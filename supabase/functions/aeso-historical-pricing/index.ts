@@ -619,7 +619,23 @@ async function processHistoricalData(data: HistoricalDataPoint[], timeframe: str
   let distribution: any[] = [];
   let seasonalPatterns: any = {};
   
-  if (timeframe === 'monthly') {
+  if (timeframe === 'daily') {
+    // Process hourly data for last 24 hours - populate chartData for live chart
+    chartData = data.map(d => {
+      const datetime = d.datetimeMPT || d.datetime;
+      // Extract hour from datetime string (format: "2024-01-15 14:00" or "2024-01-15T14:00:00")
+      const timePart = datetime.includes(' ') ? datetime.split(' ')[1] : datetime.split('T')[1];
+      const hour = timePart ? timePart.slice(0, 5) : 'Unknown';
+      return {
+        date: hour,
+        price: parseFloat(d.price.toString()),
+        average: statistics.average
+      };
+    });
+    peakHours = findPeakHours(data);
+    hourlyPatterns = calculateHourlyPatterns(data);
+    distribution = calculatePriceDistribution(prices);
+  } else if (timeframe === 'monthly') {
     // Process daily data for last 30 days
     chartData = aggregateDaily(data);
     peakHours = findPeakHours(data);
