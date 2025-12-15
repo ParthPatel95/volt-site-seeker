@@ -9,17 +9,23 @@ import {
   DollarSign, 
   Flame,
   ArrowUp,
-  Home
+  Home,
+  Box,
+  Shield,
+  HardHat
 } from 'lucide-react';
 
 const sections = [
   { id: 'hero', icon: Home, label: 'Top' },
   { id: 'advantages', icon: Droplets, label: 'Advantages' },
+  { id: 'containers', icon: Box, label: 'Containers' },
   { id: 'cooling-methods', icon: Thermometer, label: 'Cooling Methods' },
   { id: 'site-selection', icon: MapPin, label: 'Site Selection' },
   { id: 'layout', icon: LayoutGrid, label: 'Layout' },
   { id: 'water-systems', icon: Waves, label: 'Water Systems' },
   { id: 'electrical', icon: Zap, label: 'Electrical' },
+  { id: 'network-security', icon: Shield, label: 'Network & Security' },
+  { id: 'construction', icon: HardHat, label: 'Construction' },
   { id: 'economics', icon: DollarSign, label: 'Economics' },
   { id: 'waste-heat', icon: Flame, label: 'Waste Heat' },
 ];
