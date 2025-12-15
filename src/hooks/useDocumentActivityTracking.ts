@@ -259,7 +259,8 @@ export function useDocumentActivityTracking({
           .single();
 
         if (error) {
-          console.error('Error creating activity record:', error);
+          // Silently fail for anonymous users (CORS/auth issues on shared links)
+          console.warn('Activity tracking init error (expected for anonymous users):', error.message);
           return;
         }
 

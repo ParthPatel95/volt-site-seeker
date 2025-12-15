@@ -226,3 +226,6 @@ verify_jwt = false
 
 [functions.get-signed-url]
 verify_jwt = false
+
+[functions.track-activity-beacon]
+verify_jwt = false
