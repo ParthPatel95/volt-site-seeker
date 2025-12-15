@@ -11,12 +11,14 @@ import { GridOperationsSection } from '@/components/aeso-education/GridOperation
 import { GenerationMixSection } from '@/components/aeso-education/GenerationMixSection';
 import { EnergyForecastSection } from '@/components/aeso-education/EnergyForecastSection';
 import { AESOCTASection } from '@/components/aeso-education/AESOCTASection';
+import { MarketParticipantsSection } from '@/components/aeso-education/MarketParticipantsSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { ChevronUp, Zap, DollarSign, Activity, TrendingUp, PiggyBank, Settings, Wind, LineChart, ArrowRight } from 'lucide-react';
+import { ChevronUp, Zap, DollarSign, Activity, TrendingUp, PiggyBank, Settings, Wind, LineChart, ArrowRight, Users } from 'lucide-react';
 
 const sections = [
   { id: 'hero', label: 'Overview', icon: Zap },
   { id: 'what-is-aeso', label: 'What is AESO', icon: Settings },
+  { id: 'market-participants', label: 'Participants', icon: Users },
   { id: 'pool-pricing', label: 'Pool Pricing', icon: DollarSign },
   { id: 'price-trends', label: 'Price Trends', icon: LineChart },
   { id: 'twelve-cp', label: '12CP Savings', icon: PiggyBank },
@@ -107,6 +109,9 @@ const AESOEducation = () => {
         </div>
         <div id="what-is-aeso">
           <WhatIsAESOSection />
+        </div>
+        <div id="market-participants">
+          <MarketParticipantsSection />
         </div>
         <div id="pool-pricing">
           <PoolPricingSection />
