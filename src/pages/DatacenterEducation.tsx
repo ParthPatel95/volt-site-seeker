@@ -3,7 +3,6 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import DatacenterHeroSectionV2 from '@/components/datacenter-education/DatacenterHeroSectionV2';
-import SectionNavigation from '@/components/datacenter-education/SectionNavigation';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 
 // Lazy load all sections for performance
@@ -29,7 +28,6 @@ const DatacenterEducation = () => {
     <div className="min-h-screen bg-background">
       <SmoothScroll />
       <LandingNavigation />
-      <SectionNavigation />
       
       {/* Immersive Hero Section */}
       <DatacenterHeroSectionV2 />

@@ -3,7 +3,6 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import HydroHeroSection from '@/components/hydro-education/HydroHeroSection';
-import HydroSectionNavigation from '@/components/hydro-education/HydroSectionNavigation';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 
 // Lazy load all sections for performance
@@ -31,7 +30,6 @@ const HydroDatacenterEducation = () => {
     <div className="min-h-screen bg-background">
       <SmoothScroll />
       <LandingNavigation />
-      <HydroSectionNavigation />
       
       {/* Immersive Hero Section */}
       <HydroHeroSection />

@@ -6,23 +6,7 @@ import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { 
-  Bitcoin, 
-  HelpCircle, 
-  History, 
-  Workflow, 
-  Wallet,
-  Pickaxe, 
-  Thermometer, 
-  Users, 
-  Leaf, 
-  TrendingUp, 
-  Shield, 
-  Globe, 
-  Rocket, 
-  ArrowRight,
-  ArrowUp
-} from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 
 // Eager load hero for faster initial paint
 import BitcoinHeroSection from '@/components/bitcoin-education/BitcoinHeroSection';
@@ -42,23 +26,6 @@ const GlobalBitcoinAdoptionSection = lazy(() => import('@/components/bitcoin-edu
 const BitcoinFutureSection = lazy(() => import('@/components/bitcoin-education/BitcoinFutureSection'));
 const BitcoinCTASection = lazy(() => import('@/components/bitcoin-education/BitcoinCTASection'));
 
-const sections = [
-  { id: 'hero', label: 'Overview', icon: Bitcoin },
-  { id: 'what-is-bitcoin', label: 'What is Bitcoin', icon: HelpCircle },
-  { id: 'history', label: 'History', icon: History },
-  { id: 'how-it-works', label: 'How It Works', icon: Workflow },
-  { id: 'wallets', label: 'Wallets', icon: Wallet },
-  { id: 'mining', label: 'Mining', icon: Pickaxe },
-  { id: 'cooling', label: 'Cooling', icon: Thermometer },
-  { id: 'pools', label: 'Pools', icon: Users },
-  { id: 'sustainability', label: 'Sustainability', icon: Leaf },
-  { id: 'economics', label: 'Economics', icon: TrendingUp },
-  { id: 'benefits', label: 'Benefits', icon: Shield },
-  { id: 'adoption', label: 'Adoption', icon: Globe },
-  { id: 'future', label: 'Future', icon: Rocket },
-  { id: 'cta', label: 'Get Started', icon: ArrowRight },
-];
-
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
     <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-watt-bitcoin border-t-transparent rounded-full animate-spin"></div>
@@ -68,7 +35,6 @@ const SectionLoader = () => (
 const BitcoinEducation: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,37 +46,11 @@ const BitcoinEducation: React.FC = () => {
       
       // Show/hide scroll to top button
       setShowScrollTop(scrollTop > 500);
-
-      // Determine active section
-      const sectionElements = sections.map(s => ({
-        id: s.id,
-        element: document.getElementById(s.id)
-      })).filter(s => s.element);
-
-      for (let i = sectionElements.length - 1; i >= 0; i--) {
-        const section = sectionElements[i];
-        if (section.element) {
-          const rect = section.element.getBoundingClientRect();
-          if (rect.top <= 150) {
-            setActiveSection(section.id);
-            break;
-          }
-        }
-      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 80;
-      const top = element.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top, behavior: 'smooth' });
-    }
-  };
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -139,62 +79,11 @@ const BitcoinEducation: React.FC = () => {
 
       <LandingBackground />
       <LandingNavigation />
-      
-      {/* Desktop Side Navigation */}
-      <nav className="hidden xl:flex fixed right-4 top-1/2 -translate-y-1/2 z-40 flex-col gap-1">
-        {sections.map((section) => {
-          const Icon = section.icon;
-          const isActive = activeSection === section.id;
-          return (
-            <button
-              key={section.id}
-              onClick={() => scrollToSection(section.id)}
-              className={`group flex items-center gap-2 p-2 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-watt-bitcoin text-white' 
-                  : 'bg-white/80 hover:bg-watt-bitcoin/10 text-watt-navy/60 hover:text-watt-bitcoin'
-              } shadow-sm backdrop-blur-sm`}
-              title={section.label}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span className={`text-xs font-medium whitespace-nowrap overflow-hidden transition-all duration-200 ${
-                isActive ? 'max-w-24 opacity-100' : 'max-w-0 opacity-0 group-hover:max-w-24 group-hover:opacity-100'
-              }`}>
-                {section.label}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="xl:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200 safe-area-pb">
-        <div className="flex overflow-x-auto scrollbar-hide px-2 py-2 gap-1">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            const isActive = activeSection === section.id;
-            return (
-              <button
-                key={section.id}
-                onClick={() => scrollToSection(section.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[60px] flex-shrink-0 ${
-                  isActive 
-                    ? 'bg-watt-bitcoin text-white' 
-                    : 'text-watt-navy/60 hover:bg-watt-bitcoin/10'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium whitespace-nowrap">{section.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
 
       {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-20 xl:bottom-8 right-4 z-40 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 ${
+        className={`fixed bottom-8 right-4 z-40 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
         aria-label="Scroll to top"
@@ -202,7 +91,7 @@ const BitcoinEducation: React.FC = () => {
         <ArrowUp className="w-5 h-5" />
       </button>
       
-      <div className="pt-14 sm:pt-16 md:pt-20 pb-20 xl:pb-0 relative z-10 safe-area-pt">
+      <div className="pt-14 sm:pt-16 md:pt-20 relative z-10 safe-area-pt">
         <main>
           {/* Hero Section */}
           <div id="hero">
