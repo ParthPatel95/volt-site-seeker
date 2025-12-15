@@ -194,11 +194,17 @@ export function MobileDocumentViewer({
         
         if (isCancelled) return;
         
-        // Calculate scale to fit container width
+        // Get device pixel ratio for high-resolution rendering (cap at 3x for memory)
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
+        
+        // Calculate logical scale to fit container width
         const containerWidth = containerRef.current?.clientWidth || window.innerWidth;
         const baseViewport = page.getViewport({ scale: 1 });
-        const scale = (containerWidth - 32) / baseViewport.width;
-        const viewport = page.getViewport({ scale: Math.min(scale, 2) });
+        const logicalScale = (containerWidth - 32) / baseViewport.width;
+        
+        // Create high-resolution viewport (multiply by DPR for crisp rendering)
+        const renderScale = logicalScale * dpr;
+        const viewport = page.getViewport({ scale: renderScale });
         
         // Double-buffering: render to offscreen canvas first
         const offscreen = document.createElement('canvas');
@@ -208,7 +214,7 @@ export function MobileDocumentViewer({
         
         if (!offscreenContext) return;
         
-        // Render page to offscreen canvas
+        // Render page to offscreen canvas at high resolution
         await page.render({
           canvasContext: offscreenContext,
           viewport: viewport
@@ -219,11 +225,17 @@ export function MobileDocumentViewer({
         // Only update visible canvas after render is complete
         const canvas = canvasRef.current;
         if (canvas && isMountedRef.current) {
+          // Set canvas internal size to high-resolution
           canvas.width = viewport.width;
           canvas.height = viewport.height;
+          
+          // Set canvas display size to logical size (CSS pixels)
+          canvas.style.width = `${viewport.width / dpr}px`;
+          canvas.style.height = `${viewport.height / dpr}px`;
+          
           const context = canvas.getContext('2d');
           if (context) {
-            // Draw completed render to visible canvas - no flash
+            // Draw completed render to visible canvas - crisp on high-DPI screens
             context.drawImage(offscreen, 0, 0);
           }
           
