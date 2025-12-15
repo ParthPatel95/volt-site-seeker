@@ -4,6 +4,7 @@ import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import DatacenterHeroSectionV2 from '@/components/datacenter-education/DatacenterHeroSectionV2';
 import SectionNavigation from '@/components/datacenter-education/SectionNavigation';
+import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 
 // Lazy load sections below the fold
 const PowerJourneySection = lazy(() => import('@/components/datacenter-education/PowerJourneySection'));
@@ -58,6 +59,9 @@ const DatacenterEducation = () => {
       </Suspense>
       
       <LandingFooter />
+
+      {/* Page Translation Button */}
+      <PageTranslationButton pageId="datacenters-101" />
     </div>
   );
 };

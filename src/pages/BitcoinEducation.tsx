@@ -5,6 +5,7 @@ import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
+import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 
 // Eager load hero for faster initial paint
 import BitcoinHeroSection from '@/components/bitcoin-education/BitcoinHeroSection';
@@ -162,6 +163,9 @@ const BitcoinEducation: React.FC = () => {
 
         <LandingFooter />
       </div>
+
+      {/* Page Translation Button */}
+      <PageTranslationButton pageId="bitcoin-101" />
 
       {/* SEO content */}
       <div className="sr-only">
