@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Cpu, Zap, Gauge, DollarSign, Calendar, Award } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 const MiningHardwareShowcaseSection = () => {

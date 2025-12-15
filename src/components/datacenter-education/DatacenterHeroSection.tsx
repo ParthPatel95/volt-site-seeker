@@ -1,6 +1,6 @@
 import React from 'react';
 import { Server, Zap, Thermometer, Globe } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 const DatacenterHeroSection = () => {

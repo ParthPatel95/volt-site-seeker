@@ -16,6 +16,7 @@ import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
 import Hosting from "./pages/Hosting";
 import BitcoinEducation from "./pages/BitcoinEducation";
+import DatacenterEducation from "./pages/DatacenterEducation";
 
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -47,6 +48,7 @@ const App = () => (
                 } />
                 <Route path="/hosting" element={<Hosting />} />
                 <Route path="/bitcoin" element={<BitcoinEducation />} />
+                <Route path="/datacenters" element={<DatacenterEducation />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}

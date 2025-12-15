@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Building2, Server, Zap, Wind, Shield, Users, MonitorDot } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const DatacenterLayoutSection = () => {
   const [activeZone, setActiveZone] = useState<string | null>(null);
