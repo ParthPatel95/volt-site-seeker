@@ -1,6 +1,6 @@
 import React from 'react';
 import { Zap, Server, Thermometer, Wind, Bitcoin, ArrowRight } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 const EnergyFlowVisualizationSection = () => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Zap, Battery, AlertTriangle, CheckCircle, ArrowDown } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 const PowerInfrastructureSection = () => {

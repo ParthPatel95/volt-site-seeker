@@ -1,9 +1,8 @@
 import React, { lazy, Suspense } from 'react';
-import LandingNavigation from '@/components/landing/LandingNavigation';
-import LandingFooter from '@/components/landing/LandingFooter';
-import SmoothScroll from '@/components/ui/SmoothScroll';
+import { LandingNavigation } from '@/components/landing/LandingNavigation';
+import { LandingFooter } from '@/components/landing/LandingFooter';
+import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import DatacenterHeroSection from '@/components/datacenter-education/DatacenterHeroSection';
-
 // Lazy load sections below the fold
 const HowMiningDatacenterWorksSection = lazy(() => import('@/components/datacenter-education/HowMiningDatacenterWorksSection'));
 const PowerInfrastructureSection = lazy(() => import('@/components/datacenter-education/PowerInfrastructureSection'));
@@ -23,53 +22,52 @@ const SectionLoader = () => (
 
 const DatacenterEducation = () => {
   return (
-    <SmoothScroll>
-      <div className="min-h-screen bg-background">
-        <LandingNavigation />
-        
-        {/* Hero Section - Eager loaded */}
-        <DatacenterHeroSection />
-        
-        {/* Lazy loaded sections */}
-        <Suspense fallback={<SectionLoader />}>
-          <HowMiningDatacenterWorksSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <PowerInfrastructureSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <CoolingSystemsVisualSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <MiningHardwareShowcaseSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <DatacenterLayoutSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <EnergyFlowVisualizationSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <MiningPoolsSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <MiningSustainabilitySection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <DatacenterCTASection />
-        </Suspense>
-        
-        <LandingFooter />
-      </div>
-    </SmoothScroll>
+    <div className="min-h-screen bg-background">
+      <SmoothScroll />
+      <LandingNavigation />
+      
+      {/* Hero Section - Eager loaded */}
+      <DatacenterHeroSection />
+      
+      {/* Lazy loaded sections */}
+      <Suspense fallback={<SectionLoader />}>
+        <HowMiningDatacenterWorksSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <PowerInfrastructureSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <CoolingSystemsVisualSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <MiningHardwareShowcaseSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <DatacenterLayoutSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <EnergyFlowVisualizationSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <MiningPoolsSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <MiningSustainabilitySection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoader />}>
+        <DatacenterCTASection />
+      </Suspense>
+      
+      <LandingFooter />
+    </div>
   );
 };
 

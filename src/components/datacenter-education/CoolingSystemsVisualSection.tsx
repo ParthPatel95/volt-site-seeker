@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Wind, Droplets, Waves, Thermometer, CheckCircle, XCircle, TrendingDown } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const CoolingSystemsVisualSection = () => {
   const [activeCooling, setActiveCooling] = useState('air');

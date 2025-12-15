@@ -64,6 +64,11 @@ export const LandingFooter = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/datacenters" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Learn Datacenters
+                </Link>
+              </li>
+              <li>
                 <Link to="/app" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   VoltScout Platform
                 </Link>

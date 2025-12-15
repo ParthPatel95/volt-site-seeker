@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Zap, Server, Thermometer, Wind, Wifi, Bitcoin, ArrowRight, ArrowDown } from 'lucide-react';
-import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const HowMiningDatacenterWorksSection = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
