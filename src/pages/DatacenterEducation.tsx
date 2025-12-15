@@ -2,17 +2,15 @@ import React, { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
-import DatacenterHeroSection from '@/components/datacenter-education/DatacenterHeroSection';
+import DatacenterHeroSectionV2 from '@/components/datacenter-education/DatacenterHeroSectionV2';
+import SectionNavigation from '@/components/datacenter-education/SectionNavigation';
+
 // Lazy load sections below the fold
-const HowMiningDatacenterWorksSection = lazy(() => import('@/components/datacenter-education/HowMiningDatacenterWorksSection'));
-const PowerInfrastructureSection = lazy(() => import('@/components/datacenter-education/PowerInfrastructureSection'));
+const PowerJourneySection = lazy(() => import('@/components/datacenter-education/PowerJourneySection'));
 const CoolingSystemsVisualSection = lazy(() => import('@/components/datacenter-education/CoolingSystemsVisualSection'));
 const MiningHardwareShowcaseSection = lazy(() => import('@/components/datacenter-education/MiningHardwareShowcaseSection'));
-const DatacenterLayoutSection = lazy(() => import('@/components/datacenter-education/DatacenterLayoutSection'));
-const EnergyFlowVisualizationSection = lazy(() => import('@/components/datacenter-education/EnergyFlowVisualizationSection'));
-const MiningPoolsSection = lazy(() => import('@/components/bitcoin-education/MiningPoolsSection'));
-const MiningSustainabilitySection = lazy(() => import('@/components/bitcoin-education/MiningSustainabilitySection'));
-const DatacenterCTASection = lazy(() => import('@/components/datacenter-education/DatacenterCTASection'));
+const InteractiveFacilityTour = lazy(() => import('@/components/datacenter-education/InteractiveFacilityTour'));
+const EnhancedCTASection = lazy(() => import('@/components/datacenter-education/EnhancedCTASection'));
 
 const SectionLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -25,45 +23,38 @@ const DatacenterEducation = () => {
     <div className="min-h-screen bg-background">
       <SmoothScroll />
       <LandingNavigation />
+      <SectionNavigation />
       
-      {/* Hero Section - Eager loaded */}
-      <DatacenterHeroSection />
+      {/* Immersive Hero Section */}
+      <DatacenterHeroSectionV2 />
       
-      {/* Lazy loaded sections */}
+      {/* Section 1: The Power Journey (Consolidated) */}
       <Suspense fallback={<SectionLoader />}>
-        <HowMiningDatacenterWorksSection />
+        <PowerJourneySection />
       </Suspense>
       
+      {/* Section 2: Cooling Systems */}
       <Suspense fallback={<SectionLoader />}>
-        <PowerInfrastructureSection />
+        <div id="cooling-systems">
+          <CoolingSystemsVisualSection />
+        </div>
       </Suspense>
       
+      {/* Section 3: Mining Hardware */}
       <Suspense fallback={<SectionLoader />}>
-        <CoolingSystemsVisualSection />
+        <div id="mining-hardware">
+          <MiningHardwareShowcaseSection />
+        </div>
       </Suspense>
       
+      {/* Section 4: Interactive Facility Tour */}
       <Suspense fallback={<SectionLoader />}>
-        <MiningHardwareShowcaseSection />
+        <InteractiveFacilityTour />
       </Suspense>
       
+      {/* CTA Section */}
       <Suspense fallback={<SectionLoader />}>
-        <DatacenterLayoutSection />
-      </Suspense>
-      
-      <Suspense fallback={<SectionLoader />}>
-        <EnergyFlowVisualizationSection />
-      </Suspense>
-      
-      <Suspense fallback={<SectionLoader />}>
-        <MiningPoolsSection />
-      </Suspense>
-      
-      <Suspense fallback={<SectionLoader />}>
-        <MiningSustainabilitySection />
-      </Suspense>
-      
-      <Suspense fallback={<SectionLoader />}>
-        <DatacenterCTASection />
+        <EnhancedCTASection />
       </Suspense>
       
       <LandingFooter />
