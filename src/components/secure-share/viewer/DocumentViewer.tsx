@@ -329,20 +329,10 @@ export function DocumentViewer({
       loadPdfProxy();
     }
     
-    // CRITICAL: Cleanup function to prevent race conditions
+    // Cleanup: Only clear ref, don't destroy - let Document component manage its own PDF lifecycle
     return () => {
       isCancelled = true;
-      const proxyToDestroy = pdfProxyRef.current;
-      pdfProxyRef.current = null; // Clear ref immediately to prevent double-destroy
-      
-      if (proxyToDestroy) {
-        console.log('[DocumentViewer] Cleaning up PDF proxy on effect cleanup');
-        try {
-          proxyToDestroy.destroy().catch(() => {});
-        } catch (e) {
-          // Ignore cleanup errors - PDF may already be destroyed
-        }
-      }
+      pdfProxyRef.current = null;
     };
   }, [isPdf, documentUrl]);
   
@@ -783,13 +773,8 @@ export function DocumentViewer({
       setPageNumber(1);
     }
     
-    // Store proxy for translation feature - but DON'T overwrite pdfProxyRef
-    // pdfProxyRef is managed by the pre-load effect for cleanup purposes
-    // The pre-load effect's cleanup would destroy Document's internal pdf if we store it in pdfProxyRef
-    if (!pdfDocumentProxy) {
-      setPdfDocumentProxy(pdf);
-    }
-    // Note: Removed pdfProxyRef.current = pdf to prevent cleanup conflicts
+    // Always store proxy for translation feature
+    setPdfDocumentProxy(pdf);
   }
 
   const handlePageLoadSuccess = useCallback((page: any) => {
@@ -1128,7 +1113,6 @@ export function DocumentViewer({
                     }}
                   >
                     <Document
-                      key={documentUrl}
                       file={documentUrl}
                       options={{
                         disableRange: false,
@@ -1179,7 +1163,6 @@ export function DocumentViewer({
                           }}
                         >
                           <Page
-                            key={`page-${pageNumber}`}
                             pageNumber={pageNumber}
                             scale={isMobile ? (isIOS ? 0.6 : 0.75) : 1.0}
                             rotate={rotation}
