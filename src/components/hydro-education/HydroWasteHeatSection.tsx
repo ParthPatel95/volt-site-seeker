@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Flame, 
   Factory, 
@@ -7,10 +7,15 @@ import {
   Leaf,
   TrendingUp,
   DollarSign,
-  Thermometer
+  Thermometer,
+  Calculator,
+  Hotel,
+  Fuel
 } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 
 const applications = [
   {
@@ -57,7 +62,33 @@ const environmentalBenefits = [
   { metric: 'Fuel Savings', value: '$500K', unit: '/year per 10MW', description: 'Heating cost offset value' }
 ];
 
+// ROI calculation data from Bitmain documentation
+const hotelHotWaterROI = {
+  miningPower: 1, // MW
+  heatOutput: 3.4, // MW thermal per MW electric
+  waterFlow: 17206, // L/hour at 55°C
+  electricityRate: 0.06, // $/kWh for equivalent electric heating
+  annualSavings: 525600, // USD
+  paybackMonths: 8
+};
+
+const naturalGasROI = {
+  miningPower: 1, // MW
+  gasPrice: 0.25, // $/m³
+  gasReplacement: 840960, // m³/year
+  annualSavings: 210240, // USD
+  paybackMonths: 14
+};
+
 const HydroWasteHeatSection = () => {
+  const [facilitySize, setFacilitySize] = useState(10); // MW
+  
+  // Calculate scaled ROI
+  const hotelSavings = (hotelHotWaterROI.annualSavings * facilitySize).toLocaleString();
+  const gasSavings = (naturalGasROI.annualSavings * facilitySize).toLocaleString();
+  const hotWaterVolume = (hotelHotWaterROI.waterFlow * facilitySize).toLocaleString();
+  const gasReplaced = (naturalGasROI.gasReplacement * facilitySize).toLocaleString();
+
   return (
     <section className="py-20 bg-gradient-to-b from-white to-orange-50/50">
       <div className="max-w-7xl mx-auto px-6">
@@ -124,6 +155,113 @@ const HydroWasteHeatSection = () => {
                 <div className="mt-8 flex justify-center">
                   <div className="px-6 py-2 rounded-full bg-white/10 backdrop-blur text-white text-sm">
                     <span className="text-green-400 font-bold">85%</span> heat recovery efficiency achievable
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        {/* ROI Calculator */}
+        <ScrollReveal>
+          <Card className="border-watt-navy/10 mb-12">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                  <Calculator className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-watt-navy">Waste Heat ROI Calculator</h3>
+                  <p className="text-sm text-watt-navy/60">Calculate annual savings from heat recovery</p>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <Label className="text-sm text-watt-navy/70">Mining Facility Size (MW)</Label>
+                <div className="flex items-center gap-4 mt-2">
+                  <Slider
+                    value={[facilitySize]}
+                    onValueChange={([value]) => setFacilitySize(value)}
+                    min={1}
+                    max={100}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <div className="w-20 text-center">
+                    <span className="text-2xl font-bold text-watt-navy">{facilitySize}</span>
+                    <span className="text-sm text-watt-navy/60 ml-1">MW</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Hotel Hot Water Scenario */}
+                <div className="p-6 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                      <Hotel className="w-5 h-5 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-watt-navy">Hotel Hot Water Heating</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-watt-navy/70">Hot Water Production</span>
+                      <span className="font-mono text-cyan-600">{hotWaterVolume} L/hour</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-watt-navy/70">Water Temperature</span>
+                      <span className="font-mono text-cyan-600">55°C</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-watt-navy/70">Equivalent Electric Cost</span>
+                      <span className="font-mono text-cyan-600">$0.06/kWh</span>
+                    </div>
+                    <div className="pt-3 border-t border-cyan-200">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-watt-navy">Annual Savings</span>
+                        <span className="text-2xl font-bold text-green-600">${hotelSavings}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-xs text-watt-navy/60">Payback Period</span>
+                        <span className="text-sm font-medium text-cyan-600">~{hotelHotWaterROI.paybackMonths} months</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Natural Gas Replacement Scenario */}
+                <div className="p-6 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+                      <Fuel className="w-5 h-5 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-watt-navy">Natural Gas Replacement</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-watt-navy/70">Gas Replaced</span>
+                      <span className="font-mono text-orange-600">{gasReplaced} m³/year</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-watt-navy/70">Gas Price</span>
+                      <span className="font-mono text-orange-600">$0.25/m³</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-watt-navy/70">Heat Output</span>
+                      <span className="font-mono text-orange-600">{(facilitySize * 3.4).toFixed(1)} MW thermal</span>
+                    </div>
+                    <div className="pt-3 border-t border-orange-200">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-watt-navy">Annual Savings</span>
+                        <span className="text-2xl font-bold text-green-600">${gasSavings}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-xs text-watt-navy/60">Payback Period</span>
+                        <span className="text-sm font-medium text-orange-600">~{naturalGasROI.paybackMonths} months</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

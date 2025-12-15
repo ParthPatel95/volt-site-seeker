@@ -5,10 +5,13 @@ import {
   Cable,
   Server,
   CheckCircle,
-  Info
+  Info,
+  Globe,
+  AlertTriangle
 } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const voltageSteps = [
   { voltage: '110-220 kV', name: 'Grid Connection', description: 'High voltage from transmission grid', color: 'from-red-500 to-red-600' },
@@ -16,6 +19,57 @@ const voltageSteps = [
   { voltage: '10 kV', name: 'Distribution', description: 'Medium voltage ring main units', color: 'from-yellow-500 to-yellow-600' },
   { voltage: '400 V', name: 'Container Input', description: 'Low voltage to mining containers', color: 'from-green-500 to-green-600' },
   { voltage: '12 V DC', name: 'Mining Hardware', description: 'PSU output to ASIC miners', color: 'from-blue-500 to-blue-600' }
+];
+
+// Regional voltage standards
+const regionalVoltageStandards = [
+  {
+    region: 'North America (US/Canada)',
+    flag: '🇺🇸🇨🇦',
+    mediumVoltage: ['13.8 kV', '24.94 kV', '34.5 kV'],
+    lowVoltage: '480V / 600V',
+    frequency: '60 Hz',
+    notes: 'Three-phase delta or wye configurations'
+  },
+  {
+    region: 'Europe (EU/UK)',
+    flag: '🇪🇺🇬🇧',
+    mediumVoltage: ['10 kV', '20 kV', '35 kV'],
+    lowVoltage: '400V',
+    frequency: '50 Hz',
+    notes: 'IEC standards, TN-S grounding'
+  },
+  {
+    region: 'Middle East / Africa',
+    flag: '🌍',
+    mediumVoltage: ['11 kV', '22 kV', '33 kV'],
+    lowVoltage: '400V / 415V',
+    frequency: '50 Hz',
+    notes: 'Often follows UK standards'
+  },
+  {
+    region: 'Asia Pacific',
+    flag: '🌏',
+    mediumVoltage: ['10 kV', '22 kV', '35 kV'],
+    lowVoltage: '380V / 400V',
+    frequency: '50 Hz',
+    notes: 'Varies by country, check local grid'
+  }
+];
+
+// Transformer specifications
+const transformerSpecs = [
+  { rating: '2,500 kVA', containers: 2, loadFactor: '≤ 85%', type: 'Oil-immersed', cooling: 'ONAN/ONAF' },
+  { rating: '3,150 kVA', containers: 2, loadFactor: '≤ 85%', type: 'Oil-immersed', cooling: 'ONAN/ONAF' },
+  { rating: '1,600 kVA', containers: 1, loadFactor: '≤ 85%', type: 'Dry-type', cooling: 'AN/AF' }
+];
+
+// Cable specifications
+const cableSpecs = [
+  { type: 'MV Feeder', voltage: '10-35 kV', size: '3 × 300 mm² Cu', current: '~500A', installation: 'Direct buried or tray' },
+  { type: 'LV Main', voltage: '400V', size: '4 × 500 mm² Cu', current: '~1,200A', installation: 'Cable tray' },
+  { type: 'Container Feed', voltage: '400V', size: '4 × 240 mm² Cu', current: '~1,972A (2 cables)', installation: 'Overhead or trench' },
+  { type: 'Grounding', voltage: 'N/A', size: '95-120 mm² Cu', current: 'Fault current', installation: 'Buried grid' }
 ];
 
 const cableInstallationMethods = [
@@ -51,6 +105,16 @@ const cableInstallationMethods = [
     ],
     bestFor: 'Permanent outdoor installations'
   }
+];
+
+// Protection system requirements
+const protectionRequirements = [
+  { device: 'Main Circuit Breaker', location: 'Substation', function: 'Overcurrent, earth fault protection' },
+  { device: 'MV Switchgear', location: 'Distribution room', function: 'Ring main unit, load break switches' },
+  { device: 'Transformer Protection', location: 'Each transformer', function: 'Buchholz, thermal, differential' },
+  { device: 'LV Circuit Breaker', location: 'Container input', function: 'Overcurrent, short circuit protection' },
+  { device: 'Surge Protection', location: 'MV & LV boards', function: 'Lightning and switching surge protection' },
+  { device: 'Ground Fault', location: 'Container level', function: 'Personnel safety, equipment protection' }
 ];
 
 const HydroElectricalSection = () => {
@@ -124,13 +188,143 @@ const HydroElectricalSection = () => {
           </Card>
         </ScrollReveal>
 
+        {/* Regional Voltage Standards */}
+        <ScrollReveal>
+          <Card className="border-watt-navy/10 mb-12">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-watt-navy">Regional Voltage Standards</h3>
+                  <p className="text-sm text-watt-navy/60">Grid voltage levels vary by region</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {regionalVoltageStandards.map((region, i) => (
+                  <div key={i} className="p-4 rounded-lg bg-watt-navy/5 hover:bg-watt-navy/10 transition-colors">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-2xl">{region.flag}</span>
+                      <span className="font-semibold text-watt-navy text-sm">{region.region}</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-watt-navy/60 block text-xs">Medium Voltage</span>
+                        <span className="font-mono text-yellow-600">{region.mediumVoltage.join(' / ')}</span>
+                      </div>
+                      <div>
+                        <span className="text-watt-navy/60 block text-xs">Low Voltage</span>
+                        <span className="font-mono text-green-600">{region.lowVoltage}</span>
+                      </div>
+                      <div>
+                        <span className="text-watt-navy/60 block text-xs">Frequency</span>
+                        <span className="font-mono text-blue-600">{region.frequency}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-watt-navy/50 mt-2">{region.notes}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        {/* Transformer & Cable Specifications */}
+        <ScrollReveal>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {/* Transformer Specs */}
+            <Card className="border-watt-navy/10">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-watt-navy mb-4 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  Transformer Specifications
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-watt-navy/10">
+                        <th className="text-left py-2 font-semibold text-watt-navy">Rating</th>
+                        <th className="text-center py-2 font-semibold text-watt-navy">Containers</th>
+                        <th className="text-center py-2 font-semibold text-watt-navy">Load Factor</th>
+                        <th className="text-left py-2 font-semibold text-watt-navy">Type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transformerSpecs.map((spec, i) => (
+                        <tr key={i} className="border-b border-watt-navy/5">
+                          <td className="py-2 font-mono text-yellow-600">{spec.rating}</td>
+                          <td className="py-2 text-center">{spec.containers}</td>
+                          <td className="py-2 text-center text-green-600">{spec.loadFactor}</td>
+                          <td className="py-2 text-watt-navy/70">{spec.type}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-amber-700">
+                      <strong>Load factor ≤85%</strong> required to prevent overheating. 
+                      Size transformers for worst-case ambient temperature conditions.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Cable Specs */}
+            <Card className="border-watt-navy/10">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-watt-navy mb-4 flex items-center gap-2">
+                  <Cable className="w-5 h-5 text-orange-500" />
+                  Cable Specifications
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-watt-navy/10">
+                        <th className="text-left py-2 font-semibold text-watt-navy">Type</th>
+                        <th className="text-left py-2 font-semibold text-watt-navy">Size</th>
+                        <th className="text-center py-2 font-semibold text-watt-navy">Current</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cableSpecs.map((spec, i) => (
+                        <tr key={i} className="border-b border-watt-navy/5">
+                          <td className="py-2 font-medium text-watt-navy">{spec.type}</td>
+                          <td className="py-2 font-mono text-xs text-watt-navy/70">{spec.size}</td>
+                          <td className="py-2 text-center text-orange-600">{spec.current}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-blue-700">
+                      Container incoming current: <strong>~1,972A</strong> at full load.
+                      Use parallel cables or busbar for high-current connections.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </ScrollReveal>
+
         {/* Cable Installation Methods */}
         <ScrollReveal>
           <h3 className="text-2xl font-bold text-watt-navy mb-8 text-center">
             Cable Installation Methods
           </h3>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             {cableInstallationMethods.map((method) => (
               <Card 
                 key={method.id}
@@ -189,84 +383,53 @@ const HydroElectricalSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* Network Topology */}
-        <ScrollReveal delay={200}>
-          <Card className="border-watt-navy/10 mt-12">
-            <CardContent className="p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">
-                Network Architecture
-              </h3>
-              
-              <div className="relative bg-slate-50 rounded-xl p-8">
-                {/* Internet */}
-                <div className="flex justify-center mb-6">
-                  <div className="px-6 py-3 rounded-lg bg-blue-500 text-white font-medium flex items-center gap-2">
-                    🌐 Internet (Dual ISP)
-                  </div>
+        {/* Protection System */}
+        <ScrollReveal>
+          <Card className="border-watt-navy/10">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
                 </div>
-
-                {/* Main Router */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative">
-                    <div className="w-1 h-8 bg-blue-400 mx-auto" />
-                    <div className="px-6 py-3 rounded-lg bg-watt-navy text-white font-medium">
-                      Core Router (Redundant)
-                    </div>
-                  </div>
-                </div>
-
-                {/* Switches */}
-                <div className="flex justify-center gap-4 mb-6">
-                  {['Switch A', 'Switch B', 'Switch C'].map((sw, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div className="w-1 h-6 bg-gray-400" />
-                      <div className="px-4 py-2 rounded bg-gray-600 text-white text-sm">
-                        {sw}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Containers */}
-                <div className="flex justify-center gap-2 flex-wrap">
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div className="w-0.5 h-4 bg-gray-300" />
-                      <div className="w-12 h-8 rounded bg-gradient-to-b from-green-500 to-green-600 flex items-center justify-center">
-                        <Server className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Labels */}
-                <div className="mt-4 flex justify-center gap-8 text-xs text-watt-navy/60">
-                  <span className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-blue-500" />
-                    WAN
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-watt-navy" />
-                    Core Network
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-green-500" />
-                    Mining Containers
-                  </span>
+                <div>
+                  <h3 className="text-xl font-bold text-watt-navy">Electrical Protection System</h3>
+                  <p className="text-sm text-watt-navy/60">Safety devices and protection coordination</p>
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { label: 'Redundancy', value: 'Dual ISP, Dual Core' },
-                  { label: 'Bandwidth', value: '1 Gbps minimum' },
-                  { label: 'Latency', value: '< 50ms to pool' }
-                ].map((item, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-blue-50 text-center">
-                    <span className="text-xs text-watt-navy/60 block">{item.label}</span>
-                    <span className="text-lg font-bold text-blue-600">{item.value}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {protectionRequirements.map((item, i) => (
+                  <div key={i} className="p-4 rounded-lg bg-watt-navy/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="font-semibold text-watt-navy text-sm">{item.device}</span>
+                    </div>
+                    <div className="text-xs space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-watt-navy/60">Location:</span>
+                        <span className="text-watt-navy">{item.location}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="text-watt-navy/60">Function:</span>
+                        <span className="text-watt-navy/80">{item.function}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-800 mb-1">Lightning Protection Required</h4>
+                    <p className="text-sm text-yellow-700">
+                      Install surge protection devices (SPDs) at all voltage levels. 
+                      Use proper grounding grid with resistance ≤ 4Ω. 
+                      Consider direct strike protection for exposed equipment.
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
