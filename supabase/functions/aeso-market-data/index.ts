@@ -209,9 +209,14 @@ serve(async (req: Request) => {
     }
 
     // Operating reserve from CSD summary (best available real-time proxy)
+    // Contingency reserve = spinning reserve (fast-responding units)
+    // Other operating reserve = supplemental reserve (slower responding)
     const dispatchedCR = toNumber(csd?.dispatched_contingency_reserve) ?? 0;
+    const dispatchedOther = toNumber(csd?.dispatched_other_operating_reserve) ?? 0;
     const ffrArmed = toNumber(csd?.ffr_armed_dispatch) ?? 0;
-    const totalReserve = dispatchedCR + ffrArmed; // conservative sum
+    const spinningReserve = dispatchedCR; // Contingency reserve IS spinning reserve
+    const supplementalReserve = dispatchedOther + ffrArmed; // Other reserves + FFR
+    const totalReserve = spinningReserve + supplementalReserve;
 
     // Energy storage from generation fuel types
     let storageNet = 0;
@@ -241,8 +246,8 @@ serve(async (req: Request) => {
         },
         operatingReserve: {
           total_reserve_mw: Math.round(totalReserve),
-          spinning_reserve_mw: 0,
-          supplemental_reserve_mw: 0,
+          spinning_reserve_mw: Math.round(spinningReserve),
+          supplemental_reserve_mw: Math.round(supplementalReserve),
           timestamp: ts,
           source: csd ? 'aeso_api_csd_v2' : 'fallback_data'
         },
