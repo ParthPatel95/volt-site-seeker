@@ -128,6 +128,14 @@ export function DocumentViewer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Memoize Document options to prevent re-renders
+  const documentOptions = useMemo(() => ({
+    disableRange: false,
+    disableStream: false,
+    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    cMapPacked: true,
+  }), []);
+
   // Null-safe file type detection
   const isPdf = documentType === 'application/pdf' || (documentUrl?.endsWith('.pdf') ?? false);
   const isImage = documentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(documentUrl || '');
@@ -1011,12 +1019,7 @@ export function DocumentViewer({
                   >
                     <Document
                       file={documentUrl}
-                      options={{
-                        disableRange: false,
-                        disableStream: false,
-                        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-                        cMapPacked: true,
-                      }}
+                      options={documentOptions}
                       onLoadSuccess={onDocumentLoadSuccess}
                       onLoadError={(error) => {
                         loadErrorCountRef.current += 1;
