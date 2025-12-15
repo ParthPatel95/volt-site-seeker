@@ -997,7 +997,7 @@ export function TranslationPanel({
   
   // Auto-translate when panel opens, page changes, or language changes
   useEffect(() => {
-    if (!isOpen || isExtracting || !currentText) return;
+    if (!isOpen || isExtracting) return;
     
     // Check if we need to translate
     const cacheKey = `${currentPage}-${targetLanguage}`;
@@ -1013,10 +1013,31 @@ export function TranslationPanel({
       return;
     }
     
-    // Auto-translate
-    console.log('[TranslationPanel] Auto-translating', { currentPage, targetLanguage });
-    handleTranslate(true);
-  }, [isOpen, currentPage, targetLanguage, extractedText, ocrExtractedText, isExtracting, handleTranslate]);
+    // If we have text, translate it directly
+    if (currentText) {
+      console.log('[TranslationPanel] Auto-translating with existing text', { currentPage, targetLanguage, textLength: currentText.length });
+      handleTranslate(true);
+      return;
+    }
+    
+    // FALLBACK: If no text but we have pdfDocument or documentUrl, extract and translate
+    if (pdfDocument || documentUrl) {
+      console.log('[TranslationPanel] No text from props, extracting directly', { hasPdfDocument: !!pdfDocument, hasDocumentUrl: !!documentUrl });
+      
+      extractTextFromPage(currentPage).then(extractedPageText => {
+        if (extractedPageText && extractedPageText.trim().length > 0) {
+          console.log('[TranslationPanel] Extracted text successfully, translating', { textLength: extractedPageText.length });
+          handleTranslate(true, extractedPageText, currentPage);
+        } else {
+          console.warn('[TranslationPanel] No text extracted from page', { currentPage });
+          setError('No text found on this page. Try enabling OCR for scanned documents.');
+        }
+      }).catch(err => {
+        console.error('[TranslationPanel] Failed to extract text:', err);
+        setError('Failed to extract text from document.');
+      });
+    }
+  }, [isOpen, currentPage, targetLanguage, extractedText, ocrExtractedText, isExtracting, handleTranslate, pdfDocument, documentUrl, extractTextFromPage, currentText]);
   
   // Clear cache when panel closes
   useEffect(() => {
