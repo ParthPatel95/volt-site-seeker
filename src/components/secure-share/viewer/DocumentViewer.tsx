@@ -97,7 +97,7 @@ export function DocumentViewer({
   const [extractedText, setExtractedText] = useState<string>('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
-  const [isLoadingPdfProxy, setIsLoadingPdfProxy] = useState(false);
+  // NOTE: isLoadingPdfProxy state REMOVED - no longer needed without pre-load effect
   
   // Ref to track current PDF proxy for cleanup (prevents race conditions)
   const pdfProxyRef = useRef<any>(null);
@@ -239,67 +239,8 @@ export function DocumentViewer({
     };
   }, [pageNumber, isMobile]);
 
-  // Pre-load PDF proxy for text extraction - only if Document component hasn't loaded yet
-  // This avoids duplicate loading while still supporting translation feature
-  useEffect(() => {
-    let isCancelled = false;
-    
-    // Only pre-load if Document component hasn't already loaded the PDF
-    if (isPdf && documentUrl && !pdfDocumentProxy && !documentLoaded) {
-      const loadPdfProxy = async () => {
-        setIsLoadingPdfProxy(true);
-        console.log('[DocumentViewer] Pre-loading PDF proxy for translation');
-        try {
-          const pdfjsLib = await import('pdfjs-dist');
-          
-          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
-          }
-          
-          const loadingTask = pdfjsLib.getDocument({
-            url: documentUrl,
-            withCredentials: false,
-            isEvalSupported: false,
-            disableRange: false,
-            disableStream: false,
-          });
-          
-          const proxy = await loadingTask.promise;
-          
-          if (isCancelled) {
-            proxy.destroy();
-            return;
-          }
-          
-          // Only update state if Document component hasn't already done it
-          if (!pdfDocumentProxy) {
-            pdfProxyRef.current = proxy;
-            setPdfDocumentProxy(proxy);
-          } else {
-            // Document component already loaded - destroy our duplicate
-            proxy.destroy();
-          }
-          
-          console.log('[DocumentViewer] PDF proxy pre-loaded', { numPages: proxy.numPages });
-        } catch (error) {
-          if (!isCancelled) {
-            console.error('[DocumentViewer] Pre-load failed:', error);
-          }
-        } finally {
-          if (!isCancelled) {
-            setIsLoadingPdfProxy(false);
-          }
-        }
-      };
-      
-      // Delay pre-load slightly to let Document component try first
-      const timer = setTimeout(loadPdfProxy, 500);
-      return () => {
-        isCancelled = true;
-        clearTimeout(timer);
-      };
-    }
-  }, [isPdf, documentUrl, pdfDocumentProxy, documentLoaded]);
+  // NOTE: Pre-load effect REMOVED - Document component handles PDF loading
+  // pdfDocumentProxy is set in onDocumentLoadSuccess for translation feature
   
   // Safety timeout: Uses documentLoaded state to fix race condition (not numPages)
   // Longer timeout on mobile for slower connections
@@ -725,23 +666,17 @@ export function DocumentViewer({
   };
 
   function onDocumentLoadSuccess(pdf: any) {
-    console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages, alreadyLoaded: documentLoaded });
+    console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages });
     
     // CRITICAL: Only update state if not already set - prevents infinite loop
-    // This matches the working DocumentViewerDialog pattern
-    if (!documentLoaded) {
-      setDocumentLoaded(true);
-    }
-    
+    // This exactly matches the working DocumentViewerDialog pattern
     if (numPages === 0) {
       setNumPages(pdf.numPages);
-    }
-    
-    if (pageNumber === 0) {
+      setDocumentLoaded(true);
       setPageNumber(1);
     }
     
-    // Only set proxy if not already set - prevents re-render loop
+    // Set proxy for translation feature - only if not set
     if (!pdfDocumentProxy) {
       setPdfDocumentProxy(pdf);
       pdfProxyRef.current = pdf;
@@ -1077,7 +1012,6 @@ export function DocumentViewer({
                     <Document
                       file={documentUrl}
                       options={{
-                        withCredentials: false, // Fix CORS error with signed URLs
                         disableRange: false,
                         disableStream: false,
                         cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
