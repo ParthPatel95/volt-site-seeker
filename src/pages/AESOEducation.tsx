@@ -78,7 +78,7 @@ const AESOEducation = () => {
       <LandingNavigation />
 
       {/* Sticky Section Navigation */}
-      <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 hidden xl:flex flex-col gap-1">
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden xl:flex flex-col gap-1">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
