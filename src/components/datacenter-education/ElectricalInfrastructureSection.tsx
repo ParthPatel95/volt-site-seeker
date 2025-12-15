@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Zap, Gauge, Shield, AlertTriangle, CheckCircle, Info, ChevronRight, Cable, ArrowDown, Sparkles } from 'lucide-react';
+import React from 'react';
+import { Zap, Gauge, Shield, AlertTriangle, CheckCircle, Cable, ArrowDown, Sparkles, Activity, Cpu } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
@@ -8,11 +8,9 @@ import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
 import electricalPowerTransformer from '@/assets/electrical-power-transformer.jpg';
 import electricalMvSwitchgear from '@/assets/electrical-mv-switchgear.jpg';
 import electricalPduCluster from '@/assets/electrical-pdu-cluster.jpg';
+import asicMinersPowered from '@/assets/asic-miners-powered.jpg';
 
 const ElectricalInfrastructureSection = () => {
-  const [activeStep, setActiveStep] = useState<number | null>(null);
-  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
-
   // Enhanced single-line diagram with 3D images
   const powerFlowSteps = [
     {
@@ -136,28 +134,26 @@ const ElectricalInfrastructureSection = () => {
     { kva: 3000, mw: 2.4, miners: 690, efficiency: '99.4%', cost: '$110K' },
   ];
 
-  const activeStepData = activeStep !== null ? powerFlowSteps[activeStep] : null;
-
   return (
-    <section id="electrical" className="py-16 md:py-24 bg-background">
+    <section id="electrical" className="py-12 md:py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 md:mb-12">
             <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
               Section 2 • Electrical Systems
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Interactive Single-Line Diagram
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              Single-Line Diagram
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
               Follow the power journey from 138kV utility feed down to 12V DC at the ASIC hash boards
             </p>
           </div>
         </ScrollReveal>
 
-        {/* Immersive 3D Power Flow Diagram */}
-        <div className="mb-16">
-          {/* Desktop View - Vertical Tower Layout */}
+        {/* Power Flow Diagram - All Content Pre-Opened */}
+        <div className="mb-12 md:mb-16">
+          {/* Desktop View - Vertical Tower Layout with All Content Visible */}
           <div className="hidden lg:block">
             <div className="relative">
               {/* Animated Power Flow Background */}
@@ -170,29 +166,21 @@ const ElectricalInfrastructureSection = () => {
                 <div className="absolute w-3 h-3 rounded-full bg-watt-bitcoin animate-[flowDown_3s_ease-in-out_infinite] shadow-lg shadow-watt-bitcoin/50" style={{ animationDelay: '2.25s' }} />
               </div>
 
-              {/* Power Flow Steps */}
-              <div className="relative z-10 space-y-6">
+              {/* Power Flow Steps - All Pre-Opened */}
+              <div className="relative z-10 space-y-8">
                 {powerFlowSteps.map((step, index) => (
                   <ScrollReveal key={step.id} delay={index * 0.1}>
-                    <div
-                      className={`relative grid grid-cols-12 gap-6 items-center transition-all duration-500 cursor-pointer group ${
-                        activeStep === index ? 'scale-[1.02]' : 'hover:scale-[1.01]'
-                      }`}
-                      onClick={() => setActiveStep(activeStep === index ? null : index)}
-                      onMouseEnter={() => setHoveredStep(index)}
-                      onMouseLeave={() => setHoveredStep(null)}
-                    >
-                      {/* Left Content (alternating sides) */}
-                      <div className={`col-span-5 ${index % 2 === 0 ? 'order-1' : 'order-3 text-right'}`}>
-                        <div className={`transition-all duration-300 ${
-                          hoveredStep === index || activeStep === index ? 'opacity-100' : 'opacity-70'
-                        }`}>
+                    <div className="relative">
+                      {/* Step Header */}
+                      <div className="grid grid-cols-12 gap-6 items-start">
+                        {/* Left Content */}
+                        <div className={`col-span-5 ${index % 2 === 0 ? 'order-1' : 'order-3 text-right'}`}>
                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full text-xs font-medium text-muted-foreground mb-2">
                             <Sparkles className="w-3 h-3" />
                             Step {step.id} of 4
                           </div>
-                          <h3 className="text-2xl font-bold text-foreground mb-1">{step.name}</h3>
-                          <div className="flex items-center gap-3 mb-2 flex-wrap justify-start">
+                          <h3 className="text-xl md:text-2xl font-bold text-foreground mb-1">{step.name}</h3>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${step.color} text-white text-sm font-bold`}>
                               {step.voltage}
                             </span>
@@ -204,49 +192,36 @@ const ElectricalInfrastructureSection = () => {
                             {step.description}
                           </p>
                         </div>
-                      </div>
 
-                      {/* Center Image Card */}
-                      <div className="col-span-2 order-2 flex justify-center relative">
-                        {/* Voltage Step-Down Indicator */}
-                        {index > 0 && (
-                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                            <div className="w-8 h-8 rounded-full bg-watt-bitcoin/20 flex items-center justify-center animate-pulse">
-                              <ArrowDown className="w-4 h-4 text-watt-bitcoin" />
+                        {/* Center Image Card */}
+                        <div className="col-span-2 order-2 flex justify-center relative">
+                          {/* Voltage Step-Down Indicator */}
+                          {index > 0 && (
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                              <div className="w-8 h-8 rounded-full bg-watt-bitcoin/20 flex items-center justify-center animate-pulse">
+                                <ArrowDown className="w-4 h-4 text-watt-bitcoin" />
+                              </div>
+                              <span className="text-[10px] text-muted-foreground mt-1">
+                                {powerFlowSteps[index - 1].losses} loss
+                              </span>
                             </div>
-                            <span className="text-[10px] text-muted-foreground mt-1">
-                              {powerFlowSteps[index - 1].losses} loss
-                            </span>
-                          </div>
-                        )}
+                          )}
 
-                        <div className={`relative w-32 h-32 rounded-2xl overflow-hidden border-4 transition-all duration-500 shadow-2xl ${
-                          activeStep === index 
-                            ? 'border-watt-bitcoin scale-110 shadow-watt-bitcoin/30' 
-                            : 'border-border group-hover:border-watt-bitcoin/50'
-                        }`}>
-                          <img 
-                            src={step.image} 
-                            alt={step.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                          />
-                          {/* Glowing overlay on active/hover */}
-                          <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent transition-opacity ${
-                            hoveredStep === index || activeStep === index ? 'opacity-100' : 'opacity-0'
-                          }`} />
-                          {/* Icon overlay */}
-                          <div className="absolute bottom-2 right-2 text-2xl">
-                            {step.icon}
+                          <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border-4 border-border shadow-2xl hover:border-watt-bitcoin/50 transition-all duration-500">
+                            <img 
+                              src={step.image} 
+                              alt={step.name}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Icon overlay */}
+                            <div className="absolute bottom-2 right-2 text-2xl">
+                              {step.icon}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Right Content (alternating sides) */}
-                      <div className={`col-span-5 ${index % 2 === 0 ? 'order-3' : 'order-1 text-right'}`}>
-                        <div className={`transition-all duration-300 ${
-                          hoveredStep === index || activeStep === index ? 'opacity-100' : 'opacity-50'
-                        }`}>
-                          {/* Equipment brands */}
+                        {/* Right Content - Brands & Cost */}
+                        <div className={`col-span-5 ${index % 2 === 0 ? 'order-3' : 'order-1 text-right'}`}>
                           <div className="flex flex-wrap gap-2 mb-2 justify-start">
                             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-medium">
                               Est.
@@ -265,13 +240,11 @@ const ElectricalInfrastructureSection = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Expanded Details Panel */}
-                    {activeStep === index && (
-                      <div className="mt-4 ml-auto mr-auto max-w-4xl animate-fade-in">
-                        <div className="bg-card rounded-2xl border border-watt-bitcoin/30 p-6 shadow-xl shadow-watt-bitcoin/10">
-                          <div className="grid md:grid-cols-2 gap-6">
+                      {/* Always Visible Details Panel */}
+                      <div className="mt-4 ml-auto mr-auto max-w-4xl">
+                        <div className="bg-card rounded-2xl border border-border p-4 md:p-6 shadow-lg">
+                          <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                             {/* Specs */}
                             <div>
                               <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -312,19 +285,105 @@ const ElectricalInfrastructureSection = () => {
                           </div>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </ScrollReveal>
                 ))}
 
-                {/* Final Output - Miners */}
+                {/* Final Output - ASIC Miners with Real Images and Animations */}
                 <ScrollReveal delay={0.4}>
-                  <div className="text-center py-8">
-                    <div className="inline-flex items-center gap-4 p-6 bg-gradient-to-r from-cyan-500/10 via-watt-bitcoin/10 to-cyan-500/10 rounded-2xl border border-watt-bitcoin/20">
-                      <span className="text-4xl">💻</span>
-                      <div className="text-left">
-                        <h4 className="font-bold text-foreground">ASIC Miners</h4>
-                        <p className="text-sm text-muted-foreground">240V AC → 12V DC • 3,000-5,500W each</p>
-                        <p className="text-xs text-watt-bitcoin font-medium mt-1">PSU Efficiency: 93-95%</p>
+                  <div className="mt-8">
+                    <div className="relative overflow-hidden rounded-2xl border-2 border-watt-bitcoin/30 bg-gradient-to-br from-cyan-500/5 via-watt-bitcoin/10 to-cyan-500/5">
+                      {/* Animated Power Flow Lines */}
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        {/* Horizontal power cables animation */}
+                        <div className="absolute top-1/4 left-0 w-full h-1 bg-gradient-to-r from-transparent via-watt-bitcoin/40 to-transparent animate-[powerFlow_2s_linear_infinite]" />
+                        <div className="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent animate-[powerFlow_2s_linear_infinite]" style={{ animationDelay: '0.5s' }} />
+                        <div className="absolute top-3/4 left-0 w-full h-1 bg-gradient-to-r from-transparent via-watt-bitcoin/40 to-transparent animate-[powerFlow_2s_linear_infinite]" style={{ animationDelay: '1s' }} />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8 relative z-10">
+                        {/* Left: Real Miner Image with Animated Effects */}
+                        <div className="relative group">
+                          <div className="relative rounded-xl overflow-hidden">
+                            <img 
+                              src={asicMinersPowered} 
+                              alt="ASIC Bitcoin Mining Hardware with Power Connections"
+                              className="w-full h-48 md:h-64 object-cover"
+                            />
+                            {/* Pulsing LED overlay effects */}
+                            <div className="absolute inset-0 pointer-events-none">
+                              {/* Simulated LED status lights */}
+                              <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" />
+                              <div className="absolute top-4 left-8 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" style={{ animationDelay: '0.2s' }} />
+                              <div className="absolute top-4 left-12 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" style={{ animationDelay: '0.4s' }} />
+                              <div className="absolute top-8 left-4 w-2 h-2 rounded-full bg-yellow-500 animate-[ledPulse_1.5s_ease-in-out_infinite] shadow-lg shadow-yellow-500/50" />
+                              <div className="absolute top-8 left-8 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" style={{ animationDelay: '0.6s' }} />
+                              
+                              {/* Heat shimmer effect on exhaust side */}
+                              <div className="absolute right-0 top-0 bottom-0 w-1/4 bg-gradient-to-l from-orange-500/10 to-transparent animate-[heatWave_3s_ease-in-out_infinite]" />
+                            </div>
+                            
+                            {/* Power cable glow effect */}
+                            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-watt-bitcoin/30 to-transparent animate-[powerGlow_2s_ease-in-out_infinite]" />
+                          </div>
+
+                          {/* Mining Active Badge */}
+                          <div className="absolute -top-3 -right-3 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1.5 shadow-lg animate-pulse">
+                            <Activity className="w-3 h-3" />
+                            Mining Active
+                          </div>
+                        </div>
+
+                        {/* Right: Specs and Animated Stats */}
+                        <div className="flex flex-col justify-center">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-watt-bitcoin to-orange-600 flex items-center justify-center">
+                              <Cpu className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="text-xl md:text-2xl font-bold text-foreground">ASIC Miners</h4>
+                              <p className="text-sm text-muted-foreground">Final Power Destination</p>
+                            </div>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground mb-4">
+                            High-efficiency power supplies convert 240V AC to 12V DC, delivering clean power directly to ASIC hash boards for maximum mining performance.
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="p-3 bg-card rounded-lg border border-border">
+                              <div className="text-xs text-muted-foreground mb-1">Input Power</div>
+                              <div className="text-lg font-bold text-foreground">240V AC</div>
+                            </div>
+                            <div className="p-3 bg-card rounded-lg border border-border">
+                              <div className="text-xs text-muted-foreground mb-1">Output Power</div>
+                              <div className="text-lg font-bold text-watt-bitcoin">12V DC</div>
+                            </div>
+                            <div className="p-3 bg-card rounded-lg border border-border">
+                              <div className="text-xs text-muted-foreground mb-1">Power Draw</div>
+                              <div className="text-lg font-bold text-foreground">3-5.5 kW</div>
+                            </div>
+                            <div className="p-3 bg-card rounded-lg border border-border">
+                              <div className="text-xs text-muted-foreground mb-1">PSU Efficiency</div>
+                              <div className="text-lg font-bold text-green-600">93-95%</div>
+                            </div>
+                          </div>
+
+                          {/* Live Hashrate Animation */}
+                          <div className="p-4 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-xl text-white">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-xs text-white/70 mb-1">Hashrate Per Unit</div>
+                                <div className="text-2xl font-bold font-mono">
+                                  <AnimatedCounter end={335} suffix=" TH/s" />
+                                </div>
+                              </div>
+                              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center animate-spin" style={{ animationDuration: '3s' }}>
+                                <Activity className="w-6 h-6 text-watt-bitcoin" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -333,96 +392,177 @@ const ElectricalInfrastructureSection = () => {
             </div>
           </div>
 
-          {/* Mobile View - Stacked Cards */}
-          <div className="lg:hidden space-y-4">
+          {/* Mobile View - Stacked Cards with All Content Pre-Opened */}
+          <div className="lg:hidden space-y-6">
             {powerFlowSteps.map((step, index) => (
               <ScrollReveal key={step.id} delay={index * 0.1}>
-                <div 
-                  className="relative overflow-hidden rounded-2xl border border-border bg-card cursor-pointer transition-all hover:border-watt-bitcoin/50"
-                  onClick={() => setActiveStep(activeStep === index ? null : index)}
-                >
+                <div className="relative overflow-hidden rounded-xl border border-border bg-card">
                   {/* Image Header */}
-                  <div className="relative h-40">
+                  <div className="relative h-36 sm:h-44">
                     <img 
                       src={step.image} 
                       alt={step.name}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded bg-gradient-to-r ${step.color} text-white text-xs font-bold`}>
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded bg-gradient-to-r ${step.color} text-white text-xs font-bold`}>
                           Step {step.id}
                         </span>
                         <span className="text-white/80 text-xs font-mono">{step.voltage}</span>
                       </div>
-                      <h3 className="text-lg font-bold text-white">{step.name}</h3>
+                      <h3 className="text-base sm:text-lg font-bold text-white">{step.name}</h3>
                     </div>
                   </div>
 
-                  {/* Content */}
+                  {/* Content - Always Visible */}
                   <div className="p-4">
                     <p className="text-sm text-muted-foreground mb-3">{step.description}</p>
                     
-                    <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center justify-between text-xs mb-4">
                       <span className="text-muted-foreground">{step.costEstimate}</span>
                       <span className="text-watt-bitcoin font-medium">Loss: {step.losses}</span>
                     </div>
 
-                    {/* Expanded Content */}
-                    {activeStep === index && (
-                      <div className="mt-4 pt-4 border-t border-border space-y-3 animate-fade-in">
-                        {step.specs.map((spec, i) => (
-                          <div key={i} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">{spec.label}</span>
-                            <span className="font-medium text-foreground">{spec.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {/* Always Visible Specs */}
+                    <div className="pt-3 border-t border-border space-y-2">
+                      {step.specs.slice(0, 4).map((spec, i) => (
+                        <div key={i} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{spec.label}</span>
+                          <span className="font-medium text-foreground">{spec.value}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Equipment Tags */}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {step.equipment.slice(0, 3).map((eq) => (
+                        <span key={eq} className="px-2 py-1 bg-muted rounded text-[10px] text-foreground">
+                          {eq}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Arrow indicator between steps */}
                   {index < powerFlowSteps.length - 1 && (
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10">
-                      <div className="w-6 h-6 rounded-full bg-watt-bitcoin flex items-center justify-center">
-                        <ArrowDown className="w-4 h-4 text-white" />
+                      <div className="w-6 h-6 rounded-full bg-watt-bitcoin flex items-center justify-center shadow-lg">
+                        <ArrowDown className="w-3 h-3 text-white" />
                       </div>
                     </div>
                   )}
                 </div>
               </ScrollReveal>
             ))}
+
+            {/* Mobile ASIC Miners Section */}
+            <ScrollReveal delay={0.4}>
+              <div className="relative overflow-hidden rounded-xl border-2 border-watt-bitcoin/30 bg-gradient-to-br from-cyan-500/5 via-watt-bitcoin/10 to-cyan-500/5">
+                {/* Animated Power Flow Lines */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute top-1/3 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-watt-bitcoin/40 to-transparent animate-[powerFlow_2s_linear_infinite]" />
+                  <div className="absolute top-2/3 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent animate-[powerFlow_2s_linear_infinite]" style={{ animationDelay: '0.5s' }} />
+                </div>
+
+                {/* Image */}
+                <div className="relative h-40 sm:h-48">
+                  <img 
+                    src={asicMinersPowered} 
+                    alt="ASIC Bitcoin Mining Hardware"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  
+                  {/* LED effects */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" />
+                    <div className="absolute top-3 left-6 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" style={{ animationDelay: '0.3s' }} />
+                    <div className="absolute top-3 left-9 w-2 h-2 rounded-full bg-green-500 animate-[ledPulse_1s_ease-in-out_infinite] shadow-lg shadow-green-500/50" style={{ animationDelay: '0.6s' }} />
+                  </div>
+
+                  {/* Mining Active Badge */}
+                  <div className="absolute top-3 right-3 px-2 py-1 bg-green-500 text-white text-[10px] font-bold rounded-full flex items-center gap-1 shadow-lg animate-pulse">
+                    <Activity className="w-2.5 h-2.5" />
+                    Active
+                  </div>
+
+                  <div className="absolute bottom-3 left-3">
+                    <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Cpu className="w-5 h-5 text-watt-bitcoin" />
+                      ASIC Miners
+                    </h4>
+                    <p className="text-xs text-white/70">Final Power Destination</p>
+                  </div>
+                </div>
+
+                {/* Mobile Stats Grid */}
+                <div className="p-4">
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="p-2.5 bg-card rounded-lg border border-border text-center">
+                      <div className="text-[10px] text-muted-foreground">Input</div>
+                      <div className="text-sm font-bold text-foreground">240V AC</div>
+                    </div>
+                    <div className="p-2.5 bg-card rounded-lg border border-border text-center">
+                      <div className="text-[10px] text-muted-foreground">Output</div>
+                      <div className="text-sm font-bold text-watt-bitcoin">12V DC</div>
+                    </div>
+                    <div className="p-2.5 bg-card rounded-lg border border-border text-center">
+                      <div className="text-[10px] text-muted-foreground">Power</div>
+                      <div className="text-sm font-bold text-foreground">3-5.5 kW</div>
+                    </div>
+                    <div className="p-2.5 bg-card rounded-lg border border-border text-center">
+                      <div className="text-[10px] text-muted-foreground">Efficiency</div>
+                      <div className="text-sm font-bold text-green-600">93-95%</div>
+                    </div>
+                  </div>
+
+                  {/* Hashrate */}
+                  <div className="p-3 bg-watt-navy rounded-lg text-white flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] text-white/70">Hashrate/Unit</div>
+                      <div className="text-lg font-bold font-mono">
+                        <AnimatedCounter end={335} suffix=" TH/s" />
+                      </div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center animate-spin" style={{ animationDuration: '3s' }}>
+                      <Activity className="w-4 h-4 text-watt-bitcoin" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
           </div>
         </div>
 
         {/* Total System Efficiency Banner */}
         <ScrollReveal delay={0.3}>
-          <div className="mb-10 p-6 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl text-white">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="mb-8 md:mb-10 p-4 md:p-6 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-xl md:rounded-2xl text-white">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
               <div>
-                <div className="text-3xl font-bold text-watt-bitcoin">
+                <div className="text-2xl md:text-3xl font-bold text-watt-bitcoin">
                   <AnimatedCounter end={97.5} decimals={1} suffix="%" />
                 </div>
-                <div className="text-xs text-white/70">Total System Efficiency</div>
+                <div className="text-[10px] md:text-xs text-white/70">Total System Efficiency</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-2xl md:text-3xl font-bold text-white">
                   <AnimatedCounter end={2.5} decimals={1} suffix="%" />
                 </div>
-                <div className="text-xs text-white/70">Total Power Loss</div>
+                <div className="text-[10px] md:text-xs text-white/70">Total Power Loss</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-2xl md:text-3xl font-bold text-white">
                   138kV → 12V
                 </div>
-                <div className="text-xs text-white/70">Voltage Range</div>
+                <div className="text-[10px] md:text-xs text-white/70">Voltage Range</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-2xl md:text-3xl font-bold text-white">
                   <AnimatedCounter end={4} suffix=" steps" />
                 </div>
-                <div className="text-xs text-white/70">Transformation Stages</div>
+                <div className="text-[10px] md:text-xs text-white/70">Transformation Stages</div>
               </div>
             </div>
           </div>
@@ -430,37 +570,37 @@ const ElectricalInfrastructureSection = () => {
 
         {/* Transformer Sizing Guide */}
         <ScrollReveal delay={0.2}>
-          <div className="bg-muted/30 rounded-2xl border border-border p-6 mb-10">
-            <h3 className="text-xl font-bold text-foreground mb-2">Transformer Sizing Guide</h3>
-            <p className="text-sm text-muted-foreground mb-6">
+          <div className="bg-muted/30 rounded-xl md:rounded-2xl border border-border p-4 md:p-6 mb-8 md:mb-10">
+            <h3 className="text-lg md:text-xl font-bold text-foreground mb-2">Transformer Sizing Guide</h3>
+            <p className="text-xs md:text-sm text-muted-foreground mb-4 md:mb-6">
               Typical dry-type unit substation ratings for mining facilities (600V output, Canada)
             </p>
             
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+              <table className="w-full text-xs md:text-sm min-w-[500px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-medium text-foreground">kVA Rating</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">MW Capacity*</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Miners (~3.5kW)</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Efficiency</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Est. Cost</th>
+                    <th className="text-left py-2 md:py-3 px-2 md:px-4 font-medium text-foreground">kVA Rating</th>
+                    <th className="text-left py-2 md:py-3 px-2 md:px-4 font-medium text-foreground">MW Capacity*</th>
+                    <th className="text-left py-2 md:py-3 px-2 md:px-4 font-medium text-foreground">Miners (~3.5kW)</th>
+                    <th className="text-left py-2 md:py-3 px-2 md:px-4 font-medium text-foreground">Efficiency</th>
+                    <th className="text-left py-2 md:py-3 px-2 md:px-4 font-medium text-foreground">Est. Cost</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transformerSizing.map((row) => (
                     <tr key={row.kva} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="py-3 px-4 font-medium text-foreground">{row.kva.toLocaleString()} kVA</td>
-                      <td className="py-3 px-4 text-watt-bitcoin font-mono">{row.mw} MW</td>
-                      <td className="py-3 px-4 text-muted-foreground">~{row.miners}</td>
-                      <td className="py-3 px-4 text-green-600">{row.efficiency}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{row.cost}</td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 font-medium text-foreground">{row.kva.toLocaleString()} kVA</td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 text-watt-bitcoin font-mono">{row.mw} MW</td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 text-muted-foreground">~{row.miners}</td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 text-green-600">{row.efficiency}</td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 text-muted-foreground">{row.cost}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-3">
               *At 80% loading factor (continuous duty derating per NEC/CSA)
             </p>
           </div>
@@ -469,14 +609,14 @@ const ElectricalInfrastructureSection = () => {
         {/* Safety Equipment Grid */}
         <ScrollReveal delay={0.25}>
           <div>
-            <h3 className="text-xl font-bold text-foreground mb-6">Electrical Safety Systems</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <h3 className="text-lg md:text-xl font-bold text-foreground mb-4 md:mb-6">Electrical Safety Systems</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               {safetyEquipment.map((item) => (
-                <div key={item.name} className="bg-card rounded-xl border border-border p-5 hover:border-watt-bitcoin/50 transition-colors">
-                  <item.icon className="w-8 h-8 text-watt-bitcoin mb-3" />
-                  <h4 className="font-semibold text-foreground mb-2">{item.name}</h4>
-                  <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
-                  <span className="text-[10px] px-2 py-1 bg-muted rounded text-muted-foreground">{item.standards}</span>
+                <div key={item.name} className="bg-card rounded-lg md:rounded-xl border border-border p-3 md:p-5 hover:border-watt-bitcoin/50 transition-colors">
+                  <item.icon className="w-6 h-6 md:w-8 md:h-8 text-watt-bitcoin mb-2 md:mb-3" />
+                  <h4 className="font-semibold text-foreground text-sm md:text-base mb-1 md:mb-2">{item.name}</h4>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mb-2 md:mb-3 line-clamp-3">{item.description}</p>
+                  <span className="text-[9px] md:text-[10px] px-1.5 md:px-2 py-0.5 md:py-1 bg-muted rounded text-muted-foreground">{item.standards}</span>
                 </div>
               ))}
             </div>
@@ -500,6 +640,51 @@ const ElectricalInfrastructureSection = () => {
           100% {
             top: 100%;
             opacity: 0;
+          }
+        }
+        
+        @keyframes powerFlow {
+          0% {
+            transform: translateX(-100%);
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes ledPulse {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(0.9);
+          }
+        }
+        
+        @keyframes heatWave {
+          0%, 100% {
+            opacity: 0.3;
+            transform: translateY(0);
+          }
+          50% {
+            opacity: 0.6;
+            transform: translateY(-5px);
+          }
+        }
+        
+        @keyframes powerGlow {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.7;
           }
         }
       `}</style>
