@@ -60,12 +60,12 @@ export const LandingFooter = () => {
             <ul className="space-y-2">
               <li>
                 <Link to="/bitcoin" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Learn Bitcoin
+                  Bitcoin 101
                 </Link>
               </li>
               <li>
                 <Link to="/datacenters" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Learn Datacenters
+                  Datacenters 101
                 </Link>
               </li>
               <li>
