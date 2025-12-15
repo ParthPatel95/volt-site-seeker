@@ -128,12 +128,14 @@ export function DocumentViewer({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Memoize Document options to prevent re-renders
+  // Memoize Document options to prevent re-renders - CRITICAL: withCredentials false for CORS
   const documentOptions = useMemo(() => ({
     disableRange: false,
     disableStream: false,
     cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
     cMapPacked: true,
+    withCredentials: false,  // Critical for CORS with Supabase signed URLs
+    isEvalSupported: false,  // Security - disable eval in PDF.js
   }), []);
 
   // Null-safe file type detection
@@ -154,6 +156,61 @@ export function DocumentViewer({
   
   // PDFs, images, Office documents, and text files support translation
   const supportsTranslation = isPdf || isImage || isOffice || isText;
+
+  // Pre-load PDF to initialize state before Document component renders
+  useEffect(() => {
+    if (!isPdf || !documentUrl || useNativePdfViewer) return;
+    
+    let isCancelled = false;
+    
+    const preloadPdf = async () => {
+      try {
+        console.log('[DocumentViewer] Pre-loading PDF:', documentUrl.substring(0, 100));
+        
+        const loadingTask = pdfjs.getDocument({
+          url: documentUrl,
+          withCredentials: false,
+          isEvalSupported: false,
+          disableRange: false,
+          disableStream: false,
+          cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+          cMapPacked: true,
+        });
+        
+        const pdf = await loadingTask.promise;
+        
+        if (isCancelled) {
+          console.log('[DocumentViewer] Pre-load cancelled, destroying PDF');
+          pdf.destroy().catch(() => {});
+          return;
+        }
+        
+        console.log('[DocumentViewer] Pre-load success, pages:', pdf.numPages);
+        setNumPages(pdf.numPages);
+        setDocumentLoaded(true);
+        setPdfDocumentProxy(pdf);
+        pdfProxyRef.current = pdf;
+        loadErrorCountRef.current = 0; // Reset error count on success
+      } catch (error) {
+        console.error('[DocumentViewer] Pre-load failed:', error);
+        
+        if (isCancelled) return;
+        
+        // Fall back to native viewer after 3 consecutive errors
+        loadErrorCountRef.current += 1;
+        if (loadErrorCountRef.current >= 3) {
+          console.log('[DocumentViewer] Too many errors, falling back to native viewer');
+          setUseNativePdfViewer(true);
+        }
+      }
+    };
+    
+    preloadPdf();
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPdf, documentUrl, useNativePdfViewer]);
 
   // Comprehensive cleanup on unmount - prevents crashes when navigating back
   useEffect(() => {
@@ -674,10 +731,20 @@ export function DocumentViewer({
   };
 
   function onDocumentLoadSuccess(pdf: any) {
-    console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages });
+    console.log('[DocumentViewer] onDocumentLoadSuccess called', { 
+      newPages: pdf.numPages, 
+      existingPages: numPages,
+      documentLoaded,
+      hasPdfProxy: !!pdfDocumentProxy 
+    });
     
-    // CRITICAL: Only update state if not already set - prevents infinite loop
-    // This exactly matches the working DocumentViewerDialog pattern
+    // CRITICAL: Skip if pre-load already set the state - prevents double-update infinite loop
+    if (numPages > 0 && documentLoaded && pdfDocumentProxy) {
+      console.log('[DocumentViewer] State already set by pre-load, skipping');
+      return;
+    }
+    
+    // Only update if not already set
     if (numPages === 0) {
       setNumPages(pdf.numPages);
       setDocumentLoaded(true);
