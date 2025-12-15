@@ -34,13 +34,13 @@ export const ScrollReveal = ({
     const element = elementRef.current;
     if (!element) return;
 
-    const delayMs = delay * 1000;
+    const delayMs = delay; // delay is already in milliseconds
     
-    // CRITICAL: Safety fallback - show content after delay + 500ms even if observer fails
+    // CRITICAL: Safety fallback - show content after delay + 1000ms even if observer fails
     // This prevents white screen if IntersectionObserver doesn't fire
     fallbackRef.current = setTimeout(() => {
       setIsVisible(true);
-    }, delayMs + 500);
+    }, delayMs + 1000);
 
     const observer = new IntersectionObserver(
       (entries) => {
