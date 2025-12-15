@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Building2, GraduationCap, Briefcase, Globe, Cpu, Bitcoin, Award, TrendingUp, Zap, ChevronRight } from 'lucide-react';
+import { Building2, Briefcase, Globe, Cpu, Bitcoin, Award, TrendingUp, Zap, ChevronRight } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const investors = [
@@ -44,10 +44,6 @@ const investors = [
     gradientFrom: 'from-watt-bitcoin',
     gradientTo: 'to-watt-orange',
     accentColor: 'bitcoin',
-    education: [
-      { degree: 'B.S. Electrical Engineering', school: 'University of Mississippi', year: '1994' },
-      { degree: 'M.S. Electrical Engineering', school: 'Georgia Institute of Technology', year: '1996' },
-    ],
     semiconductorExperience: [
       'ASIC Director at Anyka SZ',
       'VP of Engineering at Amedia Networks',
@@ -282,13 +278,6 @@ export const InvestorSection: React.FC = () => {
                           accentColor="bitcoin"
                         />
                         <TabButton
-                          active={activeTab.jay === 'education'}
-                          onClick={() => setActiveTab({ ...activeTab, jay: 'education' })}
-                          icon={<GraduationCap className="w-4 h-4" />}
-                          label="Education"
-                          accentColor="bitcoin"
-                        />
-                        <TabButton
                           active={activeTab.jay === 'timeline'}
                           onClick={() => setActiveTab({ ...activeTab, jay: 'timeline' })}
                           icon={<TrendingUp className="w-4 h-4" />}
@@ -383,28 +372,6 @@ export const InvestorSection: React.FC = () => {
                             ))}
                           </div>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Jay Education Tab */}
-                    {investor.id === 'jay' && activeTab.jay === 'education' && (
-                      <div className="space-y-4 animate-fade-in">
-                        {investor.education?.map((edu, i) => (
-                          <div key={i} className="p-4 bg-watt-bitcoin/5 rounded-xl border border-watt-bitcoin/10">
-                            <div className="flex items-start gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-watt-bitcoin/10 flex items-center justify-center">
-                                <GraduationCap className="w-5 h-5 text-watt-bitcoin" />
-                              </div>
-                              <div>
-                                <h4 className="font-semibold text-watt-navy">{edu.degree}</h4>
-                                <p className="text-sm text-watt-navy/80">{edu.school}</p>
-                                <Badge variant="outline" className="mt-2 text-xs bg-white border-gray-200 text-watt-navy/70">
-                                  {edu.year}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     )}
 
