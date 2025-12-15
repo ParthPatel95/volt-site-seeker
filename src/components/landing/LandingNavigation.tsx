@@ -48,18 +48,18 @@ export const LandingNavigation = () => {
               Bitcoin 101
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => navigate('/datacenters')}
-              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
-            >
-              <Server className="h-4 w-4" />
-              Datacenters 101
-            </DropdownMenuItem>
-            <DropdownMenuItem 
               onClick={() => navigate('/aeso-101')}
               className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
             >
               <Zap className="h-4 w-4" />
               AESO 101
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => navigate('/datacenters')}
+              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
+            >
+              <Server className="h-4 w-4" />
+              Datacenters 101
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={() => navigate('/hydro-datacenters')}
