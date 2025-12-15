@@ -776,7 +776,6 @@ export function DocumentViewer({
     setDocumentLoaded(true);
     
     // Always set numPages from Document callback (authoritative source)
-    // Removes stale closure race condition
     setNumPages(pdf.numPages);
     
     // Set page number if not already set
@@ -784,9 +783,13 @@ export function DocumentViewer({
       setPageNumber(1);
     }
     
-    // Always store proxy for translation feature (authoritative source)
-    setPdfDocumentProxy(pdf);
-    pdfProxyRef.current = pdf;
+    // Store proxy for translation feature - but DON'T overwrite pdfProxyRef
+    // pdfProxyRef is managed by the pre-load effect for cleanup purposes
+    // The pre-load effect's cleanup would destroy Document's internal pdf if we store it in pdfProxyRef
+    if (!pdfDocumentProxy) {
+      setPdfDocumentProxy(pdf);
+    }
+    // Note: Removed pdfProxyRef.current = pdf to prevent cleanup conflicts
   }
 
   const handlePageLoadSuccess = useCallback((page: any) => {
@@ -1187,14 +1190,21 @@ export function DocumentViewer({
                             error={
                               <div className="flex items-center justify-center p-8 bg-card min-h-[200px]">
                                 <div className="text-center">
-                                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                                  <p className="text-sm text-muted-foreground">Loading page...</p>
+                                  <AlertCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
+                                  <p className="text-sm text-destructive">Failed to load page</p>
                                 </div>
                               </div>
                             }
                             onLoadSuccess={(page) => {
+                              console.log('[DocumentViewer] Page loaded successfully', { pageNumber });
                               handlePageLoadSuccess(page);
                               initialLoadRef.current = false;
+                            }}
+                            onRenderSuccess={() => {
+                              console.log('[DocumentViewer] Page rendered successfully', { pageNumber });
+                            }}
+                            onRenderError={(error) => {
+                              console.error('[DocumentViewer] Page render error:', error);
                             }}
                             onRenderAnnotationLayerError={(error) => {
                               console.warn('[DocumentViewer] Annotation layer render error:', error);
