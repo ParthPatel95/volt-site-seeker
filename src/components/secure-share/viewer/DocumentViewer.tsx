@@ -774,15 +774,16 @@ export function DocumentViewer({
     // Mark document as loaded - fixes timeout race condition
     setDocumentLoaded(true);
     
-    // Prevent race condition - only set if not already set by pre-load effect
-    if (numPages === 0) {
-      setNumPages(pdf.numPages);
-    }
-    // Don't reset pageNumber if already navigating
-    if (pageNumber === 0 || pageNumber === 1) {
+    // Always set numPages from Document callback (authoritative source)
+    // Removes stale closure race condition
+    setNumPages(pdf.numPages);
+    
+    // Set page number if not already set
+    if (pageNumber === 0) {
       setPageNumber(1);
     }
-    // Only set proxy if not already loaded
+    
+    // Store proxy for translation feature
     if (!pdfDocumentProxy) {
       setPdfDocumentProxy(pdf);
     }
@@ -1124,7 +1125,6 @@ export function DocumentViewer({
                     }}
                   >
                     <Document
-                      key={documentUrl}
                       file={documentUrl}
                       options={{
                         disableRange: false,
