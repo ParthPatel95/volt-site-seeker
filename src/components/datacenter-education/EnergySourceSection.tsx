@@ -283,11 +283,13 @@ const EnergySourceSection = () => {
 
                           {/* Quick Stats */}
                           <div className="flex flex-wrap gap-4">
-                            <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
+                            <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg relative">
+                              <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded">Est.</span>
                               <div className="text-xs text-white/60">Cost</div>
                               <div className="text-sm font-semibold text-white">{step.cost}</div>
                             </div>
-                            <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
+                            <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg relative">
+                              <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded">Est.</span>
                               <div className="text-xs text-white/60">Timeline</div>
                               <div className="text-sm font-semibold text-white">{step.timeline}</div>
                             </div>

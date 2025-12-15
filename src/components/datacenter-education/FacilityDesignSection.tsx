@@ -115,6 +115,11 @@ const FacilityDesignSection = () => {
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               Compare warehouse, container, and modular datacenter architectures for Bitcoin mining
             </p>
+            {/* Industry Estimate Disclaimer */}
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200">
+              <span className="text-amber-600 text-sm">📊</span>
+              <span className="text-xs text-amber-700">Build costs and timelines are industry estimates</span>
+            </div>
           </div>
         </ScrollReveal>
 
@@ -238,7 +243,12 @@ const FacilityDesignSection = () => {
         {/* Comparison Table */}
         <ScrollReveal delay={0.2}>
           <div className="mb-12">
-            <h3 className="text-xl font-bold text-foreground mb-6">Facility Type Comparison</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-foreground">Facility Type Comparison</h3>
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                Industry Estimates
+              </span>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm bg-card rounded-xl border border-border">
                 <thead>

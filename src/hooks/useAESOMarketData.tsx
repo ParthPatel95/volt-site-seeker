@@ -109,7 +109,10 @@ export function useAESOMarketData() {
   const getOperatingReserve = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('aeso-market-data');
-      if (error) throw error;
+      if (error) {
+        console.warn('Operating reserve API unavailable:', error.message);
+        // Don't throw - gracefully handle API unavailability
+      }
       
       if (data?.success && data?.aeso?.operatingReserve) {
         const or = data.aeso.operatingReserve;
@@ -123,12 +126,11 @@ export function useAESOMarketData() {
         return data.aeso;
       }
     } catch (e) {
-      console.error('Operating reserve fetch error:', e);
+      console.warn('Operating reserve fetch error (API may be temporarily unavailable):', e);
     }
     
-    // Data not available - set to null to hide the section
+    // API unavailable - set to null to gracefully hide section instead of showing errors
     setOperatingReserve(null);
-    setConnectionStatus('fallback');
     return null;
   };
   const getInterchange = async () => {

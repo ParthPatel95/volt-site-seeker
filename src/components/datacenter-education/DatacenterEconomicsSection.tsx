@@ -82,6 +82,11 @@ const DatacenterEconomicsSection = () => {
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               Total Cost of Ownership, CapEx/OpEx breakdown, and profitability analysis
             </p>
+            {/* Industry Estimate Disclaimer */}
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200">
+              <span className="text-amber-600 text-sm">⚠️</span>
+              <span className="text-xs text-amber-700">All costs are industry estimates and vary by location, vendor, and market conditions</span>
+            </div>
           </div>
         </ScrollReveal>
 
@@ -174,9 +179,14 @@ const DatacenterEconomicsSection = () => {
           {/* CapEx Breakdown */}
           <ScrollReveal delay={0.15}>
             <div className="bg-card rounded-2xl border border-border p-6">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <PieChart className="w-5 h-5 text-watt-bitcoin" />
-                CapEx Breakdown (per MW)
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <PieChart className="w-5 h-5 text-watt-bitcoin" />
+                  CapEx Breakdown (per MW)
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
+                  Industry Est.
+                </span>
               </h3>
               <div className="text-center mb-6">
                 <div className="text-3xl font-bold text-foreground">
@@ -212,9 +222,14 @@ const DatacenterEconomicsSection = () => {
           {/* OpEx Breakdown */}
           <ScrollReveal delay={0.2}>
             <div className="bg-card rounded-2xl border border-border p-6">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-watt-bitcoin" />
-                OpEx Breakdown (per MW/year)
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-watt-bitcoin" />
+                  OpEx Breakdown (per MW/year)
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
+                  Industry Est.
+                </span>
               </h3>
               <div className="text-center mb-6">
                 <div className="text-3xl font-bold text-foreground">
@@ -258,7 +273,12 @@ const DatacenterEconomicsSection = () => {
         {/* Build Cost Comparison */}
         <ScrollReveal delay={0.25}>
           <div className="bg-muted/30 rounded-2xl border border-border p-6">
-            <h3 className="text-xl font-bold text-foreground mb-2">Facility Type Cost Comparison</h3>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-xl font-bold text-foreground">Facility Type Cost Comparison</h3>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
+                Industry Est.
+              </span>
+            </div>
             <p className="text-sm text-muted-foreground mb-6">
               Total installed cost including building, electrical, cooling, and infrastructure
             </p>

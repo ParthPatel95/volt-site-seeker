@@ -5,15 +5,15 @@ import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
 
 // Real historical yearly averages (from AESO annual market stats)
 const yearlyData = [
-  { year: '2017', avgPrice: 22.19, peakPrice: 999.99, lowPrice: -46.09, volatility: 38 },
-  { year: '2018', avgPrice: 50.81, peakPrice: 999.99, lowPrice: -58.49, volatility: 45 },
-  { year: '2019', avgPrice: 54.87, peakPrice: 999.99, lowPrice: -42.29, volatility: 52 },
-  { year: '2020', avgPrice: 46.72, peakPrice: 999.99, lowPrice: -67.27, volatility: 58 },
-  { year: '2021', avgPrice: 101.93, peakPrice: 999.99, lowPrice: -61.93, volatility: 85 },
-  { year: '2022', avgPrice: 162.51, peakPrice: 999.99, lowPrice: -53.65, volatility: 92 },
-  { year: '2023', avgPrice: 110.97, peakPrice: 999.99, lowPrice: -72.33, volatility: 78 },
-  { year: '2024', avgPrice: 73.45, peakPrice: 867.42, lowPrice: -49.82, volatility: 62 },
-  { year: '2025', avgPrice: 55.20, peakPrice: 650.00, lowPrice: -35.00, volatility: 48 },
+  { year: '2017', avgPrice: 22.19, peakPrice: 999.99, lowPrice: -46.09, volatility: 38, isEstimate: false },
+  { year: '2018', avgPrice: 50.81, peakPrice: 999.99, lowPrice: -58.49, volatility: 45, isEstimate: false },
+  { year: '2019', avgPrice: 54.87, peakPrice: 999.99, lowPrice: -42.29, volatility: 52, isEstimate: false },
+  { year: '2020', avgPrice: 46.72, peakPrice: 999.99, lowPrice: -67.27, volatility: 58, isEstimate: false },
+  { year: '2021', avgPrice: 101.93, peakPrice: 999.99, lowPrice: -61.93, volatility: 85, isEstimate: false },
+  { year: '2022', avgPrice: 162.51, peakPrice: 999.99, lowPrice: -53.65, volatility: 92, isEstimate: false },
+  { year: '2023', avgPrice: 110.97, peakPrice: 999.99, lowPrice: -72.33, volatility: 78, isEstimate: false },
+  { year: '2024', avgPrice: 73.45, peakPrice: 867.42, lowPrice: -49.82, volatility: 62, isEstimate: false },
+  { year: '2025', avgPrice: 55.20, peakPrice: 650.00, lowPrice: -35.00, volatility: 48, isEstimate: true }, // YTD estimate
 ];
 
 // Seasonal patterns (real AESO data patterns)
@@ -162,7 +162,10 @@ export const AESOPriceTrendsSection = () => {
               
               {/* 2025 YTD Highlight */}
               <div className="mt-4 grid md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200 relative">
+                  <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
+                    🔮 YTD Est.
+                  </span>
                   <p className="text-xs text-green-600 mb-1">2025 YTD Average</p>
                   <p className="text-2xl font-bold text-green-700">$55.20 <span className="text-sm font-normal">CAD/MWh</span></p>
                   <p className="text-xs text-green-600 mt-1">↓ 25% vs 2024 avg</p>
@@ -206,8 +209,8 @@ export const AESOPriceTrendsSection = () => {
             <>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-watt-navy">Seasonal Price Patterns</h3>
-                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
-                  Based on 5-year averages
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-100 border border-amber-300 text-xs text-amber-700">
+                  📊 Illustrative (5-Year Avg)
                 </span>
               </div>
               <div className="h-80">
