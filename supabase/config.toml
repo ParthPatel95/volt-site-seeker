@@ -229,3 +229,6 @@ verify_jwt = false
 
 [functions.track-activity-beacon]
 verify_jwt = false
+
+[functions.translate-page]
+verify_jwt = false

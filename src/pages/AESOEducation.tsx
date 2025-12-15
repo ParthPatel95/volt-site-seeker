@@ -11,6 +11,7 @@ import { GridOperationsSection } from '@/components/aeso-education/GridOperation
 import { GenerationMixSection } from '@/components/aeso-education/GenerationMixSection';
 import { EnergyForecastSection } from '@/components/aeso-education/EnergyForecastSection';
 import { AESOCTASection } from '@/components/aeso-education/AESOCTASection';
+import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 import { ChevronUp, Zap, DollarSign, Activity, TrendingUp, PiggyBank, Settings, Wind, LineChart, ArrowRight } from 'lucide-react';
 
 const sections = [
@@ -134,6 +135,9 @@ const AESOEducation = () => {
       </main>
 
       <LandingFooter />
+
+      {/* Page Translation Button */}
+      <PageTranslationButton pageId="aeso-101" />
 
       {/* Scroll to Top Button */}
       <button
