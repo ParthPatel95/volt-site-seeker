@@ -239,24 +239,21 @@ export function DocumentViewer({
     };
   }, [pageNumber, isMobile]);
 
-  // Pre-load PDF proxy for text extraction AND page count (critical for iOS navigation)
+  // Pre-load PDF proxy for text extraction - only if Document component hasn't loaded yet
+  // This avoids duplicate loading while still supporting translation feature
   useEffect(() => {
     let isCancelled = false;
     
-    if (isPdf && documentUrl) {
+    // Only pre-load if Document component hasn't already loaded the PDF
+    if (isPdf && documentUrl && !pdfDocumentProxy && !documentLoaded) {
       const loadPdfProxy = async () => {
         setIsLoadingPdfProxy(true);
-        console.log('[DocumentViewer] Pre-loading PDF proxy for text extraction and page count');
+        console.log('[DocumentViewer] Pre-loading PDF proxy for translation');
         try {
           const pdfjsLib = await import('pdfjs-dist');
           
           if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            const workerUrls = [
-              `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-              `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-            ];
-            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
-            console.log('[DocumentViewer] PDF.js worker configured:', workerUrls[0]);
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
           }
           
           const loadingTask = pdfjsLib.getDocument({
@@ -269,31 +266,24 @@ export function DocumentViewer({
           
           const proxy = await loadingTask.promise;
           
-          // CRITICAL: Check if effect was cancelled before updating state
           if (isCancelled) {
-            console.log('[DocumentViewer] Effect cancelled, destroying proxy');
             proxy.destroy();
             return;
           }
           
-          // Store in both state and ref
-          pdfProxyRef.current = proxy;
-          setPdfDocumentProxy(proxy);
-          setNumPages(proxy.numPages);
-          setDocumentLoaded(true); // Mark as loaded from pre-load to prevent timeout race condition
-          
-          // Get PDF dimensions for initial page load
-          const page = await proxy.getPage(1);
-          if (!isCancelled) {
-            const viewport = page.getViewport({ scale: 1 });
-            setPdfPageDimensions({ width: viewport.width, height: viewport.height });
-            console.log('[DocumentViewer] PDF page dimensions loaded', viewport.width, viewport.height);
+          // Only update state if Document component hasn't already done it
+          if (!pdfDocumentProxy) {
+            pdfProxyRef.current = proxy;
+            setPdfDocumentProxy(proxy);
+          } else {
+            // Document component already loaded - destroy our duplicate
+            proxy.destroy();
           }
           
-          console.log('[DocumentViewer] PDF proxy loaded successfully', { numPages: proxy.numPages });
+          console.log('[DocumentViewer] PDF proxy pre-loaded', { numPages: proxy.numPages });
         } catch (error) {
           if (!isCancelled) {
-            console.error('[DocumentViewer] Failed to load PDF proxy:', error);
+            console.error('[DocumentViewer] Pre-load failed:', error);
           }
         } finally {
           if (!isCancelled) {
@@ -302,15 +292,14 @@ export function DocumentViewer({
         }
       };
       
-      loadPdfProxy();
+      // Delay pre-load slightly to let Document component try first
+      const timer = setTimeout(loadPdfProxy, 500);
+      return () => {
+        isCancelled = true;
+        clearTimeout(timer);
+      };
     }
-    
-    // Cleanup: Only clear ref, don't destroy - let Document component manage its own PDF lifecycle
-    return () => {
-      isCancelled = true;
-      pdfProxyRef.current = null;
-    };
-  }, [isPdf, documentUrl]);
+  }, [isPdf, documentUrl, pdfDocumentProxy, documentLoaded]);
   
   // Safety timeout: Uses documentLoaded state to fix race condition (not numPages)
   // Longer timeout on mobile for slower connections
@@ -736,21 +725,27 @@ export function DocumentViewer({
   };
 
   function onDocumentLoadSuccess(pdf: any) {
-    console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages });
+    console.log('[DocumentViewer] PDF loaded successfully', { numPages: pdf.numPages, alreadyLoaded: documentLoaded });
     
-    // Mark document as loaded - fixes timeout race condition
-    setDocumentLoaded(true);
+    // CRITICAL: Only update state if not already set - prevents infinite loop
+    // This matches the working DocumentViewerDialog pattern
+    if (!documentLoaded) {
+      setDocumentLoaded(true);
+    }
     
-    // Always set numPages from Document callback (authoritative source)
-    setNumPages(pdf.numPages);
+    if (numPages === 0) {
+      setNumPages(pdf.numPages);
+    }
     
-    // Set page number if not already set
     if (pageNumber === 0) {
       setPageNumber(1);
     }
     
-    // Always store proxy for translation feature
-    setPdfDocumentProxy(pdf);
+    // Only set proxy if not already set - prevents re-render loop
+    if (!pdfDocumentProxy) {
+      setPdfDocumentProxy(pdf);
+      pdfProxyRef.current = pdf;
+    }
   }
 
   const handlePageLoadSuccess = useCallback((page: any) => {
@@ -1082,6 +1077,7 @@ export function DocumentViewer({
                     <Document
                       file={documentUrl}
                       options={{
+                        withCredentials: false, // Fix CORS error with signed URLs
                         disableRange: false,
                         disableStream: false,
                         cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
