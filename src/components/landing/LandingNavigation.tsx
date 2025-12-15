@@ -1,7 +1,7 @@
 
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bitcoin, ChevronDown, BookOpen, Server } from 'lucide-react';
+import { Bitcoin, ChevronDown, BookOpen, Server, Zap } from 'lucide-react';
 import { EnhancedLogo } from '../EnhancedLogo';
 import {
   DropdownMenu,
@@ -53,6 +53,13 @@ export const LandingNavigation = () => {
             >
               <Server className="h-4 w-4" />
               Datacenters 101
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => navigate('/aeso-101')}
+              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
+            >
+              <Zap className="h-4 w-4" />
+              AESO 101
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
