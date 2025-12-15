@@ -1,46 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Bitcoin, TrendingUp, Clock, Coins, Zap, ArrowRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
-// Animated counter component
-const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = '' }: { 
-  end: number; 
-  duration?: number; 
-  prefix?: string; 
-  suffix?: string;
-}) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number | null = null;
-          const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            setCount(Math.floor(easeOutQuart * end));
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (countRef.current) observer.observe(countRef.current);
-    return () => observer.disconnect();
-  }, [end, duration, hasAnimated]);
-
-  return <span ref={countRef}>{prefix}{count.toLocaleString()}{suffix}</span>;
-};
-
-// Floating particle component
+// Floating particle component - reduced count for performance
 const FloatingParticle = ({ delay, size, left, top }: { 
   delay: number; 
   size: number; 
@@ -103,14 +68,11 @@ const BitcoinHeroSection: React.FC = () => {
         }}
       />
       
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Floating particles - reduced for performance */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
         <FloatingParticle delay={0} size={80} left="10%" top="20%" />
         <FloatingParticle delay={2} size={60} left="80%" top="15%" />
         <FloatingParticle delay={4} size={100} left="70%" top="60%" />
-        <FloatingParticle delay={1} size={50} left="20%" top="70%" />
-        <FloatingParticle delay={3} size={70} left="85%" top="40%" />
-        <FloatingParticle delay={5} size={40} left="5%" top="50%" />
       </div>
       
       {/* Floating Bitcoin icons */}
