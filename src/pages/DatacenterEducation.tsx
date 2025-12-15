@@ -6,10 +6,15 @@ import DatacenterHeroSectionV2 from '@/components/datacenter-education/Datacente
 import SectionNavigation from '@/components/datacenter-education/SectionNavigation';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 
-// Lazy load sections below the fold
-const PowerJourneySection = lazy(() => import('@/components/datacenter-education/PowerJourneySection'));
+// Lazy load all sections for performance
+const EnergySourceSection = lazy(() => import('@/components/datacenter-education/EnergySourceSection'));
+const ElectricalInfrastructureSection = lazy(() => import('@/components/datacenter-education/ElectricalInfrastructureSection'));
+const FacilityDesignSection = lazy(() => import('@/components/datacenter-education/FacilityDesignSection'));
+const AirflowContainmentSection = lazy(() => import('@/components/datacenter-education/AirflowContainmentSection'));
 const CoolingSystemsVisualSection = lazy(() => import('@/components/datacenter-education/CoolingSystemsVisualSection'));
 const MiningHardwareShowcaseSection = lazy(() => import('@/components/datacenter-education/MiningHardwareShowcaseSection'));
+const OperationsMonitoringSection = lazy(() => import('@/components/datacenter-education/OperationsMonitoringSection'));
+const DatacenterEconomicsSection = lazy(() => import('@/components/datacenter-education/DatacenterEconomicsSection'));
 const InteractiveFacilityTour = lazy(() => import('@/components/datacenter-education/InteractiveFacilityTour'));
 const EnhancedCTASection = lazy(() => import('@/components/datacenter-education/EnhancedCTASection'));
 
@@ -29,26 +34,51 @@ const DatacenterEducation = () => {
       {/* Immersive Hero Section */}
       <DatacenterHeroSectionV2 />
       
-      {/* Section 1: The Power Journey (Consolidated) */}
+      {/* Section 1: Energy Source to Facility */}
       <Suspense fallback={<SectionLoader />}>
-        <PowerJourneySection />
+        <EnergySourceSection />
       </Suspense>
       
-      {/* Section 2: Cooling Systems */}
+      {/* Section 2: Electrical Infrastructure */}
+      <Suspense fallback={<SectionLoader />}>
+        <ElectricalInfrastructureSection />
+      </Suspense>
+      
+      {/* Section 3: Facility Design & Layout */}
+      <Suspense fallback={<SectionLoader />}>
+        <FacilityDesignSection />
+      </Suspense>
+      
+      {/* Section 4: Airflow & Containment */}
+      <Suspense fallback={<SectionLoader />}>
+        <AirflowContainmentSection />
+      </Suspense>
+      
+      {/* Section 5: Cooling Systems */}
       <Suspense fallback={<SectionLoader />}>
         <div id="cooling-systems">
           <CoolingSystemsVisualSection />
         </div>
       </Suspense>
       
-      {/* Section 3: Mining Hardware */}
+      {/* Section 6: Mining Hardware */}
       <Suspense fallback={<SectionLoader />}>
         <div id="mining-hardware">
           <MiningHardwareShowcaseSection />
         </div>
       </Suspense>
       
-      {/* Section 4: Interactive Facility Tour */}
+      {/* Section 7: Operations & Monitoring */}
+      <Suspense fallback={<SectionLoader />}>
+        <OperationsMonitoringSection />
+      </Suspense>
+      
+      {/* Section 8: Datacenter Economics */}
+      <Suspense fallback={<SectionLoader />}>
+        <DatacenterEconomicsSection />
+      </Suspense>
+      
+      {/* Section 9: Interactive Facility Tour */}
       <Suspense fallback={<SectionLoader />}>
         <InteractiveFacilityTour />
       </Suspense>
