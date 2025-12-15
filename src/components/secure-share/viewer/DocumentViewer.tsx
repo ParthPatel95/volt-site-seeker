@@ -90,8 +90,6 @@ export function DocumentViewer({
   const initialLoadRef = useRef(true);
   const [documentLoaded, setDocumentLoaded] = useState(false);
   
-  // Document transition state - prevents rendering during cleanup
-  const [isDocumentTransitioning, setIsDocumentTransitioning] = useState(false);
   const loadErrorCountRef = useRef(0);
   
   // Translation state
@@ -107,7 +105,6 @@ export function DocumentViewer({
   // Refs for cleanup guards and timeout management
   const isMountedRef = useRef(true);
   const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
   const [touchStartZoom, setTouchStartZoom] = useState<number>(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -163,10 +160,6 @@ export function DocumentViewer({
         clearTimeout(safetyTimeoutRef.current);
         safetyTimeoutRef.current = null;
       }
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-        transitionTimerRef.current = null;
-      }
       
       // Safe PDF proxy cleanup with null check and try-catch
       const proxyToDestroy = pdfProxyRef.current;
@@ -205,15 +198,16 @@ export function DocumentViewer({
     };
   }, []);
 
-  // Reset state when document URL changes - with transition buffer
+  // Reset state when document URL changes - simplified without transition delay
+  // The transition delay was causing endless loading on desktop
   useEffect(() => {
-    console.log('[DocumentViewer] Document URL changed, starting transition');
+    if (!documentUrl) return;
     
-    // Set transitioning state to prevent render during cleanup
-    setIsDocumentTransitioning(true);
+    console.log('[DocumentViewer] Document URL changed:', documentUrl.substring(0, 50) + '...');
+    
     loadErrorCountRef.current = 0; // Reset error count for new document
     
-    // Reset all state
+    // Reset all state immediately - no transition delay needed
     setNumPages(0);
     setPageNumber(1);
     setUseNativePdfViewer(false);
@@ -224,24 +218,6 @@ export function DocumentViewer({
     initialDimensionsSet.current = false;
     initialLoadRef.current = true;
     
-    // Allow time for cleanup before rendering new document
-    // Longer buffer on mobile for slower cleanup
-    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const bufferTime = isMobileDevice ? 500 : 300;
-    
-    transitionTimerRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        console.log('[DocumentViewer] Transition complete, ready to render');
-        setIsDocumentTransitioning(false);
-      }
-    }, bufferTime);
-    
-    return () => {
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-        transitionTimerRef.current = null;
-      }
-    };
   }, [documentUrl]);
 
   // Manual canvas cleanup on page change (helps iOS memory management)
@@ -1085,15 +1061,6 @@ export function DocumentViewer({
                   )}
                 </div>
               ) : (
-                isDocumentTransitioning ? (
-                  // Show loading during document transition
-                  <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
-                    <div className="text-center">
-                      <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Switching document...</p>
-                    </div>
-                  </div>
-                ) : (
                 <PdfErrorBoundary 
                   onError={() => {
                     console.log('[DocumentViewer] PdfErrorBoundary exhausted retries, falling back to native viewer');
@@ -1213,7 +1180,6 @@ export function DocumentViewer({
                     </Document>
                   </div>
                 </PdfErrorBoundary>
-                )
               )
             ) : isImage ? (
               <div className="flex items-center justify-center w-full max-w-full overflow-hidden">
