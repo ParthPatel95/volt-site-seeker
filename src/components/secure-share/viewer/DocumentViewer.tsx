@@ -1125,6 +1125,7 @@ export function DocumentViewer({
                     }}
                   >
                     <Document
+                      key={documentUrl}
                       file={documentUrl}
                       options={{
                         disableRange: false,
