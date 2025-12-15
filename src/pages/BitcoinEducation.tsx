@@ -11,6 +11,7 @@ import {
   HelpCircle, 
   History, 
   Workflow, 
+  Wallet,
   Pickaxe, 
   Thermometer, 
   Users, 
@@ -30,6 +31,7 @@ import BitcoinHeroSection from '@/components/bitcoin-education/BitcoinHeroSectio
 const WhatIsBitcoinSection = lazy(() => import('@/components/bitcoin-education/WhatIsBitcoinSection'));
 const BitcoinHistorySection = lazy(() => import('@/components/bitcoin-education/BitcoinHistorySection'));
 const HowBitcoinWorksSection = lazy(() => import('@/components/bitcoin-education/HowBitcoinWorksSection'));
+const BitcoinWalletsSection = lazy(() => import('@/components/bitcoin-education/BitcoinWalletsSection'));
 const BitcoinMiningSection = lazy(() => import('@/components/bitcoin-education/BitcoinMiningSection'));
 const DatacenterCoolingSection = lazy(() => import('@/components/bitcoin-education/DatacenterCoolingSection'));
 const MiningPoolsSection = lazy(() => import('@/components/bitcoin-education/MiningPoolsSection'));
@@ -45,6 +47,7 @@ const sections = [
   { id: 'what-is-bitcoin', label: 'What is Bitcoin', icon: HelpCircle },
   { id: 'history', label: 'History', icon: History },
   { id: 'how-it-works', label: 'How It Works', icon: Workflow },
+  { id: 'wallets', label: 'Wallets', icon: Wallet },
   { id: 'mining', label: 'Mining', icon: Pickaxe },
   { id: 'cooling', label: 'Cooling', icon: Thermometer },
   { id: 'pools', label: 'Pools', icon: Users },
@@ -240,6 +243,17 @@ const BitcoinEducation: React.FC = () => {
           </div>
 
           <SectionDivider color="yellow" />
+
+          {/* Bitcoin Wallets & Storage */}
+          <div id="wallets">
+            <section aria-label="Bitcoin Wallets and Storage">
+              <Suspense fallback={<SectionLoader />}>
+                <BitcoinWalletsSection />
+              </Suspense>
+            </section>
+          </div>
+
+          <SectionDivider color="cyan" />
 
           {/* Bitcoin Mining Basics */}
           <div id="mining">
