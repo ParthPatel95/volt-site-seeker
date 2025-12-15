@@ -97,7 +97,7 @@ export const PageTranslationButton: React.FC<PageTranslationButtonProps> = ({ pa
 
       {/* Translation button */}
       {showDropdown && (
-        <div className="fixed bottom-6 left-6 z-50">
+        <div className="fixed bottom-6 right-24 z-50">
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button 
