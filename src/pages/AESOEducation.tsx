@@ -7,13 +7,14 @@ import { PoolPricingSection } from '@/components/aeso-education/PoolPricingSecti
 import { AESOPriceTrendsSection } from '@/components/aeso-education/AESOPriceTrendsSection';
 import { TwelveCPExplainedSection } from '@/components/aeso-education/TwelveCPExplainedSection';
 import { AESOSavingsProgramsSection } from '@/components/aeso-education/AESOSavingsProgramsSection';
+import { Rate65ExplainedSection } from '@/components/aeso-education/Rate65ExplainedSection';
 import { GridOperationsSection } from '@/components/aeso-education/GridOperationsSection';
 import { GenerationMixSection } from '@/components/aeso-education/GenerationMixSection';
 import { EnergyForecastSection } from '@/components/aeso-education/EnergyForecastSection';
 import { AESOCTASection } from '@/components/aeso-education/AESOCTASection';
 import { MarketParticipantsSection } from '@/components/aeso-education/MarketParticipantsSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { ChevronUp, Zap, DollarSign, Activity, TrendingUp, PiggyBank, Settings, Wind, LineChart, ArrowRight, Users } from 'lucide-react';
+import { ChevronUp, Zap, DollarSign, Activity, TrendingUp, PiggyBank, Settings, Wind, LineChart, ArrowRight, Users, FileText } from 'lucide-react';
 
 const sections = [
   { id: 'hero', label: 'Overview', icon: Zap },
@@ -23,6 +24,7 @@ const sections = [
   { id: 'price-trends', label: 'Price Trends', icon: LineChart },
   { id: 'twelve-cp', label: '12CP Savings', icon: PiggyBank },
   { id: 'savings-programs', label: 'Programs', icon: TrendingUp },
+  { id: 'rate-65', label: 'Rate 65', icon: FileText },
   { id: 'grid-operations', label: 'Grid Ops', icon: Activity },
   { id: 'generation-mix', label: 'Generation', icon: Wind },
   { id: 'forecast', label: 'Forecasting', icon: TrendingUp },
@@ -124,6 +126,9 @@ const AESOEducation = () => {
         </div>
         <div id="savings-programs">
           <AESOSavingsProgramsSection />
+        </div>
+        <div id="rate-65">
+          <Rate65ExplainedSection />
         </div>
         <div id="grid-operations">
           <GridOperationsSection />
