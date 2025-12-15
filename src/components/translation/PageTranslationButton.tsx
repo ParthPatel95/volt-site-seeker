@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Globe, X, ChevronDown, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { TranslatedContentModal } from './TranslatedContentModal';
+import { useInPlaceTranslation } from './useInPlaceTranslation';
+import { TranslationIndicatorBar } from './TranslationIndicatorBar';
 
 export const SUPPORTED_LANGUAGES = [
   // South Asian Languages
@@ -43,103 +44,32 @@ interface PageTranslationButtonProps {
 }
 
 export const PageTranslationButton: React.FC<PageTranslationButtonProps> = ({ pageId }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState<typeof SUPPORTED_LANGUAGES[0] | null>(null);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [translatedContent, setTranslatedContent] = useState<string>('');
+  const {
+    isTranslating,
+    progress,
+    currentLanguage,
+    translatePage,
+    revertToOriginal,
+    cancelTranslation,
+  } = useInPlaceTranslation(pageId);
 
-  const extractPageContent = (): string => {
-    // Extract main content from the page
-    const mainContent = document.querySelector('main');
-    if (!mainContent) return '';
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    // Get all text content, excluding navigation and footer
-    const textElements = mainContent.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span:not(.sr-only), td, th');
-    const textContent: string[] = [];
-    
-    textElements.forEach((el) => {
-      const text = el.textContent?.trim();
-      if (text && text.length > 2 && !text.match(/^[0-9.,]+$/)) {
-        textContent.push(text);
-      }
-    });
-
-    // Deduplicate and join
-    const uniqueContent = [...new Set(textContent)];
-    return uniqueContent.join('\n\n');
-  };
-
-  const handleLanguageSelect = async (language: typeof SUPPORTED_LANGUAGES[0]) => {
-    setSelectedLanguage(language);
-    setIsTranslating(true);
-    setShowModal(true);
-    
-    try {
-      const pageContent = extractPageContent();
-      
-      // Call the translation edge function
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-page`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            content: pageContent,
-            targetLanguage: language.code,
-            pageId,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Translation failed');
-      }
-
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let result = '';
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.content) {
-                  result += parsed.content;
-                  setTranslatedContent(result);
-                }
-              } catch {
-                // Ignore parsing errors for partial chunks
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Translation error:', error);
-      setTranslatedContent('Translation failed. Please try again.');
-    } finally {
-      setIsTranslating(false);
+  // Add padding to body when indicator bar is shown
+  useEffect(() => {
+    if (currentLanguage || isTranslating) {
+      document.body.style.paddingTop = '52px';
+    } else {
+      document.body.style.paddingTop = '';
     }
-  };
+    return () => {
+      document.body.style.paddingTop = '';
+    };
+  }, [currentLanguage, isTranslating]);
 
-  const handleClose = () => {
-    setShowModal(false);
-    setTranslatedContent('');
-    setSelectedLanguage(null);
+  const handleLanguageSelect = (language: typeof SUPPORTED_LANGUAGES[0]) => {
+    setIsDropdownOpen(false);
+    translatePage(language.code, language.name);
   };
 
   // Group languages by region
@@ -149,57 +79,87 @@ export const PageTranslationButton: React.FC<PageTranslationButtonProps> = ({ pa
     return acc;
   }, {} as Record<string, typeof SUPPORTED_LANGUAGES>);
 
+  // Hide dropdown when translation is active
+  const showDropdown = !currentLanguage && !isTranslating;
+
   return (
     <>
-      <div className="fixed bottom-6 left-6 z-50">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="rounded-full shadow-lg bg-white/95 backdrop-blur-sm border-border hover:bg-white hover:border-watt-bitcoin/50 transition-all"
-            >
-              <Globe className="w-5 h-5 mr-2 text-watt-bitcoin" />
-              <span className="text-sm font-medium">Translate</span>
-              <ChevronDown className="w-4 h-4 ml-1 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="start" 
-            className="w-64 max-h-[70vh] overflow-y-auto"
-            sideOffset={8}
-          >
-            {Object.entries(groupedLanguages).map(([region, languages], idx) => (
-              <React.Fragment key={region}>
-                {idx > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
-                  {region}
-                </DropdownMenuLabel>
-                {languages.map((lang) => (
-                  <DropdownMenuItem
-                    key={lang.code}
-                    onClick={() => handleLanguageSelect(lang)}
-                    className="cursor-pointer"
-                  >
-                    <span className="mr-2 text-lg">{lang.flag}</span>
-                    <span>{lang.name}</span>
-                  </DropdownMenuItem>
-                ))}
-              </React.Fragment>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {showModal && selectedLanguage && (
-        <TranslatedContentModal
-          isOpen={showModal}
-          onClose={handleClose}
-          language={selectedLanguage}
-          content={translatedContent}
+      {/* Translation indicator bar */}
+      {(currentLanguage || isTranslating) && (
+        <TranslationIndicatorBar
+          currentLanguage={currentLanguage || ''}
           isTranslating={isTranslating}
+          progress={progress}
+          onRevert={revertToOriginal}
+          onCancel={cancelTranslation}
         />
       )}
+
+      {/* Translation button */}
+      {showDropdown && (
+        <div className="fixed bottom-6 left-6 z-50">
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="rounded-full shadow-lg bg-white/95 backdrop-blur-sm border-border hover:bg-white hover:border-watt-bitcoin/50 transition-all"
+              >
+                <Globe className="w-5 h-5 mr-2 text-watt-bitcoin" />
+                <span className="text-sm font-medium">Translate</span>
+                <ChevronDown className="w-4 h-4 ml-1 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="start" 
+              className="w-64 max-h-[70vh] overflow-y-auto"
+              sideOffset={8}
+            >
+              {Object.entries(groupedLanguages).map(([region, languages], idx) => (
+                <React.Fragment key={region}>
+                  {idx > 0 && <DropdownMenuSeparator />}
+                  <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {region}
+                  </DropdownMenuLabel>
+                  {languages.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.code}
+                      onClick={() => handleLanguageSelect(lang)}
+                      className="cursor-pointer"
+                    >
+                      <span className="mr-2 text-lg">{lang.flag}</span>
+                      <span>{lang.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </React.Fragment>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {/* CSS for translation animations */}
+      <style>{`
+        .translation-fade {
+          opacity: 0.5;
+          transition: opacity 0.2s ease-out;
+        }
+        
+        .translated {
+          animation: translateFadeIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes translateFadeIn {
+          from {
+            opacity: 0.5;
+            transform: translateY(2px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </>
   );
 };
