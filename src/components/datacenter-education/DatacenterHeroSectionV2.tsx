@@ -19,7 +19,7 @@ const DatacenterHeroSectionV2 = () => {
   };
 
   return (
-    <section className="relative min-h-screen bg-watt-navy overflow-hidden flex items-center">
+    <section className="relative min-h-[85vh] lg:min-h-screen bg-watt-navy overflow-hidden flex items-center py-8 lg:py-0">
       {/* Animated Background */}
       <div className="absolute inset-0">
         {/* Circuit board pattern */}
@@ -96,26 +96,26 @@ const DatacenterHeroSectionV2 = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
+        <div className="text-center mb-6 md:mb-10">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/20 border border-watt-bitcoin/30 mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-watt-bitcoin/20 border border-watt-bitcoin/30 mb-4 md:mb-6">
             <div className="w-2 h-2 rounded-full bg-watt-bitcoin animate-pulse" />
-            <span className="text-watt-bitcoin text-sm font-medium">Interactive Learning Experience</span>
+            <span className="text-watt-bitcoin text-xs md:text-sm font-medium">Interactive Learning Experience</span>
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-3 md:mb-6">
             DATACENTERS <span className="text-watt-bitcoin">101</span>
           </h1>
-          <p className="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12">
+          <p className="text-base sm:text-lg md:text-2xl text-white/70 max-w-3xl mx-auto mb-6 md:mb-8">
             The Complete Guide to Bitcoin Mining Infrastructure
           </p>
         </div>
 
         {/* Isometric Datacenter Visualization */}
-        <div className="relative max-w-4xl mx-auto mb-16">
-          <div className="relative h-64 md:h-80">
+        <div className="relative max-w-4xl mx-auto mb-6 md:mb-10">
+          <div className="relative h-48 sm:h-56 md:h-72 lg:h-80">
             {/* Central datacenter representation */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               {/* Main structure */}
@@ -181,14 +181,14 @@ const DatacenterHeroSectionV2 = () => {
         </div>
 
         {/* Section Preview Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto">
           {sections.map((section, index) => (
             <button
               key={section.id}
               onClick={() => scrollToSection(section.id)}
               onMouseEnter={() => setHoveredCard(index)}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`group relative p-4 md:p-6 rounded-xl border transition-all duration-300 text-left ${
+              className={`group relative p-3 md:p-5 rounded-xl border transition-all duration-300 text-left ${
                 hoveredCard === index 
                   ? 'bg-watt-bitcoin/20 border-watt-bitcoin shadow-lg shadow-watt-bitcoin/20 scale-105' 
                   : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -199,31 +199,31 @@ const DatacenterHeroSectionV2 = () => {
                 opacity: 0,
               }}
             >
-              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-3 transition-colors ${
+              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center mb-2 md:mb-3 transition-colors ${
                 hoveredCard === index ? 'bg-watt-bitcoin' : 'bg-white/10'
               }`}>
-                <section.icon className={`w-5 h-5 md:w-6 md:h-6 ${hoveredCard === index ? 'text-white' : 'text-watt-bitcoin'}`} />
+                <section.icon className={`w-4 h-4 md:w-5 md:h-5 ${hoveredCard === index ? 'text-white' : 'text-watt-bitcoin'}`} />
               </div>
-              <h3 className="font-semibold text-white text-sm md:text-base mb-1">{section.title}</h3>
-              <p className="text-white/60 text-xs md:text-sm">{section.description}</p>
+              <h3 className="font-semibold text-white text-xs md:text-sm mb-0.5 md:mb-1">{section.title}</h3>
+              <p className="text-white/60 text-[10px] md:text-xs">{section.description}</p>
               
               {/* Hover indicator */}
               <div className={`absolute bottom-2 right-2 transition-opacity ${hoveredCard === index ? 'opacity-100' : 'opacity-0'}`}>
-                <ChevronDown className="w-4 h-4 text-watt-bitcoin animate-bounce" />
+                <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-watt-bitcoin animate-bounce" />
               </div>
             </button>
           ))}
         </div>
 
         {/* Scroll indicator */}
-        <div className="text-center mt-16">
+        <div className="text-center mt-6 md:mt-10">
           <button 
             onClick={() => scrollToSection('power-journey')}
             className="inline-flex flex-col items-center text-white/60 hover:text-watt-bitcoin transition-colors group"
           >
-            <span className="text-sm mb-2">Begin Your Journey</span>
-            <div className="w-6 h-10 rounded-full border-2 border-current flex items-start justify-center p-1">
-              <div className="w-1.5 h-2 bg-current rounded-full animate-bounce" />
+            <span className="text-xs md:text-sm mb-2">Begin Your Journey</span>
+            <div className="w-5 h-8 md:w-6 md:h-10 rounded-full border-2 border-current flex items-start justify-center p-1">
+              <div className="w-1 h-1.5 md:w-1.5 md:h-2 bg-current rounded-full animate-bounce" />
             </div>
           </button>
         </div>
