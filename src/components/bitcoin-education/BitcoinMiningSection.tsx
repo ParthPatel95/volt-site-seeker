@@ -1,36 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Pickaxe, Cpu, Zap, Thermometer, DollarSign, Clock, TrendingUp, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
-
-const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = '', decimals = 0 }: { end: number; duration?: number; prefix?: string; suffix?: string; decimals?: number }) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number | null = null;
-          const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            setCount(easeOutQuart * end);
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (countRef.current) observer.observe(countRef.current);
-    return () => observer.disconnect();
-  }, [end, duration, hasAnimated]);
-
-  return <div ref={countRef}>{prefix}{decimals > 0 ? count.toFixed(decimals) : Math.floor(count).toLocaleString()}{suffix}</div>;
-};
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 const BitcoinMiningSection: React.FC = () => {
   const hardwareEvolution = [
