@@ -3,6 +3,7 @@ import { LineChart as LineChartIcon, Calendar, TrendingUp, TrendingDown, Sun, Sn
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line, Cell, LabelList, ReferenceLine } from 'recharts';
 import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
 import { applyMonthlyUptimeFilter } from '@/utils/uptimeFilter';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 // Enhanced yearly data with 95% uptime and zero-price hours
 const yearlyData = [
@@ -76,9 +77,10 @@ const priceDrivers = [
   { icon: CloudSun, title: 'Outages & Constraints', description: 'Planned/unplanned outages reduce supply, spike prices', verified: true },
 ];
 
-// Custom bar label component
-const CustomBarLabel = ({ x, y, width, value, fill }: any) => {
+// Custom bar label component with USD conversion
+const CustomBarLabelUSD = ({ x, y, width, value, fill, convertToUSD }: any) => {
   if (!value) return null;
+  const usdValue = convertToUSD ? convertToUSD(value) : value;
   return (
     <text 
       x={x + width / 2} 
@@ -88,7 +90,7 @@ const CustomBarLabel = ({ x, y, width, value, fill }: any) => {
       fontSize={10}
       fontWeight={600}
     >
-      ${value.toFixed(0)}
+      ${usdValue.toFixed(0)}
     </text>
   );
 };
@@ -103,6 +105,8 @@ export const AESOPriceTrendsSection = () => {
     loadingDaily, 
     fetchDailyData 
   } = useAESOHistoricalPricing();
+
+  const { exchangeRate, convertToUSD } = useExchangeRate();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -193,7 +197,10 @@ export const AESOPriceTrendsSection = () => {
                   <h3 className="text-lg font-bold text-watt-navy">100% vs 95% Uptime Comparison</h3>
                   <p className="text-sm text-watt-navy/60">Annual average pool prices with strategic curtailment savings</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 border border-green-200 text-xs text-green-700 font-medium">
+                    🇺🇸 Prices in USD
+                  </span>
                   <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
                     AESO Annual Market Statistics
                   </span>
@@ -221,19 +228,19 @@ export const AESOPriceTrendsSection = () => {
                   <BarChart data={yearlyData} barGap={2}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="year" stroke="#6b7280" fontSize={12} />
-                    <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(v) => `$${v}`} />
+                    <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(v) => `$${convertToUSD(v).toFixed(0)}`} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                       formatter={(value: number, name: string) => [
-                        `$${value.toFixed(2)}/MWh`,
+                        `$${convertToUSD(value).toFixed(2)} USD/MWh`,
                         name === 'avgPrice' ? '100% Uptime' : '95% Uptime'
                       ]}
                     />
                     <Bar dataKey="avgPrice" fill="#F7931A" name="avgPrice" radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="avgPrice" content={<CustomBarLabel fill="#F7931A" />} />
+                      <LabelList dataKey="avgPrice" content={(props: any) => <CustomBarLabelUSD {...props} fill="#F7931A" convertToUSD={convertToUSD} />} />
                     </Bar>
                     <Bar dataKey="uptime95Price" fill="#22C55E" name="uptime95Price" radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="uptime95Price" content={<CustomBarLabel fill="#22C55E" />} />
+                      <LabelList dataKey="uptime95Price" content={(props: any) => <CustomBarLabelUSD {...props} fill="#22C55E" convertToUSD={convertToUSD} />} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -243,18 +250,18 @@ export const AESOPriceTrendsSection = () => {
               <div className="mt-6 grid md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
                   <p className="text-xs text-green-600 mb-1">2024 Savings at 95%</p>
-                  <p className="text-2xl font-bold text-green-700">$19.39 <span className="text-sm font-normal">/MWh</span></p>
+                  <p className="text-2xl font-bold text-green-700">${convertToUSD(19.39).toFixed(2)} <span className="text-sm font-normal">USD/MWh</span></p>
                   <p className="text-xs text-green-600 mt-1">26.4% reduction</p>
                 </div>
                 <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
                   <p className="text-xs text-green-600 mb-1">2022 Savings at 95%</p>
-                  <p className="text-2xl font-bold text-green-700">$38.18 <span className="text-sm font-normal">/MWh</span></p>
+                  <p className="text-2xl font-bold text-green-700">${convertToUSD(38.18).toFixed(2)} <span className="text-sm font-normal">USD/MWh</span></p>
                   <p className="text-xs text-green-600 mt-1">23.5% reduction</p>
                 </div>
                 <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 relative">
                   <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-amber-200 text-amber-700 rounded">YTD Est.</span>
                   <p className="text-xs text-amber-600 mb-1">2025 Savings at 95%</p>
-                  <p className="text-2xl font-bold text-amber-700">$12.30 <span className="text-sm font-normal">/MWh</span></p>
+                  <p className="text-2xl font-bold text-amber-700">${convertToUSD(12.30).toFixed(2)} <span className="text-sm font-normal">USD/MWh</span></p>
                   <p className="text-xs text-amber-600 mt-1">22.3% reduction</p>
                 </div>
                 <div className="p-4 rounded-lg bg-watt-navy/5 border border-watt-navy/10">
@@ -262,6 +269,12 @@ export const AESOPriceTrendsSection = () => {
                   <p className="text-2xl font-bold text-watt-navy">{avgSavings.toFixed(1)}%</p>
                   <p className="text-xs text-watt-navy/60 mt-1">at 95% uptime</p>
                 </div>
+              </div>
+
+              {/* Exchange Rate Info */}
+              <div className="mt-3 flex items-center justify-end gap-1 text-xs text-watt-navy/50">
+                <Info className="w-3 h-3" />
+                <span>CAD→USD rate: {exchangeRate.rate.toFixed(4)} ({exchangeRate.source})</span>
               </div>
 
               {/* Info callout */}
