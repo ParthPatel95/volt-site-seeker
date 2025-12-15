@@ -209,9 +209,14 @@ export const GridOperationsSection = () => {
 
             {/* Historical EEA Events */}
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-              <h4 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                <Activity className="w-4 h-4" />
-                Recent EEA History (Verified Events)
+              <h4 className="font-semibold text-amber-800 mb-3 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Recent EEA History
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-medium rounded-full">
+                  ✓ AESO Grid Alerts
+                </span>
               </h4>
               <div className="space-y-2">
                 {historicalEEAEvents.map((event, i) => (
@@ -241,7 +246,10 @@ export const GridOperationsSection = () => {
 
           <div className="grid md:grid-cols-3 gap-6">
             {interties.map((intertie, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-white border border-watt-navy/10 hover:shadow-md transition-all">
+              <div key={i} className="p-6 rounded-2xl bg-white border border-watt-navy/10 hover:shadow-md transition-all relative">
+                <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-medium rounded">
+                  AESO Data
+                </span>
                 <div className={`w-full h-2 rounded-full bg-gradient-to-r ${intertie.color} mb-4`} />
                 <h4 className="text-lg font-bold text-watt-navy mb-2">{intertie.name}</h4>
                 <div className="space-y-2 text-sm">

@@ -248,6 +248,9 @@ const ElectricalInfrastructureSection = () => {
                         }`}>
                           {/* Equipment brands */}
                           <div className="flex flex-wrap gap-2 mb-2 justify-start">
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-medium">
+                              Est.
+                            </span>
                             {step.brands.slice(0, 3).map((brand) => (
                               <span key={brand} className="px-2 py-0.5 bg-card border border-border rounded text-[10px] text-muted-foreground">
                                 {brand}
