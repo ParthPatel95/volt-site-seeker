@@ -1,174 +1,103 @@
 import React, { useState } from 'react';
-import { Zap, Gauge, Shield, AlertTriangle, CheckCircle, Info, ChevronRight, Cable } from 'lucide-react';
+import { Zap, Gauge, Shield, AlertTriangle, CheckCircle, Info, ChevronRight, Cable, ArrowDown, Sparkles } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import substationDetail from '@/assets/datacenter-substation-detail.jpg';
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+
+// Import AI-generated 3D images
+import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
+import electricalPowerTransformer from '@/assets/electrical-power-transformer.jpg';
+import electricalMvSwitchgear from '@/assets/electrical-mv-switchgear.jpg';
+import electricalPduCluster from '@/assets/electrical-pdu-cluster.jpg';
 
 const ElectricalInfrastructureSection = () => {
-  const [activeComponent, setActiveComponent] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
-  // Single-line diagram components with accurate engineering specs
-  const singleLineComponents = [
+  // Enhanced single-line diagram with 3D images
+  const powerFlowSteps = [
     {
-      id: 'utility-feed',
+      id: 1,
       name: 'Utility Feed',
-      position: { top: '5%', left: '45%' },
+      voltage: '138kV',
+      current: '418A @ 100MW',
+      image: electricalUtilityFeed,
       icon: '⚡',
-      voltage: '138kV',
-      description: 'High-voltage service entrance from transmission network',
+      color: 'from-red-500 to-orange-500',
+      description: 'High-voltage transmission lines deliver bulk power from the grid to the facility substation.',
       specs: [
-        'Voltage: 138kV 3-phase',
-        'Capacity: 100-200 MVA',
-        'Protection: Utility relay coordination',
-        'Metering: Revenue-grade CTs/PTs',
+        { label: 'Voltage Class', value: '138kV 3-phase' },
+        { label: 'Capacity', value: '100-200 MVA' },
+        { label: 'Protection', value: 'Utility relay coordination' },
+        { label: 'Metering', value: 'Revenue-grade CTs/PTs' },
       ],
+      equipment: ['Transmission towers', 'Aluminum conductor steel reinforced (ACSR)', 'Dead-end structures'],
+      brands: ['ABB', 'GE Grid Solutions', 'Siemens'],
+      costEstimate: '$2-5M for interconnection',
+      losses: '0.5-1%',
     },
     {
-      id: 'main-breaker',
-      name: 'Main Circuit Breaker',
-      position: { top: '15%', left: '45%' },
-      icon: '🔌',
-      voltage: '138kV',
-      description: 'Primary protection and disconnect for entire facility',
-      specs: [
-        'Type: SF6 gas-insulated',
-        'Rating: 2000-3000A',
-        'Interrupting: 40kA',
-        'Operation: Motorized + manual',
-      ],
-    },
-    {
-      id: 'main-transformer',
+      id: 2,
       name: 'Main Power Transformer',
-      position: { top: '28%', left: '45%' },
-      icon: '🔄',
       voltage: '138kV → 25kV',
-      description: 'Primary step-down transformer for facility distribution',
+      current: '2,300A @ 100MW',
+      image: electricalPowerTransformer,
+      icon: '🔄',
+      color: 'from-orange-500 to-yellow-500',
+      description: 'Oil-filled power transformer steps down high voltage for facility distribution.',
       specs: [
-        'Rating: 50-100 MVA',
-        'Impedance: 8-10%',
-        'Cooling: ONAN/ONAF',
-        'Efficiency: 99.5%',
-        'Oil volume: 10,000+ gallons',
-        'Lifespan: 30-40 years',
+        { label: 'Rating', value: '50-100 MVA' },
+        { label: 'Impedance', value: '8-10%' },
+        { label: 'Cooling', value: 'ONAN/ONAF' },
+        { label: 'Efficiency', value: '99.5%' },
+        { label: 'Oil Volume', value: '10,000+ gallons' },
+        { label: 'Lifespan', value: '30-40 years' },
       ],
+      equipment: ['Oil-filled transformer', 'Radiator banks', 'Buchholz relay', 'Conservator tank'],
+      brands: ['ABB', 'Siemens', 'Hitachi Energy', 'WEG'],
+      costEstimate: '$1-3M per unit',
+      losses: '0.5%',
     },
     {
-      id: 'mv-switchgear',
+      id: 3,
       name: 'MV Switchgear',
-      position: { top: '42%', left: '45%' },
-      icon: '📊',
       voltage: '25kV',
-      description: 'Medium voltage distribution to unit substations',
+      current: '1,200-2,000A',
+      image: electricalMvSwitchgear,
+      icon: '📊',
+      color: 'from-yellow-500 to-green-500',
+      description: 'Metal-enclosed switchgear distributes power to multiple unit substations across the facility.',
       specs: [
-        'Type: Metal-enclosed',
-        'Voltage class: 25kV/15kV',
-        'Bus rating: 1200-2000A',
-        'BIL: 125kV',
-        'Sections: 6-12 breakers',
+        { label: 'Type', value: 'Metal-enclosed' },
+        { label: 'Voltage Class', value: '25kV / 15kV' },
+        { label: 'Bus Rating', value: '1200-2000A' },
+        { label: 'BIL', value: '125kV' },
+        { label: 'Sections', value: '6-12 breakers' },
       ],
+      equipment: ['SF6 circuit breakers', 'Vacuum contactors', 'CTs/PTs', 'Protective relays'],
+      brands: ['Eaton', 'Schneider Electric', 'ABB', 'GE'],
+      costEstimate: '$500K-1.5M',
+      losses: '0.1%',
     },
     {
-      id: 'unit-substation-1',
-      name: 'Unit Substation 1',
-      position: { top: '58%', left: '25%' },
-      icon: '⬇️',
-      voltage: '25kV → 600V',
-      description: 'Dry-type transformer serving Pod A mining floor',
-      specs: [
-        'Rating: 2500 kVA',
-        'Type: Cast-resin dry',
-        'Temp rise: 65°C',
-        'Impedance: 5.75%',
-        'Output: 600V 3-phase',
-      ],
-    },
-    {
-      id: 'unit-substation-2',
-      name: 'Unit Substation 2',
-      position: { top: '58%', left: '45%' },
-      icon: '⬇️',
-      voltage: '25kV → 600V',
-      description: 'Dry-type transformer serving Pod B mining floor',
-      specs: [
-        'Rating: 2500 kVA',
-        'Type: Cast-resin dry',
-        'Temp rise: 65°C',
-        'Impedance: 5.75%',
-        'Output: 600V 3-phase',
-      ],
-    },
-    {
-      id: 'unit-substation-3',
-      name: 'Unit Substation 3',
-      position: { top: '58%', left: '65%' },
-      icon: '⬇️',
-      voltage: '25kV → 600V',
-      description: 'Dry-type transformer serving Pod C mining floor',
-      specs: [
-        'Rating: 2500 kVA',
-        'Type: Cast-resin dry',
-        'Temp rise: 65°C',
-        'Impedance: 5.75%',
-        'Output: 600V 3-phase',
-      ],
-    },
-    {
-      id: 'pdu-1',
-      name: 'PDU Cluster A',
-      position: { top: '75%', left: '25%' },
-      icon: '📦',
+      id: 4,
+      name: 'PDU Distribution',
       voltage: '600V → 240V',
-      description: 'Power Distribution Units for individual miner circuits',
-      specs: [
-        'Rating: 225-400 kVA each',
-        'Output: 240V 1-phase',
-        'Circuits: 42-84 per PDU',
-        'Breakers: 30A-50A per miner',
-        'Monitoring: Per-circuit metering',
-      ],
-    },
-    {
-      id: 'pdu-2',
-      name: 'PDU Cluster B',
-      position: { top: '75%', left: '45%' },
+      current: '500-800A per PDU',
+      image: electricalPduCluster,
       icon: '📦',
-      voltage: '600V → 240V',
-      description: 'Power Distribution Units for individual miner circuits',
+      color: 'from-green-500 to-cyan-500',
+      description: 'Power Distribution Units deliver final step-down power directly to ASIC mining equipment.',
       specs: [
-        'Rating: 225-400 kVA each',
-        'Output: 240V 1-phase',
-        'Circuits: 42-84 per PDU',
-        'Breakers: 30A-50A per miner',
+        { label: 'Rating', value: '225-400 kVA each' },
+        { label: 'Output', value: '240V 1-phase' },
+        { label: 'Circuits', value: '42-84 per PDU' },
+        { label: 'Breakers', value: '30A-50A per miner' },
+        { label: 'Monitoring', value: 'Per-circuit metering' },
       ],
-    },
-    {
-      id: 'pdu-3',
-      name: 'PDU Cluster C',
-      position: { top: '75%', left: '65%' },
-      icon: '📦',
-      voltage: '600V → 240V',
-      description: 'Power Distribution Units for individual miner circuits',
-      specs: [
-        'Rating: 225-400 kVA each',
-        'Output: 240V 1-phase',
-        'Circuits: 42-84 per PDU',
-        'Breakers: 30A-50A per miner',
-      ],
-    },
-    {
-      id: 'miners',
-      name: 'ASIC Miners',
-      position: { top: '90%', left: '45%' },
-      icon: '💻',
-      voltage: '240V AC → 12V DC',
-      description: 'Bitcoin mining hardware with internal PSU conversion',
-      specs: [
-        'Input: 240V 1-phase',
-        'Power: 3,000-5,500W each',
-        'PSU efficiency: 93-95%',
-        'Output: 12VDC to hash boards',
-        'Power factor: 0.99 w/PFC',
-      ],
+      equipment: ['Dry-type transformers', 'Molded case breakers', 'Busbar systems', 'Power meters'],
+      brands: ['Eaton', 'Schneider', 'Siemens', 'Vertiv'],
+      costEstimate: '$15-30K per PDU',
+      losses: '1-2%',
     },
   ];
 
@@ -176,7 +105,7 @@ const ElectricalInfrastructureSection = () => {
     {
       name: 'Protective Relays',
       description: 'Digital multifunction relays for overcurrent, ground fault, and differential protection',
-      standards: 'IEEE C37, ANSI standards',
+      standards: 'IEEE C37, ANSI',
       icon: Shield,
     },
     {
@@ -207,7 +136,7 @@ const ElectricalInfrastructureSection = () => {
     { kva: 3000, mw: 2.4, miners: 690, efficiency: '99.4%', cost: '$110K' },
   ];
 
-  const activeCompData = singleLineComponents.find(c => c.id === activeComponent);
+  const activeStepData = activeStep !== null ? powerFlowSteps[activeStep] : null;
 
   return (
     <section id="electrical" className="py-16 md:py-24 bg-background">
@@ -218,136 +147,287 @@ const ElectricalInfrastructureSection = () => {
               Section 2 • Electrical Systems
             </span>
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Electrical Infrastructure
+              Interactive Single-Line Diagram
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              Interactive single-line diagram showing the complete power distribution from utility to ASICs
+              Follow the power journey from 138kV utility feed down to 12V DC at the ASIC hash boards
             </p>
           </div>
         </ScrollReveal>
 
-        {/* Substation Image Header */}
-        <ScrollReveal delay={0.05}>
-          <div className="relative rounded-2xl overflow-hidden mb-10 h-48 md:h-64">
-            <img 
-              src={substationDetail} 
-              alt="High voltage electrical substation with transformers" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-watt-navy/90 via-watt-navy/50 to-transparent" />
-            <div className="absolute inset-0 flex items-center p-6 md:p-10">
-              <div className="text-white max-w-lg">
-                <h3 className="text-xl md:text-2xl font-bold mb-2">High Voltage Substation</h3>
-                <p className="text-white/80 text-sm md:text-base">
-                  138kV to 25kV step-down with SF6 breakers, protective relaying, and SCADA monitoring
-                </p>
+        {/* Immersive 3D Power Flow Diagram */}
+        <div className="mb-16">
+          {/* Desktop View - Vertical Tower Layout */}
+          <div className="hidden lg:block">
+            <div className="relative">
+              {/* Animated Power Flow Background */}
+              <div className="absolute inset-0 flex justify-center">
+                <div className="w-1 bg-gradient-to-b from-red-500 via-yellow-500 to-cyan-500 opacity-30 rounded-full" />
+                {/* Animated particles flowing down */}
+                <div className="absolute w-3 h-3 rounded-full bg-watt-bitcoin animate-[flowDown_3s_ease-in-out_infinite] shadow-lg shadow-watt-bitcoin/50" style={{ animationDelay: '0s' }} />
+                <div className="absolute w-3 h-3 rounded-full bg-watt-bitcoin animate-[flowDown_3s_ease-in-out_infinite] shadow-lg shadow-watt-bitcoin/50" style={{ animationDelay: '0.75s' }} />
+                <div className="absolute w-3 h-3 rounded-full bg-watt-bitcoin animate-[flowDown_3s_ease-in-out_infinite] shadow-lg shadow-watt-bitcoin/50" style={{ animationDelay: '1.5s' }} />
+                <div className="absolute w-3 h-3 rounded-full bg-watt-bitcoin animate-[flowDown_3s_ease-in-out_infinite] shadow-lg shadow-watt-bitcoin/50" style={{ animationDelay: '2.25s' }} />
+              </div>
+
+              {/* Power Flow Steps */}
+              <div className="relative z-10 space-y-6">
+                {powerFlowSteps.map((step, index) => (
+                  <ScrollReveal key={step.id} delay={index * 0.1}>
+                    <div
+                      className={`relative grid grid-cols-12 gap-6 items-center transition-all duration-500 cursor-pointer group ${
+                        activeStep === index ? 'scale-[1.02]' : 'hover:scale-[1.01]'
+                      }`}
+                      onClick={() => setActiveStep(activeStep === index ? null : index)}
+                      onMouseEnter={() => setHoveredStep(index)}
+                      onMouseLeave={() => setHoveredStep(null)}
+                    >
+                      {/* Left Content (alternating sides) */}
+                      <div className={`col-span-5 ${index % 2 === 0 ? 'order-1' : 'order-3 text-right'}`}>
+                        <div className={`transition-all duration-300 ${
+                          hoveredStep === index || activeStep === index ? 'opacity-100' : 'opacity-70'
+                        }`}>
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full text-xs font-medium text-muted-foreground mb-2">
+                            <Sparkles className="w-3 h-3" />
+                            Step {step.id} of 4
+                          </div>
+                          <h3 className="text-2xl font-bold text-foreground mb-1">{step.name}</h3>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap justify-start">
+                            <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${step.color} text-white text-sm font-bold`}>
+                              {step.voltage}
+                            </span>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {step.current}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {step.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Center Image Card */}
+                      <div className="col-span-2 order-2 flex justify-center relative">
+                        {/* Voltage Step-Down Indicator */}
+                        {index > 0 && (
+                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full bg-watt-bitcoin/20 flex items-center justify-center animate-pulse">
+                              <ArrowDown className="w-4 h-4 text-watt-bitcoin" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground mt-1">
+                              {powerFlowSteps[index - 1].losses} loss
+                            </span>
+                          </div>
+                        )}
+
+                        <div className={`relative w-32 h-32 rounded-2xl overflow-hidden border-4 transition-all duration-500 shadow-2xl ${
+                          activeStep === index 
+                            ? 'border-watt-bitcoin scale-110 shadow-watt-bitcoin/30' 
+                            : 'border-border group-hover:border-watt-bitcoin/50'
+                        }`}>
+                          <img 
+                            src={step.image} 
+                            alt={step.name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          {/* Glowing overlay on active/hover */}
+                          <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent transition-opacity ${
+                            hoveredStep === index || activeStep === index ? 'opacity-100' : 'opacity-0'
+                          }`} />
+                          {/* Icon overlay */}
+                          <div className="absolute bottom-2 right-2 text-2xl">
+                            {step.icon}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Content (alternating sides) */}
+                      <div className={`col-span-5 ${index % 2 === 0 ? 'order-3' : 'order-1 text-right'}`}>
+                        <div className={`transition-all duration-300 ${
+                          hoveredStep === index || activeStep === index ? 'opacity-100' : 'opacity-50'
+                        }`}>
+                          {/* Equipment brands */}
+                          <div className="flex flex-wrap gap-2 mb-2 justify-start">
+                            {step.brands.slice(0, 3).map((brand) => (
+                              <span key={brand} className="px-2 py-0.5 bg-card border border-border rounded text-[10px] text-muted-foreground">
+                                {brand}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="text-sm text-foreground font-medium mb-1">
+                            {step.costEstimate}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {step.equipment.slice(0, 2).join(' • ')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Details Panel */}
+                    {activeStep === index && (
+                      <div className="mt-4 ml-auto mr-auto max-w-4xl animate-fade-in">
+                        <div className="bg-card rounded-2xl border border-watt-bitcoin/30 p-6 shadow-xl shadow-watt-bitcoin/10">
+                          <div className="grid md:grid-cols-2 gap-6">
+                            {/* Specs */}
+                            <div>
+                              <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                                <Gauge className="w-4 h-4 text-watt-bitcoin" />
+                                Technical Specifications
+                              </h4>
+                              <div className="space-y-2">
+                                {step.specs.map((spec, i) => (
+                                  <div key={i} className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">{spec.label}</span>
+                                    <span className="font-medium text-foreground">{spec.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Equipment */}
+                            <div>
+                              <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                                <Cable className="w-4 h-4 text-watt-bitcoin" />
+                                Key Equipment
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {step.equipment.map((eq) => (
+                                  <span key={eq} className="px-3 py-1 bg-muted rounded-lg text-xs text-foreground">
+                                    {eq}
+                                  </span>
+                                ))}
+                              </div>
+
+                              <div className="mt-4 p-3 bg-watt-bitcoin/10 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-muted-foreground">Power Loss</span>
+                                  <span className="text-sm font-bold text-watt-bitcoin">{step.losses}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </ScrollReveal>
+                ))}
+
+                {/* Final Output - Miners */}
+                <ScrollReveal delay={0.4}>
+                  <div className="text-center py-8">
+                    <div className="inline-flex items-center gap-4 p-6 bg-gradient-to-r from-cyan-500/10 via-watt-bitcoin/10 to-cyan-500/10 rounded-2xl border border-watt-bitcoin/20">
+                      <span className="text-4xl">💻</span>
+                      <div className="text-left">
+                        <h4 className="font-bold text-foreground">ASIC Miners</h4>
+                        <p className="text-sm text-muted-foreground">240V AC → 12V DC • 3,000-5,500W each</p>
+                        <p className="text-xs text-watt-bitcoin font-medium mt-1">PSU Efficiency: 93-95%</p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile View - Stacked Cards */}
+          <div className="lg:hidden space-y-4">
+            {powerFlowSteps.map((step, index) => (
+              <ScrollReveal key={step.id} delay={index * 0.1}>
+                <div 
+                  className="relative overflow-hidden rounded-2xl border border-border bg-card cursor-pointer transition-all hover:border-watt-bitcoin/50"
+                  onClick={() => setActiveStep(activeStep === index ? null : index)}
+                >
+                  {/* Image Header */}
+                  <div className="relative h-40">
+                    <img 
+                      src={step.image} 
+                      alt={step.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-2 py-1 rounded bg-gradient-to-r ${step.color} text-white text-xs font-bold`}>
+                          Step {step.id}
+                        </span>
+                        <span className="text-white/80 text-xs font-mono">{step.voltage}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-white">{step.name}</h3>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <p className="text-sm text-muted-foreground mb-3">{step.description}</p>
+                    
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{step.costEstimate}</span>
+                      <span className="text-watt-bitcoin font-medium">Loss: {step.losses}</span>
+                    </div>
+
+                    {/* Expanded Content */}
+                    {activeStep === index && (
+                      <div className="mt-4 pt-4 border-t border-border space-y-3 animate-fade-in">
+                        {step.specs.map((spec, i) => (
+                          <div key={i} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{spec.label}</span>
+                            <span className="font-medium text-foreground">{spec.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Arrow indicator between steps */}
+                  {index < powerFlowSteps.length - 1 && (
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10">
+                      <div className="w-6 h-6 rounded-full bg-watt-bitcoin flex items-center justify-center">
+                        <ArrowDown className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+
+        {/* Total System Efficiency Banner */}
+        <ScrollReveal delay={0.3}>
+          <div className="mb-10 p-6 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl text-white">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div>
+                <div className="text-3xl font-bold text-watt-bitcoin">
+                  <AnimatedCounter end={97.5} decimals={1} suffix="%" />
+                </div>
+                <div className="text-xs text-white/70">Total System Efficiency</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white">
+                  <AnimatedCounter end={2.5} decimals={1} suffix="%" />
+                </div>
+                <div className="text-xs text-white/70">Total Power Loss</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white">
+                  138kV → 12V
+                </div>
+                <div className="text-xs text-white/70">Voltage Range</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white">
+                  <AnimatedCounter end={4} suffix=" steps" />
+                </div>
+                <div className="text-xs text-white/70">Transformation Stages</div>
               </div>
             </div>
           </div>
         </ScrollReveal>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Interactive Single-Line Diagram */}
-          <ScrollReveal delay={0.1} className="lg:col-span-2">
-            <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <Cable className="w-5 h-5 text-watt-bitcoin" />
-                Interactive Single-Line Diagram
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">Click any component to see detailed specifications</p>
-              
-              <div className="relative bg-muted/30 rounded-xl p-4 min-h-[500px]">
-                {/* Diagram background with grid */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] rounded-xl" />
-                
-                {/* Connection lines (SVG) */}
-                <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
-                  {/* Main vertical line */}
-                  <line x1="50%" y1="8%" x2="50%" y2="45%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="3" strokeOpacity="0.5" />
-                  {/* Branch lines */}
-                  <line x1="50%" y1="45%" x2="25%" y2="60%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="2" strokeOpacity="0.4" />
-                  <line x1="50%" y1="45%" x2="50%" y2="60%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="2" strokeOpacity="0.4" />
-                  <line x1="50%" y1="45%" x2="75%" y2="60%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="2" strokeOpacity="0.4" />
-                  {/* PDU lines */}
-                  <line x1="25%" y1="62%" x2="25%" y2="78%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="2" strokeOpacity="0.3" />
-                  <line x1="50%" y1="62%" x2="50%" y2="78%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="2" strokeOpacity="0.3" />
-                  <line x1="75%" y1="62%" x2="75%" y2="78%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="2" strokeOpacity="0.3" />
-                  {/* Final to miners */}
-                  <line x1="25%" y1="80%" x2="50%" y2="92%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="1" strokeOpacity="0.3" />
-                  <line x1="50%" y1="80%" x2="50%" y2="92%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="1" strokeOpacity="0.3" />
-                  <line x1="75%" y1="80%" x2="50%" y2="92%" stroke="hsl(var(--watt-bitcoin))" strokeWidth="1" strokeOpacity="0.3" />
-                </svg>
-
-                {/* Components */}
-                {singleLineComponents.map((component) => (
-                  <button
-                    key={component.id}
-                    onClick={() => setActiveComponent(activeComponent === component.id ? null : component.id)}
-                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-200 ${
-                      activeComponent === component.id
-                        ? 'scale-110'
-                        : 'hover:scale-105'
-                    }`}
-                    style={{ top: component.position.top, left: component.position.left }}
-                  >
-                    <div className={`px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1 ${
-                      activeComponent === component.id
-                        ? 'bg-watt-bitcoin text-white shadow-lg shadow-watt-bitcoin/30'
-                        : 'bg-card border border-border text-foreground hover:border-watt-bitcoin/50'
-                    }`}>
-                      <span>{component.icon}</span>
-                      <span className="hidden sm:inline">{component.name}</span>
-                      <span className="text-[10px] opacity-70 hidden md:inline">{component.voltage}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* Component Details Panel */}
-          <ScrollReveal delay={0.15}>
-            <div className="bg-card rounded-2xl border border-border p-5 h-fit sticky top-24">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <Info className="w-5 h-5 text-watt-bitcoin" />
-                Component Details
-              </h3>
-              
-              {activeCompData ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{activeCompData.icon}</span>
-                    <div>
-                      <div className="font-semibold text-foreground">{activeCompData.name}</div>
-                      <div className="text-xs text-watt-bitcoin font-mono">{activeCompData.voltage}</div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground">{activeCompData.description}</p>
-                  
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-medium text-foreground uppercase tracking-wider">Specifications</h4>
-                    {activeCompData.specs.map((spec, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs">
-                        <ChevronRight className="w-3 h-3 text-watt-bitcoin flex-shrink-0" />
-                        <span className="text-muted-foreground">{spec}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Gauge className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">Click a component on the diagram to view its specifications</p>
-                </div>
-              )}
-            </div>
-          </ScrollReveal>
-        </div>
-
         {/* Transformer Sizing Guide */}
         <ScrollReveal delay={0.2}>
-          <div className="mt-10 bg-muted/30 rounded-2xl border border-border p-6">
+          <div className="bg-muted/30 rounded-2xl border border-border p-6 mb-10">
             <h3 className="text-xl font-bold text-foreground mb-2">Transformer Sizing Guide</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Typical dry-type unit substation ratings for mining facilities (600V output, Canada)
@@ -385,7 +465,7 @@ const ElectricalInfrastructureSection = () => {
 
         {/* Safety Equipment Grid */}
         <ScrollReveal delay={0.25}>
-          <div className="mt-10">
+          <div>
             <h3 className="text-xl font-bold text-foreground mb-6">Electrical Safety Systems</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {safetyEquipment.map((item) => (
@@ -400,6 +480,26 @@ const ElectricalInfrastructureSection = () => {
           </div>
         </ScrollReveal>
       </div>
+
+      {/* CSS for animations */}
+      <style>{`
+        @keyframes flowDown {
+          0% {
+            top: 0%;
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            top: 100%;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </section>
   );
 };

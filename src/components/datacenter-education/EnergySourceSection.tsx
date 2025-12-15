@@ -1,43 +1,91 @@
 import React, { useState } from 'react';
-import { Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, DollarSign, Clock, TrendingUp } from 'lucide-react';
+import { Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, DollarSign, Clock, TrendingUp, ArrowDown, Sparkles, Shield } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
+// Import AI-generated 3D images
+import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
+import gridTransmissionSubstation from '@/assets/grid-transmission-substation.jpg';
+import electricalMvSwitchgear from '@/assets/electrical-mv-switchgear.jpg';
+import gridServiceEntrance from '@/assets/grid-service-entrance.jpg';
+
 const EnergySourceSection = () => {
   const [activeTab, setActiveTab] = useState<'grid' | 'ppa' | 'site'>('grid');
+  const [activeGridStep, setActiveGridStep] = useState<number | null>(null);
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
   const gridConnectionSteps = [
     {
       step: 1,
-      title: 'Transmission System',
+      title: 'Transmission Network',
       voltage: '138kV - 500kV',
-      description: 'High-voltage bulk power transmission from generation sources to load centers. Mining facilities connect at 69kV-138kV substations.',
+      distance: '10-100+ km',
+      image: electricalUtilityFeed,
+      description: 'High-voltage bulk power transmission from generation sources across vast distances. Mining facilities tap into this network at strategic interconnection points.',
       icon: Zap,
       color: 'from-red-500 to-orange-500',
+      details: [
+        'Aluminum conductor steel reinforced (ACSR) cables',
+        'Lattice steel or monopole tower structures',
+        'Corona rings and vibration dampers',
+        'SCADA monitoring and protection',
+      ],
+      cost: '$1-3M per km for new lines',
+      timeline: '2-5 years for new construction',
     },
     {
       step: 2,
       title: 'Transmission Substation',
       voltage: '138kV → 69kV/25kV',
-      description: 'Step-down transformers reduce voltage for regional distribution. Large mining facilities may connect directly here.',
+      distance: '1-10 km to facility',
+      image: gridTransmissionSubstation,
+      description: 'Large outdoor substations with power transformers, circuit breakers, and protective relaying. Mining facilities may connect directly at this level.',
       icon: Building2,
       color: 'from-orange-500 to-yellow-500',
+      details: [
+        'SF6 or vacuum circuit breakers',
+        'Oil-filled power transformers',
+        'Capacitor banks for power factor',
+        'Revenue metering equipment',
+      ],
+      cost: '$5-20M for new substation',
+      timeline: '18-36 months construction',
     },
     {
       step: 3,
       title: 'Distribution System',
       voltage: '25kV - 15kV',
-      description: 'Medium voltage feeders to commercial/industrial customers. Smaller facilities connect via distribution.',
+      distance: '0.5-5 km',
+      image: electricalMvSwitchgear,
+      description: 'Medium voltage feeders deliver power to commercial and industrial customers. Smaller mining operations may connect at distribution level.',
       icon: MapPin,
       color: 'from-yellow-500 to-green-500',
+      details: [
+        'Underground or overhead feeders',
+        'Sectionalizing switches',
+        'Voltage regulators',
+        'Reclosers and fuses',
+      ],
+      cost: '$100-500K per km',
+      timeline: '6-18 months',
     },
     {
       step: 4,
-      title: 'Service Entrance',
-      voltage: '600V (Canada) / 480V (US)',
-      description: 'Customer-owned substation with metering, protection, and step-down to facility voltage.',
+      title: 'Customer Service Entrance',
+      voltage: '600V (CAN) / 480V (US)',
+      distance: 'On-site',
+      image: gridServiceEntrance,
+      description: 'Customer-owned pad-mounted transformer, main disconnect, and revenue metering. This is where facility ownership begins.',
       icon: Globe,
       color: 'from-green-500 to-cyan-500',
+      details: [
+        'Pad-mounted transformer',
+        'Main service disconnect',
+        'CT/PT metering cabinet',
+        'Surge protection devices',
+      ],
+      cost: '$200-800K for 10MW service',
+      timeline: '3-6 months installation',
     },
   ];
 
@@ -173,67 +221,164 @@ const EnergySourceSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* Grid Connection Tab */}
+        {/* Grid Connection Tab - Immersive 3D Redesign */}
         {activeTab === 'grid' && (
           <>
-            {/* Animated Power Flow Diagram */}
-            <ScrollReveal delay={0.1}>
-              <div className="relative mb-12">
-                {/* Desktop Horizontal Flow */}
-                <div className="hidden md:block">
-                  <div className="relative py-8">
-                    {/* Connection Line */}
-                    <div className="absolute top-1/2 left-0 right-0 h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-cyan-500 rounded-full -translate-y-1/2 opacity-30" />
-                    
-                    {/* Animated Flow Particles */}
-                    <div className="absolute top-1/2 left-0 right-0 h-2 -translate-y-1/2 overflow-hidden rounded-full">
-                      <div className="h-full w-20 bg-gradient-to-r from-transparent via-white to-transparent animate-[flowAcross_2s_linear_infinite]" />
-                    </div>
+            {/* Immersive Hero Cards */}
+            <div className="mb-12 space-y-6">
+              {gridConnectionSteps.map((step, index) => (
+                <ScrollReveal key={step.step} delay={index * 0.1}>
+                  <div
+                    className={`relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 group ${
+                      activeGridStep === index ? 'ring-2 ring-watt-bitcoin shadow-2xl shadow-watt-bitcoin/20' : 'hover:shadow-xl'
+                    }`}
+                    onClick={() => setActiveGridStep(activeGridStep === index ? null : index)}
+                    onMouseEnter={() => setHoveredStep(index)}
+                    onMouseLeave={() => setHoveredStep(null)}
+                  >
+                    {/* Full-width Background Image */}
+                    <div className="relative h-64 md:h-80">
+                      <img 
+                        src={step.image} 
+                        alt={step.title}
+                        className={`w-full h-full object-cover transition-transform duration-700 ${
+                          hoveredStep === index ? 'scale-110' : 'scale-100'
+                        }`}
+                      />
+                      
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+                      
+                      {/* Animated Power Flow Particles */}
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className={`absolute w-2 h-2 rounded-full bg-watt-bitcoin animate-[flowRight_4s_linear_infinite] opacity-60`} style={{ top: '30%', animationDelay: '0s' }} />
+                        <div className={`absolute w-2 h-2 rounded-full bg-watt-bitcoin animate-[flowRight_4s_linear_infinite] opacity-60`} style={{ top: '50%', animationDelay: '1s' }} />
+                        <div className={`absolute w-2 h-2 rounded-full bg-watt-bitcoin animate-[flowRight_4s_linear_infinite] opacity-60`} style={{ top: '70%', animationDelay: '2s' }} />
+                      </div>
 
-                    {/* Steps */}
-                    <div className="grid grid-cols-4 gap-4 relative z-10">
-                      {gridConnectionSteps.map((step, i) => (
-                        <div key={step.step} className="flex flex-col items-center text-center">
-                          <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-3 shadow-lg`}>
-                            <step.icon className="w-8 h-8 text-white" />
+                      {/* Content Overlay */}
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="p-6 md:p-10 max-w-2xl">
+                          {/* Step Badge */}
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs font-medium text-white/80 mb-3">
+                            <Sparkles className="w-3 h-3" />
+                            Step {step.step} of 4
                           </div>
-                          <div className="font-semibold text-foreground text-sm mb-1">{step.title}</div>
-                          <div className="text-xs text-watt-bitcoin font-mono mb-2">{step.voltage}</div>
-                          <p className="text-xs text-muted-foreground">{step.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                          
+                          {/* Title and Voltage */}
+                          <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{step.title}</h3>
+                          <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${step.color} text-white text-sm font-bold`}>
+                              {step.voltage}
+                            </span>
+                            <span className="text-white/60 text-sm font-mono">
+                              📍 {step.distance}
+                            </span>
+                          </div>
+                          
+                          {/* Description */}
+                          <p className="text-white/80 text-sm md:text-base mb-4 max-w-lg">
+                            {step.description}
+                          </p>
 
-                {/* Mobile Vertical Flow */}
-                <div className="md:hidden space-y-4">
-                  {gridConnectionSteps.map((step, i) => (
-                    <div key={step.step} className="relative">
-                      <div className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center flex-shrink-0`}>
-                          <step.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-foreground text-sm">{step.title}</div>
-                          <div className="text-xs text-watt-bitcoin font-mono mb-1">{step.voltage}</div>
-                          <p className="text-xs text-muted-foreground">{step.description}</p>
+                          {/* Quick Stats */}
+                          <div className="flex flex-wrap gap-4">
+                            <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
+                              <div className="text-xs text-white/60">Cost</div>
+                              <div className="text-sm font-semibold text-white">{step.cost}</div>
+                            </div>
+                            <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
+                              <div className="text-xs text-white/60">Timeline</div>
+                              <div className="text-sm font-semibold text-white">{step.timeline}</div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      {i < gridConnectionSteps.length - 1 && (
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-                          <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90" />
+
+                      {/* Step Number Badge */}
+                      <div className="absolute top-6 right-6">
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-xl`}>
+                          <step.icon className="w-7 h-7 text-white" />
                         </div>
-                      )}
+                      </div>
+
+                      {/* Expand Indicator */}
+                      <div className="absolute bottom-6 right-6">
+                        <div className={`px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80 transition-all ${
+                          hoveredStep === index ? 'opacity-100' : 'opacity-0'
+                        }`}>
+                          Click for details
+                        </div>
+                      </div>
                     </div>
-                  ))}
+
+                    {/* Expanded Details Panel */}
+                    {activeGridStep === index && (
+                      <div className="p-6 bg-card border-t border-border animate-fade-in">
+                        <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-watt-bitcoin" />
+                          Key Equipment & Infrastructure
+                        </h4>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {step.details.map((detail, i) => (
+                            <div key={i} className="flex items-center gap-2 text-sm">
+                              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                              <span className="text-muted-foreground">{detail}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Connection Arrow Between Steps */}
+                  {index < gridConnectionSteps.length - 1 && (
+                    <div className="flex justify-center py-2">
+                      <div className="w-10 h-10 rounded-full bg-watt-bitcoin/20 flex items-center justify-center animate-pulse">
+                        <ArrowDown className="w-5 h-5 text-watt-bitcoin" />
+                      </div>
+                    </div>
+                  )}
+                </ScrollReveal>
+              ))}
+            </div>
+
+            {/* Total Journey Summary */}
+            <ScrollReveal delay={0.3}>
+              <div className="p-6 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl text-white mb-8">
+                <h3 className="text-lg font-semibold mb-4 text-center">Complete Grid Journey</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-watt-bitcoin">
+                      <AnimatedCounter end={500} suffix=" km+" />
+                    </div>
+                    <div className="text-xs text-white/70">Max Transmission Distance</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">
+                      138kV → 600V
+                    </div>
+                    <div className="text-xs text-white/70">Voltage Step-Down</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">
+                      <AnimatedCounter end={12} suffix="-30 mo" />
+                    </div>
+                    <div className="text-xs text-white/70">Interconnection Timeline</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">
+                      $<AnimatedCounter end={10} suffix="-30M" />
+                    </div>
+                    <div className="text-xs text-white/70">Typical Project Cost</div>
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
 
             {/* Interconnection Timeline */}
             <ScrollReveal delay={0.2}>
-              <div className="bg-card rounded-2xl border border-border p-6 mb-8">
+              <div className="bg-card rounded-2xl border border-border p-6">
                 <h3 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-watt-bitcoin" />
                   Interconnection Timeline
@@ -370,23 +515,35 @@ const EnergySourceSection = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-white">
-                    <AnimatedCounter end={8000} suffix="+" />
+                    <AnimatedCounter end={99.5} decimals={1} suffix="%" />
                   </div>
-                  <div className="text-xs text-white/70">Free Cooling Hours/Year</div>
+                  <div className="text-xs text-white/70">Target Uptime</div>
                 </div>
               </div>
             </div>
           </ScrollReveal>
         )}
-
-        {/* Animation keyframes */}
-        <style>{`
-          @keyframes flowAcross {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(400%); }
-          }
-        `}</style>
       </div>
+
+      {/* CSS for animations */}
+      <style>{`
+        @keyframes flowRight {
+          0% {
+            left: 0%;
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            left: 100%;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </section>
   );
 };
