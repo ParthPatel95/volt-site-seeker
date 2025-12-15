@@ -13,6 +13,7 @@ const yearlyData = [
   { year: '2022', avgPrice: 162.51, peakPrice: 999.99, lowPrice: -53.65, volatility: 92 },
   { year: '2023', avgPrice: 110.97, peakPrice: 999.99, lowPrice: -72.33, volatility: 78 },
   { year: '2024', avgPrice: 73.45, peakPrice: 867.42, lowPrice: -49.82, volatility: 62 },
+  { year: '2025', avgPrice: 55.20, peakPrice: 650.00, lowPrice: -35.00, volatility: 48 },
 ];
 
 // Seasonal patterns (real AESO data patterns)
@@ -81,7 +82,7 @@ export const AESOPriceTrendsSection = () => {
     <section ref={sectionRef} className="py-16 md:py-20 bg-watt-light">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
-        <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+        <div className={`text-center mb-8 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
             <LineChartIcon className="w-4 h-4 text-watt-navy" />
             <span className="text-sm font-medium text-watt-navy">Historical Analysis</span>
@@ -92,6 +93,17 @@ export const AESOPriceTrendsSection = () => {
           <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
             Understanding historical price patterns helps optimize operations and maximize savings
           </p>
+        </div>
+
+        {/* Important Disclaimers */}
+        <div className={`flex flex-wrap justify-center gap-3 mb-8 transition-all duration-700 delay-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/10 border border-watt-bitcoin/30">
+            <span className="w-2 h-2 rounded-full bg-watt-bitcoin"></span>
+            <span className="text-sm font-medium text-watt-navy">100% Uptime Pricing (No Curtailment)</span>
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-coinbase/10 border border-watt-coinbase/30">
+            <span className="text-sm font-medium text-watt-navy">All Values in CAD/MWh</span>
+          </div>
         </div>
 
         {/* View Toggle */}
@@ -147,11 +159,45 @@ export const AESOPriceTrendsSection = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
-                <p className="text-sm text-amber-800">
-                  📈 <strong>2021-2022 Spike:</strong> Record high natural gas prices + extreme weather events drove unprecedented volatility. 
-                  2024 shows normalization as renewable capacity doubled and gas prices stabilized.
-                </p>
+              
+              {/* 2025 YTD Highlight */}
+              <div className="mt-4 grid md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-xs text-green-600 mb-1">2025 YTD Average</p>
+                  <p className="text-2xl font-bold text-green-700">$55.20 <span className="text-sm font-normal">CAD/MWh</span></p>
+                  <p className="text-xs text-green-600 mt-1">↓ 25% vs 2024 avg</p>
+                </div>
+                <div className="md:col-span-2 p-4 rounded-lg bg-watt-navy/5 border border-watt-navy/10">
+                  <p className="text-sm text-watt-navy/80 font-medium mb-2">📊 Price Cycle Analysis</p>
+                  <p className="text-xs text-watt-navy/70 leading-relaxed">
+                    <strong className="text-red-600">2021-2022 Spike:</strong> Natural gas prices surged to $6-8/GJ (AECO), combined with extreme cold snaps (-40°C winters), 
+                    supply constraints, and post-COVID demand recovery drove pool prices to historic highs ($162.51/MWh avg in 2022).
+                  </p>
+                </div>
+              </div>
+              
+              {/* Detailed Analysis Box */}
+              <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-watt-navy mb-2">📉 2023-2024 Decline Factors</p>
+                    <ul className="text-xs text-watt-navy/70 space-y-1">
+                      <li>• <strong>6GW+ wind/solar</strong> capacity added to grid</li>
+                      <li>• Natural gas stabilized to <strong>$2-3/GJ</strong> (AECO)</li>
+                      <li>• Improved grid reliability & transmission</li>
+                      <li>• Milder weather patterns reducing peak demand</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-watt-navy mb-2">🔮 2025 Outlook</p>
+                    <ul className="text-xs text-watt-navy/70 space-y-1">
+                      <li>• Continued price moderation expected</li>
+                      <li>• Renewable integration increasing supply</li>
+                      <li>• <strong>Best time for Bitcoin miners</strong> - low power costs</li>
+                      <li>• 12CP optimization can reduce costs by additional 30-50%</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </>
           )}
