@@ -99,24 +99,27 @@ const SectionNavigation = () => {
         </div>
       </nav>
 
-      <nav className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
-        <div className="bg-card/95 backdrop-blur-sm rounded-full border border-border shadow-lg p-2 overflow-x-auto">
-          <div className="flex items-center justify-around min-w-max gap-1">
-            {sections.slice(0, 5).map((section) => (
+      <nav className="fixed bottom-4 left-2 right-2 z-50 lg:hidden">
+        <div className="bg-card/95 backdrop-blur-sm rounded-full border border-border shadow-lg p-1.5 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex items-center gap-0.5 min-w-max px-1">
+            {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className={`flex flex-col items-center p-2 rounded-full transition-all ${
-                  activeSection === section.id ? 'text-watt-bitcoin' : 'text-muted-foreground'
+                className={`flex flex-col items-center p-1.5 min-w-[44px] min-h-[44px] rounded-full transition-all touch-manipulation ${
+                  activeSection === section.id ? 'text-watt-bitcoin bg-watt-bitcoin/10' : 'text-muted-foreground'
                 }`}
               >
                 <section.icon className={`w-4 h-4 ${activeSection === section.id ? 'scale-110' : ''}`} />
-                <span className={`text-[8px] mt-0.5 ${activeSection === section.id ? 'font-medium' : ''}`}>
+                <span className={`text-[7px] mt-0.5 whitespace-nowrap ${activeSection === section.id ? 'font-medium' : ''}`}>
                   {section.label}
                 </span>
               </button>
             ))}
-            <button onClick={scrollToTop} className="p-2 text-muted-foreground">
+            <button 
+              onClick={scrollToTop} 
+              className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground touch-manipulation"
+            >
               <ArrowUp className="w-4 h-4" />
             </button>
           </div>
