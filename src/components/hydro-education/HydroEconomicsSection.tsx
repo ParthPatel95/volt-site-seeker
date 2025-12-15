@@ -7,7 +7,9 @@ import {
   Building,
   Zap,
   Droplets,
-  Users
+  Users,
+  MapPin,
+  Info
 } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,12 +25,32 @@ const costBreakdown = [
   { category: 'Other', percentage: 5, color: 'bg-gray-500', items: ['Permits', 'Design', 'Contingency'] }
 ];
 
+// Regional labor rates from Bitmain docs Table 15
 const laborRates = [
-  { region: 'United States', rate: '$45-65/hour', multiplier: 1.5 },
-  { region: 'Europe (West)', rate: '$35-55/hour', multiplier: 1.3 },
-  { region: 'Russia/CIS', rate: '$15-25/hour', multiplier: 0.7 },
-  { region: 'Middle East', rate: '$20-35/hour', multiplier: 0.9 },
-  { region: 'Southeast Asia', rate: '$10-20/hour', multiplier: 0.5 }
+  { region: 'United States', dailyRate: '$300-440/day', multiplier: 1.5, flag: '🇺🇸' },
+  { region: 'Europe (West)', dailyRate: '$162-270/day', multiplier: 1.2, flag: '🇪🇺' },
+  { region: 'Russia/CIS', dailyRate: '$43-74/day', multiplier: 0.5, flag: '🇷🇺' },
+  { region: 'Middle East', dailyRate: '$81-135/day', multiplier: 0.7, flag: '🇦🇪' },
+  { region: 'Southeast Asia', dailyRate: '$27-54/day', multiplier: 0.4, flag: '🌏' }
+];
+
+// Labor duration estimates from Bitmain docs Table 14
+const laborDuration = [
+  { role: 'General Workers', days: 286, description: 'Site preparation, material handling' },
+  { role: 'Carpenters', days: 200, description: 'Foundation forms, structures' },
+  { role: 'Steel Workers', days: 114, description: 'Rebar, metal structures' },
+  { role: 'Electricians', days: 343, description: 'Wiring, connections, testing' },
+  { role: 'Plumbers', days: 171, description: 'Water systems, piping' },
+  { role: 'Equipment Operators', days: 143, description: 'Excavators, cranes, forklifts' }
+];
+
+// Water intake distance cost impact from Bitmain docs Table 12
+const waterIntakeCosts = [
+  { distance: '0-500m', additionalCost: '$0', notes: 'Base case, minimal piping' },
+  { distance: '500-1000m', additionalCost: '$370,000', notes: 'Extended pipeline, pump station' },
+  { distance: '1000-1500m', additionalCost: '$740,000', notes: 'Two pump stations may be needed' },
+  { distance: '1500-2000m', additionalCost: '$1,110,000', notes: 'Significant infrastructure' },
+  { distance: '>2000m', additionalCost: '$1,480,000+', notes: 'Consider alternative water source' }
 ];
 
 const timeline = [
@@ -42,6 +64,46 @@ const timeline = [
   { phase: 'Testing & Commissioning', weeks: 2, color: 'bg-emerald-500' }
 ];
 
+// Detailed cost categories
+const detailedCosts = [
+  {
+    category: 'Design & Engineering',
+    items: [
+      { name: 'Electrical drawings', cost: '$50,000-100,000' },
+      { name: 'Civil/structural design', cost: '$30,000-60,000' },
+      { name: 'Mechanical design', cost: '$20,000-40,000' },
+      { name: 'Permits & approvals', cost: '$50,000-150,000' }
+    ]
+  },
+  {
+    category: 'Site Preparation',
+    items: [
+      { name: 'Geotechnical survey', cost: '$10,000-30,000' },
+      { name: 'Earthwork & grading', cost: '$200,000-500,000' },
+      { name: 'Drainage system', cost: '$50,000-100,000' },
+      { name: 'Gravel surfacing', cost: '$100,000-200,000' }
+    ]
+  },
+  {
+    category: 'Electrical (100 MW)',
+    items: [
+      { name: 'Transformers (40 units)', cost: '$2,000,000-3,000,000' },
+      { name: 'MV switchgear', cost: '$500,000-800,000' },
+      { name: 'Cables & terminations', cost: '$800,000-1,200,000' },
+      { name: 'Grounding system', cost: '$100,000-200,000' }
+    ]
+  },
+  {
+    category: 'Water Systems (100 MW)',
+    items: [
+      { name: 'Water reservoirs', cost: '$200,000-400,000' },
+      { name: 'Pumping stations', cost: '$150,000-300,000' },
+      { name: 'Piping network', cost: '$300,000-500,000' },
+      { name: 'Water treatment', cost: '$100,000-200,000' }
+    ]
+  }
+];
+
 const HydroEconomicsSection = () => {
   const [capacity, setCapacity] = useState(100);
   const baseCostPerMW = 250000; // $250k per MW base cost
@@ -51,7 +113,6 @@ const HydroEconomicsSection = () => {
   const electricalCost = estimatedCost * 0.35;
   const coolingCost = estimatedCost * 0.20;
   const containerCost = estimatedCost * 0.15;
-  const otherCost = estimatedCost * 0.05;
 
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {
@@ -186,6 +247,28 @@ const HydroEconomicsSection = () => {
           </ScrollReveal>
         </div>
 
+        {/* Detailed Cost Categories */}
+        <ScrollReveal>
+          <h3 className="text-2xl font-bold text-watt-navy mb-6">Detailed Cost Breakdown</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {detailedCosts.map((cat, index) => (
+              <Card key={index} className="border-watt-navy/10">
+                <CardContent className="p-4">
+                  <h4 className="font-semibold text-watt-navy mb-3">{cat.category}</h4>
+                  <div className="space-y-2">
+                    {cat.items.map((item, i) => (
+                      <div key={i} className="flex justify-between items-center text-sm">
+                        <span className="text-watt-navy/70">{item.name}</span>
+                        <span className="font-mono text-green-600 text-xs">{item.cost}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </ScrollReveal>
+
         {/* Construction Timeline */}
         <ScrollReveal>
           <Card className="border-watt-navy/10 mb-12">
@@ -244,7 +327,7 @@ const HydroEconomicsSection = () => {
 
         {/* Labor Rates by Region */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10">
+          <Card className="border-watt-navy/10 mb-12">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center">
@@ -256,11 +339,12 @@ const HydroEconomicsSection = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                 {laborRates.map((region, index) => (
                   <div key={index} className="p-4 rounded-lg bg-watt-navy/5 text-center hover:bg-watt-navy/10 transition-colors">
+                    <span className="text-2xl mb-2 block">{region.flag}</span>
                     <span className="text-sm text-watt-navy/70 block mb-2">{region.region}</span>
-                    <span className="text-lg font-bold text-watt-navy block">{region.rate}</span>
+                    <span className="text-lg font-bold text-watt-navy block">{region.dailyRate}</span>
                     <span className={`text-xs mt-1 inline-block px-2 py-0.5 rounded-full ${
                       region.multiplier < 1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                     }`}>
@@ -270,14 +354,82 @@ const HydroEconomicsSection = () => {
                 ))}
               </div>
 
+              {/* Labor Duration Table */}
+              <h4 className="font-semibold text-watt-navy mb-4">Labor Duration (100 MW Project)</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-watt-navy/10">
+                      <th className="text-left py-2 font-semibold text-watt-navy">Role</th>
+                      <th className="text-center py-2 font-semibold text-watt-navy">Person-Days</th>
+                      <th className="text-left py-2 font-semibold text-watt-navy">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {laborDuration.map((item, i) => (
+                      <tr key={i} className="border-b border-watt-navy/5">
+                        <td className="py-2 font-medium text-watt-navy">{item.role}</td>
+                        <td className="py-2 text-center font-mono text-blue-600">{item.days}</td>
+                        <td className="py-2 text-watt-navy/60">{item.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        {/* Water Intake Distance Impact */}
+        <ScrollReveal>
+          <Card className="border-watt-navy/10">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-watt-navy">Water Intake Distance Impact</h3>
+                  <p className="text-sm text-watt-navy/60">Additional costs based on distance to water source</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-watt-navy/10">
+                      <th className="text-left py-3 font-semibold text-watt-navy">Distance</th>
+                      <th className="text-center py-3 font-semibold text-watt-navy">Additional Cost</th>
+                      <th className="text-left py-3 font-semibold text-watt-navy">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {waterIntakeCosts.map((item, i) => (
+                      <tr key={i} className="border-b border-watt-navy/5">
+                        <td className="py-3 font-medium text-watt-navy">{item.distance}</td>
+                        <td className="py-3 text-center">
+                          <span className={`font-mono font-bold ${
+                            item.additionalCost === '$0' ? 'text-green-600' : 'text-amber-600'
+                          }`}>
+                            {item.additionalCost}
+                          </span>
+                        </td>
+                        <td className="py-3 text-watt-navy/60">{item.notes}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
               <div className="mt-6 p-4 rounded-lg bg-amber-50 border border-amber-200">
                 <div className="flex items-start gap-3">
                   <TrendingDown className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <h4 className="font-semibold text-amber-800 mb-1">Cost Optimization Tip</h4>
                     <p className="text-sm text-amber-700">
-                      Prefabricating components in low-cost regions and shipping to site can reduce 
-                      overall construction costs by 20-30% while maintaining quality standards.
+                      Site selection near water source (≤500m) can save over $1M in infrastructure costs.
+                      Consider prefabricating components in low-cost regions and shipping to site 
+                      to reduce overall construction costs by 20-30%.
                     </p>
                   </div>
                 </div>
