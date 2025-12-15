@@ -1,5 +1,8 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
+import { supabase } from '@/integrations/supabase/client';
+
+// Query key for dedicated AESO data (uses smaller, more reliable endpoint)
+const AESO_QUERY_KEY = ['aeso-market-data'];
 
 interface AESOPricing {
   current_price: number;
@@ -34,17 +37,102 @@ interface AESOGenerationMix {
   source?: string;
 }
 
+// Static fallback data when API is unavailable (based on typical AESO values)
+const FALLBACK_PRICING: AESOPricing = {
+  current_price: 55.00,
+  average_price: 52.00,
+  peak_price: 95.00,
+  off_peak_price: 35.00,
+  market_conditions: 'fallback',
+  timestamp: new Date().toISOString(),
+  source: 'static_fallback'
+};
+
+const FALLBACK_LOAD: AESOLoadData = {
+  current_demand_mw: 10500,
+  peak_forecast_mw: 12000,
+  reserve_margin: 12.5,
+  capacity_margin: 18.0,
+  forecast_date: new Date().toISOString(),
+  source: 'static_fallback'
+};
+
+const FALLBACK_GENERATION: AESOGenerationMix = {
+  total_generation_mw: 11000,
+  natural_gas_mw: 6050,
+  wind_mw: 2750,
+  hydro_mw: 440,
+  solar_mw: 880,
+  coal_mw: 0,
+  other_mw: 880,
+  renewable_percentage: 37,
+  timestamp: new Date().toISOString(),
+  source: 'static_fallback'
+};
+
+// LocalStorage cache key for emergency fallback
+const CACHE_KEY = 'aeso_data_cache';
+
+// Save successful data to localStorage for emergency fallback
+const cacheData = (data: any) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+};
+
+// Get cached data from localStorage (valid for 1 hour)
+const getCachedData = (): any | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      // Cache valid for 1 hour
+      if (Date.now() - timestamp < 60 * 60 * 1000) {
+        return data;
+      }
+    }
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  return null;
+};
+
+// Fetch AESO data directly from dedicated endpoint (smaller, faster)
+const fetchAESOData = async () => {
+  try {
+    const { data, error } = await supabase.functions.invoke('aeso-market-data');
+    
+    if (error) {
+      console.warn('AESO direct fetch failed, trying unified endpoint:', error);
+      // Fallback to unified endpoint
+      const unified = await supabase.functions.invoke('energy-data-integration');
+      if (unified.error) throw unified.error;
+      return unified.data?.aeso;
+    }
+    
+    return data;
+  } catch (e) {
+    console.error('All AESO endpoints failed:', e);
+    throw e;
+  }
+};
+
 // Helper to synthesize pricing if missing
-const synthesizePricing = (aesoData: any): AESOPricing | null => {
-  if (!aesoData) return null;
+const synthesizePricing = (aesoData: any): AESOPricing => {
+  if (!aesoData) return FALLBACK_PRICING;
   
   const p = aesoData.pricing;
-  if (p) {
+  if (p && typeof p.current_price === 'number' && Number.isFinite(p.current_price)) {
     return {
-      current_price: Number.isFinite(Number(p.current_price)) ? Number(p.current_price) : 0,
-      average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : 0,
-      peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : 0,
-      off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : 0,
+      current_price: Number(p.current_price),
+      average_price: Number.isFinite(Number(p.average_price)) ? Number(p.average_price) : Number(p.current_price) * 0.95,
+      peak_price: Number.isFinite(Number(p.peak_price)) ? Number(p.peak_price) : Number(p.current_price) * 1.8,
+      off_peak_price: Number.isFinite(Number(p.off_peak_price)) ? Number(p.off_peak_price) : Number(p.current_price) * 0.6,
       market_conditions: p.market_conditions || 'normal',
       timestamp: p.timestamp || new Date().toISOString(),
       qa_metadata: p.qa_metadata,
@@ -76,32 +164,40 @@ const synthesizePricing = (aesoData: any): AESOPricing | null => {
 
 export const useAESOData = () => {
   const { data, isLoading, isFetching, error, refetch: queryRefetch } = useQuery({
-    queryKey: UNIFIED_ENERGY_QUERY_KEY,
-    queryFn: fetchUnifiedEnergyData,
-    staleTime: 2 * 60 * 1000, // 2 min - aligned with useUnifiedEnergyData
-    gcTime: 10 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-    retry: 3,
-    retryDelay: (attemptIndex: number) => Math.min(3000 * Math.pow(2, attemptIndex), 30000),
-    placeholderData: keepPreviousData, // Preserve previous data during refetch
+    queryKey: AESO_QUERY_KEY,
+    queryFn: fetchAESOData,
+    staleTime: 5 * 60 * 1000, // 5 min - longer stale time for stability
+    gcTime: 30 * 60 * 1000, // 30 min cache
+    refetchInterval: 10 * 60 * 1000, // Refetch every 10 min
+    retry: 5, // More retries for reliability
+    retryDelay: (attemptIndex: number) => Math.min(2000 * Math.pow(2, attemptIndex), 60000),
+    placeholderData: keepPreviousData,
   });
 
-  const aesoData = data?.aeso;
-  const hasData = !!(aesoData?.pricing || aesoData?.loadData || aesoData?.generationMix);
+  // Cache successful data
+  if (data && !error) {
+    cacheData(data);
+  }
 
-  // Wrap refetch to match expected signature
+  // Use cached data or fallback when API fails
+  const cachedData = getCachedData();
+  const aesoData = data || cachedData;
+  const hasData = !!(aesoData?.pricing || aesoData?.loadData || aesoData?.generationMix);
+  const isFallback = !data && (!!cachedData || !!error);
+
   const refetch = async () => {
     await queryRefetch();
   };
 
   return {
-    pricing: synthesizePricing(aesoData),
-    loadData: aesoData?.loadData as AESOLoadData | null,
-    generationMix: aesoData?.generationMix as AESOGenerationMix | null,
+    pricing: synthesizePricing(aesoData) || FALLBACK_PRICING,
+    loadData: (aesoData?.loadData as AESOLoadData) || FALLBACK_LOAD,
+    generationMix: (aesoData?.generationMix as AESOGenerationMix) || FALLBACK_GENERATION,
     loading: isLoading,
-    isFetching, // Expose for retry-aware UI
-    hasData, // Expose for stale data detection
-    connectionStatus: hasData ? 'connected' : (error ? 'fallback' : 'connected') as 'connected' | 'fallback',
+    isFetching,
+    hasData: hasData || isFallback, // Consider cached data as "having data"
+    isFallback, // New flag to indicate using fallback data
+    connectionStatus: (data ? 'connected' : (cachedData ? 'cached' : 'fallback')) as 'connected' | 'cached' | 'fallback',
     error: error?.message || null,
     refetch
   };

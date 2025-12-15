@@ -53,7 +53,7 @@ const getGenerationColor = (name: string) => {
 export const GenerationMixSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const { generationMix, loading, refetch } = useAESOData();
+  const { generationMix, loading, isFallback, connectionStatus, refetch } = useAESOData();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -72,7 +72,7 @@ export const GenerationMixSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Transform real API data into chart format
+  // Transform real API data into chart format - always have valid data now
   const liveGenerationMix = generationMix ? [
     { name: 'Natural Gas', value: Math.round((generationMix.natural_gas_mw / generationMix.total_generation_mw) * 100), mw: generationMix.natural_gas_mw },
     { name: 'Wind', value: Math.round((generationMix.wind_mw / generationMix.total_generation_mw) * 100), mw: generationMix.wind_mw },
@@ -82,17 +82,17 @@ export const GenerationMixSection = () => {
     { name: 'Other', value: Math.round((generationMix.other_mw / generationMix.total_generation_mw) * 100), mw: generationMix.other_mw },
   ].filter(item => item.value > 0) : [];
 
-  // Fallback static data if API unavailable
-  const fallbackMix = [
+  // Chart data always available (fallback included in hook)
+  const chartData = liveGenerationMix.length > 0 ? liveGenerationMix : [
     { name: 'Natural Gas', value: 55, mw: 6050 },
     { name: 'Wind', value: 25, mw: 2750 },
     { name: 'Solar', value: 8, mw: 880 },
     { name: 'Hydro', value: 4, mw: 440 },
     { name: 'Other', value: 8, mw: 880 },
   ];
-
-  const chartData = liveGenerationMix.length > 0 ? liveGenerationMix : fallbackMix;
-  const isLiveData = liveGenerationMix.length > 0;
+  
+  const isLiveData = connectionStatus === 'connected' && liveGenerationMix.length > 0;
+  const isCached = connectionStatus === 'cached';
 
   return (
     <section ref={sectionRef} className="py-16 md:py-20 bg-watt-light">
@@ -121,6 +121,11 @@ export const GenerationMixSection = () => {
                   <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 border border-green-300 text-xs text-green-700">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                     Live from AESO
+                  </span>
+                ) : isCached ? (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
+                    <AlertCircle className="w-3 h-3" />
+                    Cached data
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-100 border border-amber-300 text-xs text-amber-700">

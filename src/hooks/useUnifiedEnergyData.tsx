@@ -17,16 +17,65 @@ export interface UnifiedEnergyData {
   error?: string;
 }
 
-// Shared query function - simplified without localStorage
-export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
-  const { data, error } = await supabase.functions.invoke('energy-data-integration');
-  
-  if (error) {
-    console.error('Unified energy data fetch error:', error);
-    throw error;
+// LocalStorage cache key for emergency fallback
+const UNIFIED_CACHE_KEY = 'unified_energy_cache';
+
+// Cache successful data
+const cacheUnifiedData = (data: UnifiedEnergyData) => {
+  try {
+    localStorage.setItem(UNIFIED_CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    // Ignore localStorage errors
   }
-  
-  return data as UnifiedEnergyData;
+};
+
+// Get cached data (valid for 30 minutes)
+const getCachedUnifiedData = (): UnifiedEnergyData | null => {
+  try {
+    const cached = localStorage.getItem(UNIFIED_CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < 30 * 60 * 1000) {
+        return data;
+      }
+    }
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  return null;
+};
+
+// Shared query function with fallback handling
+export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('energy-data-integration');
+    
+    if (error) {
+      console.warn('Unified energy data fetch error, using cache:', error);
+      const cached = getCachedUnifiedData();
+      if (cached) return cached;
+      throw error;
+    }
+    
+    // Cache successful response
+    if (data) {
+      cacheUnifiedData(data);
+    }
+    
+    return data as UnifiedEnergyData;
+  } catch (e) {
+    console.error('Energy data integration failed:', e);
+    const cached = getCachedUnifiedData();
+    if (cached) {
+      console.log('Using cached unified energy data');
+      return cached;
+    }
+    // Return empty success response instead of throwing
+    return { success: false, error: 'Data temporarily unavailable' };
+  }
 };
 
 // Shared query config to avoid repetition
