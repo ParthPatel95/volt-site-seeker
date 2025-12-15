@@ -304,6 +304,7 @@ export function DocumentViewer({
           pdfProxyRef.current = proxy;
           setPdfDocumentProxy(proxy);
           setNumPages(proxy.numPages);
+          setDocumentLoaded(true); // Mark as loaded from pre-load to prevent timeout race condition
           
           // Get PDF dimensions for initial page load
           const page = await proxy.getPage(1);
@@ -783,10 +784,9 @@ export function DocumentViewer({
       setPageNumber(1);
     }
     
-    // Store proxy for translation feature
-    if (!pdfDocumentProxy) {
-      setPdfDocumentProxy(pdf);
-    }
+    // Always store proxy for translation feature (authoritative source)
+    setPdfDocumentProxy(pdf);
+    pdfProxyRef.current = pdf;
   }
 
   const handlePageLoadSuccess = useCallback((page: any) => {
@@ -1167,7 +1167,7 @@ export function DocumentViewer({
                         </div>
                       }
                     >
-                      {numPages > 0 && pageNumber >= 1 && pageNumber <= numPages && (
+                      {numPages > 0 && pageNumber >= 1 && pageNumber <= numPages ? (
                         <div 
                           style={{ 
                             transform: `scale(${zoom})`,
@@ -1192,22 +1192,29 @@ export function DocumentViewer({
                                 </div>
                               </div>
                             }
-                    onLoadSuccess={(page) => {
-                      handlePageLoadSuccess(page);
-                      initialLoadRef.current = false;
-                    }}
-                    onRenderAnnotationLayerError={(error) => {
-                      console.warn('[DocumentViewer] Annotation layer render error:', error);
-                    }}
-                    onGetAnnotationsError={(error) => {
-                      console.warn('[DocumentViewer] Error getting annotations:', error);
-                    }}
-                    loading={
-                      <div className="flex items-center justify-center p-8 bg-card">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      </div>
-                    }
+                            onLoadSuccess={(page) => {
+                              handlePageLoadSuccess(page);
+                              initialLoadRef.current = false;
+                            }}
+                            onRenderAnnotationLayerError={(error) => {
+                              console.warn('[DocumentViewer] Annotation layer render error:', error);
+                            }}
+                            onGetAnnotationsError={(error) => {
+                              console.warn('[DocumentViewer] Error getting annotations:', error);
+                            }}
+                            loading={
+                              <div className="flex items-center justify-center p-8 bg-card">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                              </div>
+                            }
                           />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center p-8 bg-card min-h-[400px]">
+                          <div className="text-center">
+                            <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-sm text-muted-foreground">Preparing document...</p>
+                          </div>
                         </div>
                       )}
                     </Document>
