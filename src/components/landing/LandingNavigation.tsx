@@ -28,7 +28,7 @@ export const LandingNavigation = () => {
           onClick={() => navigate('/bitcoin')}
           className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex"
         >
-          Learn Bitcoin
+          Bitcoin 101
         </Button>
         <Button 
           variant="ghost" 
@@ -36,7 +36,7 @@ export const LandingNavigation = () => {
           onClick={() => navigate('/datacenters')}
           className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex"
         >
-          Learn Datacenters
+          Datacenters 101
         </Button>
         <Button 
           variant="ghost" 
