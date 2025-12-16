@@ -10,18 +10,24 @@ const colorClasses = {
     bgHover: "hover:bg-watt-bitcoin/90",
     bgLight: "bg-watt-bitcoin/10",
     text: "text-watt-bitcoin",
+    gradient: "from-watt-bitcoin/20 to-watt-bitcoin/5",
+    border: "border-watt-bitcoin/30",
   },
   "watt-blue": {
     bg: "bg-watt-blue",
     bgHover: "hover:bg-watt-blue/90",
     bgLight: "bg-watt-blue/10",
     text: "text-watt-blue",
+    gradient: "from-watt-blue/20 to-watt-blue/5",
+    border: "border-watt-blue/30",
   },
   "watt-success": {
     bg: "bg-watt-success",
     bgHover: "hover:bg-watt-success/90",
     bgLight: "bg-watt-success/10",
     text: "text-watt-success",
+    gradient: "from-watt-success/20 to-watt-success/5",
+    border: "border-watt-success/30",
   },
 } as const;
 
@@ -34,8 +40,6 @@ const learningPaths = [
     description: "Start from zero and understand Bitcoin, blockchain technology, mining economics, and the global adoption landscape.",
     icon: Bitcoin,
     color: "watt-bitcoin" as ColorKey,
-    bgGradient: "from-watt-bitcoin/20 to-watt-bitcoin/5",
-    borderColor: "border-watt-bitcoin/30",
     lessons: 13,
     duration: "~60 min",
     topics: ["What is Bitcoin", "How It Works", "Wallets", "Mining Basics", "Economics", "Global Adoption"],
@@ -47,8 +51,6 @@ const learningPaths = [
     description: "Deep dive into datacenter design, cooling systems, hardware specifications, and operational best practices.",
     icon: Server,
     color: "watt-blue" as ColorKey,
-    bgGradient: "from-watt-blue/20 to-watt-blue/5",
-    borderColor: "border-watt-blue/30",
     lessons: 22,
     duration: "~90 min",
     topics: ["Facility Design", "Cooling Systems", "Electrical Infrastructure", "Hardware", "Hydro Cooling"],
@@ -60,8 +62,6 @@ const learningPaths = [
     description: "Master Alberta's energy market, AESO operations, Rate 65 advantages, and electricity cost optimization strategies.",
     icon: Zap,
     color: "watt-success" as ColorKey,
-    bgGradient: "from-watt-success/20 to-watt-success/5",
-    borderColor: "border-watt-success/30",
     lessons: 12,
     duration: "~45 min",
     topics: ["AESO Basics", "Pool Pricing", "Rate 65", "12CP Optimization", "Grid Operations"],
@@ -93,7 +93,7 @@ export const LearningPathsSection = () => {
             return (
               <ScrollReveal key={path.id} delay={index * 100}>
                 <div 
-                  className={`relative h-full p-6 rounded-2xl bg-gradient-to-b ${path.bgGradient} border ${path.borderColor} hover:shadow-lg transition-all duration-300 group cursor-pointer`}
+                  className={`relative h-full p-6 rounded-2xl bg-gradient-to-b ${colors.gradient} border ${colors.border} hover:shadow-lg transition-all duration-300 group cursor-pointer`}
                   onClick={() => navigate(path.route)}
                 >
                   {/* Icon */}
