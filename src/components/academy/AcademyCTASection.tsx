@@ -37,8 +37,7 @@ export const AcademyCTASection = () => {
               </Button>
               <Button 
                 size="lg"
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10"
+                className="bg-white/10 border border-white/20 text-white hover:bg-white/20"
                 onClick={() => navigate('/aeso-101')}
               >
                 <Zap className="w-5 h-5 mr-2" />
