@@ -4,6 +4,24 @@ import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
+// Explicit color classes to avoid Tailwind purge issues
+const colorClasses = {
+  "watt-bitcoin": {
+    bgLight: "bg-watt-bitcoin/10",
+    text: "text-watt-bitcoin",
+  },
+  "watt-blue": {
+    bgLight: "bg-watt-blue/10",
+    text: "text-watt-blue",
+  },
+  "watt-success": {
+    bgLight: "bg-watt-success/10",
+    text: "text-watt-success",
+  },
+} as const;
+
+type ColorKey = keyof typeof colorClasses;
+
 interface Lesson {
   title: string;
   anchor?: string;
@@ -13,7 +31,7 @@ interface Module {
   id: string;
   title: string;
   icon: React.ElementType;
-  color: string;
+  color: ColorKey;
   route: string;
   lessons: Lesson[];
 }
@@ -107,6 +125,7 @@ const curriculum: Module[] = [
 const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   const [isExpanded, setIsExpanded] = useState(index === 0);
   const navigate = useNavigate();
+  const colors = colorClasses[module.color];
 
   const handleLessonClick = (lesson: Lesson) => {
     if (lesson.anchor) {
@@ -124,8 +143,8 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
         className="w-full flex items-center justify-between p-5 hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl bg-${module.color}/10 flex items-center justify-center`}>
-            <module.icon className={`w-6 h-6 text-${module.color}`} />
+          <div className={`w-12 h-12 rounded-xl ${colors.bgLight} flex items-center justify-center`}>
+            <module.icon className={`w-6 h-6 ${colors.text}`} />
           </div>
           <div className="text-left">
             <h3 className="text-lg font-semibold text-watt-navy">

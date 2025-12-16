@@ -62,8 +62,7 @@ export const AcademyHeroSection = () => {
               </Button>
               <Button 
                 size="lg" 
-                variant="outline" 
-                className="border-white/20 text-white hover:bg-white/10"
+                className="bg-white/10 border border-white/20 text-white hover:bg-white/20"
                 onClick={() => scrollToSection('curriculum')}
               >
                 View Full Curriculum
