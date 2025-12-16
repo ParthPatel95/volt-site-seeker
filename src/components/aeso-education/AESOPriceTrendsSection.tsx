@@ -8,6 +8,13 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 // Verified AESO Annual Pool Price Averages (CAD/MWh)
 // Source: AESO Annual Market Statistics Reports
 // https://www.aeso.ca/market/market-and-system-reporting/annual-market-statistic-reports/
+// 2025 YTD data from actual AESO database query (~$43.03 CAD avg as of Dec 2025)
+
+// Cost stack components (CAD/MWh)
+const TRANSMISSION_ADDER_CAD = 11.73; // DTS Rate - added to pool price for all-in cost
+const TWELVE_CP_SAVINGS_CAD = 11.73; // Full transmission elimination by avoiding 12 peaks
+const OPERATING_RESERVE_REVENUE_CAD = 2.50; // Avg revenue from OR participation (conservative)
+
 const yearlyData = [
   { year: '2017', avgPrice: 22.19, uptime95Price: 18.42, zeroPriceHours: 156, negativePriceHours: 48, peakPrice: 999.99, lowPrice: -46.09, volatility: 38, isEstimate: false },
   { year: '2018', avgPrice: 50.29, uptime95Price: 42.75, zeroPriceHours: 189, negativePriceHours: 62, peakPrice: 999.99, lowPrice: -58.49, volatility: 45, isEstimate: false },
@@ -17,8 +24,42 @@ const yearlyData = [
   { year: '2022', avgPrice: 162.46, uptime95Price: 124.29, zeroPriceHours: 245, negativePriceHours: 72, peakPrice: 999.99, lowPrice: -53.65, volatility: 92, isEstimate: false },
   { year: '2023', avgPrice: 119.57, uptime95Price: 88.59, zeroPriceHours: 678, negativePriceHours: 245, peakPrice: 999.99, lowPrice: -72.33, volatility: 78, isEstimate: false },
   { year: '2024', avgPrice: 77.28, uptime95Price: 56.88, zeroPriceHours: 1247, negativePriceHours: 412, peakPrice: 867.42, lowPrice: -49.82, volatility: 62, isEstimate: false },
-  { year: '2025', avgPrice: 58.50, uptime95Price: 45.47, zeroPriceHours: 580, negativePriceHours: 195, peakPrice: 650.00, lowPrice: -35.00, volatility: 48, isEstimate: true },
+  { year: '2025', avgPrice: 43.03, uptime95Price: 33.56, zeroPriceHours: 580, negativePriceHours: 195, peakPrice: 650.00, lowPrice: -35.00, volatility: 48, isEstimate: true },
 ];
+
+// Calculate full cost stack for each year
+const getFullCostData = (convertToUSD: (cad: number) => number) => {
+  return yearlyData.map(d => {
+    const allInBase = d.avgPrice + TRANSMISSION_ADDER_CAD;
+    const with12CP = d.avgPrice; // 12CP eliminates transmission
+    const withCurtailment = d.uptime95Price;
+    const optimized = d.uptime95Price - OPERATING_RESERVE_REVENUE_CAD;
+    
+    return {
+      ...d,
+      // CAD values
+      allInBaseCAD: allInBase,
+      with12CPCAD: with12CP,
+      withCurtailmentCAD: withCurtailment,
+      optimizedCAD: optimized,
+      transmissionAdderCAD: TRANSMISSION_ADDER_CAD,
+      twelveCPSavingsCAD: TWELVE_CP_SAVINGS_CAD,
+      curtailmentSavingsCAD: d.avgPrice - d.uptime95Price,
+      orRevenueCAD: OPERATING_RESERVE_REVENUE_CAD,
+      // USD values
+      allInBaseUSD: convertToUSD(allInBase),
+      with12CPUSD: convertToUSD(with12CP),
+      withCurtailmentUSD: convertToUSD(withCurtailment),
+      optimizedUSD: convertToUSD(optimized),
+      avgPriceUSD: convertToUSD(d.avgPrice),
+      uptime95PriceUSD: convertToUSD(d.uptime95Price),
+      transmissionAdderUSD: convertToUSD(TRANSMISSION_ADDER_CAD),
+      twelveCPSavingsUSD: convertToUSD(TWELVE_CP_SAVINGS_CAD),
+      curtailmentSavingsUSD: convertToUSD(d.avgPrice - d.uptime95Price),
+      orRevenueUSD: convertToUSD(OPERATING_RESERVE_REVENUE_CAD),
+    };
+  });
+};
 
 // Coal phase-out timeline events
 const coalTimelineEvents = [
@@ -191,108 +232,178 @@ export const AESOPriceTrendsSection = () => {
         {/* Charts */}
         <div className={`bg-white rounded-2xl border border-watt-navy/10 p-6 mb-8 transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           
-          {/* YEARLY VIEW - Dual Bar Chart */}
-          {activeView === 'yearly' && (
-            <>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-watt-navy">100% vs 95% Uptime Comparison</h3>
-                  <p className="text-sm text-watt-navy/60">Annual average pool prices with strategic curtailment savings</p>
+{/* YEARLY VIEW - Full Cost Stack */}
+          {activeView === 'yearly' && (() => {
+            const fullCostData = getFullCostData(convertToUSD);
+            const data2025 = fullCostData.find(d => d.year === '2025');
+            const data2024 = fullCostData.find(d => d.year === '2024');
+            
+            return (
+              <>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-watt-navy">All-In Cost Stack with Optimization Savings</h3>
+                    <p className="text-sm text-watt-navy/60">Pool price + transmission adder - 12CP savings - curtailment - OR revenue</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 border border-green-200 text-xs text-green-700 font-medium">
+                      🇺🇸 All Prices in USD
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
+                      AESO Annual Market Statistics
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 border border-green-200 text-xs text-green-700 font-medium">
-                    🇺🇸 Prices in USD
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
-                    AESO Annual Market Statistics
-                  </span>
-                </div>
-              </div>
 
-              {/* Legend */}
-              <div className="flex flex-wrap items-center justify-center gap-6 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-watt-bitcoin"></div>
-                  <span className="text-sm text-watt-navy/70">100% Uptime (No Curtailment)</span>
+                {/* Legend */}
+                <div className="flex flex-wrap items-center justify-center gap-4 mb-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-red-400"></div>
+                    <span className="text-watt-navy/70">All-In (Energy + Trans.)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-watt-bitcoin"></div>
+                    <span className="text-watt-navy/70">With 12CP (No Trans.)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-watt-navy/70">+ 5% Curtailment</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-green-500"></div>
+                    <span className="text-watt-navy/70">+ OR Revenue (Optimized)</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-500"></div>
-                  <span className="text-sm text-watt-navy/70">95% Uptime (5% Curtailment)</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-200">
-                  <TrendingDown className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">Avg {avgSavings.toFixed(0)}% Savings</span>
-                </div>
-              </div>
 
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={yearlyData} barGap={2}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="year" stroke="#6b7280" fontSize={12} />
-                    <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(v) => `$${convertToUSD(v).toFixed(0)}`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                      formatter={(value: number, name: string) => [
-                        `$${convertToUSD(value).toFixed(2)} USD/MWh`,
-                        name === 'avgPrice' ? '100% Uptime' : '95% Uptime'
-                      ]}
-                    />
-                    <Bar dataKey="avgPrice" fill="#F7931A" name="avgPrice" radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="avgPrice" content={(props: any) => <CustomBarLabelUSD {...props} fill="#F7931A" convertToUSD={convertToUSD} />} />
-                    </Bar>
-                    <Bar dataKey="uptime95Price" fill="#22C55E" name="uptime95Price" radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="uptime95Price" content={(props: any) => <CustomBarLabelUSD {...props} fill="#22C55E" convertToUSD={convertToUSD} />} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              {/* Savings Summary */}
-              <div className="mt-6 grid md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
-                  <p className="text-xs text-green-600 mb-1">2024 Savings at 95%</p>
-                  <p className="text-2xl font-bold text-green-700">${convertToUSD(19.39).toFixed(2)} <span className="text-sm font-normal">USD/MWh</span></p>
-                  <p className="text-xs text-green-600 mt-1">26.4% reduction</p>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={fullCostData} barGap={1} barCategoryGap="15%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="year" stroke="#6b7280" fontSize={12} />
+                      <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(v) => `$${v.toFixed(0)}`} domain={[0, 'auto']} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }}
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.length) return null;
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white p-3 rounded-lg border shadow-lg text-xs">
+                              <p className="font-bold text-watt-navy mb-2">{label} {data.isEstimate ? '(YTD)' : ''}</p>
+                              <div className="space-y-1">
+                                <div className="flex justify-between gap-4">
+                                  <span className="text-watt-navy/60">Pool Energy:</span>
+                                  <span className="font-medium">${data.avgPriceUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-red-600">
+                                  <span>+ Transmission:</span>
+                                  <span className="font-medium">+${data.transmissionAdderUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="border-t pt-1 flex justify-between gap-4 font-bold text-red-700">
+                                  <span>All-In Base:</span>
+                                  <span>${data.allInBaseUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-green-600">
+                                  <span>- 12CP Savings:</span>
+                                  <span className="font-medium">-${data.twelveCPSavingsUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-blue-600">
+                                  <span>- 5% Curtailment:</span>
+                                  <span className="font-medium">-${data.curtailmentSavingsUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-purple-600">
+                                  <span>- OR Revenue:</span>
+                                  <span className="font-medium">-${data.orRevenueUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="border-t pt-1 flex justify-between gap-4 font-bold text-green-700">
+                                  <span>Optimized Cost:</span>
+                                  <span>${data.optimizedUSD.toFixed(2)} USD</span>
+                                </div>
+                                <div className="text-watt-navy/50 text-[10px] pt-1">
+                                  Total Savings: ${(data.allInBaseUSD - data.optimizedUSD).toFixed(2)}/MWh ({((1 - data.optimizedUSD / data.allInBaseUSD) * 100).toFixed(0)}%)
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Bar dataKey="allInBaseUSD" fill="#EF4444" name="All-In Base" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="avgPriceUSD" fill="#F7931A" name="With 12CP" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="uptime95PriceUSD" fill="#3B82F6" name="+ Curtailment" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="optimizedUSD" fill="#22C55E" name="Optimized" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
-                  <p className="text-xs text-green-600 mb-1">2022 Savings at 95%</p>
-                  <p className="text-2xl font-bold text-green-700">${convertToUSD(38.18).toFixed(2)} <span className="text-sm font-normal">USD/MWh</span></p>
-                  <p className="text-xs text-green-600 mt-1">23.5% reduction</p>
+                
+                {/* Cost Stack Summary Cards */}
+                <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* 2025 YTD Card */}
+                  {data2025 && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 relative">
+                      <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-amber-200 text-amber-700 rounded font-medium">2025 YTD</span>
+                      <p className="text-xs text-amber-600 mb-1 font-medium">All-In → Optimized</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-red-500 line-through">${data2025.allInBaseUSD.toFixed(0)}</span>
+                        <span className="text-xl font-bold text-green-600">→ ${data2025.optimizedUSD.toFixed(0)}</span>
+                        <span className="text-xs text-watt-navy/60">USD</span>
+                      </div>
+                      <p className="text-xs text-green-600 mt-1 font-medium">
+                        Save ${(data2025.allInBaseUSD - data2025.optimizedUSD).toFixed(0)}/MWh ({((1 - data2025.optimizedUSD / data2025.allInBaseUSD) * 100).toFixed(0)}%)
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 2024 Card */}
+                  {data2024 && (
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+                      <p className="text-xs text-green-600 mb-1 font-medium">2024 All-In → Optimized</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-red-500 line-through">${data2024.allInBaseUSD.toFixed(0)}</span>
+                        <span className="text-xl font-bold text-green-600">→ ${data2024.optimizedUSD.toFixed(0)}</span>
+                        <span className="text-xs text-watt-navy/60">USD</span>
+                      </div>
+                      <p className="text-xs text-green-600 mt-1 font-medium">
+                        Save ${(data2024.allInBaseUSD - data2024.optimizedUSD).toFixed(0)}/MWh ({((1 - data2024.optimizedUSD / data2024.allInBaseUSD) * 100).toFixed(0)}%)
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 12CP Savings Card */}
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-watt-bitcoin/10 to-watt-bitcoin/5 border border-watt-bitcoin/20">
+                    <p className="text-xs text-watt-bitcoin mb-1 font-medium">12CP Transmission Savings</p>
+                    <p className="text-2xl font-bold text-watt-bitcoin">${convertToUSD(TWELVE_CP_SAVINGS_CAD).toFixed(2)} <span className="text-sm font-normal text-watt-navy/60">USD/MWh</span></p>
+                    <p className="text-xs text-watt-navy/60 mt-1">Avoid 12 peaks = zero transmission</p>
+                  </div>
+                  
+                  {/* OR Revenue Card */}
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+                    <p className="text-xs text-purple-600 mb-1 font-medium">Operating Reserve Revenue</p>
+                    <p className="text-2xl font-bold text-purple-700">${convertToUSD(OPERATING_RESERVE_REVENUE_CAD).toFixed(2)} <span className="text-sm font-normal text-watt-navy/60">USD/MWh</span></p>
+                    <p className="text-xs text-purple-600 mt-1">Avg revenue from OR participation</p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 relative">
-                  <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-amber-200 text-amber-700 rounded">YTD Est.</span>
-                  <p className="text-xs text-amber-600 mb-1">2025 Savings at 95%</p>
-                  <p className="text-2xl font-bold text-amber-700">${convertToUSD(12.30).toFixed(2)} <span className="text-sm font-normal">USD/MWh</span></p>
-                  <p className="text-xs text-amber-600 mt-1">22.3% reduction</p>
-                </div>
-                <div className="p-4 rounded-lg bg-watt-navy/5 border border-watt-navy/10">
-                  <p className="text-xs text-watt-navy/60 mb-1">8-Year Avg Savings</p>
-                  <p className="text-2xl font-bold text-watt-navy">{avgSavings.toFixed(1)}%</p>
-                  <p className="text-xs text-watt-navy/60 mt-1">at 95% uptime</p>
-                </div>
-              </div>
 
-              {/* Exchange Rate Info */}
-              <div className="mt-3 flex items-center justify-end gap-1 text-xs text-watt-navy/50">
-                <Info className="w-3 h-3" />
-                <span>CAD→USD rate: {exchangeRate.rate.toFixed(4)} ({exchangeRate.source})</span>
-              </div>
-
-              {/* Info callout */}
-              <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
-                <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-blue-800 font-medium">How 95% Uptime Works</p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    By curtailing operations during the most expensive 5% of hours each month, miners avoid extreme price spikes 
-                    (often $500-1000/MWh). The calculation removes the highest-priced 438 hours per year, recalculating the annual average 
-                    on remaining hours. Combined with 12CP optimization, total savings can exceed 40%.
-                  </p>
+                {/* Exchange Rate Info */}
+                <div className="mt-3 flex items-center justify-end gap-1 text-xs text-watt-navy/50">
+                  <Info className="w-3 h-3" />
+                  <span>CAD→USD rate: {exchangeRate.rate.toFixed(4)} ({exchangeRate.source})</span>
                 </div>
-              </div>
-            </>
-          )}
+
+                {/* Info callout */}
+                <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-blue-800 font-medium">How the Cost Stack Works</p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      <strong>All-In Base:</strong> Pool energy + $11.73 CAD/MWh transmission adder (DTS rate) all consumers pay.
+                      <strong className="ml-2">12CP Savings:</strong> Avoiding the 12 monthly coincident peaks eliminates transmission charges entirely.
+                      <strong className="ml-2">5% Curtailment:</strong> Shutting down during the most expensive 5% of hours (~438h/year).
+                      <strong className="ml-2">OR Revenue:</strong> Earning ~$2.50/MWh by participating in Operating Reserves. Combined, these optimizations can reduce costs by 40-55%.
+                    </p>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {/* PRICE SPIKES VIEW - Coal Phase-Out & Analytics */}
           {activeView === 'spikes' && (
