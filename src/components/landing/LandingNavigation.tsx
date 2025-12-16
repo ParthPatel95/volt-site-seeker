@@ -1,14 +1,8 @@
 
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bitcoin, ChevronDown, BookOpen, Server, Zap, Droplets } from 'lucide-react';
+import { Bitcoin, GraduationCap } from 'lucide-react';
 import { EnhancedLogo } from '../EnhancedLogo';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 export const LandingNavigation = () => {
   const navigate = useNavigate();
@@ -28,48 +22,15 @@ export const LandingNavigation = () => {
       </Link>
       
       <div className="flex items-center space-x-2 flex-shrink-0">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1"
-            >
-              Learn
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg">
-            <DropdownMenuItem 
-              onClick={() => navigate('/bitcoin')}
-              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
-            >
-              <BookOpen className="h-4 w-4" />
-              Bitcoin 101
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => navigate('/aeso-101')}
-              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
-            >
-              <Zap className="h-4 w-4" />
-              AESO 101
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => navigate('/datacenters')}
-              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
-            >
-              <Server className="h-4 w-4" />
-              Datacenters 101
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => navigate('/hydro-datacenters')}
-              className="cursor-pointer flex items-center gap-2 text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5"
-            >
-              <Droplets className="h-4 w-4" />
-              Hydro Datacenters 101
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate('/academy')}
+          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+        >
+          <GraduationCap className="h-4 w-4" />
+          Academy
+        </Button>
         <Button 
           variant="ghost" 
           size="sm"
