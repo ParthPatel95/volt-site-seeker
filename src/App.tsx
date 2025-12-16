@@ -19,6 +19,7 @@ import BitcoinEducation from "./pages/BitcoinEducation";
 import DatacenterEducation from "./pages/DatacenterEducation";
 import AESOEducation from "./pages/AESOEducation";
 import HydroDatacenterEducation from "./pages/HydroDatacenterEducation";
+import Academy from "./pages/Academy";
 
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -49,6 +50,7 @@ const App = () => (
                   </Suspense>
                 } />
                 <Route path="/hosting" element={<Hosting />} />
+                <Route path="/academy" element={<Academy />} />
                 <Route path="/bitcoin" element={<BitcoinEducation />} />
                 <Route path="/datacenters" element={<DatacenterEducation />} />
                 <Route path="/aeso-101" element={<AESOEducation />} />
