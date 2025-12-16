@@ -31,7 +31,7 @@ const investors = [
       { year: '2006', event: 'Hangzhou Bay Bridge Project' },
       { year: '2011', event: 'HK-Zhuhai-Macao Bridge' },
       { year: '2015', event: 'Expanded to Africa & Middle East' },
-      { year: '2024', event: 'WattByte Investment', highlight: true },
+      { year: '2025', event: 'WattByte Investment', highlight: true },
     ],
   },
   {
@@ -63,7 +63,7 @@ const investors = [
       { year: '2003', event: 'CEO, Unichip Technology' },
       { year: '2018', event: 'CEO, OKX Exchange', highlight: true },
       { year: '2023', event: 'Managing Director, Mahant Capital' },
-      { year: '2024', event: 'Chairman, WattByte', highlight: true },
+      { year: '2025', event: 'Chairman, WattByte', highlight: true },
     ],
   },
 ];
