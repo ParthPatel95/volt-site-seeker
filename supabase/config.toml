@@ -232,3 +232,15 @@ verify_jwt = false
 
 [functions.translate-page]
 verify_jwt = false
+
+[functions.aeso-ai-predictor]
+verify_jwt = false
+
+[functions.aeso-validate-predictions]
+verify_jwt = false
+
+[functions.aeso-adaptive-retrainer]
+verify_jwt = false
+
+[functions.aeso-advanced-analytics]
+verify_jwt = false
