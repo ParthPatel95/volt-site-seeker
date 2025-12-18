@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -266,6 +266,23 @@ const curriculum: Module[] = [
       { title: "Risk Assessment Matrix", anchor: "risk-matrix" },
       { title: "Insurance & Risk Transfer", anchor: "insurance" },
       { title: "Crisis Management", anchor: "crisis" },
+    ],
+  },
+  {
+    id: "scaling-growth",
+    title: "Scaling & Growth",
+    icon: TrendingUp,
+    color: "watt-success",
+    route: "/scaling-growth",
+    lessons: [
+      { title: "Scaling Fundamentals", anchor: "scaling-intro" },
+      { title: "Capacity Planning", anchor: "capacity-planning" },
+      { title: "Site Expansion Strategies", anchor: "site-expansion" },
+      { title: "Multi-Site Strategy", anchor: "multi-site" },
+      { title: "Capital Raising", anchor: "capital-raising" },
+      { title: "Partnership Models", anchor: "partnerships" },
+      { title: "Mergers & Acquisitions", anchor: "mergers-acquisitions" },
+      { title: "Growth Resources", anchor: "scaling-cta" },
     ],
   },
 ];
