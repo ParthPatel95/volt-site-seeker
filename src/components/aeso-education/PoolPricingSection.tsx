@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Zap, Info, AlertTriangle } from 'lucide-react';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const meritOrderStack = [
   { type: 'Wind', cost: 0, capacity: 4500, color: 'bg-emerald-500' },
@@ -73,6 +75,19 @@ export const PoolPricingSection = () => {
   return (
     <section ref={sectionRef} className="py-16 md:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
+        <LearningObjectives
+          objectives={[
+            "Understand how the merit order stacks generators from lowest to highest cost",
+            "Learn why the marginal generator sets the price for ALL generators",
+            "See real-time pool price data and what drives price volatility",
+            "Know when to expect low prices (windy nights) vs high prices (summer peaks)"
+          ]}
+          estimatedTime="10 min"
+          prerequisites={[
+            { title: "What is AESO", href: "/aeso-101#what-is-aeso" }
+          ]}
+        />
+        
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/10 border border-watt-bitcoin/30 mb-4">
@@ -262,6 +277,20 @@ export const PoolPricingSection = () => {
             </div>
           </div>
         </div>
+        
+        <SectionSummary
+          takeaways={[
+            "Merit order: Wind/solar bid $0, then hydro, coal, gas, peakers — last generator needed sets price for all",
+            "Price range: -$60/MWh (oversupply) to $999/MWh (scarcity) — massive profit opportunities for flexible loads",
+            "Hot summer afternoons = $400-800/MWh spikes; windy spring nights = negative prices",
+            "Strategic curtailment during peaks + running during negative prices = major cost savings"
+          ]}
+          proTip="Negative prices mean you get PAID to consume electricity. WattByte's VoltScout forecasts these events so you can maximize mining during negative price windows."
+          nextSteps={[
+            { title: "12CP Optimization", href: "/aeso-101#twelve-cp" },
+            { title: "Rate 65", href: "/aeso-101#rate-65" }
+          ]}
+        />
       </div>
     </section>
   );

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Cpu, Zap, Gauge, DollarSign, Calendar, Award, Thermometer, TrendingUp } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const MiningHardwareShowcaseSection = () => {
   const [selectedMiner, setSelectedMiner] = useState(0);
@@ -114,6 +116,19 @@ const MiningHardwareShowcaseSection = () => {
   return (
     <section className="py-16 md:py-24 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <LearningObjectives
+          objectives={[
+            "Compare latest 2024/2025 ASIC miners: hashrate, efficiency, and pricing",
+            "Understand the hardware lifecycle from deployment to end-of-life",
+            "Calculate profitability based on hashrate, power, and electricity costs",
+            "Know when to choose air-cooled vs hydro-cooled miners"
+          ]}
+          estimatedTime="10 min"
+          prerequisites={[
+            { title: "Bitcoin Mining", href: "/bitcoin#mining" }
+          ]}
+        />
+        
         <ScrollReveal>
           <div className="text-center mb-10">
             <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
@@ -357,6 +372,20 @@ const MiningHardwareShowcaseSection = () => {
             </div>
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Latest ASICs achieve 12-17 J/TH efficiency — a 40 million X improvement from CPU mining days",
+            "Hardware lifecycle: 2-3 years at grid power, years 3-5 at stranded/cheap power only",
+            "Hydro-cooled miners offer 2x hashrate but require water infrastructure",
+            "Total cost of ownership includes: hardware, hosting, power, maintenance, and depreciation"
+          ]}
+          proTip="Don't chase the newest hardware at launch — wait 3-6 months for prices to stabilize and early bugs to be fixed. The sweet spot is often one generation behind latest."
+          nextSteps={[
+            { title: "Facility Tour", href: "/datacenter-education#facility-tour" },
+            { title: "Mining Economics", href: "/mining-economics" }
+          ]}
+        />
       </div>
     </section>
   );
