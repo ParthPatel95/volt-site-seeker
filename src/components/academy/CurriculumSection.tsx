@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,10 @@ const colorClasses = {
   "watt-success": {
     bgLight: "bg-watt-success/10",
     text: "text-watt-success",
+  },
+  "watt-coinbase": {
+    bgLight: "bg-watt-coinbase/10",
+    text: "text-watt-coinbase",
   },
 } as const;
 
@@ -118,6 +122,27 @@ const curriculum: Module[] = [
       { title: "Economics & ROI", anchor: "economics" },
       { title: "Waste Heat Recovery", anchor: "waste-heat" },
       { title: "Implementation Guide", anchor: "cta" },
+    ],
+  },
+  {
+    id: "electrical",
+    title: "Electrical Infrastructure",
+    icon: CircuitBoard,
+    color: "watt-coinbase",
+    route: "/electrical-infrastructure",
+    lessons: [
+      { title: "Electrical Fundamentals", anchor: "fundamentals" },
+      { title: "Utility Grid Connection", anchor: "grid-connection" },
+      { title: "High Voltage Transmission", anchor: "high-voltage" },
+      { title: "Power Transformers", anchor: "transformers" },
+      { title: "Medium Voltage Switchgear", anchor: "switchgear" },
+      { title: "Low Voltage Distribution", anchor: "low-voltage" },
+      { title: "Power Distribution Units", anchor: "pdus" },
+      { title: "Mining Equipment Power", anchor: "mining-power" },
+      { title: "Power Quality", anchor: "power-quality" },
+      { title: "Grounding & Bonding", anchor: "grounding" },
+      { title: "Arc Flash Safety", anchor: "arc-flash" },
+      { title: "Redundancy Architectures", anchor: "redundancy" },
     ],
   },
 ];
