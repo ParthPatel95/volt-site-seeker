@@ -22,6 +22,7 @@ import HydroDatacenterEducation from "./pages/HydroDatacenterEducation";
 import ElectricalInfrastructureEducation from "./pages/ElectricalInfrastructureEducation";
 import NoiseManagementEducation from "./pages/NoiseManagementEducation";
 import ImmersionCoolingEducation from "./pages/ImmersionCoolingEducation";
+import SiteSelectionEducation from "./pages/SiteSelectionEducation";
 import Academy from "./pages/Academy";
 
 
