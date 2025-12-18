@@ -107,53 +107,77 @@ const ElectricalInfrastructureEducation = () => {
         </section>
 
         {/* All Sections */}
-        <Suspense fallback={<SectionLoader />}>
-          <ElectricalFundamentalsSection />
-        </Suspense>
+        <div id="fundamentals">
+          <Suspense fallback={<SectionLoader />}>
+            <ElectricalFundamentalsSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <UtilityGridConnectionSection />
-        </Suspense>
+        <div id="grid-connection">
+          <Suspense fallback={<SectionLoader />}>
+            <UtilityGridConnectionSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <HighVoltageTransmissionSection />
-        </Suspense>
+        <div id="high-voltage">
+          <Suspense fallback={<SectionLoader />}>
+            <HighVoltageTransmissionSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <PowerTransformersSection />
-        </Suspense>
+        <div id="transformers">
+          <Suspense fallback={<SectionLoader />}>
+            <PowerTransformersSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <MediumVoltageSwitchgearSection />
-        </Suspense>
+        <div id="switchgear">
+          <Suspense fallback={<SectionLoader />}>
+            <MediumVoltageSwitchgearSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <LowVoltageDistributionSection />
-        </Suspense>
+        <div id="low-voltage">
+          <Suspense fallback={<SectionLoader />}>
+            <LowVoltageDistributionSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <PowerDistributionUnitsSection />
-        </Suspense>
+        <div id="pdus">
+          <Suspense fallback={<SectionLoader />}>
+            <PowerDistributionUnitsSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <MiningEquipmentPowerSection />
-        </Suspense>
+        <div id="mining-power">
+          <Suspense fallback={<SectionLoader />}>
+            <MiningEquipmentPowerSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <PowerQualitySection />
-        </Suspense>
+        <div id="power-quality">
+          <Suspense fallback={<SectionLoader />}>
+            <PowerQualitySection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <GroundingBondingSection />
-        </Suspense>
+        <div id="grounding">
+          <Suspense fallback={<SectionLoader />}>
+            <GroundingBondingSection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <ArcFlashSafetySection />
-        </Suspense>
+        <div id="arc-flash">
+          <Suspense fallback={<SectionLoader />}>
+            <ArcFlashSafetySection />
+          </Suspense>
+        </div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <RedundancyArchitecturesSection />
-        </Suspense>
+        <div id="redundancy">
+          <Suspense fallback={<SectionLoader />}>
+            <RedundancyArchitecturesSection />
+          </Suspense>
+        </div>
       </main>
       
       <LandingFooter />
