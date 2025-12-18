@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2 } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,10 @@ const colorClasses = {
   "watt-coinbase": {
     bgLight: "bg-watt-coinbase/10",
     text: "text-watt-coinbase",
+  },
+  "watt-purple": {
+    bgLight: "bg-purple-500/10",
+    text: "text-purple-500",
   },
 } as const;
 
@@ -143,6 +147,25 @@ const curriculum: Module[] = [
       { title: "Grounding & Bonding", anchor: "grounding" },
       { title: "Arc Flash Safety", anchor: "arc-flash" },
       { title: "Redundancy Architectures", anchor: "redundancy" },
+    ],
+  },
+  {
+    id: "noise",
+    title: "Noise Management",
+    icon: Volume2,
+    color: "watt-purple",
+    route: "/noise-management",
+    lessons: [
+      { title: "Sound Fundamentals", anchor: "fundamentals" },
+      { title: "Mining Noise Sources", anchor: "noise-sources" },
+      { title: "Cumulative Noise Calculations", anchor: "cumulative" },
+      { title: "Regulatory Standards", anchor: "standards" },
+      { title: "Distance Attenuation", anchor: "distance" },
+      { title: "Mitigation Techniques", anchor: "mitigation" },
+      { title: "Site Layout Optimization", anchor: "site-layout" },
+      { title: "Monitoring & Measurement", anchor: "monitoring" },
+      { title: "Environmental Impact", anchor: "environmental" },
+      { title: "45MW Alberta Case Study", anchor: "case-study" },
     ],
   },
 ];
