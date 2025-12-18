@@ -78,6 +78,11 @@ export const LandingFooter = () => {
                   Hydro Datacenters 101
                 </Link>
               </li>
+              <li>
+                <Link to="/electrical-infrastructure" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Electrical Infrastructure 101
+                </Link>
+              </li>
             </ul>
           </div>
 
