@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -249,6 +249,23 @@ const curriculum: Module[] = [
       { title: "Team Structure & Staffing", anchor: "team" },
       { title: "Safety Protocols", anchor: "safety" },
       { title: "Documentation & Reporting", anchor: "documentation" },
+    ],
+  },
+  {
+    id: "risk-management",
+    title: "Risk Management",
+    icon: ShieldAlert,
+    color: "watt-bitcoin",
+    route: "/risk-management",
+    lessons: [
+      { title: "Risk Fundamentals", anchor: "intro" },
+      { title: "Market Risk Analysis", anchor: "market-risk" },
+      { title: "Operational Risk", anchor: "operational-risk" },
+      { title: "Regulatory & Compliance", anchor: "regulatory-risk" },
+      { title: "Financial Risk", anchor: "financial-risk" },
+      { title: "Risk Assessment Matrix", anchor: "risk-matrix" },
+      { title: "Insurance & Risk Transfer", anchor: "insurance" },
+      { title: "Crisis Management", anchor: "crisis" },
     ],
   },
 ];
