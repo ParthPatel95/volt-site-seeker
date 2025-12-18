@@ -6,6 +6,8 @@ import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
+import { ProgressTracker, Section } from '@/components/academy/ProgressTracker';
+import { useProgressTracking } from '@/hooks/useProgressTracking';
 import { ArrowUp } from 'lucide-react';
 
 // Eager load hero for faster initial paint
@@ -32,17 +34,39 @@ const SectionLoader = () => (
   </div>
 );
 
+// Define sections for progress tracking
+const BITCOIN_SECTIONS: Section[] = [
+  { id: 'what-is-bitcoin', title: 'What is Bitcoin?', anchor: 'what-is-bitcoin' },
+  { id: 'history', title: 'Bitcoin History', anchor: 'history' },
+  { id: 'how-it-works', title: 'How Bitcoin Works', anchor: 'how-it-works' },
+  { id: 'wallets', title: 'Wallets & Storage', anchor: 'wallets' },
+  { id: 'mining', title: 'Bitcoin Mining', anchor: 'mining' },
+  { id: 'cooling', title: 'Datacenter Cooling', anchor: 'cooling' },
+  { id: 'pools', title: 'Mining Pools', anchor: 'pools' },
+  { id: 'sustainability', title: 'Sustainability', anchor: 'sustainability' },
+  { id: 'economics', title: 'Bitcoin Economics', anchor: 'economics' },
+  { id: 'benefits', title: 'Benefits', anchor: 'benefits' },
+  { id: 'adoption', title: 'Global Adoption', anchor: 'adoption' },
+  { id: 'future', title: 'Future Outlook', anchor: 'future' },
+];
+
 const BitcoinEducation: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const {
+    progress,
+    toggleSection,
+    resetProgress,
+  } = useProgressTracking('bitcoin-101', BITCOIN_SECTIONS.length);
 
   useEffect(() => {
     const handleScroll = () => {
       // Calculate scroll progress
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      setScrollProgress(progress);
+      const scrollProgress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      setScrollProgress(scrollProgress);
       
       // Show/hide scroll to top button
       setShowScrollTop(scrollTop > 500);
@@ -80,10 +104,32 @@ const BitcoinEducation: React.FC = () => {
       <LandingBackground />
       <LandingNavigation />
 
+      {/* Progress Tracker - Fixed on desktop, collapsible */}
+      <div className="fixed bottom-24 right-4 z-40 hidden lg:block w-72">
+        <ProgressTracker
+          moduleTitle="Bitcoin 101"
+          sections={BITCOIN_SECTIONS}
+          completedSections={progress.completedSections}
+          onToggleSection={toggleSection}
+          onReset={resetProgress}
+        />
+      </div>
+
+      {/* Mobile Progress Tracker - Bottom sheet style */}
+      <div className="fixed bottom-20 left-4 right-4 z-40 lg:hidden">
+        <ProgressTracker
+          moduleTitle="Bitcoin 101"
+          sections={BITCOIN_SECTIONS}
+          completedSections={progress.completedSections}
+          onToggleSection={toggleSection}
+          onReset={resetProgress}
+        />
+      </div>
+
       {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-4 z-40 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 ${
+        className={`fixed bottom-8 right-4 z-50 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 lg:bottom-[400px] ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
         aria-label="Scroll to top"
