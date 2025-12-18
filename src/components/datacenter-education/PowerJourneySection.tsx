@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Zap, Building2, Gauge, Server, Thermometer, Wind, ArrowRight, ChevronDown, Calculator, AlertTriangle } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import substationImage from '@/assets/datacenter-substation.jpg';
 
 const PowerJourneySection = () => {
@@ -190,6 +192,16 @@ const PowerJourneySection = () => {
   return (
     <section id="power-journey" className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <LearningObjectives
+          objectives={[
+            "Trace the complete voltage step-down chain: 138kV → 25kV → 600V → 240V → 12VDC",
+            "Understand transformer sizing, efficiency, and redundancy configurations (N, N+1, 2N)",
+            "Learn about protection systems, switchgear, and power quality requirements",
+            "Calculate transformer requirements based on your facility size"
+          ]}
+          estimatedTime="15 min"
+        />
+        
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
@@ -494,6 +506,20 @@ const PowerJourneySection = () => {
             ))}
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Power flows: 138kV transmission → 25kV substation → 600V site → 240V distribution → 12VDC miners",
+            "Transformer efficiency is 99.5%+ — losses are minimal but heat dissipation must be planned",
+            "N configuration (95% uptime) is standard for mining; 2N (99.9%) for premium hosting operations",
+            "Each 2.5 MVA transformer supports ~575 miners (2 MW IT load)"
+          ]}
+          proTip="When sizing your electrical, always plan for 15-20% spare capacity. It's far cheaper to overspec transformers upfront than to add capacity later."
+          nextSteps={[
+            { title: "Cooling Systems", href: "/datacenter-education#cooling" },
+            { title: "Grid Connection", href: "/electrical-infrastructure#grid-connection" }
+          ]}
+        />
       </div>
 
       <style>{`

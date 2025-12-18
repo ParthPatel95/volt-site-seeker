@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Building2, Zap, ArrowRight, Shield, BarChart3, Users, Globe, CheckCircle2 } from 'lucide-react';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import aesoMeritOrderImage from '@/assets/aeso-merit-order.jpg';
 
 const responsibilities = [
@@ -68,6 +70,16 @@ export const WhatIsAESOSection = () => {
   return (
     <section ref={sectionRef} className="py-16 md:py-20 bg-watt-light">
       <div className="max-w-7xl mx-auto px-6">
+        <LearningObjectives
+          objectives={[
+            "Understand AESO's role as Alberta's Independent System Operator",
+            "Learn how the single pool price market differs from other North American ISOs",
+            "Know key statistics: 12,500 MW peak demand, 260+ market participants",
+            "See how power flows from generators through transmission to end users"
+          ]}
+          estimatedTime="8 min"
+        />
+        
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
@@ -224,6 +236,20 @@ export const WhatIsAESOSection = () => {
             Statistics from AESO 2024 Annual Report & Market Participant Registry
           </span>
         </div>
+        
+        <SectionSummary
+          takeaways={[
+            "AESO operates Alberta's wholesale electricity market — North America's only fully deregulated market",
+            "Single pool price creates transparency: all generators receive the same hourly market-clearing price",
+            "Energy-only market (no capacity payments) means price volatility creates both risks and opportunities",
+            "260+ market participants trade on a 12,500 MW grid with 26,000+ km of transmission lines"
+          ]}
+          proTip="AESO's energy-only market makes strategic load management highly profitable. Unlike capacity markets where you pay for availability, here you only pay for energy consumed."
+          nextSteps={[
+            { title: "Pool Pricing", href: "/aeso-101#pool-pricing" },
+            { title: "Rate 65 Explained", href: "/aeso-101#rate-65" }
+          ]}
+        />
       </div>
     </section>
   );

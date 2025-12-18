@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Server, Zap, Wind, Shield, Gauge, Users, MapPin, CheckCircle, Droplets, Waves, Thermometer, Box, Building2, Fan, Cable, Monitor } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import warehouseAirCooled from '@/assets/warehouse-air-cooled-facility.jpg';
 import containerHydro from '@/assets/container-hydro-facility.jpg';
 import containerImmersion from '@/assets/container-immersion-facility.jpg';
@@ -379,6 +381,19 @@ const InteractiveFacilityTour = () => {
   return (
     <section id="facility-tour" className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <LearningObjectives
+          objectives={[
+            "Compare three facility types: warehouse air-cooled, container hydro, and container immersion",
+            "Understand zone layouts: substation, mining floor, cooling, control room",
+            "Learn capacity, PUE, and uptime characteristics of each architecture",
+            "Know when to choose warehouse vs modular container deployment"
+          ]}
+          estimatedTime="10 min"
+          prerequisites={[
+            { title: "Cooling Systems", href: "/datacenter-education#cooling" }
+          ]}
+        />
+        
         <ScrollReveal>
           <div className="text-center mb-8">
             <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
@@ -696,6 +711,20 @@ const InteractiveFacilityTour = () => {
             </div>
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Warehouse air-cooled: best for large permanent sites (50+ MW), lowest CAPEX, leverages free cooling",
+            "Container hydro: rapid 4-6 week deployment, 1-2 MW per container, good for phased growth",
+            "Container immersion: highest efficiency (PUE 1.02), enables overclocking, but highest complexity",
+            "Choose based on: site permanence, capital availability, timeline, and power density needs"
+          ]}
+          proTip="Container deployments can be relocated if your power contract ends. Warehouse facilities are permanent but achieve lower $/MW at scale."
+          nextSteps={[
+            { title: "AESO Energy Market", href: "/aeso-101" },
+            { title: "Electrical Infrastructure", href: "/electrical-infrastructure" }
+          ]}
+        />
       </div>
     </section>
   );

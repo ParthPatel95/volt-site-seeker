@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { PiggyBank, Calendar, Clock, DollarSign, Calculator, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const monthlyPeaks = [
   { month: 'Jan', typicalHour: '17:00-18:00', typicalTemp: '-25°C', risk: 'high' },
@@ -49,6 +51,19 @@ export const TwelveCPExplainedSection = () => {
   return (
     <section ref={sectionRef} className="py-16 md:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
+        <LearningObjectives
+          objectives={[
+            "Understand how 12CP (12 Coincident Peak) billing determines transmission costs",
+            "Learn which months and times are highest risk for peak events",
+            "Calculate potential savings from strategic peak avoidance",
+            "Know the challenge: peaks are announced retroactively, requiring predictive forecasting"
+          ]}
+          estimatedTime="8 min"
+          prerequisites={[
+            { title: "Pool Pricing", href: "/aeso-101#pool-pricing" }
+          ]}
+        />
+        
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 mb-4">
@@ -275,6 +290,20 @@ export const TwelveCPExplainedSection = () => {
             </p>
           </div>
         </div>
+        
+        <SectionSummary
+          takeaways={[
+            "12CP = your transmission costs are based on usage during the 12 monthly system peaks",
+            "Avoid peaks = massive transmission savings (up to 85% reduction)",
+            "High-risk months: Jan, Feb, Nov, Dec (cold snaps at 5-6 PM); Jun-Aug (afternoon AC demand)",
+            "Key challenge: AESO announces peaks retroactively — you need predictive forecasting"
+          ]}
+          proTip="For a 135MW facility, perfect 12CP avoidance can save $12M+ annually in transmission charges. Even 80% success rate yields significant savings."
+          nextSteps={[
+            { title: "Rate 65", href: "/aeso-101#rate-65" },
+            { title: "VoltScout Forecasting", href: "/app" }
+          ]}
+        />
       </div>
     </section>
   );

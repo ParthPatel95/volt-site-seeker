@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Wind, Droplets, Waves, Thermometer, CheckCircle, XCircle, TrendingDown, Calculator, Info } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { PUE_RANGES, DATA_DISCLAIMER } from '@/constants/mining-data';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import airCooledImage from '@/assets/datacenter-air-cooled.jpg';
 import hydroImage from '@/assets/datacenter-hydro.jpg';
 import immersionImage from '@/assets/datacenter-immersion.jpg';
@@ -137,6 +139,19 @@ const CoolingSystemsVisualSection = () => {
   return (
     <section className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <LearningObjectives
+          objectives={[
+            "Compare air, hydro (RDHX), and immersion cooling systems",
+            "Understand PUE ratings and what they mean for operating costs",
+            "Learn engineering specs: CFM requirements, temperature ranges, water flow rates",
+            "Know when to choose each cooling method based on your facility requirements"
+          ]}
+          estimatedTime="12 min"
+          prerequisites={[
+            { title: "Power Journey", href: "/datacenter-education#power-journey" }
+          ]}
+        />
+        
         <ScrollReveal>
           <div className="text-center mb-10">
             <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
@@ -451,6 +466,20 @@ const CoolingSystemsVisualSection = () => {
             </div>
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Air cooling is lowest cost (PUE 1.20-1.40) — best for cold climates like Alberta with 8,000+ free cooling hours",
+            "Hydro/RDHX enables higher density (30 kW/rack) with consistent cooling regardless of ambient temperature",
+            "Immersion achieves best efficiency (PUE 1.02-1.08) and enables +30% overclocking, but highest upfront cost",
+            "Choose based on: budget, climate, power density needs, and noise constraints"
+          ]}
+          proTip="For a 100MW facility in Alberta, air cooling can save $2-3M annually in OPEX vs immersion, while immersion saves on floor space. Run the numbers for your specific case."
+          nextSteps={[
+            { title: "Mining Hardware", href: "/datacenter-education#hardware" },
+            { title: "Facility Tour", href: "/datacenter-education#facility-tour" }
+          ]}
+        />
       </div>
     </section>
   );
