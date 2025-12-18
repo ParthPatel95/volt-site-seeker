@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
-import LandingNavigation from '@/components/landing/LandingNavigation';
-import LandingFooter from '@/components/landing/LandingFooter';
+import { LandingNavigation } from '@/components/landing/LandingNavigation';
+import { LandingFooter } from '@/components/landing/LandingFooter';
 
 // Lazy load sections for performance
 const ElectricalIntroSection = lazy(() => import('@/components/electrical/ElectricalIntroSection'));

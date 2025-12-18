@@ -1,6 +1,6 @@
 import React from 'react';
 import { Cpu, Plug, Zap, ThermometerSun } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const MiningPowerSection = () => {
   const voltageOptions = [

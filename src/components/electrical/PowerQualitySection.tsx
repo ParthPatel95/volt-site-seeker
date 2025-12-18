@@ -1,6 +1,6 @@
 import React from 'react';
 import { Activity, Waves, Gauge, Shield } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const PowerQualitySection = () => {
   const harmonicOrders = [

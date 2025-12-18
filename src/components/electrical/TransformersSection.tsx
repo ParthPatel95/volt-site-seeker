@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Zap, Thermometer, Droplets, Wind, Calculator } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const TransformersSection = () => {
   const [loadMW, setLoadMW] = useState(10);

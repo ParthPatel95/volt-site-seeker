@@ -1,6 +1,6 @@
 import React from 'react';
 import { Zap, Activity, Gauge, TrendingUp } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const ElectricalIntroSection = () => {
   const keyMetrics = [

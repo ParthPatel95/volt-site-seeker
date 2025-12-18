@@ -1,6 +1,6 @@
 import React from 'react';
 import { Anchor, Zap, CloudLightning, AlertTriangle } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const GroundingSection = () => {
   const groundingTypes = [
