@@ -83,6 +83,11 @@ export const LandingFooter = () => {
                   Electrical Infrastructure 101
                 </Link>
               </li>
+              <li>
+                <Link to="/noise-management" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Noise Management 101
+                </Link>
+              </li>
             </ul>
           </div>
 

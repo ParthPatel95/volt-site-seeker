@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Shield, Building, Fan, Volume2, Vibrate, Mountain, Gauge, Compass } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const techniques = [
   {

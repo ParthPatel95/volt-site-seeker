@@ -1,7 +1,7 @@
 import { Shield, Globe, Building, HardHat, MapPin, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const standards = [
   {

@@ -1,6 +1,6 @@
 import { Volume2, Waves, Activity, Ear } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const soundLevels = [
   { level: 0, label: "Threshold of Hearing", icon: "👂", color: "bg-watt-success/20" },
