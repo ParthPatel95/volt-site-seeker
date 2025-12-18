@@ -1,4 +1,4 @@
-import { ScrollReveal } from "@/components/ui/ScrollAnimations";
+import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, Radio, Shield, DollarSign } from "lucide-react";
 

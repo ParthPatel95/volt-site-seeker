@@ -2,7 +2,7 @@ import { LandingNavigation } from "@/components/landing/LandingNavigation";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { useEffect, lazy, Suspense } from "react";
 import { Zap, Loader2 } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/ScrollAnimations";
+import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 
 // Lazy load sections for performance
 const ElectricalFundamentalsSection = lazy(() => import("@/components/electrical-education/ElectricalFundamentalsSection"));

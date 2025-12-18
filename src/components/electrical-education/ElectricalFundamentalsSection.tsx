@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollReveal } from "@/components/ui/ScrollAnimations";
+import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
