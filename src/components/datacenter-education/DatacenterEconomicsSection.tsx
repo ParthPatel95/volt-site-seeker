@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { DollarSign, TrendingUp, Calculator, PieChart, BarChart3, ArrowRight, Zap, Building2, Wind, Users, Wrench, Shield } from 'lucide-react';
+import { DollarSign, TrendingUp, Calculator, PieChart, BarChart3, ArrowRight, Zap, Building2, Wind, Users, Wrench, Shield, Info } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import { PUE_RANGES, CURRENT_BTC_PRICE, DATA_DISCLAIMER } from '@/constants/mining-data';
 
 const DatacenterEconomicsSection = () => {
   const [facilitySize, setFacilitySize] = useState(50); // MW
@@ -62,10 +63,10 @@ const DatacenterEconomicsSection = () => {
   ];
 
   const buildCostComparison = [
-    { type: 'Warehouse (Air)', costPerMW: '$600-800K', buildTime: '12-18 mo', pue: '1.15-1.25', notes: 'Best for large scale' },
-    { type: 'Container (RDHX)', costPerMW: '$800K-1.2M', buildTime: '4-8 wks', pue: '1.20-1.40', notes: 'Fast deployment' },
-    { type: 'Immersion Container', costPerMW: '$1.2-1.8M', buildTime: '6-10 wks', pue: '1.02-1.08', notes: 'Highest efficiency' },
-    { type: 'Prefab Modular', costPerMW: '$700K-1M', buildTime: '6-10 mo', pue: '1.15-1.30', notes: 'Balanced approach' },
+    { type: 'Warehouse (Air)', costPerMW: '$600-800K', buildTime: '12-18 mo', pue: `${PUE_RANGES.AIR_COOLED.min.toFixed(2)}-${PUE_RANGES.AIR_COOLED.typical.toFixed(2)}`, notes: 'Best for large scale' },
+    { type: 'Container (RDHX)', costPerMW: '$800K-1.2M', buildTime: '4-8 wks', pue: `${PUE_RANGES.HYDRO_COOLED.typical.toFixed(2)}-${PUE_RANGES.HYDRO_COOLED.max.toFixed(2)}`, notes: 'Fast deployment' },
+    { type: 'Immersion Container', costPerMW: '$1.2-1.8M', buildTime: '6-10 wks', pue: `${PUE_RANGES.IMMERSION_SINGLE_PHASE.min.toFixed(2)}-${PUE_RANGES.IMMERSION_SINGLE_PHASE.max.toFixed(2)}`, notes: 'Highest efficiency' },
+    { type: 'Prefab Modular', costPerMW: '$700K-1M', buildTime: '6-10 mo', pue: `${PUE_RANGES.AIR_COOLED.min.toFixed(2)}-${PUE_RANGES.HYDRO_COOLED.max.toFixed(2)}`, notes: 'Balanced approach' },
   ];
 
   return (
