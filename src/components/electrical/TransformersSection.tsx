@@ -1,50 +1,25 @@
 import React, { useState } from 'react';
 import { Zap, Thermometer, Droplets, Wind, Calculator } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import CitedStatistic from '@/components/academy/CitedStatistic';
+import { TRANSFORMER_SPECS, TRANSFORMER_SIZING } from '@/constants/industry-standards';
 
 const TransformersSection = () => {
   const [loadMW, setLoadMW] = useState(10);
   const [powerFactor, setPowerFactor] = useState(0.95);
 
   const transformerTypes = [
-    {
-      type: "Oil-Filled (ONAN/ONAF)",
-      cooling: "Oil Natural/Air Natural or Forced",
-      capacity: "1-500 MVA",
-      efficiency: "99.0-99.7%",
-      lifespan: "30-40 years",
-      maintenance: "Regular oil testing, DGA",
-      pros: ["High capacity", "Excellent cooling", "Long life"],
-      cons: ["Fire risk", "Environmental containment", "Larger footprint"]
-    },
-    {
-      type: "Dry-Type (AA/AF)",
-      cooling: "Air Natural or Forced",
-      capacity: "15 kVA - 30 MVA",
-      efficiency: "97.5-99.0%",
-      lifespan: "20-30 years",
-      maintenance: "Minimal - visual inspection",
-      pros: ["Indoor installation", "No fire risk", "Lower maintenance"],
-      cons: ["Lower capacity", "Higher cost per MVA", "Noisier"]
-    },
-    {
-      type: "Cast Resin",
-      cooling: "Air (AN/AF)",
-      capacity: "50 kVA - 15 MVA",
-      efficiency: "97.0-98.5%",
-      lifespan: "25-30 years",
-      maintenance: "Minimal - vacuum cleaning",
-      pros: ["Moisture resistant", "Compact", "Indoor/outdoor"],
-      cons: ["Expensive", "Limited capacity", "Difficult repairs"]
-    }
+    TRANSFORMER_SPECS.OIL_FILLED,
+    TRANSFORMER_SPECS.DRY_TYPE,
+    TRANSFORMER_SPECS.CAST_RESIN,
   ];
 
   const sizingFactors = [
-    { factor: "Load Growth", multiplier: "1.15-1.25x", description: "Future expansion allowance" },
-    { factor: "Diversity Factor", multiplier: "0.85-0.95x", description: "Not all loads peak simultaneously" },
-    { factor: "Efficiency Derating", multiplier: "1.05x", description: "Transformer losses" },
-    { factor: "Altitude Derating", multiplier: "1% per 330ft >3300ft", description: "Reduced cooling at altitude" },
-    { factor: "Ambient Temperature", multiplier: "1.5% per °C >30°C", description: "Hot climate derating" }
+    { factor: "Load Growth", multiplier: `${TRANSFORMER_SIZING.LOAD_GROWTH_FACTOR.min}-${TRANSFORMER_SIZING.LOAD_GROWTH_FACTOR.max}x`, description: "Future expansion allowance" },
+    { factor: "Diversity Factor", multiplier: `${TRANSFORMER_SIZING.DIVERSITY_FACTOR.min}-${TRANSFORMER_SIZING.DIVERSITY_FACTOR.max}x`, description: "Not all loads peak simultaneously" },
+    { factor: "Efficiency Derating", multiplier: `${TRANSFORMER_SIZING.EFFICIENCY_DERATING}x`, description: "Transformer losses" },
+    { factor: "Altitude Derating", multiplier: `${TRANSFORMER_SIZING.ALTITUDE_DERATING_PER_330FT}% per 330ft >3300ft`, description: "Reduced cooling at altitude" },
+    { factor: "Ambient Temperature", multiplier: `${TRANSFORMER_SIZING.AMBIENT_TEMP_DERATING_PER_C}% per °C >30°C`, description: "Hot climate derating" }
   ];
 
   // Calculate transformer size
@@ -89,11 +64,27 @@ const TransformersSection = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Efficiency:</span>
-                      <div className="font-semibold text-foreground">{xfmr.efficiency}</div>
+                      <div className="font-semibold text-foreground">
+                        <CitedStatistic
+                          value={xfmr.efficiency}
+                          label={`${xfmr.type} typical efficiency range`}
+                          source="Industry Standard"
+                          size="sm"
+                          variant="success"
+                        />
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Lifespan:</span>
-                      <div className="font-semibold text-foreground">{xfmr.lifespan}</div>
+                      <div className="font-semibold text-foreground">
+                        <CitedStatistic
+                          value={xfmr.lifespan}
+                          label={`${xfmr.type} expected operational lifespan`}
+                          source="IEEE C57.91"
+                          size="sm"
+                          variant="default"
+                        />
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Maintenance:</span>
@@ -208,7 +199,16 @@ const TransformersSection = () => {
                 <Wind className="w-8 h-8 text-cyan-500 mx-auto mb-2" />
                 <div className="font-semibold text-foreground mb-1">ONAF</div>
                 <p className="text-xs text-muted-foreground">Oil Natural, Air Forced</p>
-                <p className="text-xs text-muted-foreground mt-2">+33% capacity with fans</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  +<CitedStatistic
+                    value={TRANSFORMER_SPECS.ONAF_CAPACITY_BOOST}
+                    unit="%"
+                    label="Capacity increase with ONAF cooling"
+                    source="IEEE C57.91"
+                    size="sm"
+                    variant="bitcoin"
+                  /> capacity with fans
+                </p>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -216,7 +216,16 @@ const TransformersSection = () => {
                 </div>
                 <div className="font-semibold text-foreground mb-1">OFAF</div>
                 <p className="text-xs text-muted-foreground">Oil Forced, Air Forced</p>
-                <p className="text-xs text-muted-foreground mt-2">+67% capacity, pumps + fans</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  +<CitedStatistic
+                    value={TRANSFORMER_SPECS.OFAF_CAPACITY_BOOST}
+                    unit="%"
+                    label="Capacity increase with OFAF cooling"
+                    source="IEEE C57.91"
+                    size="sm"
+                    variant="bitcoin"
+                  /> capacity, pumps + fans
+                </p>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <Thermometer className="w-8 h-8 text-orange-500 mx-auto mb-2" />
