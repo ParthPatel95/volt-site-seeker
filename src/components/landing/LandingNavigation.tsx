@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Bitcoin, GraduationCap, Menu, Home, Server, Zap, Droplets, Building2, Users, TrendingUp, CircuitBoard, Volume2 } from 'lucide-react';
+import { Bitcoin, GraduationCap, Menu, Home, Server, Zap, Droplets, Building2, Users, TrendingUp, CircuitBoard, Volume2, Waves } from 'lucide-react';
 import { EnhancedLogo } from '../EnhancedLogo';
 
 export const LandingNavigation = () => {
@@ -161,6 +161,13 @@ export const LandingNavigation = () => {
                     >
                       <Volume2 className="h-4 w-4" />
                       Noise Management 101
+                    </button>
+                    <button
+                      onClick={() => handleNavigate('/immersion-cooling')}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                    >
+                      <Waves className="h-4 w-4" />
+                      Immersion Cooling 101
                     </button>
                   </div>
                 </div>

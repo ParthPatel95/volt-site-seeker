@@ -21,6 +21,7 @@ import AESOEducation from "./pages/AESOEducation";
 import HydroDatacenterEducation from "./pages/HydroDatacenterEducation";
 import ElectricalInfrastructureEducation from "./pages/ElectricalInfrastructureEducation";
 import NoiseManagementEducation from "./pages/NoiseManagementEducation";
+import ImmersionCoolingEducation from "./pages/ImmersionCoolingEducation";
 import Academy from "./pages/Academy";
 
 
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/hydro-datacenters" element={<HydroDatacenterEducation />} />
                 <Route path="/electrical-infrastructure" element={<ElectricalInfrastructureEducation />} />
                 <Route path="/noise-management" element={<NoiseManagementEducation />} />
+                <Route path="/immersion-cooling" element={<ImmersionCoolingEducation />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}
