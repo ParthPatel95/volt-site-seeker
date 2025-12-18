@@ -1,5 +1,6 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Flame, ArrowRight, Info } from 'lucide-react';
+import ProgressiveDisclosure from '@/components/academy/ProgressiveDisclosure';
 
 const heatTransferMethods = [
   {
@@ -153,39 +154,106 @@ export default function HeatTransferSection() {
           </div>
         </ScrollReveal>
 
-        {/* Engineering Formulas */}
+        {/* Engineering Formulas with Progressive Disclosure */}
         <ScrollReveal delay={200}>
           <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Key Engineering Formulas</h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            {formulas.map((formula) => (
-              <div key={formula.name} className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="p-4 bg-muted/50 border-b border-border">
-                  <h4 className="font-semibold text-foreground">{formula.name}</h4>
-                </div>
-                <div className="p-4">
-                  <div className="bg-zinc-900 rounded-lg p-4 mb-4 text-center">
-                    <code className="text-cyan-400 text-lg font-mono">{formula.formula}</code>
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    {formula.variables.map((v) => (
-                      <div key={v.symbol} className="flex items-start gap-2 text-sm">
-                        <code className="text-cyan-500 font-mono bg-cyan-500/10 px-1.5 py-0.5 rounded">
-                          {v.symbol}
-                        </code>
-                        <span className="text-muted-foreground">{v.desc}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
-                    <div className="flex items-start gap-2">
-                      <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground">{formula.example}</p>
+          <ProgressiveDisclosure
+            basicContent={
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h4 className="font-semibold text-foreground mb-4">Heat Transfer Basics</h4>
+                <div className="space-y-4 text-muted-foreground">
+                  <p>
+                    <strong className="text-foreground">The core principle:</strong> Heat flows from hot to cold. 
+                    The bigger the temperature difference and the better the contact, the faster heat moves.
+                  </p>
+                  <p>
+                    In immersion cooling, the dielectric fluid provides excellent contact with chips, 
+                    allowing heat to transfer ~1000x more efficiently than air.
+                  </p>
+                  <div className="grid md:grid-cols-3 gap-4 mt-4">
+                    <div className="p-4 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-foreground">85°C</div>
+                      <div className="text-sm">Chip Temperature</div>
+                    </div>
+                    <div className="p-4 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-cyan-500">50°C</div>
+                      <div className="text-sm">Fluid Temperature</div>
+                    </div>
+                    <div className="p-4 bg-muted/50 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-blue-500">35°C</div>
+                      <div className="text-sm">Ambient Air</div>
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            }
+            intermediateContent={
+              <div className="space-y-6">
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <h4 className="font-semibold text-foreground mb-4">Practical Calculations</h4>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h5 className="text-sm font-medium text-foreground mb-2">Flow Rate Sizing</h5>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        For a tank with 10 S21 miners (35 kW total), with 10°C temperature rise:
+                      </p>
+                      <div className="bg-zinc-900 rounded-lg p-3 text-center">
+                        <code className="text-cyan-400 text-sm">Flow = 35,000W ÷ (2000 × 10) = 1.75 kg/s</code>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">≈ 6.3 m³/hr or 28 GPM pump capacity</p>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-medium text-foreground mb-2">Heat Exchanger Sizing</h5>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        For 35 kW with U=500 W/m²·K and LMTD=15°C:
+                      </p>
+                      <div className="bg-zinc-900 rounded-lg p-3 text-center">
+                        <code className="text-cyan-400 text-sm">Area = 35,000 ÷ (500 × 15) = 4.7 m²</code>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">Add 20% safety margin → 5.6 m² exchanger</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            expertContent={
+              <div className="grid md:grid-cols-3 gap-6">
+                {formulas.map((formula) => (
+                  <div key={formula.name} className="bg-card border border-border rounded-xl overflow-hidden">
+                    <div className="p-4 bg-muted/50 border-b border-border">
+                      <h4 className="font-semibold text-foreground">{formula.name}</h4>
+                    </div>
+                    <div className="p-4">
+                      <div className="bg-zinc-900 rounded-lg p-4 mb-4 text-center">
+                        <code className="text-cyan-400 text-lg font-mono">{formula.formula}</code>
+                      </div>
+                      <div className="space-y-2 mb-4">
+                        {formula.variables.map((v) => (
+                          <div key={v.symbol} className="flex items-start gap-2 text-sm">
+                            <code className="text-cyan-500 font-mono bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                              {v.symbol}
+                            </code>
+                            <span className="text-muted-foreground">{v.desc}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-muted-foreground">{formula.example}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }
+            labels={{
+              basic: 'Conceptual',
+              intermediate: 'Practical Examples',
+              expert: 'Full Engineering'
+            }}
+          />
         </ScrollReveal>
 
         {/* Fluid Properties Reference */}

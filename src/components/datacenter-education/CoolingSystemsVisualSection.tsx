@@ -4,6 +4,8 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { PUE_RANGES, DATA_DISCLAIMER } from '@/constants/mining-data';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+import DecisionCard from '@/components/academy/DecisionCard';
+import CaseStudy from '@/components/academy/CaseStudy';
 import airCooledImage from '@/assets/datacenter-air-cooled.jpg';
 import hydroImage from '@/assets/datacenter-hydro.jpg';
 import immersionImage from '@/assets/datacenter-immersion.jpg';
@@ -464,6 +466,75 @@ const CoolingSystemsVisualSection = () => {
                 </p>
               </div>
             </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Decision Card */}
+        <ScrollReveal delay={0.45}>
+          <div className="mt-12">
+            <DecisionCard
+              title="Choose Your Cooling Method"
+              question="Answer based on your facility requirements to find the best cooling approach."
+              criteria={['Budget', 'Efficiency', 'Density', 'Simplicity', 'Climate Flexibility']}
+              options={[
+                {
+                  id: 'air',
+                  name: 'Air-Cooled',
+                  icon: Wind,
+                  description: 'Hot/cold aisle with exhaust fans. Lowest cost, proven at GW+ scale.',
+                  bestFor: 'Cold climates like Alberta, cost-focused large-scale operations',
+                  scores: { 'Budget': 5, 'Efficiency': 3, 'Density': 2, 'Simplicity': 5, 'Climate Flexibility': 2 },
+                  recommended: true
+                },
+                {
+                  id: 'hydro',
+                  name: 'Hydro (RDHX)',
+                  icon: Droplets,
+                  description: 'Rear-door heat exchangers with chilled water. Higher density, consistent performance.',
+                  bestFor: 'Medium to large facilities needing climate independence',
+                  scores: { 'Budget': 3, 'Efficiency': 4, 'Density': 4, 'Simplicity': 3, 'Climate Flexibility': 5 }
+                },
+                {
+                  id: 'immersion',
+                  name: 'Immersion',
+                  icon: Waves,
+                  description: 'Hardware submerged in dielectric fluid. Maximum efficiency and overclocking.',
+                  bestFor: 'New builds, premium hosting, hot climates, maximum efficiency',
+                  scores: { 'Budget': 1, 'Efficiency': 5, 'Density': 5, 'Simplicity': 1, 'Climate Flexibility': 5 }
+                }
+              ]}
+            />
+          </div>
+        </ScrollReveal>
+
+        {/* Case Study */}
+        <ScrollReveal delay={0.5}>
+          <div className="mt-12">
+            <CaseStudy
+              title="10 MW Air-Cooled Mining Facility"
+              location="Central Alberta, Canada"
+              date="Operational 2023"
+              capacity="10 MW IT Load"
+              metrics={[
+                { label: 'PUE Achieved', value: '1.18' },
+                { label: 'Miners', value: '2,800' },
+                { label: 'Free Cooling', value: '8,200 hrs/yr' },
+                { label: 'Annual Savings', value: '$1.2M' }
+              ]}
+              whatWorked={[
+                'Leveraged Alberta climate for 8,200+ hours of free cooling annually',
+                'Hot/cold aisle containment with 48x 72" exhaust fans delivering 3.1M CFM',
+                'Simple maintenance - staff can replace fans without specialized training',
+                'Zero water usage - no cooling towers, no makeup water costs'
+              ]}
+              lessonsLearned={[
+                'Dust management is critical - install high-quality intake filters',
+                'Winter freeze protection needed for glycol loops in -40°C conditions',
+                'Noise mitigation required for community - 500m setback from residences',
+                'Plan for 20% extra airflow capacity for future hardware upgrades'
+              ]}
+              proTip="In cold climates, air cooling often beats immersion on TCO despite lower efficiency. Run a 5-year model with your actual power rates."
+            />
           </div>
         </ScrollReveal>
         

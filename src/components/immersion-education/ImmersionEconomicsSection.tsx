@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { Calculator, DollarSign, TrendingUp, Clock, Info } from 'lucide-react';
+import { Calculator, DollarSign, TrendingUp, Clock, Info, Waves, Wind } from 'lucide-react';
 import { 
   PUE_RANGES, 
   CURRENT_BTC_PRICE, 
@@ -9,6 +9,8 @@ import {
   ASIC_SPECS,
   DATA_DISCLAIMER 
 } from '@/constants/mining-data';
+import DecisionCard from '@/components/academy/DecisionCard';
+import CaseStudy from '@/components/academy/CaseStudy';
 
 export default function ImmersionEconomicsSection() {
   const [asicCount, setAsicCount] = useState(20);
@@ -302,6 +304,75 @@ export default function ImmersionEconomicsSection() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Decision Card */}
+        <ScrollReveal delay={250}>
+          <div className="mt-12">
+            <DecisionCard
+              title="Immersion vs Air Cooling Decision"
+              question="Which cooling approach is right for your operation?"
+              criteria={['Budget', 'ROI Timeline', 'Technical Team', 'Climate', 'Density Needs']}
+              options={[
+                {
+                  id: 'air',
+                  name: 'Stay Air-Cooled',
+                  icon: Wind,
+                  description: 'Lower upfront cost, simpler maintenance, proven technology.',
+                  bestFor: 'Cold climates, budget-constrained, quick deployment needed',
+                  scores: { 'Budget': 5, 'ROI Timeline': 4, 'Technical Team': 5, 'Climate': 2, 'Density Needs': 2 }
+                },
+                {
+                  id: 'single-phase',
+                  name: 'Single-Phase Immersion',
+                  icon: Waves,
+                  description: 'Fluid stays liquid. Moderate complexity, good efficiency gains.',
+                  bestFor: 'Operators ready for immersion, balanced risk/reward',
+                  scores: { 'Budget': 3, 'ROI Timeline': 3, 'Technical Team': 3, 'Climate': 5, 'Density Needs': 4 },
+                  recommended: true
+                },
+                {
+                  id: 'two-phase',
+                  name: 'Two-Phase Immersion',
+                  icon: Waves,
+                  description: 'Fluid boils at chip. Maximum efficiency but highest complexity.',
+                  bestFor: 'Cutting-edge operations, maximum density, engineering expertise',
+                  scores: { 'Budget': 1, 'ROI Timeline': 2, 'Technical Team': 1, 'Climate': 5, 'Density Needs': 5 }
+                }
+              ]}
+            />
+          </div>
+        </ScrollReveal>
+
+        {/* Case Study */}
+        <ScrollReveal delay={300}>
+          <div className="mt-12">
+            <CaseStudy
+              title="Air-to-Immersion Retrofit Case Study"
+              location="Texas, USA"
+              date="2023 Retrofit"
+              capacity="5 MW Converted"
+              metrics={[
+                { label: 'Hashrate Increase', value: '+27%' },
+                { label: 'PUE Improvement', value: '1.35 → 1.05' },
+                { label: 'Payback Period', value: '14 months' },
+                { label: 'Noise Reduction', value: '35 dB' }
+              ]}
+              whatWorked={[
+                'Started with a 500 kW pilot before full conversion - proved ROI first',
+                'Overclocked S19 XPs from 140 TH/s to 178 TH/s (+27%) with stable temps',
+                'Eliminated AC costs entirely - dry coolers handle all heat rejection',
+                'Noise reduction enabled site expansion without community pushback'
+              ]}
+              lessonsLearned={[
+                'Tank sizing is critical - undersized tanks limit future expansion',
+                'Fluid handling training took longer than expected (3 weeks)',
+                'Hardware swaps are 4x slower - plan maintenance windows carefully',
+                'Keep 10% spare fluid inventory for top-offs and leak response'
+              ]}
+              proTip="Start with a small pilot (10-20 units) to train your team and validate ROI before committing to a full facility conversion."
+            />
           </div>
         </ScrollReveal>
       </div>
