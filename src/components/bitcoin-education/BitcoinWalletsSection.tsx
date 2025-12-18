@@ -16,6 +16,9 @@ import {
   ShieldCheck,
   ShieldAlert
 } from 'lucide-react';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+
 
 const BitcoinWalletsSection: React.FC = () => {
   const walletTypes = [
@@ -131,6 +134,19 @@ const BitcoinWalletsSection: React.FC = () => {
   return (
     <section className="py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
       <div className="max-w-6xl mx-auto">
+        <LearningObjectives
+          objectives={[
+            "Understand the difference between hot, cold, paper, and custodial wallets",
+            "Learn why 'not your keys, not your coins' is the core principle of self-custody",
+            "Know the security vs convenience trade-offs for each wallet type",
+            "Master best practices for securing your Bitcoin"
+          ]}
+          estimatedTime="8 min"
+          prerequisites={[
+            { title: "How Bitcoin Works", href: "/bitcoin#how-it-works" }
+          ]}
+        />
+        
         {/* Header */}
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -309,6 +325,20 @@ const BitcoinWalletsSection: React.FC = () => {
             </div>
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "'Not your keys, not your coins' — self-custody is the only way to truly own Bitcoin",
+            "Hardware wallets (cold storage) are the gold standard for securing large amounts",
+            "Never store your seed phrase digitally or share your private key with anyone",
+            "Match your wallet choice to your use case: hot for daily spending, cold for savings"
+          ]}
+          proTip="Consider a multi-signature setup for serious holdings — requiring 2 of 3 keys to spend adds significant protection against theft or loss of a single device."
+          nextSteps={[
+            { title: "Bitcoin Benefits", href: "/bitcoin#benefits" },
+            { title: "Global Adoption", href: "/bitcoin#adoption" }
+          ]}
+        />
       </div>
     </section>
   );

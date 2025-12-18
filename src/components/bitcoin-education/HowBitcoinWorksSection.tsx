@@ -1,6 +1,8 @@
 import React from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Send, Network, Pickaxe, Link2, Wallet, Key, Shield, ArrowRight, CheckCircle2 } from 'lucide-react';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const HowBitcoinWorksSection: React.FC = () => {
   const steps = [
@@ -60,6 +62,18 @@ const HowBitcoinWorksSection: React.FC = () => {
   return (
     <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
       <div className="max-w-6xl mx-auto">
+        <LearningObjectives
+          objectives={[
+            "Understand the 4-step transaction lifecycle: create, broadcast, mine, confirm",
+            "Learn key concepts: wallets, private/public keys, and cryptographic hashes",
+            "See how blocks are cryptographically linked to form an immutable chain"
+          ]}
+          estimatedTime="6 min"
+          prerequisites={[
+            { title: "What is Bitcoin", href: "/bitcoin#what-is-bitcoin" }
+          ]}
+        />
+        
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/20 mb-4">
@@ -139,6 +153,20 @@ const HowBitcoinWorksSection: React.FC = () => {
             ))}
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Bitcoin transactions are signed with private keys and broadcast to thousands of nodes",
+            "Miners compete to add transactions to blocks, earning rewards for securing the network",
+            "Each block is cryptographically linked to previous blocks, making the history immutable",
+            "Your wallet holds your keys — 'not your keys, not your coins'"
+          ]}
+          proTip="A transaction becomes more secure with each new block added after it. Most consider 6 confirmations (~1 hour) as highly secure for large transactions."
+          nextSteps={[
+            { title: "Bitcoin Wallets", href: "/bitcoin#wallets" },
+            { title: "Bitcoin Mining", href: "/bitcoin#mining" }
+          ]}
+        />
       </div>
     </section>
   );

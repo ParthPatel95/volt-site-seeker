@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Coins, TrendingUp, Clock, BarChart3, ArrowDown, Percent } from 'lucide-react';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+
 
 const AnimatedCounter = ({ end, duration = 2000, prefix = '', suffix = '' }: { end: number; duration?: number; prefix?: string; suffix?: string }) => {
   const [count, setCount] = useState(0);
@@ -43,6 +46,19 @@ const BitcoinEconomicsSection: React.FC = () => {
   return (
     <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
       <div className="max-w-6xl mx-auto">
+        <LearningObjectives
+          objectives={[
+            "Understand Bitcoin's fixed 21 million supply and why it matters",
+            "Learn how halving events reduce new supply every ~4 years",
+            "See historical price performance around halving cycles",
+            "Grasp the supply/demand dynamics driving Bitcoin's value"
+          ]}
+          estimatedTime="7 min"
+          prerequisites={[
+            { title: "What is Bitcoin", href: "/bitcoin#what-is-bitcoin" }
+          ]}
+        />
+        
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/20 mb-4">
@@ -216,6 +232,20 @@ const BitcoinEconomicsSection: React.FC = () => {
             </div>
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Bitcoin has a fixed supply of 21 million — approximately 19.5M already mined",
+            "Halving events cut new supply in half every ~210,000 blocks (~4 years)",
+            "Historical pattern: significant price appreciation 12-18 months post-halving",
+            "Scarcity + growing demand creates long-term value proposition"
+          ]}
+          proTip="Miners must remain profitable even as block rewards decrease. This is why efficiency ($/kWh) and advanced hardware become more critical after each halving."
+          nextSteps={[
+            { title: "Bitcoin Mining", href: "/bitcoin#mining" },
+            { title: "Mining Economics", href: "/mining-economics" }
+          ]}
+        />
       </div>
     </section>
   );
