@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2 } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,10 @@ const colorClasses = {
   "watt-purple": {
     bgLight: "bg-purple-500/10",
     text: "text-purple-500",
+  },
+  "watt-cyan": {
+    bgLight: "bg-cyan-500/10",
+    text: "text-cyan-500",
   },
 } as const;
 
@@ -166,6 +170,25 @@ const curriculum: Module[] = [
       { title: "Monitoring & Measurement", anchor: "monitoring" },
       { title: "Environmental Impact", anchor: "environmental" },
       { title: "45MW Alberta Case Study", anchor: "case-study" },
+    ],
+  },
+  {
+    id: "immersion",
+    title: "Immersion Cooling",
+    icon: Waves,
+    color: "watt-cyan",
+    route: "/immersion-cooling",
+    lessons: [
+      { title: "Introduction to Immersion", anchor: "introduction" },
+      { title: "Single vs Two-Phase Cooling", anchor: "types" },
+      { title: "Dielectric Fluid Selection", anchor: "fluids" },
+      { title: "Hardware Preparation", anchor: "hardware-prep" },
+      { title: "Tank Design & Systems", anchor: "tank-systems" },
+      { title: "Heat Transfer Engineering", anchor: "heat-transfer" },
+      { title: "Overclocking Potential", anchor: "overclocking" },
+      { title: "Economics & ROI", anchor: "economics" },
+      { title: "Container Systems (HD5)", anchor: "containers" },
+      { title: "Operations & Maintenance", anchor: "maintenance" },
     ],
   },
 ];

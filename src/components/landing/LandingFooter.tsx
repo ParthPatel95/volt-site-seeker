@@ -88,6 +88,11 @@ export const LandingFooter = () => {
                   Noise Management 101
                 </Link>
               </li>
+              <li>
+                <Link to="/immersion-cooling" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Immersion Cooling 101
+                </Link>
+              </li>
             </ul>
           </div>
 
