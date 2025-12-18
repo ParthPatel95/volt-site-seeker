@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -232,6 +232,23 @@ const curriculum: Module[] = [
       { title: "Hardware ROI", anchor: "hardware-roi" },
       { title: "Difficulty Adjustments", anchor: "difficulty" },
       { title: "Strategic Decisions", anchor: "strategy" },
+    ],
+  },
+  {
+    id: "operations",
+    title: "Operations & Maintenance",
+    icon: Settings,
+    color: "watt-blue",
+    route: "/operations",
+    lessons: [
+      { title: "Operations Fundamentals", anchor: "intro" },
+      { title: "Monitoring Systems", anchor: "monitoring" },
+      { title: "Preventive Maintenance", anchor: "maintenance" },
+      { title: "Troubleshooting & Diagnostics", anchor: "troubleshooting" },
+      { title: "Performance Optimization", anchor: "optimization" },
+      { title: "Team Structure & Staffing", anchor: "team" },
+      { title: "Safety Protocols", anchor: "safety" },
+      { title: "Documentation & Reporting", anchor: "documentation" },
     ],
   },
 ];
