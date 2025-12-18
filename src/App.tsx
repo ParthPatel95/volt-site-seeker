@@ -60,7 +60,8 @@ const App = () => (
                 <Route path="/hydro-datacenters" element={<HydroDatacenterEducation />} />
                 <Route path="/electrical-infrastructure" element={<ElectricalInfrastructureEducation />} />
                 <Route path="/noise-management" element={<NoiseManagementEducation />} />
-                <Route path="/immersion-cooling" element={<ImmersionCoolingEducation />} />
+            <Route path="/immersion-cooling" element={<ImmersionCoolingEducation />} />
+            <Route path="/site-selection" element={<SiteSelectionEducation />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}
