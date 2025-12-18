@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +29,10 @@ const colorClasses = {
   "watt-cyan": {
     bgLight: "bg-cyan-500/10",
     text: "text-cyan-500",
+  },
+  "watt-indigo": {
+    bgLight: "bg-indigo-500/10",
+    text: "text-indigo-500",
   },
 } as const;
 
@@ -189,6 +193,24 @@ const curriculum: Module[] = [
       { title: "Economics & ROI", anchor: "economics" },
       { title: "Container Systems (HD5)", anchor: "containers" },
       { title: "Operations & Maintenance", anchor: "maintenance" },
+    ],
+  },
+  {
+    id: "site-selection",
+    title: "Site Selection & Acquisition",
+    icon: MapPin,
+    color: "watt-indigo",
+    route: "/site-selection",
+    lessons: [
+      { title: "Site Selection Fundamentals", anchor: "intro" },
+      { title: "Power Infrastructure", anchor: "power-infrastructure" },
+      { title: "Energy Markets Analysis", anchor: "energy-markets" },
+      { title: "Regulatory Environment", anchor: "regulatory" },
+      { title: "Climate Impact Analysis", anchor: "climate" },
+      { title: "Land Acquisition Strategies", anchor: "land-acquisition" },
+      { title: "Due Diligence Process", anchor: "due-diligence" },
+      { title: "VoltScore™ Site Scoring", anchor: "site-scoring" },
+      { title: "Development Timeline", anchor: "timeline" },
     ],
   },
 ];

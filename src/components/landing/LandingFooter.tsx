@@ -93,6 +93,11 @@ export const LandingFooter = () => {
                   Immersion Cooling 101
                 </Link>
               </li>
+              <li>
+                <Link to="/site-selection" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Site Selection 101
+                </Link>
+              </li>
             </ul>
           </div>
 
