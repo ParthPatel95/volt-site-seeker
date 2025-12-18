@@ -98,6 +98,11 @@ export const LandingFooter = () => {
                   Site Selection 101
                 </Link>
               </li>
+              <li>
+                <Link to="/mining-economics" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
+                  Mining Economics 101
+                </Link>
+              </li>
             </ul>
           </div>
 

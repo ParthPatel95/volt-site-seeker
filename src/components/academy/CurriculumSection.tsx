@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +33,10 @@ const colorClasses = {
   "watt-indigo": {
     bgLight: "bg-indigo-500/10",
     text: "text-indigo-500",
+  },
+  "watt-emerald": {
+    bgLight: "bg-emerald-500/10",
+    text: "text-emerald-500",
   },
 } as const;
 
@@ -211,6 +215,23 @@ const curriculum: Module[] = [
       { title: "Due Diligence Process", anchor: "due-diligence" },
       { title: "VoltScore™ Site Scoring", anchor: "site-scoring" },
       { title: "Development Timeline", anchor: "timeline" },
+    ],
+  },
+  {
+    id: "mining-economics",
+    title: "Mining Economics",
+    icon: DollarSign,
+    color: "watt-emerald",
+    route: "/mining-economics",
+    lessons: [
+      { title: "Economics Fundamentals", anchor: "intro" },
+      { title: "Revenue Drivers", anchor: "revenue" },
+      { title: "Cost Structure Analysis", anchor: "costs" },
+      { title: "Profitability Modeling", anchor: "profitability" },
+      { title: "Break-Even Analysis", anchor: "breakeven" },
+      { title: "Hardware ROI", anchor: "hardware-roi" },
+      { title: "Difficulty Adjustments", anchor: "difficulty" },
+      { title: "Strategic Decisions", anchor: "strategy" },
     ],
   },
 ];
