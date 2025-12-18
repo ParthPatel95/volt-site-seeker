@@ -17,6 +17,7 @@ const HydroNetworkSecuritySection = lazy(() => import('@/components/hydro-educat
 const HydroConstructionSection = lazy(() => import('@/components/hydro-education/HydroConstructionSection'));
 const HydroEconomicsSection = lazy(() => import('@/components/hydro-education/HydroEconomicsSection'));
 const HydroWasteHeatSection = lazy(() => import('@/components/hydro-education/HydroWasteHeatSection'));
+const HydroNoiseManagementSection = lazy(() => import('@/components/hydro-education/HydroNoiseManagementSection'));
 const HydroCTASection = lazy(() => import('@/components/hydro-education/HydroCTASection'));
 
 const SectionLoader = () => (
@@ -108,6 +109,13 @@ const HydroDatacenterEducation = () => {
       <Suspense fallback={<SectionLoader />}>
         <div id="waste-heat">
           <HydroWasteHeatSection />
+        </div>
+      </Suspense>
+
+      {/* Section 12: Noise Management */}
+      <Suspense fallback={<SectionLoader />}>
+        <div id="noise-management">
+          <HydroNoiseManagementSection />
         </div>
       </Suspense>
       
