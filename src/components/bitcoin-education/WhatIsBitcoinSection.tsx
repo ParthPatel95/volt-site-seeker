@@ -1,6 +1,8 @@
 import React from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Bitcoin, Lock, Users, Coins, ArrowRight, Building, Gem } from 'lucide-react';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const WhatIsBitcoinSection: React.FC = () => {
   const pillars = [
@@ -60,6 +62,15 @@ const WhatIsBitcoinSection: React.FC = () => {
   return (
     <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
       <div className="max-w-6xl mx-auto">
+        <LearningObjectives
+          objectives={[
+            "Understand Bitcoin's core properties: decentralization, digital scarcity, and peer-to-peer transactions",
+            "Compare Bitcoin's characteristics against traditional assets like USD and gold",
+            "Grasp why Bitcoin's fixed supply of 21 million makes it unique"
+          ]}
+          estimatedTime="5 min"
+        />
+        
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/10 border border-watt-bitcoin/20 mb-4">
@@ -155,6 +166,20 @@ const WhatIsBitcoinSection: React.FC = () => {
             </div>
           </div>
         </ScrollReveal>
+        
+        <SectionSummary
+          takeaways={[
+            "Bitcoin is decentralized — no single entity controls the network",
+            "Only 21 million Bitcoin will ever exist, creating digital scarcity",
+            "Bitcoin combines gold's scarcity with digital money's convenience",
+            "Verification is instant and doesn't require trusted third parties"
+          ]}
+          proTip="Bitcoin's fixed supply is enforced by code, not by policy. Unlike central banks that can print more currency, Bitcoin's 21 million cap is mathematically guaranteed."
+          nextSteps={[
+            { title: "Bitcoin History", href: "/bitcoin#history" },
+            { title: "How Bitcoin Works", href: "/bitcoin#how-it-works" }
+          ]}
+        />
       </div>
     </section>
   );
