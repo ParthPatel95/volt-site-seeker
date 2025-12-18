@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Zap, Info, AlertTriangle } from 'lucide-react';
+import { DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Zap, Info, AlertTriangle, Shield, Percent, Scale } from 'lucide-react';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+import DecisionCard from '@/components/academy/DecisionCard';
+import CaseStudy from '@/components/academy/CaseStudy';
 
 const meritOrderStack = [
   { type: 'Wind', cost: 0, capacity: 4500, color: 'bg-emerald-500' },
@@ -276,6 +278,71 @@ export const PoolPricingSection = () => {
               <p className="text-sm text-watt-navy/70">Oversupply = negative prices (you get paid to consume!)</p>
             </div>
           </div>
+        </div>
+
+        {/* Power Purchasing Decision Card */}
+        <div className={`mt-12 transition-all duration-700 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <DecisionCard
+            title="Power Purchasing Strategy"
+            question="How should you manage exposure to Alberta's volatile pool prices?"
+            criteria={['Risk Tolerance', 'Cash Flow', 'Upside Potential', 'Simplicity']}
+            options={[
+              {
+                id: 'fixed-ppa',
+                name: 'Fixed PPA',
+                icon: Shield,
+                description: 'Lock in a fixed $/MWh rate for 3-10 years. Zero pool exposure.',
+                bestFor: 'Risk-averse operators, debt-financed projects, stable margins',
+                scores: { 'Risk Tolerance': 5, 'Cash Flow': 5, 'Upside Potential': 1, 'Simplicity': 5 }
+              },
+              {
+                id: 'pool-exposure',
+                name: 'Full Pool Exposure',
+                icon: Percent,
+                description: 'Buy all power at real-time pool prices. Maximum upside and risk.',
+                bestFor: 'Flexible loads that can curtail, aggressive operators',
+                scores: { 'Risk Tolerance': 1, 'Cash Flow': 2, 'Upside Potential': 5, 'Simplicity': 4 },
+                recommended: true
+              },
+              {
+                id: 'hybrid',
+                name: 'Hybrid Strategy',
+                icon: Scale,
+                description: 'Base load on PPA, flex load on pool. Balanced approach.',
+                bestFor: 'Most mining operations - hedged base with upside capture',
+                scores: { 'Risk Tolerance': 3, 'Cash Flow': 4, 'Upside Potential': 3, 'Simplicity': 2 }
+              }
+            ]}
+          />
+        </div>
+
+        {/* Case Study */}
+        <div className={`mt-12 transition-all duration-700 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <CaseStudy
+            title="Navigating the January 2024 Price Spike"
+            location="Alberta, Canada"
+            date="January 13-14, 2024"
+            capacity="25 MW Mining Operation"
+            metrics={[
+              { label: 'Peak Price', value: '$999/MWh' },
+              { label: 'Spike Duration', value: '6 hours' },
+              { label: 'Curtailment Savings', value: '$48,000' },
+              { label: 'Response Time', value: '<2 min' }
+            ]}
+            whatWorked={[
+              'Automated curtailment triggered at $150/MWh threshold',
+              'Full shutdown achieved in under 2 minutes via SCADA integration',
+              'Pre-negotiated restart protocol avoided grid penalties',
+              'Team used downtime for scheduled maintenance'
+            ]}
+            lessonsLearned={[
+              'Manual curtailment is too slow - prices can spike in minutes',
+              'Need 4-hour price forecast to anticipate events, not just react',
+              'Restart sequencing matters - staggered startup avoids inrush issues',
+              'Track curtailment savings separately to prove ROI of automation'
+            ]}
+            proTip="VoltScout\'s automated curtailment pays for itself in a single major price event. The $48K saved here covered 2+ years of the system cost."
+          />
         </div>
         
         <SectionSummary
