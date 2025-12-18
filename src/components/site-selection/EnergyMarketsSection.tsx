@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Globe, TrendingDown, TrendingUp, Minus, MapPin } from 'lucide-react';
+import CitedStatistic from '@/components/academy/CitedStatistic';
+import { ENERGY_COST_BENCHMARKS, DATA_SOURCES } from '@/constants/industry-standards';
 
 const EnergyMarketsSection = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>('north-america');
+
+  const formatRate = (range: { min: number; max: number }) => 
+    `$${range.min.toFixed(3)}-${range.max.toFixed(3)}`;
 
   const regions = {
     'north-america': {
       name: 'North America',
       markets: [
-        { location: "Alberta, Canada (AESO)", rate: "$0.025-0.045", type: "Deregulated", trend: "stable", notes: "Cold climate, Self-Retailer model" },
-        { location: "Texas (ERCOT)", rate: "$0.030-0.055", type: "Deregulated", trend: "up", notes: "No capacity market, curtailment revenue" },
+        { location: "Alberta, Canada (AESO)", rate: formatRate(ENERGY_COST_BENCHMARKS.ALBERTA), type: "Deregulated", trend: "stable", notes: "Cold climate, Self-Retailer model", source: DATA_SOURCES.AESO },
+        { location: "Texas (ERCOT)", rate: formatRate(ENERGY_COST_BENCHMARKS.TEXAS), type: "Deregulated", trend: "up", notes: "No capacity market, curtailment revenue", source: DATA_SOURCES.ERCOT },
         { location: "Upstate New York", rate: "$0.035-0.050", type: "ISO-NE", trend: "stable", notes: "Hydro availability" },
         { location: "Washington State", rate: "$0.025-0.040", type: "BPA/Utility", trend: "stable", notes: "Abundant hydro, limited capacity" },
         { location: "Kentucky/Tennessee", rate: "$0.040-0.055", type: "TVA/Utility", trend: "stable", notes: "Coal transition sites" },
@@ -20,12 +25,12 @@ const EnergyMarketsSection = () => {
     'international': {
       name: 'International',
       markets: [
-        { location: "Paraguay", rate: "$0.020-0.035", type: "Hydro", trend: "stable", notes: "Itaipu surplus, USD payments" },
-        { location: "Iceland", rate: "$0.035-0.045", type: "Geothermal", trend: "stable", notes: "100% renewable, cold climate" },
-        { location: "Norway", rate: "$0.030-0.050", type: "Hydro", trend: "up", notes: "Abundant hydro, EU interconnection" },
-        { location: "Kazakhstan", rate: "$0.025-0.040", type: "Mixed", trend: "stable", notes: "Coal/gas, regulatory risk" },
+        { location: "Paraguay", rate: formatRate(ENERGY_COST_BENCHMARKS.PARAGUAY), type: "Hydro", trend: "stable", notes: "Itaipu surplus, USD payments" },
+        { location: "Iceland", rate: formatRate(ENERGY_COST_BENCHMARKS.ICELAND), type: "Geothermal", trend: "stable", notes: "100% renewable, cold climate" },
+        { location: "Norway", rate: formatRate(ENERGY_COST_BENCHMARKS.NORWAY), type: "Hydro", trend: "up", notes: "Abundant hydro, EU interconnection" },
+        { location: "Kazakhstan", rate: formatRate(ENERGY_COST_BENCHMARKS.KAZAKHSTAN), type: "Mixed", trend: "stable", notes: "Coal/gas, regulatory risk" },
         { location: "UAE/Oman", rate: "$0.030-0.045", type: "Gas", trend: "stable", notes: "Stranded gas, hot climate" },
-        { location: "Ethiopia", rate: "$0.015-0.030", type: "Hydro", trend: "down", notes: "GERD project, political risk" }
+        { location: "Ethiopia", rate: formatRate(ENERGY_COST_BENCHMARKS.ETHIOPIA), type: "Hydro", trend: "down", notes: "GERD project, political risk" }
       ]
     }
   };
@@ -122,7 +127,21 @@ const EnergyMarketsSection = () => {
                           <span className="font-medium text-watt-navy">{market.location}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 font-bold text-watt-success">{market.rate}/kWh</td>
+                      <td className="py-3 px-4">
+                        {'source' in market ? (
+                          <CitedStatistic
+                            value={market.rate}
+                            unit="/kWh"
+                            label={`Energy rate for ${market.location}`}
+                            source={market.source.name}
+                            sourceUrl={market.source.url}
+                            variant="success"
+                            size="sm"
+                          />
+                        ) : (
+                          <span className="font-bold text-watt-success">{market.rate}/kWh</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-watt-navy">{market.type}</td>
                       <td className="py-3 px-4">{getTrendIcon(market.trend)}</td>
                       <td className="py-3 px-4 text-watt-navy/60 hidden md:table-cell">{market.notes}</td>
@@ -190,10 +209,10 @@ const EnergyMarketsSection = () => {
             <div className="grid md:grid-cols-5 gap-4">
               {[
                 { component: "Energy Charge", range: "$0.02-0.06", desc: "Wholesale or retail $/kWh" },
-                { component: "Transmission", range: "$0.005-0.015", desc: "Grid delivery charges" },
-                { component: "Distribution", range: "$0-0.02", desc: "Local utility (if applicable)" },
-                { component: "Demand Charge", range: "$5-15/kW", desc: "Peak demand fee monthly" },
-                { component: "Ancillary/Other", range: "$0.002-0.01", desc: "Reserves, admin, taxes" }
+                { component: "Transmission", range: `$${ENERGY_COST_BENCHMARKS.TRANSMISSION_TYPICAL.min.toFixed(3)}-${ENERGY_COST_BENCHMARKS.TRANSMISSION_TYPICAL.max.toFixed(3)}`, desc: "Grid delivery charges" },
+                { component: "Distribution", range: `$${ENERGY_COST_BENCHMARKS.DISTRIBUTION_TYPICAL.min.toFixed(2)}-${ENERGY_COST_BENCHMARKS.DISTRIBUTION_TYPICAL.max.toFixed(2)}`, desc: "Local utility (if applicable)" },
+                { component: "Demand Charge", range: `$${ENERGY_COST_BENCHMARKS.DEMAND_CHARGE_PER_KW.min}-${ENERGY_COST_BENCHMARKS.DEMAND_CHARGE_PER_KW.max}/kW`, desc: "Peak demand fee monthly" },
+                { component: "Ancillary/Other", range: `$${ENERGY_COST_BENCHMARKS.ANCILLARY_TYPICAL.min.toFixed(3)}-${ENERGY_COST_BENCHMARKS.ANCILLARY_TYPICAL.max.toFixed(2)}`, desc: "Reserves, admin, taxes" }
               ].map((item, idx) => (
                 <div key={idx} className="text-center p-4 bg-white/5 rounded-xl">
                   <div className="text-watt-bitcoin font-bold text-lg mb-1">{item.range}</div>

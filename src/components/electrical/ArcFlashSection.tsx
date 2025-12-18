@@ -1,38 +1,11 @@
 import React from 'react';
 import { Flame, Shield, HardHat, AlertTriangle, FileText } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import CitedStatistic from '@/components/academy/CitedStatistic';
+import { ARC_FLASH_STANDARDS, ARC_FLASH_PPE, DATA_SOURCES } from '@/constants/industry-standards';
 
 const ArcFlashSection = () => {
-  const ppeCategories = [
-    {
-      category: "1",
-      calRating: "4 cal/cm²",
-      clothing: "Arc-rated long sleeve shirt, pants",
-      ppe: "Safety glasses, hearing protection",
-      typical: "120V panelboards, 480V with covers"
-    },
-    {
-      category: "2",
-      calRating: "8 cal/cm²",
-      clothing: "Arc-rated shirt, pants, face shield",
-      ppe: "Arc-rated balaclava, hard hat, gloves",
-      typical: "480V panels, energized work"
-    },
-    {
-      category: "3",
-      calRating: "25 cal/cm²",
-      clothing: "Arc flash suit (hood, jacket, pants)",
-      ppe: "Arc-rated gloves, insulated tools",
-      typical: "MV switchgear (up to 15kV)"
-    },
-    {
-      category: "4",
-      calRating: "40 cal/cm²",
-      clothing: "Multi-layer arc flash suit",
-      ppe: "All Category 3 plus face shield",
-      typical: "MV switchgear (>15kV), HV work"
-    }
-  ];
+  const ppeCategories = Object.values(ARC_FLASH_PPE);
 
   const incidentEnergies = [
     { location: "480V MCC", distance: "18 inches", energy: "4-12 cal/cm²", typical: "1-3 sec clearing" },
@@ -78,15 +51,33 @@ const ArcFlashSection = () => {
                   <div>
                     <p className="text-sm text-muted-foreground mb-4">
                       An arc flash is an explosive release of energy caused by an electrical arc between 
-                      conductors or to ground. Temperatures can reach <span className="text-destructive font-semibold">35,000°F</span>—
-                      four times hotter than the sun's surface.
+                      conductors or to ground. Temperatures can reach{' '}
+                      <CitedStatistic
+                        value={ARC_FLASH_STANDARDS.ARC_TEMPERATURE_F.toLocaleString()}
+                        unit="°F"
+                        label="Maximum arc flash temperature"
+                        source={DATA_SOURCES.NFPA.name}
+                        sourceUrl={DATA_SOURCES.NFPA.url}
+                        variant="danger"
+                        size="sm"
+                      />
+                      —four times hotter than the sun's surface.
                     </p>
                     <h4 className="font-semibold text-foreground mb-2">Hazards Include:</h4>
                     <ul className="space-y-1 text-sm text-muted-foreground">
                       <li>• Burns from radiant heat and molten metal</li>
-                      <li>• Blast pressure (up to 2,000 lbs/ft²)</li>
+                      <li>• Blast pressure (up to{' '}
+                        <CitedStatistic
+                          value={ARC_FLASH_STANDARDS.BLAST_PRESSURE_MAX.toLocaleString()}
+                          unit="lbs/ft²"
+                          label="Maximum blast pressure from arc flash"
+                          source={DATA_SOURCES.NFPA.name}
+                          size="sm"
+                          variant="default"
+                        />)
+                      </li>
                       <li>• Shrapnel from vaporized conductors</li>
-                      <li>• Hearing damage from sound blast (140+ dB)</li>
+                      <li>• Hearing damage from sound blast ({ARC_FLASH_STANDARDS.SOUND_LEVEL_DB}+ dB)</li>
                       <li>• Vision damage from intense light</li>
                     </ul>
                   </div>
@@ -116,21 +107,29 @@ const ArcFlashSection = () => {
 
         <ScrollReveal delay={200}>
           <div className="mb-16">
-            <h3 className="text-2xl font-bold text-foreground mb-8">PPE Categories (NFPA 70E Table 130.7(C)(15))</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-8">
+              PPE Categories (NFPA 70E Table 130.7(C)(15))
+            </h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {ppeCategories.map((cat, index) => (
                 <div key={index} className="bg-card border border-border rounded-xl overflow-hidden hover:border-watt-bitcoin/50 transition-colors">
-                  <div className={`p-4 ${
-                    cat.category === "1" ? "bg-green-600" :
-                    cat.category === "2" ? "bg-amber-500" :
-                    cat.category === "3" ? "bg-orange-600" :
-                    "bg-red-600"
-                  }`}>
+                  <div className={`p-4 bg-${cat.color}`}>
                     <div className="flex items-center gap-2">
                       <HardHat className="w-5 h-5 text-white" />
-                      <span className="text-white font-bold">Category {cat.category}</span>
+                      <span className="text-white font-bold">Category {index + 1}</span>
                     </div>
-                    <div className="text-white/90 text-lg font-semibold mt-1">{cat.calRating}</div>
+                    <div className="text-white/90 text-lg font-semibold mt-1">
+                      <CitedStatistic
+                        value={cat.calRating}
+                        unit="cal/cm²"
+                        label={`PPE Category ${index + 1} minimum arc rating`}
+                        source={DATA_SOURCES.NFPA.name}
+                        sourceUrl={DATA_SOURCES.NFPA.url}
+                        size="sm"
+                        variant="default"
+                        className="text-white"
+                      />
+                    </div>
                   </div>
                   <div className="p-5">
                     <div className="space-y-3 text-sm">
@@ -213,8 +212,16 @@ const ArcFlashSection = () => {
               <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground">Inspection Requirement:</span> Arc 
-                  flash studies should be updated every 5 years or when significant changes are 
-                  made to the electrical system.
+                  flash studies should be updated every{' '}
+                  <CitedStatistic
+                    value={ARC_FLASH_STANDARDS.STUDY_UPDATE_YEARS}
+                    unit="years"
+                    label="NFPA 70E recommended arc flash study update interval"
+                    source={DATA_SOURCES.NFPA.name}
+                    size="sm"
+                    variant="bitcoin"
+                  />{' '}
+                  or when significant changes are made to the electrical system.
                 </p>
               </div>
             </div>
