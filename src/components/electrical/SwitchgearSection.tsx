@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shield, AlertTriangle, Settings, Zap } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const SwitchgearSection = () => {
   const switchgearClasses = [

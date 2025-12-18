@@ -1,6 +1,6 @@
 import React from 'react';
 import { Flame, Shield, HardHat, AlertTriangle, FileText } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const ArcFlashSection = () => {
   const ppeCategories = [

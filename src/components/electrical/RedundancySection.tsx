@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layers, RefreshCw, Battery, Zap, Check, X } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const RedundancySection = () => {
   const [selectedArch, setSelectedArch] = useState('N+1');

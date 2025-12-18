@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2, FileText, Gauge, Clock } from 'lucide-react';
-import ScrollReveal from '@/components/animations/ScrollReveal';
+import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const GridConnectionSection = () => {
   const connectionSteps = [
