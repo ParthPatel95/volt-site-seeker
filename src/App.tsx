@@ -25,6 +25,7 @@ import ImmersionCoolingEducation from "./pages/ImmersionCoolingEducation";
 import SiteSelectionEducation from "./pages/SiteSelectionEducation";
 import MiningEconomicsEducation from "./pages/MiningEconomicsEducation";
 import OperationsEducation from "./pages/OperationsEducation";
+import RiskManagementEducation from "./pages/RiskManagementEducation";
 import Academy from "./pages/Academy";
 
 
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/site-selection" element={<SiteSelectionEducation />} />
             <Route path="/mining-economics" element={<MiningEconomicsEducation />} />
             <Route path="/operations" element={<OperationsEducation />} />
+            <Route path="/risk-management" element={<RiskManagementEducation />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}
