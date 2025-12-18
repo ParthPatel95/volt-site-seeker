@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Wind, Droplets, Waves, Thermometer, CheckCircle, XCircle, TrendingDown, Calculator, Info } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { PUE_RANGES, DATA_DISCLAIMER } from '@/constants/mining-data';
 import airCooledImage from '@/assets/datacenter-air-cooled.jpg';
 import hydroImage from '@/assets/datacenter-hydro.jpg';
 import immersionImage from '@/assets/datacenter-immersion.jpg';
@@ -9,15 +10,15 @@ const CoolingSystemsVisualSection = () => {
   const [activeCooling, setActiveCooling] = useState('air');
   const [showCFMCalculator, setShowCFMCalculator] = useState(false);
 
-  // Engineering-accurate cooling system specifications
+  // Engineering-accurate cooling system specifications using centralized PUE constants
   const coolingSystems = [
     {
       id: 'air',
       name: 'Air-Cooled',
       icon: Wind,
       image: airCooledImage,
-      pue: '1.15 - 1.40',
-      pueNote: '1.15 in cold climates like Alberta',
+      pue: `${PUE_RANGES.AIR_COOLED.min.toFixed(2)} - ${PUE_RANGES.AIR_COOLED.max.toFixed(2)}`,
+      pueNote: PUE_RANGES.AIR_COOLED.notes,
       description: 'Hot/cold aisle containment with exhaust fan walls. Leverages cold outside air for free cooling 8,000+ hours/year in northern climates.',
       howItWorks: [
         { step: 'Cold air enters through intake louvers or wall openings', detail: 'Intake sized for 400 fpm max velocity' },
@@ -48,8 +49,8 @@ const CoolingSystemsVisualSection = () => {
       name: 'Hydro Cooling (RDHX)',
       icon: Droplets,
       image: hydroImage,
-      pue: '1.15 - 1.35',
-      pueNote: 'Chiller adds load; towers help',
+      pue: `${PUE_RANGES.HYDRO_COOLED.min.toFixed(2)} - ${PUE_RANGES.HYDRO_COOLED.max.toFixed(2)}`,
+      pueNote: PUE_RANGES.HYDRO_COOLED.notes,
       description: 'Rear-Door Heat Exchangers (RDHX) attached to rack backs. Chilled water captures heat directly at source, allowing higher density.',
       howItWorks: [
         { step: 'Chilled water (45°F) pumped to RDHX units', detail: '8-12 GPM per 30kW rack' },
@@ -80,8 +81,8 @@ const CoolingSystemsVisualSection = () => {
       name: 'Immersion Cooling',
       icon: Waves,
       image: immersionImage,
-      pue: '1.02 - 1.08',
-      pueNote: 'Near-perfect efficiency',
+      pue: `${PUE_RANGES.IMMERSION_SINGLE_PHASE.min.toFixed(2)} - ${PUE_RANGES.IMMERSION_SINGLE_PHASE.max.toFixed(2)}`,
+      pueNote: PUE_RANGES.IMMERSION_SINGLE_PHASE.notes,
       description: 'Mining hardware fully submerged in engineered dielectric fluid. Direct contact cooling enables maximum density and overclocking.',
       howItWorks: [
         { step: 'ASICs submerged in dielectric fluid (non-conductive)', detail: 'Fluids: BitCool, EC-110, Novec' },
@@ -103,15 +104,15 @@ const CoolingSystemsVisualSection = () => {
         dryCoilerApproach: '10-15°F above ambient',
         maxFluidTemp: '60°C before viscosity issues',
       },
-      pros: ['Highest efficiency (PUE 1.02-1.08)', 'Enables +30% overclocking', 'Silent operation', 'Extends hardware life 2-3x', 'Extreme density (100+ kW/rack)'],
+      pros: [`Highest efficiency (PUE ${PUE_RANGES.IMMERSION_SINGLE_PHASE.min.toFixed(2)}-${PUE_RANGES.IMMERSION_SINGLE_PHASE.max.toFixed(2)})`, 'Enables +30% overclocking', 'Silent operation', 'Extends hardware life 2-3x', 'Extreme density (100+ kW/rack)'],
       cons: ['High upfront cost ($500-800/kW)', 'Specialized maintenance/training', 'Fluid cost ($15-25/L)', 'Harder to retrofit', 'Slower hardware swaps'],
       bestFor: 'New builds, maximum efficiency operations, premium hosting, hot climates',
     },
   ];
 
-  // Engineering comparison data
+  // Engineering comparison data using centralized PUE constants
   const comparisonData = [
-    { metric: 'Power Usage Effectiveness (PUE)', air: '1.15-1.40', hydro: '1.15-1.35', immersion: '1.02-1.08', winner: 'immersion' },
+    { metric: 'Power Usage Effectiveness (PUE)', air: `${PUE_RANGES.AIR_COOLED.min.toFixed(2)}-${PUE_RANGES.AIR_COOLED.max.toFixed(2)}`, hydro: `${PUE_RANGES.HYDRO_COOLED.min.toFixed(2)}-${PUE_RANGES.HYDRO_COOLED.max.toFixed(2)}`, immersion: `${PUE_RANGES.IMMERSION_SINGLE_PHASE.min.toFixed(2)}-${PUE_RANGES.IMMERSION_SINGLE_PHASE.max.toFixed(2)}`, winner: 'immersion' },
     { metric: 'CapEx ($/kW IT)', air: '$50-150', hydro: '$300-500', immersion: '$500-800', winner: 'air' },
     { metric: 'Power Density (kW/rack)', air: '5-8', hydro: '20-40', immersion: '50-100+', winner: 'immersion' },
     { metric: 'Maintenance Complexity', air: 'Low', hydro: 'Medium', immersion: 'High', winner: 'air' },

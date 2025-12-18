@@ -1,23 +1,31 @@
 import { useState, useMemo } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { Calculator, DollarSign, TrendingUp, Clock } from 'lucide-react';
+import { Calculator, DollarSign, TrendingUp, Clock, Info } from 'lucide-react';
+import { 
+  PUE_RANGES, 
+  CURRENT_BTC_PRICE, 
+  NETWORK_HASHRATE_EH, 
+  BTC_PER_DAY,
+  ASIC_SPECS,
+  DATA_DISCLAIMER 
+} from '@/constants/mining-data';
 
 export default function ImmersionEconomicsSection() {
   const [asicCount, setAsicCount] = useState(20);
   const [electricityRate, setElectricityRate] = useState(0.05);
-  const [btcPrice, setBtcPrice] = useState(100000);
+  const [btcPrice, setBtcPrice] = useState(CURRENT_BTC_PRICE);
   const [fluidType, setFluidType] = useState<'mineral' | 'synthetic'>('mineral');
 
   const economics = useMemo(() => {
-    // Air-cooled baseline
-    const airHashrate = 200; // TH/s per S21
-    const airPower = 3.5; // kW per S21
-    const airPUE = 1.35;
+    // Air-cooled baseline using centralized constants
+    const airHashrate = ASIC_SPECS.S21.hashrate; // TH/s per S21
+    const airPower = ASIC_SPECS.S21.power / 1000; // kW per S21
+    const airPUE = PUE_RANGES.AIR_COOLED.typical;
     
     // Immersion with 25% OC
-    const immersionHashrate = 250;
-    const immersionPower = 4.2;
-    const immersionPUE = 1.03;
+    const immersionHashrate = Math.round(airHashrate * 1.25);
+    const immersionPower = airPower * 1.2; // Slight power increase with OC
+    const immersionPUE = PUE_RANGES.IMMERSION_SINGLE_PHASE.typical;
     
     // Costs
     const fluidCostPerLiter = fluidType === 'mineral' ? 3 : 12;
@@ -43,11 +51,11 @@ export default function ImmersionEconomicsSection() {
     const immersionDailyElectricity = immersionDailyKwh * electricityRate;
     const immersionTotalHashrate = asicCount * immersionHashrate;
     
-    // BTC mining (simplified - using rough network hashrate)
-    const networkHashrate = 750e6; // 750 EH/s
-    const btcPerDay = 450; // block rewards per day
-    const airDailyBtc = (airTotalHashrate * 1e12 / (networkHashrate * 1e18)) * btcPerDay;
-    const immersionDailyBtc = (immersionTotalHashrate * 1e12 / (networkHashrate * 1e18)) * btcPerDay;
+    // BTC mining using centralized constants
+    const networkHashrate = NETWORK_HASHRATE_EH * 1e6; // Convert EH to TH
+    const btcPerDay = BTC_PER_DAY;
+    const airDailyBtc = (airTotalHashrate / networkHashrate) * btcPerDay;
+    const immersionDailyBtc = (immersionTotalHashrate / networkHashrate) * btcPerDay;
     
     const airDailyRevenue = airDailyBtc * btcPrice;
     const immersionDailyRevenue = immersionDailyBtc * btcPrice;

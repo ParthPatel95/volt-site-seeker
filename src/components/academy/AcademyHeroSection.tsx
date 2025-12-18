@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 
 const stats = [
-  { icon: BookOpen, value: "47", label: "Lessons" },
-  { icon: Layers, value: "4", label: "Modules" },
-  { icon: Clock, value: "~4h", label: "Total Time" },
+  { icon: BookOpen, value: "118", label: "Lessons" },
+  { icon: Layers, value: "12", label: "Modules" },
+  { icon: Clock, value: "~12h", label: "Total Time" },
   { icon: GraduationCap, value: "Free", label: "Access" },
 ];
 

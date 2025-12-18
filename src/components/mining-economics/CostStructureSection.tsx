@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { Zap, Building2, Users, Wrench, Snowflake, DollarSign } from 'lucide-react';
+import { Zap, Building2, Users, Wrench, Snowflake, DollarSign, Info } from 'lucide-react';
+import { PUE_RANGES, DATA_DISCLAIMER } from '@/constants/mining-data';
 
 const CostStructureSection = () => {
   const [powerCost, setPowerCost] = useState(0.05);
@@ -222,9 +223,24 @@ const CostStructureSection = () => {
         <ScrollReveal delay={300}>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { method: "Air Cooling", pue: "1.3-1.6", overhead: "30-60%", icon: "🌀" },
-              { method: "Hydro Cooling", pue: "1.15-1.25", overhead: "15-25%", icon: "💧" },
-              { method: "Immersion", pue: "1.02-1.08", overhead: "2-8%", icon: "🔥" },
+              { 
+                method: "Air Cooling", 
+                pue: `${PUE_RANGES.AIR_COOLED.min.toFixed(2)}-${PUE_RANGES.AIR_COOLED.max.toFixed(2)}`, 
+                overhead: `${Math.round((PUE_RANGES.AIR_COOLED.min - 1) * 100)}-${Math.round((PUE_RANGES.AIR_COOLED.max - 1) * 100)}%`, 
+                icon: "🌀" 
+              },
+              { 
+                method: "Hydro Cooling", 
+                pue: `${PUE_RANGES.HYDRO_COOLED.min.toFixed(2)}-${PUE_RANGES.HYDRO_COOLED.max.toFixed(2)}`, 
+                overhead: `${Math.round((PUE_RANGES.HYDRO_COOLED.min - 1) * 100)}-${Math.round((PUE_RANGES.HYDRO_COOLED.max - 1) * 100)}%`, 
+                icon: "💧" 
+              },
+              { 
+                method: "Immersion", 
+                pue: `${PUE_RANGES.IMMERSION_SINGLE_PHASE.min.toFixed(2)}-${PUE_RANGES.IMMERSION_SINGLE_PHASE.max.toFixed(2)}`, 
+                overhead: `${Math.round((PUE_RANGES.IMMERSION_SINGLE_PHASE.min - 1) * 100)}-${Math.round((PUE_RANGES.IMMERSION_SINGLE_PHASE.max - 1) * 100)}%`, 
+                icon: "🔥" 
+              },
             ].map((cooling, idx) => (
               <div key={idx} className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6">
                 <div className="text-3xl mb-3">{cooling.icon}</div>
@@ -241,6 +257,12 @@ const CostStructureSection = () => {
                 </div>
               </div>
             ))}
+          </div>
+          
+          {/* Data Disclaimer */}
+          <div className="mt-6 flex items-start gap-2 text-xs text-watt-navy/60 bg-watt-navy/5 rounded-lg p-3">
+            <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{DATA_DISCLAIMER.short}</span>
           </div>
         </ScrollReveal>
       </div>
