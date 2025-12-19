@@ -121,7 +121,7 @@ const BitcoinEducation: React.FC = () => {
       </div>
 
       {/* Mobile Progress Tracker - Bottom sheet style */}
-      <div className="fixed bottom-20 left-4 right-4 z-40 lg:hidden">
+      <div className="fixed bottom-24 left-4 right-4 z-30 lg:hidden">
         <ProgressTracker
           moduleTitle="Bitcoin 101"
           sections={BITCOIN_SECTIONS}
@@ -134,7 +134,7 @@ const BitcoinEducation: React.FC = () => {
       {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-4 z-50 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 lg:bottom-[400px] ${
+        className={`fixed bottom-6 right-4 z-40 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 lg:bottom-[400px] ${
           showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
         aria-label="Scroll to top"
@@ -209,6 +209,16 @@ const BitcoinEducation: React.FC = () => {
               </Suspense>
             </section>
           </div>
+
+          {/* Knowledge Check after Wallets */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: Bitcoin Wallets"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets')!.questions}
+              />
+            </div>
+          )}
 
           <SectionDivider color="cyan" />
 
@@ -319,16 +329,6 @@ const BitcoinEducation: React.FC = () => {
           </div>
 
           <SectionDivider color="purple" />
-
-          {/* Knowledge Check after Wallets */}
-          {BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets') && (
-            <div className="max-w-4xl mx-auto px-4 py-8">
-              <KnowledgeCheck
-                title="Check Your Understanding: Bitcoin Wallets"
-                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets')!.questions}
-              />
-            </div>
-          )}
 
           {/* CTA Section */}
           <div id="cta">
