@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2 } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useAllModulesProgress } from "@/hooks/useProgressTracking";
 
 // Explicit color classes to avoid Tailwind purge issues
 const colorClasses = {
@@ -290,7 +291,12 @@ const curriculum: Module[] = [
 const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   const [isExpanded, setIsExpanded] = useState(index === 0);
   const navigate = useNavigate();
+  const { getModuleProgress, allProgress } = useAllModulesProgress();
   const colors = colorClasses[module.color];
+  
+  const progress = getModuleProgress(module.id, module.lessons.length);
+  const moduleProgress = allProgress[module.id];
+  const completedSections = moduleProgress?.completedSections || [];
 
   const handleLessonClick = (lesson: Lesson) => {
     if (lesson.anchor) {
@@ -301,23 +307,46 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   };
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden bg-white shadow-sm">
+    <div className={cn(
+      "border border-border rounded-xl overflow-hidden bg-white shadow-sm",
+      progress.isComplete && "ring-2 ring-green-500/20"
+    )}>
       {/* Module Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between p-5 hover:bg-muted/50 transition-colors"
+        aria-expanded={isExpanded}
+        aria-controls={`module-${module.id}-lessons`}
       >
         <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl ${colors.bgLight} flex items-center justify-center`}>
+          <div className={`w-12 h-12 rounded-xl ${colors.bgLight} flex items-center justify-center relative`}>
             <module.icon className={`w-6 h-6 ${colors.text}`} />
+            {progress.isComplete && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-3 h-3 text-white" />
+              </div>
+            )}
           </div>
           <div className="text-left">
             <h3 className="text-lg font-semibold text-watt-navy">
               Module {index + 1}: {module.title}
             </h3>
-            <p className="text-sm text-muted-foreground">
-              {module.lessons.length} lessons
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                {module.lessons.length} lessons
+              </p>
+              {progress.isStarted && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <p className={cn(
+                    "text-sm font-medium",
+                    progress.isComplete ? "text-green-600" : "text-primary"
+                  )}>
+                    {progress.percentage}% complete
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <ChevronDown 
@@ -328,26 +357,59 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
         />
       </button>
 
+      {/* Progress bar */}
+      {progress.isStarted && (
+        <div className="h-1 bg-muted -mt-1">
+          <div 
+            className={cn(
+              "h-full transition-all duration-300",
+              progress.isComplete ? "bg-green-500" : "bg-primary"
+            )}
+            style={{ width: `${progress.percentage}%` }}
+          />
+        </div>
+      )}
+
       {/* Lessons List */}
-      <div className={cn(
-        "overflow-hidden transition-all duration-300",
-        isExpanded ? "max-h-[1000px]" : "max-h-0"
-      )}>
+      <div 
+        id={`module-${module.id}-lessons`}
+        className={cn(
+          "overflow-hidden transition-all duration-300",
+          isExpanded ? "max-h-[1000px]" : "max-h-0"
+        )}
+      >
         <div className="border-t border-border">
-          {module.lessons.map((lesson, lessonIndex) => (
-            <button
-              key={lesson.title}
-              onClick={() => handleLessonClick(lesson)}
-              className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors text-left border-b border-border/50 last:border-b-0"
-            >
-              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
-                {lessonIndex + 1}
-              </div>
-              <span className="text-sm text-watt-navy/80 hover:text-watt-navy">
-                {lesson.title}
-              </span>
-            </button>
-          ))}
+          {module.lessons.map((lesson, lessonIndex) => {
+            const isCompleted = completedSections.includes(lesson.anchor || lesson.title);
+            return (
+              <button
+                key={lesson.title}
+                onClick={() => handleLessonClick(lesson)}
+                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors text-left border-b border-border/50 last:border-b-0"
+              >
+                <div className={cn(
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
+                  isCompleted 
+                    ? "bg-green-500/10 text-green-600" 
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : (
+                    lessonIndex + 1
+                  )}
+                </div>
+                <span className={cn(
+                  "text-sm transition-colors",
+                  isCompleted 
+                    ? "text-green-600 dark:text-green-400" 
+                    : "text-watt-navy/80 hover:text-watt-navy"
+                )}>
+                  {lesson.title}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -356,6 +418,13 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
 
 export const CurriculumSection = () => {
   const totalLessons = curriculum.reduce((acc, module) => acc + module.lessons.length, 0);
+  const { getModuleProgress } = useAllModulesProgress();
+  
+  // Calculate total completed lessons
+  const completedLessons = curriculum.reduce((acc, module) => {
+    const progress = getModuleProgress(module.id, module.lessons.length);
+    return acc + Math.round((progress.percentage / 100) * module.lessons.length);
+  }, 0);
 
   return (
     <section id="curriculum" className="py-20 bg-background">
@@ -364,7 +433,11 @@ export const CurriculumSection = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
               <BookOpen className="w-4 h-4" />
-              {totalLessons} Total Lessons
+              {completedLessons > 0 ? (
+                <span>{completedLessons}/{totalLessons} Lessons Completed</span>
+              ) : (
+                <span>{totalLessons} Total Lessons</span>
+              )}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
               Full Curriculum

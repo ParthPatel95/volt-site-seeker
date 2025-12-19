@@ -43,8 +43,11 @@ export const SectionComplete: React.FC<SectionCompleteProps> = ({
     )}>
       <button
         onClick={onToggle}
+        role="checkbox"
+        aria-checked={isComplete}
+        aria-label={isComplete ? `Mark ${sectionTitle} as incomplete` : `Mark ${sectionTitle} as complete`}
         className={cn(
-          'flex items-center gap-3 transition-colors',
+          'flex items-center gap-3 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg p-1',
           isComplete ? 'text-green-600 dark:text-green-400' : 'text-foreground hover:text-primary'
         )}
       >
