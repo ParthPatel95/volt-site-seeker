@@ -1,4 +1,4 @@
-import { ArrowRight, Bitcoin, Zap, MessageCircle, HelpCircle, BookOpen, Star, Users, Sparkles, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Bitcoin, Zap, HelpCircle, BookOpen, Layers, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { useNavigate } from "react-router-dom";
@@ -183,41 +183,27 @@ export const AcademyCTASection = () => {
             </div>
           </ScrollReveal>
 
-          {/* Trust Indicators - Enhanced */}
+          {/* Facts Section - Only verifiable information */}
           <ScrollReveal delay={400}>
-            <div className="border-t border-white/10 pt-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center mb-8">
-                <div>
+            <div className="border-t border-white/10 pt-8">
+              <div className="grid grid-cols-2 gap-6 max-w-md mx-auto mb-8">
+                <div className="text-center">
                   <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-3">
-                    <Users className="w-6 h-6 text-watt-bitcoin" />
+                    <Layers className="w-6 h-6 text-watt-bitcoin" />
                   </div>
-                  <p className="text-2xl font-bold text-white">5,000+</p>
-                  <p className="text-sm text-white/50">Active Learners</p>
+                  <p className="text-2xl font-bold text-white">12</p>
+                  <p className="text-sm text-white/50">Modules</p>
                 </div>
-                <div>
+                <div className="text-center">
                   <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-3">
                     <BookOpen className="w-6 h-6 text-watt-bitcoin" />
                   </div>
-                  <p className="text-2xl font-bold text-white">118</p>
+                  <p className="text-2xl font-bold text-white">107</p>
                   <p className="text-sm text-white/50">Total Lessons</p>
-                </div>
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-3">
-                    <Star className="w-6 h-6 text-watt-bitcoin" />
-                  </div>
-                  <p className="text-2xl font-bold text-white">4.9/5</p>
-                  <p className="text-sm text-white/50">Avg. Rating</p>
-                </div>
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-3">
-                    <MessageCircle className="w-6 h-6 text-watt-bitcoin" />
-                  </div>
-                  <p className="text-2xl font-bold text-white">24/7</p>
-                  <p className="text-sm text-white/50">Community Support</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-6 text-white/40 text-sm">
+              <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-white/50 text-sm">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-green-400/70" />
                   No signup required
@@ -228,11 +214,7 @@ export const AcademyCTASection = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-green-400/70" />
-                  Industry-verified content
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-green-400/70" />
-                  Updated regularly
+                  Industry-verified
                 </span>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { Bitcoin, Server, Zap, ArrowRight, Clock, BookOpen, CheckCircle2, Sparkles, Users, TrendingUp, Star } from "lucide-react";
+import { Bitcoin, Server, Zap, ArrowRight, Clock, BookOpen, CheckCircle2, Sparkles, TrendingUp, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { useNavigate } from "react-router-dom";
@@ -53,7 +53,6 @@ const learningPaths = [
     topics: ["What is Bitcoin", "How It Works", "Wallets", "Mining Basics", "Economics", "Global Adoption"],
     route: "/bitcoin",
     popular: true,
-    learners: "2.5k+",
   },
   {
     id: "mining-operations",
@@ -67,7 +66,6 @@ const learningPaths = [
     difficulty: "Intermediate",
     topics: ["Facility Design", "Cooling Systems", "Electrical Infrastructure", "Hardware", "Hydro Cooling"],
     route: "/datacenters",
-    learners: "1.8k+",
   },
   {
     id: "energy-markets",
@@ -81,7 +79,6 @@ const learningPaths = [
     difficulty: "Beginner",
     topics: ["AESO Basics", "Pool Pricing", "Rate 65", "12CP Optimization", "Grid Operations"],
     route: "/aeso-101",
-    learners: "1.2k+",
   },
 ];
 
@@ -206,12 +203,6 @@ export const LearningPathsSection = () => {
                         <Clock className="w-4 h-4" />
                         <span>{path.duration}</span>
                       </div>
-                    </div>
-
-                    {/* Learners indicator */}
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
-                      <Users className="w-3.5 h-3.5" />
-                      <span>{path.learners} learners</span>
                     </div>
 
                     {/* Progress bar (if started) */}
