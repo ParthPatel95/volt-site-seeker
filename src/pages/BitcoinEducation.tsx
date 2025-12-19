@@ -9,6 +9,11 @@ import { PageTranslationButton } from '@/components/translation/PageTranslationB
 import { ProgressTracker, Section } from '@/components/academy/ProgressTracker';
 import { useProgressTracking } from '@/hooks/useProgressTracking';
 import { ArrowUp } from 'lucide-react';
+import LastReviewed from '@/components/academy/LastReviewed';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { BITCOIN_QUIZZES } from '@/constants/quiz-data';
+import { BITCOIN_FLASHCARDS } from '@/constants/flashcard-data';
 
 // Eager load hero for faster initial paint
 import BitcoinHeroSection from '@/components/bitcoin-education/BitcoinHeroSection';
@@ -58,7 +63,7 @@ const BitcoinEducation: React.FC = () => {
     progress,
     toggleSection,
     resetProgress,
-  } = useProgressTracking('bitcoin-101', BITCOIN_SECTIONS.length);
+  } = useProgressTracking('bitcoin', BITCOIN_SECTIONS.length);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -146,6 +151,13 @@ const BitcoinEducation: React.FC = () => {
 
           <SectionDivider color="yellow" />
 
+          {/* Flashcard Deck - Study Key Terms */}
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <QuickFlashcard deck={BITCOIN_FLASHCARDS} />
+          </div>
+
+          <SectionDivider color="cyan" />
+
           {/* What is Bitcoin */}
           <div id="what-is-bitcoin">
             <section aria-label="What is Bitcoin">
@@ -154,6 +166,16 @@ const BitcoinEducation: React.FC = () => {
               </Suspense>
             </section>
           </div>
+
+          {/* Knowledge Check after What is Bitcoin */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'what-is-bitcoin') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: What is Bitcoin?"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'what-is-bitcoin')!.questions}
+              />
+            </div>
+          )}
 
           <SectionDivider color="cyan" />
 
@@ -199,6 +221,16 @@ const BitcoinEducation: React.FC = () => {
             </section>
           </div>
 
+          {/* Knowledge Check after Mining */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'mining') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: Bitcoin Mining"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'mining')!.questions}
+              />
+            </div>
+          )}
+
           <SectionDivider color="cyan" />
 
           {/* Datacenter Cooling Technologies */}
@@ -243,6 +275,16 @@ const BitcoinEducation: React.FC = () => {
             </section>
           </div>
 
+          {/* Knowledge Check after Economics */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'economics') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: Bitcoin Economics"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'economics')!.questions}
+              />
+            </div>
+          )}
+
           <SectionDivider color="purple" />
 
           {/* Bitcoin Benefits */}
@@ -278,6 +320,16 @@ const BitcoinEducation: React.FC = () => {
 
           <SectionDivider color="purple" />
 
+          {/* Knowledge Check after Wallets */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: Bitcoin Wallets"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets')!.questions}
+              />
+            </div>
+          )}
+
           {/* CTA Section */}
           <div id="cta">
             <section aria-label="Start Your Bitcoin Journey">
@@ -285,6 +337,15 @@ const BitcoinEducation: React.FC = () => {
                 <BitcoinCTASection />
               </Suspense>
             </section>
+          </div>
+
+          {/* Last Reviewed Footer */}
+          <div className="max-w-4xl mx-auto px-4 pb-8">
+            <LastReviewed
+              date="December 2024"
+              reviewer="WattByte Education Team"
+              variant="footer"
+            />
           </div>
         </main>
 
