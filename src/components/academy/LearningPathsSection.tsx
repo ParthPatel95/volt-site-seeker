@@ -1,7 +1,9 @@
-import { Bitcoin, Server, Zap, ArrowRight, Clock, BookOpen } from "lucide-react";
+import { Bitcoin, Server, Zap, ArrowRight, Clock, BookOpen, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { useNavigate } from "react-router-dom";
+import { useAllModulesProgress } from "@/hooks/useProgressTracking";
+import { cn } from "@/lib/utils";
 
 // Explicit color classes to avoid Tailwind purge issues
 const colorClasses = {
@@ -36,6 +38,7 @@ type ColorKey = keyof typeof colorClasses;
 const learningPaths = [
   {
     id: "bitcoin-fundamentals",
+    moduleId: "bitcoin",
     title: "Bitcoin Fundamentals",
     description: "Start from zero and understand Bitcoin, blockchain technology, mining economics, and the global adoption landscape.",
     icon: Bitcoin,
@@ -47,6 +50,7 @@ const learningPaths = [
   },
   {
     id: "mining-operations",
+    moduleId: "datacenters",
     title: "Mining Operations",
     description: "Deep dive into datacenter design, cooling systems, hardware specifications, and operational best practices.",
     icon: Server,
@@ -58,6 +62,7 @@ const learningPaths = [
   },
   {
     id: "energy-markets",
+    moduleId: "aeso",
     title: "Energy & Markets",
     description: "Master Alberta's energy market, AESO operations, Rate 65 advantages, and electricity cost optimization strategies.",
     icon: Zap,
@@ -71,6 +76,7 @@ const learningPaths = [
 
 export const LearningPathsSection = () => {
   const navigate = useNavigate();
+  const { getModuleProgress } = useAllModulesProgress();
 
   return (
     <section id="learning-paths" className="py-20 bg-watt-light">
@@ -90,12 +96,31 @@ export const LearningPathsSection = () => {
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {learningPaths.map((path, index) => {
             const colors = colorClasses[path.color];
+            const progress = getModuleProgress(path.moduleId, path.lessons);
+            
             return (
               <ScrollReveal key={path.id} delay={index * 100}>
                 <div 
-                  className={`relative h-full p-6 rounded-2xl bg-gradient-to-b ${colors.gradient} border ${colors.border} hover:shadow-lg transition-all duration-300 group cursor-pointer`}
+                  className={cn(
+                    "relative h-full p-6 rounded-2xl bg-gradient-to-b border hover:shadow-lg transition-all duration-300 group cursor-pointer",
+                    colors.gradient,
+                    colors.border,
+                    progress.isComplete && "ring-2 ring-green-500/30"
+                  )}
                   onClick={() => navigate(path.route)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(path.route)}
+                  aria-label={`${path.title} - ${progress.isComplete ? 'Completed' : progress.isStarted ? `${progress.percentage}% complete` : 'Not started'}`}
                 >
+                  {/* Completion badge */}
+                  {progress.isComplete && (
+                    <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-medium">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Completed
+                    </div>
+                  )}
+
                   {/* Icon */}
                   <div className={`w-14 h-14 rounded-xl ${colors.bgLight} flex items-center justify-center mb-4`}>
                     <path.icon className={`w-7 h-7 ${colors.text}`} />
@@ -119,6 +144,22 @@ export const LearningPathsSection = () => {
                     </div>
                   </div>
 
+                  {/* Progress bar (if started) */}
+                  {progress.isStarted && !progress.isComplete && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-watt-navy/60">Progress</span>
+                        <span className="font-medium text-watt-navy">{progress.percentage}%</span>
+                      </div>
+                      <div className="h-1.5 bg-watt-navy/10 rounded-full overflow-hidden">
+                        <div 
+                          className={cn("h-full rounded-full transition-all", colors.bg)}
+                          style={{ width: `${progress.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Topics Preview */}
                   <div className="flex flex-wrap gap-2 mb-6">
                     {path.topics.slice(0, 4).map((topic) => (
@@ -140,7 +181,7 @@ export const LearningPathsSection = () => {
                   <Button 
                     className={`w-full ${colors.bg} ${colors.bgHover} text-white`}
                   >
-                    Start Path
+                    {progress.isComplete ? 'Review' : progress.isStarted ? 'Continue' : 'Start Path'}
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>

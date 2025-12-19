@@ -149,19 +149,23 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
                 <button
                   key={index}
                   onClick={() => handleSelect(index)}
+                  onKeyDown={(e) => e.key === 'Enter' && !showResult && handleSelect(index)}
                   disabled={showResult}
                   className={cn(
                     'w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center justify-between',
                     optionClass,
                     !showResult && 'cursor-pointer'
                   )}
+                  role="radio"
+                  aria-checked={isSelected}
+                  aria-label={`Option ${index + 1}: ${option}`}
                 >
                   <span>{option}</span>
                   {showResult && isCorrectOption && (
-                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" aria-label="Correct answer" />
                   )}
                   {showResult && isSelected && !isCorrectOption && (
-                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" aria-label="Incorrect answer" />
                   )}
                 </button>
               );

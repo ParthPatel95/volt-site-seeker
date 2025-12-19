@@ -102,8 +102,13 @@ export const QuickFlashcard: React.FC<QuickFlashcardProps> = ({ deck, className 
             exit={{ rotateY: isFlipped ? 90 : -90, opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={handleFlip}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleFlip()}
+            tabIndex={0}
+            role="button"
+            aria-label={isFlipped ? 'Click to see term' : 'Click to reveal definition'}
+            aria-pressed={isFlipped}
             className={cn(
-              'min-h-[200px] p-6 rounded-xl cursor-pointer transition-shadow',
+              'min-h-[200px] p-6 rounded-xl cursor-pointer transition-shadow focus:outline-none focus:ring-2 focus:ring-primary',
               'flex flex-col justify-center items-center text-center',
               isFlipped
                 ? 'bg-primary/10 border-2 border-primary/30'
