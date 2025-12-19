@@ -4,8 +4,8 @@ import { AcademyHeroSection } from "@/components/academy/AcademyHeroSection";
 import { LearningPathsSection } from "@/components/academy/LearningPathsSection";
 import { CurriculumSection } from "@/components/academy/CurriculumSection";
 import { AcademyCTASection } from "@/components/academy/AcademyCTASection";
-import { ResumeLearning } from "@/components/academy/ResumeLearning";
-import { LearningStats } from "@/components/academy/LearningStats";
+import { QuickStartDashboard } from "@/components/academy/QuickStartDashboard";
+import { LearningJourneyMap } from "@/components/academy/LearningJourneyMap";
 import { useEffect } from "react";
 
 // Module info for progress tracking
@@ -36,15 +36,16 @@ const Academy = () => {
       <main>
         <AcademyHeroSection />
         
-        {/* Resume Learning and Stats Section */}
-        <section className="py-8 bg-watt-light">
-          <div className="container mx-auto px-4 space-y-6 max-w-6xl">
-            <ResumeLearning modules={academyModules} />
-            <LearningStats modules={academyModules} />
-          </div>
-        </section>
+        {/* Quick Start Dashboard for returning users */}
+        <QuickStartDashboard modules={academyModules} />
         
         <LearningPathsSection />
+        
+        {/* Learning Journey Map */}
+        <div id="journey-map">
+          <LearningJourneyMap />
+        </div>
+        
         <CurriculumSection />
         <AcademyCTASection />
       </main>
