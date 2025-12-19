@@ -85,7 +85,7 @@ export const SectionComplete: React.FC<SectionCompleteProps> = ({
       {nextSection && (
         <button
           onClick={scrollToNext}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
         >
           Next: {nextSection.title}
           <ChevronRight className="w-4 h-4" />

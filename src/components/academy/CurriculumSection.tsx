@@ -382,10 +382,10 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
           {module.lessons.map((lesson, lessonIndex) => {
             const isCompleted = completedSections.includes(lesson.anchor || lesson.title);
             return (
-              <button
+                              <button
                 key={lesson.title}
                 onClick={() => handleLessonClick(lesson)}
-                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors text-left border-b border-border/50 last:border-b-0"
+                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-b-0 group"
               >
                 <div className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
@@ -400,10 +400,10 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
                   )}
                 </div>
                 <span className={cn(
-                  "text-sm transition-colors",
+                  "text-sm font-medium transition-colors",
                   isCompleted 
                     ? "text-green-600 dark:text-green-400" 
-                    : "text-watt-navy/80 hover:text-watt-navy"
+                    : "text-foreground group-hover:text-primary"
                 )}>
                   {lesson.title}
                 </span>

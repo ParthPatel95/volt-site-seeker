@@ -82,7 +82,7 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
           
           <button
             onClick={handleReset}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             Try Again
@@ -132,17 +132,17 @@ export const KnowledgeCheck: React.FC<KnowledgeCheckProps> = ({
               const isSelected = selectedAnswer === index;
               const isCorrectOption = index === currentQuestion.correctIndex;
               
-              let optionClass = 'bg-background border-border hover:border-primary/50';
+              let optionClass = 'bg-background border-border text-foreground hover:border-primary/50 hover:bg-muted/30';
               if (showResult) {
                 if (isCorrectOption) {
                   optionClass = 'bg-green-500/10 border-green-500 text-green-700 dark:text-green-300';
                 } else if (isSelected && !isCorrectOption) {
                   optionClass = 'bg-red-500/10 border-red-500 text-red-700 dark:text-red-300';
                 } else {
-                  optionClass = 'bg-muted/50 border-border opacity-50';
+                  optionClass = 'bg-muted/50 border-border text-muted-foreground opacity-50';
                 }
               } else if (isSelected) {
-                optionClass = 'bg-primary/10 border-primary';
+                optionClass = 'bg-primary/10 border-primary text-foreground';
               }
 
               return (

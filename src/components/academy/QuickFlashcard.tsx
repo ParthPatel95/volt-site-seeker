@@ -63,7 +63,7 @@ export const QuickFlashcard: React.FC<QuickFlashcardProps> = ({ deck, className 
           <span>{masteredCards.size}/{deck.cards.length} mastered</span>
           <button
             onClick={handleShuffle}
-            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             title="Shuffle cards"
           >
             <RotateCw className="w-4 h-4" />
@@ -142,7 +142,7 @@ export const QuickFlashcard: React.FC<QuickFlashcardProps> = ({ deck, className 
       <div className="flex items-center justify-between">
         <button
           onClick={handlePrev}
-          className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-1 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted text-foreground transition-colors border border-border"
         >
           <ChevronLeft className="w-4 h-4" />
           Previous
@@ -151,10 +151,10 @@ export const QuickFlashcard: React.FC<QuickFlashcardProps> = ({ deck, className 
         <button
           onClick={toggleMastered}
           className={cn(
-            'px-4 py-2 rounded-lg font-medium transition-colors',
+            'px-4 py-2 rounded-lg font-medium transition-colors border',
             isMastered
-              ? 'bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20'
-              : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
+              ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 hover:bg-green-500/20'
+              : 'bg-primary text-white border-primary hover:bg-primary/90'
           )}
         >
           {isMastered ? '✓ Mastered' : 'Mark as Mastered'}
@@ -162,7 +162,7 @@ export const QuickFlashcard: React.FC<QuickFlashcardProps> = ({ deck, className 
 
         <button
           onClick={handleNext}
-          className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          className="flex items-center gap-1 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted text-foreground transition-colors border border-border"
         >
           Next
           <ChevronRight className="w-4 h-4" />
