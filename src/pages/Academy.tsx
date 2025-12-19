@@ -10,9 +10,9 @@ import { useEffect } from "react";
 
 // Module info for progress tracking
 const academyModules = [
-  { id: "bitcoin", title: "Bitcoin Fundamentals", route: "/bitcoin", totalSections: 13 },
+  { id: "bitcoin", title: "Bitcoin Fundamentals", route: "/bitcoin", totalSections: 12 },
   { id: "datacenters", title: "Mining Infrastructure", route: "/datacenters", totalSections: 10 },
-  { id: "aeso", title: "Alberta Energy Market", route: "/aeso-101", totalSections: 12 },
+  { id: "aeso", title: "Alberta Energy Market", route: "/aeso-101", totalSections: 10 },
   { id: "hydro", title: "Hydro Cooling Systems", route: "/hydro-datacenters", totalSections: 12 },
   { id: "electrical", title: "Electrical Infrastructure", route: "/electrical-infrastructure", totalSections: 12 },
   { id: "noise", title: "Noise Management", route: "/noise-management", totalSections: 10 },
