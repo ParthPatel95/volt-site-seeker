@@ -168,7 +168,7 @@ export const CompletionCertificate: React.FC<CompletionCertificateProps> = ({
           <div className="flex justify-center gap-4 mt-6">
             <Button
               onClick={handleDownload}
-              className="gap-2"
+              className="gap-2 bg-primary text-white hover:bg-primary/90"
               aria-label="Download certificate as PDF"
             >
               <Download className="w-4 h-4" />
@@ -177,7 +177,7 @@ export const CompletionCertificate: React.FC<CompletionCertificateProps> = ({
             <Button
               onClick={handleShare}
               variant="outline"
-              className="gap-2"
+              className="gap-2 bg-white text-foreground border-border hover:bg-muted"
               aria-label="Share certificate"
             >
               <Share2 className="w-4 h-4" />

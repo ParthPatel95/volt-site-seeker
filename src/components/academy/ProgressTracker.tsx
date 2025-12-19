@@ -161,7 +161,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
             <div className="p-3 border-t border-border flex justify-between items-center">
               <button
                 onClick={onReset}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 flex items-center gap-1 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 Reset Progress
