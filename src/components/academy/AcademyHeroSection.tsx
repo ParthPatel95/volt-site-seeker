@@ -1,15 +1,27 @@
-import { BookOpen, GraduationCap, Layers, Clock, Sparkles, Play, ChevronRight, Zap, Users } from "lucide-react";
+import { BookOpen, GraduationCap, Layers, Clock, Sparkles, Play, ChevronRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 
-const stats = [
-  { icon: BookOpen, value: "118", label: "Lessons" },
-  { icon: Layers, value: "12", label: "Modules" },
-  { icon: Clock, value: "~12h", label: "Total Time" },
-  { icon: GraduationCap, value: "Free", label: "Access" },
+// Module data with actual lesson counts
+const moduleData = [
+  { id: "bitcoin", lessons: 12 },
+  { id: "datacenters", lessons: 10 },
+  { id: "aeso", lessons: 10 },
+  { id: "hydro", lessons: 12 },
+  { id: "electrical", lessons: 12 },
+  { id: "noise", lessons: 10 },
+  { id: "immersion", lessons: 10 },
+  { id: "site-selection", lessons: 9 },
+  { id: "mining-economics", lessons: 8 },
+  { id: "operations", lessons: 8 },
+  { id: "risk-management", lessons: 8 },
+  { id: "scaling-growth", lessons: 8 },
 ];
+
+const TOTAL_LESSONS = moduleData.reduce((sum, m) => sum + m.lessons, 0);
+const TOTAL_MODULES = moduleData.length;
 
 // Animated floating particles
 const FloatingParticle = ({ delay, duration, x, y, size }: { delay: number; duration: number; x: number; y: number; size: number }) => (
@@ -33,25 +45,22 @@ const FloatingParticle = ({ delay, duration, x, y, size }: { delay: number; dura
 export const AcademyHeroSection = () => {
   const { allProgress, getModuleProgress } = useAllModulesProgress();
   
-  // Calculate personalized stats
+  // Calculate personalized stats using centralized module data
   const personalStats = useMemo(() => {
-    const moduleIds = ['bitcoin', 'datacenters', 'aeso', 'hydro', 'electrical', 'noise', 'immersion', 'site-selection', 'mining-economics', 'operations', 'risk-management', 'scaling-growth'];
-    const moduleTotals = [12, 10, 10, 12, 12, 10, 10, 9, 8, 8, 8, 8];
-    
     let started = 0;
     let completed = 0;
     let totalProgress = 0;
     let totalLessonsCompleted = 0;
     
-    moduleIds.forEach((id, index) => {
-      const progress = getModuleProgress(id, moduleTotals[index]);
+    moduleData.forEach(({ id, lessons }) => {
+      const progress = getModuleProgress(id, lessons);
       if (progress.isComplete) {
         completed++;
         started++;
-        totalLessonsCompleted += moduleTotals[index];
+        totalLessonsCompleted += lessons;
       } else if (progress.isStarted) {
         started++;
-        totalLessonsCompleted += Math.round((progress.percentage / 100) * moduleTotals[index]);
+        totalLessonsCompleted += Math.round((progress.percentage / 100) * lessons);
       }
       totalProgress += progress.percentage;
     });
@@ -59,11 +68,19 @@ export const AcademyHeroSection = () => {
     return {
       started,
       completed,
-      avgProgress: Math.round(totalProgress / moduleIds.length),
+      avgProgress: Math.round(totalProgress / moduleData.length),
       lessonsCompleted: totalLessonsCompleted,
       hasProgress: started > 0,
     };
   }, [getModuleProgress]);
+  
+  // Dynamic stats using real data
+  const stats = [
+    { icon: BookOpen, value: String(TOTAL_LESSONS), label: "Lessons" },
+    { icon: Layers, value: String(TOTAL_MODULES), label: "Modules" },
+    { icon: Clock, value: "~12h", label: "Total Time" },
+    { icon: GraduationCap, value: "Free", label: "Access" },
+  ];
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -240,21 +257,18 @@ export const AcademyHeroSection = () => {
             ))}
           </motion.div>
 
-          {/* Trust Indicators */}
+          {/* Trust Indicators - Real facts only */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="mt-12 flex items-center justify-center gap-6 text-white/40 text-sm"
+            className="mt-12 flex items-center justify-center gap-4 md:gap-6 text-white/50 text-sm flex-wrap"
           >
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>5,000+ learners</span>
-            </div>
+            <span>Industry-verified content</span>
             <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">Industry-verified content</span>
+            <span>No signup required</span>
             <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">Updated regularly</span>
+            <span>Updated regularly</span>
           </motion.div>
         </motion.div>
       </div>
