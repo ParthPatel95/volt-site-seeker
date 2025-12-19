@@ -17,6 +17,11 @@ import { PageTranslationButton } from '@/components/translation/PageTranslationB
 import { ProgressTracker, Section } from '@/components/academy/ProgressTracker';
 import { useProgressTracking } from '@/hooks/useProgressTracking';
 import { ChevronUp } from 'lucide-react';
+import LastReviewed from '@/components/academy/LastReviewed';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { AESO_QUIZZES } from '@/constants/quiz-data';
+import { AESO_FLASHCARDS } from '@/constants/flashcard-data';
 
 // Define sections for progress tracking
 const AESO_SECTIONS: Section[] = [
@@ -39,7 +44,7 @@ const AESOEducation = () => {
     progress,
     toggleSection,
     resetProgress,
-  } = useProgressTracking('aeso-101', AESO_SECTIONS.length);
+  } = useProgressTracking('aeso', AESO_SECTIONS.length);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,27 +90,77 @@ const AESOEducation = () => {
         <div id="hero">
           <AESOHeroSection />
         </div>
+
+        {/* Flashcard Deck */}
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <QuickFlashcard deck={AESO_FLASHCARDS} />
+        </div>
+
         <div id="what-is-aeso">
           <WhatIsAESOSection />
         </div>
+
+        {/* Knowledge Check after What is AESO */}
+        {AESO_QUIZZES.find(q => q.sectionId === 'what-is-aeso') && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <KnowledgeCheck
+              title="Check Your Understanding: What is AESO?"
+              questions={AESO_QUIZZES.find(q => q.sectionId === 'what-is-aeso')!.questions}
+            />
+          </div>
+        )}
+
         <div id="market-participants">
           <MarketParticipantsSection />
         </div>
         <div id="pool-pricing">
           <PoolPricingSection />
         </div>
+
+        {/* Knowledge Check after Pool Pricing */}
+        {AESO_QUIZZES.find(q => q.sectionId === 'pool-pricing') && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <KnowledgeCheck
+              title="Check Your Understanding: Pool Pricing"
+              questions={AESO_QUIZZES.find(q => q.sectionId === 'pool-pricing')!.questions}
+            />
+          </div>
+        )}
+
         <div id="price-trends">
           <AESOPriceTrendsSection />
         </div>
         <div id="twelve-cp">
           <TwelveCPExplainedSection />
         </div>
+
+        {/* Knowledge Check after 12CP */}
+        {AESO_QUIZZES.find(q => q.sectionId === 'twelve-cp') && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <KnowledgeCheck
+              title="Check Your Understanding: 12CP"
+              questions={AESO_QUIZZES.find(q => q.sectionId === 'twelve-cp')!.questions}
+            />
+          </div>
+        )}
+
         <div id="savings-programs">
           <AESOSavingsProgramsSection />
         </div>
         <div id="rate-65">
           <Rate65ExplainedSection />
         </div>
+
+        {/* Knowledge Check after Rate 65 */}
+        {AESO_QUIZZES.find(q => q.sectionId === 'rate-65') && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <KnowledgeCheck
+              title="Check Your Understanding: Rate 65"
+              questions={AESO_QUIZZES.find(q => q.sectionId === 'rate-65')!.questions}
+            />
+          </div>
+        )}
+
         <div id="grid-operations">
           <GridOperationsSection />
         </div>
@@ -117,6 +172,15 @@ const AESOEducation = () => {
         </div>
         <div id="cta">
           <AESOCTASection />
+        </div>
+
+        {/* Last Reviewed Footer */}
+        <div className="max-w-4xl mx-auto px-4 pb-8">
+          <LastReviewed
+            date="December 2024"
+            reviewer="WattByte Education Team"
+            variant="footer"
+          />
         </div>
       </main>
 
