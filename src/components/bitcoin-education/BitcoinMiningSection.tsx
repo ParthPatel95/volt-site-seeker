@@ -24,21 +24,20 @@ const BitcoinMiningSection: React.FC = () => {
   return (
     <section className="py-12 md:py-16 px-4 sm:px-6 bg-gradient-to-br from-watt-navy via-watt-navy/95 to-watt-bitcoin/20">
       <div className="max-w-6xl mx-auto">
-        <div className="[&_*]:!text-white/80 [&_.bg-gradient-to-r]:from-watt-bitcoin/20 [&_.bg-gradient-to-r]:to-watt-trust/20 [&_.border]:border-white/20 [&_h4]:!text-white">
-          <LearningObjectives
-            title="In this section, you'll learn:"
-            objectives={[
-              "How proof-of-work mining secures the Bitcoin network",
-              "The evolution of mining hardware from CPUs to modern ASICs",
-              "Mining cost breakdown — why electricity is 60% of operating costs",
-              "Why location (electricity rates, climate) is critical for profitability"
-            ]}
-            estimatedTime="8 min"
-            prerequisites={[
-              { title: "What is Bitcoin", href: "/bitcoin#what-is-bitcoin" }
-            ]}
-          />
-        </div>
+        <LearningObjectives
+          title="In this section, you'll learn:"
+          objectives={[
+            "How proof-of-work mining secures the Bitcoin network",
+            "The evolution of mining hardware from CPUs to modern ASICs",
+            "Mining cost breakdown — why electricity is 60% of operating costs",
+            "Why location (electricity rates, climate) is critical for profitability"
+          ]}
+          estimatedTime="8 min"
+          prerequisites={[
+            { title: "What is Bitcoin", href: "/bitcoin#what-is-bitcoin" }
+          ]}
+          variant="dark"
+        />
         
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -222,21 +221,20 @@ const BitcoinMiningSection: React.FC = () => {
           </div>
         </ScrollReveal>
         
-        <div className="[&_.bg-gradient-to-br]:from-watt-success/20 [&_.bg-gradient-to-br]:to-watt-blue/20 [&_.border]:border-watt-success/30 [&_h4]:!text-white [&_h5]:!text-white/70 [&_.text-watt-navy]:!text-white [&_.text-watt-navy\\/80]:!text-white/80">
-          <SectionSummary
-            takeaways={[
-              "Bitcoin mining uses proof-of-work to secure transactions and mint new coins",
-              "Hardware has evolved from CPUs (10 MH/s) to ASICs (400+ TH/s) — a 40 million X improvement",
-              "Electricity costs are ~60% of operating expenses, making location crucial",
-              "Optimal mining requires 5-8¢/kWh electricity, cold climate, and stable grid"
-            ]}
-            proTip="The most successful mining operations focus on three things: cheap power, efficient cooling, and grid reliability. WattByte's Alberta location delivers all three."
-            nextSteps={[
-              { title: "Datacenter Infrastructure", href: "/datacenter-education" },
-              { title: "AESO Energy Market", href: "/aeso-101" }
-            ]}
-          />
-        </div>
+        <SectionSummary
+          variant="dark"
+          takeaways={[
+            "Bitcoin mining uses proof-of-work to secure transactions and mint new coins",
+            "Hardware has evolved from CPUs (10 MH/s) to ASICs (400+ TH/s) — a 40 million X improvement",
+            "Electricity costs are ~60% of operating expenses, making location crucial",
+            "Optimal mining requires 5-8¢/kWh electricity, cold climate, and stable grid"
+          ]}
+          proTip="The most successful mining operations focus on three things: cheap power, efficient cooling, and grid reliability. WattByte's Alberta location delivers all three."
+          nextSteps={[
+            { title: "Datacenter Infrastructure", href: "/datacenter-education" },
+            { title: "AESO Energy Market", href: "/aeso-101" }
+          ]}
+        />
       </div>
     </section>
   );
