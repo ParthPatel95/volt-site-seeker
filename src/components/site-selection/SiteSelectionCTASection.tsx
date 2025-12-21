@@ -36,7 +36,7 @@ const SiteSelectionCTASection = () => {
                     <p className="text-xs text-white/60">Energy cost drives 60-70% of operating economics</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-4">
-                    <MapPin className="w-6 h-6 text-watt-purple mx-auto mb-2" />
+                    <MapPin className="w-6 h-6 text-white mx-auto mb-2" />
                     <div className="font-semibold">Location Matters</div>
                     <p className="text-xs text-white/60">Climate, regulations, and infrastructure all impact success</p>
                   </div>
@@ -76,7 +76,7 @@ const SiteSelectionCTASection = () => {
                     className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all group"
                   >
                     <div className="text-2xl mb-2">⚡</div>
-                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-purple transition-colors">
+                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-bitcoin transition-colors">
                       AESO Markets
                     </h4>
                     <p className="text-sm text-watt-navy/60">Deep dive into Alberta energy markets</p>
@@ -86,7 +86,7 @@ const SiteSelectionCTASection = () => {
                     className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all group"
                   >
                     <div className="text-2xl mb-2">💧</div>
-                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-purple transition-colors">
+                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-bitcoin transition-colors">
                       Immersion Cooling
                     </h4>
                     <p className="text-sm text-watt-navy/60">Advanced cooling for maximum efficiency</p>
@@ -96,7 +96,7 @@ const SiteSelectionCTASection = () => {
                     className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all group"
                   >
                     <div className="text-2xl mb-2">🏗️</div>
-                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-purple transition-colors">
+                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-bitcoin transition-colors">
                       Datacenters 101
                     </h4>
                     <p className="text-sm text-watt-navy/60">Mining infrastructure fundamentals</p>

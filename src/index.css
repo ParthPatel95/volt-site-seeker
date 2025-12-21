@@ -54,6 +54,8 @@
     --watt-navy: 220 60% 10%;             /* Deep navy for dark sections #0D1B2A */
     --watt-bitcoin: 36 94% 53%;           /* Bitcoin orange #F7931A */
     --watt-trust: 220 100% 50%;           /* Coinbase blue #0052FF */
+    --watt-coinbase: 220 100% 50%;        /* Alias for trust blue #0052FF */
+    --watt-purple: 263 70% 50%;           /* Purple accent #7C3AED */
     --watt-success: 162 100% 42%;         /* Clean green #00D395 */
     --watt-warning: 30 100% 60%;          /* Warm orange #FF9933 */
     --watt-light: 220 14% 96%;            /* Surface gray #F5F5F7 */
@@ -70,11 +72,14 @@
     --background: 220 60% 10%;            /* Deep navy */
     --foreground: 0 0% 100%;
     
+    /* WattByte Brand Colors (same in dark mode) */
+    --watt-purple: 263 70% 50%;           /* Purple accent #7C3AED */
+    --watt-coinbase: 220 100% 50%;        /* Alias for trust blue #0052FF */
+    
     /* VoltScout App Colors (same in dark mode) */
     --watt-primary: 217 91% 60%;          /* Electric Blue #3B82F6 */
     --watt-secondary: 263 70% 50%;        /* Purple #7C3AED */
     --watt-accent: 45 93% 47%;            /* Yellow/Orange #F59E0B */
-
     --card: 220 50% 12%;
     --card-foreground: 0 0% 100%;
 
@@ -127,6 +132,25 @@
   }
 }
 
+/* 
+ * WATTBYTE COLOR SYSTEM DOCUMENTATION
+ * 
+ * Primary brand colors:
+ * - watt-navy: Deep navy for dark sections
+ * - watt-bitcoin: Bitcoin orange (primary CTA color)
+ * - watt-trust and watt-coinbase: Coinbase blue (interchangeable)
+ * - watt-purple: Purple accent color
+ * - watt-success: Green for success states
+ * - watt-warning: Orange for warnings
+ *
+ * CONTRAST RULES:
+ * - ALWAYS use text-white on bg-watt colors (bitcoin, trust, purple, success, coinbase)
+ * - ALWAYS use text-white on bg-watt-navy
+ * - For badges on dark backgrounds, use opacity like bg-watt-purple/20 with text-white
+ * - Never use text-watt-navy on bg-watt-navy
+ * - Use the .btn-watt utilities for guaranteed contrast on buttons
+ */
+
 /* WattByte Institutional brand utility classes */
 @layer utilities {
   .text-watt-navy {
@@ -139,6 +163,14 @@
   
   .text-watt-trust {
     color: hsl(var(--watt-trust));
+  }
+  
+  .text-watt-coinbase {
+    color: hsl(var(--watt-coinbase));
+  }
+  
+  .text-watt-purple {
+    color: hsl(var(--watt-purple));
   }
   
   .text-watt-success {
@@ -161,6 +193,14 @@
     background-color: hsl(var(--watt-trust));
   }
   
+  .bg-watt-coinbase {
+    background-color: hsl(var(--watt-coinbase));
+  }
+  
+  .bg-watt-purple {
+    background-color: hsl(var(--watt-purple));
+  }
+  
   .bg-watt-success {
     background-color: hsl(var(--watt-success));
   }
@@ -175,6 +215,53 @@
   
   .bg-watt-surface {
     background-color: hsl(var(--watt-surface));
+  }
+  
+  /* Border utilities for brand colors */
+  .border-watt-purple {
+    border-color: hsl(var(--watt-purple));
+  }
+  
+  .border-watt-coinbase {
+    border-color: hsl(var(--watt-coinbase));
+  }
+  
+  /* Brand button utilities with GUARANTEED contrast */
+  .btn-watt-bitcoin {
+    @apply bg-watt-bitcoin text-white hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-watt-trust {
+    @apply bg-watt-trust text-white hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-watt-coinbase {
+    @apply bg-watt-coinbase text-white hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-watt-purple {
+    @apply bg-watt-purple text-white hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-watt-success {
+    @apply bg-watt-success text-white hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-watt-navy {
+    @apply bg-watt-navy text-white hover:opacity-90 transition-opacity;
+  }
+  
+  /* Text contrast utilities for dark sections */
+  .text-on-dark {
+    @apply text-white;
+  }
+  
+  .text-on-dark-muted {
+    @apply text-white/70;
+  }
+  
+  .text-on-dark-subtle {
+    @apply text-white/50;
   }
   
   .border-watt-navy {
