@@ -30,17 +30,17 @@ const ElectricalFundamentalsSection = () => {
   };
 
   return (
-    <section id="fundamentals" className="py-16 md:py-24 bg-white">
+    <section id="fundamentals" className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
               <span>Section 1</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Electrical Fundamentals
             </h2>
-            <p className="text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-muted-foreground max-w-3xl mx-auto">
               Understanding the core principles of electricity is essential before diving into datacenter power systems. 
               These fundamentals form the foundation for all electrical engineering decisions.
             </p>
@@ -50,52 +50,52 @@ const ElectricalFundamentalsSection = () => {
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Ohm's Law Section */}
           <ScrollReveal delay={100}>
-            <Card className="h-full border-watt-navy/10 shadow-institutional">
+            <Card className="h-full border-border shadow-institutional">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-watt-navy">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Zap className="w-5 h-5 text-watt-bitcoin" />
                   Ohm's Law: V = I × R
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-watt-navy/70 text-sm">
-                  <strong>Ohm's Law</strong> is the fundamental relationship between voltage (V), current (I), and resistance (R). 
+                <p className="text-muted-foreground text-sm">
+                  <strong className="text-foreground">Ohm's Law</strong> is the fundamental relationship between voltage (V), current (I), and resistance (R). 
                   Named after German physicist Georg Ohm, this law states that the current through a conductor is directly 
                   proportional to the voltage across it and inversely proportional to the resistance.
                 </p>
                 
-                <div className="bg-watt-light rounded-lg p-4">
-                  <h4 className="font-semibold text-watt-navy mb-3">Key Formulas:</h4>
+                <div className="bg-muted rounded-lg p-4">
+                  <h4 className="font-semibold text-foreground mb-3">Key Formulas:</h4>
                   <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-3 bg-white rounded-lg border border-watt-navy/10">
+                    <div className="p-3 bg-card rounded-lg border border-border">
                       <div className="text-lg font-mono font-bold text-watt-bitcoin">V = I × R</div>
-                      <div className="text-xs text-watt-navy/60 mt-1">Voltage</div>
+                      <div className="text-xs text-muted-foreground mt-1">Voltage</div>
                     </div>
-                    <div className="p-3 bg-white rounded-lg border border-watt-navy/10">
+                    <div className="p-3 bg-card rounded-lg border border-border">
                       <div className="text-lg font-mono font-bold text-watt-success">I = V / R</div>
-                      <div className="text-xs text-watt-navy/60 mt-1">Current</div>
+                      <div className="text-xs text-muted-foreground mt-1">Current</div>
                     </div>
-                    <div className="p-3 bg-white rounded-lg border border-watt-navy/10">
+                    <div className="p-3 bg-card rounded-lg border border-border">
                       <div className="text-lg font-mono font-bold text-watt-coinbase">R = V / I</div>
-                      <div className="text-xs text-watt-navy/60 mt-1">Resistance</div>
+                      <div className="text-xs text-muted-foreground mt-1">Resistance</div>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-watt-navy">In Datacenters:</h4>
-                  <ul className="text-sm text-watt-navy/70 space-y-2">
+                  <h4 className="font-semibold text-foreground">In Datacenters:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-2">
                     <li className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                      <span><strong>Voltage (V)</strong>: The electrical pressure pushing electrons. Datacenters use 240V, 480V, 600V for efficiency.</span>
+                      <span><strong className="text-foreground">Voltage (V)</strong>: The electrical pressure pushing electrons. Datacenters use 240V, 480V, 600V for efficiency.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                      <span><strong>Current (I)</strong>: The flow of electrons measured in Amperes. A typical S21 miner draws ~15A at 240V.</span>
+                      <span><strong className="text-foreground">Current (I)</strong>: The flow of electrons measured in Amperes. A typical S21 miner draws ~15A at 240V.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                      <span><strong>Resistance (R)</strong>: Opposition to current flow measured in Ohms. Cables must be sized to minimize resistance losses.</span>
+                      <span><strong className="text-foreground">Resistance (R)</strong>: Opposition to current flow measured in Ohms. Cables must be sized to minimize resistance losses.</span>
                     </li>
                   </ul>
                 </div>
@@ -105,15 +105,15 @@ const ElectricalFundamentalsSection = () => {
 
           {/* Interactive Calculator */}
           <ScrollReveal delay={200}>
-            <Card className="h-full border-watt-bitcoin/20 shadow-institutional bg-gradient-to-br from-white to-watt-bitcoin/5">
+            <Card className="h-full border-watt-bitcoin/20 shadow-institutional bg-gradient-to-br from-card to-watt-bitcoin/5">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-watt-navy">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Calculator className="w-5 h-5 text-watt-bitcoin" />
                   Interactive Ohm's Law Calculator
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-watt-navy/70">
+                <p className="text-sm text-muted-foreground">
                   Enter any two values to calculate the third. This tool helps you understand how voltage, 
                   current, and resistance relate in real-world mining scenarios.
                 </p>
@@ -126,7 +126,7 @@ const ElectricalFundamentalsSection = () => {
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         calcMode === mode
                           ? "bg-watt-bitcoin text-white"
-                          : "bg-watt-navy/5 text-watt-navy hover:bg-watt-navy/10"
+                          : "bg-muted text-foreground hover:bg-muted/80"
                       }`}
                     >
                       Solve for {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -136,7 +136,7 @@ const ElectricalFundamentalsSection = () => {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label className="text-xs text-watt-navy/70">Voltage (V)</Label>
+                    <Label className="text-xs text-muted-foreground">Voltage (V)</Label>
                     <Input
                       type="number"
                       value={calcMode === "voltage" ? calculateOhm() : voltage}
@@ -146,7 +146,7 @@ const ElectricalFundamentalsSection = () => {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-watt-navy/70">Current (A)</Label>
+                    <Label className="text-xs text-muted-foreground">Current (A)</Label>
                     <Input
                       type="number"
                       value={calcMode === "current" ? calculateOhm() : current}
@@ -156,7 +156,7 @@ const ElectricalFundamentalsSection = () => {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-watt-navy/70">Resistance (Ω)</Label>
+                    <Label className="text-xs text-muted-foreground">Resistance (Ω)</Label>
                     <Input
                       type="number"
                       value={calcMode === "resistance" ? calculateOhm() : resistance}
@@ -167,12 +167,12 @@ const ElectricalFundamentalsSection = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-watt-navy/5 rounded-lg">
+                <div className="p-4 bg-muted rounded-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-watt-navy/70">Power (P = V × I)</span>
+                    <span className="text-sm text-muted-foreground">Power (P = V × I)</span>
                     <span className="text-2xl font-bold text-watt-bitcoin">{calculatePower()} W</span>
                   </div>
-                  <div className="text-xs text-watt-navy/50 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     This is the actual power consumed at these values
                   </div>
                 </div>
@@ -180,8 +180,8 @@ const ElectricalFundamentalsSection = () => {
                 <div className="p-3 bg-watt-success/10 rounded-lg border border-watt-success/20">
                   <div className="flex items-start gap-2">
                     <Info className="w-4 h-4 text-watt-success mt-0.5" />
-                    <div className="text-xs text-watt-navy/70">
-                      <strong>Example:</strong> An Antminer S21 Hyd at 240V drawing 22.9A consumes 5,496W (5.5 kW). 
+                    <div className="text-xs text-muted-foreground">
+                      <strong className="text-foreground">Example:</strong> An Antminer S21 Hyd at 240V drawing 22.9A consumes 5,496W (5.5 kW). 
                       Understanding these relationships helps in cable sizing and circuit planning.
                     </div>
                   </div>

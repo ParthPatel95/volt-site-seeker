@@ -28,10 +28,10 @@ export const NoiseBasicsSection = () => {
               <Volume2 className="h-4 w-4 text-watt-bitcoin" />
               <span className="text-sm font-medium text-watt-bitcoin">Sound Fundamentals</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Understanding Sound & Decibels
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Sound is a pressure wave that travels through air. Understanding how we measure and perceive sound
               is essential for effective noise management in mining facilities.
             </p>
@@ -46,23 +46,23 @@ export const NoiseBasicsSection = () => {
                 <div className="w-12 h-12 bg-gradient-to-br from-watt-bitcoin to-watt-bitcoin/70 rounded-xl flex items-center justify-center mb-4">
                   <Waves className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-3">What is Sound?</h3>
-                <p className="text-watt-navy/70 text-sm mb-4">
+                <h3 className="text-xl font-bold text-foreground mb-3">What is Sound?</h3>
+                <p className="text-muted-foreground text-sm mb-4">
                   Sound is a mechanical wave of pressure that propagates through a medium (air, water, solids).
                   It's characterized by:
                 </p>
-                <ul className="space-y-2 text-sm text-watt-navy/70">
+                <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <span className="text-watt-bitcoin font-bold">•</span>
-                    <span><strong>Frequency (Hz):</strong> Pitch - how many cycles per second</span>
+                    <span><strong className="text-foreground">Frequency (Hz):</strong> Pitch - how many cycles per second</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-watt-bitcoin font-bold">•</span>
-                    <span><strong>Amplitude:</strong> Loudness - the strength of the pressure wave</span>
+                    <span><strong className="text-foreground">Amplitude:</strong> Loudness - the strength of the pressure wave</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-watt-bitcoin font-bold">•</span>
-                    <span><strong>Speed:</strong> ~343 m/s in air at 20°C</span>
+                    <span><strong className="text-foreground">Speed:</strong> ~343 m/s in air at 20°C</span>
                   </li>
                 </ul>
               </CardContent>
@@ -75,18 +75,18 @@ export const NoiseBasicsSection = () => {
                 <div className="w-12 h-12 bg-gradient-to-br from-watt-coinbase to-watt-coinbase/70 rounded-xl flex items-center justify-center mb-4">
                   <Activity className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-3">The Decibel Scale</h3>
-                <p className="text-watt-navy/70 text-sm mb-4">
+                <h3 className="text-xl font-bold text-foreground mb-3">The Decibel Scale</h3>
+                <p className="text-muted-foreground text-sm mb-4">
                   Decibels (dB) use a logarithmic scale because human hearing perceives loudness logarithmically.
                 </p>
-                <div className="bg-watt-light rounded-lg p-4 font-mono text-sm">
-                  <p className="text-watt-navy mb-2">dB = 10 × log₁₀(P / P₀)</p>
-                  <p className="text-watt-navy/60 text-xs">Where P₀ = 20 μPa (threshold of hearing)</p>
+                <div className="bg-muted rounded-lg p-4 font-mono text-sm">
+                  <p className="text-foreground mb-2">dB = 10 × log₁₀(P / P₀)</p>
+                  <p className="text-muted-foreground text-xs">Where P₀ = 20 μPa (threshold of hearing)</p>
                 </div>
-                <div className="mt-4 space-y-1 text-sm text-watt-navy/70">
-                  <p><strong>+3 dB</strong> = 2× sound energy</p>
-                  <p><strong>+10 dB</strong> = 10× sound energy (perceived 2× louder)</p>
-                  <p><strong>+20 dB</strong> = 100× sound energy</p>
+                <div className="mt-4 space-y-1 text-sm text-muted-foreground">
+                  <p><strong className="text-foreground">+3 dB</strong> = 2× sound energy</p>
+                  <p><strong className="text-foreground">+10 dB</strong> = 10× sound energy (perceived 2× louder)</p>
+                  <p><strong className="text-foreground">+20 dB</strong> = 100× sound energy</p>
                 </div>
               </CardContent>
             </Card>
@@ -98,25 +98,25 @@ export const NoiseBasicsSection = () => {
                 <div className="w-12 h-12 bg-gradient-to-br from-watt-success to-watt-success/70 rounded-xl flex items-center justify-center mb-4">
                   <Ear className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-3">A-Weighting (dBA)</h3>
-                <p className="text-watt-navy/70 text-sm mb-4">
+                <h3 className="text-xl font-bold text-foreground mb-3">A-Weighting (dBA)</h3>
+                <p className="text-muted-foreground text-sm mb-4">
                   Human ears don't hear all frequencies equally. A-weighting adjusts measurements to match human perception.
                 </p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-watt-navy/70">Low frequencies (bass)</span>
+                    <span className="text-muted-foreground">Low frequencies (bass)</span>
                     <span className="text-red-500 font-medium">-20 to -40 dB</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-watt-navy/70">1-4 kHz (speech range)</span>
+                    <span className="text-muted-foreground">1-4 kHz (speech range)</span>
                     <span className="text-watt-success font-medium">0 to +1 dB</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-watt-navy/70">High frequencies</span>
+                    <span className="text-muted-foreground">High frequencies</span>
                     <span className="text-watt-bitcoin font-medium">-3 to -10 dB</span>
                   </div>
                 </div>
-                <p className="text-xs text-watt-navy/50 mt-4">
+                <p className="text-xs text-muted-foreground mt-4">
                   Most regulations use dBA for community noise limits
                 </p>
               </CardContent>
@@ -128,7 +128,7 @@ export const NoiseBasicsSection = () => {
         <ScrollReveal delay={400}>
           <Card className="bg-white border-none shadow-institutional">
             <CardContent className="p-6 md:p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">
+              <h3 className="text-xl font-bold text-foreground mb-6 text-center">
                 Sound Level Comparison Chart
               </h3>
               <div className="relative">
@@ -149,7 +149,7 @@ export const NoiseBasicsSection = () => {
                         className={`w-full rounded-t-md ${item.color} transition-all group-hover:brightness-110`}
                         style={{ height: `${(item.level / 130) * 100}%` }}
                       />
-                      <span className="text-xs text-watt-navy/60 mt-2 font-mono">{item.level}</span>
+                      <span className="text-xs text-muted-foreground mt-2 font-mono">{item.level}</span>
                     </div>
                   ))}
                 </div>
