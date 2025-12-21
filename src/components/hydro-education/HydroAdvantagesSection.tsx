@@ -91,10 +91,10 @@ const HydroAdvantagesSection = () => {
               <Droplets className="w-4 h-4" />
               Why Hydro-Cooling?
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Superior Cooling Technology
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Hydro-cooling enables mining operations in environments where traditional 
               air-cooling would fail, while delivering unprecedented efficiency.
             </p>
@@ -105,18 +105,18 @@ const HydroAdvantagesSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {advantages.map((advantage, index) => (
             <ScrollReveal key={index} delay={index * 100}>
-              <Card className="h-full bg-white border-watt-navy/10 hover:shadow-lg hover:border-blue-300 transition-all duration-300 group overflow-hidden">
+              <Card className="h-full bg-card border-border hover:shadow-lg hover:border-blue-300 transition-all duration-300 group overflow-hidden">
                 <CardContent className="p-6">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${advantage.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                     <advantage.icon className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-watt-navy">{advantage.title}</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{advantage.title}</h3>
                     <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                       {advantage.stats}
                     </span>
                   </div>
-                  <p className="text-sm text-watt-navy/70">{advantage.description}</p>
+                  <p className="text-sm text-muted-foreground">{advantage.description}</p>
                 </CardContent>
               </Card>
             </ScrollReveal>
@@ -125,17 +125,17 @@ const HydroAdvantagesSection = () => {
 
         {/* Comparison Chart */}
         <ScrollReveal>
-          <div className="bg-white rounded-2xl border border-watt-navy/10 p-8 mb-20">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">
+          <div className="bg-card rounded-2xl border border-border p-8 mb-20">
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
               Hydro vs Air Cooling Comparison
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-watt-navy/10">
-                    <th className="text-left py-4 px-4 font-semibold text-watt-navy">Metric</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-4 px-4 font-semibold text-foreground">Metric</th>
                     <th className="text-center py-4 px-4 font-semibold text-blue-600">Hydro-Cooling</th>
-                    <th className="text-center py-4 px-4 font-semibold text-watt-navy/50">Air-Cooling</th>
+                    <th className="text-center py-4 px-4 font-semibold text-muted-foreground">Air-Cooling</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -147,15 +147,15 @@ const HydroAdvantagesSection = () => {
                     { metric: 'Compute Density', hydro: 'High', air: 'Medium' },
                     { metric: 'Maintenance Frequency', hydro: 'Lower', air: 'Higher' },
                   ].map((row, index) => (
-                    <tr key={index} className="border-b border-watt-navy/5 last:border-0">
-                      <td className="py-4 px-4 font-medium text-watt-navy">{row.metric}</td>
+                    <tr key={index} className="border-b border-border/50 last:border-0">
+                      <td className="py-4 px-4 font-medium text-foreground">{row.metric}</td>
                       <td className="py-4 px-4 text-center">
                         <span className="inline-flex items-center gap-1 text-blue-600 font-semibold">
                           <CheckCircle className="w-4 h-4" />
                           {row.hydro}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-center text-watt-navy/50">{row.air}</td>
+                      <td className="py-4 px-4 text-center text-muted-foreground">{row.air}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -166,7 +166,7 @@ const HydroAdvantagesSection = () => {
 
         {/* Case Studies */}
         <ScrollReveal>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">
+          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
             Real-World Deployments
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
