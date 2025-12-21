@@ -1,51 +1,11 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, Filter } from "lucide-react";
-import { ScrollReveal } from "@/components/landing/ScrollAnimations";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Explicit color classes to avoid Tailwind purge issues
-const colorClasses = {
-  "watt-bitcoin": {
-    bgLight: "bg-watt-bitcoin/10",
-    text: "text-watt-bitcoin",
-  },
-  "watt-blue": {
-    bgLight: "bg-watt-blue/10",
-    text: "text-watt-blue",
-  },
-  "watt-success": {
-    bgLight: "bg-watt-success/10",
-    text: "text-watt-success",
-  },
-  "watt-coinbase": {
-    bgLight: "bg-watt-coinbase/10",
-    text: "text-watt-coinbase",
-  },
-  "watt-purple": {
-    bgLight: "bg-purple-500/10",
-    text: "text-purple-500",
-  },
-  "watt-cyan": {
-    bgLight: "bg-cyan-500/10",
-    text: "text-cyan-500",
-  },
-  "watt-indigo": {
-    bgLight: "bg-indigo-500/10",
-    text: "text-indigo-500",
-  },
-  "watt-emerald": {
-    bgLight: "bg-emerald-500/10",
-    text: "text-emerald-500",
-  },
-} as const;
-
-type ColorKey = keyof typeof colorClasses;
 
 interface Lesson {
   title: string;
@@ -55,25 +15,23 @@ interface Lesson {
 interface Module {
   id: string;
   title: string;
+  description: string;
   icon: React.ElementType;
-  color: ColorKey;
   route: string;
   lessons: Lesson[];
   category: 'fundamentals' | 'operations' | 'advanced';
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  duration: string;
 }
 
 const curriculum: Module[] = [
   {
     id: "bitcoin",
     title: "Bitcoin Fundamentals",
+    description: "Understand Bitcoin, blockchain technology, mining basics, and global adoption.",
     icon: Bitcoin,
-    color: "watt-bitcoin",
     route: "/bitcoin",
     category: "fundamentals",
     difficulty: "Beginner",
-    duration: "~60 min",
     lessons: [
       { title: "What is Bitcoin", anchor: "what-is-bitcoin" },
       { title: "Bitcoin History", anchor: "history" },
@@ -92,12 +50,11 @@ const curriculum: Module[] = [
   {
     id: "aeso",
     title: "Alberta Energy Market",
+    description: "Master AESO operations, pool pricing, and electricity cost optimization.",
     icon: Zap,
-    color: "watt-success",
     route: "/aeso-101",
     category: "fundamentals",
     difficulty: "Beginner",
-    duration: "~45 min",
     lessons: [
       { title: "What is AESO", anchor: "what-is-aeso" },
       { title: "Market Participants", anchor: "market-participants" },
@@ -114,12 +71,11 @@ const curriculum: Module[] = [
   {
     id: "mining-economics",
     title: "Mining Economics",
+    description: "Revenue drivers, cost analysis, profitability modeling, and ROI calculations.",
     icon: DollarSign,
-    color: "watt-emerald",
     route: "/mining-economics",
     category: "fundamentals",
     difficulty: "Beginner",
-    duration: "~40 min",
     lessons: [
       { title: "Economics Fundamentals", anchor: "intro" },
       { title: "Revenue Drivers", anchor: "revenue" },
@@ -134,12 +90,11 @@ const curriculum: Module[] = [
   {
     id: "datacenters",
     title: "Mining Infrastructure",
+    description: "Facility design, cooling systems, hardware specifications, and operations.",
     icon: Server,
-    color: "watt-blue",
     route: "/datacenters",
     category: "operations",
     difficulty: "Intermediate",
-    duration: "~50 min",
     lessons: [
       { title: "Energy Source to Facility", anchor: "power-journey" },
       { title: "Electrical Infrastructure", anchor: "electrical" },
@@ -156,12 +111,11 @@ const curriculum: Module[] = [
   {
     id: "electrical",
     title: "Electrical Infrastructure",
+    description: "Power distribution, transformers, switchgear, and safety protocols.",
     icon: CircuitBoard,
-    color: "watt-coinbase",
     route: "/electrical-infrastructure",
     category: "operations",
     difficulty: "Intermediate",
-    duration: "~60 min",
     lessons: [
       { title: "Electrical Fundamentals", anchor: "fundamentals" },
       { title: "Utility Grid Connection", anchor: "grid-connection" },
@@ -180,12 +134,11 @@ const curriculum: Module[] = [
   {
     id: "operations",
     title: "Operations & Maintenance",
+    description: "Monitoring, preventive maintenance, troubleshooting, and team management.",
     icon: Settings,
-    color: "watt-blue",
     route: "/operations",
     category: "operations",
     difficulty: "Intermediate",
-    duration: "~40 min",
     lessons: [
       { title: "Operations Fundamentals", anchor: "intro" },
       { title: "Monitoring Systems", anchor: "monitoring" },
@@ -200,12 +153,11 @@ const curriculum: Module[] = [
   {
     id: "noise",
     title: "Noise Management",
+    description: "Sound fundamentals, regulatory standards, and mitigation techniques.",
     icon: Volume2,
-    color: "watt-purple",
     route: "/noise-management",
     category: "operations",
     difficulty: "Intermediate",
-    duration: "~50 min",
     lessons: [
       { title: "Sound Fundamentals", anchor: "fundamentals" },
       { title: "Mining Noise Sources", anchor: "noise-sources" },
@@ -222,12 +174,11 @@ const curriculum: Module[] = [
   {
     id: "hydro",
     title: "Hydro Cooling Systems",
+    description: "Container products, cooling methods, water systems, and waste heat recovery.",
     icon: Droplets,
-    color: "watt-blue",
     route: "/hydro-datacenters",
     category: "advanced",
     difficulty: "Advanced",
-    duration: "~60 min",
     lessons: [
       { title: "Why Hydro-cooling", anchor: "advantages" },
       { title: "Container Products", anchor: "containers" },
@@ -246,12 +197,11 @@ const curriculum: Module[] = [
   {
     id: "immersion",
     title: "Immersion Cooling",
+    description: "Single vs two-phase cooling, dielectric fluids, and overclocking potential.",
     icon: Waves,
-    color: "watt-cyan",
     route: "/immersion-cooling",
     category: "advanced",
     difficulty: "Advanced",
-    duration: "~50 min",
     lessons: [
       { title: "Introduction to Immersion", anchor: "introduction" },
       { title: "Single vs Two-Phase Cooling", anchor: "types" },
@@ -268,12 +218,11 @@ const curriculum: Module[] = [
   {
     id: "site-selection",
     title: "Site Selection & Acquisition",
+    description: "Power infrastructure, energy markets, regulatory environment, and due diligence.",
     icon: MapPin,
-    color: "watt-indigo",
     route: "/site-selection",
     category: "advanced",
     difficulty: "Advanced",
-    duration: "~45 min",
     lessons: [
       { title: "Site Selection Fundamentals", anchor: "intro" },
       { title: "Power Infrastructure", anchor: "power-infrastructure" },
@@ -289,12 +238,11 @@ const curriculum: Module[] = [
   {
     id: "risk-management",
     title: "Risk Management",
+    description: "Market risk, operational risk, regulatory compliance, and crisis management.",
     icon: ShieldAlert,
-    color: "watt-bitcoin",
     route: "/risk-management",
     category: "advanced",
     difficulty: "Advanced",
-    duration: "~40 min",
     lessons: [
       { title: "Risk Fundamentals", anchor: "intro" },
       { title: "Market Risk Analysis", anchor: "market-risk" },
@@ -309,12 +257,11 @@ const curriculum: Module[] = [
   {
     id: "scaling-growth",
     title: "Scaling & Growth",
+    description: "Capacity planning, multi-site strategy, capital raising, and M&A.",
     icon: TrendingUp,
-    color: "watt-success",
     route: "/scaling-growth",
     category: "advanced",
     difficulty: "Advanced",
-    duration: "~40 min",
     lessons: [
       { title: "Scaling Fundamentals", anchor: "scaling-intro" },
       { title: "Capacity Planning", anchor: "capacity-planning" },
@@ -328,6 +275,13 @@ const curriculum: Module[] = [
   },
 ];
 
+const categories = [
+  { key: 'all', label: 'All Modules', count: curriculum.length },
+  { key: 'fundamentals', label: 'Fundamentals', count: curriculum.filter(m => m.category === 'fundamentals').length },
+  { key: 'operations', label: 'Operations', count: curriculum.filter(m => m.category === 'operations').length },
+  { key: 'advanced', label: 'Advanced', count: curriculum.filter(m => m.category === 'advanced').length },
+];
+
 const difficultyBadges = {
   Beginner: { bg: 'bg-green-500/10', text: 'text-green-600' },
   Intermediate: { bg: 'bg-blue-500/10', text: 'text-blue-600' },
@@ -338,7 +292,6 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const { getModuleProgress, allProgress } = useAllModulesProgress();
-  const colors = colorClasses[module.color];
   
   const progress = getModuleProgress(module.id, module.lessons.length);
   const moduleProgress = allProgress[module.id];
@@ -353,84 +306,95 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
     }
   };
 
+  const handleStartModule = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(module.route);
+  };
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: index * 0.03 }}
       className={cn(
-        "border border-border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow",
+        "border border-border rounded-xl overflow-hidden bg-card",
         progress.isComplete && "ring-2 ring-green-500/20"
       )}
     >
       {/* Module Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-5 hover:bg-muted/30 transition-colors"
-        aria-expanded={isExpanded}
-        aria-controls={`module-${module.id}-lessons`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl ${colors.bgLight} flex items-center justify-center relative`}>
-            <module.icon className={`w-6 h-6 ${colors.text}`} />
-            {progress.isComplete && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-3 h-3 text-white" />
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex items-start gap-3">
+            <div className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+              progress.isComplete ? "bg-green-500/10" : "bg-primary/10"
+            )}>
+              <module.icon className={cn(
+                "w-5 h-5",
+                progress.isComplete ? "text-green-600" : "text-primary"
+              )} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-foreground">{module.title}</h3>
+                {progress.isComplete && (
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                )}
               </div>
-            )}
-          </div>
-          <div className="text-left">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-semibold text-watt-navy">
-                {module.title}
-              </h3>
-              <span className={cn(
-                "text-[10px] font-medium px-2 py-0.5 rounded-full",
-                diffBadge.bg, diffBadge.text
-              )}>
-                {module.difficulty}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span>{module.lessons.length} lessons</span>
-              <span>•</span>
-              <span>{module.duration}</span>
-              {progress.isStarted && (
-                <>
-                  <span>•</span>
-                  <span className={cn(
-                    "font-medium",
-                    progress.isComplete ? "text-green-600" : "text-primary"
-                  )}>
-                    {progress.percentage}%
-                  </span>
-                </>
-              )}
+              <p className="text-sm text-muted-foreground mt-1">{module.description}</p>
             </div>
           </div>
         </div>
-        <ChevronDown 
-          className={cn(
-            "w-5 h-5 text-muted-foreground transition-transform duration-200",
-            isExpanded && "rotate-180"
-          )} 
-        />
-      </button>
 
-      {/* Progress bar */}
-      {progress.isStarted && (
-        <div className="h-1 bg-muted -mt-1">
-          <motion.div 
-            className={cn(
-              "h-full transition-all duration-300",
-              progress.isComplete ? "bg-green-500" : "bg-primary"
-            )}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress.percentage}%` }}
-          />
+        {/* Meta row */}
+        <div className="flex items-center gap-3 text-sm mb-4">
+          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", diffBadge.bg, diffBadge.text)}>
+            {module.difficulty}
+          </span>
+          <span className="text-muted-foreground">{module.lessons.length} lessons</span>
+          {progress.isStarted && !progress.isComplete && (
+            <span className="text-primary font-medium">{progress.percentage}% complete</span>
+          )}
         </div>
-      )}
+
+        {/* Progress bar */}
+        {progress.isStarted && (
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
+            <motion.div 
+              className={cn(
+                "h-full rounded-full",
+                progress.isComplete ? "bg-green-500" : "bg-primary"
+              )}
+              initial={{ width: 0 }}
+              animate={{ width: `${progress.percentage}%` }}
+            />
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="gap-1"
+          >
+            <BookOpen className="w-4 h-4" />
+            {isExpanded ? "Hide" : "View"} Lessons
+            <ChevronDown className={cn(
+              "w-4 h-4 transition-transform",
+              isExpanded && "rotate-180"
+            )} />
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleStartModule}
+          >
+            {progress.isComplete ? "Review" : progress.isStarted ? "Continue" : "Start"}
+          </Button>
+        </div>
+      </div>
 
       {/* Lessons List */}
       <AnimatePresence>
@@ -440,34 +404,31 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            id={`module-${module.id}-lessons`}
           >
-            <div className="border-t border-border">
+            <div className="border-t border-border bg-muted/30">
               {module.lessons.map((lesson, lessonIndex) => {
                 const isCompleted = completedSections.includes(lesson.anchor || lesson.title);
                 return (
                   <button
                     key={lesson.title}
                     onClick={() => handleLessonClick(lesson)}
-                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-b-0 group"
+                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-b-0"
                   >
                     <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
+                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
                       isCompleted 
                         ? "bg-green-500/10 text-green-600" 
                         : "bg-muted text-muted-foreground"
                     )}>
                       {isCompleted ? (
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                       ) : (
                         lessonIndex + 1
                       )}
                     </div>
                     <span className={cn(
-                      "text-sm font-medium transition-colors flex-1",
-                      isCompleted 
-                        ? "text-green-600" 
-                        : "text-foreground group-hover:text-primary"
+                      "text-sm",
+                      isCompleted ? "text-muted-foreground" : "text-foreground"
                     )}>
                       {lesson.title}
                     </span>
@@ -483,122 +444,91 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
 };
 
 export const CurriculumSection = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const { getModuleProgress } = useAllModulesProgress();
-  
-  const totalLessons = curriculum.reduce((acc, module) => acc + module.lessons.length, 0);
-  
-  // Calculate total completed lessons
-  const completedLessons = curriculum.reduce((acc, module) => {
-    const progress = getModuleProgress(module.id, module.lessons.length);
-    return acc + Math.round((progress.percentage / 100) * module.lessons.length);
-  }, 0);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter modules based on search and category
   const filteredModules = useMemo(() => {
     return curriculum.filter(module => {
-      const matchesSearch = searchQuery === "" || 
+      const matchesCategory = activeCategory === 'all' || module.category === activeCategory;
+      const matchesSearch = searchQuery === '' || 
         module.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        module.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         module.lessons.some(l => l.title.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const matchesCategory = activeTab === "all" || module.category === activeTab;
-      
-      return matchesSearch && matchesCategory;
+      return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, activeTab]);
-
-  const categoryCount = {
-    all: curriculum.length,
-    fundamentals: curriculum.filter(m => m.category === 'fundamentals').length,
-    operations: curriculum.filter(m => m.category === 'operations').length,
-    advanced: curriculum.filter(m => m.category === 'advanced').length,
-  };
+  }, [activeCategory, searchQuery]);
 
   return (
-    <section id="curriculum" className="py-20 bg-background">
+    <section id="curriculum" className="py-16 bg-background">
       <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
-              <BookOpen className="w-4 h-4" />
-              {completedLessons > 0 ? (
-                <span>{completedLessons}/{totalLessons} Lessons Completed</span>
-              ) : (
-                <span>{totalLessons} Total Lessons</span>
-              )}
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
-              Full Curriculum
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Explore all modules and lessons. Click any lesson to jump directly to that topic.
-            </p>
-          </div>
-        </ScrollReveal>
-
-        {/* Search and Filter Bar */}
-        <div className="max-w-3xl mx-auto mb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search modules and lessons..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Category Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="w-full justify-start bg-muted/50 p-1">
-              <TabsTrigger value="all" className="gap-2">
-                All <span className="text-xs text-muted-foreground">({categoryCount.all})</span>
-              </TabsTrigger>
-              <TabsTrigger value="fundamentals" className="gap-2">
-                Fundamentals <span className="text-xs text-muted-foreground">({categoryCount.fundamentals})</span>
-              </TabsTrigger>
-              <TabsTrigger value="operations" className="gap-2">
-                Operations <span className="text-xs text-muted-foreground">({categoryCount.operations})</span>
-              </TabsTrigger>
-              <TabsTrigger value="advanced" className="gap-2">
-                Advanced <span className="text-xs text-muted-foreground">({categoryCount.advanced})</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-foreground mb-3">
+            Browse All Modules
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            {curriculum.length} modules covering everything from Bitcoin basics to advanced operations. 
+            All content is free and accessible without signup.
+          </p>
         </div>
 
-        {/* Module Cards */}
-        <div className="max-w-3xl mx-auto space-y-4">
-          <AnimatePresence mode="popLayout">
-            {filteredModules.map((module, index) => (
-              <ModuleCard key={module.id} module={module} index={index} />
-            ))}
-          </AnimatePresence>
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 max-w-4xl mx-auto">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search modules or lessons..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
 
-          {filteredModules.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12 text-muted-foreground"
-            >
-              <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No modules found matching "{searchQuery}"</p>
+          {/* Category tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+            {categories.map((cat) => (
               <Button
-                variant="ghost"
-                className="mt-4"
-                onClick={() => {
-                  setSearchQuery("");
-                  setActiveTab("all");
-                }}
+                key={cat.key}
+                variant={activeCategory === cat.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveCategory(cat.key)}
+                className="whitespace-nowrap"
               >
-                Clear filters
+                {cat.label}
+                <span className={cn(
+                  "ml-1.5 px-1.5 py-0.5 rounded text-xs",
+                  activeCategory === cat.key 
+                    ? "bg-primary-foreground/20" 
+                    : "bg-muted"
+                )}>
+                  {cat.count}
+                </span>
               </Button>
-            </motion.div>
-          )}
+            ))}
+          </div>
         </div>
+
+        {/* Module Grid */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          {filteredModules.map((module, index) => (
+            <ModuleCard key={module.id} module={module} index={index} />
+          ))}
+        </div>
+
+        {/* Empty state */}
+        {filteredModules.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No modules found matching your search.</p>
+            <Button
+              variant="link"
+              onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
+            >
+              Clear filters
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
