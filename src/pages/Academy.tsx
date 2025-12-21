@@ -1,11 +1,9 @@
 import { LandingNavigation } from "@/components/landing/LandingNavigation";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { AcademyHeroSection } from "@/components/academy/AcademyHeroSection";
-import { LearningPathsSection } from "@/components/academy/LearningPathsSection";
 import { CurriculumSection } from "@/components/academy/CurriculumSection";
 import { AcademyCTASection } from "@/components/academy/AcademyCTASection";
-import { QuickStartDashboard } from "@/components/academy/QuickStartDashboard";
-import { LearningJourneyMap } from "@/components/academy/LearningJourneyMap";
+import { ContinueLearningBar } from "@/components/academy/ContinueLearningBar";
 import { useEffect } from "react";
 
 // Module info for progress tracking
@@ -26,7 +24,7 @@ const academyModules = [
 
 const Academy = () => {
   useEffect(() => {
-    document.title = "WattByte Academy | Comprehensive Bitcoin Mining & Energy Education";
+    document.title = "WattByte Academy | Bitcoin Mining & Energy Education";
   }, []);
 
   return (
@@ -36,17 +34,13 @@ const Academy = () => {
       <main>
         <AcademyHeroSection />
         
-        {/* Quick Start Dashboard for returning users */}
-        <QuickStartDashboard modules={academyModules} />
+        {/* Simple continue learning bar for returning users */}
+        <ContinueLearningBar modules={academyModules} />
         
-        <LearningPathsSection />
-        
-        {/* Learning Journey Map */}
-        <div id="journey-map">
-          <LearningJourneyMap />
-        </div>
-        
+        {/* Main curriculum browser */}
         <CurriculumSection />
+        
+        {/* Simple CTA */}
         <AcademyCTASection />
       </main>
       
