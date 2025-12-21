@@ -36,7 +36,7 @@ export const NoiseCTASection = () => {
                 </p>
                 <Button 
                   onClick={() => navigate('/hydro-datacenters')}
-                  className="w-full bg-watt-coinbase hover:bg-watt-coinbase/90"
+                  className="w-full bg-watt-coinbase text-white hover:bg-watt-coinbase/90"
                 >
                   Learn More
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -58,7 +58,7 @@ export const NoiseCTASection = () => {
                 </p>
                 <Button 
                   onClick={() => navigate('/academy')}
-                  className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90"
+                  className="w-full bg-watt-bitcoin text-white hover:bg-watt-bitcoin/90"
                 >
                   View Curriculum
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -80,7 +80,7 @@ export const NoiseCTASection = () => {
                 </p>
                 <Button 
                   onClick={() => navigate('/hosting')}
-                  className="w-full bg-watt-success hover:bg-watt-success/90"
+                  className="w-full bg-watt-success text-white hover:bg-watt-success/90"
                 >
                   Explore Hosting
                   <ArrowRight className="ml-2 h-4 w-4" />
