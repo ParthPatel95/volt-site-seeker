@@ -1,6 +1,7 @@
 import { Volume2, Waves, Activity, Ear } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 
 const soundLevels = [
   { level: 0, label: "Threshold of Hearing", icon: "👂", color: "bg-watt-success/20" },
@@ -131,39 +132,48 @@ export const NoiseBasicsSection = () => {
               <h3 className="text-xl font-bold text-foreground mb-6 text-center">
                 Sound Level Comparison Chart
               </h3>
-              <div className="relative">
-                {/* Scale */}
-                <div className="flex items-end gap-1 h-64 md:h-80">
-                  {soundLevels.map((item, index) => (
-                    <div 
-                      key={index} 
-                      className="flex-1 flex flex-col items-center justify-end group cursor-pointer"
-                    >
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-16 bg-watt-navy text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap z-10">
-                        <strong>{item.level} dB</strong>
-                        <br />
-                        {item.label}
-                      </div>
-                      <span className="text-lg mb-2 group-hover:scale-125 transition-transform">{item.icon}</span>
-                      <div 
-                        className={`w-full rounded-t-md ${item.color} transition-all group-hover:brightness-110`}
-                        style={{ height: `${(item.level / 130) * 100}%` }}
-                      />
-                      <span className="text-xs text-muted-foreground mt-2 font-mono">{item.level}</span>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Reference Lines */}
-                <div className="absolute left-0 right-0 top-[23%] border-t border-dashed border-red-400 z-0">
-                  <span className="absolute -top-3 right-0 text-xs text-red-500 bg-white px-2">Pain threshold (120 dB)</span>
-                </div>
-                <div className="absolute left-0 right-0 top-[54%] border-t border-dashed border-watt-bitcoin z-0">
-                  <span className="absolute -top-3 right-0 text-xs text-watt-bitcoin bg-white px-2">OSHA limit (90 dB)</span>
-                </div>
-                <div className="absolute left-0 right-0 top-[77%] border-t border-dashed border-watt-success z-0">
-                  <span className="absolute -top-3 right-0 text-xs text-watt-success bg-white px-2">WHO residential night (45 dB)</span>
-                </div>
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={soundLevels} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <XAxis 
+                      dataKey="label" 
+                      stroke="#6b7280" 
+                      fontSize={10}
+                      angle={-45}
+                      textAnchor="end"
+                      interval={0}
+                      height={80}
+                    />
+                    <YAxis 
+                      stroke="#6b7280" 
+                      fontSize={12}
+                      domain={[0, 140]}
+                      label={{ value: 'dB', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
+                    />
+                    <Tooltip 
+                      formatter={(value: number, name: string, props: any) => [`${value} dB`, props.payload.label]}
+                      labelFormatter={() => ''}
+                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    />
+                    <ReferenceLine y={120} stroke="#DC2626" strokeDasharray="5 5" label={{ value: 'Pain threshold', position: 'right', fontSize: 10, fill: '#DC2626' }} />
+                    <ReferenceLine y={90} stroke="#F59E0B" strokeDasharray="5 5" label={{ value: 'OSHA limit', position: 'right', fontSize: 10, fill: '#F59E0B' }} />
+                    <ReferenceLine y={45} stroke="#10B981" strokeDasharray="5 5" label={{ value: 'WHO night', position: 'right', fontSize: 10, fill: '#10B981' }} />
+                    <Bar dataKey="level" radius={[4, 4, 0, 0]}>
+                      {soundLevels.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={
+                            entry.level >= 110 ? '#DC2626' :
+                            entry.level >= 90 ? '#EF4444' :
+                            entry.level >= 70 ? '#F59E0B' :
+                            entry.level >= 50 ? '#FBBF24' :
+                            '#10B981'
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

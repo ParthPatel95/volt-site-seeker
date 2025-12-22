@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const waterSystems = [
@@ -380,58 +381,38 @@ const HydroWaterSystemsSection = () => {
                 Water Consumption vs Ambient Temperature (100 MW Facility)
               </h3>
               
-              <div className="relative h-64 mb-6">
-                {/* Y-axis */}
-                <div className="absolute left-0 top-0 bottom-8 w-16 flex flex-col justify-between items-end pr-2">
-                  <span className="text-xs text-watt-navy/60">400</span>
-                  <span className="text-xs text-watt-navy/60">300</span>
-                  <span className="text-xs text-watt-navy/60">200</span>
-                  <span className="text-xs text-watt-navy/60">100</span>
-                  <span className="text-xs text-watt-navy/60">0</span>
-                </div>
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-watt-navy/60 origin-center">
-                  m³/hour
-                </div>
-
-                {/* Chart area */}
-                <div className="absolute left-20 right-4 top-0 bottom-8 border-l-2 border-b-2 border-watt-navy/20">
-                  {/* Grid lines */}
-                  {[...Array(4)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute left-0 right-0 border-t border-watt-navy/10"
-                      style={{ top: `${(i + 1) * 20}%` }}
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={temperatureWaterCurve} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="temp" 
+                      stroke="#6b7280" 
+                      fontSize={12}
+                      tickFormatter={(value) => `${value}°C`}
+                      label={{ value: 'Ambient Temperature', position: 'bottom', offset: 0, style: { fontSize: 12, fill: '#6b7280' } }}
                     />
-                  ))}
-
-                  {/* Bars */}
-                  <div className="absolute inset-0 flex items-end justify-around px-4">
-                    {temperatureWaterCurve.map((point, index) => (
-                      <div key={index} className="flex flex-col items-center gap-1">
-                        <div
-                          className="w-12 bg-gradient-to-t from-cyan-500 to-blue-400 rounded-t-lg transition-all duration-500 hover:from-cyan-400 hover:to-blue-300"
-                          style={{ height: `${(point.water / 400) * 100}%` }}
-                        >
-                          <div className="text-xs text-white font-bold text-center pt-1">
-                            {point.water}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* X-axis labels */}
-                <div className="absolute left-20 right-4 bottom-0 flex justify-around">
-                  {temperatureWaterCurve.map((point, index) => (
-                    <span key={index} className="text-xs text-watt-navy/60">{point.temp}°C</span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-2 text-sm text-watt-navy/70">
-                <Thermometer className="w-4 h-4" />
-                Ambient Temperature
+                    <YAxis 
+                      stroke="#6b7280" 
+                      fontSize={12}
+                      label={{ value: 'm³/hour', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
+                      domain={[0, 450]}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value} m³/hour`, 'Water Consumption']}
+                      labelFormatter={(label) => `${label}°C Ambient`}
+                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    />
+                    <Bar dataKey="water" radius={[4, 4, 0, 0]}>
+                      {temperatureWaterCurve.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.temp <= 25 ? '#10B981' : entry.temp <= 35 ? '#F59E0B' : '#EF4444'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
