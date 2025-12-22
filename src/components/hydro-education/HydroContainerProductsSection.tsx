@@ -133,10 +133,10 @@ const HydroContainerProductsSection = () => {
               <Box className="w-4 h-4" />
               Container Products
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Hydro-Cooling Container Systems
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Purpose-built 40ft containers engineered for liquid-cooled Bitcoin mining 
               with different cooling technologies for various deployment scenarios.
             </p>
@@ -153,7 +153,7 @@ const HydroContainerProductsSection = () => {
                 className={`h-auto py-6 px-6 flex flex-col items-center gap-3 ${
                   selectedContainer.id === container.id 
                     ? 'bg-gradient-to-br ' + container.color + ' text-white border-0 shadow-lg' 
-                    : 'border-watt-navy/20 text-watt-navy hover:border-blue-300'
+                    : 'border-border text-foreground hover:border-blue-300'
                 }`}
                 onClick={() => setSelectedContainer(container)}
               >
@@ -171,7 +171,7 @@ const HydroContainerProductsSection = () => {
         <ScrollReveal>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             {/* Container Visualization */}
-            <Card className="border-watt-navy/10 overflow-hidden">
+            <Card className="border-border overflow-hidden">
               <CardContent className="p-0">
                 <div className={`bg-gradient-to-br ${selectedContainer.color} p-8 text-white`}>
                   <div className="flex items-center gap-4 mb-6">
@@ -205,10 +205,10 @@ const HydroContainerProductsSection = () => {
 
                 {/* Features */}
                 <div className="p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4">Key Features</h4>
+                  <h4 className="font-semibold text-foreground mb-4">Key Features</h4>
                   <div className="grid grid-cols-1 gap-2">
                     {selectedContainer.features.map((feature, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm text-watt-navy/80">
+                      <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                         {feature}
                       </div>
@@ -221,19 +221,19 @@ const HydroContainerProductsSection = () => {
             {/* Specifications Panel */}
             <div className="space-y-6">
               {/* Technical Specs */}
-              <Card className="border-watt-navy/10">
+              <Card className="border-border">
                 <CardContent className="p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4 flex items-center gap-2">
+                  <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Ruler className="w-5 h-5 text-blue-500" />
                     Technical Specifications
                   </h4>
                   <div className="space-y-3">
                     {Object.entries(selectedContainer.specs).map(([key, value]) => (
-                      <div key={key} className="flex items-center justify-between py-2 border-b border-watt-navy/5 last:border-0">
-                        <span className="text-sm text-watt-navy/70 capitalize">
+                      <div key={key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <span className="text-sm text-muted-foreground capitalize">
                           {key.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
-                        <span className="text-sm font-medium text-watt-navy font-mono">{value}</span>
+                        <span className="text-sm font-medium text-foreground font-mono">{value}</span>
                       </div>
                     ))}
                   </div>
@@ -275,9 +275,9 @@ const HydroContainerProductsSection = () => {
               </Card>
 
               {/* Best Applications */}
-              <Card className="border-watt-navy/10">
+              <Card className="border-border">
                 <CardContent className="p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4">Best Applications</h4>
+                  <h4 className="font-semibold text-foreground mb-4">Best Applications</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedContainer.applications.map((app, i) => (
                       <Badge key={i} variant="secondary" className="bg-blue-100 text-blue-700">
@@ -293,16 +293,16 @@ const HydroContainerProductsSection = () => {
 
         {/* Comparison Table */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10">
+          <Card className="border-border">
             <CardContent className="p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">
+              <h3 className="text-xl font-bold text-foreground mb-6 text-center">
                 Container Comparison
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Feature</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Feature</th>
                       <th className="text-center py-3 px-4 font-semibold text-blue-600">HK3</th>
                       <th className="text-center py-3 px-4 font-semibold text-green-600">HW5</th>
                       <th className="text-center py-3 px-4 font-semibold text-purple-600">HD5</th>
@@ -310,11 +310,11 @@ const HydroContainerProductsSection = () => {
                   </thead>
                   <tbody>
                     {coolingComparison.map((row, i) => (
-                      <tr key={i} className="border-b border-watt-navy/5 last:border-0">
-                        <td className="py-3 px-4 text-watt-navy/70">{row.feature}</td>
-                        <td className="py-3 px-4 text-center font-medium text-watt-navy">{row.hk3}</td>
-                        <td className="py-3 px-4 text-center font-medium text-watt-navy">{row.hw5}</td>
-                        <td className="py-3 px-4 text-center font-medium text-watt-navy">{row.hd5}</td>
+                      <tr key={i} className="border-b border-border last:border-0">
+                        <td className="py-3 px-4 text-muted-foreground">{row.feature}</td>
+                        <td className="py-3 px-4 text-center font-medium text-foreground">{row.hk3}</td>
+                        <td className="py-3 px-4 text-center font-medium text-foreground">{row.hw5}</td>
+                        <td className="py-3 px-4 text-center font-medium text-foreground">{row.hd5}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -326,33 +326,33 @@ const HydroContainerProductsSection = () => {
 
         {/* Scaling Guide */}
         <ScrollReveal delay={100}>
-          <Card className="border-watt-navy/10 mt-8 bg-gradient-to-br from-blue-50 to-cyan-50">
+          <Card className="border-border mt-8 bg-gradient-to-br from-blue-50 to-cyan-50">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
                   <Info className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-watt-navy mb-2">Scaling to 100 MW</h4>
-                  <p className="text-sm text-watt-navy/70 mb-4">
+                  <h4 className="font-semibold text-foreground mb-2">Scaling to 100 MW</h4>
+                  <p className="text-sm text-muted-foreground mb-4">
                     For a 100 MW facility using HK3 containers with plate heat exchangers:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-3 rounded-lg bg-white text-center">
                       <span className="text-2xl font-bold text-blue-600">40</span>
-                      <span className="text-xs block text-watt-navy/60">Basic Units</span>
+                      <span className="text-xs block text-muted-foreground">Basic Units</span>
                     </div>
                     <div className="p-3 rounded-lg bg-white text-center">
                       <span className="text-2xl font-bold text-blue-600">80</span>
-                      <span className="text-xs block text-watt-navy/60">Containers</span>
+                      <span className="text-xs block text-muted-foreground">Containers</span>
                     </div>
                     <div className="p-3 rounded-lg bg-white text-center">
                       <span className="text-2xl font-bold text-blue-600">40</span>
-                      <span className="text-xs block text-watt-navy/60">Transformers</span>
+                      <span className="text-xs block text-muted-foreground">Transformers</span>
                     </div>
                     <div className="p-3 rounded-lg bg-white text-center">
                       <span className="text-2xl font-bold text-blue-600">16,800</span>
-                      <span className="text-xs block text-watt-navy/60">Total Miners</span>
+                      <span className="text-xs block text-muted-foreground">Total Miners</span>
                     </div>
                   </div>
                 </div>

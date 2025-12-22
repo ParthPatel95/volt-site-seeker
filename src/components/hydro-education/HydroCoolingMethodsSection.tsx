@@ -162,10 +162,10 @@ const HydroCoolingMethodsSection = () => {
               <Thermometer className="w-4 h-4" />
               Cooling Methods
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Choose Your Cooling Strategy
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Select the optimal cooling method based on your site's climate, 
               water availability, and operational requirements.
             </p>
@@ -181,12 +181,12 @@ const HydroCoolingMethodsSection = () => {
                   <TabsTrigger
                     key={method.id}
                     value={method.id}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 border-watt-navy/10 bg-white hover:border-blue-300`}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 border-border bg-white hover:border-blue-300`}
                   >
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${method.color} flex items-center justify-center`}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-sm font-medium text-watt-navy">{method.name}</span>
+                    <span className="text-sm font-medium text-foreground">{method.name}</span>
                   </TabsTrigger>
                 );
               })}
@@ -196,14 +196,14 @@ const HydroCoolingMethodsSection = () => {
               <TabsContent key={method.id} value={method.id} className="mt-0">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Left: Diagram and Description */}
-                  <Card className="border-watt-navy/10">
+                  <Card className="border-border">
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-bold text-watt-navy mb-4">{method.name}</h3>
-                      <p className="text-watt-navy/70 mb-6">{method.description}</p>
+                      <h3 className="text-xl font-bold text-foreground mb-4">{method.name}</h3>
+                      <p className="text-muted-foreground mb-6">{method.description}</p>
                       
                       {/* Interactive Diagram */}
                       <div className="mb-6">
-                        <span className="text-sm font-medium text-watt-navy/60 mb-2 block">System Diagram</span>
+                        <span className="text-sm font-medium text-muted-foreground mb-2 block">System Diagram</span>
                         {method.diagram}
                       </div>
 
@@ -222,24 +222,24 @@ const HydroCoolingMethodsSection = () => {
                   {/* Right: Specifications */}
                   <div className="space-y-4">
                     {/* Key Metrics */}
-                    <Card className="border-watt-navy/10">
+                    <Card className="border-border">
                       <CardContent className="p-6">
-                        <h4 className="font-semibold text-watt-navy mb-4">Key Specifications</h4>
+                        <h4 className="font-semibold text-foreground mb-4">Key Specifications</h4>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="p-4 rounded-lg bg-blue-50">
-                            <span className="text-xs text-watt-navy/60">PUE Rating</span>
+                            <span className="text-xs text-muted-foreground">PUE Rating</span>
                             <div className="text-xl font-bold text-blue-600">{method.pue}</div>
                           </div>
                           <div className="p-4 rounded-lg bg-green-50">
-                            <span className="text-xs text-watt-navy/60">Land Required</span>
+                            <span className="text-xs text-muted-foreground">Land Required</span>
                             <div className="text-xl font-bold text-green-600">{method.landArea}</div>
                           </div>
                           <div className="p-4 rounded-lg bg-cyan-50">
-                            <span className="text-xs text-watt-navy/60">Water Usage</span>
+                            <span className="text-xs text-muted-foreground">Water Usage</span>
                             <div className="text-xl font-bold text-cyan-600">{method.waterConsumption}</div>
                           </div>
                           <div className="p-4 rounded-lg bg-orange-50">
-                            <span className="text-xs text-watt-navy/60">Best Temperature Range</span>
+                            <span className="text-xs text-muted-foreground">Best Temperature Range</span>
                             <div className="text-xl font-bold text-orange-600">{method.bestTemps}</div>
                           </div>
                         </div>
@@ -247,12 +247,12 @@ const HydroCoolingMethodsSection = () => {
                     </Card>
 
                     {/* Requirements */}
-                    <Card className="border-watt-navy/10">
+                    <Card className="border-border">
                       <CardContent className="p-6">
-                        <h4 className="font-semibold text-watt-navy mb-4">Requirements</h4>
+                        <h4 className="font-semibold text-foreground mb-4">Requirements</h4>
                         <ul className="space-y-2">
                           {method.requirements.map((req, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm text-watt-navy/70">
+                            <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                               <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                               {req}
                             </li>
