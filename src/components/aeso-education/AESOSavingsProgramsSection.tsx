@@ -78,18 +78,18 @@ export const AESOSavingsProgramsSection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 bg-watt-light">
+    <section ref={sectionRef} className="py-16 md:py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
-            <TrendingUp className="w-4 h-4 text-watt-navy" />
-            <span className="text-sm font-medium text-watt-navy">Revenue Opportunities</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border mb-4">
+            <TrendingUp className="w-4 h-4 text-foreground" />
+            <span className="text-sm font-medium text-foreground">Revenue Opportunities</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
-            AESO <span className="text-watt-bitcoin">Savings Programs</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            AESO <span className="text-primary">Savings Programs</span>
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Beyond 12CP avoidance, flexible loads can earn revenue by participating in grid programs
           </p>
         </div>
@@ -102,8 +102,8 @@ export const AESOSavingsProgramsSection = () => {
               onClick={() => setSelectedProgram(i)}
               className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 ${
                 selectedProgram === i
-                  ? 'bg-white border-2 border-watt-bitcoin shadow-lg scale-[1.02]'
-                  : 'bg-white/70 border border-watt-navy/10 hover:bg-white hover:shadow-md'
+                  ? 'bg-card border-2 border-primary shadow-lg scale-[1.02]'
+                  : 'bg-card/70 border border-border hover:bg-card hover:shadow-md'
               }`}
             >
               {/* Icon with gradient */}
@@ -111,17 +111,17 @@ export const AESOSavingsProgramsSection = () => {
                 <program.icon className="w-6 h-6 text-white" />
               </div>
 
-              <h3 className="text-xl font-bold text-watt-navy mb-2">{program.name}</h3>
-              <p className="text-sm text-watt-navy/70 mb-4">{program.description}</p>
+              <h3 className="text-xl font-bold text-foreground mb-2">{program.name}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{program.description}</p>
 
-              <div className="flex items-center gap-2 text-watt-bitcoin font-semibold">
+              <div className="flex items-center gap-2 text-primary font-semibold">
                 <DollarSign className="w-4 h-4" />
                 <span className="text-sm">{program.potential}</span>
               </div>
 
               {selectedProgram === i && (
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-watt-bitcoin rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-white" />
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-primary-foreground" />
                 </div>
               )}
             </div>
@@ -129,7 +129,7 @@ export const AESOSavingsProgramsSection = () => {
         </div>
 
         {/* Selected Program Details */}
-        <div className={`bg-white rounded-2xl border border-watt-navy/10 overflow-hidden transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+        <div className={`bg-card rounded-2xl border border-border overflow-hidden transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           <div className={`p-4 bg-gradient-to-r ${programs[selectedProgram].color}`}>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               {(() => { const Icon = programs[selectedProgram].icon; return <Icon className="w-5 h-5" />; })()}

@@ -75,7 +75,7 @@ export const PoolPricingSection = () => {
   const priceChange = systemMarginalPrice ? (systemMarginalPrice.price - systemMarginalPrice.forecast_pool_price) : 0;
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 bg-white">
+    <section ref={sectionRef} className="py-16 md:py-20 bg-card">
       <div className="max-w-7xl mx-auto px-6">
         <LearningObjectives
           objectives={[
@@ -92,14 +92,14 @@ export const PoolPricingSection = () => {
         
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/10 border border-watt-bitcoin/30 mb-4">
-            <DollarSign className="w-4 h-4 text-watt-bitcoin" />
-            <span className="text-sm font-medium text-watt-bitcoin">Market Mechanics</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-4">
+            <DollarSign className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Market Mechanics</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
-            How <span className="text-watt-bitcoin">Pool Pricing</span> Works
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            How <span className="text-primary">Pool Pricing</span> Works
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Alberta uses a single clearing price mechanism — all generators receive the same price, 
             determined by the marginal (last) generator needed to meet demand.
           </p>
