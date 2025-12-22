@@ -107,10 +107,10 @@ const HydroWaterSystemsSection = () => {
               <Waves className="w-4 h-4" />
               Water Systems
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Water Management Systems
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Understanding the water infrastructure required for different hydro-cooling approaches.
             </p>
           </div>
@@ -123,10 +123,10 @@ const HydroWaterSystemsSection = () => {
                 <TabsTrigger
                   key={system.id}
                   value={system.id}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-cyan-500 data-[state=active]:bg-cyan-50 border-watt-navy/10 bg-white hover:border-cyan-300"
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-cyan-500 data-[state=active]:bg-cyan-50 border-border bg-white hover:border-cyan-300"
                 >
                   <Waves className="w-6 h-6 text-cyan-600" />
-                  <span className="text-sm font-medium text-watt-navy">{system.name}</span>
+                  <span className="text-sm font-medium text-foreground">{system.name}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -136,10 +136,10 @@ const HydroWaterSystemsSection = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Water Flow Diagram */}
                   <div className="lg:col-span-2">
-                    <Card className="border-watt-navy/10 h-full">
+                    <Card className="border-border h-full">
                       <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold text-watt-navy mb-2">{system.name}</h3>
-                        <p className="text-sm text-watt-navy/70 mb-6">{system.description}</p>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">{system.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-6">{system.description}</p>
                         
                         {/* Flow Steps */}
                         <div className="relative">
@@ -149,12 +149,12 @@ const HydroWaterSystemsSection = () => {
                                 <div className="flex flex-col items-center text-center">
                                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mb-3 relative z-10">
                                     <step.icon className="w-7 h-7 text-white" />
-                                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-watt-navy text-white text-xs flex items-center justify-center font-bold">
+                                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-foreground text-background text-xs flex items-center justify-center font-bold">
                                       {index + 1}
                                     </span>
                                   </div>
-                                  <h4 className="font-semibold text-watt-navy text-sm mb-1">{step.name}</h4>
-                                  <p className="text-xs text-watt-navy/60">{step.description}</p>
+                                  <h4 className="font-semibold text-foreground text-sm mb-1">{step.name}</h4>
+                                  <p className="text-xs text-muted-foreground">{step.description}</p>
                                 </div>
                                 
                                 {/* Connector Arrow */}
@@ -191,13 +191,13 @@ const HydroWaterSystemsSection = () => {
                   </div>
 
                   {/* Metrics */}
-                  <Card className="border-watt-navy/10">
+                  <Card className="border-border">
                     <CardContent className="p-6">
-                      <h4 className="font-semibold text-watt-navy mb-4">System Metrics</h4>
+                      <h4 className="font-semibold text-foreground mb-4">System Metrics</h4>
                       <ul className="space-y-4">
                         {Object.entries(system.metrics).map(([key, value], index) => (
                           <li key={index} className="flex flex-col">
-                            <span className="text-xs text-watt-navy/60">{key}</span>
+                            <span className="text-xs text-muted-foreground">{key}</span>
                             <span className="text-lg font-semibold text-cyan-600">{value}</span>
                           </li>
                         ))}
@@ -212,34 +212,34 @@ const HydroWaterSystemsSection = () => {
 
         {/* Flow Rate vs Temperature Table */}
         <ScrollReveal delay={100}>
-          <Card className="border-watt-navy/10 mt-12">
+          <Card className="border-border mt-12">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
                   <Thermometer className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Flow Rate vs Inlet Temperature</h3>
-                  <p className="text-sm text-watt-navy/60">Water flow requirements per container based on inlet temperature</p>
+                  <h3 className="text-xl font-bold text-foreground">Flow Rate vs Inlet Temperature</h3>
+                  <p className="text-sm text-muted-foreground">Water flow requirements per container based on inlet temperature</p>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Inlet Water Temp</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Flow Rate (m³/h per container)</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Efficiency Rating</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Inlet Water Temp</th>
+                      <th className="text-center py-3 px-4 font-semibold text-foreground">Flow Rate (m³/h per container)</th>
+                      <th className="text-center py-3 px-4 font-semibold text-foreground">Efficiency Rating</th>
                     </tr>
                   </thead>
                   <tbody>
                     {flowRateTable.map((row, i) => (
-                      <tr key={i} className="border-b border-watt-navy/5 last:border-0">
-                        <td className="py-3 px-4 font-medium text-watt-navy">{row.inletTemp}°C</td>
+                      <tr key={i} className="border-b border-border/50 last:border-0">
+                        <td className="py-3 px-4 font-medium text-foreground">{row.inletTemp}°C</td>
                         <td className="py-3 px-4 text-center">
                           <span className="text-lg font-bold text-cyan-600">{row.flowRate}</span>
-                          <span className="text-watt-navy/60 ml-1">m³/h</span>
+                          <span className="text-muted-foreground ml-1">m³/h</span>
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -272,32 +272,32 @@ const HydroWaterSystemsSection = () => {
 
         {/* Water Quality Requirements */}
         <ScrollReveal delay={200}>
-          <Card className="border-watt-navy/10 mt-8">
+          <Card className="border-border mt-8">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
                   <Beaker className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Water Quality Requirements</h3>
-                  <p className="text-sm text-watt-navy/60">Testing parameters before site selection</p>
+                  <h3 className="text-xl font-bold text-foreground">Water Quality Requirements</h3>
+                  <p className="text-sm text-muted-foreground">Testing parameters before site selection</p>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Parameter</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Requirement</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Priority</th>
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Note</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Parameter</th>
+                      <th className="text-center py-3 px-4 font-semibold text-foreground">Requirement</th>
+                      <th className="text-center py-3 px-4 font-semibold text-foreground">Priority</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Note</th>
                     </tr>
                   </thead>
                   <tbody>
                     {waterQualityRequirements.map((row, i) => (
-                      <tr key={i} className="border-b border-watt-navy/5 last:border-0">
-                        <td className="py-3 px-4 font-medium text-watt-navy">{row.parameter}</td>
+                      <tr key={i} className="border-b border-border/50 last:border-0">
+                        <td className="py-3 px-4 font-medium text-foreground">{row.parameter}</td>
                         <td className="py-3 px-4 text-center font-mono text-cyan-600">{row.requirement}</td>
                         <td className="py-3 px-4 text-center">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -308,7 +308,7 @@ const HydroWaterSystemsSection = () => {
                             {row.priority}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-watt-navy/60 text-xs">{row.note}</td>
+                        <td className="py-3 px-4 text-muted-foreground text-xs">{row.note}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -333,39 +333,27 @@ const HydroWaterSystemsSection = () => {
 
         {/* Reservoir Sizing Guide */}
         <ScrollReveal delay={300}>
-          <Card className="border-watt-navy/10 mt-8">
+          <Card className="border-border mt-8">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                   <Droplets className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Reservoir Sizing Guide</h3>
-                  <p className="text-sm text-watt-navy/60">Buffer capacity for 5-hour operational backup</p>
+                  <h3 className="text-xl font-bold text-foreground">Reservoir Sizing Guide</h3>
+                  <p className="text-sm text-muted-foreground">Buffer capacity for 5-hour operational backup</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {reservoirSizing.map((size, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200">
-                    <div className="text-center">
-                      <span className="text-xs text-watt-navy/60 block">Facility Size</span>
-                      <span className="text-xl font-bold text-watt-navy">{size.capacity}</span>
-                    </div>
-                    <div className="mt-4 space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-watt-navy/60">Total Volume:</span>
-                        <span className="font-semibold text-cyan-600">{size.volume}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-watt-navy/60">Configuration:</span>
-                        <span className="font-mono text-watt-navy">{size.tanks}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-watt-navy/60">Backup Time:</span>
-                        <span className="font-semibold text-green-600">{size.backupHours} hours</span>
-                      </div>
-                    </div>
+                  <div key={i} className="p-4 rounded-lg bg-muted/50 text-center">
+                    <span className="text-sm text-muted-foreground block">{size.capacity}</span>
+                    <span className="text-2xl font-bold text-blue-600 block mt-1">{size.volume}</span>
+                    <span className="text-xs text-muted-foreground block mt-2">{size.tanks}</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 inline-block mt-2">
+                      {size.backupHours}h backup
+                    </span>
                   </div>
                 ))}
               </div>
@@ -373,40 +361,46 @@ const HydroWaterSystemsSection = () => {
           </Card>
         </ScrollReveal>
 
-        {/* Water Consumption Curve */}
+        {/* Water Consumption vs Temperature Chart */}
         <ScrollReveal delay={400}>
-          <Card className="border-watt-navy/10 mt-8">
+          <Card className="border-border mt-8">
             <CardContent className="p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">
-                Water Consumption vs Ambient Temperature (100 MW Facility)
-              </h3>
-              
-              <div className="h-72 w-full">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                  <Thermometer className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Water Consumption vs Ambient Temperature</h3>
+                  <p className="text-sm text-muted-foreground">m³/hour consumption at different temperatures</p>
+                </div>
+              </div>
+
+              <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={temperatureWaterCurve} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="temp" 
-                      stroke="#6b7280" 
+                    <XAxis
+                      dataKey="temp"
+                      stroke="#6b7280"
                       fontSize={12}
                       tickFormatter={(value) => `${value}°C`}
                       label={{ value: 'Ambient Temperature', position: 'bottom', offset: 0, style: { fontSize: 12, fill: '#6b7280' } }}
                     />
-                    <YAxis 
-                      stroke="#6b7280" 
+                    <YAxis
+                      stroke="#6b7280"
                       fontSize={12}
                       label={{ value: 'm³/hour', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6b7280' } }}
                       domain={[0, 450]}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [`${value} m³/hour`, 'Water Consumption']}
                       labelFormatter={(label) => `${label}°C Ambient`}
                       contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     />
                     <Bar dataKey="water" radius={[4, 4, 0, 0]}>
                       {temperatureWaterCurve.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
+                        <Cell
+                          key={`cell-${index}`}
                           fill={entry.temp <= 25 ? '#10B981' : entry.temp <= 35 ? '#F59E0B' : '#EF4444'}
                         />
                       ))}
@@ -415,24 +409,18 @@ const HydroWaterSystemsSection = () => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-green-800 text-sm">Cold Climate (≤25°C)</h4>
-                      <p className="text-xs text-green-700">Minimal water consumption, dry cooling often sufficient</p>
-                    </div>
-                  </div>
+              <div className="mt-4 flex justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-green-500" />
+                  <span className="text-muted-foreground">≤25°C (Optimal)</span>
                 </div>
-                <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-amber-800 text-sm">Hot Climate (≥35°C)</h4>
-                      <p className="text-xs text-amber-700">High water consumption, ensure reliable water source</p>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-yellow-500" />
+                  <span className="text-muted-foreground">26-35°C (Moderate)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-red-500" />
+                  <span className="text-muted-foreground">&gt;35°C (High)</span>
                 </div>
               </div>
             </CardContent>

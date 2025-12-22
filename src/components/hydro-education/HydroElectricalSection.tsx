@@ -130,10 +130,10 @@ const HydroElectricalSection = () => {
               <Zap className="w-4 h-4" />
               Electrical Infrastructure
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Power Distribution System
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Understanding the voltage step-down chain and cable infrastructure 
               for hydro-cooled mining facilities.
             </p>
@@ -142,9 +142,9 @@ const HydroElectricalSection = () => {
 
         {/* Voltage Step-Down Visualization */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12">
+          <Card className="border-border mb-12">
             <CardContent className="p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-8 text-center">
+              <h3 className="text-xl font-bold text-foreground mb-8 text-center">
                 Voltage Transformation Chain
               </h3>
               
@@ -159,7 +159,7 @@ const HydroElectricalSection = () => {
                           <span className="text-xl font-bold">{step.voltage}</span>
                           <span className="text-xs opacity-80">{step.name}</span>
                         </div>
-                        <p className="text-xs text-watt-navy/60 text-center mt-2 max-w-[120px]">
+                        <p className="text-xs text-muted-foreground text-center mt-2 max-w-[120px]">
                           {step.description}
                         </p>
                       </div>
@@ -167,8 +167,8 @@ const HydroElectricalSection = () => {
                       {/* Arrow */}
                       {index < voltageSteps.length - 1 && (
                         <div className="hidden md:flex flex-col items-center mx-2">
-                          <ArrowDown className="w-5 h-5 text-watt-navy/40 rotate-[-90deg]" />
-                          <span className="text-[10px] text-watt-navy/40">step down</span>
+                          <ArrowDown className="w-5 h-5 text-muted-foreground/50 rotate-[-90deg]" />
+                          <span className="text-[10px] text-muted-foreground/50">step down</span>
                         </div>
                       )}
                     </div>
@@ -179,7 +179,7 @@ const HydroElectricalSection = () => {
                 <div className="mt-8 flex items-center justify-center gap-4">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-100 to-green-100">
                     <Zap className="w-4 h-4 text-yellow-600" />
-                    <span className="text-sm font-medium text-watt-navy">Power flows from grid to miners</span>
+                    <span className="text-sm font-medium text-foreground">Power flows from grid to miners</span>
                     <Server className="w-4 h-4 text-green-600" />
                   </div>
                 </div>
@@ -190,40 +190,40 @@ const HydroElectricalSection = () => {
 
         {/* Regional Voltage Standards */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12">
+          <Card className="border-border mb-12">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                   <Globe className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Regional Voltage Standards</h3>
-                  <p className="text-sm text-watt-navy/60">Grid voltage levels vary by region</p>
+                  <h3 className="text-xl font-bold text-foreground">Regional Voltage Standards</h3>
+                  <p className="text-sm text-muted-foreground">Grid voltage levels vary by region</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {regionalVoltageStandards.map((region, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-watt-navy/5 hover:bg-watt-navy/10 transition-colors">
+                  <div key={i} className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-2xl">{region.flag}</span>
-                      <span className="font-semibold text-watt-navy text-sm">{region.region}</span>
+                      <span className="font-semibold text-foreground text-sm">{region.region}</span>
                     </div>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-watt-navy/60 block text-xs">Medium Voltage</span>
+                        <span className="text-muted-foreground block text-xs">Medium Voltage</span>
                         <span className="font-mono text-yellow-600">{region.mediumVoltage.join(' / ')}</span>
                       </div>
                       <div>
-                        <span className="text-watt-navy/60 block text-xs">Low Voltage</span>
+                        <span className="text-muted-foreground block text-xs">Low Voltage</span>
                         <span className="font-mono text-green-600">{region.lowVoltage}</span>
                       </div>
                       <div>
-                        <span className="text-watt-navy/60 block text-xs">Frequency</span>
+                        <span className="text-muted-foreground block text-xs">Frequency</span>
                         <span className="font-mono text-blue-600">{region.frequency}</span>
                       </div>
                     </div>
-                    <p className="text-xs text-watt-navy/50 mt-2">{region.notes}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-2">{region.notes}</p>
                   </div>
                 ))}
               </div>
@@ -235,29 +235,29 @@ const HydroElectricalSection = () => {
         <ScrollReveal>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
             {/* Transformer Specs */}
-            <Card className="border-watt-navy/10">
+            <Card className="border-border">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-watt-navy mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <Zap className="w-5 h-5 text-yellow-500" />
                   Transformer Specifications
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-watt-navy/10">
-                        <th className="text-left py-2 font-semibold text-watt-navy">Rating</th>
-                        <th className="text-center py-2 font-semibold text-watt-navy">Containers</th>
-                        <th className="text-center py-2 font-semibold text-watt-navy">Load Factor</th>
-                        <th className="text-left py-2 font-semibold text-watt-navy">Type</th>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 font-semibold text-foreground">Rating</th>
+                        <th className="text-center py-2 font-semibold text-foreground">Containers</th>
+                        <th className="text-center py-2 font-semibold text-foreground">Load Factor</th>
+                        <th className="text-left py-2 font-semibold text-foreground">Type</th>
                       </tr>
                     </thead>
                     <tbody>
                       {transformerSpecs.map((spec, i) => (
-                        <tr key={i} className="border-b border-watt-navy/5">
+                        <tr key={i} className="border-b border-border/50">
                           <td className="py-2 font-mono text-yellow-600">{spec.rating}</td>
                           <td className="py-2 text-center">{spec.containers}</td>
                           <td className="py-2 text-center text-green-600">{spec.loadFactor}</td>
-                          <td className="py-2 text-watt-navy/70">{spec.type}</td>
+                          <td className="py-2 text-muted-foreground">{spec.type}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -277,26 +277,26 @@ const HydroElectricalSection = () => {
             </Card>
 
             {/* Cable Specs */}
-            <Card className="border-watt-navy/10">
+            <Card className="border-border">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-watt-navy mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <Cable className="w-5 h-5 text-orange-500" />
                   Cable Specifications
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-watt-navy/10">
-                        <th className="text-left py-2 font-semibold text-watt-navy">Type</th>
-                        <th className="text-left py-2 font-semibold text-watt-navy">Size</th>
-                        <th className="text-center py-2 font-semibold text-watt-navy">Current</th>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 font-semibold text-foreground">Type</th>
+                        <th className="text-left py-2 font-semibold text-foreground">Size</th>
+                        <th className="text-center py-2 font-semibold text-foreground">Current</th>
                       </tr>
                     </thead>
                     <tbody>
                       {cableSpecs.map((spec, i) => (
-                        <tr key={i} className="border-b border-watt-navy/5">
-                          <td className="py-2 font-medium text-watt-navy">{spec.type}</td>
-                          <td className="py-2 font-mono text-xs text-watt-navy/70">{spec.size}</td>
+                        <tr key={i} className="border-b border-border/50">
+                          <td className="py-2 font-medium text-foreground">{spec.type}</td>
+                          <td className="py-2 font-mono text-xs text-muted-foreground">{spec.size}</td>
                           <td className="py-2 text-center text-orange-600">{spec.current}</td>
                         </tr>
                       ))}
@@ -320,7 +320,7 @@ const HydroElectricalSection = () => {
 
         {/* Cable Installation Methods */}
         <ScrollReveal>
-          <h3 className="text-2xl font-bold text-watt-navy mb-8 text-center">
+          <h3 className="text-2xl font-bold text-foreground mb-8 text-center">
             Cable Installation Methods
           </h3>
           
@@ -331,7 +331,7 @@ const HydroElectricalSection = () => {
                 className={`border-2 transition-all cursor-pointer ${
                   selectedMethod === method.id 
                     ? 'border-yellow-500 shadow-lg' 
-                    : 'border-watt-navy/10 hover:border-yellow-300'
+                    : 'border-border hover:border-yellow-300'
                 }`}
                 onClick={() => setSelectedMethod(method.id)}
               >
@@ -345,8 +345,8 @@ const HydroElectricalSection = () => {
                       <Cable className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold text-watt-navy">{method.name}</h4>
-                      <p className="text-sm text-watt-navy/60">{method.bestFor}</p>
+                      <h4 className="text-lg font-semibold text-foreground">{method.name}</h4>
+                      <p className="text-sm text-muted-foreground">{method.bestFor}</p>
                     </div>
                   </div>
 
@@ -385,51 +385,32 @@ const HydroElectricalSection = () => {
 
         {/* Protection System */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10">
+          <Card className="border-border">
             <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Electrical Protection System</h3>
-                  <p className="text-sm text-watt-navy/60">Safety devices and protection coordination</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {protectionRequirements.map((item, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-watt-navy/5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-red-500" />
-                      <span className="font-semibold text-watt-navy text-sm">{item.device}</span>
-                    </div>
-                    <div className="text-xs space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-watt-navy/60">Location:</span>
-                        <span className="text-watt-navy">{item.location}</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-watt-navy/60">Function:</span>
-                        <span className="text-watt-navy/80">{item.function}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-yellow-800 mb-1">Lightning Protection Required</h4>
-                    <p className="text-sm text-yellow-700">
-                      Install surge protection devices (SPDs) at all voltage levels. 
-                      Use proper grounding grid with resistance ≤ 4Ω. 
-                      Consider direct strike protection for exposed equipment.
-                    </p>
-                  </div>
-                </div>
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Protection System Requirements
+              </h3>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 font-semibold text-foreground">Protection Device</th>
+                      <th className="text-left py-3 font-semibold text-foreground">Location</th>
+                      <th className="text-left py-3 font-semibold text-foreground">Function</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {protectionRequirements.map((req, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td className="py-3 font-medium text-foreground">{req.device}</td>
+                        <td className="py-3 text-muted-foreground">{req.location}</td>
+                        <td className="py-3 text-muted-foreground">{req.function}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>

@@ -230,10 +230,10 @@ const HydroConstructionSection = () => {
               <HardHat className="w-4 h-4" />
               Construction & Acceptance
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Site Construction Guide
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Comprehensive material requirements, construction phases, and acceptance 
               criteria for building a hydro-cooled mining facility.
             </p>
@@ -242,7 +242,7 @@ const HydroConstructionSection = () => {
 
         {/* Material Preparation */}
         <ScrollReveal>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
             <Package className="w-6 h-6 text-amber-500" />
             Material Preparation (100 MW Reference)
           </h3>
@@ -253,7 +253,7 @@ const HydroConstructionSection = () => {
                 open={expandedCategory === cat.category}
                 onOpenChange={() => setExpandedCategory(expandedCategory === cat.category ? null : cat.category)}
               >
-                <Card className="border-watt-navy/10">
+                <Card className="border-border">
                   <CollapsibleTrigger className="w-full">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -262,24 +262,24 @@ const HydroConstructionSection = () => {
                             <cat.icon className="w-5 h-5 text-white" />
                           </div>
                           <div className="text-left">
-                            <h4 className="font-semibold text-watt-navy">{cat.category}</h4>
-                            <span className="text-sm text-watt-navy/60">{cat.items.length} items</span>
+                            <h4 className="font-semibold text-foreground">{cat.category}</h4>
+                            <span className="text-sm text-muted-foreground">{cat.items.length} items</span>
                           </div>
                         </div>
                         {expandedCategory === cat.category ? (
-                          <ChevronUp className="w-5 h-5 text-watt-navy/50" />
+                          <ChevronUp className="w-5 h-5 text-muted-foreground" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-watt-navy/50" />
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
                         )}
                       </div>
                     </CardContent>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="px-4 pb-4">
-                      <div className="border-t border-watt-navy/10 pt-4">
+                      <div className="border-t border-border pt-4">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="text-watt-navy/60">
+                            <tr className="text-muted-foreground">
                               <th className="text-left pb-2">Item</th>
                               <th className="text-center pb-2">Quantity</th>
                               <th className="text-right pb-2">Notes</th>
@@ -287,10 +287,10 @@ const HydroConstructionSection = () => {
                           </thead>
                           <tbody>
                             {cat.items.map((item, i) => (
-                              <tr key={i} className="border-t border-watt-navy/5">
-                                <td className="py-2 font-medium text-watt-navy">{item.name}</td>
+                              <tr key={i} className="border-t border-border/50">
+                                <td className="py-2 font-medium text-foreground">{item.name}</td>
                                 <td className="py-2 text-center text-blue-600 font-mono text-xs">{item.quantity}</td>
-                                <td className="py-2 text-right text-watt-navy/60 text-xs">{item.notes}</td>
+                                <td className="py-2 text-right text-muted-foreground text-xs">{item.notes}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -306,7 +306,7 @@ const HydroConstructionSection = () => {
 
         {/* Construction Timeline */}
         <ScrollReveal>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
             <Clock className="w-6 h-6 text-amber-500" />
             Construction Phases
           </h3>
@@ -317,7 +317,7 @@ const HydroConstructionSection = () => {
                 open={expandedPhase === index}
                 onOpenChange={() => setExpandedPhase(expandedPhase === index ? null : index)}
               >
-                <Card className="border-watt-navy/10">
+                <Card className="border-border">
                   <CollapsibleTrigger className="w-full">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
@@ -325,17 +325,17 @@ const HydroConstructionSection = () => {
                           {index + 1}
                         </div>
                         <div className="flex-1 text-left">
-                          <h4 className="font-semibold text-watt-navy">{step.phase}</h4>
-                          <span className="text-sm text-watt-navy/60">{step.duration}</span>
+                          <h4 className="font-semibold text-foreground">{step.phase}</h4>
+                          <span className="text-sm text-muted-foreground">{step.duration}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-watt-navy/5 text-watt-navy/70">
+                          <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
                             {step.tasks.length} tasks
                           </span>
                           {expandedPhase === index ? (
-                            <ChevronUp className="w-5 h-5 text-watt-navy/50" />
+                            <ChevronUp className="w-5 h-5 text-muted-foreground" />
                           ) : (
-                            <ChevronDown className="w-5 h-5 text-watt-navy/50" />
+                            <ChevronDown className="w-5 h-5 text-muted-foreground" />
                           )}
                         </div>
                       </div>
@@ -343,12 +343,12 @@ const HydroConstructionSection = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="px-4 pb-4">
-                      <div className="border-t border-watt-navy/10 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="border-t border-border pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <h5 className="text-sm font-semibold text-watt-navy mb-2">Tasks</h5>
+                          <h5 className="text-sm font-semibold text-foreground mb-2">Tasks</h5>
                           <ul className="space-y-1">
                             {step.tasks.map((task, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm text-watt-navy/70">
+                              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                                 <CheckSquare className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                                 {task}
                               </li>
@@ -356,7 +356,7 @@ const HydroConstructionSection = () => {
                           </ul>
                         </div>
                         <div>
-                          <h5 className="text-sm font-semibold text-watt-navy mb-2">Key Requirements</h5>
+                          <h5 className="text-sm font-semibold text-foreground mb-2">Key Requirements</h5>
                           <ul className="space-y-1">
                             {step.requirements.map((req, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-2 rounded">
@@ -377,15 +377,15 @@ const HydroConstructionSection = () => {
 
         {/* Fire Protection */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12 bg-gradient-to-br from-red-50 to-orange-50">
+          <Card className="border-border mb-12 bg-gradient-to-br from-red-50 to-orange-50">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
                   <Flame className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Fire Protection Requirements</h3>
-                  <p className="text-sm text-watt-navy/60">Critical safety equipment for hydro-cooled facilities</p>
+                  <h3 className="text-xl font-bold text-foreground">Fire Protection Requirements</h3>
+                  <p className="text-sm text-muted-foreground">Critical safety equipment for hydro-cooled facilities</p>
                 </div>
               </div>
 
@@ -402,20 +402,20 @@ const HydroConstructionSection = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Equipment</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Location</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Quantity</th>
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Note</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Equipment</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Location</th>
+                      <th className="text-center py-3 px-4 font-semibold text-foreground">Quantity</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Note</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {fireProtectionRequirements.map((item, i) => (
-                      <tr key={i} className="border-b border-watt-navy/5 last:border-0">
-                        <td className="py-3 px-4 font-medium text-watt-navy">{item.item}</td>
-                        <td className="py-3 px-4 text-center text-watt-navy/70">{item.location}</td>
-                        <td className="py-3 px-4 text-center text-blue-600 font-mono">{item.quantity}</td>
-                        <td className="py-3 px-4 text-watt-navy/60 text-xs">{item.note}</td>
+                    {fireProtectionRequirements.map((req, i) => (
+                      <tr key={i} className="border-b border-border/50">
+                        <td className="py-3 px-4 font-medium text-foreground">{req.item}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{req.location}</td>
+                        <td className="py-3 px-4 text-center text-orange-600 font-mono">{req.quantity}</td>
+                        <td className="py-3 px-4 text-muted-foreground text-xs">{req.note}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -427,30 +427,27 @@ const HydroConstructionSection = () => {
 
         {/* Acceptance Checklist */}
         <ScrollReveal>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
             <Shield className="w-6 h-6 text-amber-500" />
-            Acceptance Inspection Checklist
+            Acceptance Checklist
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {acceptanceChecklist.map((section, index) => (
-              <Card key={index} className="border-watt-navy/10">
+              <Card key={index} className="border-border">
                 <CardContent className="p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4">{section.category}</h4>
-                  <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground mb-4">{section.category}</h4>
+                  <ul className="space-y-2">
                     {section.items.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2 rounded bg-watt-navy/5">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          item.critical ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'
+                      <li key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                        <span className="text-sm text-muted-foreground">{item.item}</span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          item.critical ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
                         }`}>
-                          {item.critical && <span className="text-red-500 text-xs font-bold">!</span>}
-                        </div>
-                        <span className="text-sm text-watt-navy flex-1">{item.item}</span>
-                        {item.critical && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700">Critical</span>
-                        )}
-                      </div>
+                          {item.critical ? 'Critical' : 'Standard'}
+                        </span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </CardContent>
               </Card>
             ))}

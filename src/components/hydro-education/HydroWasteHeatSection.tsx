@@ -98,10 +98,10 @@ const HydroWasteHeatSection = () => {
               <Flame className="w-4 h-4" />
               Waste Heat Recovery
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Turn Heat Waste Into Value
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Hydro-cooled mining generates significant waste heat that can be captured 
               and monetized for various applications.
             </p>
@@ -110,7 +110,7 @@ const HydroWasteHeatSection = () => {
 
         {/* Heat Recovery Diagram */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12 overflow-hidden">
+          <Card className="border-border mb-12 overflow-hidden">
             <CardContent className="p-0">
               <div className="relative bg-gradient-to-r from-watt-navy via-blue-900 to-watt-navy p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-8">
@@ -164,20 +164,20 @@ const HydroWasteHeatSection = () => {
 
         {/* ROI Calculator */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12">
+          <Card className="border-border mb-12">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                   <Calculator className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Waste Heat ROI Calculator</h3>
-                  <p className="text-sm text-watt-navy/60">Calculate annual savings from heat recovery</p>
+                  <h3 className="text-xl font-bold text-foreground">Waste Heat ROI Calculator</h3>
+                  <p className="text-sm text-muted-foreground">Calculate annual savings from heat recovery</p>
                 </div>
               </div>
 
               <div className="mb-8">
-                <Label className="text-sm text-watt-navy/70">Mining Facility Size (MW)</Label>
+                <Label className="text-sm text-muted-foreground">Mining Facility Size (MW)</Label>
                 <div className="flex items-center gap-4 mt-2">
                   <Slider
                     value={[facilitySize]}
@@ -188,8 +188,8 @@ const HydroWasteHeatSection = () => {
                     className="flex-1"
                   />
                   <div className="w-20 text-center">
-                    <span className="text-2xl font-bold text-watt-navy">{facilitySize}</span>
-                    <span className="text-sm text-watt-navy/60 ml-1">MW</span>
+                    <span className="text-2xl font-bold text-foreground">{facilitySize}</span>
+                    <span className="text-sm text-muted-foreground ml-1">MW</span>
                   </div>
                 </div>
               </div>
@@ -201,29 +201,29 @@ const HydroWasteHeatSection = () => {
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
                       <Hotel className="w-5 h-5 text-white" />
                     </div>
-                    <h4 className="font-semibold text-watt-navy">Hotel Hot Water Heating</h4>
+                    <h4 className="font-semibold text-foreground">Hotel Hot Water Heating</h4>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-watt-navy/70">Hot Water Production</span>
+                      <span className="text-sm text-muted-foreground">Hot Water Production</span>
                       <span className="font-mono text-cyan-600">{hotWaterVolume} L/hour</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-watt-navy/70">Water Temperature</span>
+                      <span className="text-sm text-muted-foreground">Water Temperature</span>
                       <span className="font-mono text-cyan-600">55°C</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-watt-navy/70">Equivalent Electric Cost</span>
+                      <span className="text-sm text-muted-foreground">Equivalent Electric Cost</span>
                       <span className="font-mono text-cyan-600">$0.06/kWh</span>
                     </div>
                     <div className="pt-3 border-t border-cyan-200">
                       <div className="flex justify-between items-center">
-                        <span className="font-semibold text-watt-navy">Annual Savings</span>
+                        <span className="font-semibold text-foreground">Annual Savings</span>
                         <span className="text-2xl font-bold text-green-600">${hotelSavings}</span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-watt-navy/60">Payback Period</span>
+                        <span className="text-xs text-muted-foreground">Payback Period</span>
                         <span className="text-sm font-medium text-cyan-600">~{hotelHotWaterROI.paybackMonths} months</span>
                       </div>
                     </div>
@@ -236,29 +236,29 @@ const HydroWasteHeatSection = () => {
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
                       <Fuel className="w-5 h-5 text-white" />
                     </div>
-                    <h4 className="font-semibold text-watt-navy">Natural Gas Replacement</h4>
+                    <h4 className="font-semibold text-foreground">Natural Gas Replacement</h4>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-watt-navy/70">Gas Replaced</span>
+                      <span className="text-sm text-muted-foreground">Gas Replaced</span>
                       <span className="font-mono text-orange-600">{gasReplaced} m³/year</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-watt-navy/70">Gas Price</span>
+                      <span className="text-sm text-muted-foreground">Gas Price</span>
                       <span className="font-mono text-orange-600">$0.25/m³</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-watt-navy/70">Heat Output</span>
+                      <span className="text-sm text-muted-foreground">Heat Output</span>
                       <span className="font-mono text-orange-600">{(facilitySize * 3.4).toFixed(1)} MW thermal</span>
                     </div>
                     <div className="pt-3 border-t border-orange-200">
                       <div className="flex justify-between items-center">
-                        <span className="font-semibold text-watt-navy">Annual Savings</span>
+                        <span className="font-semibold text-foreground">Annual Savings</span>
                         <span className="text-2xl font-bold text-green-600">${gasSavings}</span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-watt-navy/60">Payback Period</span>
+                        <span className="text-xs text-muted-foreground">Payback Period</span>
                         <span className="text-sm font-medium text-orange-600">~{naturalGasROI.paybackMonths} months</span>
                       </div>
                     </div>
@@ -273,20 +273,20 @@ const HydroWasteHeatSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {applications.map((app, index) => (
             <ScrollReveal key={index} delay={index * 100}>
-              <Card className="border-watt-navy/10 h-full hover:shadow-lg transition-all duration-300 group">
+              <Card className="border-border h-full hover:shadow-lg transition-all duration-300 group">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${app.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
                       <app.icon className="w-7 h-7 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-watt-navy mb-2">{app.title}</h3>
-                      <p className="text-sm text-watt-navy/70 mb-4">{app.description}</p>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">{app.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">{app.description}</p>
                       
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="p-2 rounded bg-watt-navy/5 text-center">
-                          <span className="text-xs text-watt-navy/60 block">Heat Output</span>
-                          <span className="text-sm font-semibold text-watt-navy">{app.heatOutput}</span>
+                        <div className="p-2 rounded bg-muted/50 text-center">
+                          <span className="text-xs text-muted-foreground block">Heat Output</span>
+                          <span className="text-sm font-semibold text-foreground">{app.heatOutput}</span>
                         </div>
                         <div className="p-2 rounded bg-green-50 text-center">
                           <span className="text-xs text-green-600 block">ROI Boost</span>
@@ -307,15 +307,15 @@ const HydroWasteHeatSection = () => {
 
         {/* Environmental Benefits */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 bg-gradient-to-br from-green-50 to-emerald-50">
+          <Card className="border-border bg-gradient-to-br from-green-50 to-emerald-50">
             <CardContent className="p-8">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                   <Leaf className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Environmental Impact</h3>
-                  <p className="text-sm text-watt-navy/60">Sustainability benefits of waste heat recovery</p>
+                  <h3 className="text-xl font-bold text-foreground">Environmental Impact</h3>
+                  <p className="text-sm text-muted-foreground">Sustainability benefits of waste heat recovery</p>
                 </div>
               </div>
 
@@ -324,10 +324,10 @@ const HydroWasteHeatSection = () => {
                   <div key={index} className="bg-white rounded-xl p-6 shadow-sm">
                     <div className="flex items-end gap-2 mb-2">
                       <span className="text-4xl font-bold text-green-600">{benefit.value}</span>
-                      <span className="text-sm text-watt-navy/60 pb-1">{benefit.unit}</span>
+                      <span className="text-sm text-muted-foreground pb-1">{benefit.unit}</span>
                     </div>
-                    <h4 className="font-semibold text-watt-navy mb-1">{benefit.metric}</h4>
-                    <p className="text-xs text-watt-navy/60">{benefit.description}</p>
+                    <h4 className="font-semibold text-foreground mb-1">{benefit.metric}</h4>
+                    <p className="text-xs text-muted-foreground">{benefit.description}</p>
                   </div>
                 ))}
               </div>
