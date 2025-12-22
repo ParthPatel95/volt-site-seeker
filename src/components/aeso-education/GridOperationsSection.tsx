@@ -60,14 +60,14 @@ export const GridOperationsSection = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
-            <Activity className="w-4 h-4 text-watt-navy" />
-            <span className="text-sm font-medium text-watt-navy">Real-Time Monitoring</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border mb-4">
+            <Activity className="w-4 h-4 text-foreground" />
+            <span className="text-sm font-medium text-foreground">Real-Time Monitoring</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Grid <span className="text-watt-bitcoin">Operations</span> & Reliability
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             How AESO maintains 99.97% grid reliability with real-time balancing and reserves
           </p>
         </div>
@@ -76,16 +76,16 @@ export const GridOperationsSection = () => {
           {/* Left - Operating Reserves Widget */}
           <div className={`transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-watt-navy flex items-center gap-2">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <Gauge className="w-5 h-5 text-watt-bitcoin" />
                 Live Operating Reserves
               </h3>
               <button
                 onClick={() => refetchReserves()}
-                className="p-1.5 rounded-lg hover:bg-watt-navy/10 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                 title="Refresh data"
               >
-                <RefreshCw className={`w-4 h-4 text-watt-navy/50 ${reserveLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 text-muted-foreground ${reserveLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
@@ -142,16 +142,16 @@ export const GridOperationsSection = () => {
                 { name: 'Supplemental Reserve', desc: 'Offline capacity that can start within 10 minutes', icon: '🔋', verified: true },
                 { name: 'Regulating Reserve', desc: 'Fine-tunes supply second-by-second to match demand fluctuations', icon: '⚖️', verified: true },
               ].map((type, i) => (
-                <div key={i} className="p-4 rounded-xl bg-watt-light border border-watt-navy/10 flex items-start gap-3">
+                <div key={i} className="p-4 rounded-xl bg-muted border border-border flex items-start gap-3">
                   <span className="text-2xl">{type.icon}</span>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-watt-navy">{type.name}</p>
+                      <p className="font-semibold text-foreground">{type.name}</p>
                       {type.verified && (
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">AESO Standard</span>
                       )}
                     </div>
-                    <p className="text-sm text-watt-navy/70">{type.desc}</p>
+                    <p className="text-sm text-muted-foreground">{type.desc}</p>
                   </div>
                 </div>
               ))}
@@ -161,16 +161,16 @@ export const GridOperationsSection = () => {
           {/* Right - EEA Levels */}
           <div className={`transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6'}`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-watt-navy flex items-center gap-2">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
                 Emergency Energy Alerts (EEA)
               </h3>
               <button
                 onClick={() => fetchGridAlerts()}
-                className="p-1.5 rounded-lg hover:bg-watt-navy/10 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                 title="Refresh alerts"
               >
-                <RefreshCw className={`w-4 h-4 text-watt-navy/50 ${alertsLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 text-muted-foreground ${alertsLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
@@ -179,7 +179,7 @@ export const GridOperationsSection = () => {
                 <div 
                   key={i}
                   className={`p-4 rounded-xl border transition-all hover:shadow-md ${
-                    i === activeEEAIndex ? 'bg-green-50 border-green-200 ring-2 ring-green-300' : 'bg-white border-watt-navy/10'
+                    i === activeEEAIndex ? 'bg-green-50 border-green-200 ring-2 ring-green-300' : 'bg-white border-border'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -188,14 +188,14 @@ export const GridOperationsSection = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-watt-navy">{eea.status}</p>
+                        <p className="font-semibold text-foreground">{eea.status}</p>
                         {i === activeEEAIndex && (
                           <span className="px-2 py-0.5 rounded-full bg-green-200 text-green-800 text-xs font-medium animate-pulse">
                             CURRENT
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-watt-navy/70">{eea.description}</p>
+                      <p className="text-sm text-muted-foreground">{eea.description}</p>
                     </div>
                     {i === activeEEAIndex ? (
                       <CheckCircle2 className="w-6 h-6 text-green-500" />
@@ -239,33 +239,33 @@ export const GridOperationsSection = () => {
 
         {/* Intertie Connections */}
         <div className={`transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <h3 className="text-xl font-bold text-watt-navy text-center mb-6 flex items-center justify-center gap-2">
+          <h3 className="text-xl font-bold text-foreground text-center mb-6 flex items-center justify-center gap-2">
             <ArrowLeftRight className="w-5 h-5 text-watt-bitcoin" />
             Intertie Connections
           </h3>
 
           <div className="grid md:grid-cols-3 gap-6">
             {interties.map((intertie, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-white border border-watt-navy/10 hover:shadow-md transition-all relative">
+              <div key={i} className="p-6 rounded-2xl bg-white border border-border hover:shadow-md transition-all relative">
                 <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-medium rounded">
                   AESO Data
                 </span>
                 <div className={`w-full h-2 rounded-full bg-gradient-to-r ${intertie.color} mb-4`} />
-                <h4 className="text-lg font-bold text-watt-navy mb-2">{intertie.name}</h4>
+                <h4 className="text-lg font-bold text-foreground mb-2">{intertie.name}</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/70">Capacity:</span>
-                    <span className="font-medium text-watt-navy">{intertie.capacity}</span>
+                    <span className="text-muted-foreground">Capacity:</span>
+                    <span className="font-medium text-foreground">{intertie.capacity}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/70">Typical Flow:</span>
+                    <span className="text-muted-foreground">Typical Flow:</span>
                     <span className={`font-medium ${intertie.typical === 'Import' ? 'text-green-600' : 'text-blue-600'}`}>
                       {intertie.typical}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/70">Partner:</span>
-                    <span className="text-watt-navy/60 text-xs">{intertie.source}</span>
+                    <span className="text-muted-foreground">Partner:</span>
+                    <span className="text-muted-foreground/70 text-xs">{intertie.source}</span>
                   </div>
                 </div>
               </div>
@@ -282,7 +282,7 @@ export const GridOperationsSection = () => {
 
         {/* Data Source Badge */}
         <div className="mt-8 text-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-watt-navy/5 border border-watt-navy/10 text-xs text-watt-navy/60">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-xs text-muted-foreground">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
             Live reserves from AESO CSD API | EEA definitions from AESO Operating Policies | Historical events from AESO Grid Alerts
           </span>

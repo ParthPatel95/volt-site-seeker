@@ -167,21 +167,21 @@ export const MarketParticipantsSection = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
-            <Users className="w-4 h-4 text-watt-navy" />
-            <span className="text-sm font-medium text-watt-navy">Market Structure</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border mb-4">
+            <Users className="w-4 h-4 text-foreground" />
+            <span className="text-sm font-medium text-foreground">Market Structure</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Market <span className="text-watt-bitcoin">Participants</span> & Self-Retailers
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Understanding how different entities interact with Alberta's deregulated electricity market
           </p>
         </div>
 
         {/* Market Flow Diagram */}
-        <div className={`mb-12 p-6 rounded-2xl bg-watt-light border border-watt-navy/10 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <h3 className="text-lg font-bold text-watt-navy mb-6 text-center">How Electricity Flows Through Alberta's Market</h3>
+        <div className={`mb-12 p-6 rounded-2xl bg-muted border border-border transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <h3 className="text-lg font-bold text-foreground mb-6 text-center">How Electricity Flows Through Alberta's Market</h3>
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
             {[
               { label: 'Generators', desc: 'Sell power into pool', color: 'bg-green-100 border-green-300 text-green-800' },
@@ -195,7 +195,7 @@ export const MarketParticipantsSection = () => {
                   <p className="font-semibold text-sm">{step.label}</p>
                   <p className="text-xs opacity-70">{step.desc}</p>
                 </div>
-                {i < 4 && <ArrowRight className="w-5 h-5 text-watt-navy/30 hidden md:block" />}
+                {i < 4 && <ArrowRight className="w-5 h-5 text-muted-foreground/50 hidden md:block" />}
               </div>
             ))}
           </div>
@@ -213,7 +213,7 @@ export const MarketParticipantsSection = () => {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedParticipant === type.id
                       ? 'bg-watt-bitcoin text-white shadow-lg'
-                      : 'bg-white text-watt-navy/70 hover:bg-watt-light border border-watt-navy/10'
+                      : 'bg-white text-muted-foreground hover:bg-muted border border-border'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -242,14 +242,14 @@ export const MarketParticipantsSection = () => {
             </div>
 
             {/* Requirements */}
-            <div className="p-5 rounded-xl bg-watt-light border border-watt-navy/10 mb-4">
-              <h4 className="font-semibold text-watt-navy mb-3 flex items-center gap-2">
+            <div className="p-5 rounded-xl bg-muted border border-border mb-4">
+              <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-watt-bitcoin" />
                 Requirements
               </h4>
               <ul className="space-y-2">
                 {activeParticipant.requirements.map((req, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-watt-navy/70">
+                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                     <span className="text-watt-bitcoin mt-1">•</span>
                     {req}
                   </li>
@@ -260,8 +260,8 @@ export const MarketParticipantsSection = () => {
             {/* Ideal For */}
             <div className="p-4 rounded-xl bg-watt-bitcoin/10 border border-watt-bitcoin/20">
               <p className="text-sm">
-                <span className="font-semibold text-watt-navy">Ideal for: </span>
-                <span className="text-watt-navy/70">{activeParticipant.idealFor}</span>
+                <span className="font-semibold text-foreground">Ideal for: </span>
+                <span className="text-muted-foreground">{activeParticipant.idealFor}</span>
               </p>
             </div>
           </div>
@@ -314,46 +314,46 @@ export const MarketParticipantsSection = () => {
         {/* Self-Retailer Deep Dive (always visible) */}
         {selectedParticipant === 'self-retailer' && (
           <div className={`mt-12 p-8 rounded-2xl bg-gradient-to-br from-watt-bitcoin/5 to-amber-50 border border-watt-bitcoin/20 transition-all duration-700 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-            <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">Why Self-Retailer Status is Ideal for Bitcoin Mining</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Why Self-Retailer Status is Ideal for Bitcoin Mining</h3>
             
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-5 rounded-xl bg-white border border-watt-navy/10">
+              <div className="p-5 rounded-xl bg-white border border-border">
                 <div className="w-12 h-12 rounded-lg bg-watt-bitcoin/10 flex items-center justify-center mb-4">
                   <DollarSign className="w-6 h-6 text-watt-bitcoin" />
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-2">Direct Pool Access</h4>
-                <p className="text-sm text-watt-navy/70">
+                <h4 className="font-semibold text-foreground mb-2">Direct Pool Access</h4>
+                <p className="text-sm text-muted-foreground">
                   No retailer markup — pay exactly what the market clears at. During low-price hours (often $0-30/MWh), 
                   miners can run at maximum capacity for minimal cost.
                 </p>
               </div>
               
-              <div className="p-5 rounded-xl bg-white border border-watt-navy/10">
+              <div className="p-5 rounded-xl bg-white border border-border">
                 <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mb-4">
                   <Zap className="w-6 h-6 text-green-600" />
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-2">12CP Optimization</h4>
-                <p className="text-sm text-watt-navy/70">
+                <h4 className="font-semibold text-foreground mb-2">12CP Optimization</h4>
+                <p className="text-sm text-muted-foreground">
                   By curtailing during the 12 monthly system peaks (~12 hours/year), self-retailers can eliminate 
                   up to 100% of transmission costs — worth $13M+/year for a 135MW facility.
                 </p>
               </div>
               
-              <div className="p-5 rounded-xl bg-white border border-watt-navy/10">
+              <div className="p-5 rounded-xl bg-white border border-border">
                 <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
                   <TrendingUp className="w-6 h-6 text-blue-600" />
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-2">Flexible Load = Profit</h4>
-                <p className="text-sm text-watt-navy/70">
+                <h4 className="font-semibold text-foreground mb-2">Flexible Load = Profit</h4>
+                <p className="text-sm text-muted-foreground">
                   Bitcoin mining's instant on/off capability is perfect for pool price optimization. 
                   Run at 100% during cheap hours, curtail during spikes — no production loss, just shifted timing.
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 p-4 rounded-lg bg-white border border-watt-navy/10 text-center">
-              <p className="text-sm text-watt-navy/70">
-                <span className="font-semibold text-watt-navy">WattByte Advantage:</span> Our VoltScout AI platform 
+            <div className="mt-6 p-4 rounded-lg bg-white border border-border text-center">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">WattByte Advantage:</span> Our VoltScout AI platform 
                 provides 12CP predictions, real-time price alerts, and automated curtailment recommendations — 
                 enabling self-retailers to maximize savings without 24/7 manual monitoring.
               </p>
@@ -363,7 +363,7 @@ export const MarketParticipantsSection = () => {
 
         {/* Data Source Badge */}
         <div className="mt-8 text-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-watt-navy/5 border border-watt-navy/10 text-xs text-watt-navy/60">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-xs text-muted-foreground">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
             Market structure based on AESO Market Rules & AUC regulations
           </span>
