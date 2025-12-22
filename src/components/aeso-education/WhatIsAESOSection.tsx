@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Building2, Zap, ArrowRight, Shield, BarChart3, Users, Globe, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+import ProgressiveDisclosure from '@/components/academy/ProgressiveDisclosure';
 import aesoMeritOrderImage from '@/assets/aeso-merit-order.jpg';
 
 const responsibilities = [
@@ -68,7 +70,7 @@ export const WhatIsAESOSection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 bg-watt-light">
+    <section ref={sectionRef} className="py-16 md:py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-6">
         <LearningObjectives
           objectives={[
@@ -82,14 +84,14 @@ export const WhatIsAESOSection = () => {
         
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
-            <Building2 className="w-4 h-4 text-watt-navy" />
-            <span className="text-sm font-medium text-watt-navy">Understanding the Market</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted border border-border mb-4">
+            <Building2 className="w-4 h-4 text-foreground" />
+            <span className="text-sm font-medium text-foreground">Understanding the Market</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
-            What is <span className="text-watt-bitcoin">AESO</span>?
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            What is <span className="text-primary">AESO</span>?
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             The Alberta Electric System Operator is an Independent System Operator (ISO) that manages 
             Alberta's electricity grid and wholesale market — one of North America's most unique power markets.
           </p>
@@ -98,24 +100,44 @@ export const WhatIsAESOSection = () => {
         {/* Key Stats Bar */}
         <div className={`mb-12 grid grid-cols-2 md:grid-cols-4 gap-4 transition-all duration-700 delay-150 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           {keyStats.map((stat, i) => (
-            <div key={i} className="p-4 rounded-xl bg-white border border-watt-navy/10 text-center">
-              <p className="text-2xl font-bold text-watt-bitcoin">{stat.value}</p>
-              <p className="text-sm text-watt-navy/70">{stat.label}</p>
-              <p className="text-xs text-watt-navy/40 mt-1">Source: {stat.source}</p>
+            <div key={i} className="p-4 rounded-xl bg-card border border-border text-center">
+              <p className="text-2xl font-bold text-primary">{stat.value}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Source: {stat.source}</p>
             </div>
           ))}
         </div>
 
-        {/* Power Flow Diagram */}
+        {/* Power Flow Diagram - Animated */}
         <div className={`mb-16 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <h3 className="text-xl font-bold text-watt-navy text-center mb-8">How Power Flows in Alberta</h3>
+          <h3 className="text-xl font-bold text-foreground text-center mb-8">How Power Flows in Alberta</h3>
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
             {['Generators', 'Transmission (AESO)', 'Distribution (Utilities)', 'End Users'].map((step, i) => (
               <div key={i} className="flex items-center gap-2 md:gap-4">
-                <div className="px-4 py-3 md:px-6 md:py-4 rounded-xl bg-white border border-watt-navy/10 shadow-sm hover:shadow-md transition-shadow">
-                  <p className="font-semibold text-watt-navy text-sm md:text-base">{step}</p>
-                </div>
-                {i < 3 && <ArrowRight className="w-5 h-5 text-watt-bitcoin hidden md:block" />}
+                <motion.div 
+                  className="px-4 py-3 md:px-6 md:py-4 rounded-xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.3 + i * 0.15, duration: 0.5 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <p className="font-semibold text-foreground text-sm md:text-base">{step}</p>
+                </motion.div>
+                {i < 3 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                    transition={{ delay: 0.5 + i * 0.15, duration: 0.3 }}
+                    className="hidden md:block"
+                  >
+                    <motion.div
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                    >
+                      <ArrowRight className="w-5 h-5 text-primary" />
+                    </motion.div>
+                  </motion.div>
+                )}
               </div>
             ))}
           </div>
