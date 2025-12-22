@@ -58,17 +58,17 @@ const PowerDistributionUnitsSection = () => {
   const result = calculatePDU();
 
   return (
-    <section id="pdus" className="py-16 md:py-24 bg-white">
+    <section id="pdus" className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
               <span>Section 7</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Power Distribution Units (PDUs)
             </h2>
-            <p className="text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-muted-foreground max-w-3xl mx-auto">
               PDUs are the final step in power distribution, converting facility voltage (600V/480V) 
               to equipment voltage (240V/208V) and providing individual circuit protection. 
               Proper PDU selection impacts operations, monitoring, and flexibility.
@@ -78,9 +78,9 @@ const PowerDistributionUnitsSection = () => {
 
         {/* PDU Types */}
         <ScrollReveal delay={100}>
-          <Card className="mb-12 border-watt-navy/10 shadow-institutional">
+          <Card className="mb-12 border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Zap className="w-5 h-5 text-watt-bitcoin" />
                 PDU Types & Capabilities
               </CardTitle>
@@ -88,24 +88,24 @@ const PowerDistributionUnitsSection = () => {
             <CardContent>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {pduTypes.map((pdu) => (
-                  <div key={pdu.type} className="p-4 bg-watt-light rounded-lg">
+                  <div key={pdu.type} className="p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-watt-navy">{pdu.type}</span>
+                      <span className="font-bold text-foreground">{pdu.type}</span>
                       <span className="text-xs px-2 py-0.5 bg-watt-bitcoin/10 text-watt-bitcoin rounded">
                         {pdu.cost}
                       </span>
                     </div>
-                    <p className="text-sm text-watt-navy/70 mb-3">{pdu.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{pdu.description}</p>
                     <div className="space-y-2">
                       <div className="text-xs">
                         <span className="font-medium text-watt-success">Features:</span>
-                        <ul className="mt-1 text-watt-navy/60 space-y-0.5">
+                        <ul className="mt-1 text-muted-foreground space-y-0.5">
                           {pdu.features.map((f, i) => <li key={i}>• {f}</li>)}
                         </ul>
                       </div>
                       <div className="text-xs">
                         <span className="font-medium text-watt-coinbase">Best for:</span>
-                        <p className="text-watt-navy/60 mt-0.5">{pdu.use}</p>
+                        <p className="text-muted-foreground mt-0.5">{pdu.use}</p>
                       </div>
                     </div>
                   </div>
@@ -118,39 +118,39 @@ const PowerDistributionUnitsSection = () => {
         {/* PDU Architecture */}
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           <ScrollReveal delay={200}>
-            <Card className="h-full border-watt-navy/10 shadow-institutional">
+            <Card className="h-full border-border shadow-institutional">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-watt-navy">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Zap className="w-5 h-5 text-watt-bitcoin" />
                   PDU Architecture & Transformers
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-watt-navy/70">
+                <p className="text-sm text-muted-foreground">
                   Floor-mounted PDUs contain transformers to step down facility voltage to miner voltage. 
                   The transformer configuration affects fault behavior and grounding.
                 </p>
 
                 <div className="space-y-3">
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy">Delta-Wye (Δ-Y)</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground">Delta-Wye (Δ-Y)</h5>
+                    <p className="text-xs text-muted-foreground">
                       Primary: 480V or 600V delta (3-wire). Secondary: 208Y/120V or 240Y/139V (4-wire). 
-                      Creates neutral for line-to-neutral loads. <strong>Most common for datacenters.</strong>
+                      Creates neutral for line-to-neutral loads. <strong className="text-foreground">Most common for datacenters.</strong>
                     </p>
                   </div>
 
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy">Wye-Wye (Y-Y)</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground">Wye-Wye (Y-Y)</h5>
+                    <p className="text-xs text-muted-foreground">
                       Both windings wye-connected. Neutral available on both sides. 
                       Can have grounding issues if neutral not properly bonded.
                     </p>
                   </div>
 
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy">Delta-Delta (Δ-Δ)</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground">Delta-Delta (Δ-Δ)</h5>
+                    <p className="text-xs text-muted-foreground">
                       No neutral available. Used for motor loads. Can continue operating 
                       with one transformer failed (open-delta) at reduced capacity.
                     </p>
@@ -158,8 +158,8 @@ const PowerDistributionUnitsSection = () => {
                 </div>
 
                 <div className="p-3 bg-watt-bitcoin/10 rounded-lg border border-watt-bitcoin/20">
-                  <h5 className="font-semibold text-watt-navy text-sm mb-1">Mining PDU Considerations:</h5>
-                  <p className="text-xs text-watt-navy/70">
+                  <h5 className="font-semibold text-foreground text-sm mb-1">Mining PDU Considerations:</h5>
+                  <p className="text-xs text-muted-foreground">
                     Bitcoin miners typically use 240V line-to-line power (no neutral needed). 
                     Delta-wye transformers with 240V secondary are common. 
                     K-factor rated transformers (K-13 or K-20) handle harmonic loads from switch-mode PSUs.
@@ -170,21 +170,21 @@ const PowerDistributionUnitsSection = () => {
           </ScrollReveal>
 
           <ScrollReveal delay={300}>
-            <Card className="h-full border-watt-bitcoin/20 shadow-institutional bg-gradient-to-br from-white to-watt-bitcoin/5">
+            <Card className="h-full border-watt-bitcoin/20 shadow-institutional bg-gradient-to-br from-card to-watt-bitcoin/5">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-watt-navy">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Calculator className="w-5 h-5 text-watt-bitcoin" />
                   PDU Sizing Calculator
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-watt-navy/70">
+                <p className="text-sm text-muted-foreground">
                   Calculate how many PDUs and circuits you need for your mining operation.
                 </p>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label className="text-xs text-watt-navy/70">Number of Miners</Label>
+                    <Label className="text-xs text-muted-foreground">Number of Miners</Label>
                     <Input
                       type="number"
                       value={miners}
@@ -193,7 +193,7 @@ const PowerDistributionUnitsSection = () => {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-watt-navy/70">Watts per Miner</Label>
+                    <Label className="text-xs text-muted-foreground">Watts per Miner</Label>
                     <Input
                       type="number"
                       value={powerPerMiner}
@@ -202,7 +202,7 @@ const PowerDistributionUnitsSection = () => {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-watt-navy/70">Voltage</Label>
+                    <Label className="text-xs text-muted-foreground">Voltage</Label>
                     <Input
                       type="number"
                       value={voltage}
@@ -213,23 +213,23 @@ const PowerDistributionUnitsSection = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-white rounded-lg border border-watt-navy/10">
-                    <div className="text-xs text-watt-navy/60">Total Power</div>
+                  <div className="p-3 bg-card rounded-lg border border-border">
+                    <div className="text-xs text-muted-foreground">Total Power</div>
                     <div className="text-2xl font-bold text-watt-bitcoin">{result.totalKW} kW</div>
                   </div>
-                  <div className="p-3 bg-white rounded-lg border border-watt-navy/10">
-                    <div className="text-xs text-watt-navy/60">Total Current</div>
-                    <div className="text-2xl font-bold text-watt-navy">{result.totalAmps} A</div>
+                  <div className="p-3 bg-card rounded-lg border border-border">
+                    <div className="text-xs text-muted-foreground">Total Current</div>
+                    <div className="text-2xl font-bold text-foreground">{result.totalAmps} A</div>
                   </div>
-                  <div className="p-3 bg-white rounded-lg border border-watt-navy/10">
-                    <div className="text-xs text-watt-navy/60">30A Circuits Needed</div>
+                  <div className="p-3 bg-card rounded-lg border border-border">
+                    <div className="text-xs text-muted-foreground">30A Circuits Needed</div>
                     <div className="text-2xl font-bold text-watt-success">{result.circuits30A}</div>
-                    <div className="text-xs text-watt-navy/50">at 80% loading</div>
+                    <div className="text-xs text-muted-foreground/50">at 80% loading</div>
                   </div>
                   <div className="p-3 bg-watt-bitcoin/10 rounded-lg border border-watt-bitcoin/20">
-                    <div className="text-xs text-watt-navy/60">PDUs Required</div>
+                    <div className="text-xs text-muted-foreground">PDUs Required</div>
                     <div className="text-2xl font-bold text-watt-bitcoin">{result.pdusNeeded}</div>
-                    <div className="text-xs text-watt-navy/50">42 circuits each</div>
+                    <div className="text-xs text-muted-foreground/50">42 circuits each</div>
                   </div>
                 </div>
               </CardContent>
@@ -239,9 +239,9 @@ const PowerDistributionUnitsSection = () => {
 
         {/* Circuit Density & Breakers */}
         <ScrollReveal delay={400}>
-          <Card className="mb-12 border-watt-navy/10 shadow-institutional">
+          <Card className="mb-12 border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Zap className="w-5 h-5 text-watt-bitcoin" />
                 Circuit Density & Breaker Selection
               </CardTitle>
@@ -249,39 +249,39 @@ const PowerDistributionUnitsSection = () => {
             <CardContent>
               <div className="grid lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">Circuit Configuration for Mining:</h4>
-                  <p className="text-sm text-watt-navy/70">
+                  <h4 className="font-semibold text-foreground">Circuit Configuration for Mining:</h4>
+                  <p className="text-sm text-muted-foreground">
                     Modern ASIC miners draw 10-25A at 240V. Circuit breakers must be sized for 
                     continuous loads (load ≤ 80% of breaker rating).
                   </p>
 
                   <div className="space-y-2">
-                    <div className="p-3 bg-watt-light rounded-lg flex justify-between items-center">
+                    <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
                       <div>
-                        <span className="font-medium text-watt-navy">30A Breaker</span>
-                        <span className="text-xs text-watt-navy/60 ml-2">→ 24A max continuous</span>
+                        <span className="font-medium text-foreground">30A Breaker</span>
+                        <span className="text-xs text-muted-foreground ml-2">→ 24A max continuous</span>
                       </div>
                       <span className="text-sm font-bold text-watt-bitcoin">1-2 miners</span>
                     </div>
-                    <div className="p-3 bg-watt-light rounded-lg flex justify-between items-center">
+                    <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
                       <div>
-                        <span className="font-medium text-watt-navy">40A Breaker</span>
-                        <span className="text-xs text-watt-navy/60 ml-2">→ 32A max continuous</span>
+                        <span className="font-medium text-foreground">40A Breaker</span>
+                        <span className="text-xs text-muted-foreground ml-2">→ 32A max continuous</span>
                       </div>
                       <span className="text-sm font-bold text-watt-bitcoin">2 miners</span>
                     </div>
-                    <div className="p-3 bg-watt-light rounded-lg flex justify-between items-center">
+                    <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
                       <div>
-                        <span className="font-medium text-watt-navy">50A Breaker</span>
-                        <span className="text-xs text-watt-navy/60 ml-2">→ 40A max continuous</span>
+                        <span className="font-medium text-foreground">50A Breaker</span>
+                        <span className="text-xs text-muted-foreground ml-2">→ 40A max continuous</span>
                       </div>
                       <span className="text-sm font-bold text-watt-bitcoin">2-3 miners</span>
                     </div>
                   </div>
 
                   <div className="p-3 bg-watt-success/10 rounded-lg border border-watt-success/20">
-                    <h5 className="font-semibold text-watt-navy text-sm mb-1">Tip: Use 240V Circuits</h5>
-                    <p className="text-xs text-watt-navy/70">
+                    <h5 className="font-semibold text-foreground text-sm mb-1">Tip: Use 240V Circuits</h5>
+                    <p className="text-xs text-muted-foreground">
                       240V circuits carry twice the power of 120V at the same current. 
                       Use NEMA 6-20R or 6-30R outlets for mining (not standard 5-15R).
                     </p>
@@ -289,40 +289,40 @@ const PowerDistributionUnitsSection = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">PDU Circuit Count Examples:</h4>
+                  <h4 className="font-semibold text-foreground">PDU Circuit Count Examples:</h4>
                   <div className="space-y-2">
-                    <div className="p-3 bg-watt-light rounded-lg">
+                    <div className="p-3 bg-muted rounded-lg">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="font-medium text-watt-navy">225 kVA PDU</span>
+                        <span className="font-medium text-foreground">225 kVA PDU</span>
                         <span className="text-xs text-watt-bitcoin">~200 kW IT load</span>
                       </div>
-                      <p className="text-xs text-watt-navy/60">
+                      <p className="text-xs text-muted-foreground">
                         42 × 30A circuits or 36 × 40A circuits. Powers ~50-60 miners.
                       </p>
                     </div>
-                    <div className="p-3 bg-watt-light rounded-lg">
+                    <div className="p-3 bg-muted rounded-lg">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="font-medium text-watt-navy">500 kVA PDU</span>
+                        <span className="font-medium text-foreground">500 kVA PDU</span>
                         <span className="text-xs text-watt-bitcoin">~450 kW IT load</span>
                       </div>
-                      <p className="text-xs text-watt-navy/60">
+                      <p className="text-xs text-muted-foreground">
                         84 × 30A circuits or 72 × 40A circuits. Powers ~120-150 miners.
                       </p>
                     </div>
-                    <div className="p-3 bg-watt-light rounded-lg">
+                    <div className="p-3 bg-muted rounded-lg">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="font-medium text-watt-navy">750 kVA PDU</span>
+                        <span className="font-medium text-foreground">750 kVA PDU</span>
                         <span className="text-xs text-watt-bitcoin">~675 kW IT load</span>
                       </div>
-                      <p className="text-xs text-watt-navy/60">
+                      <p className="text-xs text-muted-foreground">
                         126 × 30A circuits or 108 × 40A circuits. Powers ~180-220 miners.
                       </p>
                     </div>
                   </div>
 
                   <div className="p-3 bg-watt-bitcoin/10 rounded-lg border border-watt-bitcoin/20">
-                    <h5 className="font-semibold text-watt-navy text-sm mb-1">Over-provision Circuits</h5>
-                    <p className="text-xs text-watt-navy/70">
+                    <h5 className="font-semibold text-foreground text-sm mb-1">Over-provision Circuits</h5>
+                    <p className="text-xs text-muted-foreground">
                       Add 10-20% extra circuits for flexibility. Allows mixing miner models, 
                       hot-swapping failed units, and future upgrades without PDU changes.
                     </p>
@@ -335,9 +335,9 @@ const PowerDistributionUnitsSection = () => {
 
         {/* Monitoring & SCADA */}
         <ScrollReveal delay={500}>
-          <Card className="border-watt-navy/10 shadow-institutional">
+          <Card className="border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Monitor className="w-5 h-5 text-watt-bitcoin" />
                 Monitoring & SCADA Integration
               </CardTitle>
@@ -345,87 +345,52 @@ const PowerDistributionUnitsSection = () => {
             <CardContent>
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">Per-Circuit Metering</h4>
-                  <p className="text-sm text-watt-navy/70">
+                  <h4 className="font-semibold text-foreground">Per-Circuit Metering</h4>
+                  <p className="text-sm text-muted-foreground">
                     Monitored PDUs track power on every circuit, enabling:
                   </p>
-                  <ul className="text-sm text-watt-navy/70 space-y-1">
-                    <li>• <strong>Capacity planning:</strong> Know exactly how much headroom exists</li>
-                    <li>• <strong>Load balancing:</strong> Distribute miners across phases</li>
-                    <li>• <strong>Anomaly detection:</strong> Spot failing PSUs or overloads</li>
-                    <li>• <strong>Billing:</strong> Per-customer usage for colocation</li>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong className="text-foreground">Capacity planning:</strong> Know exactly how much headroom exists</li>
+                    <li>• <strong className="text-foreground">Load balancing:</strong> Distribute miners across phases</li>
+                    <li>• <strong className="text-foreground">Anomaly detection:</strong> Spot failing PSUs or overloads</li>
+                    <li>• <strong className="text-foreground">Billing:</strong> Per-customer usage for colocation</li>
                   </ul>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">Communication Protocols</h4>
-                  <p className="text-sm text-watt-navy/70">
-                    PDUs connect to building management systems via:
+                  <h4 className="font-semibold text-foreground">Environmental Monitoring</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Advanced PDUs include sensor ports for environmental data:
                   </p>
-                  <div className="space-y-2">
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>SNMP v2c/v3:</strong> Industry standard, wide compatibility
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>Modbus TCP/RTU:</strong> Industrial protocol, BMS integration
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>BACnet:</strong> Building automation standard
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>REST API:</strong> Modern web-based integration
-                    </div>
-                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong className="text-foreground">Temperature:</strong> Inlet/outlet air temps</li>
+                    <li>• <strong className="text-foreground">Humidity:</strong> Prevent condensation</li>
+                    <li>• <strong className="text-foreground">Airflow:</strong> Detect blocked vents</li>
+                    <li>• <strong className="text-foreground">Door contacts:</strong> Security monitoring</li>
+                  </ul>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">Environmental Sensors</h4>
-                  <p className="text-sm text-watt-navy/70">
-                    Many PDUs include or support add-on sensors:
+                  <h4 className="font-semibold text-foreground">Network Protocols</h4>
+                  <p className="text-sm text-muted-foreground">
+                    PDUs communicate via standard protocols:
                   </p>
-                  <div className="space-y-2">
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>Temperature:</strong> Inlet/outlet air monitoring
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>Humidity:</strong> Prevent condensation issues
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>Airflow:</strong> Detect blocked vents
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>Door/Contact:</strong> Security monitoring
-                    </div>
-                    <div className="p-2 bg-watt-light rounded text-xs">
-                      <strong>Leak Detection:</strong> Water under raised floor
-                    </div>
-                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• <strong className="text-foreground">SNMP v3:</strong> Standard for monitoring systems</li>
+                    <li>• <strong className="text-foreground">Modbus TCP:</strong> Industrial automation</li>
+                    <li>• <strong className="text-foreground">REST API:</strong> Custom integrations</li>
+                    <li>• <strong className="text-foreground">BACnet:</strong> Building management</li>
+                  </ul>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-watt-navy/5 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="w-5 h-5 text-watt-bitcoin" />
-                  <h5 className="font-semibold text-watt-navy">PDU Cost Considerations</h5>
-                </div>
-                <div className="grid md:grid-cols-4 gap-4 text-sm">
-                  <div className="p-3 bg-white rounded">
-                    <div className="text-watt-navy/60 text-xs">225 kVA Basic</div>
-                    <div className="font-bold text-watt-navy">$15,000-25,000</div>
-                  </div>
-                  <div className="p-3 bg-white rounded">
-                    <div className="text-watt-navy/60 text-xs">225 kVA Monitored</div>
-                    <div className="font-bold text-watt-navy">$25,000-40,000</div>
-                  </div>
-                  <div className="p-3 bg-white rounded">
-                    <div className="text-watt-navy/60 text-xs">500 kVA Monitored</div>
-                    <div className="font-bold text-watt-navy">$45,000-70,000</div>
-                  </div>
-                  <div className="p-3 bg-white rounded">
-                    <div className="text-watt-navy/60 text-xs">Installation</div>
-                    <div className="font-bold text-watt-navy">$5,000-15,000</div>
-                  </div>
-                </div>
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h5 className="font-semibold text-foreground mb-2">DCIM Integration</h5>
+                <p className="text-sm text-muted-foreground">
+                  Data Center Infrastructure Management (DCIM) software aggregates data from all PDUs, 
+                  UPS systems, and cooling equipment. Provides facility-wide visibility, trending, 
+                  and automated alerts. Essential for operations at scale.
+                </p>
               </div>
             </CardContent>
           </Card>

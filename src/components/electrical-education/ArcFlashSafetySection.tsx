@@ -11,17 +11,17 @@ const ArcFlashSafetySection = () => {
   ];
 
   return (
-    <section id="arc-flash" className="py-16 md:py-24 bg-white">
+    <section id="arc-flash" className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
               <span>Section 11</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Arc Flash Safety
             </h2>
-            <p className="text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-muted-foreground max-w-3xl mx-auto">
               Arc flash events can release enormous energy, causing severe burns, blindness, 
               and death. Understanding arc flash hazards is critical for electrical safety.
             </p>
@@ -30,9 +30,9 @@ const ArcFlashSafetySection = () => {
 
         {/* What is Arc Flash */}
         <ScrollReveal delay={100}>
-          <Card className="mb-12 border-watt-navy/10 shadow-institutional">
+          <Card className="mb-12 border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Zap className="w-5 h-5 text-watt-bitcoin" />
                 Understanding Arc Flash
               </CardTitle>
@@ -40,8 +40,8 @@ const ArcFlashSafetySection = () => {
             <CardContent>
               <div className="grid lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <p className="text-watt-navy/70">
-                    An <strong>arc flash</strong> occurs when current flows through air between 
+                  <p className="text-muted-foreground">
+                    An <strong className="text-foreground">arc flash</strong> occurs when current flows through air between 
                     conductors or between a conductor and ground. The air ionizes and becomes 
                     conductive, releasing enormous energy.
                   </p>
@@ -57,9 +57,9 @@ const ArcFlashSafetySection = () => {
                     </ul>
                   </div>
 
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy text-sm mb-1">Common Causes:</h5>
-                    <ul className="text-xs text-watt-navy/60 space-y-1">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground text-sm mb-1">Common Causes:</h5>
+                    <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• Accidental contact with energized parts</li>
                       <li>• Dropped tools or foreign objects</li>
                       <li>• Equipment failure or insulation breakdown</li>
@@ -70,27 +70,27 @@ const ArcFlashSafetySection = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">Arc Flash Energy (Incident Energy)</h4>
-                  <p className="text-sm text-watt-navy/70">
-                    Arc flash severity is measured in <strong>calories per square centimeter (cal/cm²)</strong>. 
+                  <h4 className="font-semibold text-foreground">Arc Flash Energy (Incident Energy)</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Arc flash severity is measured in <strong className="text-foreground">calories per square centimeter (cal/cm²)</strong>. 
                     1.2 cal/cm² is enough to cause a second-degree burn on exposed skin.
                   </p>
 
                   <div className="space-y-2">
-                    <div className="p-3 bg-watt-light rounded-lg">
-                      <h5 className="font-medium text-watt-navy text-sm">Factors Affecting Incident Energy:</h5>
-                      <ul className="text-xs text-watt-navy/60 space-y-1 mt-1">
-                        <li>• <strong>Available fault current:</strong> Higher = more energy</li>
-                        <li>• <strong>Clearing time:</strong> Slower protection = more energy</li>
-                        <li>• <strong>Working distance:</strong> Closer = more exposure</li>
-                        <li>• <strong>Electrode configuration:</strong> Enclosure type matters</li>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <h5 className="font-medium text-foreground text-sm">Factors Affecting Incident Energy:</h5>
+                      <ul className="text-xs text-muted-foreground space-y-1 mt-1">
+                        <li>• <strong className="text-foreground">Available fault current:</strong> Higher = more energy</li>
+                        <li>• <strong className="text-foreground">Clearing time:</strong> Slower protection = more energy</li>
+                        <li>• <strong className="text-foreground">Working distance:</strong> Closer = more exposure</li>
+                        <li>• <strong className="text-foreground">Electrode configuration:</strong> Enclosure type matters</li>
                       </ul>
                     </div>
                   </div>
 
                   <div className="p-3 bg-watt-bitcoin/10 rounded-lg border border-watt-bitcoin/20">
-                    <h5 className="font-semibold text-watt-navy text-sm mb-1">IEEE 1584 Calculation</h5>
-                    <p className="text-xs text-watt-navy/70">
+                    <h5 className="font-semibold text-foreground text-sm mb-1">IEEE 1584 Calculation</h5>
+                    <p className="text-xs text-muted-foreground">
                       IEEE 1584 provides equations to calculate incident energy based on 
                       system parameters. An arc flash study applies these to every 
                       electrical panel in the facility.
@@ -104,32 +104,32 @@ const ArcFlashSafetySection = () => {
 
         {/* PPE Categories */}
         <ScrollReveal delay={200}>
-          <Card className="mb-12 border-watt-navy/10 shadow-institutional">
+          <Card className="mb-12 border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Shield className="w-5 h-5 text-watt-bitcoin" />
                 PPE Categories (NFPA 70E)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-watt-navy/70 mb-6">
+              <p className="text-muted-foreground mb-6">
                 NFPA 70E defines four PPE categories based on incident energy levels. 
                 Workers must wear PPE rated for the hazard level of the equipment being worked on.
               </p>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {ppeCategories.map((ppe) => (
-                  <div key={ppe.category} className="p-4 bg-watt-light rounded-lg">
+                  <div key={ppe.category} className="p-4 bg-muted rounded-lg">
                     <div className="flex items-center gap-2 mb-3">
                       <div className={`w-8 h-8 rounded-full ${ppe.color} text-white flex items-center justify-center font-bold`}>
                         {ppe.category}
                       </div>
                       <div>
-                        <div className="font-bold text-watt-navy">Category {ppe.category}</div>
-                        <div className="text-xs text-watt-navy/60">≤ {ppe.arc}</div>
+                        <div className="font-bold text-foreground">Category {ppe.category}</div>
+                        <div className="text-xs text-muted-foreground">≤ {ppe.arc}</div>
                       </div>
                     </div>
-                    <p className="text-xs text-watt-navy/70">{ppe.clothing}</p>
+                    <p className="text-xs text-muted-foreground">{ppe.clothing}</p>
                   </div>
                 ))}
               </div>
@@ -149,15 +149,15 @@ const ArcFlashSafetySection = () => {
         {/* Arc Flash Labeling */}
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           <ScrollReveal delay={300}>
-            <Card className="h-full border-watt-navy/10 shadow-institutional">
+            <Card className="h-full border-border shadow-institutional">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-watt-navy">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <FileText className="w-5 h-5 text-watt-bitcoin" />
                   Arc Flash Labels
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-watt-navy/70">
+                <p className="text-sm text-muted-foreground">
                   Every piece of electrical equipment must have an arc flash label 
                   displaying hazard information per NFPA 70E.
                 </p>
@@ -193,9 +193,9 @@ const ArcFlashSafetySection = () => {
                   </div>
                 </div>
 
-                <div className="p-3 bg-watt-light rounded-lg">
-                  <h5 className="font-medium text-watt-navy text-sm mb-1">Label Requirements:</h5>
-                  <ul className="text-xs text-watt-navy/60 space-y-1">
+                <div className="p-3 bg-muted rounded-lg">
+                  <h5 className="font-medium text-foreground text-sm mb-1">Label Requirements:</h5>
+                  <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• Nominal system voltage</li>
                     <li>• Arc flash boundary</li>
                     <li>• Incident energy OR PPE category</li>
@@ -208,54 +208,54 @@ const ArcFlashSafetySection = () => {
           </ScrollReveal>
 
           <ScrollReveal delay={400}>
-            <Card className="h-full border-watt-navy/10 shadow-institutional">
+            <Card className="h-full border-border shadow-institutional">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-watt-navy">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Shield className="w-5 h-5 text-watt-bitcoin" />
                   Reducing Arc Flash Hazards
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-watt-navy/70">
+                <p className="text-sm text-muted-foreground">
                   Several design and operational strategies can reduce arc flash incident energy.
                 </p>
 
                 <div className="space-y-3">
                   <div className="p-3 bg-watt-success/10 rounded-lg border border-watt-success/20">
                     <h5 className="font-medium text-watt-success text-sm">Arc-Resistant Switchgear</h5>
-                    <p className="text-xs text-watt-navy/60">
+                    <p className="text-xs text-muted-foreground">
                       Contains and vents arc energy away from personnel. 
                       Reduces incident energy to safe levels at front of equipment.
                     </p>
                   </div>
                   
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy text-sm">Fast-Acting Protection</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground text-sm">Fast-Acting Protection</h5>
+                    <p className="text-xs text-muted-foreground">
                       Current-limiting fuses or fast breakers clear faults in &lt;0.1 seconds. 
                       Less time = less energy released.
                     </p>
                   </div>
                   
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy text-sm">Arc Flash Relay</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground text-sm">Arc Flash Relay</h5>
+                    <p className="text-xs text-muted-foreground">
                       Detects light from arc and trips breaker in 2-10 ms. 
                       Dramatically reduces incident energy.
                     </p>
                   </div>
                   
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy text-sm">Maintenance Mode</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground text-sm">Maintenance Mode</h5>
+                    <p className="text-xs text-muted-foreground">
                       Temporarily reduce protection trip settings during maintenance. 
                       Faster clearing = lower incident energy.
                     </p>
                   </div>
                   
-                  <div className="p-3 bg-watt-light rounded-lg">
-                    <h5 className="font-medium text-watt-navy text-sm">Remote Racking/Switching</h5>
-                    <p className="text-xs text-watt-navy/60">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <h5 className="font-medium text-foreground text-sm">Remote Racking/Switching</h5>
+                    <p className="text-xs text-muted-foreground">
                       Operate equipment from a distance using remote controls. 
                       Increases working distance, reducing exposure.
                     </p>
@@ -268,9 +268,9 @@ const ArcFlashSafetySection = () => {
 
         {/* Compliance */}
         <ScrollReveal delay={500}>
-          <Card className="border-watt-navy/10 shadow-institutional">
+          <Card className="border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <FileText className="w-5 h-5 text-watt-bitcoin" />
                 Regulatory Compliance
               </CardTitle>
@@ -278,12 +278,12 @@ const ArcFlashSafetySection = () => {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">NFPA 70E (US)</h4>
-                  <p className="text-sm text-watt-navy/70">
+                  <h4 className="font-semibold text-foreground">NFPA 70E (US)</h4>
+                  <p className="text-sm text-muted-foreground">
                     "Standard for Electrical Safety in the Workplace" - primary US standard 
                     for arc flash and electrical safety.
                   </p>
-                  <ul className="text-xs text-watt-navy/60 space-y-1">
+                  <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• Requires arc flash hazard analysis</li>
                     <li>• Defines PPE requirements</li>
                     <li>• Establishes work practices and procedures</li>
@@ -292,12 +292,12 @@ const ArcFlashSafetySection = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">CSA Z462 (Canada)</h4>
-                  <p className="text-sm text-watt-navy/70">
+                  <h4 className="font-semibold text-foreground">CSA Z462 (Canada)</h4>
+                  <p className="text-sm text-muted-foreground">
                     Canadian equivalent to NFPA 70E. Very similar requirements with 
                     some differences in approach boundaries and calculations.
                   </p>
-                  <ul className="text-xs text-watt-navy/60 space-y-1">
+                  <ul className="text-xs text-muted-foreground space-y-1">
                     <li>• Adopted by most Canadian jurisdictions</li>
                     <li>• Harmonized with NFPA 70E</li>
                     <li>• Includes both imperial and metric units</li>
@@ -306,8 +306,8 @@ const ArcFlashSafetySection = () => {
               </div>
 
               <div className="mt-6 p-4 bg-watt-bitcoin/10 rounded-lg border border-watt-bitcoin/20">
-                <h5 className="font-semibold text-watt-navy mb-2">Arc Flash Study Requirements</h5>
-                <p className="text-sm text-watt-navy/70">
+                <h5 className="font-semibold text-foreground mb-2">Arc Flash Study Requirements</h5>
+                <p className="text-sm text-muted-foreground">
                   An arc flash study must be performed by a qualified engineer and updated 
                   whenever major system changes occur or at least every 5 years. 
                   The study calculates incident energy at each equipment location and 
