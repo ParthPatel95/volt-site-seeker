@@ -98,10 +98,10 @@ const HydroSiteSelectionSection = () => {
               <FileText className="w-4 h-4" />
               Site Selection
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Site Selection Criteria
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Comprehensive checklist for evaluating potential hydro-cooling mining farm locations.
             </p>
           </div>
@@ -148,7 +148,7 @@ const HydroSiteSelectionSection = () => {
                             ) : (
                               <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                             )}
-                            <span className={`text-sm ${item.critical ? 'font-medium text-watt-navy' : 'text-watt-navy/70'}`}>
+                            <span className={`text-sm ${item.critical ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                               {item.name}
                               {item.critical && (
                                 <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
