@@ -130,10 +130,10 @@ const HydroEconomicsSection = () => {
               <DollarSign className="w-4 h-4" />
               Economics
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Construction Economics
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Understand the capital requirements and cost structure for building 
               a hydro-cooled mining facility.
             </p>
@@ -143,18 +143,18 @@ const HydroEconomicsSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Cost Calculator */}
           <ScrollReveal>
-            <Card className="border-watt-navy/10 h-full">
+            <Card className="border-border h-full">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                     <Calculator className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-watt-navy">Cost Estimator</h3>
+                  <h3 className="text-xl font-bold text-foreground">Cost Estimator</h3>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <Label className="text-sm text-watt-navy/70">Facility Capacity (MW)</Label>
+                    <Label className="text-sm text-muted-foreground">Facility Capacity (MW)</Label>
                     <div className="flex items-center gap-4 mt-2">
                       <Slider
                         value={[capacity]}
@@ -189,12 +189,12 @@ const HydroEconomicsSection = () => {
                       { name: 'Cooling', cost: coolingCost, icon: Droplets },
                       { name: 'Containers', cost: containerCost, icon: Building },
                     ].map((item, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 border-b border-watt-navy/5 last:border-0">
+                      <div key={index} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                         <div className="flex items-center gap-2">
-                          <item.icon className="w-4 h-4 text-watt-navy/50" />
-                          <span className="text-sm text-watt-navy/70">{item.name}</span>
+                          <item.icon className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{item.name}</span>
                         </div>
-                        <span className="font-semibold text-watt-navy">{formatCurrency(item.cost)}</span>
+                        <span className="font-semibold text-foreground">{formatCurrency(item.cost)}</span>
                       </div>
                     ))}
                   </div>
@@ -205,9 +205,9 @@ const HydroEconomicsSection = () => {
 
           {/* Cost Breakdown Pie */}
           <ScrollReveal delay={100}>
-            <Card className="border-watt-navy/10 h-full">
+            <Card className="border-border h-full">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-watt-navy mb-6">Cost Distribution</h3>
+                <h3 className="text-xl font-bold text-foreground mb-6">Cost Distribution</h3>
                 
                 {/* Visual breakdown */}
                 <div className="flex h-8 rounded-full overflow-hidden mb-6">
@@ -228,12 +228,12 @@ const HydroEconomicsSection = () => {
                       <div className={`w-4 h-4 rounded ${item.color} flex-shrink-0 mt-0.5`} />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-watt-navy">{item.category}</span>
-                          <span className="text-sm font-bold text-watt-navy">{item.percentage}%</span>
+                          <span className="font-medium text-foreground">{item.category}</span>
+                          <span className="text-sm font-bold text-foreground">{item.percentage}%</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.items.map((subItem, i) => (
-                            <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-watt-navy/5 text-watt-navy/60">
+                            <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                               {subItem}
                             </span>
                           ))}
@@ -249,16 +249,16 @@ const HydroEconomicsSection = () => {
 
         {/* Detailed Cost Categories */}
         <ScrollReveal>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6">Detailed Cost Breakdown</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-6">Detailed Cost Breakdown</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
             {detailedCosts.map((cat, index) => (
-              <Card key={index} className="border-watt-navy/10">
+              <Card key={index} className="border-border">
                 <CardContent className="p-4">
-                  <h4 className="font-semibold text-watt-navy mb-3">{cat.category}</h4>
+                  <h4 className="font-semibold text-foreground mb-3">{cat.category}</h4>
                   <div className="space-y-2">
                     {cat.items.map((item, i) => (
                       <div key={i} className="flex justify-between items-center text-sm">
-                        <span className="text-watt-navy/70">{item.name}</span>
+                        <span className="text-muted-foreground">{item.name}</span>
                         <span className="font-mono text-green-600 text-xs">{item.cost}</span>
                       </div>
                     ))}
@@ -271,15 +271,15 @@ const HydroEconomicsSection = () => {
 
         {/* Construction Timeline */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12">
+          <Card className="border-border mb-12">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Construction Timeline</h3>
-                  <p className="text-sm text-watt-navy/60">Typical 100 MW facility: ~12 months total</p>
+                  <h3 className="text-xl font-bold text-foreground">Construction Timeline</h3>
+                  <p className="text-sm text-muted-foreground">Typical 100 MW facility: ~12 months total</p>
                 </div>
               </div>
 
@@ -288,7 +288,7 @@ const HydroEconomicsSection = () => {
                   {/* Week scale */}
                   <div className="flex mb-2 ml-48">
                     {[...Array(13)].map((_, i) => (
-                      <div key={i} className="flex-1 text-xs text-watt-navy/50 text-center">
+                      <div key={i} className="flex-1 text-xs text-muted-foreground text-center">
                         {i * 4}w
                       </div>
                     ))}
@@ -304,10 +304,10 @@ const HydroEconomicsSection = () => {
 
                       return (
                         <div key={index} className="flex items-center gap-4">
-                          <div className="w-44 text-sm text-watt-navy/70 truncate flex-shrink-0">
+                          <div className="w-44 text-sm text-muted-foreground truncate flex-shrink-0">
                             {phase.phase}
                           </div>
-                          <div className="flex-1 h-8 bg-watt-navy/5 rounded relative">
+                          <div className="flex-1 h-8 bg-muted rounded relative">
                             <div
                               className={`absolute h-full ${phase.color} rounded flex items-center justify-center text-white text-xs font-medium transition-all duration-500`}
                               style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
@@ -327,24 +327,24 @@ const HydroEconomicsSection = () => {
 
         {/* Labor Rates by Region */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10 mb-12">
+          <Card className="border-border mb-12">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center">
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Regional Labor Costs</h3>
-                  <p className="text-sm text-watt-navy/60">Construction labor rate comparison</p>
+                  <h3 className="text-xl font-bold text-foreground">Regional Labor Costs</h3>
+                  <p className="text-sm text-muted-foreground">Construction labor rate comparison</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                 {laborRates.map((region, index) => (
-                  <div key={index} className="p-4 rounded-lg bg-watt-navy/5 text-center hover:bg-watt-navy/10 transition-colors">
+                  <div key={index} className="p-4 rounded-lg bg-muted/50 text-center hover:bg-muted transition-colors">
                     <span className="text-2xl mb-2 block">{region.flag}</span>
-                    <span className="text-sm text-watt-navy/70 block mb-2">{region.region}</span>
-                    <span className="text-lg font-bold text-watt-navy block">{region.dailyRate}</span>
+                    <span className="text-sm text-muted-foreground block mb-2">{region.region}</span>
+                    <span className="text-lg font-bold text-foreground block">{region.dailyRate}</span>
                     <span className={`text-xs mt-1 inline-block px-2 py-0.5 rounded-full ${
                       region.multiplier < 1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                     }`}>
@@ -355,22 +355,22 @@ const HydroEconomicsSection = () => {
               </div>
 
               {/* Labor Duration Table */}
-              <h4 className="font-semibold text-watt-navy mb-4">Labor Duration (100 MW Project)</h4>
+              <h4 className="font-semibold text-foreground mb-4">Labor Duration (100 MW Project)</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-2 font-semibold text-watt-navy">Role</th>
-                      <th className="text-center py-2 font-semibold text-watt-navy">Person-Days</th>
-                      <th className="text-left py-2 font-semibold text-watt-navy">Description</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 font-semibold text-foreground">Role</th>
+                      <th className="text-center py-2 font-semibold text-foreground">Person-Days</th>
+                      <th className="text-left py-2 font-semibold text-foreground">Description</th>
                     </tr>
                   </thead>
                   <tbody>
                     {laborDuration.map((item, i) => (
-                      <tr key={i} className="border-b border-watt-navy/5">
-                        <td className="py-2 font-medium text-watt-navy">{item.role}</td>
+                      <tr key={i} className="border-b border-border/50">
+                        <td className="py-2 font-medium text-foreground">{item.role}</td>
                         <td className="py-2 text-center font-mono text-blue-600">{item.days}</td>
-                        <td className="py-2 text-watt-navy/60">{item.description}</td>
+                        <td className="py-2 text-muted-foreground">{item.description}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -382,56 +382,46 @@ const HydroEconomicsSection = () => {
 
         {/* Water Intake Distance Impact */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10">
+          <Card className="border-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
                   <MapPin className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Water Intake Distance Impact</h3>
-                  <p className="text-sm text-watt-navy/60">Additional costs based on distance to water source</p>
+                  <h3 className="text-xl font-bold text-foreground">Water Intake Distance Impact</h3>
+                  <p className="text-sm text-muted-foreground">Additional costs based on water source distance</p>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 font-semibold text-watt-navy">Distance</th>
-                      <th className="text-center py-3 font-semibold text-watt-navy">Additional Cost</th>
-                      <th className="text-left py-3 font-semibold text-watt-navy">Notes</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 font-semibold text-foreground">Distance</th>
+                      <th className="text-center py-3 font-semibold text-foreground">Additional Cost</th>
+                      <th className="text-left py-3 font-semibold text-foreground">Notes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {waterIntakeCosts.map((item, i) => (
-                      <tr key={i} className="border-b border-watt-navy/5">
-                        <td className="py-3 font-medium text-watt-navy">{item.distance}</td>
-                        <td className="py-3 text-center">
-                          <span className={`font-mono font-bold ${
-                            item.additionalCost === '$0' ? 'text-green-600' : 'text-amber-600'
-                          }`}>
-                            {item.additionalCost}
-                          </span>
-                        </td>
-                        <td className="py-3 text-watt-navy/60">{item.notes}</td>
+                      <tr key={i} className="border-b border-border/50">
+                        <td className="py-3 font-medium text-foreground">{item.distance}</td>
+                        <td className="py-3 text-center font-mono text-cyan-600">{item.additionalCost}</td>
+                        <td className="py-3 text-muted-foreground">{item.notes}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              <div className="mt-6 p-4 rounded-lg bg-amber-50 border border-amber-200">
-                <div className="flex items-start gap-3">
-                  <TrendingDown className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-amber-800 mb-1">Cost Optimization Tip</h4>
-                    <p className="text-sm text-amber-700">
-                      Site selection near water source (≤500m) can save over $1M in infrastructure costs.
-                      Consider prefabricating components in low-cost regions and shipping to site 
-                      to reduce overall construction costs by 20-30%.
-                    </p>
-                  </div>
+              <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-start gap-2">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    <strong>Site Selection Tip:</strong> Prioritize locations within 500m of a suitable water source 
+                    to minimize infrastructure costs and permitting complexity.
+                  </p>
                 </div>
               </div>
             </CardContent>

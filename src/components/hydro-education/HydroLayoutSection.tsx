@@ -90,10 +90,10 @@ const HydroLayoutSection = () => {
               <LayoutGrid className="w-4 h-4" />
               Modular Design
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Facility Layout Options
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Explore different modular layout configurations optimized for various capacity 
               requirements and site constraints.
             </p>
@@ -110,7 +110,7 @@ const HydroLayoutSection = () => {
                 className={`h-auto py-4 px-4 flex flex-col items-center gap-2 ${
                   selectedLayout.id === layout.id 
                     ? 'bg-gradient-to-br ' + layout.color + ' text-white border-0' 
-                    : 'border-watt-navy/20 text-watt-navy hover:border-blue-300'
+                    : 'border-border text-foreground hover:border-blue-300'
                 }`}
                 onClick={() => setSelectedLayout(layout)}
               >
@@ -125,11 +125,11 @@ const HydroLayoutSection = () => {
         <ScrollReveal>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Interactive Layout Visualization */}
-            <Card className="border-watt-navy/10 overflow-hidden">
+            <Card className="border-border overflow-hidden">
               <CardContent className="p-0">
-                <div className="p-6 border-b border-watt-navy/10">
-                  <h3 className="text-xl font-bold text-watt-navy">{selectedLayout.name}</h3>
-                  <p className="text-sm text-watt-navy/70 mt-1">{selectedLayout.description}</p>
+                <div className="p-6 border-b border-border">
+                  <h3 className="text-xl font-bold text-foreground">{selectedLayout.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedLayout.description}</p>
                 </div>
                 
                 {/* Layout Diagram */}
@@ -188,16 +188,16 @@ const HydroLayoutSection = () => {
                   <div className="absolute bottom-4 left-4 flex gap-4 text-xs">
                     <div className="flex items-center gap-1">
                       <div className="w-4 h-4 bg-yellow-500 rounded" />
-                      <span className="text-watt-navy/70">Transformer</span>
+                      <span className="text-muted-foreground">Transformer</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className={`w-4 h-6 rounded bg-gradient-to-b ${selectedLayout.color}`} />
-                      <span className="text-watt-navy/70">Container</span>
+                      <span className="text-muted-foreground">Container</span>
                     </div>
                   </div>
 
                   {/* Dimensions indicator */}
-                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-white/80 rounded-full text-xs font-medium text-watt-navy">
+                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-white/80 rounded-full text-xs font-medium text-foreground">
                     <Ruler className="w-3 h-3" />
                     {selectedLayout.landArea}
                   </div>
@@ -208,24 +208,24 @@ const HydroLayoutSection = () => {
             {/* Specifications Panel */}
             <div className="space-y-6">
               {/* Key Metrics */}
-              <Card className="border-watt-navy/10">
+              <Card className="border-border">
                 <CardContent className="p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4">Key Metrics</h4>
+                  <h4 className="font-semibold text-foreground mb-4">Key Metrics</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg bg-blue-50">
-                      <span className="text-xs text-watt-navy/60">Land Area</span>
+                      <span className="text-xs text-muted-foreground">Land Area</span>
                       <div className="text-2xl font-bold text-blue-600">{selectedLayout.landArea}</div>
                     </div>
                     <div className="p-4 rounded-lg bg-green-50">
-                      <span className="text-xs text-watt-navy/60">Power Capacity</span>
+                      <span className="text-xs text-muted-foreground">Power Capacity</span>
                       <div className="text-2xl font-bold text-green-600">{selectedLayout.capacity}</div>
                     </div>
                     <div className="p-4 rounded-lg bg-purple-50">
-                      <span className="text-xs text-watt-navy/60">Containers</span>
+                      <span className="text-xs text-muted-foreground">Containers</span>
                       <div className="text-2xl font-bold text-purple-600">{selectedLayout.containers}</div>
                     </div>
                     <div className="p-4 rounded-lg bg-yellow-50">
-                      <span className="text-xs text-watt-navy/60">Transformers</span>
+                      <span className="text-xs text-muted-foreground">Transformers</span>
                       <div className="text-2xl font-bold text-yellow-600">{selectedLayout.transformers}</div>
                     </div>
                   </div>
@@ -233,16 +233,16 @@ const HydroLayoutSection = () => {
               </Card>
 
               {/* Technical Specs */}
-              <Card className="border-watt-navy/10">
+              <Card className="border-border">
                 <CardContent className="p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4">Technical Specifications</h4>
+                  <h4 className="font-semibold text-foreground mb-4">Technical Specifications</h4>
                   <ul className="space-y-3">
                     {Object.entries(selectedLayout.specs).map(([key, value]) => (
-                      <li key={key} className="flex items-center justify-between py-2 border-b border-watt-navy/5 last:border-0">
-                        <span className="text-sm text-watt-navy/70 capitalize">
+                      <li key={key} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                        <span className="text-sm text-muted-foreground capitalize">
                           {key.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
-                        <span className="text-sm font-medium text-watt-navy font-mono">{value}</span>
+                        <span className="text-sm font-medium text-foreground font-mono">{value}</span>
                       </li>
                     ))}
                   </ul>
@@ -250,7 +250,7 @@ const HydroLayoutSection = () => {
               </Card>
 
               {/* Basic Unit Info */}
-              <Card className="border-watt-navy/10 bg-gradient-to-br from-watt-navy to-blue-900 text-white">
+              <Card className="border-border bg-gradient-to-br from-watt-navy to-blue-900 text-white">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
