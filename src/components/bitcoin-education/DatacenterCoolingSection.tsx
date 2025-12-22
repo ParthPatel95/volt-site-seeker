@@ -150,18 +150,18 @@ const DatacenterCoolingSection: React.FC = () => {
   const IconComponent = selectedMethod.icon;
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-muted">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/10 border border-watt-navy/20 mb-4">
-              <Factory className="w-4 h-4 text-watt-navy" />
-              <span className="text-sm font-medium text-watt-navy">Infrastructure Deep Dive</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/10 border border-border mb-4">
+              <Factory className="w-4 h-4 text-foreground" />
+              <span className="text-sm font-medium text-foreground">Infrastructure Deep Dive</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Datacenter Cooling Technologies
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Cooling is the second-largest cost in Bitcoin mining after electricity. 
               Understanding cooling technologies is crucial for optimizing profitability.
             </p>
@@ -181,17 +181,17 @@ const DatacenterCoolingSection: React.FC = () => {
                   onClick={() => setSelectedCooling(key)}
                   className={`p-6 rounded-2xl border-2 transition-all text-left ${
                     isSelected 
-                      ? `border-${method.color} bg-white shadow-institutional-lg` 
-                      : 'border-transparent bg-white/50 hover:bg-white hover:shadow-institutional'
+                      ? `border-${method.color} bg-card shadow-institutional-lg` 
+                      : 'border-transparent bg-card/50 hover:bg-card hover:shadow-institutional'
                   }`}
                 >
                   <div className={`w-12 h-12 rounded-xl bg-${method.color}/10 flex items-center justify-center mb-4`}>
                     <Icon className={`w-6 h-6 text-${method.color}`} />
                   </div>
-                  <h3 className="text-xl font-bold text-watt-navy mb-2">{method.name}</h3>
+                  <h3 className="text-xl font-bold text-foreground mb-2">{method.name}</h3>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-watt-navy/60">PUE: <span className="font-semibold text-watt-navy">{method.pue}</span></span>
-                    <span className="text-watt-navy/60">Density: <span className="font-semibold text-watt-navy">{method.density}</span></span>
+                    <span className="text-muted-foreground">PUE: <span className="font-semibold text-foreground">{method.pue}</span></span>
+                    <span className="text-muted-foreground">Density: <span className="font-semibold text-foreground">{method.density}</span></span>
                   </div>
                 </button>
               );
@@ -201,14 +201,14 @@ const DatacenterCoolingSection: React.FC = () => {
 
         {/* Selected Method Details */}
         <ScrollReveal direction="up" delay={0.2}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-institutional mb-8">
+          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-institutional mb-8">
             <div className="flex items-center gap-4 mb-6">
               <div className={`w-16 h-16 rounded-2xl bg-${selectedMethod.color}/10 flex items-center justify-center`}>
                 <IconComponent className={`w-8 h-8 text-${selectedMethod.color}`} />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-watt-navy">{selectedMethod.name}</h3>
-                <p className="text-watt-navy/70">{selectedMethod.description}</p>
+                <h3 className="text-2xl font-bold text-foreground">{selectedMethod.name}</h3>
+                <p className="text-muted-foreground">{selectedMethod.description}</p>
               </div>
             </div>
 
@@ -223,11 +223,11 @@ const DatacenterCoolingSection: React.FC = () => {
               <TabsContent value="how" className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   {selectedMethod.howItWorks.map((step, index) => (
-                    <div key={index} className="flex gap-3 p-4 bg-watt-light rounded-xl">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-watt-navy/10 flex items-center justify-center">
-                        <span className="text-sm font-bold text-watt-navy">{index + 1}</span>
+                    <div key={index} className="flex gap-3 p-4 bg-muted rounded-xl">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center">
+                        <span className="text-sm font-bold text-foreground">{index + 1}</span>
                       </div>
-                      <p className="text-watt-navy/80">{step}</p>
+                      <p className="text-foreground/80">{step}</p>
                     </div>
                   ))}
                 </div>
@@ -237,7 +237,7 @@ const DatacenterCoolingSection: React.FC = () => {
                 {selectedMethod.pros.map((pro, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-watt-success/5 rounded-xl border border-watt-success/20">
                     <CheckCircle2 className="w-5 h-5 text-watt-success flex-shrink-0" />
-                    <span className="text-watt-navy">{pro}</span>
+                    <span className="text-foreground">{pro}</span>
                   </div>
                 ))}
               </TabsContent>
@@ -246,20 +246,20 @@ const DatacenterCoolingSection: React.FC = () => {
                 {selectedMethod.cons.map((con, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-destructive/5 rounded-xl border border-destructive/20">
                     <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                    <span className="text-watt-navy">{con}</span>
+                    <span className="text-foreground">{con}</span>
                   </div>
                 ))}
               </TabsContent>
 
               <TabsContent value="use">
                 <div className="space-y-4">
-                  <div className="p-4 bg-watt-light rounded-xl">
-                    <h4 className="font-bold text-watt-navy mb-2">Ideal Scenarios</h4>
-                    <p className="text-watt-navy/80">{selectedMethod.bestFor}</p>
+                  <div className="p-4 bg-muted rounded-xl">
+                    <h4 className="font-bold text-foreground mb-2">Ideal Scenarios</h4>
+                    <p className="text-foreground/80">{selectedMethod.bestFor}</p>
                   </div>
                   <div className={`p-4 bg-${selectedMethod.color}/10 rounded-xl border border-${selectedMethod.color}/20`}>
                     <h4 className={`font-bold text-${selectedMethod.color} mb-2`}>WattByte Insight</h4>
-                    <p className="text-watt-navy/80">{selectedMethod.wattbyteNote}</p>
+                    <p className="text-foreground/80">{selectedMethod.wattbyteNote}</p>
                   </div>
                 </div>
               </TabsContent>
@@ -269,12 +269,12 @@ const DatacenterCoolingSection: React.FC = () => {
 
         {/* Comparison Table */}
         <ScrollReveal direction="up" delay={0.3}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-institutional mb-8 overflow-x-auto">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6">Cooling Method Comparison</h3>
+          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-institutional mb-8 overflow-x-auto">
+            <h3 className="text-2xl font-bold text-foreground mb-6">Cooling Method Comparison</h3>
             <table className="w-full min-w-[600px]">
               <thead>
-                <tr className="border-b border-watt-navy/10">
-                  <th className="text-left py-3 px-4 text-watt-navy font-bold">Metric</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-foreground font-bold">Metric</th>
                   <th className="text-center py-3 px-4 text-watt-trust font-bold">
                     <Wind className="w-5 h-5 inline mr-2" />Air-Cooled
                   </th>
@@ -288,15 +288,15 @@ const DatacenterCoolingSection: React.FC = () => {
               </thead>
               <tbody>
                 {comparisonData.map((row, index) => (
-                  <tr key={index} className="border-b border-watt-navy/5 hover:bg-watt-light/50">
-                    <td className="py-3 px-4 font-medium text-watt-navy">{row.metric}</td>
-                    <td className={`py-3 px-4 text-center ${row.winner === 'air' ? 'bg-watt-success/10 font-bold text-watt-success' : 'text-watt-navy/70'}`}>
+                  <tr key={index} className="border-b border-border/50 hover:bg-muted/50">
+                    <td className="py-3 px-4 font-medium text-foreground">{row.metric}</td>
+                    <td className={`py-3 px-4 text-center ${row.winner === 'air' ? 'bg-watt-success/10 font-bold text-watt-success' : 'text-muted-foreground'}`}>
                       {row.air}
                     </td>
-                    <td className={`py-3 px-4 text-center ${row.winner === 'hydro' ? 'bg-watt-success/10 font-bold text-watt-success' : 'text-watt-navy/70'}`}>
+                    <td className={`py-3 px-4 text-center ${row.winner === 'hydro' ? 'bg-watt-success/10 font-bold text-watt-success' : 'text-muted-foreground'}`}>
                       {row.hydro}
                     </td>
-                    <td className={`py-3 px-4 text-center ${row.winner === 'immersion' ? 'bg-watt-success/10 font-bold text-watt-success' : 'text-watt-navy/70'}`}>
+                    <td className={`py-3 px-4 text-center ${row.winner === 'immersion' ? 'bg-watt-success/10 font-bold text-watt-success' : 'text-muted-foreground'}`}>
                       {row.immersion}
                     </td>
                   </tr>
@@ -353,20 +353,20 @@ const DatacenterCoolingSection: React.FC = () => {
 
         {/* Infrastructure Requirements */}
         <ScrollReveal direction="up" delay={0.5}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-institutional">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6">Mining Datacenter Infrastructure Requirements</h3>
+          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-institutional">
+            <h3 className="text-2xl font-bold text-foreground mb-6">Complete Infrastructure Requirements</h3>
             <div className="grid md:grid-cols-2 gap-6">
-              {infrastructureRequirements.map((req, index) => (
-                <div key={index} className="p-5 bg-watt-light rounded-xl">
+              {infrastructureRequirements.map((category, index) => (
+                <div key={index} className="bg-muted rounded-xl p-5">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-watt-navy/10 flex items-center justify-center">
-                      <req.icon className="w-5 h-5 text-watt-navy" />
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <category.icon className="w-5 h-5 text-primary" />
                     </div>
-                    <h4 className="font-bold text-watt-navy">{req.category}</h4>
+                    <h4 className="font-bold text-foreground">{category.category}</h4>
                   </div>
                   <ul className="space-y-2">
-                    {req.items.map((item, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-watt-navy/70">
+                    {category.items.map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <CheckCircle2 className="w-4 h-4 text-watt-success flex-shrink-0" />
                         {item}
                       </li>

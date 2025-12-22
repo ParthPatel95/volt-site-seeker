@@ -60,7 +60,7 @@ const WhatIsBitcoinSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-card">
       <div className="max-w-6xl mx-auto">
         <LearningObjectives
           objectives={[
@@ -77,10 +77,10 @@ const WhatIsBitcoinSection: React.FC = () => {
               <Bitcoin className="w-4 h-4 text-watt-bitcoin" />
               <span className="text-sm font-medium text-watt-bitcoin">The Basics</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               What is Bitcoin?
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Bitcoin is the world's first decentralized digital currency, created in 2009 by an anonymous 
               person or group using the pseudonym Satoshi Nakamoto. It enables direct value transfer 
               without the need for banks or governments.
@@ -92,12 +92,12 @@ const WhatIsBitcoinSection: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {pillars.map((pillar, index) => (
             <ScrollReveal key={pillar.title} direction="up" delay={index * 0.1}>
-              <div className="bg-white rounded-2xl p-6 border border-watt-navy/10 shadow-institutional hover:shadow-lg transition-shadow">
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-institutional hover:shadow-lg transition-shadow">
                 <div className={`w-12 h-12 rounded-xl ${pillar.color} flex items-center justify-center mb-4`}>
                   <pillar.icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-2">{pillar.title}</h3>
-                <p className="text-watt-navy/70">{pillar.description}</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">{pillar.title}</h3>
+                <p className="text-muted-foreground">{pillar.description}</p>
               </div>
             </ScrollReveal>
           ))}
@@ -105,41 +105,41 @@ const WhatIsBitcoinSection: React.FC = () => {
 
         {/* Comparison Table */}
         <ScrollReveal direction="up" delay={0.3}>
-          <div className="bg-watt-light rounded-2xl p-6 md:p-8">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">
+          <div className="bg-muted rounded-2xl p-6 md:p-8">
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
               Bitcoin vs Traditional Assets
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
-                  <tr className="border-b border-watt-navy/10">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-watt-navy/60">Asset</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-watt-navy/60">Supply</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-watt-navy/60">Control</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-watt-navy/60">Portability</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-watt-navy/60">Divisibility</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-watt-navy/60">Verification</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Asset</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Supply</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Control</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Portability</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Divisibility</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Verification</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisons.map((item) => (
                     <tr 
                       key={item.asset} 
-                      className={`border-b border-watt-navy/5 ${item.highlight ? 'bg-watt-bitcoin/5' : ''}`}
+                      className={`border-b border-border/50 ${item.highlight ? 'bg-watt-bitcoin/5' : ''}`}
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
-                          <item.icon className={`w-5 h-5 ${item.highlight ? 'text-watt-bitcoin' : 'text-watt-navy/60'}`} />
-                          <span className={`font-medium ${item.highlight ? 'text-watt-bitcoin' : 'text-watt-navy'}`}>
+                          <item.icon className={`w-5 h-5 ${item.highlight ? 'text-watt-bitcoin' : 'text-muted-foreground'}`} />
+                          <span className={`font-medium ${item.highlight ? 'text-watt-bitcoin' : 'text-foreground'}`}>
                             {item.asset}
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-watt-navy/70">{item.supply}</td>
-                      <td className="py-4 px-4 text-watt-navy/70">{item.control}</td>
-                      <td className="py-4 px-4 text-watt-navy/70">{item.portability}</td>
-                      <td className="py-4 px-4 text-watt-navy/70">{item.divisibility}</td>
-                      <td className="py-4 px-4 text-watt-navy/70">{item.verification}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{item.supply}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{item.control}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{item.portability}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{item.divisibility}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{item.verification}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -156,8 +156,8 @@ const WhatIsBitcoinSection: React.FC = () => {
                 <ArrowRight className="w-5 h-5 text-watt-bitcoin" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-watt-navy mb-1">Key Insight</h4>
-                <p className="text-watt-navy/70">
+                <h4 className="text-lg font-bold text-foreground mb-1">Key Insight</h4>
+                <p className="text-muted-foreground">
                   Bitcoin combines the scarcity of gold with the convenience of digital money, 
                   creating a new asset class that can be sent anywhere in the world in minutes 
                   for minimal fees.

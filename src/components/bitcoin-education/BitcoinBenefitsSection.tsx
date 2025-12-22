@@ -62,7 +62,7 @@ const BitcoinBenefitsSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-muted">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -70,10 +70,10 @@ const BitcoinBenefitsSection: React.FC = () => {
               <CheckCircle2 className="w-4 h-4 text-watt-bitcoin" />
               <span className="text-sm font-medium text-watt-bitcoin">Benefits & Considerations</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Why Bitcoin Matters
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Understanding both the benefits and considerations helps you make informed decisions
             </p>
           </div>
@@ -83,12 +83,12 @@ const BitcoinBenefitsSection: React.FC = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {benefits.map((benefit, index) => (
             <ScrollReveal key={benefit.title} direction="up" delay={index * 0.05}>
-              <div className="bg-white rounded-2xl p-6 border border-watt-navy/10 shadow-institutional h-full hover:shadow-lg transition-shadow">
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-institutional h-full hover:shadow-lg transition-shadow">
                 <div className={`w-12 h-12 rounded-xl ${benefit.color} flex items-center justify-center mb-4`}>
                   <benefit.icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-watt-navy mb-2">{benefit.title}</h3>
-                <p className="text-watt-navy/70 text-sm">{benefit.description}</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">{benefit.title}</h3>
+                <p className="text-muted-foreground text-sm">{benefit.description}</p>
               </div>
             </ScrollReveal>
           ))}
@@ -96,22 +96,22 @@ const BitcoinBenefitsSection: React.FC = () => {
 
         {/* Considerations */}
         <ScrollReveal direction="up" delay={0.3}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 border border-watt-navy/10 shadow-institutional">
+          <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-institutional">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-500" />
               </div>
-              <h3 className="text-xl font-bold text-watt-navy">Important Considerations</h3>
+              <h3 className="text-xl font-bold text-foreground">Important Considerations</h3>
             </div>
-            <p className="text-watt-navy/70 mb-6">
+            <p className="text-muted-foreground mb-6">
               A balanced view is essential. While Bitcoin offers unique benefits, there are important 
               factors to understand before getting involved.
             </p>
             <div className="grid md:grid-cols-2 gap-4">
               {considerations.map((item) => (
-                <div key={item.title} className="bg-watt-light rounded-xl p-4">
-                  <h4 className="font-bold text-watt-navy mb-2">{item.title}</h4>
-                  <p className="text-sm text-watt-navy/70">{item.description}</p>
+                <div key={item.title} className="bg-muted rounded-xl p-4">
+                  <h4 className="font-bold text-foreground mb-2">{item.title}</h4>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
                 </div>
               ))}
             </div>

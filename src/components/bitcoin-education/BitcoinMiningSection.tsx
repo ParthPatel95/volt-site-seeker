@@ -93,24 +93,24 @@ const BitcoinMiningSection: React.FC = () => {
 
         {/* Hardware Evolution */}
         <ScrollReveal direction="up" delay={0.2}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 mb-8">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6">Hardware Evolution</h3>
+          <div className="bg-card rounded-2xl p-6 md:p-8 mb-8">
+            <h3 className="text-2xl font-bold text-foreground mb-6">Hardware Evolution</h3>
             <div className="space-y-4">
               {hardwareEvolution.map((era, index) => (
-                <div key={era.era} className="flex items-center gap-4 p-4 bg-watt-light rounded-xl">
+                <div key={era.era} className="flex items-center gap-4 p-4 bg-muted rounded-xl">
                   <div className="text-3xl">{era.icon}</div>
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="font-bold text-watt-navy">{era.type}</span>
-                      <span className="text-xs text-watt-navy/60 bg-watt-navy/10 px-2 py-0.5 rounded">{era.era}</span>
+                      <span className="font-bold text-foreground">{era.type}</span>
+                      <span className="text-xs text-muted-foreground bg-muted-foreground/10 px-2 py-0.5 rounded">{era.era}</span>
                     </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-watt-navy/70">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <span>Hashrate: {era.hashrate}</span>
                       <span>Efficiency: {era.efficiency}</span>
                     </div>
                   </div>
                   {index < hardwareEvolution.length - 1 && (
-                    <ArrowRight className="w-5 h-5 text-watt-navy/30 hidden md:block" />
+                    <ArrowRight className="w-5 h-5 text-muted-foreground/30 hidden md:block" />
                   )}
                 </div>
               ))}
@@ -121,25 +121,25 @@ const BitcoinMiningSection: React.FC = () => {
         {/* Mining Economics */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <ScrollReveal direction="left" delay={0.3}>
-            <div className="bg-white rounded-2xl p-6 h-full">
-              <h3 className="text-xl font-bold text-watt-navy mb-4">Mining Cost Breakdown</h3>
+            <div className="bg-card rounded-2xl p-6 h-full">
+              <h3 className="text-xl font-bold text-foreground mb-4">Mining Cost Breakdown</h3>
               <div className="space-y-4">
                 {costFactors.map((item) => (
                   <div key={item.factor} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <item.icon className="w-4 h-4 text-watt-bitcoin" />
-                        <span className="font-medium text-watt-navy">{item.factor}</span>
+                        <span className="font-medium text-foreground">{item.factor}</span>
                       </div>
                       <span className="font-bold text-watt-bitcoin">{item.percentage}%</span>
                     </div>
-                    <div className="w-full bg-watt-navy/10 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div 
                         className="bg-watt-bitcoin rounded-full h-2 transition-all duration-1000"
                         style={{ width: `${item.percentage}%` }}
                       />
                     </div>
-                    <p className="text-xs text-watt-navy/60">{item.description}</p>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
                 ))}
               </div>
@@ -147,41 +147,41 @@ const BitcoinMiningSection: React.FC = () => {
           </ScrollReveal>
 
           <ScrollReveal direction="right" delay={0.3}>
-            <div className="bg-white rounded-2xl p-6 h-full">
-              <h3 className="text-xl font-bold text-watt-navy mb-4">Key Mining Metrics</h3>
+            <div className="bg-card rounded-2xl p-6 h-full">
+              <h3 className="text-xl font-bold text-foreground mb-4">Key Mining Metrics</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-watt-light rounded-xl p-4">
+                <div className="bg-muted rounded-xl p-4">
                   <div className="text-2xl font-bold text-watt-bitcoin">
                     <AnimatedCounter end={3.125} decimals={3} suffix=" BTC" />
                   </div>
-                  <div className="text-sm text-watt-navy/70">Current Block Reward</div>
+                  <div className="text-sm text-muted-foreground">Current Block Reward</div>
                 </div>
-                <div className="bg-watt-light rounded-xl p-4">
+                <div className="bg-muted rounded-xl p-4">
                   <div className="text-2xl font-bold text-watt-bitcoin">
                     ~<AnimatedCounter end={10} suffix=" min" />
                   </div>
-                  <div className="text-sm text-watt-navy/70">Avg Block Time</div>
+                  <div className="text-sm text-muted-foreground">Avg Block Time</div>
                 </div>
-                <div className="bg-watt-light rounded-xl p-4">
+                <div className="bg-muted rounded-xl p-4">
                   <div className="text-2xl font-bold text-watt-bitcoin">
                     <AnimatedCounter end={700} suffix=" EH/s" />
                   </div>
-                  <div className="text-sm text-watt-navy/70">Network Hashrate</div>
+                  <div className="text-sm text-muted-foreground">Network Hashrate</div>
                 </div>
-                <div className="bg-watt-light rounded-xl p-4">
+                <div className="bg-muted rounded-xl p-4">
                   <div className="text-2xl font-bold text-watt-bitcoin">
                     <AnimatedCounter end={2016} suffix=" blocks" />
                   </div>
-                  <div className="text-sm text-watt-navy/70">Difficulty Adjustment</div>
+                  <div className="text-sm text-muted-foreground">Difficulty Adjustment</div>
                 </div>
               </div>
 
               <div className="mt-6 p-4 bg-watt-bitcoin/10 rounded-xl border border-watt-bitcoin/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="w-4 h-4 text-watt-bitcoin" />
-                  <span className="font-bold text-watt-navy">Next Halving</span>
+                  <span className="font-bold text-foreground">Next Halving</span>
                 </div>
-                <p className="text-sm text-watt-navy/70">
+                <p className="text-sm text-muted-foreground">
                   Block reward will drop to 1.5625 BTC around April 2028
                 </p>
               </div>

@@ -44,7 +44,7 @@ const BitcoinEconomicsSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-card">
       <div className="max-w-6xl mx-auto">
         <LearningObjectives
           objectives={[
@@ -65,10 +65,10 @@ const BitcoinEconomicsSection: React.FC = () => {
               <BarChart3 className="w-4 h-4 text-watt-success" />
               <span className="text-sm font-medium text-watt-success">Economics</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Bitcoin Economics
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Understanding the economic principles that make Bitcoin unique: fixed supply, 
               predictable issuance, and the halving cycle
             </p>
@@ -78,33 +78,33 @@ const BitcoinEconomicsSection: React.FC = () => {
         {/* Supply Stats */}
         <ScrollReveal direction="up" delay={0.1}>
           <div className="grid md:grid-cols-4 gap-4 mb-12">
-            <div className="bg-watt-light rounded-2xl p-6 text-center">
+            <div className="bg-muted rounded-2xl p-6 text-center">
               <Coins className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
-              <div className="text-3xl font-bold text-watt-navy mb-1">
+              <div className="text-3xl font-bold text-foreground mb-1">
                 <AnimatedCounter end={21} suffix="M" />
               </div>
-              <div className="text-sm text-watt-navy/70">Maximum Supply</div>
+              <div className="text-sm text-muted-foreground">Maximum Supply</div>
             </div>
-            <div className="bg-watt-light rounded-2xl p-6 text-center">
+            <div className="bg-muted rounded-2xl p-6 text-center">
               <TrendingUp className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
-              <div className="text-3xl font-bold text-watt-navy mb-1">
+              <div className="text-3xl font-bold text-foreground mb-1">
                 ~<AnimatedCounter end={19} suffix=".8M" />
               </div>
-              <div className="text-sm text-watt-navy/70">Currently Mined</div>
+              <div className="text-sm text-muted-foreground">Currently Mined</div>
             </div>
-            <div className="bg-watt-light rounded-2xl p-6 text-center">
+            <div className="bg-muted rounded-2xl p-6 text-center">
               <Clock className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
-              <div className="text-3xl font-bold text-watt-navy mb-1">
+              <div className="text-3xl font-bold text-foreground mb-1">
                 ~<AnimatedCounter end={2140} />
               </div>
-              <div className="text-sm text-watt-navy/70">Last BTC Mined</div>
+              <div className="text-sm text-muted-foreground">Last BTC Mined</div>
             </div>
-            <div className="bg-watt-light rounded-2xl p-6 text-center">
+            <div className="bg-muted rounded-2xl p-6 text-center">
               <Percent className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
-              <div className="text-3xl font-bold text-watt-navy mb-1">
+              <div className="text-3xl font-bold text-foreground mb-1">
                 <AnimatedCounter end={94} suffix="%" />
               </div>
-              <div className="text-sm text-watt-navy/70">Already Mined</div>
+              <div className="text-sm text-muted-foreground">Already Mined</div>
             </div>
           </div>
         </ScrollReveal>
@@ -165,16 +165,16 @@ const BitcoinEconomicsSection: React.FC = () => {
         {/* Supply vs Demand */}
         <ScrollReveal direction="up" delay={0.3}>
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-watt-light rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-4">Supply Dynamics</h3>
+            <div className="bg-muted rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-foreground mb-4">Supply Dynamics</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-watt-bitcoin/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-watt-bitcoin text-sm">1</span>
                   </div>
                   <div>
-                    <span className="font-medium text-watt-navy">Fixed Maximum</span>
-                    <p className="text-sm text-watt-navy/70">Only 21 million Bitcoin will ever exist - no central bank can print more</p>
+                    <span className="font-medium text-foreground">Fixed Maximum</span>
+                    <p className="text-sm text-muted-foreground">Only 21 million Bitcoin will ever exist - no central bank can print more</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -182,8 +182,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                     <span className="text-watt-bitcoin text-sm">2</span>
                   </div>
                   <div>
-                    <span className="font-medium text-watt-navy">Decreasing Issuance</span>
-                    <p className="text-sm text-watt-navy/70">Halvings reduce new supply every 4 years, creating increasing scarcity</p>
+                    <span className="font-medium text-foreground">Decreasing Issuance</span>
+                    <p className="text-sm text-muted-foreground">Halvings reduce new supply every 4 years, creating increasing scarcity</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -191,23 +191,23 @@ const BitcoinEconomicsSection: React.FC = () => {
                     <span className="text-watt-bitcoin text-sm">3</span>
                   </div>
                   <div>
-                    <span className="font-medium text-watt-navy">Lost Coins</span>
-                    <p className="text-sm text-watt-navy/70">Estimated 3-4 million BTC are permanently lost, reducing effective supply</p>
+                    <span className="font-medium text-foreground">Lost Coins</span>
+                    <p className="text-sm text-muted-foreground">Estimated 3-4 million BTC are permanently lost, reducing effective supply</p>
                   </div>
                 </li>
               </ul>
             </div>
 
-            <div className="bg-watt-light rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-4">Demand Drivers</h3>
+            <div className="bg-muted rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-foreground mb-4">Demand Drivers</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-watt-trust/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-watt-trust text-sm">1</span>
                   </div>
                   <div>
-                    <span className="font-medium text-watt-navy">Institutional Adoption</span>
-                    <p className="text-sm text-watt-navy/70">ETFs, corporations, and funds adding Bitcoin to portfolios</p>
+                    <span className="font-medium text-foreground">Institutional Adoption</span>
+                    <p className="text-sm text-muted-foreground">ETFs, corporations, and funds adding Bitcoin to portfolios</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -215,8 +215,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                     <span className="text-watt-trust text-sm">2</span>
                   </div>
                   <div>
-                    <span className="font-medium text-watt-navy">Store of Value</span>
-                    <p className="text-sm text-watt-navy/70">Increasing recognition as "digital gold" and inflation hedge</p>
+                    <span className="font-medium text-foreground">Store of Value</span>
+                    <p className="text-sm text-muted-foreground">Increasing recognition as "digital gold" and inflation hedge</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -224,8 +224,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                     <span className="text-watt-trust text-sm">3</span>
                   </div>
                   <div>
-                    <span className="font-medium text-watt-navy">Global Access</span>
-                    <p className="text-sm text-watt-navy/70">Growing adoption in emerging markets seeking financial alternatives</p>
+                    <span className="font-medium text-foreground">Global Access</span>
+                    <p className="text-sm text-muted-foreground">Growing adoption in emerging markets seeking financial alternatives</p>
                   </div>
                 </li>
               </ul>
