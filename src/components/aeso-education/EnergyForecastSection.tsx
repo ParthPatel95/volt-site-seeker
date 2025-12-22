@@ -48,10 +48,10 @@ export const EnergyForecastSection = () => {
             <Brain className="w-4 h-4 text-purple-600" />
             <span className="text-sm font-medium text-purple-700">AI-Powered Insights</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Energy <span className="text-watt-bitcoin">Forecasting</span>
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             How WattByte uses machine learning to predict prices and optimize operations
           </p>
         </div>
@@ -59,12 +59,12 @@ export const EnergyForecastSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 mb-12">
           {/* Left - Forecast Chart */}
           <div className={`transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-watt-bitcoin" />
               24-Hour Price Forecast
             </h3>
 
-            <div className="bg-white rounded-2xl border border-watt-navy/10 p-6">
+            <div className="bg-white rounded-2xl border border-border p-6">
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={forecastData}>
@@ -117,15 +117,15 @@ export const EnergyForecastSection = () => {
               <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-1 bg-watt-bitcoin rounded" />
-                  <span className="text-xs text-watt-navy/70">Predicted</span>
+                  <span className="text-xs text-muted-foreground">Predicted</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-1 bg-watt-coinbase rounded" />
-                  <span className="text-xs text-watt-navy/70">Actual</span>
+                  <span className="text-xs text-muted-foreground">Actual</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-1 bg-watt-bitcoin/30 rounded" style={{ borderTop: '1px dashed' }} />
-                  <span className="text-xs text-watt-navy/70">Confidence Band</span>
+                  <span className="text-xs text-muted-foreground">Confidence Band</span>
                 </div>
               </div>
             </div>
@@ -133,27 +133,27 @@ export const EnergyForecastSection = () => {
 
           {/* Right - Forecast Drivers */}
           <div className={`transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6'}`}>
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-watt-bitcoin" />
               Key Forecast Drivers
             </h3>
 
             <div className="space-y-4 mb-6">
               {forecastDrivers.map((driver, i) => (
-                <div key={i} className="p-4 rounded-xl bg-watt-light border border-watt-navy/10 flex items-center gap-4 hover:shadow-md transition-all">
+                <div key={i} className="p-4 rounded-xl bg-muted border border-border flex items-center gap-4 hover:shadow-md transition-all">
                   <div className="p-3 rounded-lg bg-watt-bitcoin/10">
                     <driver.icon className="w-5 h-5 text-watt-bitcoin" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-watt-navy">{driver.name}</p>
+                      <p className="font-semibold text-foreground">{driver.name}</p>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         driver.impact === 'High' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                       }`}>
                         {driver.impact} Impact
                       </span>
                     </div>
-                    <p className="text-sm text-watt-navy/70">{driver.desc}</p>
+                    <p className="text-sm text-muted-foreground">{driver.desc}</p>
                   </div>
                 </div>
               ))}

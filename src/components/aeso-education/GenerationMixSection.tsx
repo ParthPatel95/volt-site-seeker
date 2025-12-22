@@ -103,10 +103,10 @@ export const GenerationMixSection = () => {
             <Wind className="w-4 h-4 text-green-600" />
             <span className="text-sm font-medium text-green-700">Energy Transition</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Generation <span className="text-watt-bitcoin">Mix</span> & Renewables
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Alberta's electricity generation is rapidly transforming with increasing renewable penetration
           </p>
         </div>
@@ -115,7 +115,7 @@ export const GenerationMixSection = () => {
           {/* Left - Pie Chart */}
           <div className={`transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-watt-navy">Current Generation Mix</h3>
+              <h3 className="text-xl font-bold text-foreground">Current Generation Mix</h3>
               <div className="flex items-center gap-2">
                 {isLiveData ? (
                   <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 border border-green-300 text-xs text-green-700">
@@ -135,15 +135,15 @@ export const GenerationMixSection = () => {
                 )}
                 <button
                   onClick={() => refetch()}
-                  className="p-1.5 rounded-lg hover:bg-watt-navy/10 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                   title="Refresh data"
                 >
-                  <RefreshCw className={`w-4 h-4 text-watt-navy/50 ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
                 </button>
               </div>
             </div>
             
-            <div className="bg-white rounded-2xl border border-watt-navy/10 p-6">
+            <div className="bg-white rounded-2xl border border-border p-6">
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -177,20 +177,20 @@ export const GenerationMixSection = () => {
                 {chartData.slice(0, 6).map((source, i) => {
                   const Icon = getGenerationIcon(source.name);
                   return (
-                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-watt-light">
+                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted">
                       <Icon className="w-4 h-4" style={{ color: getGenerationColor(source.name) }} />
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-watt-navy truncate block">{source.name}</span>
-                        <span className="text-xs text-watt-navy/50">{source.mw?.toLocaleString()} MW</span>
+                        <span className="text-xs font-medium text-foreground truncate block">{source.name}</span>
+                        <span className="text-xs text-muted-foreground/70">{source.mw?.toLocaleString()} MW</span>
                       </div>
-                      <span className="text-xs text-watt-navy/70 font-medium">{source.value}%</span>
+                      <span className="text-xs text-muted-foreground font-medium">{source.value}%</span>
                     </div>
                   );
                 })}
               </div>
 
               {generationMix?.timestamp && (
-                <p className="text-xs text-watt-navy/40 text-center mt-4">
+                <p className="text-xs text-muted-foreground/60 text-center mt-4">
                   Last updated: {new Date(generationMix.timestamp).toLocaleString()}
                 </p>
               )}
@@ -200,13 +200,13 @@ export const GenerationMixSection = () => {
           {/* Right - Transition Chart */}
           <div className={`transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6'}`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-watt-navy">Alberta's Energy Transition</h3>
+              <h3 className="text-xl font-bold text-foreground">Alberta's Energy Transition</h3>
               <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
                 AESO Annual Reports
               </span>
             </div>
             
-            <div className="bg-white rounded-2xl border border-watt-navy/10 p-6">
+            <div className="bg-white rounded-2xl border border-border p-6">
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={renewableGrowth}>
@@ -261,7 +261,7 @@ export const GenerationMixSection = () => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-watt-navy">Impact on Pool Prices</h3>
+            <h3 className="text-xl font-bold text-foreground">Impact on Pool Prices</h3>
             
             {[
               { title: 'High Wind = Low Prices', desc: 'When wind output exceeds 3,000 MW, pool prices often drop below $30/MWh or go negative', icon: Wind, color: 'green' },
@@ -297,7 +297,7 @@ export const GenerationMixSection = () => {
 
         {/* Data Source Badge */}
         <div className="mt-8 text-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-watt-navy/5 border border-watt-navy/10 text-xs text-watt-navy/60">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-xs text-muted-foreground">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
             Generation data from AESO Current Supply Demand (CSD) API | Historical data from AESO Annual Reports
           </span>
