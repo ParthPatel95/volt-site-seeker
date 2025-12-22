@@ -479,7 +479,7 @@ const HydroNoiseManagementSection = () => {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground mt-4">
-                {cooling.description}
+                Cooling systems typically generate 85-100+ dB at the source
               </p>
             </CardContent>
           </Card>
