@@ -54,7 +54,7 @@ const BitcoinFutureSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-muted">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -62,10 +62,10 @@ const BitcoinFutureSection: React.FC = () => {
               <Sparkles className="w-4 h-4 text-watt-bitcoin" />
               <span className="text-sm font-medium text-watt-bitcoin">Looking Ahead</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               The Future of Bitcoin
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               From scaling solutions to institutional adoption, Bitcoin's ecosystem continues to mature and expand
             </p>
           </div>
@@ -75,7 +75,7 @@ const BitcoinFutureSection: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {developments.map((item, index) => (
             <ScrollReveal key={item.title} direction="up" delay={index * 0.1}>
-              <div className="bg-white rounded-2xl p-6 border border-watt-navy/10 shadow-institutional h-full">
+              <div className="bg-card rounded-2xl p-6 border border-border shadow-institutional h-full">
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center`}>
                     <item.icon className="w-6 h-6" />
@@ -84,8 +84,8 @@ const BitcoinFutureSection: React.FC = () => {
                     {item.status}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-2">{item.title}</h3>
-                <p className="text-watt-navy/70">{item.description}</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
+                <p className="text-muted-foreground">{item.description}</p>
               </div>
             </ScrollReveal>
           ))}

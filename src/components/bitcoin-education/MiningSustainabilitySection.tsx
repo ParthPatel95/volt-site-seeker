@@ -100,7 +100,7 @@ const MiningSustainabilitySection: React.FC = () => {
   const renewablePercentage = 48; // Approximate sustainable energy mix in Bitcoin mining
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-gradient-to-br from-watt-success/5 via-white to-watt-trust/5">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-gradient-to-br from-watt-success/5 via-background to-watt-trust/5">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -108,10 +108,10 @@ const MiningSustainabilitySection: React.FC = () => {
               <Leaf className="w-4 h-4 text-watt-success" />
               <span className="text-sm font-medium text-watt-success">Energy & Sustainability</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Bitcoin Mining & Energy
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Bitcoin mining is uniquely positioned to support renewable energy adoption 
               and grid stability. Here's how the industry is evolving.
             </p>
@@ -157,20 +157,20 @@ const MiningSustainabilitySection: React.FC = () => {
         <ScrollReveal direction="up" delay={0.2}>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {energySources.map((source, index) => (
-              <div key={source.source} className="bg-white rounded-xl p-5 shadow-institutional hover:shadow-institutional-lg transition-shadow">
+              <div key={source.source} className="bg-card rounded-xl p-5 shadow-institutional hover:shadow-institutional-lg transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-10 h-10 rounded-lg bg-${source.color}/10 flex items-center justify-center`}>
                     <source.icon className={`w-5 h-5 text-${source.color}`} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-watt-navy">{source.source}</h4>
+                    <h4 className="font-bold text-foreground">{source.source}</h4>
                     <span className={`text-lg font-bold text-${source.color}`}>{source.percentage}%</span>
                   </div>
                 </div>
-                <p className="text-sm text-watt-navy/70 mb-3">{source.description}</p>
+                <p className="text-sm text-muted-foreground mb-3">{source.description}</p>
                 <div className="flex flex-wrap gap-1">
                   {source.locations.slice(0, 3).map((loc, i) => (
-                    <span key={i} className="text-xs px-2 py-1 bg-watt-light rounded-full text-watt-navy/60">
+                    <span key={i} className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground">
                       {loc}
                     </span>
                   ))}
@@ -183,21 +183,21 @@ const MiningSustainabilitySection: React.FC = () => {
         {/* Sustainability Benefits */}
         <ScrollReveal direction="up" delay={0.3}>
           <div className="mb-8">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">
               How Bitcoin Mining Supports Clean Energy
             </h3>
             <div className="grid md:grid-cols-2 gap-6">
               {sustainabilityBenefits.map((benefit, index) => (
-                <div key={index} className="bg-white rounded-2xl p-6 shadow-institutional">
+                <div key={index} className="bg-card rounded-2xl p-6 shadow-institutional">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-xl bg-watt-success/10 flex items-center justify-center">
                       <benefit.icon className="w-6 h-6 text-watt-success" />
                     </div>
-                    <h4 className="text-xl font-bold text-watt-navy">{benefit.title}</h4>
+                    <h4 className="text-xl font-bold text-foreground">{benefit.title}</h4>
                   </div>
-                  <p className="text-watt-navy/70 mb-4">{benefit.description}</p>
-                  <div className="p-3 bg-watt-light rounded-xl">
-                    <p className="text-sm text-watt-navy/80">
+                  <p className="text-muted-foreground mb-4">{benefit.description}</p>
+                  <div className="p-3 bg-muted rounded-xl">
+                    <p className="text-sm text-foreground/80">
                       <strong className="text-watt-success">Example:</strong> {benefit.example}
                     </p>
                   </div>

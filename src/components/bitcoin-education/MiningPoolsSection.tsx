@@ -59,16 +59,8 @@ const MiningPoolsSection: React.FC = () => {
     { factor: 'User Interface & Tools', importance: 'Low', description: 'Monitoring apps, notifications, detailed statistics' }
   ];
 
-  const soloMiningMath = {
-    networkHashrate: 700, // EH/s
-    yourHashrate: 1, // PH/s
-    probability: (1 / 700000).toFixed(8),
-    avgDaysToBlock: Math.round(700000 / 1 / 144),
-    blockReward: 3.125
-  };
-
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-card">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -76,10 +68,10 @@ const MiningPoolsSection: React.FC = () => {
               <Users className="w-4 h-4 text-watt-trust" />
               <span className="text-sm font-medium text-watt-trust">Collaborative Mining</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Mining Pools & Solo Mining
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Mining pools combine the hashrate of many miners to find blocks more consistently, 
               then distribute rewards proportionally.
             </p>
@@ -88,51 +80,51 @@ const MiningPoolsSection: React.FC = () => {
 
         {/* Why Pool Mining */}
         <ScrollReveal direction="up" delay={0.1}>
-          <div className="bg-watt-light rounded-2xl p-6 md:p-8 mb-8">
+          <div className="bg-muted rounded-2xl p-6 md:p-8 mb-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
-                <h3 className="text-2xl font-bold text-watt-navy mb-4">Why Mine in a Pool?</h3>
-                <p className="text-watt-navy/70 mb-4">
-                  With network hashrate at <strong>700+ EH/s</strong>, solo mining is like playing the lottery. 
-                  Even a large 1 PH/s operation would wait <strong>years</strong> on average to find a single block.
+                <h3 className="text-2xl font-bold text-foreground mb-4">Why Mine in a Pool?</h3>
+                <p className="text-muted-foreground mb-4">
+                  With network hashrate at <strong className="text-foreground">700+ EH/s</strong>, solo mining is like playing the lottery. 
+                  Even a large 1 PH/s operation would wait <strong className="text-foreground">years</strong> on average to find a single block.
                 </p>
-                <p className="text-watt-navy/70">
+                <p className="text-muted-foreground">
                   Pools solve this by combining resources. When any pool member finds a block, 
                   the reward is split among all participants based on their contributed work (shares).
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-institutional">
-                <h4 className="font-bold text-watt-navy mb-4">Solo Mining Math (1 PH/s)</h4>
+              <div className="bg-card rounded-xl p-6 shadow-institutional">
+                <h4 className="font-bold text-foreground mb-4">Solo Mining Math (1 PH/s)</h4>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/60">Your Hashrate</span>
-                    <span className="font-mono font-bold text-watt-navy">1 PH/s</span>
+                    <span className="text-muted-foreground">Your Hashrate</span>
+                    <span className="font-mono font-bold text-foreground">1 PH/s</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/60">Network Hashrate</span>
-                    <span className="font-mono font-bold text-watt-navy">700,000 PH/s</span>
+                    <span className="text-muted-foreground">Network Hashrate</span>
+                    <span className="font-mono font-bold text-foreground">700,000 PH/s</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/60">% of Network</span>
-                    <span className="font-mono font-bold text-watt-navy">0.000143%</span>
+                    <span className="text-muted-foreground">% of Network</span>
+                    <span className="font-mono font-bold text-foreground">0.000143%</span>
                   </div>
-                  <div className="border-t border-watt-navy/10 my-2" />
+                  <div className="border-t border-border my-2" />
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/60">Blocks per Day (network)</span>
-                    <span className="font-mono font-bold text-watt-navy">144</span>
+                    <span className="text-muted-foreground">Blocks per Day (network)</span>
+                    <span className="font-mono font-bold text-foreground">144</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/60">Expected Days to Block</span>
+                    <span className="text-muted-foreground">Expected Days to Block</span>
                     <span className="font-mono font-bold text-watt-bitcoin">~4,861 days</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/60">That's about...</span>
+                    <span className="text-muted-foreground">That's about...</span>
                     <span className="font-mono font-bold text-destructive">~13.3 years</span>
                   </div>
                 </div>
-                <div className="mt-4 p-3 bg-watt-warning/10 rounded-lg border border-watt-warning/20">
-                  <p className="text-xs text-watt-navy/70">
-                    <AlertCircle className="w-4 h-4 inline mr-1 text-watt-warning" />
+                <div className="mt-4 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                  <p className="text-xs text-muted-foreground">
+                    <AlertCircle className="w-4 h-4 inline mr-1 text-amber-500" />
                     This is average time. You could get lucky in week 1 or wait 30+ years.
                   </p>
                 </div>
@@ -143,18 +135,18 @@ const MiningPoolsSection: React.FC = () => {
 
         {/* Top Mining Pools */}
         <ScrollReveal direction="up" delay={0.2}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-institutional mb-8">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6">Top Mining Pools by Hashrate</h3>
+          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-institutional mb-8">
+            <h3 className="text-2xl font-bold text-foreground mb-6">Top Mining Pools by Hashrate</h3>
             <div className="space-y-4">
               {topPools.map((pool, index) => (
                 <div key={pool.name} className="flex items-center gap-4">
-                  <div className="w-8 text-center font-bold text-watt-navy/40">#{index + 1}</div>
+                  <div className="w-8 text-center font-bold text-muted-foreground/40">#{index + 1}</div>
                   <div className="flex-1">
                     <div className="flex justify-between mb-1">
-                      <span className="font-medium text-watt-navy">{pool.name}</span>
-                      <span className="font-bold text-watt-navy">{pool.hashrate}%</span>
+                      <span className="font-medium text-foreground">{pool.name}</span>
+                      <span className="font-bold text-foreground">{pool.hashrate}%</span>
                     </div>
-                    <div className="w-full bg-watt-navy/10 rounded-full h-3">
+                    <div className="w-full bg-muted rounded-full h-3">
                       <div 
                         className={`bg-${pool.color} rounded-full h-3 transition-all duration-1000`}
                         style={{ width: `${pool.hashrate}%` }}
@@ -164,7 +156,7 @@ const MiningPoolsSection: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p className="text-sm text-watt-navy/60 mt-4 text-center">
+            <p className="text-sm text-muted-foreground mt-4 text-center">
               Source: BTC.com Pool Distribution (approximate, changes frequently)
             </p>
           </div>
@@ -173,24 +165,24 @@ const MiningPoolsSection: React.FC = () => {
         {/* Payout Schemes */}
         <ScrollReveal direction="up" delay={0.3}>
           <div className="mb-8">
-            <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">Pool Payout Schemes Explained</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Pool Payout Schemes Explained</h3>
             <div className="grid md:grid-cols-3 gap-6">
               {payoutSchemes.map((scheme, index) => (
-                <div key={scheme.name} className="bg-watt-light rounded-2xl p-6">
-                  <h4 className="font-bold text-watt-navy mb-2">{scheme.name}</h4>
-                  <p className="text-sm text-watt-navy/70 mb-4">{scheme.description}</p>
+                <div key={scheme.name} className="bg-muted rounded-2xl p-6">
+                  <h4 className="font-bold text-foreground mb-2">{scheme.name}</h4>
+                  <p className="text-sm text-muted-foreground mb-4">{scheme.description}</p>
                   
                   <div className="space-y-2 mb-4 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-watt-navy/60">Risk Level</span>
+                      <span className="text-muted-foreground">Risk Level</span>
                       <span className={`font-medium ${
                         scheme.riskLevel === 'Very Low' ? 'text-watt-success' :
-                        scheme.riskLevel === 'Low' ? 'text-watt-trust' : 'text-watt-warning'
+                        scheme.riskLevel === 'Low' ? 'text-watt-trust' : 'text-amber-500'
                       }`}>{scheme.riskLevel}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-watt-navy/60">Pool Fee</span>
-                      <span className="font-medium text-watt-navy">{scheme.poolFee}</span>
+                      <span className="text-muted-foreground">Pool Fee</span>
+                      <span className="font-medium text-foreground">{scheme.poolFee}</span>
                     </div>
                   </div>
 
@@ -203,9 +195,9 @@ const MiningPoolsSection: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="p-3 bg-white rounded-lg">
-                    <p className="text-xs text-watt-navy/70">
-                      <strong>Best for:</strong> {scheme.bestFor}
+                  <div className="p-3 bg-card rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      <strong className="text-foreground">Best for:</strong> {scheme.bestFor}
                     </p>
                   </div>
                 </div>

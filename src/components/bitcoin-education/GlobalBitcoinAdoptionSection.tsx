@@ -58,7 +58,7 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-white">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-card">
       <div className="max-w-6xl mx-auto">
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
@@ -66,10 +66,10 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
               <Globe className="w-4 h-4 text-watt-trust" />
               <span className="text-sm font-medium text-watt-trust">Global Adoption</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Bitcoin Around the World
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               From individuals to corporations to governments, Bitcoin adoption continues to accelerate globally
             </p>
           </div>
@@ -79,12 +79,12 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
         <ScrollReveal direction="up" delay={0.1}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             {adoptionMilestones.map((item) => (
-              <div key={item.metric} className="bg-watt-light rounded-2xl p-5 text-center">
+              <div key={item.metric} className="bg-muted rounded-2xl p-5 text-center">
                 <div className="text-2xl md:text-3xl font-bold text-watt-bitcoin mb-1">
                   <AnimatedCounter end={item.value} suffix={item.suffix} />
                 </div>
-                <div className="text-sm font-medium text-watt-navy mb-1">{item.metric}</div>
-                <div className="text-xs text-watt-navy/60">{item.description}</div>
+                <div className="text-sm font-medium text-foreground mb-1">{item.metric}</div>
+                <div className="text-xs text-muted-foreground">{item.description}</div>
               </div>
             ))}
           </div>
@@ -95,15 +95,15 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
           <div className="bg-gradient-to-r from-watt-bitcoin/10 to-watt-trust/10 rounded-2xl p-6 mb-8 border border-watt-bitcoin/20">
             <div className="flex items-center gap-3 mb-4">
               <Landmark className="w-6 h-6 text-watt-bitcoin" />
-              <h3 className="text-xl font-bold text-watt-navy">Legal Tender Status</h3>
+              <h3 className="text-xl font-bold text-foreground">Legal Tender Status</h3>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-white rounded-xl p-4 border border-watt-navy/10">
+              <div className="bg-card rounded-xl p-4 border border-border">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-3xl">🇸🇻</span>
                   <div>
-                    <div className="font-bold text-watt-navy">El Salvador</div>
-                    <div className="text-sm text-watt-navy/70">First country to adopt (Sept 2021)</div>
+                    <div className="font-bold text-foreground">El Salvador</div>
+                    <div className="text-sm text-muted-foreground">First country to adopt (Sept 2021)</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-watt-success">
@@ -111,12 +111,12 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
                   <span>Bitcoin accepted for all transactions</span>
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-watt-navy/10">
+              <div className="bg-card rounded-xl p-4 border border-border">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-3xl">🇨🇫</span>
                   <div>
-                    <div className="font-bold text-watt-navy">Central African Republic</div>
-                    <div className="text-sm text-watt-navy/70">Adopted April 2022</div>
+                    <div className="font-bold text-foreground">Central African Republic</div>
+                    <div className="text-sm text-muted-foreground">Adopted April 2022</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-watt-success">
@@ -132,21 +132,21 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Government Holdings */}
           <ScrollReveal direction="left" delay={0.3}>
-            <div className="bg-white rounded-2xl p-6 border border-watt-navy/10 shadow-institutional h-full">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-institutional h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-watt-trust/10 flex items-center justify-center">
                   <Landmark className="w-5 h-5 text-watt-trust" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy">Government Holdings</h3>
+                <h3 className="text-xl font-bold text-foreground">Government Holdings</h3>
               </div>
               <div className="space-y-3">
                 {governmentHoldings.map((item) => (
-                  <div key={item.country} className="flex items-center justify-between p-3 bg-watt-light rounded-lg">
+                  <div key={item.country} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{item.flag}</span>
                       <div>
-                        <div className="font-medium text-watt-navy text-sm">{item.country}</div>
-                        <div className="text-xs text-watt-navy/60">{item.source}</div>
+                        <div className="font-medium text-foreground text-sm">{item.country}</div>
+                        <div className="text-xs text-muted-foreground">{item.source}</div>
                       </div>
                     </div>
                     <div className="font-bold text-watt-bitcoin text-sm">{item.btc} BTC</div>
@@ -158,19 +158,19 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
 
           {/* Corporate Holdings */}
           <ScrollReveal direction="right" delay={0.3}>
-            <div className="bg-white rounded-2xl p-6 border border-watt-navy/10 shadow-institutional h-full">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-institutional h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-watt-bitcoin/10 flex items-center justify-center">
                   <Building2 className="w-5 h-5 text-watt-bitcoin" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy">Corporate Holdings</h3>
+                <h3 className="text-xl font-bold text-foreground">Corporate Holdings</h3>
               </div>
               <div className="space-y-3">
                 {corporateHoldings.map((item) => (
-                  <div key={item.company} className="flex items-center justify-between p-3 bg-watt-light rounded-lg">
+                  <div key={item.company} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div>
-                      <div className="font-medium text-watt-navy text-sm">{item.company}</div>
-                      <div className="text-xs text-watt-navy/60">{item.btc} BTC</div>
+                      <div className="font-medium text-foreground text-sm">{item.company}</div>
+                      <div className="text-xs text-muted-foreground">{item.btc} BTC</div>
                     </div>
                     <div className="font-bold text-watt-success text-sm">{item.value}</div>
                   </div>

@@ -108,7 +108,7 @@ const BitcoinWalletsSection: React.FC = () => {
           <div
             key={star}
             className={`w-2 h-2 rounded-full ${
-              star <= level ? 'bg-watt-success' : 'bg-gray-200'
+              star <= level ? 'bg-watt-success' : 'bg-muted-foreground/20'
             }`}
           />
         ))}
@@ -123,7 +123,7 @@ const BitcoinWalletsSection: React.FC = () => {
           <div
             key={star}
             className={`w-2 h-2 rounded-full ${
-              star <= level ? 'bg-watt-bitcoin' : 'bg-gray-200'
+              star <= level ? 'bg-watt-bitcoin' : 'bg-muted-foreground/20'
             }`}
           />
         ))}
@@ -132,7 +132,7 @@ const BitcoinWalletsSection: React.FC = () => {
   };
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-muted">
       <div className="max-w-6xl mx-auto">
         <LearningObjectives
           objectives={[
@@ -154,10 +154,10 @@ const BitcoinWalletsSection: React.FC = () => {
               <Wallet className="w-4 h-4 text-watt-trust" />
               <span className="text-sm font-medium text-watt-trust">Storage & Security</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Storing Your Bitcoin
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Understanding the different ways to secure your digital assets and why self-custody matters
             </p>
           </div>
@@ -181,13 +181,13 @@ const BitcoinWalletsSection: React.FC = () => {
 
         {/* Key Concepts */}
         <ScrollReveal direction="up" delay={0.2}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">Understanding Keys</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Understanding Keys</h3>
           <div className="grid md:grid-cols-3 gap-4 mb-12">
             {keyConcepts.map((concept, index) => (
               <div 
                 key={concept.title} 
-                className={`bg-white rounded-xl p-5 border ${
-                  concept.warning ? 'border-watt-bitcoin/30' : 'border-watt-navy/10'
+                className={`bg-card rounded-xl p-5 border ${
+                  concept.warning ? 'border-watt-bitcoin/30' : 'border-border'
                 } shadow-institutional`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -198,9 +198,9 @@ const BitcoinWalletsSection: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <h4 className="font-bold text-watt-navy mb-2">{concept.title}</h4>
-                <p className="text-sm text-watt-navy/70 mb-3">{concept.description}</p>
-                <div className="bg-watt-light rounded-lg p-2 font-mono text-xs text-watt-navy/60 truncate">
+                <h4 className="font-bold text-foreground mb-2">{concept.title}</h4>
+                <p className="text-sm text-muted-foreground mb-3">{concept.description}</p>
+                <div className="bg-muted rounded-lg p-2 font-mono text-xs text-muted-foreground truncate">
                   {concept.visual}
                 </div>
               </div>
@@ -210,34 +210,34 @@ const BitcoinWalletsSection: React.FC = () => {
 
         {/* Wallet Types */}
         <ScrollReveal direction="up" delay={0.3}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">Types of Wallets</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-6 text-center">Types of Wallets</h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
             {walletTypes.map((wallet, index) => (
               <ScrollReveal key={wallet.title} direction="up" delay={0.1 * index}>
-                <div className="bg-white rounded-2xl p-5 border border-watt-navy/10 shadow-institutional h-full flex flex-col">
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-institutional h-full flex flex-col">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${wallet.color} flex items-center justify-center mb-4`}>
                     <wallet.icon className="w-6 h-6 text-white" />
                   </div>
-                  <h4 className="font-bold text-watt-navy mb-1">{wallet.title}</h4>
-                  <p className="text-xs text-watt-navy/50 mb-3">{wallet.subtitle}</p>
-                  <p className="text-sm text-watt-navy/70 mb-4 flex-grow">{wallet.description}</p>
+                  <h4 className="font-bold text-foreground mb-1">{wallet.title}</h4>
+                  <p className="text-xs text-muted-foreground/50 mb-3">{wallet.subtitle}</p>
+                  <p className="text-sm text-muted-foreground mb-4 flex-grow">{wallet.description}</p>
                   
-                  <div className="space-y-3 pt-3 border-t border-watt-navy/10">
+                  <div className="space-y-3 pt-3 border-t border-border">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-watt-navy/60">Security</span>
+                      <span className="text-xs text-muted-foreground">Security</span>
                       {renderSecurityStars(wallet.security)}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-watt-navy/60">Convenience</span>
+                      <span className="text-xs text-muted-foreground">Convenience</span>
                       {renderConvenienceStars(wallet.convenience)}
                     </div>
                     <div className="pt-2">
-                      <span className="text-xs font-medium text-watt-navy/80">Best for:</span>
-                      <p className="text-xs text-watt-navy/60">{wallet.bestFor}</p>
+                      <span className="text-xs font-medium text-foreground/80">Best for:</span>
+                      <p className="text-xs text-muted-foreground">{wallet.bestFor}</p>
                     </div>
                     <div className="pt-1">
-                      <span className="text-xs font-medium text-watt-navy/80">Examples:</span>
-                      <p className="text-xs text-watt-navy/60">{wallet.examples}</p>
+                      <span className="text-xs font-medium text-foreground/80">Examples:</span>
+                      <p className="text-xs text-muted-foreground">{wallet.examples}</p>
                     </div>
                   </div>
                 </div>
@@ -248,18 +248,18 @@ const BitcoinWalletsSection: React.FC = () => {
 
         {/* Security vs Convenience Visual */}
         <ScrollReveal direction="up" delay={0.4}>
-          <div className="bg-white rounded-2xl p-6 md:p-8 border border-watt-navy/10 shadow-institutional mb-10">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">Security vs. Convenience Trade-off</h3>
+          <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-institutional mb-10">
+            <h3 className="text-xl font-bold text-foreground mb-6 text-center">Security vs. Convenience Trade-off</h3>
             <div className="relative h-48 md:h-64">
               {/* Axes */}
-              <div className="absolute left-8 top-0 bottom-8 w-px bg-watt-navy/20" />
-              <div className="absolute left-8 bottom-8 right-0 h-px bg-watt-navy/20" />
+              <div className="absolute left-8 top-0 bottom-8 w-px bg-border" />
+              <div className="absolute left-8 bottom-8 right-0 h-px bg-border" />
               
               {/* Labels */}
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-medium text-watt-navy/60 whitespace-nowrap">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-medium text-muted-foreground whitespace-nowrap">
                 Security
               </div>
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs font-medium text-watt-navy/60">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs font-medium text-muted-foreground">
                 Convenience
               </div>
 
@@ -269,7 +269,7 @@ const BitcoinWalletsSection: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-watt-trust/20 flex items-center justify-center mb-1">
                     <HardDrive className="w-5 h-5 text-watt-trust" />
                   </div>
-                  <span className="text-xs font-medium text-watt-navy">Cold</span>
+                  <span className="text-xs font-medium text-foreground">Cold</span>
                 </div>
               </div>
               
@@ -278,7 +278,7 @@ const BitcoinWalletsSection: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-watt-success/20 flex items-center justify-center mb-1">
                     <FileText className="w-5 h-5 text-watt-success" />
                   </div>
-                  <span className="text-xs font-medium text-watt-navy">Paper</span>
+                  <span className="text-xs font-medium text-foreground">Paper</span>
                 </div>
               </div>
 
@@ -287,7 +287,7 @@ const BitcoinWalletsSection: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-watt-bitcoin/20 flex items-center justify-center mb-1">
                     <Smartphone className="w-5 h-5 text-watt-bitcoin" />
                   </div>
-                  <span className="text-xs font-medium text-watt-navy">Hot</span>
+                  <span className="text-xs font-medium text-foreground">Hot</span>
                 </div>
               </div>
 
@@ -296,7 +296,7 @@ const BitcoinWalletsSection: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mb-1">
                     <Building2 className="w-5 h-5 text-purple-500" />
                   </div>
-                  <span className="text-xs font-medium text-watt-navy">Custodial</span>
+                  <span className="text-xs font-medium text-foreground">Custodial</span>
                 </div>
               </div>
             </div>
