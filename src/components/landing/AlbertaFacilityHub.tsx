@@ -3,15 +3,10 @@ import { Building2, Thermometer, Clock, Network, Zap, Leaf, Shield, MapPin, X, D
 import { StrategicMarketAnalytics } from './StrategicMarketAnalytics';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlbertaVideoShowcase } from './AlbertaVideoShowcase';
-import facilityNight from '@/assets/alberta-facility-night.png';
 import facilityAerial1 from '@/assets/alberta-facility-aerial-1.jpg';
 import facilityAerial2 from '@/assets/alberta-facility-aerial-2.jpg';
+
 const facilityImages = [{
-  src: facilityNight,
-  alt: 'Alberta Facility Night View',
-  caption: 'World-Class Infrastructure',
-  description: '135 MW operational facility in Alberta, Canada'
-}, {
   src: facilityAerial1,
   alt: 'Alberta Facility Aerial View 1',
   caption: 'Direct Grid Connection',
@@ -80,18 +75,10 @@ const specifications = [{
   size: 'small'
 }];
 export const AlbertaFacilityHub = () => {
-  const [currentHeroImage, setCurrentHeroImage] = useState(0);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
-  // Auto-rotate hero images
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentHeroImage(prev => (prev + 1) % facilityImages.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Intersection observer for scroll animations
   useEffect(() => {
@@ -127,36 +114,8 @@ export const AlbertaFacilityHub = () => {
           </p>
         </div>
 
-        {/* Interactive Image Gallery */}
-        <div className={`mb-8 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Large featured image */}
-            <div className="md:col-span-2 relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer group shadow-institutional" onClick={() => handleImageClick(0)}>
-              <img src={facilityImages[0].src} alt={facilityImages[0].alt} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                <h4 className="text-xl font-bold text-white mb-1">{facilityImages[0].caption}</h4>
-                <p className="text-sm text-white/90">{facilityImages[0].description}</p>
-              </div>
-              <div className="absolute inset-0 border-2 border-transparent group-hover:border-watt-trust/50 rounded-2xl transition-colors duration-300" />
-            </div>
-
-            {/* Vertical stack of smaller images */}
-            <div className="flex flex-col gap-4">
-              {facilityImages.slice(1).map((image, index) => <div key={index + 1} className="relative aspect-video rounded-2xl overflow-hidden cursor-pointer group shadow-institutional" onClick={() => handleImageClick(index + 1)}>
-                  <img src={image.src} alt={image.alt} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <h5 className="text-sm font-bold text-white">{image.caption}</h5>
-                  </div>
-                  <div className="absolute inset-0 border-2 border-transparent group-hover:border-watt-trust/50 rounded-2xl transition-colors duration-300" />
-                </div>)}
-            </div>
-          </div>
-        </div>
-
         {/* Video Showcase Section */}
-        <div className={`mb-10 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`mb-8 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-watt-trust/10 rounded-xl">
               <Video className="w-5 h-5 text-watt-trust" />
@@ -167,6 +126,33 @@ export const AlbertaFacilityHub = () => {
             </div>
           </div>
           <AlbertaVideoShowcase />
+        </div>
+
+        {/* Image Gallery - 2 Column Grid */}
+        <div className={`mb-10 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {facilityImages.map((image, index) => (
+              <div 
+                key={index} 
+                className="relative aspect-video rounded-2xl overflow-hidden cursor-pointer group shadow-institutional" 
+                onClick={() => handleImageClick(index)}
+              >
+                <img 
+                  src={image.src} 
+                  alt={image.alt} 
+                  loading="lazy" 
+                  decoding="async" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                  <h5 className="text-base font-bold text-white">{image.caption}</h5>
+                  <p className="text-sm text-white/90">{image.description}</p>
+                </div>
+                <div className="absolute inset-0 border-2 border-transparent group-hover:border-watt-trust/50 rounded-2xl transition-colors duration-300" />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Combined Facility Intelligence Section */}
