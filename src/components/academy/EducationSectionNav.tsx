@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, BookOpen, Clock, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { ArrowUp, BookOpen, Clock } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 export interface NavSection {
@@ -22,31 +22,18 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set());
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('education-nav-collapsed');
-      return stored === 'true';
-    }
-    return false;
-  });
 
   const totalTime = sections.reduce((acc, s) => acc + parseInt(s.time || '0'), 0);
 
   // Set CSS variable for other fixed elements to know nav offset
   useEffect(() => {
-    localStorage.setItem('education-nav-collapsed', String(isCollapsed));
-    
-    // Update CSS variable based on visibility and collapsed state
-    const updateOffset = () => {
-      const offset = isVisible && !isCollapsed ? '240px' : '0px';
-      document.documentElement.style.setProperty('--edu-nav-offset', offset);
-    };
-    updateOffset();
+    const offset = isVisible ? '240px' : '0px';
+    document.documentElement.style.setProperty('--edu-nav-offset', offset);
     
     return () => {
       document.documentElement.style.setProperty('--edu-nav-offset', '0px');
     };
-  }, [isCollapsed, isVisible]);
+  }, [isVisible]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -121,7 +108,7 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
     <>
       {/* Progress bar at top - always visible after scrolling */}
       {isVisible && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-40">
+        <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
           <div 
             className={`h-full ${accentBg} transition-all duration-150`} 
             style={{ width: `${scrollProgress}%` }} 
@@ -129,26 +116,9 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
         </div>
       )}
 
-      {/* Toggle button - visible on desktop when scrolled */}
+      {/* Desktop sidebar navigation - hidden on mobile, appears on scroll */}
       {isVisible && (
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`fixed top-20 z-40 hidden lg:flex items-center justify-center w-10 h-10 rounded-full ${accentBg} text-white shadow-lg hover:opacity-90 transition-all ${
-            isCollapsed ? 'right-4' : 'right-[232px]'
-          }`}
-          title={isCollapsed ? 'Show navigation' : 'Hide navigation'}
-        >
-          {isCollapsed ? (
-            <PanelRightOpen className="w-5 h-5" />
-          ) : (
-            <PanelRightClose className="w-5 h-5" />
-          )}
-        </button>
-      )}
-
-      {/* Desktop sidebar navigation - hidden on mobile, toggleable on desktop */}
-      {isVisible && !isCollapsed && (
-        <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-30 hidden lg:block animate-in slide-in-from-right duration-300">
+        <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:block animate-in slide-in-from-right duration-300">
           <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-2">
             {/* Progress indicator */}
             <div className="px-2 py-2 mb-2 border-b border-border">

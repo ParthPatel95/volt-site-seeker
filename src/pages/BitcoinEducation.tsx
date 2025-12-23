@@ -1,12 +1,12 @@
 // Bitcoin Education Page
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { ArrowUp, Bitcoin, History, Settings, Wallet, Cpu, Thermometer, Users, Leaf, TrendingUp, Gift, Globe, Rocket } from 'lucide-react';
+import { Bitcoin, History, Settings, Wallet, Cpu, Thermometer, Users, Leaf, TrendingUp, Gift, Globe, Rocket } from 'lucide-react';
 import LastReviewed from '@/components/academy/LastReviewed';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
@@ -55,40 +55,9 @@ const SectionLoader = () => (
 );
 
 const BitcoinEducation: React.FC = () => {
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      // Calculate scroll progress
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollProgress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      setScrollProgress(scrollProgress);
-      
-      // Show/hide scroll to top button
-      setShowScrollTop(scrollTop > 500);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <div className="min-h-screen bg-white text-watt-navy relative overflow-hidden">
       <SmoothScroll />
-      
-      {/* Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
-        <div 
-          className="h-full bg-watt-bitcoin transition-all duration-150"
-          style={{ width: `${scrollProgress}%` }}
-        />
-      </div>
       
       {/* SEO content */}
       <header>
@@ -102,19 +71,8 @@ const BitcoinEducation: React.FC = () => {
       <LandingBackground />
       <LandingNavigation />
       
-      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      {/* Section Navigation - hidden on mobile, appears on scroll */}
       <EducationSectionNav sections={bitcoinSections} accentColor="watt-bitcoin" />
-
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-6 right-4 z-40 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 ${
-          showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}
-        aria-label="Scroll to top"
-      >
-        <ArrowUp className="w-5 h-5" />
-      </button>
       
       <div className="pt-14 sm:pt-16 md:pt-20 relative z-10 safe-area-pt">
         <main>

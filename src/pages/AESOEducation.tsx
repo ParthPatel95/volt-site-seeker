@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { AESOHeroSection } from '@/components/aeso-education/AESOHeroSection';
@@ -14,7 +13,7 @@ import { EnergyForecastSection } from '@/components/aeso-education/EnergyForecas
 import { AESOCTASection } from '@/components/aeso-education/AESOCTASection';
 import { MarketParticipantsSection } from '@/components/aeso-education/MarketParticipantsSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { ChevronUp, Zap, Users, DollarSign, TrendingUp, Calendar, Percent, Banknote, Activity, PieChart, BarChart3 } from 'lucide-react';
+import { Zap, Users, DollarSign, TrendingUp, Calendar, Percent, Banknote, Activity, PieChart, BarChart3 } from 'lucide-react';
 import LastReviewed from '@/components/academy/LastReviewed';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
@@ -37,21 +36,6 @@ const navSections = [
 ];
 
 const AESOEducation = () => {
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <div className="min-h-screen bg-white">
       <LandingNavigation />
@@ -161,17 +145,6 @@ const AESOEducation = () => {
 
       {/* Page Translation Button */}
       <PageTranslationButton pageId="aeso-101" />
-
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-6 right-6 z-50 p-3 rounded-full bg-watt-bitcoin text-white shadow-lg transition-all duration-300 hover:bg-watt-bitcoin/90 ${
-          showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
-        }`}
-        aria-label="Scroll to top"
-      >
-        <ChevronUp className="w-5 h-5" />
-      </button>
     </div>
   );
 };
