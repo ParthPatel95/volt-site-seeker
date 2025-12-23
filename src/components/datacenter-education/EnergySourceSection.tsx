@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, DollarSign, Clock, TrendingUp, ArrowDown, Sparkles, Shield } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 // Import AI-generated 3D images
 import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
@@ -183,6 +185,16 @@ const EnergySourceSection = () => {
   return (
     <section id="energy-source" className="py-16 md:py-24 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <LearningObjectives
+          objectives={[
+            "Understand the power journey from transmission lines to your facility",
+            "Compare power purchasing methods: wholesale, PPA, BTM, and retail",
+            "Evaluate site selection criteria for optimal mining operations",
+            "Navigate the utility interconnection process and timeline"
+          ]}
+          estimatedTime="8 min"
+        />
+        
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
@@ -546,6 +558,20 @@ const EnergySourceSection = () => {
           }
         }
       `}</style>
+      
+        <SectionSummary
+          takeaways={[
+            "Large mining ops connect at transmission/distribution level (25-138kV) for lowest rates",
+            "Behind-the-meter (BTM) offers 40-60% savings but requires co-location with generation",
+            "Interconnection takes 12-30 months — start the process early",
+            "Site selection weighs power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
+          ]}
+          nextSteps={[
+            { title: "Electrical Infrastructure", href: "#electrical", description: "Learn about transformers, switchgear, and PDUs" }
+          ]}
+          proTip="Self-retailer status in AESO can save 15-30% vs regulated retail rates, but requires 24/7 market monitoring."
+        />
+      </div>
     </section>
   );
 };

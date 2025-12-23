@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Building2, Box, Grid, Ruler, CheckCircle, ArrowRight, Zap, Wind, Shield, DollarSign } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import datacenter3dExterior from '@/assets/datacenter-3d-exterior.jpg';
 import containerDeployment from '@/assets/datacenter-container-deployment.jpg';
 
