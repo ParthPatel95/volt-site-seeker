@@ -51,6 +51,16 @@ export default function DielectricFluidsSection() {
   return (
     <section id="fluids" className="py-20 bg-background">
       <div className="container mx-auto px-4">
+        <LearningObjectives
+          objectives={[
+            "Compare mineral oils, synthetic oils, and fluorocarbons",
+            "Evaluate fluids by flash point, cost, GWP, and viscosity",
+            "Calculate fluid cost for your tank size"
+          ]}
+          estimatedTime="7 min"
+          prerequisites={[{ title: "Types of Immersion", href: "#types" }]}
+        />
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -211,6 +221,22 @@ export default function DielectricFluidsSection() {
             </div>
           </div>
         </ScrollReveal>
+
+        <ScrollReveal delay={350}>
+          <div className="mt-12">
+            <FluidRecommender />
+          </div>
+        </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Mineral oil: $2-5/L, flammable but economical for most operations",
+            "Synthetic oil: $8-18/L, higher flash point and longer lifespan",
+            "Fluorocarbons: $100-300/L, non-flammable for two-phase systems"
+          ]}
+          nextSectionId="hardware-prep"
+          nextSectionLabel="Continue to Hardware Prep"
+        />
       </div>
     </section>
   );
