@@ -47,7 +47,7 @@ const NoiseManagementEducation = () => {
       <LandingNavigation />
       
       {/* Hero Section */}
-      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden lg:pr-56">
+      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -111,7 +111,7 @@ const NoiseManagementEducation = () => {
       </section>
 
       {/* Main Content */}
-      <div className="lg:pr-56">
+      <div>
         <Suspense fallback={<SectionLoader />}>
           <NoiseBasicsSection />
         </Suspense>
