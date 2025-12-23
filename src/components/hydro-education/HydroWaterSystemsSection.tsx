@@ -14,6 +14,8 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const waterSystems = [
   {
@@ -99,7 +101,7 @@ const HydroWaterSystemsSection = () => {
   const currentSystem = waterSystems.find(s => s.id === activeSystem) || waterSystems[0];
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-cyan-50/50">
+    <section id="water-systems" className="py-20 bg-gradient-to-b from-white to-cyan-50/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -115,6 +117,15 @@ const HydroWaterSystemsSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Compare plate heat exchanger vs cooling tower makeup systems",
+            "Calculate water flow rates based on inlet temperature",
+            "Understand water quality requirements and reservoir sizing"
+          ]}
+          estimatedTime="8 min"
+        />
 
         <ScrollReveal>
           <Tabs value={activeSystem} onValueChange={setActiveSystem} className="w-full">
@@ -426,6 +437,17 @@ const HydroWaterSystemsSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Plate heat exchanger: zero water consumption, needs natural water source",
+            "Cooling tower makeup: ~150 m³/hour peak for 100 MW facility",
+            "Flow rate increases exponentially with inlet water temperature",
+            "400 m³ reservoir provides 5-hour backup for 100 MW facility"
+          ]}
+          nextSectionId="electrical"
+          nextSectionLabel="Learn Electrical Systems"
+        />
       </div>
     </section>
   );

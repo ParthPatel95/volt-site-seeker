@@ -16,6 +16,8 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const applications = [
   {
@@ -90,7 +92,7 @@ const HydroWasteHeatSection = () => {
   const gasReplaced = (naturalGasROI.gasReplacement * facilitySize).toLocaleString();
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-orange-50/50">
+    <section id="waste-heat" className="py-20 bg-gradient-to-b from-white to-orange-50/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -107,6 +109,15 @@ const HydroWasteHeatSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Calculate waste heat recovery ROI for different facility sizes",
+            "Identify monetization opportunities: industrial, district, greenhouse heating",
+            "Understand environmental benefits and ESG advantages"
+          ]}
+          estimatedTime="6 min"
+        />
 
         {/* Heat Recovery Diagram */}
         <ScrollReveal>
@@ -348,6 +359,17 @@ const HydroWasteHeatSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "85% of waste heat can be captured from hydro-cooled systems",
+            "Hotel hot water heating: ~$525K/year savings per MW",
+            "Natural gas replacement: ~$210K/year savings per MW",
+            "ESG benefits can attract institutional investors and carbon credits"
+          ]}
+          nextSectionId="noise-management"
+          nextSectionLabel="Learn Noise Management"
+        />
       </div>
     </section>
   );

@@ -14,6 +14,8 @@ import {
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const siteCategories = [
   {
@@ -90,7 +92,7 @@ const HydroSiteSelectionSection = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>('policies');
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-slate-50">
+    <section id="site-selection" className="py-20 bg-gradient-to-b from-white to-slate-50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -106,6 +108,15 @@ const HydroSiteSelectionSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Evaluate sites across 4 critical categories: policies, electricity, climate, water",
+            "Understand water quality requirements for hydro-cooling systems",
+            "Identify critical vs recommended site requirements"
+          ]}
+          estimatedTime="6 min"
+        />
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
@@ -234,6 +245,17 @@ const HydroSiteSelectionSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Critical requirements: permits, 100 MW+ capacity, water quality testing",
+            "pH 6.5-8.5 and conductivity <1000 μS/cm are essential water parameters",
+            "Test water quality 3+ times across seasons before site selection",
+            "Distance to substation <5 km is ideal for cost optimization"
+          ]}
+          nextSectionId="layout"
+          nextSectionLabel="Explore Layout Options"
+        />
       </div>
     </section>
   );

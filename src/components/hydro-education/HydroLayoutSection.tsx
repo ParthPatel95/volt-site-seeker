@@ -10,6 +10,8 @@ import {
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const layoutSchemes = [
   {
@@ -82,7 +84,7 @@ const HydroLayoutSection = () => {
   const [selectedLayout, setSelectedLayout] = useState(layoutSchemes[0]);
 
   return (
-    <section className="py-20 bg-white">
+    <section id="layout" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -99,6 +101,15 @@ const HydroLayoutSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Compare 4 different facility layout configurations",
+            "Calculate land area requirements for various capacities",
+            "Understand the modular 'basic unit' concept for scalable deployment"
+          ]}
+          estimatedTime="5 min"
+        />
 
         {/* Layout Selector */}
         <ScrollReveal>
@@ -279,6 +290,17 @@ const HydroLayoutSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "100 MW Classic HK3 layout requires ~20,000 m² land area",
+            "PV rooftop option adds 5 MW solar capacity to facilities",
+            "HD5 high-density layout minimizes land requirements",
+            "Modular basic unit enables phased deployment and scaling"
+          ]}
+          nextSectionId="water-systems"
+          nextSectionLabel="Learn Water Systems"
+        />
       </div>
     </section>
   );
