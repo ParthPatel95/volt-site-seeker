@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Droplets, DollarSign, Thermometer, Shield, AlertTriangle } from 'lucide-react';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
+import FluidRecommender from './FluidRecommender';
 
 const fluidCategories = [
   {

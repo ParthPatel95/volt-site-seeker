@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Droplets, Flame, Check, X } from 'lucide-react';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const coolingTypes = [
   {

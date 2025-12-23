@@ -1,5 +1,8 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Wrench, Calendar, AlertTriangle, CheckCircle2, Droplets } from 'lucide-react';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
+import MaintenanceScheduleGenerator from './MaintenanceScheduleGenerator';
 
 const maintenanceTasks = [
   {
