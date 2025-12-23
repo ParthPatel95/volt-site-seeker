@@ -1,35 +1,51 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Settings, Clock, Shield, TrendingUp } from "lucide-react";
+import { LearningObjectives } from "@/components/electrical-education/LearningObjectives";
+import { SectionSummary } from "@/components/electrical-education/SectionSummary";
+
+const keyPrinciples = [
+  {
+    icon: Clock,
+    title: "24/7 Monitoring",
+    description: "Continuous oversight of all systems to maximize uptime and catch issues early"
+  },
+  {
+    icon: Shield,
+    title: "Preventive Maintenance",
+    description: "Scheduled maintenance prevents costly failures and extends equipment life"
+  },
+  {
+    icon: TrendingUp,
+    title: "Performance Optimization",
+    description: "Constant tuning to extract maximum efficiency from every watt consumed"
+  },
+  {
+    icon: Settings,
+    title: "Systematic Procedures",
+    description: "Documented processes ensure consistency and enable rapid scaling"
+  }
+];
+
+const learningObjectives = [
+  "Understand the pillars of operational excellence in mining facilities",
+  "Recognize the financial impact of operations on mining profitability",
+  "Identify key performance indicators (KPIs) for mining operations",
+  "Learn the difference between top-quartile and average operators"
+];
+
+const takeaways = [
+  "Operations determine profitability more than initial facility design",
+  "Top operators achieve 15-20% higher hashrate per MW through operational excellence",
+  "Target uptime for profitable operations is 98%+",
+  "Four pillars: Monitoring, Maintenance, Optimization, and Documentation"
+];
 
 export const OperationsIntroSection = () => {
-  const keyPrinciples = [
-    {
-      icon: Clock,
-      title: "24/7 Monitoring",
-      description: "Continuous oversight of all systems to maximize uptime and catch issues early"
-    },
-    {
-      icon: Shield,
-      title: "Preventive Maintenance",
-      description: "Scheduled maintenance prevents costly failures and extends equipment life"
-    },
-    {
-      icon: TrendingUp,
-      title: "Performance Optimization",
-      description: "Constant tuning to extract maximum efficiency from every watt consumed"
-    },
-    {
-      icon: Settings,
-      title: "Systematic Procedures",
-      description: "Documented processes ensure consistency and enable rapid scaling"
-    }
-  ];
-
   return (
     <section id="intro" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-blue/10 text-watt-blue rounded-full text-sm font-medium mb-4">
               Module 10: Operations & Maintenance
             </span>
@@ -40,6 +56,16 @@ export const OperationsIntroSection = () => {
               Master the day-to-day operations that separate profitable mining facilities from 
               struggling ones. Learn monitoring, maintenance, and optimization strategies.
             </p>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={50}>
+          <div className="mb-12">
+            <LearningObjectives 
+              objectives={learningObjectives}
+              sectionTitle="Introduction"
+              accentColor="watt-blue"
+            />
           </div>
         </ScrollReveal>
 
@@ -74,7 +100,7 @@ export const OperationsIntroSection = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {keyPrinciples.map((principle, index) => (
             <ScrollReveal key={principle.title} delay={150 + index * 50}>
               <div className="bg-card border border-border rounded-xl p-6 h-full hover:border-watt-blue/50 transition-colors">
@@ -87,6 +113,16 @@ export const OperationsIntroSection = () => {
             </ScrollReveal>
           ))}
         </div>
+
+        <ScrollReveal delay={400}>
+          <SectionSummary
+            title="Introduction Summary"
+            takeaways={takeaways}
+            nextSectionId="monitoring"
+            nextSectionLabel="Monitoring Systems"
+            accentColor="watt-blue"
+          />
+        </ScrollReveal>
       </div>
     </section>
   );

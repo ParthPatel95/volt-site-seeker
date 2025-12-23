@@ -20,17 +20,23 @@ const SectionLoader = () => (
   </div>
 );
 
-// Navigation sections config
+// Navigation sections config with updated reading times
 const navSections = [
-  { id: 'intro', icon: Settings, label: 'Introduction', time: '5 min' },
-  { id: 'monitoring', icon: Monitor, label: 'Monitoring', time: '7 min' },
-  { id: 'preventive-maintenance', icon: Wrench, label: 'Maintenance', time: '7 min' },
-  { id: 'troubleshooting', icon: Search, label: 'Troubleshooting', time: '6 min' },
-  { id: 'performance', icon: TrendingUp, label: 'Optimization', time: '7 min' },
-  { id: 'team-structure', icon: Users, label: 'Team', time: '5 min' },
-  { id: 'safety', icon: ShieldCheck, label: 'Safety', time: '6 min' },
-  { id: 'documentation', icon: FileText, label: 'Documentation', time: '5 min' },
+  { id: 'intro', icon: Settings, label: 'Introduction', time: '6 min' },
+  { id: 'monitoring', icon: Monitor, label: 'Monitoring', time: '8 min' },
+  { id: 'preventive-maintenance', icon: Wrench, label: 'Maintenance', time: '8 min' },
+  { id: 'troubleshooting', icon: Search, label: 'Troubleshooting', time: '7 min' },
+  { id: 'performance', icon: TrendingUp, label: 'Optimization', time: '9 min' },
+  { id: 'team-structure', icon: Users, label: 'Team', time: '8 min' },
+  { id: 'safety', icon: ShieldCheck, label: 'Safety', time: '7 min' },
+  { id: 'documentation', icon: FileText, label: 'Documentation', time: '6 min' },
 ];
+
+// Total estimated reading time
+const totalReadingTime = navSections.reduce((acc, section) => {
+  const minutes = parseInt(section.time);
+  return acc + minutes;
+}, 0);
 
 const OperationsEducation = () => {
   useEffect(() => {
