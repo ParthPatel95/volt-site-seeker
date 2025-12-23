@@ -64,17 +64,17 @@ const ProfitabilityAnalysisSection = () => {
   ];
 
   return (
-    <section id="profitability" className="py-20 bg-watt-light">
+    <section id="profitability" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-success/10 text-watt-success rounded-full text-sm font-medium mb-4">
               Profitability Analysis
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Mining Profitability Calculator
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Model your mining operation's profitability based on hardware,
               energy costs, and market conditions.
             </p>
@@ -83,8 +83,8 @@ const ProfitabilityAnalysisSection = () => {
 
         {/* Full Calculator */}
         <ScrollReveal delay={100}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-background rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <Calculator className="w-5 h-5 text-watt-success" />
               Profitability Model
             </h3>
@@ -92,10 +92,10 @@ const ProfitabilityAnalysisSection = () => {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Inputs */}
               <div className="space-y-5">
-                <h4 className="font-semibold text-watt-navy border-b pb-2">Inputs</h4>
+                <h4 className="font-semibold text-foreground border-b border-border pb-2">Inputs</h4>
                 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     BTC Price: ${btcPrice.toLocaleString()}
                   </label>
                   <input
@@ -105,12 +105,12 @@ const ProfitabilityAnalysisSection = () => {
                     step="1000"
                     value={btcPrice}
                     onChange={(e) => setBtcPrice(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg cursor-pointer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Machine Count: {machineCount}
                   </label>
                   <input
@@ -120,12 +120,12 @@ const ProfitabilityAnalysisSection = () => {
                     step="10"
                     value={machineCount}
                     onChange={(e) => setMachineCount(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg cursor-pointer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Hashrate/Machine: {hashrate} TH/s
                   </label>
                   <input
@@ -135,12 +135,12 @@ const ProfitabilityAnalysisSection = () => {
                     step="10"
                     value={hashrate}
                     onChange={(e) => setHashrate(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg cursor-pointer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Power/Machine: {powerWatts}W
                   </label>
                   <input
@@ -150,12 +150,12 @@ const ProfitabilityAnalysisSection = () => {
                     step="100"
                     value={powerWatts}
                     onChange={(e) => setPowerWatts(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg cursor-pointer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Energy Rate: ${energyRate.toFixed(3)}/kWh
                   </label>
                   <input
@@ -165,43 +165,43 @@ const ProfitabilityAnalysisSection = () => {
                     step="0.005"
                     value={energyRate}
                     onChange={(e) => setEnergyRate(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg cursor-pointer"
                   />
                 </div>
               </div>
 
               {/* Key Metrics */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-watt-navy border-b pb-2">Key Metrics</h4>
+                <h4 className="font-semibold text-foreground border-b border-border pb-2">Key Metrics</h4>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <div className="text-xs text-watt-navy/60">Total Hashrate</div>
-                    <div className="font-bold text-watt-navy">{(calculations.totalHashrate / 1000).toFixed(1)} PH/s</div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground">Total Hashrate</div>
+                    <div className="font-bold text-foreground">{(calculations.totalHashrate / 1000).toFixed(1)} PH/s</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <div className="text-xs text-watt-navy/60">Total Power</div>
-                    <div className="font-bold text-watt-navy">{calculations.totalPowerKw.toLocaleString()} kW</div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground">Total Power</div>
+                    <div className="font-bold text-foreground">{calculations.totalPowerKw.toLocaleString()} kW</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <div className="text-xs text-watt-navy/60">Efficiency</div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground">Efficiency</div>
                     <div className="font-bold text-watt-purple">{calculations.efficiency.toFixed(1)} J/TH</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <div className="text-xs text-watt-navy/60">Daily BTC</div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-muted-foreground">Daily BTC</div>
                     <div className="font-bold text-watt-bitcoin">{calculations.dailyBtc.toFixed(4)}</div>
                   </div>
                 </div>
 
                 <div className="bg-watt-success/10 rounded-xl p-4">
-                  <div className="text-sm text-watt-navy/60 mb-1">Monthly Revenue</div>
+                  <div className="text-sm text-muted-foreground mb-1">Monthly Revenue</div>
                   <div className="text-2xl font-bold text-watt-success">
                     ${calculations.monthlyRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
                 </div>
 
-                <div className="bg-red-50 rounded-xl p-4">
-                  <div className="text-sm text-watt-navy/60 mb-1">Monthly Costs</div>
+                <div className="bg-red-500/10 rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground mb-1">Monthly Costs</div>
                   <div className="text-2xl font-bold text-red-500">
                     ${calculations.totalMonthlyCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
@@ -210,10 +210,10 @@ const ProfitabilityAnalysisSection = () => {
 
               {/* Results */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-watt-navy border-b pb-2">Results</h4>
+                <h4 className="font-semibold text-foreground border-b border-border pb-2">Results</h4>
                 
-                <div className={`rounded-xl p-6 text-center ${calculations.monthlyProfit >= 0 ? 'bg-watt-success/20' : 'bg-red-100'}`}>
-                  <div className="text-sm text-watt-navy/60 mb-1">Monthly Profit</div>
+                <div className={`rounded-xl p-6 text-center ${calculations.monthlyProfit >= 0 ? 'bg-watt-success/20' : 'bg-red-500/20'}`}>
+                  <div className="text-sm text-muted-foreground mb-1">Monthly Profit</div>
                   <div className={`text-3xl font-bold ${calculations.monthlyProfit >= 0 ? 'text-watt-success' : 'text-red-500'}`}>
                     {calculations.monthlyProfit >= 0 ? '+' : ''}${calculations.monthlyProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
@@ -237,9 +237,9 @@ const ProfitabilityAnalysisSection = () => {
                 </div>
 
                 {calculations.breakEvenPrice > btcPrice && (
-                  <div className="bg-red-100 rounded-xl p-4 flex items-start gap-2">
+                  <div className="bg-red-500/10 rounded-xl p-4 flex items-start gap-2">
                     <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                    <p className="text-sm text-red-700">
+                    <p className="text-sm text-red-600 dark:text-red-400">
                       Operating below break-even. Consider reducing energy costs or upgrading hardware.
                     </p>
                   </div>
@@ -251,31 +251,31 @@ const ProfitabilityAnalysisSection = () => {
 
         {/* Efficiency Benchmarks */}
         <ScrollReveal delay={200}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-xl font-bold text-watt-navy mb-6">
+          <div className="bg-background rounded-2xl shadow-lg border border-border p-6">
+            <h3 className="text-xl font-bold text-foreground mb-6">
               Hardware Efficiency Evolution
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Generation</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Efficiency (J/TH)</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Hashrate (TH/s)</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Status</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Generation</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Efficiency (J/TH)</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Hashrate (TH/s)</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {efficiencyBenchmarks.map((hw, idx) => (
-                    <tr key={idx} className={`border-b border-gray-100 ${hw.status === 'Latest' ? 'bg-watt-success/5' : ''}`}>
-                      <td className="py-3 px-4 font-medium text-watt-navy">{hw.gen}</td>
+                    <tr key={idx} className={`border-b border-border ${hw.status === 'Latest' ? 'bg-watt-success/5' : ''}`}>
+                      <td className="py-3 px-4 font-medium text-foreground">{hw.gen}</td>
                       <td className="py-3 px-4 font-bold text-watt-purple">{hw.efficiency} J/TH</td>
-                      <td className="py-3 px-4 text-watt-navy">{hw.hashrate} TH/s</td>
+                      <td className="py-3 px-4 text-foreground">{hw.hashrate} TH/s</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           hw.status === 'Latest' ? 'bg-watt-success/20 text-watt-success' :
-                          hw.status === 'Current' ? 'bg-blue-100 text-blue-600' :
-                          'bg-gray-100 text-gray-600'
+                          hw.status === 'Current' ? 'bg-blue-500/20 text-blue-500' :
+                          'bg-muted text-muted-foreground'
                         }`}>
                           {hw.status}
                         </span>
