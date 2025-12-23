@@ -241,18 +241,18 @@ export const AESOPriceTrendsSection = () => {
     : 22; // Default 22% if no data
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 bg-watt-light">
+    <section ref={sectionRef} className="py-16 md:py-20 bg-muted">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-8 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-navy/5 border border-watt-navy/10 mb-4">
-            <LineChartIcon className="w-4 h-4 text-watt-navy" />
-            <span className="text-sm font-medium text-watt-navy">Historical Analysis</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-border mb-4">
+            <LineChartIcon className="w-4 h-4 text-foreground" />
+            <span className="text-sm font-medium text-foreground">Historical Analysis</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Price <span className="text-watt-bitcoin">Trends</span> & Patterns
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Understanding historical price patterns helps optimize operations and maximize savings
           </p>
         </div>
@@ -272,7 +272,7 @@ export const AESOPriceTrendsSection = () => {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeView === view.key
                   ? 'bg-watt-bitcoin text-white'
-                  : 'bg-white text-watt-navy/70 hover:bg-watt-navy/5 border border-watt-navy/10'
+                  : 'bg-background text-muted-foreground hover:bg-muted border border-border'
               }`}
             >
               <view.icon className="w-4 h-4" />
@@ -285,7 +285,7 @@ export const AESOPriceTrendsSection = () => {
         </div>
 
         {/* Charts */}
-        <div className={`bg-white rounded-2xl border border-watt-navy/10 p-6 mb-8 transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+        <div className={`bg-background rounded-2xl border border-border p-6 mb-8 transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
           
 {/* YEARLY VIEW - Full Cost Stack */}
           {activeView === 'yearly' && (() => {
@@ -294,7 +294,7 @@ export const AESOPriceTrendsSection = () => {
               return (
                 <div className="flex flex-col items-center justify-center h-80 gap-4">
                   <Loader2 className="w-8 h-8 text-watt-bitcoin animate-spin" />
-                  <p className="text-watt-navy/60">Loading live AESO data...</p>
+                  <p className="text-muted-foreground">Loading live AESO data...</p>
                 </div>
               );
             }
@@ -304,7 +304,7 @@ export const AESOPriceTrendsSection = () => {
               return (
                 <div className="flex flex-col items-center justify-center h-80 gap-4">
                   <AlertCircle className="w-8 h-8 text-red-500" />
-                  <p className="text-watt-navy/60">{dataError || 'No data available'}</p>
+                  <p className="text-muted-foreground">{dataError || 'No data available'}</p>
                   <button 
                     onClick={() => fetchHistoricalTenYearData(95)}
                     className="px-4 py-2 bg-watt-bitcoin text-white rounded-lg text-sm"
@@ -324,8 +324,8 @@ export const AESOPriceTrendsSection = () => {
               <>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                   <div>
-                    <h3 className="text-lg font-bold text-watt-navy">All-In Cost Stack with Optimization Savings (95% Uptime)</h3>
-                    <p className="text-sm text-watt-navy/60">Pool price + transmission adder - 12CP savings - 5% curtailment - OR revenue</p>
+                    <h3 className="text-lg font-bold text-foreground">All-In Cost Stack with Optimization Savings (95% Uptime)</h3>
+                    <p className="text-sm text-muted-foreground">Pool price + transmission adder - 12CP savings - 5% curtailment - OR revenue</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 border border-green-200 text-xs text-green-700 font-medium">
@@ -345,19 +345,19 @@ export const AESOPriceTrendsSection = () => {
                 <div className="flex flex-wrap items-center justify-center gap-4 mb-4 text-xs">
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded bg-red-400"></div>
-                    <span className="text-watt-navy/70">All-In (Energy + Trans.)</span>
+                    <span className="text-muted-foreground">All-In (Energy + Trans.)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded bg-watt-bitcoin"></div>
-                    <span className="text-watt-navy/70">With 12CP (No Trans.)</span>
+                    <span className="text-muted-foreground">With 12CP (No Trans.)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-watt-navy/70">+ 5% Curtailment</span>
+                    <span className="text-muted-foreground">+ 5% Curtailment</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded bg-green-500"></div>
-                    <span className="text-watt-navy/70">+ OR Revenue (Optimized)</span>
+                    <span className="text-muted-foreground">+ OR Revenue (Optimized)</span>
                   </div>
                 </div>
 
@@ -373,8 +373,8 @@ export const AESOPriceTrendsSection = () => {
                           if (!active || !payload?.length) return null;
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-white p-3 rounded-lg border shadow-lg text-xs">
-                              <p className="font-bold text-watt-navy mb-2">{label} {data.isYTD ? '(YTD)' : ''}</p>
+                            <div className="bg-background p-3 rounded-lg border shadow-lg text-xs">
+                              <p className="font-bold text-foreground mb-2">{label} {data.isYTD ? '(YTD)' : ''}</p>
                               <div className="space-y-1">
                                 <div className="flex justify-between gap-4">
                                   <span className="text-watt-navy/60">Pool Energy:</span>
@@ -404,7 +404,7 @@ export const AESOPriceTrendsSection = () => {
                                   <span>Optimized Cost:</span>
                                   <span>${data.optimizedUSD.toFixed(2)} USD</span>
                                 </div>
-                                <div className="text-watt-navy/50 text-[10px] pt-1">
+                                <div className="text-muted-foreground/50 text-[10px] pt-1">
                                   Total Savings: ${(data.allInBaseUSD - data.optimizedUSD).toFixed(2)}/MWh ({((1 - data.optimizedUSD / data.allInBaseUSD) * 100).toFixed(0)}%)
                                 </div>
                               </div>
@@ -430,7 +430,7 @@ export const AESOPriceTrendsSection = () => {
                       <div className="flex items-baseline gap-1">
                         <span className="text-lg font-bold text-red-500 line-through">${dataCurrentYear.allInBaseUSD.toFixed(0)}</span>
                         <span className="text-xl font-bold text-green-600">→ ${dataCurrentYear.optimizedUSD.toFixed(0)}</span>
-                        <span className="text-xs text-watt-navy/60">USD</span>
+                        <span className="text-xs text-muted-foreground">USD</span>
                       </div>
                       <p className="text-xs text-green-600 mt-1 font-medium">
                         Save ${(dataCurrentYear.allInBaseUSD - dataCurrentYear.optimizedUSD).toFixed(0)}/MWh ({((1 - dataCurrentYear.optimizedUSD / dataCurrentYear.allInBaseUSD) * 100).toFixed(0)}%)
@@ -445,7 +445,7 @@ export const AESOPriceTrendsSection = () => {
                       <div className="flex items-baseline gap-1">
                         <span className="text-lg font-bold text-red-500 line-through">${dataPrevYear.allInBaseUSD.toFixed(0)}</span>
                         <span className="text-xl font-bold text-green-600">→ ${dataPrevYear.optimizedUSD.toFixed(0)}</span>
-                        <span className="text-xs text-watt-navy/60">USD</span>
+                        <span className="text-xs text-muted-foreground">USD</span>
                       </div>
                       <p className="text-xs text-green-600 mt-1 font-medium">
                         Save ${(dataPrevYear.allInBaseUSD - dataPrevYear.optimizedUSD).toFixed(0)}/MWh ({((1 - dataPrevYear.optimizedUSD / dataPrevYear.allInBaseUSD) * 100).toFixed(0)}%)
@@ -456,20 +456,20 @@ export const AESOPriceTrendsSection = () => {
                   {/* 12CP Savings Card */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-watt-bitcoin/10 to-watt-bitcoin/5 border border-watt-bitcoin/20">
                     <p className="text-xs text-watt-bitcoin mb-1 font-medium">12CP Transmission Savings</p>
-                    <p className="text-2xl font-bold text-watt-bitcoin">${convertToUSD(TWELVE_CP_SAVINGS_CAD).toFixed(2)} <span className="text-sm font-normal text-watt-navy/60">USD/MWh</span></p>
-                    <p className="text-xs text-watt-navy/60 mt-1">Avoid 12 peaks = zero transmission</p>
+                    <p className="text-2xl font-bold text-watt-bitcoin">${convertToUSD(TWELVE_CP_SAVINGS_CAD).toFixed(2)} <span className="text-sm font-normal text-muted-foreground">USD/MWh</span></p>
+                    <p className="text-xs text-muted-foreground mt-1">Avoid 12 peaks = zero transmission</p>
                   </div>
                   
                   {/* OR Revenue Card */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
                     <p className="text-xs text-purple-600 mb-1 font-medium">Operating Reserve Revenue</p>
-                    <p className="text-2xl font-bold text-purple-700">${convertToUSD(OPERATING_RESERVE_REVENUE_CAD).toFixed(2)} <span className="text-sm font-normal text-watt-navy/60">USD/MWh</span></p>
+                    <p className="text-2xl font-bold text-purple-700">${convertToUSD(OPERATING_RESERVE_REVENUE_CAD).toFixed(2)} <span className="text-sm font-normal text-muted-foreground">USD/MWh</span></p>
                     <p className="text-xs text-purple-600 mt-1">Avg revenue from OR participation</p>
                   </div>
                 </div>
 
                 {/* Exchange Rate Info */}
-                <div className="mt-3 flex items-center justify-end gap-1 text-xs text-watt-navy/50">
+                <div className="mt-3 flex items-center justify-end gap-1 text-xs text-muted-foreground/50">
                   <Info className="w-3 h-3" />
                   <span>CAD→USD rate: {exchangeRate.rate.toFixed(4)} ({exchangeRate.source})</span>
                 </div>
@@ -496,8 +496,8 @@ export const AESOPriceTrendsSection = () => {
             <>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-watt-navy">Price Spike Analysis & Coal Phase-Out</h3>
-                  <p className="text-sm text-watt-navy/60">Understanding what drove historic price volatility</p>
+                  <h3 className="text-lg font-bold text-foreground">Price Spike Analysis & Coal Phase-Out</h3>
+                  <p className="text-sm text-muted-foreground">Understanding what drove historic price volatility</p>
                 </div>
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
                   AESO Market Reports
@@ -506,8 +506,8 @@ export const AESOPriceTrendsSection = () => {
 
               {/* Coal Phase-Out Timeline */}
               <div className="mb-8">
-                <h4 className="text-sm font-semibold text-watt-navy mb-4 flex items-center gap-2">
-                  <Factory className="w-4 h-4 text-watt-navy/60" />
+                <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Factory className="w-4 h-4 text-muted-foreground" />
                   Alberta Coal Phase-Out Timeline
                 </h4>
                 <div className="relative">
@@ -520,13 +520,13 @@ export const AESOPriceTrendsSection = () => {
                           event.year <= 2022 ? 'bg-amber-100 border-amber-400' :
                           'bg-green-100 border-green-400'
                         }`}></div>
-                        <div className="p-3 rounded-lg bg-watt-navy/5 border border-watt-navy/10">
+                        <div className="p-3 rounded-lg bg-muted/50 border border-border">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-watt-navy">{event.year}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-watt-navy/10 text-watt-navy/70">{event.capacity}</span>
+                            <span className="font-bold text-foreground">{event.year}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{event.capacity}</span>
                           </div>
-                          <p className="text-sm font-medium text-watt-navy/80">{event.event}</p>
-                          <p className="text-xs text-watt-navy/60">{event.impact}</p>
+                          <p className="text-sm font-medium text-foreground/80">{event.event}</p>
+                          <p className="text-xs text-muted-foreground">{event.impact}</p>
                         </div>
                       </div>
                     ))}
@@ -607,8 +607,8 @@ export const AESOPriceTrendsSection = () => {
             <>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-watt-navy">$0/MWh & Negative Price Hours</h3>
-                  <p className="text-sm text-watt-navy/60">Free electricity opportunities driven by renewable surplus</p>
+                  <h3 className="text-lg font-bold text-foreground">$0/MWh & Negative Price Hours</h3>
+                  <p className="text-sm text-muted-foreground">Free electricity opportunities driven by renewable surplus</p>
                 </div>
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-100 border border-blue-300 text-xs text-blue-700">
                   AESO Pool Price Data
@@ -726,7 +726,7 @@ export const AESOPriceTrendsSection = () => {
           {activeView === 'seasonal' && (
             <>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-watt-navy">Seasonal Price Patterns</h3>
+                <h3 className="text-lg font-bold text-foreground">Seasonal Price Patterns</h3>
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-100 border border-amber-300 text-xs text-amber-700">
                   📊 Illustrative (5-Year Avg)
                 </span>
@@ -776,7 +776,7 @@ export const AESOPriceTrendsSection = () => {
           {activeView === 'live' && (
             <>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-watt-navy">Live 24-Hour Pricing</h3>
+                <h3 className="text-lg font-bold text-foreground">Live 24-Hour Pricing</h3>
                 <div className="flex items-center gap-2">
                   {dailyData ? (
                     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 border border-green-300 text-xs text-green-700">
@@ -791,10 +791,10 @@ export const AESOPriceTrendsSection = () => {
                   )}
                   <button
                     onClick={fetchDailyData}
-                    className="p-1.5 rounded-lg hover:bg-watt-navy/10 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                     title="Refresh data"
                   >
-                    <RefreshCw className={`w-4 h-4 text-watt-navy/50 ${loadingDaily ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 text-muted-foreground ${loadingDaily ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
               </div>
@@ -803,7 +803,7 @@ export const AESOPriceTrendsSection = () => {
                 <div className="h-80 flex items-center justify-center">
                   <div className="text-center">
                     <RefreshCw className="w-8 h-8 text-watt-bitcoin animate-spin mx-auto mb-2" />
-                    <p className="text-watt-navy/60">Loading live pricing data...</p>
+                    <p className="text-muted-foreground">Loading live pricing data...</p>
                   </div>
                 </div>
               ) : dailyData?.chartData ? (
@@ -843,16 +843,16 @@ export const AESOPriceTrendsSection = () => {
                 <div className="h-80 flex items-center justify-center">
                   <div className="text-center">
                     <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                    <p className="text-watt-navy/60">Unable to load live data. Click refresh to try again.</p>
+                    <p className="text-muted-foreground">Unable to load live data. Click refresh to try again.</p>
                   </div>
                 </div>
               )}
 
               {dailyData?.statistics && (
                 <div className="grid grid-cols-4 gap-4 mt-4">
-                  <div className="p-3 rounded-lg bg-watt-light border border-watt-navy/10 text-center">
-                    <p className="text-xs text-watt-navy/60">24hr Average</p>
-                    <p className="text-lg font-bold text-watt-navy">${dailyData.statistics.average?.toFixed(2)}</p>
+                  <div className="p-3 rounded-lg bg-muted border border-border text-center">
+                    <p className="text-xs text-muted-foreground">24hr Average</p>
+                    <p className="text-lg font-bold text-foreground">${dailyData.statistics.average?.toFixed(2)}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-center">
                     <p className="text-xs text-red-600">24hr Peak</p>
@@ -874,12 +874,12 @@ export const AESOPriceTrendsSection = () => {
 
         {/* Price Drivers */}
         <div className={`transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <h3 className="text-xl font-bold text-watt-navy text-center mb-6">Key Price Drivers</h3>
+          <h3 className="text-xl font-bold text-foreground text-center mb-6">Key Price Drivers</h3>
           <div className="grid md:grid-cols-4 gap-4">
             {priceDrivers.map((driver, i) => (
               <div 
                 key={i}
-                className="p-5 rounded-xl bg-white border border-watt-navy/10 hover:border-watt-bitcoin/30 transition-all hover:shadow-md"
+                className="p-5 rounded-xl bg-background border border-border hover:border-watt-bitcoin/30 transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="p-3 rounded-lg bg-watt-bitcoin/10 w-fit">
@@ -889,8 +889,8 @@ export const AESOPriceTrendsSection = () => {
                     <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
                   )}
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-1">{driver.title}</h4>
-                <p className="text-sm text-watt-navy/70">{driver.description}</p>
+                <h4 className="font-semibold text-foreground mb-1">{driver.title}</h4>
+                <p className="text-sm text-muted-foreground">{driver.description}</p>
               </div>
             ))}
           </div>
@@ -898,7 +898,7 @@ export const AESOPriceTrendsSection = () => {
 
         {/* Data Source Badge */}
         <div className="mt-8 text-center">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-watt-navy/5 border border-watt-navy/10 text-xs text-watt-navy/60">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border text-xs text-muted-foreground">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
             Historical data from AESO Annual Market Statistics | Live data from AESO Pool Price API
           </span>
