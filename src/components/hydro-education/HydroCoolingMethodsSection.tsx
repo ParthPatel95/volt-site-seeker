@@ -12,6 +12,10 @@ import {
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
+import AnimatedCoolingCycle from './AnimatedCoolingCycle';
+import CoolingMethodRecommender from './CoolingMethodRecommender';
 
 const coolingMethods = [
   {

@@ -15,6 +15,9 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
+import TCOComparisonCalculator from './TCOComparisonCalculator';
 import { Slider } from '@/components/ui/slider';
 
 const costBreakdown = [
