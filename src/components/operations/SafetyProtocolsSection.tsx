@@ -98,7 +98,7 @@ export const SafetyProtocolsSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Safety Protocols"
-              accentColor="red-500"
+              accentColor="bitcoin"
             />
           </div>
         </ScrollReveal>
@@ -176,7 +176,7 @@ export const SafetyProtocolsSection = () => {
             takeaways={takeaways}
             nextSectionId="documentation"
             nextSectionLabel="Documentation"
-            accentColor="red-500"
+            accentColor="bitcoin"
           />
         </ScrollReveal>
       </div>

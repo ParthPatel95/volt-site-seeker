@@ -100,7 +100,7 @@ export const DocumentationSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Documentation"
-              accentColor="watt-success"
+              accentColor="success"
             />
           </div>
         </ScrollReveal>
@@ -204,7 +204,7 @@ export const DocumentationSection = () => {
             takeaways={takeaways}
             nextSectionId="cta"
             nextSectionLabel="Complete Module"
-            accentColor="watt-success"
+            accentColor="success"
           />
         </ScrollReveal>
       </div>

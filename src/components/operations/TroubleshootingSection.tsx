@@ -94,7 +94,7 @@ export const TroubleshootingSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Troubleshooting"
-              accentColor="watt-bitcoin"
+              accentColor="bitcoin"
             />
           </div>
         </ScrollReveal>
@@ -182,7 +182,7 @@ export const TroubleshootingSection = () => {
             takeaways={takeaways}
             nextSectionId="performance"
             nextSectionLabel="Performance Optimization"
-            accentColor="watt-bitcoin"
+            accentColor="bitcoin"
           />
         </ScrollReveal>
       </div>

@@ -118,7 +118,7 @@ export const TeamStructureSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Team Structure"
-              accentColor="watt-blue"
+              accentColor="trust"
             />
           </div>
         </ScrollReveal>
@@ -222,7 +222,7 @@ export const TeamStructureSection = () => {
             takeaways={takeaways}
             nextSectionId="safety"
             nextSectionLabel="Safety Protocols"
-            accentColor="watt-blue"
+            accentColor="trust"
           />
         </ScrollReveal>
       </div>
