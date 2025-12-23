@@ -117,7 +117,7 @@ const BitcoinEducation: React.FC = () => {
       </button>
       
       <div className="pt-14 sm:pt-16 md:pt-20 relative z-10 safe-area-pt">
-        <main className="lg:pr-56">
+        <main>
           {/* Hero Section */}
           <div id="hero">
             <BitcoinHeroSection />

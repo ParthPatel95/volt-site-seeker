@@ -32,9 +32,21 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
 
   const totalTime = sections.reduce((acc, s) => acc + parseInt(s.time || '0'), 0);
 
+  // Set CSS variable for other fixed elements to know nav offset
   useEffect(() => {
     localStorage.setItem('education-nav-collapsed', String(isCollapsed));
-  }, [isCollapsed]);
+    
+    // Update CSS variable based on visibility and collapsed state
+    const updateOffset = () => {
+      const offset = isVisible && !isCollapsed ? '240px' : '0px';
+      document.documentElement.style.setProperty('--edu-nav-offset', offset);
+    };
+    updateOffset();
+    
+    return () => {
+      document.documentElement.style.setProperty('--edu-nav-offset', '0px');
+    };
+  }, [isCollapsed, isVisible]);
 
   useEffect(() => {
     const handleScroll = () => {

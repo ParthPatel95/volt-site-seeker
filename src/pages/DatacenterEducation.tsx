@@ -31,8 +31,8 @@ const DatacenterEducation = () => {
       <LandingNavigation />
       <SectionNavigation />
       
-      {/* Main content with right padding for nav */}
-      <div className="lg:pr-56">
+      {/* Main content */}
+      <div>
         {/* Immersive Hero Section */}
         <DatacenterHeroSectionV2 />
       

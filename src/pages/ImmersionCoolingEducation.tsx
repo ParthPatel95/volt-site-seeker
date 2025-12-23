@@ -44,7 +44,7 @@ export default function ImmersionCoolingEducation() {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="cyan-500" />
       
-      <main className="pt-16 lg:pr-56">
+      <main className="pt-16">
         <Suspense fallback={<SectionLoader />}>
           <ImmersionIntroSection />
         </Suspense>

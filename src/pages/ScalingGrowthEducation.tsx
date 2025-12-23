@@ -42,7 +42,7 @@ const ScalingGrowthEducation = () => {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-success" />
       
-      <main className="lg:pr-56">
+      <main>
         <Suspense fallback={<SectionLoader />}>
           <ScalingIntroSection />
         </Suspense>

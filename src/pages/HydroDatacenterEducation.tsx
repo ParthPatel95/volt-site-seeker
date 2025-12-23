@@ -53,8 +53,8 @@ const HydroDatacenterEducation = () => {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="blue-500" />
       
-      {/* Main content with right padding for nav */}
-      <div className="lg:pr-56">
+      {/* Main content */}
+      <div>
         {/* Immersive Hero Section */}
         <HydroHeroSection />
       {/* Section 1: Why Hydro-cooling */}
