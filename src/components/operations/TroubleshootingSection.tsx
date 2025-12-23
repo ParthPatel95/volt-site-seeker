@@ -1,66 +1,82 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Search, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { LearningObjectives } from "@/components/electrical-education/LearningObjectives";
+import { SectionSummary } from "@/components/electrical-education/SectionSummary";
+
+const commonIssues = [
+  {
+    symptom: "ASIC Not Hashing",
+    possibleCauses: ["Power supply failure", "Control board issue", "Network disconnection", "Overheating shutdown"],
+    diagnosticSteps: [
+      "Check LED indicators on PSU and control board",
+      "Verify network connectivity and IP assignment",
+      "Check temperature readings in management interface",
+      "Test with known-good power supply"
+    ],
+    resolution: "Replace failed component or reset if software issue"
+  },
+  {
+    symptom: "Low Hashrate",
+    possibleCauses: ["Overheating", "Dusty hashboards", "Failing chips", "Undervolting"],
+    diagnosticSteps: [
+      "Compare current hashrate to baseline",
+      "Check individual chip temperatures",
+      "Review voltage and frequency settings",
+      "Inspect for dust accumulation"
+    ],
+    resolution: "Clean, adjust cooling, or replace failing components"
+  },
+  {
+    symptom: "High Reject Rate",
+    possibleCauses: ["Network latency", "Pool issues", "Hardware errors", "Incorrect settings"],
+    diagnosticSteps: [
+      "Check network latency to pool",
+      "Review pool dashboard for issues",
+      "Examine ASIC error logs",
+      "Verify mining software configuration"
+    ],
+    resolution: "Optimize network, switch pools, or fix configuration"
+  },
+  {
+    symptom: "Frequent Reboots",
+    possibleCauses: ["Power instability", "Overheating", "Firmware bugs", "Memory errors"],
+    diagnosticSteps: [
+      "Monitor power quality at PDU",
+      "Check thermal paste condition",
+      "Review reboot patterns and logs",
+      "Test with different firmware version"
+    ],
+    resolution: "Stabilize power, improve cooling, or reflash firmware"
+  }
+];
+
+const escalationMatrix = [
+  { level: "L1 - Operator", scope: "Basic troubleshooting, reboots, cleaning", time: "0-15 min" },
+  { level: "L2 - Technician", scope: "Component replacement, diagnostics", time: "15-60 min" },
+  { level: "L3 - Engineer", scope: "Complex repairs, system issues", time: "1-4 hours" },
+  { level: "L4 - Vendor/Expert", scope: "Warranty claims, major failures", time: "4+ hours" }
+];
+
+const learningObjectives = [
+  "Apply systematic troubleshooting methodologies",
+  "Diagnose common ASIC issues including hashrate loss and connectivity problems",
+  "Implement escalation procedures for different issue severities",
+  "Document and learn from troubleshooting incidents"
+];
+
+const takeaways = [
+  "Systematic diagnostics: identify symptom → possible causes → diagnostic steps → resolution",
+  "Four-level escalation matrix ensures issues reach the right expertise level",
+  "Most common issues: power problems, overheating, network issues, and firmware bugs",
+  "Document all troubleshooting for knowledge base building"
+];
 
 export const TroubleshootingSection = () => {
-  const commonIssues = [
-    {
-      symptom: "ASIC Not Hashing",
-      possibleCauses: ["Power supply failure", "Control board issue", "Network disconnection", "Overheating shutdown"],
-      diagnosticSteps: [
-        "Check LED indicators on PSU and control board",
-        "Verify network connectivity and IP assignment",
-        "Check temperature readings in management interface",
-        "Test with known-good power supply"
-      ],
-      resolution: "Replace failed component or reset if software issue"
-    },
-    {
-      symptom: "Low Hashrate",
-      possibleCauses: ["Overheating", "Dusty hashboards", "Failing chips", "Undervolting"],
-      diagnosticSteps: [
-        "Compare current hashrate to baseline",
-        "Check individual chip temperatures",
-        "Review voltage and frequency settings",
-        "Inspect for dust accumulation"
-      ],
-      resolution: "Clean, adjust cooling, or replace failing components"
-    },
-    {
-      symptom: "High Reject Rate",
-      possibleCauses: ["Network latency", "Pool issues", "Hardware errors", "Incorrect settings"],
-      diagnosticSteps: [
-        "Check network latency to pool",
-        "Review pool dashboard for issues",
-        "Examine ASIC error logs",
-        "Verify mining software configuration"
-      ],
-      resolution: "Optimize network, switch pools, or fix configuration"
-    },
-    {
-      symptom: "Frequent Reboots",
-      possibleCauses: ["Power instability", "Overheating", "Firmware bugs", "Memory errors"],
-      diagnosticSteps: [
-        "Monitor power quality at PDU",
-        "Check thermal paste condition",
-        "Review reboot patterns and logs",
-        "Test with different firmware version"
-      ],
-      resolution: "Stabilize power, improve cooling, or reflash firmware"
-    }
-  ];
-
-  const escalationMatrix = [
-    { level: "L1 - Operator", scope: "Basic troubleshooting, reboots, cleaning", time: "0-15 min" },
-    { level: "L2 - Technician", scope: "Component replacement, diagnostics", time: "15-60 min" },
-    { level: "L3 - Engineer", scope: "Complex repairs, system issues", time: "1-4 hours" },
-    { level: "L4 - Vendor/Expert", scope: "Warranty claims, major failures", time: "4+ hours" }
-  ];
-
   return (
     <section id="troubleshooting" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-bitcoin/10 text-watt-bitcoin rounded-full text-sm font-medium mb-4">
               Lesson 4
             </span>
@@ -70,6 +86,16 @@ export const TroubleshootingSection = () => {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Systematic approaches to identify and resolve issues quickly
             </p>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={50}>
+          <div className="mb-12">
+            <LearningObjectives 
+              objectives={learningObjectives}
+              sectionTitle="Troubleshooting"
+              accentColor="watt-bitcoin"
+            />
           </div>
         </ScrollReveal>
 
@@ -124,7 +150,7 @@ export const TroubleshootingSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <div className="bg-card border border-border rounded-2xl p-8">
+          <div className="bg-card border border-border rounded-2xl p-8 mb-12">
             <div className="flex items-center gap-3 mb-6">
               <Search className="w-6 h-6 text-watt-purple" />
               <h3 className="text-2xl font-bold text-foreground">Escalation Matrix</h3>
@@ -148,6 +174,16 @@ export const TroubleshootingSection = () => {
               ))}
             </div>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={250}>
+          <SectionSummary
+            title="Troubleshooting Summary"
+            takeaways={takeaways}
+            nextSectionId="performance"
+            nextSectionLabel="Performance Optimization"
+            accentColor="watt-bitcoin"
+          />
         </ScrollReveal>
       </div>
     </section>

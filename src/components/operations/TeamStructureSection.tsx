@@ -1,89 +1,106 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Users, User, Clock, Shield } from "lucide-react";
+import { LearningObjectives } from "@/components/electrical-education/LearningObjectives";
+import { SectionSummary } from "@/components/electrical-education/SectionSummary";
+import { StaffingCalculator } from "./StaffingCalculator";
+
+const roles = [
+  {
+    title: "NOC Operator",
+    ratio: "1 per 5-10 MW",
+    responsibilities: [
+      "24/7 monitoring of dashboards",
+      "First response to alerts",
+      "Basic troubleshooting and reboots",
+      "Shift handoff documentation"
+    ],
+    skills: "Basic IT, attention to detail"
+  },
+  {
+    title: "Field Technician",
+    ratio: "1 per 10-20 MW",
+    responsibilities: [
+      "Physical hardware maintenance",
+      "Component replacement",
+      "Cleaning and inspections",
+      "Cable management"
+    ],
+    skills: "Electronics repair, physical stamina"
+  },
+  {
+    title: "Electrical Technician",
+    ratio: "1 per 20-50 MW",
+    responsibilities: [
+      "Electrical system maintenance",
+      "PDU and breaker management",
+      "Power quality monitoring",
+      "Electrical troubleshooting"
+    ],
+    skills: "Licensed electrician preferred"
+  },
+  {
+    title: "Site Manager",
+    ratio: "1 per site",
+    responsibilities: [
+      "Overall facility operations",
+      "Team scheduling and management",
+      "Vendor relationships",
+      "Budget and reporting"
+    ],
+    skills: "Management experience, technical background"
+  }
+];
+
+const shiftStructure = [
+  {
+    shift: "Day Shift",
+    hours: "6 AM - 6 PM",
+    coverage: "Full team",
+    focus: "Maintenance, projects, optimization"
+  },
+  {
+    shift: "Night Shift",
+    hours: "6 PM - 6 AM",
+    coverage: "Reduced team",
+    focus: "Monitoring, emergency response"
+  },
+  {
+    shift: "Weekend",
+    hours: "Rotating",
+    coverage: "Skeleton crew",
+    focus: "Monitoring, critical issues only"
+  }
+];
+
+const trainingTopics = [
+  "Safety procedures and PPE",
+  "Equipment-specific training",
+  "Monitoring system usage",
+  "Emergency response protocols",
+  "Electrical safety (NFPA 70E)",
+  "Performance optimization techniques"
+];
+
+const learningObjectives = [
+  "Define staffing ratios for different facility sizes",
+  "Structure shift schedules for 24/7 coverage",
+  "Identify key roles and responsibilities",
+  "Develop training programs for operations staff"
+];
+
+const takeaways = [
+  "Typical staffing: 1 NOC operator per 5-10 MW, 1 technician per 10-20 MW",
+  "24/7 coverage requires ~4.2 FTEs per position for shifts and PTO coverage",
+  "Cross-training creates operational resilience",
+  "Day shifts focus on maintenance, night shifts on monitoring"
+];
 
 export const TeamStructureSection = () => {
-  const roles = [
-    {
-      title: "NOC Operator",
-      ratio: "1 per 5-10 MW",
-      responsibilities: [
-        "24/7 monitoring of dashboards",
-        "First response to alerts",
-        "Basic troubleshooting and reboots",
-        "Shift handoff documentation"
-      ],
-      skills: "Basic IT, attention to detail"
-    },
-    {
-      title: "Field Technician",
-      ratio: "1 per 10-20 MW",
-      responsibilities: [
-        "Physical hardware maintenance",
-        "Component replacement",
-        "Cleaning and inspections",
-        "Cable management"
-      ],
-      skills: "Electronics repair, physical stamina"
-    },
-    {
-      title: "Electrical Technician",
-      ratio: "1 per 20-50 MW",
-      responsibilities: [
-        "Electrical system maintenance",
-        "PDU and breaker management",
-        "Power quality monitoring",
-        "Electrical troubleshooting"
-      ],
-      skills: "Licensed electrician preferred"
-    },
-    {
-      title: "Site Manager",
-      ratio: "1 per site",
-      responsibilities: [
-        "Overall facility operations",
-        "Team scheduling and management",
-        "Vendor relationships",
-        "Budget and reporting"
-      ],
-      skills: "Management experience, technical background"
-    }
-  ];
-
-  const shiftStructure = [
-    {
-      shift: "Day Shift",
-      hours: "6 AM - 6 PM",
-      coverage: "Full team",
-      focus: "Maintenance, projects, optimization"
-    },
-    {
-      shift: "Night Shift",
-      hours: "6 PM - 6 AM",
-      coverage: "Reduced team",
-      focus: "Monitoring, emergency response"
-    },
-    {
-      shift: "Weekend",
-      hours: "Rotating",
-      coverage: "Skeleton crew",
-      focus: "Monitoring, critical issues only"
-    }
-  ];
-
-  const trainingTopics = [
-    "Safety procedures and PPE",
-    "Equipment-specific training",
-    "Monitoring system usage",
-    "Emergency response protocols",
-    "Electrical safety (NFPA 70E)",
-    "Performance optimization techniques"
-  ];
-
   return (
-    <section id="team" className="py-20 bg-muted/30">
+    <section id="team-structure" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-blue/10 text-watt-blue rounded-full text-sm font-medium mb-4">
               Lesson 6
             </span>
@@ -93,6 +110,16 @@ export const TeamStructureSection = () => {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Build and organize an effective operations team
             </p>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={50}>
+          <div className="mb-12">
+            <LearningObjectives 
+              objectives={learningObjectives}
+              sectionTitle="Team Structure"
+              accentColor="watt-blue"
+            />
           </div>
         </ScrollReveal>
 
@@ -125,7 +152,13 @@ export const TeamStructureSection = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <ScrollReveal delay={150}>
+          <div className="mb-12">
+            <StaffingCalculator />
+          </div>
+        </ScrollReveal>
+
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
           <ScrollReveal delay={200}>
             <div className="bg-card border border-border rounded-2xl p-8 h-full">
               <div className="flex items-center gap-3 mb-6">
@@ -182,6 +215,16 @@ export const TeamStructureSection = () => {
             </div>
           </ScrollReveal>
         </div>
+
+        <ScrollReveal delay={350}>
+          <SectionSummary
+            title="Team Structure Summary"
+            takeaways={takeaways}
+            nextSectionId="safety"
+            nextSectionLabel="Safety Protocols"
+            accentColor="watt-blue"
+          />
+        </ScrollReveal>
       </div>
     </section>
   );

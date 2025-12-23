@@ -1,50 +1,67 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Monitor, Activity, Thermometer, Zap, Wifi, Bell } from "lucide-react";
+import { LearningObjectives } from "@/components/electrical-education/LearningObjectives";
+import { SectionSummary } from "@/components/electrical-education/SectionSummary";
+import { AnimatedMonitoringFlow } from "./AnimatedMonitoringFlow";
+
+const monitoringLayers = [
+  {
+    icon: Activity,
+    layer: "ASIC Level",
+    metrics: ["Hashrate", "Temperature", "Fan Speed", "Power Draw", "Error Rates"],
+    tools: ["Foreman", "Awesome Miner", "Hive OS"],
+    color: "watt-bitcoin"
+  },
+  {
+    icon: Thermometer,
+    layer: "Environment",
+    metrics: ["Ambient Temp", "Humidity", "Airflow", "Differential Pressure"],
+    tools: ["BMS Systems", "IoT Sensors", "SCADA"],
+    color: "watt-blue"
+  },
+  {
+    icon: Zap,
+    layer: "Electrical",
+    metrics: ["Voltage", "Current", "Power Factor", "Harmonics", "Load Balance"],
+    tools: ["Smart PDUs", "Power Meters", "EPMS"],
+    color: "watt-success"
+  },
+  {
+    icon: Wifi,
+    layer: "Network",
+    metrics: ["Latency", "Packet Loss", "Bandwidth", "Pool Connectivity"],
+    tools: ["PRTG", "Nagios", "Custom Dashboards"],
+    color: "watt-purple"
+  }
+];
+
+const alertPriorities = [
+  { level: "Critical", response: "< 5 min", examples: "Power failure, Fire alarm, Total hashrate loss", color: "bg-red-500" },
+  { level: "High", response: "< 15 min", examples: "ASIC offline, Cooling failure, Network outage", color: "bg-orange-500" },
+  { level: "Medium", response: "< 1 hour", examples: "High temps, Hashrate drop >10%, Fan failures", color: "bg-yellow-500" },
+  { level: "Low", response: "< 24 hours", examples: "Single ASIC issues, Minor efficiency drops", color: "bg-blue-500" }
+];
+
+const learningObjectives = [
+  "Design a multi-layer monitoring architecture for mining facilities",
+  "Configure alert priority frameworks with appropriate response times",
+  "Select and implement monitoring tools for each operational layer",
+  "Build effective dashboards for NOC and field operations"
+];
+
+const takeaways = [
+  "Four monitoring layers: ASIC, Environment, Electrical, and Network",
+  "Critical alerts require <5 minute response time",
+  "Effective dashboards enable rapid troubleshooting without physical inspection",
+  "Historical trend analysis identifies degradation before failures occur"
+];
 
 export const MonitoringSystemsSection = () => {
-  const monitoringLayers = [
-    {
-      icon: Activity,
-      layer: "ASIC Level",
-      metrics: ["Hashrate", "Temperature", "Fan Speed", "Power Draw", "Error Rates"],
-      tools: ["Foreman", "Awesome Miner", "Hive OS"],
-      color: "watt-bitcoin"
-    },
-    {
-      icon: Thermometer,
-      layer: "Environment",
-      metrics: ["Ambient Temp", "Humidity", "Airflow", "Differential Pressure"],
-      tools: ["BMS Systems", "IoT Sensors", "SCADA"],
-      color: "watt-blue"
-    },
-    {
-      icon: Zap,
-      layer: "Electrical",
-      metrics: ["Voltage", "Current", "Power Factor", "Harmonics", "Load Balance"],
-      tools: ["Smart PDUs", "Power Meters", "EPMS"],
-      color: "watt-success"
-    },
-    {
-      icon: Wifi,
-      layer: "Network",
-      metrics: ["Latency", "Packet Loss", "Bandwidth", "Pool Connectivity"],
-      tools: ["PRTG", "Nagios", "Custom Dashboards"],
-      color: "watt-purple"
-    }
-  ];
-
-  const alertPriorities = [
-    { level: "Critical", response: "< 5 min", examples: "Power failure, Fire alarm, Total hashrate loss", color: "bg-red-500" },
-    { level: "High", response: "< 15 min", examples: "ASIC offline, Cooling failure, Network outage", color: "bg-orange-500" },
-    { level: "Medium", response: "< 1 hour", examples: "High temps, Hashrate drop >10%, Fan failures", color: "bg-yellow-500" },
-    { level: "Low", response: "< 24 hours", examples: "Single ASIC issues, Minor efficiency drops", color: "bg-blue-500" }
-  ];
-
   return (
     <section id="monitoring" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-blue/10 text-watt-blue rounded-full text-sm font-medium mb-4">
               Lesson 2
             </span>
@@ -57,7 +74,23 @@ export const MonitoringSystemsSection = () => {
           </div>
         </ScrollReveal>
 
+        <ScrollReveal delay={50}>
+          <div className="mb-12">
+            <LearningObjectives 
+              objectives={learningObjectives}
+              sectionTitle="Monitoring Systems"
+              accentColor="watt-blue"
+            />
+          </div>
+        </ScrollReveal>
+
         <ScrollReveal delay={100}>
+          <div className="mb-12">
+            <AnimatedMonitoringFlow />
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={150}>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {monitoringLayers.map((layer, index) => (
               <div key={layer.layer} className="bg-card border border-border rounded-xl p-6">
@@ -105,7 +138,7 @@ export const MonitoringSystemsSection = () => {
                   {alertPriorities.map(alert => (
                     <tr key={alert.level} className="border-b border-border/50">
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center gap-2`}>
+                        <span className="inline-flex items-center gap-2">
                           <span className={`w-3 h-3 rounded-full ${alert.color}`}></span>
                           <span className="font-medium text-foreground">{alert.level}</span>
                         </span>
@@ -121,7 +154,7 @@ export const MonitoringSystemsSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={300}>
-          <div className="bg-gradient-to-r from-watt-blue/10 to-watt-purple/10 border border-watt-blue/20 rounded-2xl p-8">
+          <div className="bg-gradient-to-r from-watt-blue/10 to-watt-purple/10 border border-watt-blue/20 rounded-2xl p-8 mb-12">
             <div className="flex items-center gap-3 mb-4">
               <Monitor className="w-6 h-6 text-watt-blue" />
               <h3 className="text-xl font-bold text-foreground">Dashboard Best Practices</h3>
@@ -150,6 +183,16 @@ export const MonitoringSystemsSection = () => {
               </div>
             </div>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={350}>
+          <SectionSummary
+            title="Monitoring Summary"
+            takeaways={takeaways}
+            nextSectionId="preventive-maintenance"
+            nextSectionLabel="Preventive Maintenance"
+            accentColor="watt-blue"
+          />
         </ScrollReveal>
       </div>
     </section>
