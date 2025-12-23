@@ -1,5 +1,7 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { MapPin, Zap, DollarSign, Building2, Scale, Thermometer } from 'lucide-react';
+import { MapPin, Zap, DollarSign, Building2, Scale, Thermometer, Clock, BookOpen, Calculator, Target } from 'lucide-react';
+import SiteSelectionWorkflowDiagram from './SiteSelectionWorkflowDiagram';
+import SiteReadinessChecker from './SiteReadinessChecker';
 
 const SiteSelectionIntroSection = () => {
   const keyFactors = [
@@ -51,18 +53,33 @@ const SiteSelectionIntroSection = () => {
     <section className="py-20 bg-gradient-to-b from-watt-navy via-watt-navy/95 to-watt-navy">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-purple/20 text-white rounded-full text-sm font-medium mb-4">
               Module 8 • Site Selection & Acquisition
             </span>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
               Site Selection & Acquisition
             </h1>
-            <p className="text-xl text-white/70 max-w-3xl mx-auto">
+            <p className="text-xl text-white/70 max-w-3xl mx-auto mb-8">
               Master the art and science of identifying, evaluating, and acquiring 
               optimal locations for Bitcoin mining operations. Location determines 
               up to 70% of your operational profitability.
             </p>
+            
+            {/* Course Stats */}
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
+              {[
+                { icon: Clock, label: '~53 min read' },
+                { icon: BookOpen, label: '9 sections' },
+                { icon: Calculator, label: '4 calculators' },
+                { icon: Target, label: '50+ variables' }
+              ].map((stat, idx) => (
+                <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full">
+                  <stat.icon className="w-4 h-4 text-watt-bitcoin" />
+                  <span className="text-white/80 text-sm">{stat.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </ScrollReveal>
 
@@ -110,32 +127,17 @@ const SiteSelectionIntroSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* Decision Framework */}
+        {/* Interactive Workflow Diagram */}
         <ScrollReveal delay={300}>
-          <div className="mt-16 bg-gradient-to-r from-watt-purple/20 to-watt-bitcoin/20 border border-white/10 rounded-2xl p-8">
-            <h3 className="text-xl font-bold text-white mb-6 text-center">Site Selection Decision Framework</h3>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              {[
-                { step: "1", title: "Identify", desc: "Screen markets & opportunities" },
-                { step: "2", title: "Analyze", desc: "Deep-dive technical feasibility" },
-                { step: "3", title: "Negotiate", desc: "Power agreements & land terms" },
-                { step: "4", title: "Acquire", desc: "Close deal & begin development" },
-                { step: "5", title: "Develop", desc: "Permits, construction, energize" }
-              ].map((phase, idx) => (
-                <div key={idx} className="flex items-center gap-4">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-10 h-10 rounded-full bg-watt-purple flex items-center justify-center text-white font-bold mb-2">
-                      {phase.step}
-                    </div>
-                    <div className="text-white font-medium">{phase.title}</div>
-                    <div className="text-white/50 text-xs max-w-[120px]">{phase.desc}</div>
-                  </div>
-                  {idx < 4 && (
-                    <div className="hidden md:block w-8 h-0.5 bg-gradient-to-r from-watt-purple to-watt-bitcoin" />
-                  )}
-                </div>
-              ))}
-            </div>
+          <div className="mt-16">
+            <SiteSelectionWorkflowDiagram />
+          </div>
+        </ScrollReveal>
+
+        {/* Site Readiness Checker */}
+        <ScrollReveal delay={400}>
+          <div className="mt-12">
+            <SiteReadinessChecker />
           </div>
         </ScrollReveal>
       </div>
