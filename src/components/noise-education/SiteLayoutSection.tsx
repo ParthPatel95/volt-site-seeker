@@ -1,6 +1,8 @@
-import { Layout, ArrowRight, Building, Compass, TreePine, Wind } from 'lucide-react';
+import { Layout, Building, Compass, TreePine, Wind } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const layoutPrinciples = [
   {
@@ -30,6 +32,19 @@ export const SiteLayoutSection = () => {
     <section id="site-layout" className="py-16 md:py-24 bg-watt-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
+          <LearningObjectives
+            objectives={[
+              'Apply equipment clustering principles to maximize buffer distances',
+              'Use existing structures as natural sound barriers',
+              'Orient noise sources away from sensitive receptors',
+              'Design effective vegetation buffer zones'
+            ]}
+            estimatedTime="6 min"
+            prerequisites={[
+              { title: 'Mitigation Techniques', href: '#mitigation' }
+            ]}
+          />
+
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-bitcoin/10 rounded-full mb-4">
               <Layout className="h-4 w-4 text-watt-bitcoin" />
@@ -151,6 +166,19 @@ export const SiteLayoutSection = () => {
               </div>
             </CardContent>
           </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={500}>
+          <SectionSummary
+            title="Site Layout Optimization"
+            takeaways={[
+              'Equipment clustering maximizes distance to all property boundaries',
+              'Existing structures provide free noise barriers',
+              'Orienting exhaust away from receptors can reduce perceived noise by 3-6 dB',
+              'Vegetation buffers add psychological and modest acoustic benefits'
+            ]}
+            nextSteps={[{ title: 'Monitoring & Measurement', href: '#monitoring' }]}
+          />
         </ScrollReveal>
       </div>
     </section>

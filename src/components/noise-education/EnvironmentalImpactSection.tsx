@@ -1,6 +1,8 @@
 import { FileSearch, Users, Map, ClipboardCheck, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const eiaSteps = [
   { step: 1, title: 'Scoping', description: 'Define study area and identify sensitive receptors', icon: Map },
@@ -16,6 +18,19 @@ export const EnvironmentalImpactSection = () => {
     <section id="environmental" className="py-16 md:py-24 bg-watt-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
+          <LearningObjectives
+            objectives={[
+              'Understand the 6-step Noise Impact Assessment process',
+              'Know Alberta regulatory submission requirements',
+              'Prepare effective stakeholder engagement strategies',
+              'Navigate the AUC approval workflow'
+            ]}
+            estimatedTime="5 min"
+            prerequisites={[
+              { title: 'Monitoring', href: '#monitoring' }
+            ]}
+          />
+
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-success/10 rounded-full mb-4">
               <FileSearch className="h-4 w-4 text-watt-success" />
@@ -107,6 +122,19 @@ export const EnvironmentalImpactSection = () => {
               </div>
             </CardContent>
           </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={300}>
+          <SectionSummary
+            title="Environmental Assessment"
+            takeaways={[
+              'NIA follows a structured 6-step process from scoping to engagement',
+              'Baseline surveys establish pre-existing noise conditions',
+              'Alberta AUC Rule 012 governs noise submissions',
+              'Well-designed facilities simplify the approval process'
+            ]}
+            nextSteps={[{ title: 'Case Study: Alberta Heartland', href: '#case-study' }]}
+          />
         </ScrollReveal>
       </div>
     </section>

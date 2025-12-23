@@ -1,7 +1,9 @@
-import { Building2, Droplets, MapPin, Shield, CheckCircle, Calculator, TrendingDown } from 'lucide-react';
+import { Building2, Droplets, Shield, CheckCircle, Calculator, TrendingDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const facilitySpecs = [
   { label: 'Total Capacity', value: '45 MW', icon: '⚡' },
@@ -38,6 +40,20 @@ export const AlbertaHeartlandCaseStudy = () => {
     <section id="case-study" className="py-16 md:py-24 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
+          <LearningObjectives
+            variant="dark"
+            objectives={[
+              'Apply all noise concepts to a real 45MW facility',
+              'Walk through complete noise calculations step-by-step',
+              'Compare hydro vs air-cooled noise performance',
+              'Understand mitigation reserve capacity for future expansion'
+            ]}
+            estimatedTime="8 min"
+            prerequisites={[
+              { title: 'Environmental Assessment', href: '#environmental' }
+            ]}
+          />
+
           <div className="text-center mb-12">
             <Badge className="bg-watt-bitcoin text-white mb-4">Real-World Case Study</Badge>
             <h2 className="text-3xl md:text-5xl font-bold mb-4">
@@ -185,7 +201,7 @@ export const AlbertaHeartlandCaseStudy = () => {
 
         {/* Mitigation Reserve */}
         <ScrollReveal delay={500}>
-          <Card className="bg-white/5 backdrop-blur border-white/10">
+          <Card className="bg-white/5 backdrop-blur border-white/10 mb-8">
             <CardContent className="p-6 md:p-8">
               <h3 className="text-xl font-bold mb-6">Available Mitigation Reserve (If Needed)</h3>
               <p className="text-white/60 mb-6">
@@ -208,6 +224,19 @@ export const AlbertaHeartlandCaseStudy = () => {
               </div>
             </CardContent>
           </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={600}>
+          <SectionSummary
+            variant="dark"
+            title="Alberta Heartland Case Study"
+            takeaways={[
+              'Hydro-cooling reduces source noise by 28 dB vs air-cooled systems',
+              '1.7km distance provides 64.6 dB of natural attenuation',
+              'Final noise at residence (~17 dB) is essentially inaudible',
+              '25 dB mitigation reserve available for future expansion'
+            ]}
+          />
         </ScrollReveal>
       </div>
     </section>
