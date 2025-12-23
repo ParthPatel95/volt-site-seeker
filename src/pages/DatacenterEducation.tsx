@@ -31,8 +31,10 @@ const DatacenterEducation = () => {
       <LandingNavigation />
       <SectionNavigation />
       
-      {/* Immersive Hero Section */}
-      <DatacenterHeroSectionV2 />
+      {/* Main content with right padding for nav */}
+      <div className="lg:pr-56">
+        {/* Immersive Hero Section */}
+        <DatacenterHeroSectionV2 />
       
       {/* Section 1: Energy Source to Facility */}
       <Suspense fallback={<SectionLoader />}>
@@ -87,6 +89,7 @@ const DatacenterEducation = () => {
       <Suspense fallback={<SectionLoader />}>
         <EnhancedCTASection />
       </Suspense>
+      </div>
       
       <LandingFooter />
 

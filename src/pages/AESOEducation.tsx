@@ -59,7 +59,7 @@ const AESOEducation = () => {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
 
-      <main className="pt-16">
+      <main className="pt-16 lg:pr-56">
         <div id="hero">
           <AESOHeroSection />
         </div>

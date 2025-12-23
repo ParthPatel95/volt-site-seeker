@@ -109,7 +109,7 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
     <>
       {/* Progress bar at top - always visible after scrolling */}
       {isVisible && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
+        <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-40">
           <div 
             className={`h-full ${accentBg} transition-all duration-150`} 
             style={{ width: `${scrollProgress}%` }} 
@@ -117,11 +117,13 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
         </div>
       )}
 
-      {/* Toggle button - always visible on desktop when nav is hidden */}
+      {/* Toggle button - visible on desktop when scrolled */}
       {isVisible && (
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`fixed right-4 top-20 z-50 hidden lg:flex items-center justify-center w-10 h-10 rounded-full ${accentBg} text-white shadow-lg hover:opacity-90 transition-all`}
+          className={`fixed top-20 z-40 hidden lg:flex items-center justify-center w-10 h-10 rounded-full ${accentBg} text-white shadow-lg hover:opacity-90 transition-all ${
+            isCollapsed ? 'right-4' : 'right-[232px]'
+          }`}
           title={isCollapsed ? 'Show navigation' : 'Hide navigation'}
         >
           {isCollapsed ? (
@@ -134,7 +136,7 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
 
       {/* Desktop sidebar navigation - hidden on mobile, toggleable on desktop */}
       {isVisible && !isCollapsed && (
-        <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden lg:block animate-in slide-in-from-right duration-300">
+        <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-30 hidden lg:block animate-in slide-in-from-right duration-300">
           <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-2">
             {/* Progress indicator */}
             <div className="px-2 py-2 mb-2 border-b border-border">

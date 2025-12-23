@@ -53,9 +53,10 @@ const HydroDatacenterEducation = () => {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="blue-500" />
       
-      {/* Immersive Hero Section */}
-      <HydroHeroSection />
-      
+      {/* Main content with right padding for nav */}
+      <div className="lg:pr-56">
+        {/* Immersive Hero Section */}
+        <HydroHeroSection />
       {/* Section 1: Why Hydro-cooling */}
       <Suspense fallback={<SectionLoader />}>
         <div id="advantages">
@@ -140,11 +141,11 @@ const HydroDatacenterEducation = () => {
         </div>
       </Suspense>
       
-      {/* CTA Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <HydroCTASection />
-      </Suspense>
-      
+        {/* CTA Section */}
+        <Suspense fallback={<SectionLoader />}>
+          <HydroCTASection />
+        </Suspense>
+      </div>
       <LandingFooter />
 
       {/* Page Translation Button */}

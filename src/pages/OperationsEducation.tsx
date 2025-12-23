@@ -44,7 +44,7 @@ const OperationsEducation = () => {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
       
-      <main>
+      <main className="lg:pr-56">
         <Suspense fallback={<SectionLoader />}>
           <OperationsIntroSection />
         </Suspense>
