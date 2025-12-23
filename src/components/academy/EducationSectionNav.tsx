@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, BookOpen, Clock } from 'lucide-react';
+import { ArrowUp, BookOpen, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 export interface NavSection {
@@ -22,18 +22,30 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [completedSections, setCompletedSections] = useState<Set<string>>(new Set());
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('edu-nav-collapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
 
   const totalTime = sections.reduce((acc, s) => acc + parseInt(s.time || '0'), 0);
 
+  // Persist collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem('edu-nav-collapsed', String(isCollapsed));
+  }, [isCollapsed]);
+
   // Set CSS variable for other fixed elements to know nav offset
   useEffect(() => {
-    const offset = isVisible ? '240px' : '0px';
+    const offset = (isVisible && !isCollapsed) ? '240px' : '0px';
     document.documentElement.style.setProperty('--edu-nav-offset', offset);
     
     return () => {
       document.documentElement.style.setProperty('--edu-nav-offset', '0px');
     };
-  }, [isVisible]);
+  }, [isVisible, isCollapsed]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,22 +116,42 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
   const accentBg = `bg-${accentColor}`;
   const accentText = `text-${accentColor}`;
 
+  if (!isVisible) return null;
+
   return (
     <>
       {/* Progress bar at top - always visible after scrolling */}
-      {isVisible && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
-          <div 
-            className={`h-full ${accentBg} transition-all duration-150`} 
-            style={{ width: `${scrollProgress}%` }} 
-          />
-        </div>
+      <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
+        <div 
+          className={`h-full ${accentBg} transition-all duration-150`} 
+          style={{ width: `${scrollProgress}%` }} 
+        />
+      </div>
+
+      {/* Collapsed state - mini expand button */}
+      {isCollapsed && (
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex items-center justify-center w-10 h-10 bg-card/95 backdrop-blur-sm rounded-full border border-border shadow-lg hover:bg-muted transition-colors"
+          title="Expand navigation"
+        >
+          <BookOpen className={`w-4 h-4 ${accentText}`} />
+        </button>
       )}
 
       {/* Desktop sidebar navigation - hidden on mobile, appears on scroll */}
-      {isVisible && (
+      {!isCollapsed && (
         <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:block">
-          <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-2">
+          <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-2 relative">
+            {/* Collapse button */}
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="absolute -left-3 top-4 w-6 h-6 bg-card rounded-full border border-border shadow-sm flex items-center justify-center hover:bg-muted transition-colors"
+              title="Collapse navigation"
+            >
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+
             {/* Progress indicator */}
             <div className="px-2 py-2 mb-2 border-b border-border">
               <div className="flex items-center gap-2 mb-1">
