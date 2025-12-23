@@ -79,7 +79,7 @@ export const MonitoringSystemsSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Monitoring Systems"
-              accentColor="watt-blue"
+              accentColor="trust"
             />
           </div>
         </ScrollReveal>
@@ -191,7 +191,7 @@ export const MonitoringSystemsSection = () => {
             takeaways={takeaways}
             nextSectionId="preventive-maintenance"
             nextSectionLabel="Preventive Maintenance"
-            accentColor="watt-blue"
+            accentColor="trust"
           />
         </ScrollReveal>
       </div>

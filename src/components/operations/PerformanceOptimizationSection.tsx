@@ -88,7 +88,7 @@ export const PerformanceOptimizationSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Performance Optimization"
-              accentColor="watt-purple"
+              accentColor="coinbase"
             />
           </div>
         </ScrollReveal>
@@ -187,7 +187,7 @@ export const PerformanceOptimizationSection = () => {
             takeaways={takeaways}
             nextSectionId="team-structure"
             nextSectionLabel="Team Structure"
-            accentColor="watt-purple"
+            accentColor="coinbase"
           />
         </ScrollReveal>
       </div>

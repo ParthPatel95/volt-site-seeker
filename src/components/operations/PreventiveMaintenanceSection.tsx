@@ -68,7 +68,7 @@ export const PreventiveMaintenanceSection = () => {
             <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Preventive Maintenance"
-              accentColor="watt-success"
+              accentColor="success"
             />
           </div>
         </ScrollReveal>
@@ -170,7 +170,7 @@ export const PreventiveMaintenanceSection = () => {
             takeaways={takeaways}
             nextSectionId="troubleshooting"
             nextSectionLabel="Troubleshooting"
-            accentColor="watt-success"
+            accentColor="success"
           />
         </ScrollReveal>
       </div>

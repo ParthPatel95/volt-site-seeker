@@ -61,10 +61,10 @@ export const OperationsIntroSection = () => {
 
         <ScrollReveal delay={50}>
           <div className="mb-12">
-            <LearningObjectives 
+          <LearningObjectives 
               objectives={learningObjectives}
               sectionTitle="Introduction"
-              accentColor="watt-blue"
+              accentColor="trust"
             />
           </div>
         </ScrollReveal>
@@ -120,7 +120,7 @@ export const OperationsIntroSection = () => {
             takeaways={takeaways}
             nextSectionId="monitoring"
             nextSectionLabel="Monitoring Systems"
-            accentColor="watt-blue"
+            accentColor="trust"
           />
         </ScrollReveal>
       </div>
