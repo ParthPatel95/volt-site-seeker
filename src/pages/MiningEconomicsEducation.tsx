@@ -40,7 +40,7 @@ export default function MiningEconomicsEducation() {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-success" />
       
-      <main className="pt-16">
+      <main className="pt-16 lg:pr-56">
         <Suspense fallback={<SectionLoader />}>
           <MiningEconomicsIntroSection />
         </Suspense>

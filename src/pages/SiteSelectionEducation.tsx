@@ -42,7 +42,7 @@ export default function SiteSelectionEducation() {
       {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-purple" />
       
-      <main className="pt-16">
+      <main className="pt-16 lg:pr-56">
         <Suspense fallback={<SectionLoader />}>
           <SiteSelectionIntroSection />
         </Suspense>

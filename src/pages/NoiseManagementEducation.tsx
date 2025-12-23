@@ -47,7 +47,7 @@ const NoiseManagementEducation = () => {
       <LandingNavigation />
       
       {/* Hero Section */}
-      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden">
+      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden lg:pr-56">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -111,39 +111,41 @@ const NoiseManagementEducation = () => {
       </section>
 
       {/* Main Content */}
-      <Suspense fallback={<SectionLoader />}>
-        <NoiseBasicsSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <NoiseSourcesSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <CumulativeNoiseSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <RegulatoryStandardsSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <DistanceAttenuationSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <MitigationTechniquesSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <SiteLayoutSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <NoiseMonitoringSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <EnvironmentalImpactSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <AlbertaHeartlandCaseStudy />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <NoiseCTASection />
-      </Suspense>
+      <div className="lg:pr-56">
+        <Suspense fallback={<SectionLoader />}>
+          <NoiseBasicsSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <NoiseSourcesSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <CumulativeNoiseSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <RegulatoryStandardsSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <DistanceAttenuationSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <MitigationTechniquesSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <SiteLayoutSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <NoiseMonitoringSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <EnvironmentalImpactSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <AlbertaHeartlandCaseStudy />
+        </Suspense>
+        <Suspense fallback={<SectionLoader />}>
+          <NoiseCTASection />
+        </Suspense>
+      </div>
 
       <LandingFooter />
     </div>
