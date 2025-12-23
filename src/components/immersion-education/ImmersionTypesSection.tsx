@@ -123,6 +123,15 @@ export default function ImmersionTypesSection() {
   return (
     <section id="types" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
+        <LearningObjectives
+          objectives={[
+            "Differentiate single-phase vs two-phase immersion cooling mechanisms",
+            "Compare heat transfer coefficients (300-1K vs 5K-25K W/m²·K)",
+            "Evaluate cost vs performance trade-offs for each approach"
+          ]}
+          estimatedTime="6 min"
+        />
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -258,6 +267,16 @@ export default function ImmersionTypesSection() {
             </div>
           </div>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Single-phase: simpler, cheaper ($2-15/L), well-suited for most operations",
+            "Two-phase: maximum heat transfer but 10-50x fluid cost and complexity",
+            "Two-phase achieves 50-500x better heat transfer than air cooling"
+          ]}
+          nextSectionId="fluids"
+          nextSectionLabel="Continue to Fluid Selection"
+        />
       </div>
     </section>
   );

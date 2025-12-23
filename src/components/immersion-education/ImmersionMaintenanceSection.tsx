@@ -77,6 +77,15 @@ export default function ImmersionMaintenanceSection() {
   return (
     <section id="maintenance" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
+        <LearningObjectives
+          objectives={[
+            "Follow daily/weekly/monthly/quarterly/annual maintenance schedules",
+            "Interpret fluid analysis parameters (TAN, water content, particle count)",
+            "Perform safe ASIC extraction procedures"
+          ]}
+          estimatedTime="8 min"
+        />
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -201,6 +210,20 @@ export default function ImmersionMaintenanceSection() {
             </div>
           </div>
         </ScrollReveal>
+
+        <ScrollReveal delay={300}>
+          <div className="mt-12">
+            <MaintenanceScheduleGenerator />
+          </div>
+        </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Daily monitoring of temperatures and pump operation is critical",
+            "Quarterly fluid analysis prevents costly failures",
+            "Proper ASIC extraction procedure takes 15-30 minutes plus drain time"
+          ]}
+        />
       </div>
     </section>
   );
