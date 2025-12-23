@@ -4,6 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap, Calculator, Activity, Gauge, Info } from "lucide-react";
+import { LearningObjectives } from "./LearningObjectives";
+import { SectionSummary } from "./SectionSummary";
+import { AnimatedSingleLineDiagram } from "./AnimatedSingleLineDiagram";
+
+const learningObjectives = [
+  "Apply Ohm's Law (V = I × R) to calculate voltage, current, and resistance in mining scenarios",
+  "Understand the power equations (P = V × I, P = I²R) and their implications for cable sizing",
+  "Differentiate between AC and DC power and understand why datacenters use both",
+  "Explain three-phase power systems and their advantages for industrial applications",
+  "Trace the complete power conversion chain from utility grid (138kV) to miner PSU (12V DC)",
+];
+
+const keyTakeaways = [
+  "Ohm's Law (V = I × R) and power equations (P = V × I) are the foundation of all electrical calculations",
+  "Higher voltages mean lower current for the same power, dramatically reducing cable losses (I²R losses)",
+  "Three-phase power delivers 73% more power than single-phase using the same conductors",
+  "Power flows through 6-7 transformation stages from 500kV grid to 12V DC at the miner chip",
+  "Understanding these fundamentals is critical for proper equipment sizing and cost optimization",
+];
 
 const ElectricalFundamentalsSection = () => {
   // Ohm's Law Calculator
@@ -44,6 +63,18 @@ const ElectricalFundamentalsSection = () => {
               Understanding the core principles of electricity is essential before diving into datacenter power systems. 
               These fundamentals form the foundation for all electrical engineering decisions.
             </p>
+          </div>
+        </ScrollReveal>
+
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <LearningObjectives objectives={learningObjectives} accentColor="bitcoin" />
+        </ScrollReveal>
+
+        {/* Animated Single-Line Diagram */}
+        <ScrollReveal delay={75}>
+          <div className="mb-12">
+            <AnimatedSingleLineDiagram />
           </div>
         </ScrollReveal>
 
@@ -463,6 +494,14 @@ const ElectricalFundamentalsSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        {/* Section Summary */}
+        <SectionSummary 
+          takeaways={keyTakeaways}
+          nextSectionId="grid-connection"
+          nextSectionLabel="Utility Grid Connection"
+          accentColor="bitcoin"
+        />
       </div>
     </section>
   );

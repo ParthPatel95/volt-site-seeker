@@ -1,8 +1,23 @@
 import { LandingNavigation } from "@/components/landing/LandingNavigation";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { useEffect, lazy, Suspense } from "react";
-import { Zap, Loader2 } from "lucide-react";
+import { 
+  Zap, 
+  Loader2, 
+  Globe, 
+  Cable, 
+  Gauge, 
+  ToggleLeft, 
+  CircuitBoard, 
+  Cpu, 
+  Activity, 
+  Anchor, 
+  ShieldAlert, 
+  Layers,
+  Clock
+} from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
+import EducationSectionNav from "@/components/academy/EducationSectionNav";
 
 // Lazy load sections for performance
 const ElectricalFundamentalsSection = lazy(() => import("@/components/electrical-education/ElectricalFundamentalsSection"));
@@ -24,14 +39,35 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections configuration
+const navigationSections = [
+  { id: 'fundamentals', icon: Zap, label: 'Fundamentals', time: '8 min' },
+  { id: 'grid-connection', icon: Globe, label: 'Grid Connection', time: '6 min' },
+  { id: 'high-voltage', icon: Cable, label: 'High Voltage', time: '7 min' },
+  { id: 'transformers', icon: Gauge, label: 'Transformers', time: '8 min' },
+  { id: 'switchgear', icon: ToggleLeft, label: 'Switchgear', time: '6 min' },
+  { id: 'low-voltage', icon: CircuitBoard, label: 'Low Voltage', time: '5 min' },
+  { id: 'pdus', icon: Cpu, label: 'PDUs', time: '6 min' },
+  { id: 'mining-power', icon: Zap, label: 'Mining Power', time: '7 min' },
+  { id: 'power-quality', icon: Activity, label: 'Power Quality', time: '6 min' },
+  { id: 'grounding', icon: Anchor, label: 'Grounding', time: '5 min' },
+  { id: 'arc-flash', icon: ShieldAlert, label: 'Arc Flash', time: '6 min' },
+  { id: 'redundancy', icon: Layers, label: 'Redundancy', time: '7 min' },
+];
+
 const ElectricalInfrastructureEducation = () => {
   useEffect(() => {
     document.title = "Electrical Infrastructure 101 | WattByte Academy";
   }, []);
 
+  const totalTime = navigationSections.reduce((acc, s) => acc + parseInt(s.time || '0'), 0);
+
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Sticky Navigation */}
+      <EducationSectionNav sections={navigationSections} accentColor="watt-bitcoin" />
       
       <main>
         {/* Hero Section */}
@@ -88,7 +124,7 @@ const ElectricalInfrastructureEducation = () => {
             </ScrollReveal>
 
             <ScrollReveal delay={300}>
-              <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60">
+              <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60 mb-8">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10">
                   <span className="w-2 h-2 rounded-full bg-watt-bitcoin" />
                   <span>12 Detailed Sections</span>
@@ -101,6 +137,14 @@ const ElectricalInfrastructureEducation = () => {
                   <span className="w-2 h-2 rounded-full bg-watt-coinbase" />
                   <span>Engineer-Grade Content</span>
                 </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Estimated time */}
+            <ScrollReveal delay={400}>
+              <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-white/70">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm">Estimated reading time: <strong className="text-white">{totalTime} minutes</strong></span>
               </div>
             </ScrollReveal>
           </div>
