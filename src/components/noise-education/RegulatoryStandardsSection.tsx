@@ -2,7 +2,15 @@ import { Shield, Globe, Building, HardHat, MapPin, AlertTriangle } from 'lucide-
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
+const learningObjectives = [
+  "Understand WHO, OSHA, and Alberta AUC noise standards",
+  "Compare daytime vs nighttime regulatory limits",
+  "Learn the 6-step regulatory compliance pathway",
+  "See how Alberta Heartland exceeds all requirements",
+];
 const standards = [
   {
     name: 'WHO Guidelines',
@@ -63,6 +71,13 @@ export const RegulatoryStandardsSection = () => {
   return (
     <section id="standards" className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal delay={50}>
+          <LearningObjectives 
+            objectives={learningObjectives}
+            estimatedTime="6 min read"
+          />
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-bitcoin/10 rounded-full mb-4">

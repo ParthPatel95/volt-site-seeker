@@ -91,20 +91,25 @@ const NoiseManagementEducation = () => {
               </p>
 
               {/* Stats */}
-              <div className="flex flex-wrap justify-center gap-6 text-white/80">
+              <div className="flex flex-wrap justify-center gap-6 text-white/80 mb-4">
                 <div className="flex items-center gap-2">
                   <Volume2 className="h-5 w-5 text-watt-bitcoin" />
                   <span>10 Detailed Sections</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calculator className="h-5 w-5 text-watt-bitcoin" />
-                  <span>Interactive Calculators</span>
+                  <span>3 Interactive Calculators</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-watt-bitcoin" />
                   <span>Real Case Study</span>
                 </div>
               </div>
+              
+              {/* Total Reading Time */}
+              <Badge className="bg-white/10 text-white/80 border-white/20 text-sm px-4 py-2">
+                ⏱️ ~57 min total reading time
+              </Badge>
             </div>
           </ScrollReveal>
         </div>

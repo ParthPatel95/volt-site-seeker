@@ -2,6 +2,15 @@ import { Volume2, Waves, Activity, Ear } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+
+const learningObjectives = [
+  "Understand sound as a pressure wave and its key properties",
+  "Master the logarithmic decibel scale and why it's used",
+  "Learn what A-weighting (dBA) means and why regulations use it",
+  "Compare common sound levels to mining equipment noise",
+];
 
 const soundLevels = [
   { level: 0, label: "Threshold of Hearing", icon: "👂", color: "bg-watt-success/20" },
@@ -23,6 +32,13 @@ export const NoiseBasicsSection = () => {
   return (
     <section id="fundamentals" className="py-16 md:py-24 bg-watt-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal delay={50}>
+          <LearningObjectives 
+            objectives={learningObjectives}
+            estimatedTime="6 min read"
+          />
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-bitcoin/10 rounded-full mb-4">
@@ -177,6 +193,21 @@ export const NoiseBasicsSection = () => {
               </div>
             </CardContent>
           </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={500}>
+          <SectionSummary
+            takeaways={[
+              "Sound is measured in decibels (dB), a logarithmic scale where +10 dB = 10× more energy",
+              "A-weighting (dBA) adjusts for human hearing sensitivity - most regulations use dBA",
+              "Mining equipment typically ranges from 55-105 dB depending on cooling technology",
+              "The pain threshold is 120 dB; OSHA workplace limit is 90 dBA for 8 hours",
+            ]}
+            proTip="Remember: 3 dB difference = 2× sound energy. Two identical sources add just 3 dB, not double the dB value!"
+            nextSteps={[
+              { title: 'Noise Sources', href: '#noise-sources', description: 'Learn about mining-specific noise sources' },
+            ]}
+          />
         </ScrollReveal>
       </div>
     </section>
