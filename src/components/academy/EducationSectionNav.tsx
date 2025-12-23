@@ -118,7 +118,7 @@ const EducationSectionNav: React.FC<EducationSectionNavProps> = ({
 
       {/* Desktop sidebar navigation - hidden on mobile, appears on scroll */}
       {isVisible && (
-        <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:block animate-in slide-in-from-right duration-300">
+        <nav className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:block">
           <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-2">
             {/* Progress indicator */}
             <div className="px-2 py-2 mb-2 border-b border-border">
