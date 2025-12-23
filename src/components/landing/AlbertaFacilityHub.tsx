@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Building2, Thermometer, Clock, Network, Zap, Leaf, Shield, MapPin, X, DollarSign, Snowflake, Cable, Globe } from 'lucide-react';
+import { Building2, Thermometer, Clock, Network, Zap, Leaf, Shield, MapPin, X, DollarSign, Snowflake, Cable, Globe, Video } from 'lucide-react';
 import { StrategicMarketAnalytics } from './StrategicMarketAnalytics';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { AlbertaVideoShowcase } from './AlbertaVideoShowcase';
 import facilityNight from '@/assets/alberta-facility-night.png';
 import facilityAerial1 from '@/assets/alberta-facility-aerial-1.jpg';
 import facilityAerial2 from '@/assets/alberta-facility-aerial-2.jpg';
@@ -152,6 +153,20 @@ export const AlbertaFacilityHub = () => {
                 </div>)}
             </div>
           </div>
+        </div>
+
+        {/* Video Showcase Section */}
+        <div className={`mb-10 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-watt-trust/10 rounded-xl">
+              <Video className="w-5 h-5 text-watt-trust" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-watt-navy">Virtual Site Tour</h3>
+              <p className="text-xs text-watt-navy/60">Experience our 45MW Alberta facility</p>
+            </div>
+          </div>
+          <AlbertaVideoShowcase />
         </div>
 
         {/* Combined Facility Intelligence Section */}
