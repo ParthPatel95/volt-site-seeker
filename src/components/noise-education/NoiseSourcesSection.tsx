@@ -3,6 +3,15 @@ import { Fan, Droplets, Thermometer, Zap, Wind, Server } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+
+const learningObjectives = [
+  "Compare noise levels between air-cooled, hydro-cooled, and immersion cooling",
+  "Identify the major noise sources in Bitcoin mining facilities",
+  "Understand why hydro-cooling reduces noise by 630× vs air-cooling",
+  "Recognize secondary noise sources like transformers and cooling towers",
+];
 
 const noiseSources = [
   {
@@ -65,6 +74,13 @@ export const NoiseSourcesSection = () => {
   return (
     <section id="noise-sources" className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal delay={50}>
+          <LearningObjectives 
+            objectives={learningObjectives}
+            estimatedTime="5 min read"
+          />
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-coinbase/10 rounded-full mb-4">
@@ -239,6 +255,21 @@ export const NoiseSourcesSection = () => {
               );
             })}
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={400}>
+          <SectionSummary
+            takeaways={[
+              "Air-cooled containers: 85-105 dB - high-speed fans are the primary noise source",
+              "Hydro-cooled containers: 60-75 dB - 28 dB quieter (630× less sound energy)",
+              "Immersion cooling: 50-65 dB - nearly silent operation with minimal moving parts",
+              "Secondary sources (transformers, cooling towers) add 55-85 dB each",
+            ]}
+            proTip="Hydro-cooling isn't just quieter - it's also more energy-efficient and allows for heat recovery. Triple win!"
+            nextSteps={[
+              { title: 'Cumulative Noise', href: '#cumulative', description: 'Calculate total noise from multiple sources' },
+            ]}
+          />
         </ScrollReveal>
       </div>
     </section>

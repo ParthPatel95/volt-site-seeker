@@ -3,7 +3,16 @@ import { Shield, Building, Fan, Volume2, Vibrate, Mountain, Gauge, Compass } fro
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+import MitigationStackCalculator from './MitigationStackCalculator';
 
+const learningObjectives = [
+  "Identify 8 proven noise mitigation techniques",
+  "Compare cost, complexity, and effectiveness of each method",
+  "Understand how to combine techniques for maximum reduction",
+  "Use the stack calculator to model combined mitigation",
+];
 const techniques = [
   {
     id: 'barriers',
@@ -247,6 +256,13 @@ export const MitigationTechniquesSection = () => {
   return (
     <section id="mitigation" className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal delay={50}>
+          <LearningObjectives 
+            objectives={learningObjectives}
+            estimatedTime="7 min read"
+          />
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-success/10 rounded-full mb-4">

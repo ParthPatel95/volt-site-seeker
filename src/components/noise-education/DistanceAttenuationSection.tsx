@@ -5,7 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+import AnimatedSoundPropagation from './AnimatedSoundPropagation';
 
+const learningObjectives = [
+  "Apply the inverse square law: -6 dB per doubling of distance",
+  "Calculate distance attenuation using the formula",
+  "Understand atmospheric absorption and ground effects",
+  "Visualize sound propagation from source to receptor",
+];
 export const DistanceAttenuationSection = () => {
   const [sourceDb, setSourceDb] = useState(81.8);
   const [distance, setDistance] = useState(1700);
@@ -22,6 +31,20 @@ export const DistanceAttenuationSection = () => {
   return (
     <section id="distance" className="py-16 md:py-24 bg-watt-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal delay={50}>
+          <LearningObjectives 
+            objectives={learningObjectives}
+            estimatedTime="5 min read"
+          />
+        </ScrollReveal>
+
+        {/* Animated Sound Propagation */}
+        <ScrollReveal delay={100}>
+          <div className="mb-12">
+            <AnimatedSoundPropagation initialSourceDb={81.8} initialDistance={1700} />
+          </div>
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-coinbase/10 rounded-full mb-4">

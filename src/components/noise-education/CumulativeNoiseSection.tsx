@@ -5,6 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+
+const learningObjectives = [
+  "Apply the logarithmic addition formula for combining noise sources",
+  "Calculate cumulative noise for facilities with multiple containers",
+  "Understand why 30 containers at 67 dB each total only 81.8 dB",
+  "Compare cumulative noise between hydro-cooled and air-cooled facilities",
+];
 
 export const CumulativeNoiseSection = () => {
   const [containerCount, setContainerCount] = useState(30);
@@ -21,6 +30,13 @@ export const CumulativeNoiseSection = () => {
   return (
     <section id="cumulative" className="py-16 md:py-24 bg-watt-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal delay={50}>
+          <LearningObjectives 
+            objectives={learningObjectives}
+            estimatedTime="5 min read"
+          />
+        </ScrollReveal>
+
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-success/10 rounded-full mb-4">
@@ -225,6 +241,21 @@ export const CumulativeNoiseSection = () => {
               </p>
             </CardContent>
           </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={400}>
+          <SectionSummary
+            takeaways={[
+              "Sound adds logarithmically: 67 + 67 dB = 70 dB, not 134 dB",
+              "Formula: L_total = L_single + 10 × log₁₀(n) for n identical sources",
+              "30 hydro containers at 67 dB = 81.8 dB total at source",
+              "Same 30 containers air-cooled (95 dB) would be 109.8 dB - 630× more energy!",
+            ]}
+            proTip="Use the interactive calculator above to model your own facility. Try different container counts and cooling technologies."
+            nextSteps={[
+              { title: 'Regulations', href: '#standards', description: 'Learn about noise compliance standards' },
+            ]}
+          />
         </ScrollReveal>
       </div>
     </section>
