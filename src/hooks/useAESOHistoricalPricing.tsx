@@ -1,6 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+// Cache keys and TTL
+const CACHE_KEY_TEN_YEAR = 'aeso_historical_10year';
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+interface CachedData {
+  data: any;
+  timestamp: number;
+  uptimePercentage: number;
+}
+
+// Helper to get cached data
+function getCachedTenYearData(uptimePercentage: number): any | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY_TEN_YEAR);
+    if (!cached) return null;
+    
+    const parsed: CachedData = JSON.parse(cached);
+    const isExpired = Date.now() - parsed.timestamp > CACHE_TTL_MS;
+    const isSameUptime = parsed.uptimePercentage === uptimePercentage;
+    
+    // Return cached data even if expired (will refresh in background)
+    if (isSameUptime) {
+      return { data: parsed.data, isStale: isExpired };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Helper to cache data
+function cacheTenYearData(data: any, uptimePercentage: number): void {
+  try {
+    const cacheEntry: CachedData = {
+      data,
+      timestamp: Date.now(),
+      uptimePercentage
+    };
+    localStorage.setItem(CACHE_KEY_TEN_YEAR, JSON.stringify(cacheEntry));
+  } catch (e) {
+    console.warn('Failed to cache 10-year data:', e);
+  }
+}
 
 export interface HistoricalPricingData {
   statistics: {
@@ -81,7 +125,17 @@ export function useAESOHistoricalPricing() {
   const [loadingPeakAnalysis, setLoadingPeakAnalysis] = useState(false);
   const [loadingHistoricalTenYear, setLoadingHistoricalTenYear] = useState(false);
   const [loadingCustomPeriod, setLoadingCustomPeriod] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false); // True when refreshing stale cache
   const { toast } = useToast();
+  
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    const cached = getCachedTenYearData(95); // Default uptime percentage
+    if (cached?.data) {
+      console.log('[useAESOHistoricalPricing] Hydrating from localStorage cache');
+      setHistoricalTenYearData(cached.data);
+    }
+  }, []);
 
   const fetchDailyData = async () => {
     setLoadingDaily(true);
@@ -223,8 +277,27 @@ export function useAESOHistoricalPricing() {
     }
   };
 
-  const fetchHistoricalTenYearData = async (uptimePercentage: number = 100) => {
-    setLoadingHistoricalTenYear(true);
+  const fetchHistoricalTenYearData = useCallback(async (uptimePercentage: number = 100) => {
+    // Check cache first
+    const cached = getCachedTenYearData(uptimePercentage);
+    
+    if (cached?.data && !cached.isStale) {
+      // Fresh cache hit - no need to fetch
+      console.log('[fetchHistoricalTenYearData] Fresh cache hit, skipping fetch');
+      setHistoricalTenYearData(cached.data);
+      return;
+    }
+    
+    if (cached?.data && cached.isStale) {
+      // Stale cache - show data immediately, refresh in background
+      console.log('[fetchHistoricalTenYearData] Stale cache, showing cached data and refreshing');
+      setHistoricalTenYearData(cached.data);
+      setIsRefreshing(true);
+    } else {
+      // No cache - show loading spinner
+      setLoadingHistoricalTenYear(true);
+    }
+    
     try {
       console.log(`Fetching real 8-year AESO historical data with ${uptimePercentage}% uptime filter...`);
       const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
@@ -241,24 +314,32 @@ export function useAESOHistoricalPricing() {
       } else {
         console.log('8-year historical data received:', data);
         setHistoricalTenYearData(data);
+        cacheTenYearData(data, uptimePercentage);
         
-        toast({
-          title: "8-year data loaded",
-          description: `Real historical data from ${data.totalYears} years retrieved (${data.realDataYears} years with data)`,
-        });
+        // Only show toast on background refresh, not initial load
+        if (cached?.isStale) {
+          toast({
+            title: "Data updated",
+            description: "Historical pricing data refreshed",
+          });
+        }
       }
     } catch (error: any) {
       console.error('Error fetching 8-year historical data:', error);
       
-      toast({
-        title: "Error loading 8-year data",
-        description: error.message || "Failed to fetch 8-year historical data. Please try again.",
-        variant: "destructive",
-      });
+      // Only show error if we have no cached data to fall back on
+      if (!cached?.data) {
+        toast({
+          title: "Error loading 8-year data",
+          description: error.message || "Failed to fetch 8-year historical data. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoadingHistoricalTenYear(false);
+      setIsRefreshing(false);
     }
-  };
+  }, [toast]);
 
   const fetchCustomPeriodData = async (daysInPeriod: number) => {
     // For 30 days, use existing monthlyData
@@ -328,6 +409,7 @@ export function useAESOHistoricalPricing() {
     loadingPeakAnalysis,
     loadingHistoricalTenYear,
     loadingCustomPeriod,
+    isRefreshing, // New: true when refreshing stale cache in background
     fetchDailyData,
     fetchMonthlyData,
     fetchYearlyData,

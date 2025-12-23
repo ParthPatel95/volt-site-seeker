@@ -146,30 +146,33 @@ export const AESOPriceTrendsSection = () => {
     fetchDailyData,
     historicalTenYearData,
     loadingHistoricalTenYear,
-    fetchHistoricalTenYearData
+    fetchHistoricalTenYearData,
+    isRefreshing
   } = useAESOHistoricalPricing();
 
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
-  // Fetch live yearly data on mount
+  // Prefetch yearly data on mount (not waiting for visibility)
   useEffect(() => {
-    const fetchYearlyPrices = async () => {
-      setLoadingYearlyData(true);
-      setDataError(null);
-      
-      try {
-        // Fetch both 100% and 95% uptime data
-        await fetchHistoricalTenYearData(95);
-      } catch (error) {
-        console.error('Error fetching yearly data:', error);
-        setDataError('Failed to load live AESO data');
-      } finally {
-        setLoadingYearlyData(false);
+    // Use requestIdleCallback or setTimeout to not block initial render
+    const prefetch = () => {
+      if (!historicalTenYearData && !loadingHistoricalTenYear) {
+        console.log('[AESOPriceTrendsSection] Prefetching yearly data on mount');
+        fetchHistoricalTenYearData(95);
       }
     };
     
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(prefetch, { timeout: 2000 });
+    } else {
+      setTimeout(prefetch, 100);
+    }
+  }, []); // Only run once on mount
+
+  // Also trigger fetch when section becomes visible (fallback)
+  useEffect(() => {
     if (isVisible && !historicalTenYearData && !loadingHistoricalTenYear) {
-      fetchYearlyPrices();
+      fetchHistoricalTenYearData(95);
     }
   }, [isVisible, historicalTenYearData, loadingHistoricalTenYear, fetchHistoricalTenYearData]);
 
@@ -289,8 +292,11 @@ export const AESOPriceTrendsSection = () => {
           
 {/* YEARLY VIEW - Full Cost Stack */}
           {activeView === 'yearly' && (() => {
-            // Show loading state
-            if (loadingHistoricalTenYear || loadingYearlyData) {
+            // Only show full loading spinner if no data at all (first load with no cache)
+            const hasData = liveYearlyData.length > 0;
+            const isInitialLoading = loadingHistoricalTenYear && !hasData;
+            
+            if (isInitialLoading) {
               return (
                 <div className="flex flex-col items-center justify-center h-80 gap-4">
                   <Loader2 className="w-8 h-8 text-watt-bitcoin animate-spin" />
@@ -299,17 +305,33 @@ export const AESOPriceTrendsSection = () => {
               );
             }
             
-            // Show error state
-            if (dataError || liveYearlyData.length === 0) {
+            // Show error state only if no data
+            if (dataError && !hasData) {
               return (
                 <div className="flex flex-col items-center justify-center h-80 gap-4">
                   <AlertCircle className="w-8 h-8 text-red-500" />
-                  <p className="text-muted-foreground">{dataError || 'No data available'}</p>
+                  <p className="text-muted-foreground">{dataError}</p>
                   <button 
                     onClick={() => fetchHistoricalTenYearData(95)}
                     className="px-4 py-2 bg-watt-bitcoin text-white rounded-lg text-sm"
                   >
                     Retry
+                  </button>
+                </div>
+              );
+            }
+            
+            // No data available at all
+            if (!hasData) {
+              return (
+                <div className="flex flex-col items-center justify-center h-80 gap-4">
+                  <AlertCircle className="w-8 h-8 text-muted-foreground" />
+                  <p className="text-muted-foreground">No data available</p>
+                  <button 
+                    onClick={() => fetchHistoricalTenYearData(95)}
+                    className="px-4 py-2 bg-watt-bitcoin text-white rounded-lg text-sm"
+                  >
+                    Load Data
                   </button>
                 </div>
               );
@@ -328,6 +350,13 @@ export const AESOPriceTrendsSection = () => {
                     <p className="text-sm text-muted-foreground">Pool price + transmission adder - 12CP savings - 5% curtailment - OR revenue</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Show refreshing indicator when updating in background */}
+                    {isRefreshing && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs text-amber-700 font-medium">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Updating...
+                      </span>
+                    )}
                     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 border border-green-200 text-xs text-green-700 font-medium">
                       ⚡ 95% Uptime
                     </span>
