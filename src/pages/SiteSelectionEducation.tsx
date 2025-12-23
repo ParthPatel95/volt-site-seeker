@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { MapPin, Zap, DollarSign, Scale, Thermometer, Building, FileSearch, BarChart3, Calendar } from 'lucide-react';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
 
 const SiteSelectionIntroSection = lazy(() => import('@/components/site-selection/SiteSelectionIntroSection'));
 const PowerInfrastructureSection = lazy(() => import('@/components/site-selection/PowerInfrastructureSection'));
@@ -19,10 +21,26 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'intro', icon: MapPin, label: 'Introduction', time: '5 min' },
+  { id: 'power-infrastructure', icon: Zap, label: 'Power', time: '7 min' },
+  { id: 'energy-markets', icon: DollarSign, label: 'Energy Markets', time: '6 min' },
+  { id: 'regulatory', icon: Scale, label: 'Regulatory', time: '6 min' },
+  { id: 'climate', icon: Thermometer, label: 'Climate', time: '5 min' },
+  { id: 'land-acquisition', icon: Building, label: 'Land', time: '6 min' },
+  { id: 'due-diligence', icon: FileSearch, label: 'Due Diligence', time: '7 min' },
+  { id: 'site-scoring', icon: BarChart3, label: 'Scoring', time: '6 min' },
+  { id: 'timeline', icon: Calendar, label: 'Timeline', time: '5 min' },
+];
+
 export default function SiteSelectionEducation() {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-purple" />
       
       <main className="pt-16">
         <Suspense fallback={<SectionLoader />}>

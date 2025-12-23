@@ -4,6 +4,7 @@ import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Volume2, VolumeX, Headphones, Calculator, Shield, Ruler, Layout, Activity, FileSearch, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
 
 // Lazy load sections for performance
 const NoiseBasicsSection = lazy(() => import('@/components/noise-education/NoiseBasicsSection').then(m => ({ default: m.NoiseBasicsSection })));
@@ -24,22 +25,25 @@ const SectionLoader = () => (
   </div>
 );
 
-const sections = [
-  { id: 'fundamentals', title: 'Sound Fundamentals', icon: Volume2 },
-  { id: 'noise-sources', title: 'Noise Sources', icon: Headphones },
-  { id: 'cumulative', title: 'Cumulative Noise', icon: Calculator },
-  { id: 'standards', title: 'Regulations', icon: Shield },
-  { id: 'distance', title: 'Distance Attenuation', icon: Ruler },
-  { id: 'mitigation', title: 'Mitigation', icon: VolumeX },
-  { id: 'site-layout', title: 'Site Layout', icon: Layout },
-  { id: 'monitoring', title: 'Monitoring', icon: Activity },
-  { id: 'environmental', title: 'Environmental', icon: FileSearch },
-  { id: 'case-study', title: 'Case Study', icon: Building2 },
+// Navigation sections config
+const navSections = [
+  { id: 'fundamentals', label: 'Sound Fundamentals', icon: Volume2, time: '6 min' },
+  { id: 'noise-sources', label: 'Noise Sources', icon: Headphones, time: '5 min' },
+  { id: 'cumulative', label: 'Cumulative Noise', icon: Calculator, time: '5 min' },
+  { id: 'standards', label: 'Regulations', icon: Shield, time: '6 min' },
+  { id: 'distance', label: 'Distance Attenuation', icon: Ruler, time: '5 min' },
+  { id: 'mitigation', label: 'Mitigation', icon: VolumeX, time: '7 min' },
+  { id: 'site-layout', label: 'Site Layout', icon: Layout, time: '5 min' },
+  { id: 'monitoring', label: 'Monitoring', icon: Activity, time: '5 min' },
+  { id: 'environmental', label: 'Environmental', icon: FileSearch, time: '5 min' },
+  { id: 'case-study', label: 'Case Study', icon: Building2, time: '8 min' },
 ];
 
 const NoiseManagementEducation = () => {
   return (
     <div className="min-h-screen bg-background">
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
       <LandingNavigation />
       
       {/* Hero Section */}

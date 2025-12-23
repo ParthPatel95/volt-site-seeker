@@ -14,12 +14,27 @@ import { EnergyForecastSection } from '@/components/aeso-education/EnergyForecas
 import { AESOCTASection } from '@/components/aeso-education/AESOCTASection';
 import { MarketParticipantsSection } from '@/components/aeso-education/MarketParticipantsSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, Zap, Users, DollarSign, TrendingUp, Calendar, Percent, Banknote, Activity, PieChart, BarChart3 } from 'lucide-react';
 import LastReviewed from '@/components/academy/LastReviewed';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { AESO_QUIZZES } from '@/constants/quiz-data';
 import { AESO_FLASHCARDS } from '@/constants/flashcard-data';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
+
+// Navigation sections config
+const navSections = [
+  { id: 'what-is-aeso', icon: Zap, label: 'What is AESO', time: '5 min' },
+  { id: 'market-participants', icon: Users, label: 'Participants', time: '6 min' },
+  { id: 'pool-pricing', icon: DollarSign, label: 'Pool Pricing', time: '7 min' },
+  { id: 'price-trends', icon: TrendingUp, label: 'Price Trends', time: '6 min' },
+  { id: 'twelve-cp', icon: Calendar, label: '12CP', time: '8 min' },
+  { id: 'savings-programs', icon: Percent, label: 'Savings', time: '6 min' },
+  { id: 'rate-65', icon: Banknote, label: 'Rate 65', time: '6 min' },
+  { id: 'grid-operations', icon: Activity, label: 'Grid Ops', time: '6 min' },
+  { id: 'generation-mix', icon: PieChart, label: 'Gen Mix', time: '5 min' },
+  { id: 'forecast', icon: BarChart3, label: 'Forecast', time: '5 min' },
+];
 
 const AESOEducation = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -40,6 +55,9 @@ const AESOEducation = () => {
   return (
     <div className="min-h-screen bg-white">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
 
       <main className="pt-16">
         <div id="hero">

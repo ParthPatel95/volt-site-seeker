@@ -1,6 +1,8 @@
 import { LandingNavigation } from "@/components/landing/LandingNavigation";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Suspense, lazy, useEffect } from "react";
+import { Settings, Monitor, Wrench, Search, TrendingUp, Users, ShieldCheck, FileText } from "lucide-react";
+import EducationSectionNav from "@/components/academy/EducationSectionNav";
 
 const OperationsIntroSection = lazy(() => import("@/components/operations/OperationsIntroSection").then(m => ({ default: m.OperationsIntroSection })));
 const MonitoringSystemsSection = lazy(() => import("@/components/operations/MonitoringSystemsSection").then(m => ({ default: m.MonitoringSystemsSection })));
@@ -18,6 +20,18 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'intro', icon: Settings, label: 'Introduction', time: '5 min' },
+  { id: 'monitoring', icon: Monitor, label: 'Monitoring', time: '7 min' },
+  { id: 'preventive-maintenance', icon: Wrench, label: 'Maintenance', time: '7 min' },
+  { id: 'troubleshooting', icon: Search, label: 'Troubleshooting', time: '6 min' },
+  { id: 'performance', icon: TrendingUp, label: 'Optimization', time: '7 min' },
+  { id: 'team-structure', icon: Users, label: 'Team', time: '5 min' },
+  { id: 'safety', icon: ShieldCheck, label: 'Safety', time: '6 min' },
+  { id: 'documentation', icon: FileText, label: 'Documentation', time: '5 min' },
+];
+
 const OperationsEducation = () => {
   useEffect(() => {
     document.title = "Operations & Maintenance 101 | WattByte Academy";
@@ -26,6 +40,9 @@ const OperationsEducation = () => {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
       
       <main>
         <Suspense fallback={<SectionLoader />}>

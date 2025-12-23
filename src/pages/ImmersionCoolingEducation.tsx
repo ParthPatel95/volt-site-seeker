@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { Droplets, Layers, FlaskConical, Cpu, Container, Thermometer, Zap, DollarSign, Box, Wrench } from 'lucide-react';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
 
 const ImmersionIntroSection = lazy(() => import('@/components/immersion-education/ImmersionIntroSection'));
 const ImmersionTypesSection = lazy(() => import('@/components/immersion-education/ImmersionTypesSection'));
@@ -20,10 +22,27 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'intro', icon: Droplets, label: 'Introduction', time: '5 min' },
+  { id: 'types', icon: Layers, label: 'Types', time: '6 min' },
+  { id: 'fluids', icon: FlaskConical, label: 'Fluids', time: '7 min' },
+  { id: 'hardware-prep', icon: Cpu, label: 'Hardware Prep', time: '6 min' },
+  { id: 'tank-systems', icon: Container, label: 'Tank Systems', time: '7 min' },
+  { id: 'heat-transfer', icon: Thermometer, label: 'Heat Transfer', time: '6 min' },
+  { id: 'overclocking', icon: Zap, label: 'Overclocking', time: '6 min' },
+  { id: 'economics', icon: DollarSign, label: 'Economics', time: '7 min' },
+  { id: 'containers', icon: Box, label: 'Containers', time: '6 min' },
+  { id: 'maintenance', icon: Wrench, label: 'Maintenance', time: '6 min' },
+];
+
 export default function ImmersionCoolingEducation() {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="cyan-500" />
       
       <main className="pt-16">
         <Suspense fallback={<SectionLoader />}>
