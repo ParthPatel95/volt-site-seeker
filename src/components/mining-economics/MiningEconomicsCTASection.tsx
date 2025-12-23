@@ -4,7 +4,7 @@ import { ArrowRight, Calculator, TrendingUp, Zap } from 'lucide-react';
 
 const MiningEconomicsCTASection = () => {
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-watt-light">
+    <section className="py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="max-w-4xl mx-auto">
@@ -64,37 +64,37 @@ const MiningEconomicsCTASection = () => {
 
             <ScrollReveal delay={200}>
               <div className="mt-12">
-                <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">Continue Learning</h3>
+                <h3 className="text-xl font-bold text-foreground mb-6 text-center">Continue Learning</h3>
                 <div className="grid md:grid-cols-3 gap-4">
                   <Link 
                     to="/site-selection" 
-                    className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all group"
+                    className="bg-background rounded-xl p-4 border border-border hover:shadow-lg transition-all group"
                   >
                     <div className="text-2xl mb-2">📍</div>
-                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-purple transition-colors">
+                    <h4 className="font-semibold text-foreground group-hover:text-watt-purple transition-colors">
                       Site Selection
                     </h4>
-                    <p className="text-sm text-watt-navy/60">Find optimal mining locations</p>
+                    <p className="text-sm text-muted-foreground">Find optimal mining locations</p>
                   </Link>
                   <Link 
                     to="/immersion-cooling" 
-                    className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all group"
+                    className="bg-background rounded-xl p-4 border border-border hover:shadow-lg transition-all group"
                   >
                     <div className="text-2xl mb-2">💧</div>
-                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-purple transition-colors">
+                    <h4 className="font-semibold text-foreground group-hover:text-watt-purple transition-colors">
                       Immersion Cooling
                     </h4>
-                    <p className="text-sm text-watt-navy/60">Maximize efficiency with liquid cooling</p>
+                    <p className="text-sm text-muted-foreground">Maximize efficiency with liquid cooling</p>
                   </Link>
                   <Link 
                     to="/electrical-infrastructure" 
-                    className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all group"
+                    className="bg-background rounded-xl p-4 border border-border hover:shadow-lg transition-all group"
                   >
                     <div className="text-2xl mb-2">⚡</div>
-                    <h4 className="font-semibold text-watt-navy group-hover:text-watt-purple transition-colors">
+                    <h4 className="font-semibold text-foreground group-hover:text-watt-purple transition-colors">
                       Electrical Infrastructure
                     </h4>
-                    <p className="text-sm text-watt-navy/60">Power systems for mining</p>
+                    <p className="text-sm text-muted-foreground">Power systems for mining</p>
                   </Link>
                 </div>
               </div>

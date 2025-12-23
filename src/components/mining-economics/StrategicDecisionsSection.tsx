@@ -61,17 +61,17 @@ const StrategicDecisionsSection = () => {
   ];
 
   return (
-    <section id="strategy" className="py-20 bg-watt-light">
+    <section id="strategy" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Strategic Decisions
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Strategic Mining Decisions
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Beyond the numbers, successful mining requires strategic thinking about 
               treasury management, timing, risk, and market cycles.
             </p>
@@ -82,18 +82,18 @@ const StrategicDecisionsSection = () => {
         <ScrollReveal delay={100}>
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             {strategies.map((strategy, idx) => (
-              <div key={idx} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+              <div key={idx} className="bg-background rounded-2xl shadow-lg border border-border p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-watt-purple/10 rounded-lg flex items-center justify-center">
                     <strategy.icon className="w-5 h-5 text-watt-purple" />
                   </div>
-                  <h3 className="font-bold text-watt-navy">{strategy.title}</h3>
+                  <h3 className="font-bold text-foreground">{strategy.title}</h3>
                 </div>
-                <p className="text-sm text-watt-navy/70 mb-4">{strategy.description}</p>
+                <p className="text-sm text-muted-foreground mb-4">{strategy.description}</p>
                 
                 <div className="space-y-2 mb-4">
                   {strategy.considerations.map((point, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm text-watt-navy/70">
+                    <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <span className="w-1.5 h-1.5 bg-watt-purple rounded-full mt-2 flex-shrink-0" />
                       {point}
                     </div>
@@ -151,9 +151,9 @@ const StrategicDecisionsSection = () => {
               { title: "Energy is Everything", desc: "60-80% of costs are energy. A $0.01/kWh advantage compounds to millions over time." },
               { title: "Cycles are Certain", desc: "Bitcoin markets are cyclical. Plan for all phases, not just current conditions." },
             ].map((takeaway, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 border border-gray-100">
-                <h4 className="font-bold text-watt-navy mb-2">{takeaway.title}</h4>
-                <p className="text-sm text-watt-navy/70">{takeaway.desc}</p>
+              <div key={idx} className="bg-background rounded-xl p-6 border border-border">
+                <h4 className="font-bold text-foreground mb-2">{takeaway.title}</h4>
+                <p className="text-sm text-muted-foreground">{takeaway.desc}</p>
               </div>
             ))}
           </div>

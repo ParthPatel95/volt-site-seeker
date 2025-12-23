@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { Zap, Building2, Users, Wrench, Snowflake, DollarSign, Info } from 'lucide-react';
+import { Zap, Building2, Users, Wrench, DollarSign, Info } from 'lucide-react';
 import { PUE_RANGES, DATA_DISCLAIMER } from '@/constants/mining-data';
 
 const CostStructureSection = () => {
@@ -59,17 +59,17 @@ const CostStructureSection = () => {
   ];
 
   return (
-    <section id="costs" className="py-20 bg-white">
+    <section id="costs" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
-            <span className="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-medium mb-4">
+            <span className="inline-block px-3 py-1 bg-red-500/10 text-red-500 rounded-full text-sm font-medium mb-4">
               Cost Structure
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Mining Cost Analysis
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Understanding your cost structure is critical for profitability. 
               Electricity typically accounts for 60-80% of operating expenses.
             </p>
@@ -78,8 +78,8 @@ const CostStructureSection = () => {
 
         {/* Interactive Cost Calculator */}
         <ScrollReveal delay={100}>
-          <div className="bg-gray-50 rounded-2xl p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-muted/50 rounded-2xl p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-watt-bitcoin" />
               Operating Cost Calculator
             </h3>
@@ -87,7 +87,7 @@ const CostStructureSection = () => {
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Energy Rate ($/kWh)
                   </label>
                   <input
@@ -97,9 +97,9 @@ const CostStructureSection = () => {
                     step="0.005"
                     value={powerCost}
                     onChange={(e) => setPowerCost(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                   />
-                  <div className="flex justify-between text-sm text-watt-navy/50 mt-1">
+                  <div className="flex justify-between text-sm text-muted-foreground mt-1">
                     <span>$0.02</span>
                     <span className="text-watt-bitcoin font-bold">${powerCost.toFixed(3)}</span>
                     <span>$0.12</span>
@@ -107,7 +107,7 @@ const CostStructureSection = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Power Capacity (kW)
                   </label>
                   <input
@@ -117,9 +117,9 @@ const CostStructureSection = () => {
                     step="100"
                     value={powerUsage}
                     onChange={(e) => setPowerUsage(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                   />
-                  <div className="flex justify-between text-sm text-watt-navy/50 mt-1">
+                  <div className="flex justify-between text-sm text-muted-foreground mt-1">
                     <span>100 kW</span>
                     <span className="text-watt-purple font-bold">{powerUsage.toLocaleString()} kW</span>
                     <span>10 MW</span>
@@ -127,7 +127,7 @@ const CostStructureSection = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-watt-navy mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Staff Count
                   </label>
                   <input
@@ -136,9 +136,9 @@ const CostStructureSection = () => {
                     max="20"
                     value={staffCount}
                     onChange={(e) => setStaffCount(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                   />
-                  <div className="flex justify-between text-sm text-watt-navy/50 mt-1">
+                  <div className="flex justify-between text-sm text-muted-foreground mt-1">
                     <span>1</span>
                     <span className="text-blue-500 font-bold">{staffCount} staff</span>
                     <span>20</span>
@@ -150,24 +150,24 @@ const CostStructureSection = () => {
               <div>
                 <div className="space-y-3 mb-4">
                   {costBreakdown.map((cost, idx) => (
-                    <div key={idx} className="bg-white rounded-lg p-3">
+                    <div key={idx} className="bg-background rounded-lg p-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <cost.icon className="w-4 h-4 text-watt-navy/60" />
-                          <span className="font-medium text-watt-navy">{cost.category}</span>
+                          <cost.icon className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-foreground">{cost.category}</span>
                         </div>
-                        <span className="font-bold text-watt-navy">
+                        <span className="font-bold text-foreground">
                           ${cost.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                           <div 
                             className={`h-full ${cost.color} rounded-full`}
                             style={{ width: `${cost.percentage}%` }}
                           />
                         </div>
-                        <span className="text-sm text-watt-navy/60 w-12 text-right">{cost.percentage}%</span>
+                        <span className="text-sm text-muted-foreground w-12 text-right">{cost.percentage}%</span>
                       </div>
                     </div>
                   ))}
@@ -189,28 +189,28 @@ const CostStructureSection = () => {
 
         {/* Energy Rates Comparison */}
         <ScrollReveal delay={200}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-background rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <Zap className="w-5 h-5 text-watt-bitcoin" />
               Global Energy Rates Comparison
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Region</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Rate Range</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Market Type</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold hidden md:table-cell">Notes</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Region</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Rate Range</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Market Type</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold hidden md:table-cell">Notes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {energyRates.map((rate, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-watt-navy">{rate.region}</td>
+                    <tr key={idx} className="border-b border-border hover:bg-muted/50">
+                      <td className="py-3 px-4 font-medium text-foreground">{rate.region}</td>
                       <td className="py-3 px-4 font-bold text-watt-success">{rate.rate}</td>
-                      <td className="py-3 px-4 text-watt-navy/70">{rate.type}</td>
-                      <td className="py-3 px-4 text-watt-navy/60 hidden md:table-cell">{rate.notes}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{rate.type}</td>
+                      <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{rate.notes}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -242,16 +242,16 @@ const CostStructureSection = () => {
                 icon: "🔥" 
               },
             ].map((cooling, idx) => (
-              <div key={idx} className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6">
+              <div key={idx} className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-xl p-6">
                 <div className="text-3xl mb-3">{cooling.icon}</div>
-                <h4 className="font-bold text-watt-navy mb-2">{cooling.method}</h4>
+                <h4 className="font-bold text-foreground mb-2">{cooling.method}</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/70">PUE Range</span>
-                    <span className="font-medium text-watt-navy">{cooling.pue}</span>
+                    <span className="text-muted-foreground">PUE Range</span>
+                    <span className="font-medium text-foreground">{cooling.pue}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-watt-navy/70">Cooling Overhead</span>
+                    <span className="text-muted-foreground">Cooling Overhead</span>
                     <span className="font-medium text-watt-bitcoin">{cooling.overhead}</span>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ const CostStructureSection = () => {
           </div>
           
           {/* Data Disclaimer */}
-          <div className="mt-6 flex items-start gap-2 text-xs text-watt-navy/60 bg-watt-navy/5 rounded-lg p-3">
+          <div className="mt-6 flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
             <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>{DATA_DISCLAIMER.short}</span>
           </div>
