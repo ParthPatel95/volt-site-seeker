@@ -137,7 +137,7 @@ export const AESOCTASection = () => {
           </p>
           <Button
             onClick={() => window.location.href = 'mailto:contact@wattbyte.com'}
-            className="bg-white text-watt-navy hover:bg-white/90 border-none"
+            className="bg-background text-foreground hover:bg-background/90 border-none"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
             Schedule a Consultation
