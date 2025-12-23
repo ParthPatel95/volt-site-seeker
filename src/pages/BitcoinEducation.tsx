@@ -6,12 +6,29 @@ import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Bitcoin, History, Settings, Wallet, Cpu, Thermometer, Users, Leaf, TrendingUp, Gift, Globe, Rocket } from 'lucide-react';
 import LastReviewed from '@/components/academy/LastReviewed';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { BITCOIN_QUIZZES } from '@/constants/quiz-data';
 import { BITCOIN_FLASHCARDS } from '@/constants/flashcard-data';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
+
+// Section navigation config
+const bitcoinSections = [
+  { id: 'what-is-bitcoin', icon: Bitcoin, label: 'What is Bitcoin', time: '5 min' },
+  { id: 'history', icon: History, label: 'History', time: '6 min' },
+  { id: 'how-it-works', icon: Settings, label: 'How it Works', time: '8 min' },
+  { id: 'wallets', icon: Wallet, label: 'Wallets', time: '5 min' },
+  { id: 'mining', icon: Cpu, label: 'Mining', time: '7 min' },
+  { id: 'cooling', icon: Thermometer, label: 'Cooling', time: '6 min' },
+  { id: 'pools', icon: Users, label: 'Mining Pools', time: '5 min' },
+  { id: 'sustainability', icon: Leaf, label: 'Sustainability', time: '6 min' },
+  { id: 'economics', icon: TrendingUp, label: 'Economics', time: '7 min' },
+  { id: 'benefits', icon: Gift, label: 'Benefits', time: '5 min' },
+  { id: 'adoption', icon: Globe, label: 'Adoption', time: '6 min' },
+  { id: 'future', icon: Rocket, label: 'Future', time: '5 min' },
+];
 
 // Eager load hero for faster initial paint
 import BitcoinHeroSection from '@/components/bitcoin-education/BitcoinHeroSection';
@@ -84,6 +101,9 @@ const BitcoinEducation: React.FC = () => {
 
       <LandingBackground />
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={bitcoinSections} accentColor="watt-bitcoin" />
 
       {/* Scroll to Top Button */}
       <button

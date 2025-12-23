@@ -4,6 +4,8 @@ import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import HydroHeroSection from '@/components/hydro-education/HydroHeroSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
+import { Droplets, Box, Thermometer, MapPin, Layout, Waves, Zap, Shield, HardHat, DollarSign, Flame, Volume2 } from 'lucide-react';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
 
 // Lazy load all sections for performance
 const HydroAdvantagesSection = lazy(() => import('@/components/hydro-education/HydroAdvantagesSection'));
@@ -26,11 +28,30 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'advantages', icon: Droplets, label: 'Advantages', time: '5 min' },
+  { id: 'containers', icon: Box, label: 'Containers', time: '7 min' },
+  { id: 'cooling-methods', icon: Thermometer, label: 'Cooling Methods', time: '7 min' },
+  { id: 'site-selection', icon: MapPin, label: 'Site Selection', time: '6 min' },
+  { id: 'layout', icon: Layout, label: 'Layout', time: '5 min' },
+  { id: 'water-systems', icon: Waves, label: 'Water Systems', time: '7 min' },
+  { id: 'electrical', icon: Zap, label: 'Electrical', time: '6 min' },
+  { id: 'network-security', icon: Shield, label: 'Network', time: '5 min' },
+  { id: 'construction', icon: HardHat, label: 'Construction', time: '6 min' },
+  { id: 'economics', icon: DollarSign, label: 'Economics', time: '7 min' },
+  { id: 'waste-heat', icon: Flame, label: 'Waste Heat', time: '5 min' },
+  { id: 'noise-management', icon: Volume2, label: 'Noise', time: '5 min' },
+];
+
 const HydroDatacenterEducation = () => {
   return (
     <div className="min-h-screen bg-background">
       <SmoothScroll />
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="blue-500" />
       
       {/* Immersive Hero Section */}
       <HydroHeroSection />

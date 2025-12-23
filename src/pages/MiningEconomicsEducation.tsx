@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { BookOpen, DollarSign, BarChart3, Calculator, TrendingUp, Cpu, Activity, Lightbulb } from 'lucide-react';
+import EducationSectionNav from '@/components/academy/EducationSectionNav';
 
 const MiningEconomicsIntroSection = lazy(() => import('@/components/mining-economics/MiningEconomicsIntroSection'));
 const RevenueDriversSection = lazy(() => import('@/components/mining-economics/RevenueDriversSection'));
@@ -18,10 +20,25 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'intro', icon: BookOpen, label: 'Introduction', time: '5 min' },
+  { id: 'revenue-drivers', icon: DollarSign, label: 'Revenue Drivers', time: '8 min' },
+  { id: 'cost-structure', icon: BarChart3, label: 'Cost Structure', time: '7 min' },
+  { id: 'profitability', icon: TrendingUp, label: 'Profitability', time: '8 min' },
+  { id: 'break-even', icon: Calculator, label: 'Break-Even', time: '6 min' },
+  { id: 'hardware-roi', icon: Cpu, label: 'Hardware ROI', time: '7 min' },
+  { id: 'difficulty', icon: Activity, label: 'Difficulty', time: '6 min' },
+  { id: 'strategic', icon: Lightbulb, label: 'Strategic', time: '7 min' },
+];
+
 export default function MiningEconomicsEducation() {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-success" />
       
       <main className="pt-16">
         <Suspense fallback={<SectionLoader />}>

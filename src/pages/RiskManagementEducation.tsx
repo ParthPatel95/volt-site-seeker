@@ -1,6 +1,8 @@
 import { LandingNavigation } from "@/components/landing/LandingNavigation";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Suspense, lazy, useEffect } from "react";
+import { Shield, TrendingDown, Settings, Scale, Banknote, Grid3X3, FileCheck, AlertTriangle } from "lucide-react";
+import EducationSectionNav from "@/components/academy/EducationSectionNav";
 
 const RiskIntroSection = lazy(() => import("@/components/risk-management/RiskIntroSection").then(m => ({ default: m.RiskIntroSection })));
 const MarketRiskSection = lazy(() => import("@/components/risk-management/MarketRiskSection").then(m => ({ default: m.MarketRiskSection })));
@@ -18,6 +20,18 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'intro', icon: Shield, label: 'Introduction', time: '5 min' },
+  { id: 'market-risk', icon: TrendingDown, label: 'Market Risk', time: '7 min' },
+  { id: 'operational-risk', icon: Settings, label: 'Operational', time: '7 min' },
+  { id: 'regulatory-risk', icon: Scale, label: 'Regulatory', time: '6 min' },
+  { id: 'financial-risk', icon: Banknote, label: 'Financial', time: '7 min' },
+  { id: 'risk-matrix', icon: Grid3X3, label: 'Risk Matrix', time: '6 min' },
+  { id: 'insurance', icon: FileCheck, label: 'Insurance', time: '6 min' },
+  { id: 'crisis', icon: AlertTriangle, label: 'Crisis Mgmt', time: '6 min' },
+];
+
 const RiskManagementEducation = () => {
   useEffect(() => {
     document.title = "Risk Management 101 | WattByte Academy";
@@ -26,6 +40,9 @@ const RiskManagementEducation = () => {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
       
       <main>
         <Suspense fallback={<SectionLoader />}>

@@ -1,6 +1,8 @@
 import { LandingNavigation } from "@/components/landing/LandingNavigation";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { useEffect, lazy, Suspense } from "react";
+import { TrendingUp, BarChart3, Building2, MapPin, Banknote, Handshake, Users } from "lucide-react";
+import EducationSectionNav from "@/components/academy/EducationSectionNav";
 
 const ScalingIntroSection = lazy(() => import("@/components/scaling/ScalingIntroSection").then(m => ({ default: m.ScalingIntroSection })));
 const CapacityPlanningSection = lazy(() => import("@/components/scaling/CapacityPlanningSection").then(m => ({ default: m.CapacityPlanningSection })));
@@ -17,6 +19,17 @@ const SectionLoader = () => (
   </div>
 );
 
+// Navigation sections config
+const navSections = [
+  { id: 'intro', icon: TrendingUp, label: 'Introduction', time: '5 min' },
+  { id: 'capacity-planning', icon: BarChart3, label: 'Capacity Planning', time: '7 min' },
+  { id: 'site-expansion', icon: Building2, label: 'Site Expansion', time: '6 min' },
+  { id: 'multi-site', icon: MapPin, label: 'Multi-Site', time: '7 min' },
+  { id: 'capital-raising', icon: Banknote, label: 'Capital Raising', time: '8 min' },
+  { id: 'partnerships', icon: Handshake, label: 'Partnerships', time: '6 min' },
+  { id: 'mergers', icon: Users, label: 'M&A', time: '7 min' },
+];
+
 const ScalingGrowthEducation = () => {
   useEffect(() => {
     document.title = "Scaling & Growth 101 | WattByte Academy";
@@ -25,6 +38,9 @@ const ScalingGrowthEducation = () => {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
+      
+      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
+      <EducationSectionNav sections={navSections} accentColor="watt-success" />
       
       <main>
         <Suspense fallback={<SectionLoader />}>
