@@ -69,38 +69,13 @@ export const LandingFooter = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/aeso-101" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  AESO 101
-                </Link>
-              </li>
-              <li>
-                <Link to="/hydro-datacenters" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Hydro Datacenters 101
-                </Link>
-              </li>
-              <li>
-                <Link to="/electrical-infrastructure" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Electrical Infrastructure 101
-                </Link>
-              </li>
-              <li>
-                <Link to="/noise-management" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Noise Management 101
-                </Link>
-              </li>
-              <li>
-                <Link to="/immersion-cooling" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Immersion Cooling 101
-                </Link>
-              </li>
-              <li>
-                <Link to="/site-selection" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
-                  Site Selection 101
-                </Link>
-              </li>
-              <li>
                 <Link to="/mining-economics" className="text-sm text-watt-navy/70 hover:text-watt-trust transition-colors">
                   Mining Economics 101
+                </Link>
+              </li>
+              <li>
+                <Link to="/academy" className="text-sm text-watt-trust font-medium hover:text-watt-trust/80 transition-colors">
+                  View All Courses →
                 </Link>
               </li>
             </ul>
