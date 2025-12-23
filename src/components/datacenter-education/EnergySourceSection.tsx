@@ -537,6 +537,19 @@ const EnergySourceSection = () => {
             </div>
           </ScrollReveal>
         )}
+
+        <SectionSummary
+          takeaways={[
+            "Large mining ops connect at transmission/distribution level (25-138kV) for lowest rates",
+            "Behind-the-meter (BTM) offers 40-60% savings but requires co-location with generation",
+            "Interconnection takes 12-30 months — start the process early",
+            "Site selection weighs power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
+          ]}
+          nextSteps={[
+            { title: "Electrical Infrastructure", href: "#electrical", description: "Learn about transformers, switchgear, and PDUs" }
+          ]}
+          proTip="Self-retailer status in AESO can save 15-30% vs regulated retail rates, but requires 24/7 market monitoring."
+        />
       </div>
 
       {/* CSS for animations */}
@@ -558,20 +571,6 @@ const EnergySourceSection = () => {
           }
         }
       `}</style>
-      
-        <SectionSummary
-          takeaways={[
-            "Large mining ops connect at transmission/distribution level (25-138kV) for lowest rates",
-            "Behind-the-meter (BTM) offers 40-60% savings but requires co-location with generation",
-            "Interconnection takes 12-30 months — start the process early",
-            "Site selection weighs power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
-          ]}
-          nextSteps={[
-            { title: "Electrical Infrastructure", href: "#electrical", description: "Learn about transformers, switchgear, and PDUs" }
-          ]}
-          proTip="Self-retailer status in AESO can save 15-30% vs regulated retail rates, but requires 24/7 market monitoring."
-        />
-      </div>
     </section>
   );
 };
