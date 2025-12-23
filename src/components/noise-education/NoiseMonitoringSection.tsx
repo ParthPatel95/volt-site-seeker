@@ -1,6 +1,9 @@
-import { Activity, Gauge, Radio, Clock, FileText, MapPin } from 'lucide-react';
+import { Activity, Gauge, Radio, FileText, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
+import ComplianceChecker from './ComplianceChecker';
 
 const monitoringMethods = [
   {
@@ -35,6 +38,19 @@ export const NoiseMonitoringSection = () => {
     <section id="monitoring" className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
+          <LearningObjectives
+            objectives={[
+              'Understand different noise monitoring equipment types',
+              'Know the four standard measurement positions',
+              'Interpret noise monitoring reports',
+              'Use the compliance checker to verify regulatory conformance'
+            ]}
+            estimatedTime="7 min"
+            prerequisites={[
+              { title: 'Site Layout', href: '#site-layout' }
+            ]}
+          />
+
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-coinbase/10 rounded-full mb-4">
               <Activity className="h-4 w-4 text-watt-coinbase" />
@@ -98,6 +114,13 @@ export const NoiseMonitoringSection = () => {
           </Card>
         </ScrollReveal>
 
+        {/* Compliance Checker Tool */}
+        <ScrollReveal delay={450}>
+          <div className="mb-12">
+            <ComplianceChecker />
+          </div>
+        </ScrollReveal>
+
         {/* Sample Report */}
         <ScrollReveal delay={500}>
           <Card className="bg-white border-none shadow-institutional">
@@ -159,6 +182,19 @@ export const NoiseMonitoringSection = () => {
               </div>
             </CardContent>
           </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={600}>
+          <SectionSummary
+            title="Monitoring & Measurement"
+            takeaways={[
+              'Class 1 meters provide precision measurements for compliance',
+              'Four measurement positions cover all regulatory requirements',
+              'Continuous monitoring enables trend analysis and early warning',
+              'Professional reports document compliance for regulators'
+            ]}
+            nextSteps={[{ title: 'Environmental Assessment', href: '#environmental' }]}
+          />
         </ScrollReveal>
       </div>
     </section>
