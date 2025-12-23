@@ -43,6 +43,24 @@ const teamMembers: TeamMember[] = [
     wattbyteRole: 'Fund Governance & Capital Strategy',
   },
   {
+    id: 'snehal',
+    name: 'SnehalKumar Patel',
+    role: 'President',
+    initials: 'SP',
+    gradientFrom: 'from-watt-trust',
+    gradientTo: 'to-watt-success',
+    accentColor: 'trust',
+    tagline: 'Engineering expertise behind the world\'s most ambitious infrastructure megaprojects across 5 continents.',
+    impactStats: [
+      { value: '1,000+', label: 'Super-Cells Deployed' },
+      { value: '6', label: 'Megaprojects' },
+      { value: '5', label: 'Continents' },
+      { value: '20+', label: 'Years' },
+    ],
+    badges: ['Global Infrastructure', 'Super-Cell® Pioneer', 'Engineering Excellence'],
+    wattbyteRole: 'Strategic Vision & Infrastructure Leadership',
+  },
+  {
     id: 'parth',
     name: 'Parth Patel',
     role: 'CEO',
@@ -217,8 +235,8 @@ export const LeadershipTeamSection = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
                 <AnimatedStat value={700} suffix="MW+" label="Pipeline" />
                 <AnimatedStat value={275} suffix="MW" label="Transacted" />
-                <AnimatedStat value={4} label="Executives" />
-                <AnimatedStat value={3} label="Continents" />
+                <AnimatedStat value={5} label="Executives" />
+                <AnimatedStat value={5} label="Continents" />
               </div>
             </div>
           </div>
