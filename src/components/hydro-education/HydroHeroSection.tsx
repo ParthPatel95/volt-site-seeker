@@ -1,6 +1,7 @@
 import React from 'react';
-import { Droplets, Thermometer, Volume2, Box, ArrowDown } from 'lucide-react';
+import { Droplets, Thermometer, Volume2, Box, ArrowDown, Clock, BookOpen, Calculator } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { Badge } from '@/components/ui/badge';
 
 const HydroHeroSection = () => {
   const stats = [
@@ -8,6 +9,12 @@ const HydroHeroSection = () => {
     { icon: Droplets, value: '1.02-1.08', label: 'PUE Rating' },
     { icon: Volume2, value: '70%', label: 'Less Noise' },
     { icon: Box, value: 'Modular', label: 'Container Design' },
+  ];
+
+  const courseStats = [
+    { icon: Clock, value: '~71 min', label: 'Total Reading Time' },
+    { icon: BookOpen, value: '12', label: 'Sections' },
+    { icon: Calculator, value: '5+', label: 'Interactive Tools' },
   ];
 
   return (
@@ -55,10 +62,27 @@ const HydroHeroSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-12">
+          <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-8">
             Advanced hydro-cooling technology enables mining operations in extreme environments 
             with superior energy efficiency, reduced noise, and modular scalability.
           </p>
+        </ScrollReveal>
+
+        {/* Course Stats */}
+        <ScrollReveal delay={250}>
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {courseStats.map((stat, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="px-4 py-2 bg-white/10 text-white/90 border border-white/20 hover:bg-white/15"
+              >
+                <stat.icon className="w-4 h-4 mr-2 text-cyan-400" />
+                <span className="font-bold mr-1">{stat.value}</span>
+                <span className="text-white/60">{stat.label}</span>
+              </Badge>
+            ))}
+          </div>
         </ScrollReveal>
 
         {/* Stats Bar */}

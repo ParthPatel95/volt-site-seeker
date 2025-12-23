@@ -8,6 +8,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 // Industry standards data
 const industryStandards = [
@@ -187,7 +189,7 @@ const HydroNoiseManagementSection = () => {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-white to-watt-light">
+    <section id="noise-management" className="py-16 md:py-24 bg-gradient-to-b from-white to-watt-light">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
@@ -204,6 +206,15 @@ const HydroNoiseManagementSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Calculate cumulative noise levels using logarithmic addition",
+            "Design noise mitigation strategies achieving 10-25 dB reduction",
+            "Ensure compliance with WHO, Alberta AUC, and OSHA standards"
+          ]}
+          estimatedTime="8 min"
+        />
 
         {/* 45MW Noise Calculation Explainer */}
         <ScrollReveal delay={100}>
@@ -484,6 +495,15 @@ const HydroNoiseManagementSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Hydro-cooling produces 28 dB less noise than air-cooling (630× reduction in sound energy)",
+            "Logarithmic addition: 18 containers at 67 dB each = 79.6 dB total",
+            "Acoustic barriers provide 10-15 dB reduction, enclosures 15-25 dB",
+            "Distance attenuation: -6 dB per doubling of distance from source"
+          ]}
+        />
       </div>
     </section>
   );

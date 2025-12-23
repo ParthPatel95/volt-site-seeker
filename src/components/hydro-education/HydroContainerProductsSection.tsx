@@ -14,6 +14,8 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const containerProducts = [
   {
@@ -125,7 +127,7 @@ const HydroContainerProductsSection = () => {
   const [selectedContainer, setSelectedContainer] = useState(containerProducts[0]);
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-blue-50/50">
+    <section id="container-products" className="py-20 bg-gradient-to-b from-white to-blue-50/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -142,6 +144,15 @@ const HydroContainerProductsSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Differentiate between HK3, HW5, and HD5 container systems",
+            "Understand water source requirements for each container type",
+            "Calculate container counts for different facility capacities"
+          ]}
+          estimatedTime="7 min"
+        />
 
         {/* Container Selector */}
         <ScrollReveal>
@@ -360,6 +371,17 @@ const HydroContainerProductsSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "HK3 uses plate heat exchangers - best for natural water sources",
+            "HW5 uses dry-wet cooling towers - best for inland/desert sites",
+            "HD5 uses immersion cooling - highest density, lowest noise",
+            "Basic unit = 1 transformer + 2 containers = 2.5 MW"
+          ]}
+          nextSectionId="cooling-methods"
+          nextSectionLabel="Learn Cooling Methods"
+        />
       </div>
     </section>
   );

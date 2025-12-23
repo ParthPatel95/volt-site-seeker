@@ -15,6 +15,8 @@ import {
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const materialCategories = [
   {
@@ -222,7 +224,7 @@ const HydroConstructionSection = () => {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(0);
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-amber-50/50">
+    <section id="construction" className="py-20 bg-gradient-to-b from-white to-amber-50/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -239,6 +241,15 @@ const HydroConstructionSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Plan material requirements for 100 MW facility construction",
+            "Understand 7-phase construction timeline (20-35 weeks total)",
+            "Learn fire protection and acceptance criteria requirements"
+          ]}
+          estimatedTime="7 min"
+        />
 
         {/* Material Preparation */}
         <ScrollReveal>
@@ -453,6 +464,17 @@ const HydroConstructionSection = () => {
             ))}
           </div>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "7 construction phases spanning 20-35 weeks total",
+            "CO₂ extinguishers only - never use water-based for electrical fires",
+            "72-hour stability test required before handover",
+            "Foundation: 15cm height, 12T capacity, level tolerance ±20mm"
+          ]}
+          nextSectionId="economics"
+          nextSectionLabel="Learn Economics"
+        />
       </div>
     </section>
   );

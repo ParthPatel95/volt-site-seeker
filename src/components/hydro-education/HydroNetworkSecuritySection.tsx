@@ -15,6 +15,8 @@ import {
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const networkLayers = [
   {
@@ -107,7 +109,7 @@ const HydroNetworkSecuritySection = () => {
   const [activeTab, setActiveTab] = useState('network');
 
   return (
-    <section className="py-20 bg-white">
+    <section id="network-security" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -124,6 +126,15 @@ const HydroNetworkSecuritySection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Design 3-tier network topology for mining facilities",
+            "Implement multi-zone physical security systems",
+            "Configure farm management platforms for monitoring"
+          ]}
+          estimatedTime="6 min"
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <ScrollReveal>
@@ -394,6 +405,17 @@ const HydroNetworkSecuritySection = () => {
             </ScrollReveal>
           </TabsContent>
         </Tabs>
+
+        <SectionSummary
+          takeaways={[
+            "3-tier network: Core (10+ Gbps) → Aggregation (10 Gbps) → Access (1 Gbps)",
+            "Bandwidth: ~10 Kbps per miner, dual ISP recommended",
+            "3-zone security: Perimeter, Facility Grounds, Operations Area",
+            "Biometric + card access for critical areas with audit trails"
+          ]}
+          nextSectionId="construction"
+          nextSectionLabel="Learn Construction Guide"
+        />
       </div>
     </section>
   );

@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
+import InteractivePUEComparison from './InteractivePUEComparison';
 
 const advantages = [
   {
@@ -83,7 +86,7 @@ const caseStudies = [
 
 const HydroAdvantagesSection = () => {
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-blue-50/50">
+    <section id="advantages" className="py-20 bg-gradient-to-b from-background to-blue-50/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -100,6 +103,15 @@ const HydroAdvantagesSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Understand the 6 key advantages of hydro-cooling over air-cooling",
+            "Compare PUE ratings and operational metrics between cooling methods",
+            "Analyze real-world deployment case studies across different climates"
+          ]}
+          estimatedTime="8 min"
+        />
 
         {/* Advantages Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
@@ -190,6 +202,22 @@ const HydroAdvantagesSection = () => {
             ))}
           </div>
         </ScrollReveal>
+
+        {/* Interactive PUE Comparison */}
+        <ScrollReveal delay={100}>
+          <InteractivePUEComparison />
+        </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Hydro-cooling achieves PUE of 1.02-1.08 vs 1.3-1.6 for air-cooling",
+            "Enables operation in up to 45°C ambient temperatures",
+            "Reduces noise by up to 70% compared to air-cooled systems",
+            "Proven deployments across Middle East, Southeast Asia, and Northern Europe"
+          ]}
+          nextSectionId="container-products"
+          nextSectionLabel="Explore Container Products"
+        />
       </div>
     </section>
   );

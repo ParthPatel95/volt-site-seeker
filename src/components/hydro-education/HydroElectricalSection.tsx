@@ -12,6 +12,8 @@ import {
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LearningObjectives from './LearningObjectives';
+import SectionSummary from './SectionSummary';
 
 const voltageSteps = [
   { voltage: '110-220 kV', name: 'Grid Connection', description: 'High voltage from transmission grid', color: 'from-red-500 to-red-600' },
@@ -122,7 +124,7 @@ const HydroElectricalSection = () => {
   const currentMethod = cableInstallationMethods.find(m => m.id === selectedMethod) || cableInstallationMethods[0];
 
   return (
-    <section className="py-20 bg-white">
+    <section id="electrical" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -139,6 +141,15 @@ const HydroElectricalSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <LearningObjectives
+          objectives={[
+            "Understand the voltage step-down chain from grid to miners",
+            "Learn regional voltage standards for global deployments",
+            "Compare cable installation methods and protection requirements"
+          ]}
+          estimatedTime="7 min"
+        />
 
         {/* Voltage Step-Down Visualization */}
         <ScrollReveal>
@@ -415,6 +426,17 @@ const HydroElectricalSection = () => {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <SectionSummary
+          takeaways={[
+            "Voltage chain: 110-220 kV → 35 kV → 10 kV → 400 V → 12 V DC",
+            "2,500 kVA transformer supports 2 containers at ≤85% load factor",
+            "Container incoming current: ~1,972A requires parallel cables",
+            "Regional voltage standards vary - verify local grid compatibility"
+          ]}
+          nextSectionId="network-security"
+          nextSectionLabel="Learn Network & Security"
+        />
       </div>
     </section>
   );
