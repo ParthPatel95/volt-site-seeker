@@ -16,7 +16,6 @@ import { AnimatedApproach } from '@/components/about/AnimatedApproach';
 import { AnimatedWhatWeDo } from '@/components/about/AnimatedWhatWeDo';
 import { AnimatedAdvantages } from '@/components/about/AnimatedAdvantages';
 import { AnimatedCTA } from '@/components/about/AnimatedCTA';
-import { InvestorSection } from '@/components/about/InvestorSection';
 
 const AboutUs: React.FC = () => {
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
@@ -78,11 +77,6 @@ const AboutUs: React.FC = () => {
 
         {/* Leadership Team Section */}
         <LeadershipTeamSection />
-
-        {/* Investors Section */}
-        <ScrollReveal>
-          <InvestorSection />
-        </ScrollReveal>
 
         {/* Join Our Mission CTA - Animated */}
         <ScrollReveal>
