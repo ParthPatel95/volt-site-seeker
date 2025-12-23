@@ -28,7 +28,7 @@ const investors: Investor[] = [
   {
     id: 'satt',
     name: 'SnehalKumar Patel',
-    title: 'Professional Engineer AB-SK-BC & Visionary Chairman',
+    title: 'Visionary Chairman & Veteran Engineer',
     company: 'SATT Engineering Ltd.',
     initials: 'SP',
     gradientFrom: 'from-watt-success',
