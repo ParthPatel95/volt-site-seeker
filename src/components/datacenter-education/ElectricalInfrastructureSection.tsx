@@ -2,6 +2,8 @@ import React from 'react';
 import { Zap, Gauge, Shield, AlertTriangle, CheckCircle, Cable, ArrowDown, Sparkles, Activity, Cpu } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 // Import AI-generated 3D images
 import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';

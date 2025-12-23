@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Wind, Thermometer, ArrowRight, ArrowUp, ArrowDown, Info, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import miningFloorInterior from '@/assets/datacenter-mining-floor-interior.jpg';
 
 const AirflowContainmentSection = () => {

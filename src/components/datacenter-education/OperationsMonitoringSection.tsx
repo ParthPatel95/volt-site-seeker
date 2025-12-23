@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Monitor, Bell, Clock, Shield, Wrench, Activity, Zap, Thermometer, Cpu, Wifi, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 import nocInterior from '@/assets/datacenter-noc-interior.jpg';
 
 const OperationsMonitoringSection = () => {

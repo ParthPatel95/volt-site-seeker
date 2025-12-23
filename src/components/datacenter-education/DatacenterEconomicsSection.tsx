@@ -3,6 +3,8 @@ import { DollarSign, TrendingUp, Calculator, PieChart, BarChart3, ArrowRight, Za
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { PUE_RANGES, CURRENT_BTC_PRICE, DATA_DISCLAIMER } from '@/constants/mining-data';
+import LearningObjectives from '@/components/academy/LearningObjectives';
+import SectionSummary from '@/components/academy/SectionSummary';
 
 const DatacenterEconomicsSection = () => {
   const [facilitySize, setFacilitySize] = useState(50); // MW
