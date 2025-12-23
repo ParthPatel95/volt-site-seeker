@@ -3,6 +3,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// In-memory cache for 10-year historical data (keyed by uptimePercentage)
+interface CachedResponse {
+  data: any;
+  timestamp: number;
+}
+const historicalCache = new Map<string, CachedResponse>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+function getCacheKey(uptimePercentage: number): string {
+  return `historical-10year-${uptimePercentage}`;
+}
+
 interface HistoricalDataPoint {
   datetime: string;
   datetimeMPT?: string; // Mountain Prevailing Time - the reliable timestamp
@@ -159,119 +171,145 @@ Deno.serve(async (req) => {
         return pointDateUTC <= now;
       });
     } else if (timeframe === 'historical-10year') {
-      // Fetch real 8-year historical data from AESO
-      console.log(`Fetching 8-year real historical data from AESO API with ${uptimePercentage}% uptime filter...`);
+      // Check in-memory cache first
+      const cacheKey = getCacheKey(uptimePercentage);
+      const cached = historicalCache.get(cacheKey);
+      
+      if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+        console.log(`[historical-10year] Cache HIT for ${uptimePercentage}% uptime (age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s)`);
+        return new Response(
+          JSON.stringify(cached.data),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log(`[historical-10year] Cache MISS, fetching 8-year data with ${uptimePercentage}% uptime filter...`);
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
-      const historicalYearsData = [];
-      
-      // Fetch data for each of the past 8 years (including current year)
-      // This will fetch 8 complete years of data
       const startYear = currentYear - 7;
       
-      console.log(`Will attempt to fetch data for years ${startYear} to ${currentYear} (8 years total)`);
+      console.log(`Will fetch data for years ${startYear} to ${currentYear} (8 years) in parallel batches...`);
+      
+      // Prepare all year requests
+      const yearRequests: Array<{
+        year: number;
+        startDate: Date;
+        endDate: Date;
+      }> = [];
       
       for (let year = startYear; year <= currentYear; year++) {
-        // For current year, only fetch up to today
         const isCurrentYear = year === currentYear;
-        const yearStartDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0)); // January 1st UTC
+        const yearStartDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
         const yearEndDate = isCurrentYear 
           ? new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59))
-          : new Date(Date.UTC(year, 11, 31, 23, 59, 59)); // December 31st UTC
+          : new Date(Date.UTC(year, 11, 31, 23, 59, 59));
         
-        try {
-          console.log(`Fetching real AESO data for year ${year} (${yearStartDate.toISOString().slice(0, 10)} to ${yearEndDate.toISOString().slice(0, 10)})...`);
-          const yearData = await fetchAESOHistoricalData(yearStartDate, yearEndDate, apiKey);
-          
-          if (yearData && yearData.length > 0) {
-            console.log(`Received ${yearData.length} data points for year ${year}`);
-            
-            // Apply uptime filter if not 100%
-            let filteredYearData = yearData;
-            if (uptimePercentage < 100) {
-              const hoursToKeep = Math.floor(yearData.length * (uptimePercentage / 100));
-              // Sort by price and keep the lowest-priced hours
-              filteredYearData = [...yearData]
-                .sort((a, b) => a.price - b.price)
-                .slice(0, hoursToKeep);
-              console.log(`Applied ${uptimePercentage}% uptime filter: ${yearData.length} → ${filteredYearData.length} hours (removed ${yearData.length - filteredYearData.length} highest-price hours)`);
-            }
-            
-            const yearlyStats = await processHistoricalData(filteredYearData, 'yearly');
-            
-            if (yearlyStats && yearlyStats.statistics) {
-              historicalYearsData.push({
-                year,
-                average: Math.round(yearlyStats.statistics.average * 100) / 100,
-                peak: Math.round(yearlyStats.statistics.peak * 100) / 100,
-                low: Math.round(yearlyStats.statistics.low * 100) / 100,
-                volatility: Math.round(yearlyStats.statistics.volatility * 100) / 100,
-                dataPoints: yearData.length,
-                filteredDataPoints: filteredYearData.length,
-                uptimePercentage,
-                isReal: true
-              });
-              console.log(`Year ${year}: Avg=$${yearlyStats.statistics.average.toFixed(2)} CAD/MWh (${filteredYearData.length} of ${yearData.length} data points at ${uptimePercentage}% uptime)`);
-            } else {
-              console.warn(`No statistics calculated for year ${year}`);
-              historicalYearsData.push({
+        yearRequests.push({ year, startDate: yearStartDate, endDate: yearEndDate });
+      }
+      
+      // Fetch years in parallel batches of 4 (to avoid overwhelming the API)
+      const BATCH_SIZE = 4;
+      const historicalYearsData: any[] = [];
+      
+      for (let i = 0; i < yearRequests.length; i += BATCH_SIZE) {
+        const batch = yearRequests.slice(i, i + BATCH_SIZE);
+        console.log(`Fetching batch ${Math.floor(i / BATCH_SIZE) + 1}: years ${batch.map(b => b.year).join(', ')}`);
+        
+        const batchResults = await Promise.allSettled(
+          batch.map(async ({ year, startDate, endDate }) => {
+            try {
+              const yearData = await fetchAESOHistoricalData(startDate, endDate, apiKey);
+              
+              if (yearData && yearData.length > 0) {
+                // Apply uptime filter if not 100%
+                let filteredYearData = yearData;
+                if (uptimePercentage < 100) {
+                  const hoursToKeep = Math.floor(yearData.length * (uptimePercentage / 100));
+                  filteredYearData = [...yearData]
+                    .sort((a, b) => a.price - b.price)
+                    .slice(0, hoursToKeep);
+                }
+                
+                // Calculate stats directly without heavy processHistoricalData
+                const prices = filteredYearData.map(d => d.price);
+                const average = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+                const peak = Math.max(...prices);
+                const low = Math.min(...prices);
+                const mean = average;
+                const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
+                const volatility = Math.sqrt(variance);
+                
+                return {
+                  year,
+                  average: Math.round(average * 100) / 100,
+                  peak: Math.round(peak * 100) / 100,
+                  low: Math.round(low * 100) / 100,
+                  volatility: Math.round(volatility * 100) / 100,
+                  dataPoints: yearData.length,
+                  filteredDataPoints: filteredYearData.length,
+                  uptimePercentage,
+                  isReal: true
+                };
+              } else {
+                return {
+                  year,
+                  average: null,
+                  peak: null,
+                  low: null,
+                  volatility: null,
+                  dataPoints: 0,
+                  isReal: false,
+                  noData: true
+                };
+              }
+            } catch (error) {
+              const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+              console.error(`Error fetching year ${year}:`, errorMsg);
+              return {
                 year,
                 average: null,
                 peak: null,
                 low: null,
                 volatility: null,
                 dataPoints: 0,
-                isReal: false
-              });
+                isReal: false,
+                error: errorMsg
+              };
             }
-          } else {
-            console.log(`No data available for year ${year} - AESO API may not have historical data this far back`);
-            // Still add the year to show in the UI that we attempted to fetch it
-            historicalYearsData.push({
-              year,
-              average: null,
-              peak: null,
-              low: null,
-              volatility: null,
-              dataPoints: 0,
-              isReal: false,
-              noData: true  // Flag to indicate API had no data for this year
-            });
+          })
+        );
+        
+        // Process batch results
+        for (const result of batchResults) {
+          if (result.status === 'fulfilled') {
+            historicalYearsData.push(result.value);
           }
-        } catch (error) {
-          console.error(`Error fetching data for year ${year}:`, error);
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          console.error(`Error details: ${errorMsg}`);
-          // Still add the year to show we attempted it
-          historicalYearsData.push({
-            year,
-            average: null,
-            peak: null,
-            low: null,
-            volatility: null,
-            dataPoints: 0,
-            isReal: false,
-            error: errorMsg
-          });
         }
       }
       
-      console.log(`Completed fetching 8-year data. Total years in response: ${historicalYearsData.length}, Years with real data: ${historicalYearsData.filter(y => y.isReal).length}`);
+      // Sort by year
+      historicalYearsData.sort((a, b) => a.year - b.year);
+      
+      console.log(`Completed fetching 8-year data. Total: ${historicalYearsData.length}, With data: ${historicalYearsData.filter(y => y.isReal).length}`);
+      
+      const responseData = {
+        historicalYears: historicalYearsData,
+        totalYears: historicalYearsData.length,
+        realDataYears: historicalYearsData.filter(y => y.isReal).length,
+        uptimePercentage,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      // Cache the result
+      historicalCache.set(cacheKey, {
+        data: responseData,
+        timestamp: Date.now()
+      });
+      console.log(`[historical-10year] Cached response for ${uptimePercentage}% uptime`);
       
       return new Response(
-        JSON.stringify({
-          historicalYears: historicalYearsData,
-          totalYears: historicalYearsData.length,
-          realDataYears: historicalYearsData.filter(y => y.isReal).length,
-          uptimePercentage,
-          lastUpdated: new Date().toISOString()
-        }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
-        }
+        JSON.stringify(responseData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
