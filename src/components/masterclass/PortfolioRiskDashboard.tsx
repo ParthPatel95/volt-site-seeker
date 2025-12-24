@@ -74,7 +74,7 @@ export const PortfolioRiskDashboard = () => {
       const siteAvg = Object.values(site.riskScores).reduce((a, b) => a + b, 0) / 5;
       return acc + siteAvg;
     }, 0) / sites.length,
-    geographicDiversification: new Set(sites.map(s => s.region)).size / 5 * 100 // Assume 5 possible regions
+    geographicDiversification: new Set(sites.map(s => s.region)).size / 5 * 100
   };
 
   // Aggregate risk by category
@@ -131,11 +131,11 @@ export const PortfolioRiskDashboard = () => {
   const selectedSiteData = sites.find(s => s.id === selectedSite);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-foreground">Portfolio Risk Dashboard</h3>
-          <p className="text-sm text-muted-foreground">Visualize and manage risk across your mining portfolio</p>
+          <h3 className="text-xl font-bold text-watt-navy">Portfolio Risk Dashboard</h3>
+          <p className="text-sm text-watt-navy/60">Visualize and manage risk across your mining portfolio</p>
         </div>
         <Button onClick={() => setShowAddSite(true)} size="sm" className="gap-2">
           <Plus className="w-4 h-4" />
@@ -145,40 +145,40 @@ export const PortfolioRiskDashboard = () => {
 
       {/* Portfolio Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="bg-watt-light rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm text-muted-foreground">Total Capacity</span>
+            <Zap className="w-4 h-4 text-watt-blue" />
+            <span className="text-sm text-watt-navy/60">Total Capacity</span>
           </div>
-          <p className="text-2xl font-bold text-foreground">{portfolioMetrics.totalCapacity} MW</p>
+          <p className="text-2xl font-bold text-watt-navy">{portfolioMetrics.totalCapacity} MW</p>
         </div>
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="bg-watt-light rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Building2 className="w-4 h-4 text-green-500" />
-            <span className="text-sm text-muted-foreground">Operational</span>
+            <span className="text-sm text-watt-navy/60">Operational</span>
           </div>
-          <p className="text-2xl font-bold text-foreground">{portfolioMetrics.operationalCapacity} MW</p>
+          <p className="text-2xl font-bold text-watt-navy">{portfolioMetrics.operationalCapacity} MW</p>
         </div>
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="bg-watt-light rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-orange-500" />
-            <span className="text-sm text-muted-foreground">Avg Risk Score</span>
+            <span className="text-sm text-watt-navy/60">Avg Risk Score</span>
           </div>
-          <p className="text-2xl font-bold text-foreground">{portfolioMetrics.avgRiskScore.toFixed(0)}%</p>
+          <p className="text-2xl font-bold text-watt-navy">{portfolioMetrics.avgRiskScore.toFixed(0)}%</p>
         </div>
-        <div className="bg-muted/50 rounded-xl p-4">
+        <div className="bg-watt-light rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <MapPin className="w-4 h-4 text-purple-500" />
-            <span className="text-sm text-muted-foreground">Diversification</span>
+            <span className="text-sm text-watt-navy/60">Diversification</span>
           </div>
-          <p className="text-2xl font-bold text-foreground">{portfolioMetrics.geographicDiversification.toFixed(0)}%</p>
+          <p className="text-2xl font-bold text-watt-navy">{portfolioMetrics.geographicDiversification.toFixed(0)}%</p>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Site List */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-foreground">Sites ({sites.length})</h4>
+          <h4 className="font-semibold text-watt-navy">Sites ({sites.length})</h4>
           {sites.map((site) => {
             const avgRisk = Object.values(site.riskScores).reduce((a, b) => a + b, 0) / 5;
             const isSelected = selectedSite === site.id;
@@ -190,8 +190,8 @@ export const PortfolioRiskDashboard = () => {
                 className={cn(
                   "p-3 rounded-xl border cursor-pointer transition-all",
                   isSelected 
-                    ? "border-primary bg-primary/5" 
-                    : "border-border hover:border-primary/50"
+                    ? "border-watt-blue bg-watt-blue/5" 
+                    : "border-gray-200 hover:border-watt-blue/50"
                 )}
                 whileHover={{ scale: 1.01 }}
               >
@@ -202,20 +202,20 @@ export const PortfolioRiskDashboard = () => {
                       site.operationalStatus === "operational" ? "bg-green-500" :
                       site.operationalStatus === "development" ? "bg-yellow-500" : "bg-gray-400"
                     )} />
-                    <span className="font-medium text-foreground text-sm">{site.name}</span>
+                    <span className="font-medium text-watt-navy text-sm">{site.name}</span>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeSite(site.id); }}
-                    className="p-1 hover:bg-destructive/10 rounded"
+                    className="p-1 hover:bg-red-100 rounded"
                   >
-                    <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                    <X className="w-3 h-3 text-gray-400 hover:text-red-500" />
                   </button>
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center justify-between text-xs text-watt-navy/50">
                   <span>{site.location}</span>
                   <span>{site.capacityMW} MW</span>
                 </div>
-                <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className={cn(
                       "h-full rounded-full",
@@ -231,13 +231,13 @@ export const PortfolioRiskDashboard = () => {
 
         {/* Aggregate Risk Chart */}
         <div>
-          <h4 className="font-semibold text-foreground mb-4">Portfolio Risk Distribution</h4>
+          <h4 className="font-semibold text-watt-navy mb-4">Portfolio Risk Distribution</h4>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={aggregateRiskData} layout="vertical">
-              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
+              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: '#1e3a5f' }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#1e3a5f' }} width={80} />
               <Tooltip 
-                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                 formatter={(value: number) => [`${value.toFixed(0)}%`, 'Risk Level']}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
@@ -251,15 +251,15 @@ export const PortfolioRiskDashboard = () => {
 
         {/* Site Detail / Radar Chart */}
         <div>
-          <h4 className="font-semibold text-foreground mb-4">
+          <h4 className="font-semibold text-watt-navy mb-4">
             {selectedSiteData ? `${selectedSiteData.name} Risk Profile` : "Select a Site"}
           </h4>
           {selectedSiteData ? (
             <ResponsiveContainer width="100%" height={250}>
               <RadarChart data={getRadarData(selectedSiteData)}>
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
+                <PolarGrid stroke="#e5e7eb" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#1e3a5f' }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10, fill: '#1e3a5f' }} />
                 <Radar
                   name="Risk Resilience"
                   dataKey="A"
@@ -270,7 +270,7 @@ export const PortfolioRiskDashboard = () => {
               </RadarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
+            <div className="h-[250px] flex items-center justify-center text-watt-navy/50 text-sm">
               Click on a site to view detailed risk profile
             </div>
           )}
@@ -288,13 +288,13 @@ export const PortfolioRiskDashboard = () => {
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            className="bg-card border border-border rounded-2xl p-6 max-w-md w-full mx-4"
+            className="bg-white border border-gray-200 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl"
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold mb-4">Add New Site</h3>
+            <h3 className="text-lg font-bold text-watt-navy mb-4">Add New Site</h3>
             <div className="space-y-4">
               <div>
-                <Label>Site Name</Label>
+                <Label className="text-watt-navy">Site Name</Label>
                 <Input 
                   value={newSite.name}
                   onChange={e => setNewSite({...newSite, name: e.target.value})}
@@ -302,7 +302,7 @@ export const PortfolioRiskDashboard = () => {
                 />
               </div>
               <div>
-                <Label>Location</Label>
+                <Label className="text-watt-navy">Location</Label>
                 <Input 
                   value={newSite.location}
                   onChange={e => setNewSite({...newSite, location: e.target.value})}
@@ -310,7 +310,7 @@ export const PortfolioRiskDashboard = () => {
                 />
               </div>
               <div>
-                <Label>Region</Label>
+                <Label className="text-watt-navy">Region</Label>
                 <Select value={newSite.region} onValueChange={v => setNewSite({...newSite, region: v})}>
                   <SelectTrigger>
                     <SelectValue />
@@ -325,7 +325,7 @@ export const PortfolioRiskDashboard = () => {
                 </Select>
               </div>
               <div>
-                <Label>Capacity (MW)</Label>
+                <Label className="text-watt-navy">Capacity (MW)</Label>
                 <Input 
                   type="number"
                   value={newSite.capacityMW}
