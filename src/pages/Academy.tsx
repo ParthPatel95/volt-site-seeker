@@ -15,11 +15,8 @@ const academyModules = [
   { id: "electrical", title: "Electrical Infrastructure", route: "/electrical-infrastructure", totalSections: 12 },
   { id: "noise", title: "Noise Management", route: "/noise-management", totalSections: 10 },
   { id: "immersion", title: "Immersion Cooling", route: "/immersion-cooling", totalSections: 10 },
-  { id: "site-selection", title: "Site Selection", route: "/site-selection", totalSections: 9 },
   { id: "mining-economics", title: "Mining Economics", route: "/mining-economics", totalSections: 8 },
   { id: "operations", title: "Operations & Maintenance", route: "/operations", totalSections: 8 },
-  { id: "risk-management", title: "Risk Management", route: "/risk-management", totalSections: 8 },
-  { id: "scaling-growth", title: "Scaling & Growth", route: "/scaling-growth", totalSections: 8 },
   { id: "strategic-operations", title: "Strategic Operations Masterclass", route: "/strategic-operations", totalSections: 6 },
 ];
 
