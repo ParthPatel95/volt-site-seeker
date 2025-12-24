@@ -98,6 +98,7 @@ const SiteScoringSection = () => {
         {/* Learning Objectives */}
         <ScrollReveal delay={50}>
           <SiteSelectionLearningObjectives
+            variant="light"
             objectives={[
               "Apply weighted scoring methodology across 8 evaluation criteria",
               "Interpret VoltScore™ grades (A-F) and corresponding recommended actions",

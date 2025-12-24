@@ -134,6 +134,7 @@ const RegulatoryEnvironmentSection = () => {
         {/* Learning Objectives */}
         <ScrollReveal delay={50}>
           <SiteSelectionLearningObjectives
+            variant="light"
             objectives={[
               "Score jurisdictions by crypto-friendliness and permitting complexity",
               "Identify required permits and realistic timelines for each",

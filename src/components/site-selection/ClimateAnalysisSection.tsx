@@ -102,6 +102,7 @@ const ClimateAnalysisSection = () => {
         {/* Learning Objectives */}
         <ScrollReveal delay={50}>
           <SiteSelectionLearningObjectives
+            variant="light"
             objectives={[
               "Quantify PUE impact by climate zone (1.1-1.7 range)",
               "Calculate cooling overhead costs as a percentage of IT load",

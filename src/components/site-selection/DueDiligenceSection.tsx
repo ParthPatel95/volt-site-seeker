@@ -107,6 +107,7 @@ const DueDiligenceSection = () => {
         {/* Learning Objectives */}
         <ScrollReveal delay={50}>
           <SiteSelectionLearningObjectives
+            variant="light"
             objectives={[
               "Follow the 4-phase due diligence process from screening to final approval",
               "Identify critical red flags that should stop or pause a deal",
