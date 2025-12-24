@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
@@ -19,7 +19,7 @@ interface Module {
   icon: React.ElementType;
   route: string;
   lessons: Lesson[];
-  category: 'fundamentals' | 'operations' | 'advanced';
+  category: 'fundamentals' | 'operations' | 'advanced' | 'masterclass';
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
@@ -273,10 +273,28 @@ const curriculum: Module[] = [
       { title: "Growth Resources", anchor: "scaling-cta" },
     ],
   },
+  {
+    id: "strategic-operations",
+    title: "Strategic Operations Masterclass",
+    description: "Complete lifecycle from site selection to multi-site portfolio management. Combines site selection, risk management, and scaling strategies.",
+    icon: GraduationCap,
+    route: "/strategic-operations",
+    category: "masterclass",
+    difficulty: "Advanced",
+    lessons: [
+      { title: "Strategic Foundations", anchor: "intro" },
+      { title: "Power Infrastructure", anchor: "track-1" },
+      { title: "Risk Assessment", anchor: "track-2" },
+      { title: "Project Execution", anchor: "track-3" },
+      { title: "Scaling Operations", anchor: "track-4" },
+      { title: "Capital & Growth", anchor: "track-5" },
+    ],
+  },
 ];
 
 const categories = [
   { key: 'all', label: 'All Modules', count: curriculum.length },
+  { key: 'masterclass', label: 'Masterclass', count: curriculum.filter(m => m.category === 'masterclass').length },
   { key: 'fundamentals', label: 'Fundamentals', count: curriculum.filter(m => m.category === 'fundamentals').length },
   { key: 'operations', label: 'Operations', count: curriculum.filter(m => m.category === 'operations').length },
   { key: 'advanced', label: 'Advanced', count: curriculum.filter(m => m.category === 'advanced').length },

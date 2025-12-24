@@ -8,12 +8,12 @@ import { PortfolioRiskDashboard } from "@/components/masterclass/PortfolioRiskDa
 import { MasterclassCTASection } from "@/components/masterclass/MasterclassCTASection";
 
 // Lazy load existing sections from the 3 modules
-const PowerInfrastructureSection = lazy(() => import("@/components/site-selection/PowerInfrastructureSection").then(m => ({ default: m.PowerInfrastructureSection })));
-const EnergyMarketsSection = lazy(() => import("@/components/site-selection/EnergyMarketsSection").then(m => ({ default: m.EnergyMarketsSection })));
-const RegulatoryEnvironmentSection = lazy(() => import("@/components/site-selection/RegulatoryEnvironmentSection").then(m => ({ default: m.RegulatoryEnvironmentSection })));
-const ClimateAnalysisSection = lazy(() => import("@/components/site-selection/ClimateAnalysisSection").then(m => ({ default: m.ClimateAnalysisSection })));
-const DueDiligenceSection = lazy(() => import("@/components/site-selection/DueDiligenceSection").then(m => ({ default: m.DueDiligenceSection })));
-const SiteScoringSection = lazy(() => import("@/components/site-selection/SiteScoringSection").then(m => ({ default: m.SiteScoringSection })));
+const PowerInfrastructureSection = lazy(() => import("@/components/site-selection/PowerInfrastructureSection"));
+const EnergyMarketsSection = lazy(() => import("@/components/site-selection/EnergyMarketsSection"));
+const RegulatoryEnvironmentSection = lazy(() => import("@/components/site-selection/RegulatoryEnvironmentSection"));
+const ClimateAnalysisSection = lazy(() => import("@/components/site-selection/ClimateAnalysisSection"));
+const DueDiligenceSection = lazy(() => import("@/components/site-selection/DueDiligenceSection"));
+const SiteScoringSection = lazy(() => import("@/components/site-selection/SiteScoringSection"));
 const RiskIntroSection = lazy(() => import("@/components/risk-management/RiskIntroSection").then(m => ({ default: m.RiskIntroSection })));
 const MarketRiskSection = lazy(() => import("@/components/risk-management/MarketRiskSection").then(m => ({ default: m.MarketRiskSection })));
 const OperationalRiskSection = lazy(() => import("@/components/risk-management/OperationalRiskSection").then(m => ({ default: m.OperationalRiskSection })));
