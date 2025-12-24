@@ -83,6 +83,7 @@ const PowerInfrastructureSection = () => {
         {/* Learning Objectives */}
         <ScrollReveal delay={50}>
           <SiteSelectionLearningObjectives
+            variant="light"
             objectives={[
               "Differentiate transmission voltage classes (25kV-500kV) and their mining suitability",
               "Evaluate substation capacity and critical interconnection requirements",

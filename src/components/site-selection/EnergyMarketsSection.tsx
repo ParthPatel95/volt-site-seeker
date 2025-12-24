@@ -91,6 +91,7 @@ const EnergyMarketsSection = () => {
         {/* Learning Objectives */}
         <ScrollReveal delay={50}>
           <SiteSelectionLearningObjectives
+            variant="light"
             objectives={[
               "Compare deregulated vs regulated energy markets and their implications",
               "Analyze all-in energy costs beyond headline rates (transmission, demand charges, ancillary)",
