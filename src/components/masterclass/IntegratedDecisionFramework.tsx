@@ -85,7 +85,6 @@ const decisionTree: DecisionNode[] = [
       { label: "Start over", value: "restart", next: "start", impact: "neutral" }
     ]
   },
-  // Additional nodes for various paths
   {
     id: "power-strategy",
     question: "Which power strategy are you pursuing?",
@@ -207,12 +206,13 @@ const decisionTree: DecisionNode[] = [
   }
 ];
 
+// Static color mappings for tracks
 const trackInfo = {
-  1: { icon: MapPin, color: "purple", label: "Site Selection" },
-  2: { icon: ShieldAlert, color: "orange", label: "Risk Assessment" },
-  3: { icon: Zap, color: "blue", label: "Execution" },
-  4: { icon: TrendingUp, color: "green", label: "Scaling" },
-  5: { icon: DollarSign, color: "pink", label: "Capital" }
+  1: { icon: MapPin, label: "Site Selection", lightBg: "bg-purple-500/10", text: "text-purple-600" },
+  2: { icon: ShieldAlert, label: "Risk Assessment", lightBg: "bg-orange-500/10", text: "text-orange-600" },
+  3: { icon: Zap, label: "Execution", lightBg: "bg-blue-500/10", text: "text-blue-600" },
+  4: { icon: TrendingUp, label: "Scaling", lightBg: "bg-green-500/10", text: "text-green-600" },
+  5: { icon: DollarSign, label: "Capital", lightBg: "bg-pink-500/10", text: "text-pink-600" }
 };
 
 export const IntegratedDecisionFramework = () => {
@@ -227,12 +227,10 @@ export const IntegratedDecisionFramework = () => {
     setAnswers(prev => ({ ...prev, [currentNodeId]: option.value }));
     
     if (option.next === null) {
-      // End of tree
       return;
     }
     
     if (option.next === "start") {
-      // Restart
       setHistory([]);
       setAnswers({});
       setCurrentNodeId("start");
@@ -262,13 +260,13 @@ export const IntegratedDecisionFramework = () => {
   const isComplete = currentNode.options.every(o => o.next === null || o.next === "start");
 
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500/10 via-orange-500/10 to-green-500/10 p-4 border-b border-border">
+      <div className="bg-watt-light p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-foreground">Strategic Decision Framework</h3>
-            <p className="text-sm text-muted-foreground">Interactive guide integrating site selection, risk, and scaling</p>
+            <h3 className="text-lg font-bold text-watt-navy">Strategic Decision Framework</h3>
+            <p className="text-sm text-watt-navy/60">Interactive guide integrating site selection, risk, and scaling</p>
           </div>
           <div className="flex items-center gap-2">
             {history.length > 0 && (
@@ -296,8 +294,8 @@ export const IntegratedDecisionFramework = () => {
                 key={t}
                 className={cn(
                   "flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors",
-                  isActive ? `bg-${info.color}-500/20 text-${info.color}-600` : 
-                  isPast ? "bg-muted text-muted-foreground" : "text-muted-foreground/50"
+                  isActive ? `${info.lightBg} ${info.text}` : 
+                  isPast ? "bg-gray-100 text-gray-600" : "text-gray-400"
                 )}
               >
                 <info.icon className="w-3 h-3" />
@@ -322,15 +320,15 @@ export const IntegratedDecisionFramework = () => {
           {track && (
             <div className={cn(
               "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm mb-4",
-              `bg-${track.color}-500/10 text-${track.color}-600`
+              track.lightBg, track.text
             )}>
               <track.icon className="w-4 h-4" />
               Track {currentNode.track}: {track.label}
             </div>
           )}
 
-          <h4 className="text-xl font-bold text-foreground mb-2">{currentNode.question}</h4>
-          <p className="text-muted-foreground mb-6">{currentNode.context}</p>
+          <h4 className="text-xl font-bold text-watt-navy mb-2">{currentNode.question}</h4>
+          <p className="text-watt-navy/60 mb-6">{currentNode.context}</p>
 
           {/* Options */}
           <div className="space-y-3">
@@ -340,8 +338,8 @@ export const IntegratedDecisionFramework = () => {
                 onClick={() => handleSelect(option)}
                 className={cn(
                   "w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left",
-                  "border-border hover:border-primary hover:bg-primary/5",
-                  answers[currentNodeId] === option.value && "border-primary bg-primary/5"
+                  "border-gray-200 hover:border-watt-blue hover:bg-watt-blue/5",
+                  answers[currentNodeId] === option.value && "border-watt-blue bg-watt-blue/5"
                 )}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -350,9 +348,9 @@ export const IntegratedDecisionFramework = () => {
                   {option.impact === "positive" && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                   {option.impact === "negative" && <XCircle className="w-5 h-5 text-red-500" />}
                   {option.impact === "neutral" && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
-                  <span className="font-medium text-foreground">{option.label}</span>
+                  <span className="font-medium text-watt-navy">{option.label}</span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-watt-navy/40" />
               </motion.button>
             ))}
           </div>
@@ -362,9 +360,9 @@ export const IntegratedDecisionFramework = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-8 p-6 bg-green-500/10 border border-green-500/20 rounded-xl"
+              className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl"
             >
-              <h5 className="font-bold text-foreground mb-4">Your Decision Path Summary</h5>
+              <h5 className="font-bold text-watt-navy mb-4">Your Decision Path Summary</h5>
               <div className="space-y-2">
                 {history.map((nodeId, index) => {
                   const node = decisionTree.find(n => n.id === nodeId);
@@ -373,13 +371,13 @@ export const IntegratedDecisionFramework = () => {
                   
                   return (
                     <div key={nodeId} className="flex items-start gap-2 text-sm">
-                      <span className="text-muted-foreground">{index + 1}.</span>
-                      <span className="text-foreground">{selectedOption?.label}</span>
+                      <span className="text-watt-navy/50">{index + 1}.</span>
+                      <span className="text-watt-navy">{selectedOption?.label}</span>
                     </div>
                   );
                 })}
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">
+              <p className="mt-4 text-sm text-watt-navy/60">
                 Based on your selections, proceed through the masterclass tracks in order, 
                 focusing on the areas highlighted by your decision path.
               </p>

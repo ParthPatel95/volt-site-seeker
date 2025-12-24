@@ -11,6 +11,15 @@ interface MasterclassCTASectionProps {
 
 const STORAGE_KEY = "masterclass-progress";
 
+// Static color mappings for track badges
+const trackBadgeColors = [
+  { bg: "bg-purple-500", lightBg: "bg-purple-500/20", text: "text-purple-600" },
+  { bg: "bg-orange-500", lightBg: "bg-orange-500/20", text: "text-orange-600" },
+  { bg: "bg-blue-500", lightBg: "bg-blue-500/20", text: "text-blue-600" },
+  { bg: "bg-green-500", lightBg: "bg-green-500/20", text: "text-green-600" },
+  { bg: "bg-pink-500", lightBg: "bg-pink-500/20", text: "text-pink-600" }
+];
+
 export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCompletedTracks }: MasterclassCTASectionProps) => {
   const [completedTracks, setCompletedTracks] = useState<number[]>(propCompletedTracks || []);
   
@@ -19,8 +28,6 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
     if (saved && !propCompletedTracks) {
       try {
         const progress = JSON.parse(saved);
-        // Calculate which tracks are complete based on section completion
-        // For now, use a simplified approach
         const completed: number[] = [];
         if (progress.track1?.length >= 6) completed.push(1);
         if (progress.track2?.length >= 5) completed.push(2);
@@ -53,7 +60,7 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
   ];
 
   return (
-    <section id="masterclass-cta" className="py-20 bg-gradient-to-br from-purple-900/10 via-background to-green-900/10">
+    <section id="masterclass-cta" className="py-20 bg-watt-light">
       <div className="container mx-auto px-4">
         {isComplete ? (
           // Completion State
@@ -82,25 +89,25 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-4">
-                <Star className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium text-yellow-600">Masterclass Complete</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 border border-yellow-300 mb-4">
+                <Star className="w-4 h-4 text-yellow-600" />
+                <span className="text-sm font-medium text-yellow-700">Masterclass Complete</span>
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
                 Congratulations! 🎉
               </h2>
-              <p className="text-xl text-muted-foreground mb-8">
+              <p className="text-xl text-watt-navy/70 mb-8">
                 You've completed the Strategic Operations Masterclass
               </p>
 
               {/* Certificate Card */}
-              <div className="bg-card border-2 border-yellow-500/30 rounded-2xl p-8 mb-8">
+              <div className="bg-white border-2 border-yellow-400 rounded-2xl p-8 mb-8 shadow-lg">
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <Award className="w-8 h-8 text-yellow-500" />
-                  <h3 className="text-2xl font-bold text-foreground">Certificate of Completion</h3>
+                  <h3 className="text-2xl font-bold text-watt-navy">Certificate of Completion</h3>
                 </div>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-watt-navy/60 mb-6">
                   Strategic Operations Masterclass • 5 Tracks • ~2 Hours
                 </p>
                 
@@ -116,7 +123,7 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
                       className="flex items-start gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">{topic}</span>
+                      <span className="text-sm text-watt-navy/70">{topic}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -134,7 +141,7 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
               </div>
 
               {/* Next Steps */}
-              <h3 className="text-xl font-bold text-foreground mb-6">What's Next?</h3>
+              <h3 className="text-xl font-bold text-watt-navy mb-6">What's Next?</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 {nextSteps.map((step, index) => (
                   <motion.div
@@ -143,13 +150,13 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.5 + index * 0.1 }}
-                    className="bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer"
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-watt-blue/50 transition-colors group cursor-pointer shadow-sm"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                      <step.icon className="w-5 h-5 text-primary" />
+                    <div className="w-10 h-10 rounded-lg bg-watt-blue/10 flex items-center justify-center mb-3 group-hover:bg-watt-blue/20 transition-colors">
+                      <step.icon className="w-5 h-5 text-watt-blue" />
                     </div>
-                    <h4 className="font-semibold text-foreground mb-1">{step.title}</h4>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    <h4 className="font-semibold text-watt-navy mb-1">{step.title}</h4>
+                    <p className="text-sm text-watt-navy/60">{step.description}</p>
                   </motion.div>
                 ))}
               </div>
@@ -164,21 +171,21 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
             className="max-w-4xl mx-auto"
           >
             <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-                <GraduationCap className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium text-primary">Keep Learning</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-blue/10 border border-watt-blue/20 mb-4">
+                <GraduationCap className="w-5 h-5 text-watt-blue" />
+                <span className="text-sm font-medium text-watt-blue">Keep Learning</span>
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
                 You're Making Great Progress!
               </h2>
-              <p className="text-xl text-muted-foreground mb-8">
+              <p className="text-xl text-watt-navy/70 mb-8">
                 {completedTracks.length} of {totalTracks} tracks completed • {progressPercentage}% done
               </p>
 
               {/* Progress Bar */}
               <div className="max-w-md mx-auto mb-8">
-                <div className="h-4 bg-muted rounded-full overflow-hidden">
+                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-purple-500 via-orange-500 to-green-500 rounded-full"
                     initial={{ width: 0 }}
@@ -187,7 +194,7 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
                     transition={{ duration: 1, ease: "easeOut" }}
                   />
                 </div>
-                <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+                <div className="flex justify-between mt-2 text-sm text-watt-navy/50">
                   <span>Track 1</span>
                   <span>Track 5</span>
                 </div>
@@ -197,7 +204,7 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
               <div className="flex justify-center gap-3 mb-8">
                 {[1, 2, 3, 4, 5].map((track) => {
                   const isCompleted = completedTracks.includes(track);
-                  const colors = ["purple", "orange", "blue", "green", "pink"];
+                  const colors = trackBadgeColors[track - 1];
                   
                   return (
                     <div
@@ -206,7 +213,7 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
                         "w-12 h-12 rounded-full flex items-center justify-center font-bold",
                         isCompleted 
                           ? "bg-green-500 text-white" 
-                          : `bg-${colors[track - 1]}-500/20 text-${colors[track - 1]}-600`
+                          : `${colors.lightBg} ${colors.text}`
                       )}
                     >
                       {isCompleted ? <CheckCircle2 className="w-6 h-6" /> : track}
@@ -217,17 +224,17 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
             </div>
 
             {/* Continue Learning Card */}
-            <div className="bg-card border border-border rounded-2xl p-8">
+            <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-green-500 flex items-center justify-center shrink-0">
                   <Clock className="w-10 h-10 text-white" />
                 </div>
                 
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-xl font-bold text-foreground mb-2">
+                  <h3 className="text-xl font-bold text-watt-navy mb-2">
                     Continue Your Journey
                   </h3>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-watt-navy/60 mb-4">
                     Complete all 5 tracks to earn your certificate and master the full 
                     lifecycle of Bitcoin mining operations.
                   </p>
