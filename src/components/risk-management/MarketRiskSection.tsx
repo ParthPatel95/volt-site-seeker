@@ -1,5 +1,8 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import { TrendingDown, Bitcoin, Gauge, ArrowDownUp } from "lucide-react";
+import { TrendingDown, Bitcoin } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
+import { BreakEvenCalculator } from "./BreakEvenCalculator";
 
 export const MarketRiskSection = () => {
   const marketRisks = [
@@ -58,11 +61,24 @@ export const MarketRiskSection = () => {
     }
   };
 
+  const learningObjectives = [
+    "Quantify BTC price volatility impact on your specific operation",
+    "Apply break-even analysis framework to assess profitability thresholds",
+    "Develop hedging strategies for revenue stability across market cycles"
+  ];
+
+  const keyTakeaways = [
+    "Market risk is the #1 threat to mining operations - price drops and difficulty increases are inevitable",
+    "Know your break-even BTC price and ensure it's competitive (<$35k for average operators)",
+    "Build 6-12 months operating reserves to survive extended bear markets",
+    "Halving events require proactive efficiency upgrades - plan ahead, not after"
+  ];
+
   return (
     <section id="market-risk" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-bitcoin/10 text-watt-bitcoin rounded-full text-sm font-medium mb-4">
               Lesson 2
             </span>
@@ -74,6 +90,8 @@ export const MarketRiskSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Market Risk" />
 
         <div className="space-y-6 mb-12">
           {marketRisks.map((item, index) => (
@@ -107,11 +125,14 @@ export const MarketRiskSection = () => {
           ))}
         </div>
 
+        {/* Break-Even Calculator */}
+        <BreakEvenCalculator />
+
         <ScrollReveal delay={300}>
           <div className="bg-gradient-to-r from-watt-bitcoin/10 to-orange-500/10 border border-watt-bitcoin/20 rounded-2xl p-8">
             <div className="flex items-center gap-3 mb-4">
               <Bitcoin className="w-6 h-6 text-watt-bitcoin" />
-              <h3 className="text-xl font-bold text-foreground">Break-Even Analysis Framework</h3>
+              <h3 className="text-xl font-bold text-foreground">Break-Even Benchmarks</h3>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center">
@@ -132,6 +153,12 @@ export const MarketRiskSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Market Risk"
+          keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Operational Risk", href: "#operational-risk" }}
+        />
       </div>
     </section>
   );

@@ -1,5 +1,8 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { DollarSign, PiggyBank, CreditCard, TrendingUp } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
+import { CashRunwayCalculator } from "./CashRunwayCalculator";
 
 export const FinancialRiskSection = () => {
   const financialRisks = [
@@ -60,11 +63,24 @@ export const FinancialRiskSection = () => {
     { component: "Equipment Leases", range: "0-20%", notes: "Preserve capital, higher cost" }
   ];
 
+  const learningObjectives = [
+    "Structure capital to survive 2+ year bear markets without forced liquidation",
+    "Identify warning indicators before liquidity crises develop",
+    "Match funding sources to operational needs and risk tolerance"
+  ];
+
+  const keyTakeaways = [
+    "Equity should comprise 50-70% of capital to provide cushion during downturns",
+    "Monitor liquidity weekly - cash runway < 6 months is a critical warning sign",
+    "Counterparty diversification applies to power suppliers, customers, and pools",
+    "Currency risk is inherent to mining - develop a consistent BTC treasury strategy"
+  ];
+
   return (
     <section id="financial-risk" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-success/10 text-watt-success rounded-full text-sm font-medium mb-4">
               Lesson 5
             </span>
@@ -76,6 +92,8 @@ export const FinancialRiskSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Financial Risk" />
 
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {financialRisks.map((item, index) => (
@@ -116,6 +134,9 @@ export const FinancialRiskSection = () => {
           ))}
         </div>
 
+        {/* Cash Runway Calculator */}
+        <CashRunwayCalculator />
+
         <ScrollReveal delay={300}>
           <div className="bg-card border border-border rounded-2xl p-8">
             <h3 className="text-2xl font-bold text-foreground mb-6">Recommended Capital Structure</h3>
@@ -145,6 +166,12 @@ export const FinancialRiskSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Financial Risk"
+          keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Risk Matrix", href: "#risk-matrix" }}
+        />
       </div>
     </section>
   );

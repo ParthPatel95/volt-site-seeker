@@ -1,5 +1,8 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import { Grid3X3, AlertTriangle, ArrowRight } from "lucide-react";
+import { Grid3X3 } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
+import { VisualRiskMatrix } from "./VisualRiskMatrix";
 
 export const RiskMatrixSection = () => {
   const risks = [
@@ -35,11 +38,24 @@ export const RiskMatrixSection = () => {
     }
   };
 
+  const learningObjectives = [
+    "Build a customized risk register for your specific mining operation",
+    "Apply 5x5 impact/likelihood scoring methodology consistently",
+    "Prioritize mitigation efforts by risk score to maximize ROI on risk management"
+  ];
+
+  const keyTakeaways = [
+    "Critical risks (score 15+) require immediate mitigation - don't delay action",
+    "BTC price crash and difficulty spikes are the highest-scoring market risks",
+    "Risk assessment should be updated quarterly as conditions change",
+    "Focus resources on high-impact, high-likelihood risks first"
+  ];
+
   return (
     <section id="risk-matrix" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-bitcoin/10 text-watt-bitcoin rounded-full text-sm font-medium mb-4">
               Lesson 6
             </span>
@@ -51,6 +67,11 @@ export const RiskMatrixSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Risk Matrix" />
+
+        {/* Visual Risk Matrix */}
+        <VisualRiskMatrix />
 
         <ScrollReveal delay={100}>
           <div className="bg-card border border-border rounded-2xl p-8 mb-12">
@@ -147,6 +168,12 @@ export const RiskMatrixSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Risk Matrix"
+          keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Insurance & Risk Transfer", href: "#insurance" }}
+        />
       </div>
     </section>
   );

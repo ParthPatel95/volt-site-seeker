@@ -1,5 +1,7 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Scale, FileText, MapPin, AlertCircle } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
 
 export const RegulatoryRiskSection = () => {
   const regulatoryAreas = [
@@ -65,11 +67,24 @@ export const RegulatoryRiskSection = () => {
     }
   };
 
+  const learningObjectives = [
+    "Score jurisdictions by regulatory friendliness using a structured framework",
+    "Identify required permits and compliance requirements before site commitment",
+    "Recognize regulatory red flags that could threaten your operation"
+  ];
+
+  const keyTakeaways = [
+    "Jurisdiction selection is a long-term decision - regulatory changes can destroy profitability",
+    "Engage with regulators proactively; build relationships before issues arise",
+    "Maintain detailed compliance documentation for audits and legal protection",
+    "Monitor legislative developments in energy, environmental, and financial regulations"
+  ];
+
   return (
     <section id="regulatory-risk" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Lesson 4
             </span>
@@ -82,9 +97,11 @@ export const RegulatoryRiskSection = () => {
           </div>
         </ScrollReveal>
 
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Regulatory Risk" />
+
         <ScrollReveal delay={100}>
           <div className="grid md:grid-cols-2 gap-6 mb-12">
-            {regulatoryAreas.map((area, index) => (
+            {regulatoryAreas.map((area) => (
               <div key={area.area} className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Scale className="w-5 h-5 text-watt-purple" />
@@ -170,6 +187,12 @@ export const RegulatoryRiskSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Regulatory Risk"
+          keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Financial Risk", href: "#financial-risk" }}
+        />
       </div>
     </section>
   );
