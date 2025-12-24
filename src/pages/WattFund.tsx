@@ -4,6 +4,7 @@ import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll, ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { LazySection } from '@/components/LazyErrorBoundary';
 import { ChevronDown } from 'lucide-react';
 
 // Lazy load sections
@@ -151,63 +152,63 @@ const WattFund: React.FC = () => {
 
           {/* Investment Thesis Section */}
           <section aria-label="Investment Thesis" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Investment Thesis">
               <InvestmentThesisSection />
-            </Suspense>
+            </LazySection>
           </section>
 
           <SectionDivider color="purple" />
 
           {/* Fund Overview Section */}
           <section aria-label="Fund Overview" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Fund Overview">
               <FundOverviewSection />
-            </Suspense>
+            </LazySection>
           </section>
 
           <SectionDivider color="yellow" />
 
           {/* Fund Growth Plan Section */}
           <section aria-label="Fund Growth Plan" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Fund Growth Plan">
               <FundGrowthPlanSection />
-            </Suspense>
+            </LazySection>
           </section>
 
           <SectionDivider color="cyan" />
 
           {/* Why Invest Section */}
           <section aria-label="Why Invest With WattFund" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Why Invest">
               <WhyInvestSection />
-            </Suspense>
+            </LazySection>
           </section>
 
           <SectionDivider color="purple" />
 
           {/* Market Opportunity Section */}
           <section aria-label="Market Opportunity" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Market Opportunity">
               <MarketOpportunitySection />
-            </Suspense>
+            </LazySection>
           </section>
 
           <SectionDivider color="yellow" />
 
           {/* Investment Process Section */}
           <section aria-label="Investment Process" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Investment Process">
               <InvestmentProcessSection />
-            </Suspense>
+            </LazySection>
           </section>
 
           <SectionDivider color="cyan" />
 
           {/* Investor CTA Section */}
           <section aria-label="Ready to Invest" className="relative">
-            <Suspense fallback={<SectionLoader />}>
+            <LazySection componentName="Investment CTA">
               <InvestorCTASection />
-            </Suspense>
+            </LazySection>
           </section>
         </main>
 

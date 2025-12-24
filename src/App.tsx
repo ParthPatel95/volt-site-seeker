@@ -11,6 +11,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { LazyErrorBoundary, SectionLoader } from "./components/LazyErrorBoundary";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
@@ -26,7 +27,6 @@ import MiningEconomicsEducation from "./pages/MiningEconomicsEducation";
 import OperationsEducation from "./pages/OperationsEducation";
 import StrategicOperationsMasterclass from "./pages/StrategicOperationsMasterclass";
 import Academy from "./pages/Academy";
-
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 import SharedAESOReport from './pages/SharedAESOReport';
@@ -51,9 +51,15 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/wattfund" element={<WattFund />} />
                 <Route path="/about" element={
-                  <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                    <AboutUs />
-                  </Suspense>
+                  <LazyErrorBoundary componentName="About Us">
+                    <Suspense fallback={
+                      <div className="min-h-screen flex items-center justify-center bg-background">
+                        <SectionLoader message="Loading About Us..." />
+                      </div>
+                    }>
+                      <AboutUs />
+                    </Suspense>
+                  </LazyErrorBoundary>
                 } />
                 <Route path="/hosting" element={<Hosting />} />
                 <Route path="/academy" element={<Academy />} />
