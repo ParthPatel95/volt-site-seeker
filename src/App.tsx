@@ -22,11 +22,8 @@ import HydroDatacenterEducation from "./pages/HydroDatacenterEducation";
 import ElectricalInfrastructureEducation from "./pages/ElectricalInfrastructureEducation";
 import NoiseManagementEducation from "./pages/NoiseManagementEducation";
 import ImmersionCoolingEducation from "./pages/ImmersionCoolingEducation";
-import SiteSelectionEducation from "./pages/SiteSelectionEducation";
 import MiningEconomicsEducation from "./pages/MiningEconomicsEducation";
 import OperationsEducation from "./pages/OperationsEducation";
-import RiskManagementEducation from "./pages/RiskManagementEducation";
-import ScalingGrowthEducation from "./pages/ScalingGrowthEducation";
 import StrategicOperationsMasterclass from "./pages/StrategicOperationsMasterclass";
 import Academy from "./pages/Academy";
 
@@ -67,11 +64,8 @@ const App = () => (
                 <Route path="/electrical-infrastructure" element={<ElectricalInfrastructureEducation />} />
                 <Route path="/noise-management" element={<NoiseManagementEducation />} />
             <Route path="/immersion-cooling" element={<ImmersionCoolingEducation />} />
-            <Route path="/site-selection" element={<SiteSelectionEducation />} />
             <Route path="/mining-economics" element={<MiningEconomicsEducation />} />
             <Route path="/operations" element={<OperationsEducation />} />
-            <Route path="/risk-management" element={<RiskManagementEducation />} />
-            <Route path="/scaling-growth" element={<ScalingGrowthEducation />} />
             <Route path="/strategic-operations" element={<StrategicOperationsMasterclass />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
