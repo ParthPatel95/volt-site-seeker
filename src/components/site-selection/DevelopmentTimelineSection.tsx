@@ -1,5 +1,7 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Calendar, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
 
 const DevelopmentTimelineSection = () => {
   const phases = [
@@ -118,6 +120,22 @@ const DevelopmentTimelineSection = () => {
               critical path helps you plan and identify acceleration opportunities.
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Map the 5 development phases and their typical durations (12-24 months total)",
+              "Identify critical path items that determine overall project timeline",
+              "Apply timeline acceleration strategies to reduce time-to-hash by 6-12 months",
+              "Understand long-lead equipment ordering (transformers, switchgear) timing"
+            ]}
+            estimatedTime="7 min"
+            prerequisites={[
+              { title: "Site Scoring", href: "#site-scoring" }
+            ]}
+          />
         </ScrollReveal>
 
         {/* Visual Timeline */}
@@ -268,6 +286,23 @@ const DevelopmentTimelineSection = () => {
               </div>
             ))}
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={550}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "Greenfield development typically takes 12-24 months; shovel-ready sites can reduce this to 6-12 months",
+              "Interconnection (6-18 months) and transformer lead time (6-12 months) are usually the critical path",
+              "Order long-lead equipment (transformers, switchgear) before final permits to avoid delays",
+              "Modular/container-based designs allow phased deployment as power comes online"
+            ]}
+            proTip="The fastest path to first hash is a brownfield site with existing interconnection and industrial zoning. These sites can deploy in 3-6 months with container-based infrastructure."
+            nextSection={{
+              title: "Get Started",
+              href: "#cta"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>

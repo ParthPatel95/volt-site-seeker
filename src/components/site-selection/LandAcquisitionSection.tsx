@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { MapPin, Building, FileText, DollarSign, Calculator } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
 
 const LandAcquisitionSection = () => {
   const [landSize, setLandSize] = useState<number>(20);
@@ -87,6 +89,22 @@ const LandAcquisitionSection = () => {
               Understand purchase vs. lease tradeoffs and site sizing requirements.
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Match zoning classifications to mining suitability (Industrial, Agricultural, etc.)",
+              "Compare purchase vs lease economics for different investment horizons",
+              "Size land requirements based on MW capacity needs (2-50 acres)",
+              "Calculate land costs and breakeven timelines for purchase vs lease"
+            ]}
+            estimatedTime="8 min"
+            prerequisites={[
+              { title: "Climate Analysis", href: "#climate" }
+            ]}
+          />
         </ScrollReveal>
 
         {/* Zoning Guide */}
@@ -260,6 +278,23 @@ const LandAcquisitionSection = () => {
               </div>
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={350}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "Industrial (M1/M2) zoning is ideal — mining is permitted by right with standard building permits",
+              "Agricultural land can work but typically requires special use permits (add 3-6 months)",
+              "A 100 MW facility needs 15-25 acres including setbacks, switchyard, and expansion room",
+              "Purchase makes sense for 10+ year horizons; lease provides flexibility for 3-7 year operations"
+            ]}
+            proTip="Even if you plan to purchase, consider a lease-to-own structure. This lets you start operations faster while the purchase closes, and provides an exit if regulatory or power issues emerge."
+            nextSection={{
+              title: "Due Diligence",
+              href: "#due-diligence"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>

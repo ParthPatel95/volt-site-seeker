@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Thermometer, Wind, Droplets, Sun, Calculator } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
 
 const ClimateAnalysisSection = () => {
   const [selectedClimate, setSelectedClimate] = useState<string>('cold');
@@ -95,6 +97,22 @@ const ClimateAnalysisSection = () => {
               A 10°C difference can mean 15-20% variation in operating costs.
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Quantify PUE impact by climate zone (1.1-1.7 range)",
+              "Calculate cooling overhead costs as a percentage of IT load",
+              "Evaluate water availability and humidity requirements",
+              "Select appropriate cooling strategies for each climate type"
+            ]}
+            estimatedTime="7 min"
+            prerequisites={[
+              { title: "Regulatory Environment", href: "#regulatory" }
+            ]}
+          />
         </ScrollReveal>
 
         {/* Climate Selector */}
@@ -277,6 +295,23 @@ const ClimateAnalysisSection = () => {
               </div>
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={450}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "Cold climates (Alberta, Iceland) achieve PUE of 1.1-1.2, saving 20-40% on cooling vs hot climates",
+              "Every 0.1 PUE improvement saves ~$350,000/year for a 100 MW facility at $0.04/kWh",
+              "Evaporative cooling requires 2,000-10,000 gallons/MW/day — verify water availability",
+              "Ideal humidity range is 30-50% RH for both cooling efficiency and hardware longevity"
+            ]}
+            proTip="Don't underestimate extreme cold challenges. Sites below -30°C need specialized equipment for cold starts, and frozen roads can delay equipment delivery for months."
+            nextSection={{
+              title: "Land Acquisition",
+              href: "#land-acquisition"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>
