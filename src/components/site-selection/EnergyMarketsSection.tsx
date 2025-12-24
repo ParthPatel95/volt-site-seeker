@@ -3,6 +3,9 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Globe, TrendingDown, TrendingUp, Minus, MapPin } from 'lucide-react';
 import CitedStatistic from '@/components/academy/CitedStatistic';
 import { ENERGY_COST_BENCHMARKS, DATA_SOURCES } from '@/constants/industry-standards';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
+import JurisdictionRecommender from './JurisdictionRecommender';
 
 const EnergyMarketsSection = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>('north-america');
@@ -85,6 +88,22 @@ const EnergyMarketsSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Compare deregulated vs regulated energy markets and their implications",
+              "Analyze all-in energy costs beyond headline rates (transmission, demand charges, ancillary)",
+              "Identify lowest-cost jurisdictions globally and understand their trade-offs",
+              "Evaluate market structure fit based on your operational sophistication"
+            ]}
+            estimatedTime="10 min"
+            prerequisites={[
+              { title: "Power Infrastructure", href: "#power-infrastructure" }
+            ]}
+          />
+        </ScrollReveal>
+
         {/* Region Selector & Table */}
         <ScrollReveal delay={100}>
           <div className="bg-gray-50 rounded-2xl p-6 mb-8">
@@ -153,9 +172,14 @@ const EnergyMarketsSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* Interactive Jurisdiction Recommender */}
+        <ScrollReveal delay={150}>
+          <JurisdictionRecommender />
+        </ScrollReveal>
+
         {/* Market Structures Comparison */}
         <ScrollReveal delay={200}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center">
+          <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center mt-8">
             Market Structure Comparison
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
@@ -226,6 +250,23 @@ const EnergyMarketsSection = () => {
               all components — headline rates can be misleading
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={350}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "All-in energy cost includes 5+ components beyond the headline rate — always calculate the full picture",
+              "Deregulated markets (ERCOT, AESO) offer flexibility but require trading sophistication",
+              "Cold-climate locations (Alberta, Iceland, Norway) combine low energy costs with cooling advantages",
+              "Direct PPAs with renewables can lock in $0.02-0.03/kWh for 10+ years"
+            ]}
+            proTip="When evaluating international jurisdictions, factor in currency risk, political stability, and infrastructure quality. The cheapest energy doesn't help if you can't reliably operate."
+            nextSection={{
+              title: "Regulatory Environment",
+              href: "#regulatory"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>

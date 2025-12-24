@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Calculator, Star, TrendingUp, AlertCircle } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
 
 const SiteScoringSection = () => {
   const [scores, setScores] = useState({
@@ -91,6 +93,22 @@ const SiteScoringSection = () => {
               and make data-driven acquisition decisions.
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Apply weighted scoring methodology across 8 evaluation criteria",
+              "Interpret VoltScore™ grades (A-F) and corresponding recommended actions",
+              "Compare sites objectively using quantitative and qualitative factors",
+              "Understand why energy cost (25%) and power capacity (20%) receive highest weights"
+            ]}
+            estimatedTime="8 min"
+            prerequisites={[
+              { title: "Due Diligence", href: "#due-diligence" }
+            ]}
+          />
         </ScrollReveal>
 
         {/* Interactive Scorer */}
@@ -255,6 +273,23 @@ const SiteScoringSection = () => {
               </div>
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={450}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "Energy cost (25%) and power capacity (20%) are the most heavily weighted criteria — prioritize these",
+              "A VoltScore of 8.0+ indicates a site worth pursuing with full due diligence",
+              "Scores of 6.5-7.9 warrant investigation to identify improvement opportunities",
+              "Sites scoring below 5.0 should generally be passed on in favor of alternatives"
+            ]}
+            proTip="Don't let one exceptional criterion (like ultra-low energy cost) blind you to weaknesses elsewhere. A balanced scorecard across all 8 criteria produces better long-term outcomes."
+            nextSection={{
+              title: "Development Timeline",
+              href: "#timeline"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>

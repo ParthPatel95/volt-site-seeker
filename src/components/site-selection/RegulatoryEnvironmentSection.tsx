@@ -1,5 +1,7 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Scale, Shield, FileText, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
 
 const RegulatoryEnvironmentSection = () => {
   const jurisdictions = [
@@ -129,6 +131,22 @@ const RegulatoryEnvironmentSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Score jurisdictions by crypto-friendliness and permitting complexity",
+              "Identify required permits and realistic timelines for each",
+              "Recognize regulatory red flags that could derail your project",
+              "Develop strategies for navigating complex permitting environments"
+            ]}
+            estimatedTime="8 min"
+            prerequisites={[
+              { title: "Energy Markets", href: "#energy-markets" }
+            ]}
+          />
+        </ScrollReveal>
+
         {/* Jurisdiction Scorecard */}
         <ScrollReveal delay={100}>
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
@@ -246,6 +264,23 @@ const RegulatoryEnvironmentSection = () => {
               ))}
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={350}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "Wyoming, Alberta, and Texas score highest for crypto-friendly regulations (85-90/100)",
+              "Utility interconnection (6-24 months) is often the longest permitting item — start immediately",
+              "Engage early with local planning departments and attend community meetings for smoother approvals",
+              "Avoid jurisdictions with moratoriums or hostile political environments (e.g., New York for new projects)"
+            ]}
+            proTip="Before finalizing any site, research recent local news for anti-crypto sentiment. Community opposition can add 12+ months to your timeline even if regulations are favorable."
+            nextSection={{
+              title: "Climate Analysis",
+              href: "#climate"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>

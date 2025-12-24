@@ -1,5 +1,8 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Search, CheckCircle2, AlertTriangle, FileText, Users, Hammer } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
+import DueDiligenceBudgetCalculator from './DueDiligenceBudgetCalculator';
 
 const DueDiligenceSection = () => {
   const dueDiligencePhases = [
@@ -101,6 +104,22 @@ const DueDiligenceSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Follow the 4-phase due diligence process from screening to final approval",
+              "Identify critical red flags that should stop or pause a deal",
+              "Build your expert advisory team (6 key specialists)",
+              "Budget appropriately for due diligence ($50-165K depending on complexity)"
+            ]}
+            estimatedTime="10 min"
+            prerequisites={[
+              { title: "Land Acquisition", href: "#land-acquisition" }
+            ]}
+          />
+        </ScrollReveal>
+
         {/* Due Diligence Phases */}
         <ScrollReveal delay={100}>
           <div className="space-y-6 mb-12">
@@ -147,8 +166,13 @@ const DueDiligenceSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* Interactive Budget Calculator */}
+        <ScrollReveal delay={150}>
+          <DueDiligenceBudgetCalculator />
+        </ScrollReveal>
+
         {/* Red Flags & Expert Team */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 mt-8">
           {/* Red Flags */}
           <ScrollReveal delay={200}>
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 h-full">
@@ -237,6 +261,23 @@ const DueDiligenceSection = () => {
               ))}
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={450}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "Budget 6-12 weeks and $50-165K for comprehensive due diligence — it's insurance against bad deals",
+              "Critical red flags: utility capacity uncertainty and environmental contamination should pause any deal",
+              "Engage your expert team (6 specialists) early — they pay for themselves in avoided mistakes",
+              "The 4-phase process provides go/no-go checkpoints to limit wasted investment"
+            ]}
+            proTip="Never skip Phase I environmental. A $3,000 assessment can save you from millions in remediation liability. If Phase I identifies concerns, budget $15-50K for Phase II."
+            nextSection={{
+              title: "Site Scoring",
+              href: "#site-scoring"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>

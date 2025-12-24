@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Zap, Activity, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import SiteSelectionLearningObjectives from './SiteSelectionLearningObjectives';
+import SiteSelectionSectionSummary from './SiteSelectionSectionSummary';
+import InterconnectionCostCalculator from './InterconnectionCostCalculator';
 
 const PowerInfrastructureSection = () => {
   const [selectedVoltage, setSelectedVoltage] = useState<string>('138kV');
@@ -59,15 +62,6 @@ const PowerInfrastructureSection = () => {
     { item: "Redundancy (N-1 capability)", critical: false, notes: "Single vs dual feed reliability" }
   ];
 
-  const interconnectionCosts = [
-    { component: "Transmission Line", range: "$1-3M/mile", notes: "Voltage dependent, terrain factors" },
-    { component: "Substation Tap", range: "$500K-2M", notes: "Depends on existing infrastructure" },
-    { component: "Customer Substation", range: "$2-8M", notes: "Transformers, switchgear, protection" },
-    { component: "Engineering Studies", range: "$50-200K", notes: "System impact, facilities studies" },
-    { component: "Utility Upgrades", range: "$0-20M+", notes: "If capacity constrained" },
-    { component: "Permitting", range: "$25-100K", notes: "Environmental, local approvals" }
-  ];
-
   return (
     <section id="power-infrastructure" className="py-20 bg-watt-light">
       <div className="container mx-auto px-4">
@@ -84,6 +78,22 @@ const PowerInfrastructureSection = () => {
               requirements is fundamental to site selection.
             </p>
           </div>
+        </ScrollReveal>
+
+        {/* Learning Objectives */}
+        <ScrollReveal delay={50}>
+          <SiteSelectionLearningObjectives
+            objectives={[
+              "Differentiate transmission voltage classes (25kV-500kV) and their mining suitability",
+              "Evaluate substation capacity and critical interconnection requirements",
+              "Estimate interconnection costs ranging from $3M to $30M+",
+              "Understand the 13-32 month interconnection timeline and critical milestones"
+            ]}
+            estimatedTime="12 min"
+            prerequisites={[
+              { title: "Site Selection Fundamentals", href: "#intro" }
+            ]}
+          />
         </ScrollReveal>
 
         {/* Voltage Classes */}
@@ -133,69 +143,47 @@ const PowerInfrastructureSection = () => {
 
         {/* Substation Evaluation Checklist */}
         <ScrollReveal delay={200}>
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-watt-purple" />
-                Substation Evaluation Checklist
-              </h3>
-              <div className="space-y-3">
-                {substationChecklist.map((item, idx) => (
-                  <div 
-                    key={idx}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {item.critical ? (
-                      <AlertTriangle className="w-5 h-5 text-watt-bitcoin flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <CheckCircle2 className="w-5 h-5 text-watt-success flex-shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <div className="font-medium text-watt-navy flex items-center gap-2">
-                        {item.item}
-                        {item.critical && (
-                          <span className="text-xs bg-watt-bitcoin/20 text-watt-bitcoin px-2 py-0.5 rounded">
-                            Critical
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-watt-navy/60">{item.notes}</div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-watt-purple" />
+              Substation Evaluation Checklist
+            </h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              {substationChecklist.map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  {item.critical ? (
+                    <AlertTriangle className="w-5 h-5 text-watt-bitcoin flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5 text-watt-success flex-shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-medium text-watt-navy flex items-center gap-2">
+                      {item.item}
+                      {item.critical && (
+                        <span className="text-xs bg-watt-bitcoin/20 text-watt-bitcoin px-2 py-0.5 rounded">
+                          Critical
+                        </span>
+                      )}
                     </div>
+                    <div className="text-sm text-watt-navy/60">{item.notes}</div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Interconnection Costs */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-watt-purple" />
-                Typical Interconnection Costs
-              </h3>
-              <div className="space-y-4">
-                {interconnectionCosts.map((cost, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium text-watt-navy">{cost.component}</div>
-                      <div className="text-xs text-watt-navy/60">{cost.notes}</div>
-                    </div>
-                    <div className="text-watt-bitcoin font-bold">{cost.range}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 p-4 bg-watt-navy/5 rounded-lg">
-                <div className="text-sm text-watt-navy/70">
-                  <strong className="text-watt-navy">Total Range:</strong> $3-30M+ depending on distance, 
-                  voltage, and utility upgrade requirements
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </ScrollReveal>
 
+        {/* Interactive Interconnection Cost Calculator */}
+        <ScrollReveal delay={250}>
+          <InterconnectionCostCalculator />
+        </ScrollReveal>
+
         {/* Timeline */}
         <ScrollReveal delay={300}>
-          <div className="bg-gradient-to-r from-watt-purple/10 to-watt-bitcoin/10 rounded-2xl p-8">
+          <div className="bg-gradient-to-r from-watt-purple/10 to-watt-bitcoin/10 rounded-2xl p-8 mt-8">
             <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">
               Typical Interconnection Timeline
             </h3>
@@ -221,6 +209,23 @@ const PowerInfrastructureSection = () => {
               Total: <span className="font-bold text-watt-navy">13-32 months</span> from application to energization
             </div>
           </div>
+        </ScrollReveal>
+
+        {/* Section Summary */}
+        <ScrollReveal delay={350}>
+          <SiteSelectionSectionSummary
+            keyTakeaways={[
+              "69kV-138kV substations are the sweet spot for most mining operations (10-100 MW)",
+              "Total interconnection costs range from $3-30M+ depending on distance and upgrades",
+              "The interconnection timeline (13-32 months) is often the critical path for project development",
+              "Always get written capacity confirmation from the utility before proceeding"
+            ]}
+            proTip="Order long-lead equipment (transformers, switchgear) as early as possible - even before final permits. Lead times of 6-12 months can delay your entire project."
+            nextSection={{
+              title: "Energy Markets",
+              href: "#energy-markets"
+            }}
+          />
         </ScrollReveal>
       </div>
     </section>
