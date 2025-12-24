@@ -1,5 +1,8 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Shield, Umbrella, FileCheck, Building } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
+import { InsuranceCoverageEstimator } from "./InsuranceCoverageEstimator";
 
 export const InsuranceSection = () => {
   const insuranceTypes = [
@@ -74,11 +77,24 @@ export const InsuranceSection = () => {
     }
   ];
 
+  const learningObjectives = [
+    "Determine appropriate coverage levels based on your facility size and risk profile",
+    "Evaluate insurance vs self-insurance trade-offs for different risk categories",
+    "Understand risk transfer mechanisms beyond insurance (hedging, PPAs, hosting)"
+  ];
+
+  const keyTakeaways = [
+    "Property insurance should cover 125% of equipment value for replacement cost coverage",
+    "Cyber insurance is increasingly important as mining operations become more connected",
+    "Hedging provides revenue certainty but caps upside - use strategically, not universally",
+    "Hosting contracts transfer operational risk but reduce profit margins"
+  ];
+
   return (
     <section id="insurance" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-blue/10 text-watt-blue rounded-full text-sm font-medium mb-4">
               Lesson 7
             </span>
@@ -91,9 +107,11 @@ export const InsuranceSection = () => {
           </div>
         </ScrollReveal>
 
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Insurance & Risk Transfer" />
+
         <ScrollReveal delay={100}>
           <div className="grid md:grid-cols-2 gap-6 mb-12">
-            {insuranceTypes.map((insurance, index) => (
+            {insuranceTypes.map((insurance) => (
               <div key={insurance.type} className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-watt-blue/10 rounded-lg flex items-center justify-center">
@@ -121,11 +139,14 @@ export const InsuranceSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* Insurance Coverage Estimator */}
+        <InsuranceCoverageEstimator />
+
         <ScrollReveal delay={200}>
           <div className="bg-card border border-border rounded-2xl p-8">
             <h3 className="text-2xl font-bold text-foreground mb-6">Risk Transfer Mechanisms</h3>
             <div className="grid md:grid-cols-3 gap-6">
-              {riskTransferOptions.map((option, index) => (
+              {riskTransferOptions.map((option) => (
                 <div key={option.method} className="bg-background border border-border rounded-xl p-6">
                   <h4 className="text-lg font-semibold text-foreground mb-2">{option.method}</h4>
                   <p className="text-sm text-muted-foreground mb-4">{option.description}</p>
@@ -156,6 +177,12 @@ export const InsuranceSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Insurance & Risk Transfer"
+          keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Crisis Management", href: "#crisis" }}
+        />
       </div>
     </section>
   );

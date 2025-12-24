@@ -1,5 +1,7 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Zap, Server, Thermometer, Wrench, AlertTriangle } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
 
 export const OperationalRiskSection = () => {
   const operationalRisks = [
@@ -43,11 +45,24 @@ export const OperationalRiskSection = () => {
     { size: "100 MW", hourly: "$20,000-50,000", daily: "$480,000-1,200,000" }
   ];
 
+  const learningObjectives = [
+    "Calculate the true cost of downtime for your specific facility size",
+    "Identify the 4 primary operational risk categories and their impact levels",
+    "Implement preventive maintenance programs to reduce failure rates by 50%+"
+  ];
+
+  const keyTakeaways = [
+    "Downtime costs scale linearly with facility size - a 100 MW facility loses $20k-50k per hour",
+    "Power interruption is the most impactful risk; invest in redundant feeds and backup systems",
+    "Equipment failures are inevitable - maintain spare parts inventory and vendor relationships",
+    "Preventive maintenance costs less than reactive repairs; schedule regular maintenance windows"
+  ];
+
   return (
     <section id="operational-risk" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-watt-blue/10 text-watt-blue rounded-full text-sm font-medium mb-4">
               Lesson 3
             </span>
@@ -59,6 +74,8 @@ export const OperationalRiskSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Operational Risk" />
 
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {operationalRisks.map((item, index) => (
@@ -146,6 +163,12 @@ export const OperationalRiskSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Operational Risk"
+          keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Regulatory Risk", href: "#regulatory-risk" }}
+        />
       </div>
     </section>
   );

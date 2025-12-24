@@ -1,5 +1,7 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import { ShieldAlert, TrendingDown, Zap, Scale } from "lucide-react";
+import { ShieldAlert, TrendingDown, Zap, Scale, Clock, BookOpen, Calculator } from "lucide-react";
+import { AnimatedRiskWheel } from "./AnimatedRiskWheel";
+import { RiskProfileAssessment } from "./RiskProfileAssessment";
 
 export const RiskIntroSection = () => {
   const riskCategories = [
@@ -25,21 +27,45 @@ export const RiskIntroSection = () => {
     }
   ];
 
+  const courseStats = [
+    { icon: Clock, value: "~50 min", label: "Total Time" },
+    { icon: BookOpen, value: "8", label: "Sections" },
+    { icon: Calculator, value: "4", label: "Calculators" },
+  ];
+
   return (
     <section id="intro" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             <span className="inline-block px-4 py-2 bg-red-500/10 text-red-500 rounded-full text-sm font-medium mb-4">
               Module 11: Risk Management
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               Risk Management 101
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
               Identify, assess, and mitigate the key risks that threaten mining profitability. 
               Learn frameworks for building resilient operations.
             </p>
+            
+            {/* Course Stats Badges */}
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
+              {courseStats.map((stat) => (
+                <div key={stat.label} className="flex items-center gap-2 bg-card border border-border rounded-full px-4 py-2">
+                  <stat.icon className="w-4 h-4 text-red-500" />
+                  <span className="font-semibold text-foreground">{stat.value}</span>
+                  <span className="text-muted-foreground text-sm">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Animated Risk Wheel */}
+        <ScrollReveal delay={50}>
+          <div className="max-w-md mx-auto mb-12">
+            <AnimatedRiskWheel />
           </div>
         </ScrollReveal>
 
@@ -74,7 +100,7 @@ export const RiskIntroSection = () => {
           </div>
         </ScrollReveal>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {riskCategories.map((category, index) => (
             <ScrollReveal key={category.title} delay={150 + index * 50}>
               <div className="bg-card border border-border rounded-xl p-6 h-full hover:border-red-500/50 transition-colors">
@@ -87,6 +113,9 @@ export const RiskIntroSection = () => {
             </ScrollReveal>
           ))}
         </div>
+
+        {/* Risk Profile Assessment */}
+        <RiskProfileAssessment />
       </div>
     </section>
   );

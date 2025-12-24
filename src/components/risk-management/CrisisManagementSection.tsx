@@ -1,5 +1,7 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import { AlertTriangle, CheckCircle, Clock, RefreshCw } from "lucide-react";
+import { AlertTriangle, Clock, RefreshCw } from "lucide-react";
+import { RiskLearningObjectives } from "./RiskLearningObjectives";
+import { RiskSectionSummary } from "./RiskSectionSummary";
 
 export const CrisisManagementSection = () => {
   const crisisScenarios = [
@@ -59,11 +61,24 @@ export const CrisisManagementSection = () => {
     { priority: 6, item: "Operations Restoration", timeframe: "ASAP", description: "Return to normal operations" }
   ];
 
+  const learningObjectives = [
+    "Develop crisis response playbooks for 3 critical scenarios (market crash, incident, regulatory)",
+    "Establish recovery priority frameworks with clear timeframes",
+    "Build stakeholder communication protocols for crisis situations"
+  ];
+
+  const keyTakeaways = [
+    "Personnel safety is ALWAYS the #1 priority in any crisis situation",
+    "Have documented response plans - during a crisis is not the time to figure things out",
+    "Communicate proactively with stakeholders - silence creates uncertainty and erodes trust",
+    "Document everything during a crisis for insurance claims and post-incident analysis"
+  ];
+
   return (
     <section id="crisis" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="inline-block px-4 py-2 bg-red-500/10 text-red-500 rounded-full text-sm font-medium mb-4">
               Lesson 8
             </span>
@@ -75,6 +90,8 @@ export const CrisisManagementSection = () => {
             </p>
           </div>
         </ScrollReveal>
+
+        <RiskLearningObjectives objectives={learningObjectives} sectionTitle="Crisis Management" />
 
         <div className="space-y-6 mb-12">
           {crisisScenarios.map((crisis, index) => (
@@ -148,6 +165,11 @@ export const CrisisManagementSection = () => {
             </div>
           </div>
         </ScrollReveal>
+
+        <RiskSectionSummary 
+          title="Crisis Management"
+          keyTakeaways={keyTakeaways}
+        />
       </div>
     </section>
   );
