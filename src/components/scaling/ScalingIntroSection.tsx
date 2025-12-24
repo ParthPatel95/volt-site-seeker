@@ -1,5 +1,8 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import { TrendingUp, Target, Building2, Globe } from "lucide-react";
+import { TrendingUp, Target, Building2, Globe, Clock, BookOpen, Calculator } from "lucide-react";
+import { ScalingGrowthWheel } from "./ScalingGrowthWheel";
+import { GrowthReadinessAssessment } from "./GrowthReadinessAssessment";
+import { Button } from "@/components/ui/button";
 
 export const ScalingIntroSection = () => {
   const scalingPillars = [
@@ -25,11 +28,15 @@ export const ScalingIntroSection = () => {
     }
   ];
 
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section id="scaling-intro" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             <span className="inline-block px-4 py-2 bg-watt-success/10 text-watt-success rounded-full text-sm font-medium mb-4">
               Module 12: Scaling & Growth
             </span>
@@ -40,6 +47,89 @@ export const ScalingIntroSection = () => {
               Master the strategies and frameworks for taking your mining operation from megawatts 
               to hundreds of megawatts while maintaining efficiency and profitability.
             </p>
+          </div>
+
+          {/* Course Stats */}
+          <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
+              <Clock className="w-4 h-4 text-watt-success" />
+              <span className="text-sm font-medium text-foreground">~46 min read</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
+              <BookOpen className="w-4 h-4 text-watt-bitcoin" />
+              <span className="text-sm font-medium text-foreground">7 sections</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
+              <Calculator className="w-4 h-4 text-watt-coinbase" />
+              <span className="text-sm font-medium text-foreground">4 interactive tools</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
+              <TrendingUp className="w-4 h-4 text-purple-500" />
+              <span className="text-sm font-medium text-foreground">$500K+/MW insight</span>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Growth Wheel & Quick Jump */}
+        <ScrollReveal delay={50}>
+          <div className="grid lg:grid-cols-2 gap-12 mb-16 items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-4">The Four Pillars of Scaling</h2>
+              <p className="text-muted-foreground mb-6">
+                Successful scaling requires mastery across four interconnected areas. Click any pillar 
+                to jump directly to that section.
+              </p>
+              <ScalingGrowthWheel />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">Quick Jump to Tools</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-auto py-3"
+                  onClick={() => scrollToSection('capacity-planning')}
+                >
+                  <Calculator className="w-4 h-4 mr-2 text-watt-success" />
+                  <div className="text-left">
+                    <div className="font-medium">Capacity Calculator</div>
+                    <div className="text-xs text-muted-foreground">Plan your expansion</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-auto py-3"
+                  onClick={() => scrollToSection('site-expansion')}
+                >
+                  <Building2 className="w-4 h-4 mr-2 text-watt-bitcoin" />
+                  <div className="text-left">
+                    <div className="font-medium">ROI Estimator</div>
+                    <div className="text-xs text-muted-foreground">Compare approaches</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-auto py-3"
+                  onClick={() => scrollToSection('capital-raising')}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2 text-watt-coinbase" />
+                  <div className="text-left">
+                    <div className="font-medium">Funding Strategy</div>
+                    <div className="text-xs text-muted-foreground">Structure capital</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-auto py-3"
+                  onClick={() => scrollToSection('mergers-acquisitions')}
+                >
+                  <Target className="w-4 h-4 mr-2 text-purple-500" />
+                  <div className="text-left">
+                    <div className="font-medium">M&A Valuation</div>
+                    <div className="text-xs text-muted-foreground">Value targets</div>
+                  </div>
+                </Button>
+              </div>
+            </div>
           </div>
         </ScrollReveal>
 
@@ -61,7 +151,7 @@ export const ScalingIntroSection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <div className="bg-gradient-to-r from-watt-success/10 to-watt-blue/10 rounded-2xl p-8 md:p-12">
+          <div className="bg-gradient-to-r from-watt-success/10 to-watt-blue/10 rounded-2xl p-8 md:p-12 mb-16">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
@@ -110,6 +200,19 @@ export const ScalingIntroSection = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Growth Readiness Assessment */}
+        <ScrollReveal delay={300}>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-4 text-center">
+              Assess Your Growth Readiness
+            </h2>
+            <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-8">
+              Before diving into the course, evaluate your current position and readiness for scaling.
+            </p>
+            <GrowthReadinessAssessment />
           </div>
         </ScrollReveal>
       </div>

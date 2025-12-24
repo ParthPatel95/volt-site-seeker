@@ -1,9 +1,19 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import { ArrowRight, BookOpen, TrendingUp, Building2 } from "lucide-react";
+import { ArrowRight, BookOpen, TrendingUp, Building2, CheckCircle, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const ScalingCTASection = () => {
   const navigate = useNavigate();
+
+  const completedTopics = [
+    "Growth readiness assessment",
+    "Capacity planning & requirements",
+    "Site expansion strategies",
+    "Multi-site management",
+    "Capital raising & funding",
+    "Partnership models",
+    "M&A strategies & valuation"
+  ];
 
   const nextSteps = [
     {
@@ -32,7 +42,31 @@ export const ScalingCTASection = () => {
   return (
     <section id="scaling-cta" className="py-20 bg-gradient-to-br from-watt-navy via-watt-navy/95 to-watt-navy">
       <div className="container mx-auto px-4">
+        {/* Course Completion */}
         <ScrollReveal>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 mb-12 border border-white/10">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 bg-watt-success rounded-full flex items-center justify-center">
+                <Award className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Course Complete!</h2>
+                <p className="text-white/70">You've covered all 7 sections of Scaling & Growth 101</p>
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {completedTopics.map((topic, index) => (
+                <div key={index} className="flex items-center gap-2 text-white/80">
+                  <CheckCircle className="w-4 h-4 text-watt-success flex-shrink-0" />
+                  <span className="text-sm">{topic}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={100}>
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Ready to Scale Your Operation?
@@ -44,7 +78,7 @@ export const ScalingCTASection = () => {
           </div>
         </ScrollReveal>
 
-        <ScrollReveal delay={100}>
+        <ScrollReveal delay={150}>
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             {nextSteps.map((step, index) => (
               <button
