@@ -20,6 +20,7 @@ const academyModules = [
   { id: "operations", title: "Operations & Maintenance", route: "/operations", totalSections: 8 },
   { id: "risk-management", title: "Risk Management", route: "/risk-management", totalSections: 8 },
   { id: "scaling-growth", title: "Scaling & Growth", route: "/scaling-growth", totalSections: 8 },
+  { id: "strategic-operations", title: "Strategic Operations Masterclass", route: "/strategic-operations", totalSections: 6 },
 ];
 
 const Academy = () => {
