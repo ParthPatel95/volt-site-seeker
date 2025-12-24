@@ -23,7 +23,7 @@ const TOTAL_MODULES = moduleData.length;
 // Floating Particle Component
 const FloatingParticle = ({ delay, size, left, duration }: { delay: number; size: number; left: string; duration: number }) => (
   <motion.div
-    className="absolute rounded-full bg-watt-bitcoin/20 blur-sm"
+    className="absolute rounded-full bg-watt-bitcoin/30"
     style={{ width: size, height: size, left }}
     initial={{ y: "100vh", opacity: 0 }}
     animate={{ 
@@ -98,7 +98,7 @@ const OrbitingIcon = ({
     }}
   >
     <motion.div
-      className="absolute bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 flex items-center justify-center"
+      className="absolute bg-slate-800/70 rounded-xl border border-white/20 flex items-center justify-center"
       style={{
         width: size,
         height: size,
@@ -131,7 +131,7 @@ export const AcademyHeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy overflow-hidden pt-16">
       {/* Animated Background Layers */}
       <div className="absolute inset-0">
         {/* Radial gradient overlays */}
@@ -254,7 +254,7 @@ export const AcademyHeroSection = () => {
               </Button>
               <Button 
                 size="lg" 
-                className="bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                className="bg-slate-800/70 border border-white/20 text-white hover:bg-slate-700/70"
                 onClick={() => window.location.href = '/bitcoin'}
               >
                 Start with Bitcoin 101
@@ -361,7 +361,7 @@ export const AcademyHeroSection = () => {
 
             {/* Floating Cards */}
             <motion.div
-              className="absolute top-10 right-0 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 shadow-xl"
+              className="absolute top-10 right-0 bg-slate-800/70 rounded-xl border border-white/20 p-4 shadow-xl"
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
@@ -377,7 +377,7 @@ export const AcademyHeroSection = () => {
             </motion.div>
 
             <motion.div
-              className="absolute bottom-10 left-0 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 shadow-xl"
+              className="absolute bottom-10 left-0 bg-slate-800/70 rounded-xl border border-white/20 p-4 shadow-xl"
               animate={{ y: [0, 10, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
             >
@@ -410,8 +410,6 @@ export const AcademyHeroSection = () => {
         </button>
       </motion.div>
 
-      {/* Bottom Fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 };
