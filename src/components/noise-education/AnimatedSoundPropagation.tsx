@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
@@ -8,8 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface SoundWave {
   id: number;
-  scale: number;
-  opacity: number;
+  progress: number; // 0 to 1 representing travel progress
+  startTime: number;
 }
 
 interface AnimatedSoundPropagationProps {
@@ -24,12 +24,109 @@ const AnimatedSoundPropagation = ({
   const [sourceDb, setSourceDb] = useState(initialSourceDb);
   const [distance, setDistance] = useState(initialDistance);
   const [waves, setWaves] = useState<SoundWave[]>([]);
-  const [isAnimating, setIsAnimating] = useState(true);
+  const [receptorPulse, setReceptorPulse] = useState(0);
 
-  // Calculate attenuation
+  // Calculate attenuation using inverse square law
   const distanceAttenuation = 20 * Math.log10(distance);
   const atmosphericLoss = distance * 0.002;
   const resultDb = Math.max(0, sourceDb - distanceAttenuation - atmosphericLoss);
+
+  // Calculate wave physics parameters
+  const waveParams = useMemo(() => {
+    // Normalize distance for wave count (more waves for longer distances)
+    const normalizedDistance = Math.min(distance / 5000, 1);
+    const maxWaves = Math.floor(3 + normalizedDistance * 5); // 3-8 waves based on distance
+    
+    // Wave spawn interval based on distance (faster spawn for shorter distances)
+    const spawnInterval = 300 + normalizedDistance * 200; // 300-500ms
+    
+    // How fast waves travel (normalized speed)
+    const waveSpeed = 0.015 + (1 - normalizedDistance) * 0.01; // Faster for closer
+    
+    // Initial opacity based on source dB (louder = more opaque)
+    const initialOpacity = Math.min(1, (sourceDb - 60) / 40); // 0.0 at 60dB, 1.0 at 100dB
+    
+    return { maxWaves, spawnInterval, waveSpeed, initialOpacity };
+  }, [distance, sourceDb]);
+
+  // Calculate wave opacity based on progress using inverse square law
+  const getWaveOpacity = (progress: number) => {
+    // Inverse square law: intensity ∝ 1/r²
+    // At progress 0 (source), full opacity; at progress 1 (receptor), much less
+    const distanceFactor = 1 + progress * (distance / 100); // Simulated distance factor
+    const inverseSquareFade = 1 / (distanceFactor * distanceFactor);
+    
+    // Also factor in the source dB level
+    const sourceIntensity = waveParams.initialOpacity;
+    
+    // Combine factors - waves fade faster at greater distances
+    const opacity = sourceIntensity * inverseSquareFade * (1 - progress * 0.3);
+    
+    return Math.max(0, Math.min(1, opacity));
+  };
+
+  // Get wave color based on progress (orange → teal → green)
+  const getWaveColor = (progress: number): string => {
+    if (progress < 0.4) {
+      // Orange to teal transition
+      return `rgb(${Math.round(247 - progress * 200)}, ${Math.round(147 + progress * 150)}, ${Math.round(30 + progress * 150)})`;
+    } else {
+      // Teal to green transition
+      const p = (progress - 0.4) / 0.6;
+      return `rgb(${Math.round(127 - p * 100)}, ${Math.round(207 + p * 48)}, ${Math.round(90 + p * 37)})`;
+    }
+  };
+
+  // Animate sound waves
+  useEffect(() => {
+    let animationFrame: number;
+    let lastSpawnTime = 0;
+    
+    const animate = (currentTime: number) => {
+      // Spawn new waves at interval
+      if (currentTime - lastSpawnTime > waveParams.spawnInterval) {
+        setWaves(prev => {
+          const activeWaves = prev.filter(w => w.progress < 1.1);
+          if (activeWaves.length < waveParams.maxWaves) {
+            return [...activeWaves, { 
+              id: currentTime, 
+              progress: 0,
+              startTime: currentTime 
+            }];
+          }
+          return activeWaves;
+        });
+        lastSpawnTime = currentTime;
+      }
+      
+      // Update wave progress
+      setWaves(prev => 
+        prev
+          .map(w => ({ 
+            ...w, 
+            progress: w.progress + waveParams.waveSpeed 
+          }))
+          .filter(w => w.progress < 1.2) // Remove waves past receptor
+      );
+      
+      animationFrame = requestAnimationFrame(animate);
+    };
+    
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [waveParams]);
+
+  // Trigger receptor pulse when wave reaches receptor
+  useEffect(() => {
+    const hasWaveAtReceptor = waves.some(w => w.progress >= 0.95 && w.progress < 1.05);
+    if (hasWaveAtReceptor && resultDb > 5) {
+      // Pulse intensity proportional to received dB
+      const pulseIntensity = Math.min(1, resultDb / 55);
+      setReceptorPulse(pulseIntensity);
+      const timeout = setTimeout(() => setReceptorPulse(0), 200);
+      return () => clearTimeout(timeout);
+    }
+  }, [waves, resultDb]);
 
   // Determine zone color based on result
   const getZoneColor = () => {
@@ -46,31 +143,24 @@ const AnimatedSoundPropagation = ({
     return 'May Exceed Limits';
   };
 
-  // Animate sound waves
-  useEffect(() => {
-    if (!isAnimating) return;
-    
-    const interval = setInterval(() => {
-      setWaves(prev => {
-        const newWaves = prev
-          .map(w => ({ ...w, scale: w.scale + 0.3, opacity: w.opacity - 0.08 }))
-          .filter(w => w.opacity > 0);
-        
-        if (newWaves.length < 5) {
-          newWaves.push({ id: Date.now(), scale: 1, opacity: 1 });
-        }
-        
-        return newWaves;
-      });
-    }, 400);
-
-    return () => clearInterval(interval);
-  }, [isAnimating]);
-
-  // Calculate positions based on distance (normalized)
+  // Calculate house position (normalized)
   const getHousePosition = () => {
     const normalized = Math.min(distance / 5000, 1);
     return 60 + normalized * 30; // 60% to 90%
+  };
+
+  // Calculate wave size based on progress
+  const getWaveSize = (progress: number) => {
+    const baseSize = 40;
+    const maxScale = 2 + (distance / 1000); // Larger max scale for greater distances
+    return baseSize + progress * maxScale * 60;
+  };
+
+  // Calculate wave position (progress to visual position)
+  const getWavePosition = (progress: number) => {
+    const startPos = 8; // Percentage from left (source position)
+    const endPos = getHousePosition(); // Receptor position
+    return startPos + progress * (endPos - startPos);
   };
 
   return (
@@ -82,41 +172,74 @@ const AnimatedSoundPropagation = ({
           </div>
           <div>
             <h3 className="text-xl font-bold text-white">Sound Propagation Visualization</h3>
-            <p className="text-sm text-white/60">Watch how sound attenuates with distance</p>
+            <p className="text-sm text-white/60">Watch how sound attenuates with distance (inverse square law)</p>
           </div>
         </div>
 
         {/* Visualization Area */}
         <div className="relative h-48 md:h-64 bg-gradient-to-r from-watt-bitcoin/20 via-watt-coinbase/10 to-watt-success/10 rounded-xl overflow-hidden mb-6">
-          {/* Animated Sound Waves */}
-          <div className="absolute left-8 top-1/2 -translate-y-1/2">
-            <AnimatePresence>
-              {waves.map(wave => (
+          {/* Sound Field Gradient Trail */}
+          <div 
+            className="absolute inset-y-0 left-0 pointer-events-none"
+            style={{
+              width: `${getHousePosition()}%`,
+              background: `linear-gradient(to right, 
+                rgba(247, 147, 30, ${waveParams.initialOpacity * 0.3}) 0%, 
+                rgba(0, 212, 170, ${waveParams.initialOpacity * 0.15}) 50%, 
+                rgba(39, 174, 96, ${Math.min(resultDb / 100, 0.1)}) 100%
+              )`,
+            }}
+          />
+
+          {/* Animated Sound Waves with Physics-Based Fading */}
+          <AnimatePresence>
+            {waves.map(wave => {
+              const opacity = getWaveOpacity(wave.progress);
+              const size = getWaveSize(wave.progress);
+              const color = getWaveColor(wave.progress);
+              const leftPos = getWavePosition(wave.progress);
+              
+              // Don't render if opacity is too low
+              if (opacity < 0.02) return null;
+              
+              return (
                 <motion.div
                   key={wave.id}
-                  initial={{ scale: 1, opacity: 1 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ 
-                    scale: wave.scale * 2, 
-                    opacity: wave.opacity * 0.5 
+                    opacity: opacity,
+                    scale: 1,
                   }}
                   exit={{ opacity: 0 }}
-                  className="absolute border-2 border-watt-bitcoin rounded-full -translate-x-1/2 -translate-y-1/2"
+                  className="absolute top-1/2 rounded-full pointer-events-none"
                   style={{
-                    width: 40,
-                    height: 40,
-                    left: 20,
-                    top: 0,
+                    width: size,
+                    height: size,
+                    left: `${leftPos}%`,
+                    transform: 'translate(-50%, -50%)',
+                    border: `${2 + waveParams.initialOpacity}px solid ${color}`,
+                    boxShadow: `0 0 ${10 * opacity}px ${color}`,
                   }}
                 />
-              ))}
-            </AnimatePresence>
-          </div>
+              );
+            })}
+          </AnimatePresence>
 
           {/* Facility Icon */}
           <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-            <div className="bg-watt-navy border-2 border-watt-bitcoin rounded-lg p-3 shadow-lg">
+            <motion.div 
+              className="bg-watt-navy border-2 border-watt-bitcoin rounded-lg p-3 shadow-lg"
+              animate={{
+                boxShadow: [
+                  `0 0 10px rgba(247, 147, 30, ${waveParams.initialOpacity * 0.3})`,
+                  `0 0 20px rgba(247, 147, 30, ${waveParams.initialOpacity * 0.5})`,
+                  `0 0 10px rgba(247, 147, 30, ${waveParams.initialOpacity * 0.3})`,
+                ]
+              }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
               <Factory className="h-8 w-8 text-watt-bitcoin" />
-            </div>
+            </motion.div>
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
               <Badge className="bg-watt-bitcoin text-white text-xs">
                 {sourceDb.toFixed(1)} dB
@@ -141,15 +264,39 @@ const AnimatedSoundPropagation = ({
             </div>
           ))}
 
-          {/* House/Receptor */}
+          {/* House/Receptor with Pulse Animation */}
           <motion.div 
             className="absolute top-1/2 -translate-y-1/2 z-10"
             animate={{ left: `${getHousePosition()}%` }}
             transition={{ type: 'spring', stiffness: 100 }}
           >
-            <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-2">
-              <Home className="h-6 w-6 text-white" />
-            </div>
+            <motion.div 
+              className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-2 relative"
+              animate={{
+                scale: 1 + receptorPulse * 0.15,
+                boxShadow: receptorPulse > 0 
+                  ? `0 0 ${20 * receptorPulse}px rgba(${resultDb > 45 ? '255, 165, 0' : '39, 174, 96'}, ${receptorPulse * 0.6})`
+                  : '0 0 0px transparent',
+              }}
+              transition={{ duration: 0.15 }}
+            >
+              <Home className={`h-6 w-6 ${resultDb > 45 ? 'text-yellow-400' : 'text-white'}`} />
+              
+              {/* Sound reception indicator */}
+              {resultDb > 5 && (
+                <motion.div
+                  className="absolute -right-1 -top-1 w-3 h-3 rounded-full"
+                  style={{
+                    backgroundColor: resultDb > 45 ? '#f59e0b' : '#27ae60',
+                  }}
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 1, 0.7],
+                  }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                />
+              )}
+            </motion.div>
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
               <Badge className={`${getZoneColor()} bg-black/50 text-xs`}>
                 {resultDb.toFixed(1)} dB
@@ -160,7 +307,7 @@ const AnimatedSoundPropagation = ({
           {/* Attenuation Arrow */}
           <div className="absolute bottom-2 left-1/4 right-1/4 flex items-center justify-center gap-2">
             <ArrowRight className="h-4 w-4 text-white/30" />
-            <span className="text-xs text-white/50">Sound decreases with distance</span>
+            <span className="text-xs text-white/50">Inverse square law: -6dB per distance doubling</span>
             <ArrowRight className="h-4 w-4 text-white/30" />
           </div>
         </div>
