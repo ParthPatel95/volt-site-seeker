@@ -131,7 +131,7 @@ export const AcademyHeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-[90vh] flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden">
+    <section className="relative min-h-screen flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden">
       {/* Animated Background Layers */}
       <div className="absolute inset-0">
         {/* Radial gradient overlays */}
@@ -144,12 +144,12 @@ export const AcademyHeroSection = () => {
           backgroundSize: '60px 60px'
         }} />
         
-        {/* Animated Gradient Orbs */}
+        {/* Subtle Gradient Accents (no blur) */}
         <motion.div 
-          className="absolute top-20 left-1/4 w-96 h-96 bg-watt-bitcoin/10 rounded-full blur-[100px]"
+          className="absolute top-20 left-1/4 w-64 h-64 bg-watt-bitcoin/5 rounded-full"
           animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.1, 0.15, 0.1],
+            scale: [1, 1.1, 1],
+            opacity: [0.05, 0.08, 0.05],
           }}
           transition={{
             duration: 8,
@@ -158,10 +158,10 @@ export const AcademyHeroSection = () => {
           }}
         />
         <motion.div 
-          className="absolute bottom-20 right-1/4 w-80 h-80 bg-watt-blue/10 rounded-full blur-[80px]"
+          className="absolute bottom-40 right-1/3 w-48 h-48 bg-watt-blue/5 rounded-full"
           animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.1, 0.2, 0.1],
+            scale: [1, 1.2, 1],
+            opacity: [0.05, 0.08, 0.05],
           }}
           transition={{
             duration: 10,
@@ -171,13 +171,13 @@ export const AcademyHeroSection = () => {
           }}
         />
         <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-watt-trust/5 rounded-full blur-[120px]"
+          className="absolute top-1/2 left-10 w-32 h-32 bg-watt-trust/5 rounded-full"
           animate={{
             scale: [1, 1.1, 1],
-            opacity: [0.05, 0.1, 0.05],
+            opacity: [0.05, 0.08, 0.05],
           }}
           transition={{
-            duration: 12,
+            duration: 6,
             delay: 1,
             repeat: Infinity,
             ease: "easeInOut"
