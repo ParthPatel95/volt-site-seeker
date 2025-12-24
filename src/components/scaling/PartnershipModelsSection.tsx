@@ -1,5 +1,7 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Handshake, Building, Zap, Server, Users, ArrowRightLeft, CheckCircle, XCircle } from "lucide-react";
+import { ScalingLearningObjectives } from "./ScalingLearningObjectives";
+import { ScalingSectionSummary } from "./ScalingSectionSummary";
 
 export const PartnershipModelsSection = () => {
   const partnershipTypes = [
@@ -73,18 +75,34 @@ export const PartnershipModelsSection = () => {
     { term: "Non-Compete", description: "Restrictions on partners competing in the same market or geography" }
   ];
 
+  const learningObjectives = [
+    "Evaluate 4 partnership types: JV (shared risk), Power (fixed costs), Hosting (quick start), Hashrate (capital efficiency)",
+    "Apply the 4-category partner evaluation framework: Financial, Operational, Strategic, Terms",
+    "Negotiate 6 key partnership terms: Economic split, Governance, Capital, Operations, Exit, Non-compete"
+  ];
+
+  const keyTakeaways = [
+    "JVs provide shared risk and combined expertise but require complex governance",
+    "Power partnerships offer cost certainty but come with volume commitments and lock-in",
+    "Successful partnerships require clear objectives, fair economics, strong governance, and exit flexibility"
+  ];
+
   return (
-    <section id="partnerships" className="py-20 bg-watt-gray/30">
+    <section id="partnerships" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Partnership Models
             </h2>
-            <p className="text-xl text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Strategic partnerships can accelerate growth, reduce risk, and provide access to resources.
             </p>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={50}>
+          <ScalingLearningObjectives objectives={learningObjectives} />
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
@@ -92,43 +110,43 @@ export const PartnershipModelsSection = () => {
             {partnershipTypes.map((partnership, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-watt-navy/10 hover:shadow-xl transition-all duration-300"
+                className="bg-card rounded-2xl p-6 shadow-lg border border-border hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-watt-success/10 rounded-xl flex items-center justify-center">
                     <partnership.icon className="w-6 h-6 text-watt-success" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-watt-navy">{partnership.type}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{partnership.type}</h3>
                     <p className="text-sm text-watt-success">{partnership.structure}</p>
                   </div>
                 </div>
                 
-                <p className="text-watt-navy/70 text-sm mb-3">{partnership.description}</p>
-                <p className="text-sm text-watt-navy mb-4">
+                <p className="text-muted-foreground text-sm mb-3">{partnership.description}</p>
+                <p className="text-sm text-foreground mb-4">
                   <span className="font-medium">Best for:</span> {partnership.useCase}
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <h5 className="text-xs font-semibold text-watt-navy mb-2 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3 text-green-500" />
+                    <h5 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3 text-watt-success" />
                       Advantages
                     </h5>
                     <ul className="space-y-1">
                       {partnership.pros.map((pro, i) => (
-                        <li key={i} className="text-xs text-watt-navy/70">• {pro}</li>
+                        <li key={i} className="text-xs text-muted-foreground">• {pro}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h5 className="text-xs font-semibold text-watt-navy mb-2 flex items-center gap-1">
+                    <h5 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1">
                       <XCircle className="w-3 h-3 text-amber-500" />
                       Considerations
                     </h5>
                     <ul className="space-y-1">
                       {partnership.cons.map((con, i) => (
-                        <li key={i} className="text-xs text-watt-navy/70">• {con}</li>
+                        <li key={i} className="text-xs text-muted-foreground">• {con}</li>
                       ))}
                     </ul>
                   </div>
@@ -140,23 +158,23 @@ export const PartnershipModelsSection = () => {
 
         <ScrollReveal delay={200}>
           <div className="grid lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-watt-navy/10">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <Users className="w-5 h-5 text-watt-success" />
                 Partner Evaluation Framework
               </h3>
               <div className="space-y-4">
                 {partnerEvaluation.map((criteria, index) => (
-                  <div key={index} className="bg-watt-gray/50 rounded-xl p-4">
+                  <div key={index} className="bg-muted/50 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-semibold text-watt-navy">{criteria.category}</h4>
+                      <h4 className="font-semibold text-foreground">{criteria.category}</h4>
                       <span className="text-sm font-medium text-watt-success">{criteria.weight}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {criteria.factors.map((factor, i) => (
                         <span
                           key={i}
-                          className="px-2 py-1 bg-white rounded text-xs text-watt-navy/70"
+                          className="px-2 py-1 bg-card rounded text-xs text-muted-foreground"
                         >
                           {factor}
                         </span>
@@ -167,16 +185,16 @@ export const PartnershipModelsSection = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-watt-navy/10">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <Handshake className="w-5 h-5 text-watt-success" />
                 Key Partnership Terms
               </h3>
               <div className="space-y-4">
                 {keyTerms.map((item, index) => (
-                  <div key={index} className="border-b border-watt-navy/10 pb-3 last:border-0">
-                    <h4 className="font-semibold text-watt-navy text-sm">{item.term}</h4>
-                    <p className="text-sm text-watt-navy/70">{item.description}</p>
+                  <div key={index} className="border-b border-border pb-3 last:border-0">
+                    <h4 className="font-semibold text-foreground text-sm">{item.term}</h4>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
                   </div>
                 ))}
               </div>
@@ -186,38 +204,46 @@ export const PartnershipModelsSection = () => {
 
         <ScrollReveal delay={300}>
           <div className="mt-12 bg-gradient-to-r from-watt-success/10 to-watt-blue/10 rounded-2xl p-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-4">Partnership Success Factors</h3>
+            <h3 className="text-xl font-bold text-foreground mb-4">Partnership Success Factors</h3>
             <div className="grid md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="w-12 h-12 bg-watt-success rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-white font-bold">1</span>
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-1">Clear Objectives</h4>
-                <p className="text-sm text-watt-navy/70">Aligned goals and expectations from day one</p>
+                <h4 className="font-semibold text-foreground mb-1">Clear Objectives</h4>
+                <p className="text-sm text-muted-foreground">Aligned goals and expectations from day one</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-watt-success rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-white font-bold">2</span>
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-1">Fair Economics</h4>
-                <p className="text-sm text-watt-navy/70">Value sharing that reflects contributions</p>
+                <h4 className="font-semibold text-foreground mb-1">Fair Economics</h4>
+                <p className="text-sm text-muted-foreground">Value sharing that reflects contributions</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-watt-success rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-white font-bold">3</span>
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-1">Strong Governance</h4>
-                <p className="text-sm text-watt-navy/70">Clear decision rights and dispute resolution</p>
+                <h4 className="font-semibold text-foreground mb-1">Strong Governance</h4>
+                <p className="text-sm text-muted-foreground">Clear decision rights and dispute resolution</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-watt-success rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-white font-bold">4</span>
                 </div>
-                <h4 className="font-semibold text-watt-navy mb-1">Exit Flexibility</h4>
-                <p className="text-sm text-watt-navy/70">Well-defined paths for changing circumstances</p>
+                <h4 className="font-semibold text-foreground mb-1">Exit Flexibility</h4>
+                <p className="text-sm text-muted-foreground">Well-defined paths for changing circumstances</p>
               </div>
             </div>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={400}>
+          <ScalingSectionSummary 
+            keyTakeaways={keyTakeaways}
+            nextSectionId="mergers-acquisitions"
+            nextSectionTitle="Mergers & Acquisitions"
+          />
         </ScrollReveal>
       </div>
     </section>

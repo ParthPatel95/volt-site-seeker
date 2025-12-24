@@ -1,6 +1,9 @@
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Building, ArrowRight, Clock, DollarSign, Zap, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { ScalingLearningObjectives } from "./ScalingLearningObjectives";
+import { ScalingSectionSummary } from "./ScalingSectionSummary";
+import { ExpansionROIEstimator } from "./ExpansionROIEstimator";
 
 export const SiteExpansionSection = () => {
   const [selectedPhase, setSelectedPhase] = useState(0);
@@ -91,62 +94,78 @@ export const SiteExpansionSection = () => {
     }
   ];
 
+  const learningObjectives = [
+    "Compare Brownfield, Greenfield, and Conversion expansion approaches with cost/timeline trade-offs",
+    "Estimate timeline and cost per MW for each expansion approach",
+    "Navigate the 4 expansion project phases from planning to commissioning"
+  ];
+
+  const keyTakeaways = [
+    "Brownfield is fastest (6-12 mo) but limited by existing capacity",
+    "Greenfield offers optimal design but costs $600K-$900K/MW and takes 12-24 months",
+    "Conversion offers best value at $350K-$550K/MW with existing power infrastructure"
+  ];
+
   return (
     <section id="site-expansion" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Site Expansion Strategies
             </h2>
-            <p className="text-xl text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Understanding the different approaches to expanding mining capacity and their trade-offs.
             </p>
           </div>
         </ScrollReveal>
 
+        <ScrollReveal delay={50}>
+          <ScalingLearningObjectives objectives={learningObjectives} />
+        </ScrollReveal>
+
         <ScrollReveal delay={100}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6">Expansion Types Comparison</h3>
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
+          <h3 className="text-2xl font-bold text-foreground mb-6">Expansion Types Comparison</h3>
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
             {expansionTypes.map((type, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-watt-navy/10 hover:shadow-xl transition-all duration-300"
+                className="bg-card rounded-2xl p-6 shadow-lg border border-border hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <Building className="w-6 h-6 text-watt-success" />
-                  <h4 className="text-xl font-bold text-watt-navy">{type.type}</h4>
+                  <h4 className="text-xl font-bold text-foreground">{type.type}</h4>
                 </div>
-                <p className="text-watt-navy/70 text-sm mb-4">{type.description}</p>
+                <p className="text-muted-foreground text-sm mb-4">{type.description}</p>
                 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-watt-success/10 rounded-lg p-3">
                     <Clock className="w-4 h-4 text-watt-success mb-1" />
-                    <div className="text-sm font-semibold text-watt-navy">{type.timeline}</div>
-                    <div className="text-xs text-watt-navy/60">Timeline</div>
+                    <div className="text-sm font-semibold text-foreground">{type.timeline}</div>
+                    <div className="text-xs text-muted-foreground">Timeline</div>
                   </div>
                   <div className="bg-watt-bitcoin/10 rounded-lg p-3">
                     <DollarSign className="w-4 h-4 text-watt-bitcoin mb-1" />
-                    <div className="text-sm font-semibold text-watt-navy">{type.costPerMW}</div>
-                    <div className="text-xs text-watt-navy/60">Cost/MW</div>
+                    <div className="text-sm font-semibold text-foreground">{type.costPerMW}</div>
+                    <div className="text-xs text-muted-foreground">Cost/MW</div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <h5 className="text-sm font-semibold text-green-600 mb-1">Advantages</h5>
-                    <ul className="text-xs text-watt-navy/70 space-y-1">
+                    <h5 className="text-sm font-semibold text-watt-success mb-1">Advantages</h5>
+                    <ul className="text-xs text-muted-foreground space-y-1">
                       {type.pros.map((pro, i) => (
                         <li key={i} className="flex items-center gap-1">
-                          <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                          <div className="w-1 h-1 bg-watt-success rounded-full"></div>
                           {pro}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h5 className="text-sm font-semibold text-amber-600 mb-1">Considerations</h5>
-                    <ul className="text-xs text-watt-navy/70 space-y-1">
+                    <h5 className="text-sm font-semibold text-amber-500 mb-1">Considerations</h5>
+                    <ul className="text-xs text-muted-foreground space-y-1">
                       {type.cons.map((con, i) => (
                         <li key={i} className="flex items-center gap-1">
                           <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
@@ -161,10 +180,17 @@ export const SiteExpansionSection = () => {
           </div>
         </ScrollReveal>
 
+        {/* ROI Estimator */}
+        <ScrollReveal delay={150}>
+          <div className="mb-12">
+            <ExpansionROIEstimator />
+          </div>
+        </ScrollReveal>
+
         <ScrollReveal delay={200}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6">Expansion Project Phases</h3>
-          <div className="bg-white rounded-2xl shadow-lg border border-watt-navy/10 overflow-hidden">
-            <div className="flex flex-wrap border-b border-watt-navy/10">
+          <h3 className="text-2xl font-bold text-foreground mb-6">Expansion Project Phases</h3>
+          <div className="bg-card rounded-2xl shadow-lg border border-border overflow-hidden">
+            <div className="flex flex-wrap border-b border-border">
               {expansionPhases.map((phase, index) => (
                 <button
                   key={index}
@@ -172,7 +198,7 @@ export const SiteExpansionSection = () => {
                   className={`flex-1 min-w-[150px] px-6 py-4 text-center transition-all duration-300 ${
                     selectedPhase === index
                       ? "bg-watt-success text-white"
-                      : "bg-white text-watt-navy hover:bg-watt-gray/50"
+                      : "bg-card text-foreground hover:bg-muted/50"
                   }`}
                 >
                   <div className="font-semibold">{phase.phase}</div>
@@ -184,18 +210,18 @@ export const SiteExpansionSection = () => {
             <div className="p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
-                  <h4 className="text-xl font-bold text-watt-navy mb-4">
+                  <h4 className="text-xl font-bold text-foreground mb-4">
                     {expansionPhases[selectedPhase].title}
                   </h4>
-                  <p className="text-watt-navy/70 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Duration: <span className="font-semibold">{expansionPhases[selectedPhase].duration}</span>
                     <span className="mx-2">|</span>
                     Budget: <span className="font-semibold">{expansionPhases[selectedPhase].cost} of total</span>
                   </p>
-                  <h5 className="font-semibold text-watt-navy mb-2">Key Activities</h5>
+                  <h5 className="font-semibold text-foreground mb-2">Key Activities</h5>
                   <ul className="space-y-2">
                     {expansionPhases[selectedPhase].activities.map((activity, i) => (
-                      <li key={i} className="flex items-start gap-2 text-watt-navy/70">
+                      <li key={i} className="flex items-start gap-2 text-muted-foreground">
                         <ArrowRight className="w-4 h-4 text-watt-success mt-0.5 shrink-0" />
                         {activity}
                       </li>
@@ -203,7 +229,7 @@ export const SiteExpansionSection = () => {
                   </ul>
                 </div>
                 <div>
-                  <h5 className="font-semibold text-watt-navy mb-4">Key Milestones</h5>
+                  <h5 className="font-semibold text-foreground mb-4">Key Milestones</h5>
                   <div className="space-y-3">
                     {expansionPhases[selectedPhase].milestones.map((milestone, i) => (
                       <div
@@ -211,17 +237,17 @@ export const SiteExpansionSection = () => {
                         className="flex items-center gap-3 bg-watt-success/10 rounded-lg p-4"
                       >
                         <CheckCircle2 className="w-5 h-5 text-watt-success" />
-                        <span className="font-medium text-watt-navy">{milestone}</span>
+                        <span className="font-medium text-foreground">{milestone}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-6 bg-watt-navy/5 rounded-xl p-4">
+                  <div className="mt-6 bg-muted/50 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Zap className="w-4 h-4 text-watt-bitcoin" />
-                      <span className="font-semibold text-watt-navy">Pro Tip</span>
+                      <span className="font-semibold text-foreground">Pro Tip</span>
                     </div>
-                    <p className="text-sm text-watt-navy/70">
+                    <p className="text-sm text-muted-foreground">
                       {selectedPhase === 0 && "Start utility discussions early - interconnection can be the longest lead time item."}
                       {selectedPhase === 1 && "Order transformers and switchgear immediately - lead times can exceed 12 months."}
                       {selectedPhase === 2 && "Stage equipment deliveries to match installation capacity and avoid storage costs."}
@@ -232,6 +258,14 @@ export const SiteExpansionSection = () => {
               </div>
             </div>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={300}>
+          <ScalingSectionSummary 
+            keyTakeaways={keyTakeaways}
+            nextSectionId="multi-site-strategy"
+            nextSectionTitle="Multi-Site Strategy"
+          />
         </ScrollReveal>
       </div>
     </section>
