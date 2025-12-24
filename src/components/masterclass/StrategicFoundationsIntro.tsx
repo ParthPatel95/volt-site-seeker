@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { GraduationCap, Clock, Award, Target, MapPin, ShieldAlert, TrendingUp, ArrowRight, Zap, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 
 export const StrategicFoundationsIntro = () => {
   const tracks = [
@@ -71,150 +72,156 @@ export const StrategicFoundationsIntro = () => {
   ];
 
   return (
-    <section id="intro" className="relative py-20 overflow-hidden bg-watt-light">
+    <section id="intro" className="relative py-20 overflow-hidden bg-muted">
       {/* Background Effects */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-green-500/5 rounded-full blur-3xl" />
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Hero Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center max-w-4xl mx-auto mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm mb-6">
-            <GraduationCap className="w-5 h-5 text-watt-blue" />
-            <span className="text-sm font-medium text-watt-navy">Strategic Operations Masterclass</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-watt-navy">
-            Master the Complete Lifecycle
-            <br />
-            <span className="text-watt-blue">of Bitcoin Mining Development</span>
-          </h1>
-          
-          <p className="text-xl text-watt-navy/70 mb-8 max-w-3xl mx-auto">
-            From identifying your first site to managing a multi-site portfolio. 
-            This comprehensive masterclass integrates site selection, risk management, 
-            and scaling strategies into one unified learning experience.
-          </p>
-
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-4 shadow-lg border border-gray-100"
-              >
-                <stat.icon className="w-5 h-5 text-watt-blue mx-auto mb-2" />
-                <div className="text-2xl font-bold text-watt-navy">{stat.value}</div>
-                <div className="text-sm text-watt-navy/60">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* The 5 Tracks Visual */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-16"
-        >
-          <h2 className="text-2xl font-bold text-center mb-8 text-watt-navy">Your Learning Journey</h2>
-          
-          <div className="relative">
-            {/* Connection Line */}
-            <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-purple-300 via-orange-300 to-green-300 -translate-y-1/2" />
+        <ScrollReveal>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-4xl mx-auto mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border shadow-sm mb-6">
+              <GraduationCap className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">Strategic Operations Masterclass</span>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {tracks.map((track, index) => (
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground">
+              Master the Complete Lifecycle
+              <br />
+              <span className="text-primary">of Bitcoin Mining Development</span>
+            </h1>
+            
+            <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+              From identifying your first site to managing a multi-site portfolio. 
+              This comprehensive masterclass integrates site selection, risk management, 
+              and scaling strategies into one unified learning experience.
+            </p>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
+              {stats.map((stat, index) => (
                 <motion.div
-                  key={track.number}
+                  key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="relative"
+                  className="bg-card rounded-xl p-4 shadow-lg border border-border"
                 >
-                  <div className="bg-white border border-gray-100 rounded-xl p-5 h-full hover:border-watt-blue/50 transition-all group shadow-lg">
-                    {/* Track Number Badge */}
-                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full ${track.bgColor} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
-                      {track.number}
+                  <stat.icon className="w-5 h-5 text-primary mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </ScrollReveal>
+
+        {/* The 5 Tracks Visual */}
+        <ScrollReveal>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16"
+          >
+            <h2 className="text-2xl font-bold text-center mb-8 text-foreground">Your Learning Journey</h2>
+            
+            <div className="relative">
+              {/* Connection Line */}
+              <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-purple-300 via-orange-300 to-green-300 -translate-y-1/2" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {tracks.map((track, index) => (
+                  <motion.div
+                    key={track.number}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="relative"
+                  >
+                    <div className="bg-card border border-border rounded-xl p-5 h-full hover:border-primary/50 transition-all group shadow-lg">
+                      {/* Track Number Badge */}
+                      <div className={`absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full ${track.bgColor} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
+                        {track.number}
+                      </div>
+                      
+                      <div className="pt-4">
+                        <div className={`w-12 h-12 rounded-xl ${track.bgColor} flex items-center justify-center mb-3 mx-auto`}>
+                          <track.icon className="w-6 h-6 text-white" />
+                        </div>
+                        
+                        <h3 className="font-semibold text-foreground text-center mb-2 group-hover:text-primary transition-colors">
+                          {track.title}
+                        </h3>
+                        
+                        <p className="text-sm text-muted-foreground text-center mb-3">
+                          {track.description}
+                        </p>
+                        
+                        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span>{track.duration}</span>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="pt-4">
-                      <div className={`w-12 h-12 rounded-xl ${track.bgColor} flex items-center justify-center mb-3 mx-auto`}>
-                        <track.icon className="w-6 h-6 text-white" />
+                    {/* Arrow Between Tracks */}
+                    {index < tracks.length - 1 && (
+                      <div className="hidden lg:block absolute top-1/2 -right-2 -translate-y-1/2 z-10">
+                        <ArrowRight className="w-4 h-4 text-muted-foreground/50" />
                       </div>
-                      
-                      <h3 className="font-semibold text-watt-navy text-center mb-2 group-hover:text-watt-blue transition-colors">
-                        {track.title}
-                      </h3>
-                      
-                      <p className="text-sm text-watt-navy/60 text-center mb-3">
-                        {track.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-center gap-1 text-xs text-watt-navy/50">
-                        <Clock className="w-3 h-3" />
-                        <span>{track.duration}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Arrow Between Tracks */}
-                  {index < tracks.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-2 -translate-y-1/2 z-10">
-                      <ArrowRight className="w-4 h-4 text-watt-navy/30" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
+                    )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </ScrollReveal>
 
         {/* Learning Outcomes */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto"
-        >
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-            <h2 className="text-2xl font-bold text-center mb-6 text-watt-navy">What You'll Learn</h2>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              {learningOutcomes.map((outcome, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-start gap-3"
-                >
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                  <span className="text-watt-navy/70">{outcome}</span>
-                </motion.div>
-              ))}
+        <ScrollReveal>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
+              <h2 className="text-2xl font-bold text-center mb-6 text-foreground">What You'll Learn</h2>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {learningOutcomes.map((outcome, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-start gap-3"
+                  >
+                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{outcome}</span>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <div className="mt-8 text-center">
+                <Button size="lg" className="gap-2">
+                  Start Track 1
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-            
-            <div className="mt-8 text-center">
-              <Button size="lg" className="gap-2">
-                Start Track 1
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </ScrollReveal>
       </div>
     </section>
   );
