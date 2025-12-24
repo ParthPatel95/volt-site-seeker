@@ -131,7 +131,7 @@ export const StrategicJourneyDiagram = ({
                   <div className={cn(
                     "relative mx-auto w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300",
                     isCurrent && colors.bgGlow,
-                    isCurrent && "ring-2 ring-watt-blue ring-offset-2 ring-offset-white"
+                    isCurrent && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                   )}>
                     <div className={cn(
                       "w-24 h-24 rounded-full flex items-center justify-center transition-all",
@@ -139,14 +139,14 @@ export const StrategicJourneyDiagram = ({
                         ? "bg-green-500" 
                         : isCurrent 
                           ? colors.bg
-                          : "bg-gray-200"
+                          : "bg-muted"
                     )}>
                       {isCompleted ? (
                         <CheckCircle2 className="w-10 h-10 text-white" />
                       ) : (
                         <stage.icon className={cn(
                           "w-10 h-10",
-                          isCurrent ? "text-white" : "text-gray-500"
+                          isCurrent ? "text-white" : "text-muted-foreground"
                         )} />
                       )}
                     </div>
@@ -165,7 +165,7 @@ export const StrategicJourneyDiagram = ({
                     <div className="absolute top-16 -right-2 z-10 hidden xl:block">
                       <ArrowRight className={cn(
                         "w-5 h-5 transition-colors",
-                        isPast ? "text-watt-blue" : "text-gray-300"
+                        isPast ? "text-primary" : "text-muted-foreground/30"
                       )} />
                     </div>
                   )}
@@ -174,17 +174,17 @@ export const StrategicJourneyDiagram = ({
                   <div className="text-center mt-4">
                     <div className={cn(
                       "text-xs font-medium mb-1",
-                      isCurrent ? "text-watt-blue" : "text-watt-navy/50"
+                      isCurrent ? "text-primary" : "text-muted-foreground"
                     )}>
                       Track {stage.track}
                     </div>
                     <h4 className={cn(
                       "font-bold mb-1",
-                      isCurrent ? "text-watt-navy" : isCompleted ? "text-watt-navy/60" : "text-watt-navy/50"
+                      isCurrent ? "text-foreground" : isCompleted ? "text-muted-foreground" : "text-muted-foreground"
                     )}>
                       {stage.title}
                     </h4>
-                    <p className="text-xs text-watt-navy/50 mb-2">{stage.subtitle}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{stage.subtitle}</p>
                     
                     {/* Key Actions */}
                     <div className="space-y-1">
@@ -195,7 +195,7 @@ export const StrategicJourneyDiagram = ({
                             "text-xs py-0.5 px-2 rounded-full inline-block mx-0.5",
                             isCurrent 
                               ? `${colors.lightBg} ${colors.text}`
-                              : "bg-gray-100 text-gray-600"
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           {action}
@@ -238,14 +238,14 @@ export const StrategicJourneyDiagram = ({
                       ? "bg-green-500" 
                       : isCurrent 
                         ? colors.bg
-                        : "bg-gray-200 border-2 border-gray-300"
+                        : "bg-muted border-2 border-border"
                   )}>
                     {isCompleted ? (
                       <CheckCircle2 className="w-4 h-4 text-white" />
                     ) : (
                       <span className={cn(
                         "text-xs font-bold",
-                        isCurrent ? "text-white" : "text-gray-500"
+                        isCurrent ? "text-white" : "text-muted-foreground"
                       )}>
                         {stage.track}
                       </span>
@@ -254,8 +254,8 @@ export const StrategicJourneyDiagram = ({
                   
                   {/* Content Card */}
                   <div className={cn(
-                    "bg-white border rounded-xl p-4 transition-all shadow-sm",
-                    isCurrent ? "border-watt-blue shadow-lg" : "border-gray-200"
+                    "bg-card border rounded-xl p-4 transition-all shadow-sm",
+                    isCurrent ? "border-primary shadow-lg" : "border-border"
                   )}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className={cn(
@@ -268,8 +268,8 @@ export const StrategicJourneyDiagram = ({
                         )} />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-watt-navy">{stage.title}</h4>
-                        <p className="text-xs text-watt-navy/60">{stage.subtitle}</p>
+                        <h4 className="font-semibold text-foreground">{stage.title}</h4>
+                        <p className="text-xs text-muted-foreground">{stage.subtitle}</p>
                       </div>
                     </div>
                     
@@ -278,7 +278,7 @@ export const StrategicJourneyDiagram = ({
                       {stage.keyActions.map((action, i) => (
                         <span 
                           key={i}
-                          className="text-xs py-0.5 px-2 rounded-full bg-gray-100 text-gray-600"
+                          className="text-xs py-0.5 px-2 rounded-full bg-muted text-muted-foreground"
                         >
                           {action}
                         </span>

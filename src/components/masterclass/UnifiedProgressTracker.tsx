@@ -132,13 +132,13 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
         animate={{ x: 0 }}
       >
         <div className={cn(
-          "bg-white/95 backdrop-blur border border-gray-200 rounded-r-xl shadow-xl transition-all duration-300",
+          "bg-card/95 backdrop-blur border border-border rounded-r-xl shadow-xl transition-all duration-300",
           isExpanded ? "w-80" : "w-16"
         )}>
           {/* Expand/Collapse Toggle */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-watt-blue rounded-full flex items-center justify-center text-white shadow-lg"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg"
           >
             <ChevronRight className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
           </button>
@@ -157,7 +157,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                     onClick={() => setIsExpanded(true)}
                     className={cn(
                       "w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold relative group",
-                      isCurrentTrack ? `${bgColor} text-white` : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      isCurrentTrack ? `${bgColor} text-white` : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                   >
                     {progress.percentage === 100 ? (
@@ -177,7 +177,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                           stroke="currentColor"
                           strokeWidth="2"
                           strokeDasharray={`${(progress.percentage / 100) * 113} 113`}
-                          className="text-watt-blue/30"
+                          className="text-primary/30"
                         />
                       </svg>
                     )}
@@ -186,9 +186,9 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
               })}
               
               {/* Total Progress */}
-              <div className="pt-2 border-t border-gray-200">
+              <div className="pt-2 border-t border-border">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-purple-100 to-green-100 flex items-center justify-center">
-                  <span className="text-xs font-bold text-watt-navy">{totalProgress.percentage}%</span>
+                  <span className="text-xs font-bold text-foreground">{totalProgress.percentage}%</span>
                 </div>
               </div>
             </div>
@@ -199,15 +199,15 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
             <div className="p-4 max-h-[70vh] overflow-y-auto">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-watt-navy">Progress</h3>
+                <h3 className="font-bold text-foreground">Progress</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-watt-navy/60">{totalProgress.percentage}%</span>
-                  <Trophy className={cn("w-4 h-4", totalProgress.percentage === 100 ? "text-yellow-500" : "text-gray-400")} />
+                  <span className="text-sm text-muted-foreground">{totalProgress.percentage}%</span>
+                  <Trophy className={cn("w-4 h-4", totalProgress.percentage === 100 ? "text-yellow-500" : "text-muted-foreground")} />
                 </div>
               </div>
               
               {/* Overall Progress Bar */}
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-6">
+              <div className="h-2 bg-muted rounded-full overflow-hidden mb-6">
                 <motion.div
                   className="h-full bg-gradient-to-r from-purple-500 via-orange-500 to-green-500 rounded-full"
                   initial={{ width: 0 }}
@@ -226,7 +226,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                     <div key={track.id} className="space-y-2">
                       <div className={cn(
                         "flex items-center gap-2 p-2 rounded-lg transition-colors",
-                        isCurrentTrack ? "bg-watt-blue/10" : ""
+                        isCurrentTrack ? "bg-primary/10" : ""
                       )}>
                         <div className={cn(
                           "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white",
@@ -237,8 +237,8 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                           {progress.percentage === 100 ? <CheckCircle2 className="w-4 h-4" /> : track.number}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-watt-navy truncate">{track.title}</p>
-                          <p className="text-xs text-watt-navy/50">{progress.completed}/{progress.total} sections</p>
+                          <p className="text-sm font-medium text-foreground truncate">{track.title}</p>
+                          <p className="text-xs text-muted-foreground">{progress.completed}/{progress.total} sections</p>
                         </div>
                       </div>
                       
@@ -251,7 +251,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                               <button
                                 key={section.id}
                                 onClick={() => scrollToSection(section.anchor)}
-                                className="flex items-center gap-2 w-full text-left p-1.5 rounded hover:bg-gray-100 transition-colors"
+                                className="flex items-center gap-2 w-full text-left p-1.5 rounded hover:bg-muted transition-colors"
                               >
                                 <button
                                   onClick={(e) => {
@@ -263,12 +263,12 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                                   {isCompleted ? (
                                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                                   ) : (
-                                    <Circle className="w-4 h-4 text-gray-400 hover:text-watt-blue" />
+                                    <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
                                   )}
                                 </button>
                                 <span className={cn(
                                   "text-sm truncate",
-                                  isCompleted ? "text-watt-navy/50 line-through" : "text-watt-navy"
+                                  isCompleted ? "text-muted-foreground line-through" : "text-foreground"
                                 )}>
                                   {section.title}
                                 </span>
@@ -287,7 +287,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                 variant="ghost"
                 size="sm"
                 onClick={resetProgress}
-                className="w-full mt-4 text-gray-500 hover:text-red-500"
+                className="w-full mt-4 text-muted-foreground hover:text-red-500"
               >
                 Reset Progress
               </Button>
@@ -298,7 +298,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
 
       {/* Mobile Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-        <div className="bg-white/95 backdrop-blur border-t border-gray-200">
+        <div className="bg-card/95 backdrop-blur border-t border-border">
           {/* Current Track Progress */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -314,13 +314,13 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                 </div>
               )}
               <div className="text-left">
-                <p className="text-sm font-medium text-watt-navy">{currentTrackData?.title}</p>
-                <p className="text-xs text-watt-navy/50">
+                <p className="text-sm font-medium text-foreground">{currentTrackData?.title}</p>
+                <p className="text-xs text-muted-foreground">
                   {currentProgress?.completed}/{currentProgress?.total} sections • {currentProgress?.percentage}%
                 </p>
               </div>
             </div>
-            {showMobileMenu ? <ChevronDown className="w-5 h-5 text-watt-navy" /> : <ChevronUp className="w-5 h-5 text-watt-navy" />}
+            {showMobileMenu ? <ChevronDown className="w-5 h-5 text-foreground" /> : <ChevronUp className="w-5 h-5 text-foreground" />}
           </button>
 
           {/* Expanded Mobile Menu */}
@@ -330,7 +330,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="border-t border-gray-200 overflow-hidden"
+                className="border-t border-border overflow-hidden"
               >
                 <div className="p-4 max-h-[60vh] overflow-y-auto">
                   {/* Track Pills */}
@@ -345,7 +345,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                             "shrink-0 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5",
                             track.number === currentTrack 
                               ? `${bgColor} text-white` 
-                              : "bg-gray-100 text-gray-600"
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           {progress.percentage === 100 && <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -364,7 +364,7 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                           <button
                             key={section.id}
                             onClick={() => scrollToSection(section.anchor)}
-                            className="flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-gray-100"
+                            className="flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-muted"
                           >
                             <button
                               onClick={(e) => {
@@ -375,12 +375,12 @@ export const UnifiedProgressTracker = ({ tracks, currentTrack, className }: Unif
                               {isCompleted ? (
                                 <CheckCircle2 className="w-5 h-5 text-green-500" />
                               ) : (
-                                <Circle className="w-5 h-5 text-gray-400" />
+                                <Circle className="w-5 h-5 text-muted-foreground" />
                               )}
                             </button>
                             <span className={cn(
                               "text-sm",
-                              isCompleted ? "text-watt-navy/50" : "text-watt-navy"
+                              isCompleted ? "text-muted-foreground" : "text-foreground"
                             )}>
                               {section.title}
                             </span>

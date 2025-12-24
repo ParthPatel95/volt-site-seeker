@@ -260,13 +260,13 @@ export const IntegratedDecisionFramework = () => {
   const isComplete = currentNode.options.every(o => o.next === null || o.next === "start");
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
+    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-lg">
       {/* Header */}
-      <div className="bg-watt-light p-4 border-b border-gray-200">
+      <div className="bg-muted p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-watt-navy">Strategic Decision Framework</h3>
-            <p className="text-sm text-watt-navy/60">Interactive guide integrating site selection, risk, and scaling</p>
+            <h3 className="text-lg font-bold text-foreground">Strategic Decision Framework</h3>
+            <p className="text-sm text-muted-foreground">Interactive guide integrating site selection, risk, and scaling</p>
           </div>
           <div className="flex items-center gap-2">
             {history.length > 0 && (
@@ -295,7 +295,7 @@ export const IntegratedDecisionFramework = () => {
                 className={cn(
                   "flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors",
                   isActive ? `${info.lightBg} ${info.text}` : 
-                  isPast ? "bg-gray-100 text-gray-600" : "text-gray-400"
+                  isPast ? "bg-muted text-muted-foreground" : "text-muted-foreground"
                 )}
               >
                 <info.icon className="w-3 h-3" />
@@ -327,8 +327,8 @@ export const IntegratedDecisionFramework = () => {
             </div>
           )}
 
-          <h4 className="text-xl font-bold text-watt-navy mb-2">{currentNode.question}</h4>
-          <p className="text-watt-navy/60 mb-6">{currentNode.context}</p>
+          <h4 className="text-xl font-bold text-foreground mb-2">{currentNode.question}</h4>
+          <p className="text-muted-foreground mb-6">{currentNode.context}</p>
 
           {/* Options */}
           <div className="space-y-3">
@@ -338,8 +338,8 @@ export const IntegratedDecisionFramework = () => {
                 onClick={() => handleSelect(option)}
                 className={cn(
                   "w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left",
-                  "border-gray-200 hover:border-watt-blue hover:bg-watt-blue/5",
-                  answers[currentNodeId] === option.value && "border-watt-blue bg-watt-blue/5"
+                  "border-border hover:border-primary hover:bg-primary/5",
+                  answers[currentNodeId] === option.value && "border-primary bg-primary/5"
                 )}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -348,9 +348,9 @@ export const IntegratedDecisionFramework = () => {
                   {option.impact === "positive" && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                   {option.impact === "negative" && <XCircle className="w-5 h-5 text-red-500" />}
                   {option.impact === "neutral" && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
-                  <span className="font-medium text-watt-navy">{option.label}</span>
+                  <span className="font-medium text-foreground">{option.label}</span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-watt-navy/40" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </motion.button>
             ))}
           </div>
@@ -362,7 +362,7 @@ export const IntegratedDecisionFramework = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl"
             >
-              <h5 className="font-bold text-watt-navy mb-4">Your Decision Path Summary</h5>
+              <h5 className="font-bold text-foreground mb-4">Your Decision Path Summary</h5>
               <div className="space-y-2">
                 {history.map((nodeId, index) => {
                   const node = decisionTree.find(n => n.id === nodeId);
@@ -371,13 +371,13 @@ export const IntegratedDecisionFramework = () => {
                   
                   return (
                     <div key={nodeId} className="flex items-start gap-2 text-sm">
-                      <span className="text-watt-navy/50">{index + 1}.</span>
-                      <span className="text-watt-navy">{selectedOption?.label}</span>
+                      <span className="text-muted-foreground">{index + 1}.</span>
+                      <span className="text-foreground">{selectedOption?.label}</span>
                     </div>
                   );
                 })}
               </div>
-              <p className="mt-4 text-sm text-watt-navy/60">
+              <p className="mt-4 text-sm text-muted-foreground">
                 Based on your selections, proceed through the masterclass tracks in order, 
                 focusing on the areas highlighted by your decision path.
               </p>
