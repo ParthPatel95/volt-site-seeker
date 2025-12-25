@@ -851,7 +851,7 @@ export function TradingViewChart({
         </div>
       </div>
 
-      {/* ===== DEBUG PANEL ===== */}
+      {/* ===== DEBUG PANEL WITH DATA FRESHNESS ===== */}
       {showDebug && (
         <div className="px-3 py-2 border-b border-border bg-amber-500/10 text-xs">
           <div className="flex flex-wrap gap-4">
@@ -875,6 +875,43 @@ export function TradingViewChart({
             </span>
             <span className="text-muted-foreground">
               Candlesticks: <span className="font-mono text-foreground">{candlestickData.length}</span>
+            </span>
+          </div>
+          {/* Data freshness indicator */}
+          <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-amber-500/20">
+            {data && data.length > 0 && (
+              <span className="text-muted-foreground">
+                Latest Data: <span className="font-mono text-foreground">
+                  {(() => {
+                    const latestTs = data.reduce((latest, d) => {
+                      const ts = d.datetime || d.timestamp || '';
+                      return ts > latest ? ts : latest;
+                    }, '');
+                    if (latestTs) {
+                      const latestDate = new Date(latestTs);
+                      const ageMinutes = Math.round((Date.now() - latestDate.getTime()) / 60000);
+                      return `${format(latestDate, 'HH:mm')} (${ageMinutes}min ago)`;
+                    }
+                    return 'N/A';
+                  })()}
+                </span>
+              </span>
+            )}
+            {aiPredictions && aiPredictions.length > 0 && (
+              <span className="text-muted-foreground">
+                AI Predictions: <span className="font-mono text-emerald-500">
+                  {(() => {
+                    const firstPred = aiPredictions[0];
+                    const lastPred = aiPredictions[aiPredictions.length - 1];
+                    return `${format(new Date(firstPred.timestamp), 'HH:mm')} → ${format(new Date(lastPred.timestamp), 'HH:mm')}`;
+                  })()}
+                </span>
+              </span>
+            )}
+            <span className={`font-medium ${
+              (data?.length || 0) > 0 ? 'text-emerald-500' : 'text-red-500'
+            }`}>
+              {(data?.length || 0) > 0 ? '✓ Real Data' : '⚠ No Data'}
             </span>
           </div>
         </div>
