@@ -2,21 +2,21 @@ import { motion } from 'framer-motion';
 import { Bitcoin, Zap, TrendingUp, Building2, Cpu, Leaf } from 'lucide-react';
 
 const floatingIcons = [
-  { Icon: Bitcoin, x: '10%', y: '20%', size: 24, delay: 0, duration: 6 },
-  { Icon: Zap, x: '85%', y: '15%', size: 20, delay: 1, duration: 7 },
-  { Icon: TrendingUp, x: '75%', y: '70%', size: 22, delay: 2, duration: 8 },
-  { Icon: Building2, x: '15%', y: '75%', size: 26, delay: 0.5, duration: 7 },
-  { Icon: Cpu, x: '90%', y: '45%', size: 18, delay: 1.5, duration: 6 },
-  { Icon: Leaf, x: '5%', y: '50%', size: 20, delay: 2.5, duration: 8 },
+  { Icon: Bitcoin, x: '10%', y: '20%', size: 24, delay: 0, duration: 6, hideOnMobile: false },
+  { Icon: Zap, x: '85%', y: '15%', size: 20, delay: 1, duration: 7, hideOnMobile: true },
+  { Icon: TrendingUp, x: '75%', y: '70%', size: 22, delay: 2, duration: 8, hideOnMobile: true },
+  { Icon: Building2, x: '15%', y: '75%', size: 26, delay: 0.5, duration: 7, hideOnMobile: false },
+  { Icon: Cpu, x: '90%', y: '45%', size: 18, delay: 1.5, duration: 6, hideOnMobile: true },
+  { Icon: Leaf, x: '5%', y: '50%', size: 20, delay: 2.5, duration: 8, hideOnMobile: true },
 ];
 
 export const FloatingElements = () => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {floatingIcons.map(({ Icon, x, y, size, delay, duration }, index) => (
+      {floatingIcons.map(({ Icon, x, y, size, delay, duration, hideOnMobile }, index) => (
         <motion.div
           key={index}
-          className="absolute"
+          className={`absolute ${hideOnMobile ? 'hidden md:block' : ''}`}
           style={{ left: x, top: y }}
           initial={{ opacity: 0 }}
           animate={{ 
