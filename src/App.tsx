@@ -29,6 +29,8 @@ import StrategicOperationsMasterclass from "./pages/StrategicOperationsMastercla
 import Academy from "./pages/Academy";
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 import SharedAESOReport from './pages/SharedAESOReport';
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
@@ -58,6 +60,20 @@ const App = () => (
                       </div>
                     }>
                       <AboutUs />
+                    </Suspense>
+                  </LazyErrorBoundary>
+                } />
+                <Route path="/terms" element={
+                  <LazyErrorBoundary componentName="Terms of Service">
+                    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><SectionLoader message="Loading..." /></div>}>
+                      <TermsOfService />
+                    </Suspense>
+                  </LazyErrorBoundary>
+                } />
+                <Route path="/privacy" element={
+                  <LazyErrorBoundary componentName="Privacy Policy">
+                    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><SectionLoader message="Loading..." /></div>}>
+                      <PrivacyPolicy />
                     </Suspense>
                   </LazyErrorBoundary>
                 } />
