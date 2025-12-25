@@ -186,22 +186,26 @@ export class RegionalEnergyService {
         basePrice *= 0.7; // Off-peak
       }
       
-      // Add volatility (Alberta has significant price swings)
+      // Add volatility (Alberta has significant price swings including negative prices)
       const volatility = Math.random();
-      if (volatility > 0.99) {
-        basePrice *= 20; // Extreme spike
-      } else if (volatility > 0.95) {
-        basePrice *= 6; // Price spike
-      } else {
-        basePrice *= (0.6 + Math.random() * 0.8); // Normal variation
-      }
+      let pricePerMWh: number;
       
-      const pricePerMWh = Math.max(basePrice, 15); // Floor price in CAD
+      if (volatility > 0.99) {
+        pricePerMWh = basePrice * 20; // Extreme spike
+      } else if (volatility > 0.95) {
+        pricePerMWh = basePrice * 6; // Price spike
+      } else if (volatility < 0.02 && hour >= 1 && hour <= 5) {
+        // AESO can have negative prices during overnight wind oversupply (~2% of off-peak hours)
+        // Negative prices range from -$10 to -$60/MWh
+        pricePerMWh = -(Math.random() * 50 + 10);
+      } else {
+        pricePerMWh = basePrice * (0.6 + Math.random() * 0.8); // Normal variation
+      }
       
       prices.push({
         timestamp,
         pricePerMWh,
-        pricePerKWh: pricePerMWh / 1000 // Still in CAD
+        pricePerKWh: pricePerMWh / 1000 // Still in CAD (can be negative)
       });
     }
     

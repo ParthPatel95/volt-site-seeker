@@ -775,7 +775,8 @@ async function fetchAESODataWithRetry(maxRetries = 2) {
       console.log(`⏱️ AESO fetch completed in ${fetchDuration}ms`);
       
       // Validate we have critical data (pricing + load + mix)
-      const hasPricing = result?.pricing && result.pricing.current_price !== undefined && result.pricing.current_price > 0;
+      // NOTE: AESO can have negative prices during oversupply (wind), so we accept any valid number
+      const hasPricing = result?.pricing && typeof result.pricing.current_price === 'number' && !isNaN(result.pricing.current_price);
       const hasLoad = result?.loadData && result.loadData.current_demand_mw !== undefined && result.loadData.current_demand_mw > 0;
       const hasMix = result?.generationMix && result.generationMix.total_generation_mw !== undefined && result.generationMix.total_generation_mw > 0;
       
