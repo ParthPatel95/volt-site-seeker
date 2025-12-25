@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Area,
-  Cell
+  Cell,
+  ReferenceArea
 } from 'recharts';
 import { 
   Activity, 
@@ -51,7 +52,10 @@ import {
   ChevronDown,
   Plus,
   Trash2,
-  X
+  X,
+  CandlestickChart,
+  LineChart,
+  Bug
 } from 'lucide-react';
 import { format, subHours, addHours, parseISO, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
@@ -85,6 +89,7 @@ interface TradingViewChartProps {
 }
 
 type TimeRange = '1D' | '5D' | '1M' | '3M';
+type ChartType = 'line' | 'candlestick';
 
 // Indicator definitions
 const AVAILABLE_INDICATORS = [
@@ -96,10 +101,10 @@ const AVAILABLE_INDICATORS = [
 ];
 
 const TIME_INTERVALS = [
-  { value: '1H', label: '1H' },
-  { value: '4H', label: '4H' },
-  { value: '1D', label: '1D' },
-  { value: '1W', label: '1W' },
+  { value: '1H', label: '1H', hours: 1 },
+  { value: '4H', label: '4H', hours: 4 },
+  { value: '1D', label: '1D', hours: 24 },
+  { value: '1W', label: '1W', hours: 168 },
 ];
 
 const TIME_RANGES = [
@@ -180,6 +185,9 @@ export function TradingViewChart({
 }: TradingViewChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [interval, setInterval] = useState('1H');
+  const [chartType, setChartType] = useState<ChartType>('line');
+  const [showDebug, setShowDebug] = useState(false);
+  const [crosshairX, setCrosshairX] = useState<string | null>(null);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(() => {
     const saved = localStorage.getItem('chart-indicators');
     return saved ? JSON.parse(saved) : [];
@@ -236,12 +244,23 @@ export function TradingViewChart({
   };
 
   // Get hours based on time range
-  const getHoursBack = () => {
+  const getHoursBack = useCallback(() => {
     const range = TIME_RANGES.find(r => r.value === timeRange);
     return range?.hours || 24;
-  };
+  }, [timeRange]);
 
-  // Process data for chart
+  // Handle mouse move for crosshair
+  const handleMouseMove = useCallback((state: any) => {
+    if (state?.activePayload?.[0]?.payload?.timestamp) {
+      setCrosshairX(state.activePayload[0].payload.timestamp);
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setCrosshairX(null);
+  }, []);
+
+  // Process data for chart - FIXED to show all lines correctly
   const chartData = useMemo(() => {
     const now = new Date();
     const hoursBack = getHoursBack();
@@ -249,6 +268,15 @@ export function TradingViewChart({
     const cutoffFuture = addHours(now, Math.min(hoursBack, 72));
     
     const chartPoints: any[] = [];
+    const pointMap = new Map<string, any>();
+    
+    // Debug logging
+    console.log('[TradingViewChart] Processing data:', {
+      dataPoints: data?.length || 0,
+      aiPredictions: aiPredictions?.length || 0,
+      timeRange,
+      hoursBack
+    });
     
     if (data && data.length > 0) {
       data.forEach(d => {
@@ -269,31 +297,41 @@ export function TradingViewChart({
         if (isNaN(parsedDate.getTime())) return;
         if (isBefore(parsedDate, cutoffPast) || isAfter(parsedDate, cutoffFuture)) return;
         
-        const isPast = isBefore(parsedDate, now);
+        const isPast = isBefore(parsedDate, now) || Math.abs(parsedDate.getTime() - now.getTime()) < 60000;
+        // Use hour-level key for matching
+        const hourKey = `${parsedDate.getFullYear()}-${parsedDate.getMonth()}-${parsedDate.getDate()}-${parsedDate.getHours()}`;
         const timestamp = parsedDate.toISOString();
         
-        const existingPoint = chartPoints.find(p => p.timestamp === timestamp);
+        const existingPoint = pointMap.get(hourKey);
         if (existingPoint) {
-          if (isPast && d.pool_price !== undefined) {
+          // Update existing point with both actual and forecast data
+          if (d.pool_price !== undefined && isPast) {
             existingPoint.actual = d.pool_price;
             existingPoint.volume = d.ail_mw;
           }
-          if (!isPast && d.forecast_pool_price !== undefined) {
+          // FIXED: Show forecast for ALL times, not just future
+          if (d.forecast_pool_price !== undefined) {
             existingPoint.aesoForecast = d.forecast_pool_price;
           }
         } else {
-          chartPoints.push({
+          const point = {
             timestamp,
             parsedDate,
-            actual: isPast ? d.pool_price : undefined,
-            aesoForecast: !isPast && d.forecast_pool_price ? d.forecast_pool_price : undefined,
+            hourKey,
+            actual: isPast && d.pool_price !== undefined ? d.pool_price : undefined,
+            aesoForecast: d.forecast_pool_price !== undefined ? d.forecast_pool_price : undefined,
             volume: isPast ? d.ail_mw : undefined,
-          });
+          };
+          pointMap.set(hourKey, point);
+          chartPoints.push(point);
         }
       });
     }
     
+    // Process AI predictions with hour-level matching
     if (aiPredictions && aiPredictions.length > 0) {
+      console.log('[TradingViewChart] AI Predictions sample:', aiPredictions.slice(0, 3));
+      
       aiPredictions.forEach(pred => {
         let predDate: Date;
         try {
@@ -305,30 +343,91 @@ export function TradingViewChart({
         if (isNaN(predDate.getTime())) return;
         if (isBefore(predDate, cutoffPast) || isAfter(predDate, cutoffFuture)) return;
         
+        const hourKey = `${predDate.getFullYear()}-${predDate.getMonth()}-${predDate.getDate()}-${predDate.getHours()}`;
         const timestamp = predDate.toISOString();
         
-        const existingPoint = chartPoints.find(p => 
-          Math.abs(new Date(p.timestamp).getTime() - predDate.getTime()) < 30 * 60 * 1000
-        );
+        // FIXED: Use hourKey for matching instead of time tolerance
+        const existingPoint = pointMap.get(hourKey);
         
         if (existingPoint) {
           existingPoint.aiPrediction = pred.price;
           existingPoint.aiLower = pred.confidenceLower;
           existingPoint.aiUpper = pred.confidenceUpper;
         } else {
-          chartPoints.push({
+          const point = {
             timestamp,
             parsedDate: predDate,
+            hourKey,
             aiPrediction: pred.price,
             aiLower: pred.confidenceLower,
             aiUpper: pred.confidenceUpper,
-          });
+          };
+          pointMap.set(hourKey, point);
+          chartPoints.push(point);
         }
       });
     }
     
-    return chartPoints.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
-  }, [data, aiPredictions, timeRange]);
+    const sorted = chartPoints.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+    
+    // Debug: Count how many points have each data type
+    const actualCount = sorted.filter(p => p.actual !== undefined).length;
+    const forecastCount = sorted.filter(p => p.aesoForecast !== undefined).length;
+    const aiCount = sorted.filter(p => p.aiPrediction !== undefined).length;
+    
+    console.log('[TradingViewChart] Chart data summary:', {
+      totalPoints: sorted.length,
+      actualPrices: actualCount,
+      aesoForecasts: forecastCount,
+      aiPredictions: aiCount
+    });
+    
+    return sorted;
+  }, [data, aiPredictions, timeRange, getHoursBack]);
+
+  // Generate candlestick data from chart data based on interval
+  const candlestickData = useMemo(() => {
+    if (chartType !== 'candlestick') return [];
+    
+    const intervalHours = TIME_INTERVALS.find(i => i.value === interval)?.hours || 1;
+    const actualData = chartData.filter(d => d.actual !== undefined);
+    
+    if (actualData.length === 0) return [];
+    
+    const candles: any[] = [];
+    let currentCandle: any = null;
+    
+    actualData.forEach((point) => {
+      const pointTime = new Date(point.timestamp).getTime();
+      const candleStart = Math.floor(pointTime / (intervalHours * 3600000)) * (intervalHours * 3600000);
+      
+      if (!currentCandle || currentCandle.startTime !== candleStart) {
+        if (currentCandle) {
+          candles.push(currentCandle);
+        }
+        currentCandle = {
+          startTime: candleStart,
+          timestamp: new Date(candleStart).toISOString(),
+          open: point.actual,
+          high: point.actual,
+          low: point.actual,
+          close: point.actual,
+          volume: point.volume || 0,
+        };
+      } else {
+        currentCandle.high = Math.max(currentCandle.high, point.actual);
+        currentCandle.low = Math.min(currentCandle.low, point.actual);
+        currentCandle.close = point.actual;
+        currentCandle.volume += point.volume || 0;
+      }
+    });
+    
+    if (currentCandle) {
+      candles.push(currentCandle);
+    }
+    
+    return candles;
+  }, [chartData, chartType, interval]);
 
   // Calculate indicators
   const indicatorData = useMemo(() => {
@@ -577,6 +676,26 @@ export function TradingViewChart({
             </SelectContent>
           </Select>
 
+          {/* Chart Type Toggle */}
+          <div className="hidden sm:flex items-center border border-border rounded overflow-hidden">
+            <Button 
+              variant={chartType === 'line' ? 'secondary' : 'ghost'}
+              size="sm" 
+              className="h-7 px-2 text-xs rounded-none"
+              onClick={() => setChartType('line')}
+            >
+              <LineChart className="w-3.5 h-3.5" />
+            </Button>
+            <Button 
+              variant={chartType === 'candlestick' ? 'secondary' : 'ghost'}
+              size="sm" 
+              className="h-7 px-2 text-xs rounded-none"
+              onClick={() => setChartType('candlestick')}
+            >
+              <CandlestickChart className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
           <div className="hidden sm:flex items-center gap-1">
             {/* Indicators Popover */}
             <Popover>
@@ -646,6 +765,16 @@ export function TradingViewChart({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Debug Toggle */}
+          <Button 
+            variant={showDebug ? 'secondary' : 'ghost'}
+            size="icon" 
+            className="h-7 w-7"
+            onClick={() => setShowDebug(!showDebug)}
+            title="Toggle debug panel"
+          >
+            <Bug className="w-3.5 h-3.5" />
+          </Button>
           <Badge variant="outline" className="text-emerald-500 border-emerald-500/50 text-[10px] animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
             LIVE
@@ -722,6 +851,35 @@ export function TradingViewChart({
         </div>
       </div>
 
+      {/* ===== DEBUG PANEL ===== */}
+      {showDebug && (
+        <div className="px-3 py-2 border-b border-border bg-amber-500/10 text-xs">
+          <div className="flex flex-wrap gap-4">
+            <span className="text-muted-foreground">
+              Raw Data: <span className="font-mono text-foreground">{data?.length || 0}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Chart Points: <span className="font-mono text-foreground">{chartData.length}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Actual Prices: <span className="font-mono text-primary">{chartData.filter(p => p.actual !== undefined).length}</span>
+            </span>
+            <span className="text-muted-foreground">
+              AESO Forecasts: <span className="font-mono text-blue-500">{chartData.filter(p => p.aesoForecast !== undefined).length}</span>
+            </span>
+            <span className="text-muted-foreground">
+              AI Predictions: <span className="font-mono text-emerald-500">{chartData.filter(p => p.aiPrediction !== undefined).length}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Volume Points: <span className="font-mono text-foreground">{volumeData.length}</span>
+            </span>
+            <span className="text-muted-foreground">
+              Candlesticks: <span className="font-mono text-foreground">{candlestickData.length}</span>
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ===== MAIN CHART AREA ===== */}
       <div className={cn("flex", isFullscreen && "flex-1")}>
         {/* Chart Container */}
@@ -749,8 +907,10 @@ export function TradingViewChart({
               {/* Main Price Chart */}
               <ResponsiveContainer width="100%" height={chartHeight}>
                 <ComposedChart 
-                  data={chartDataWithIndicators} 
+                  data={chartType === 'candlestick' ? candlestickData : chartDataWithIndicators} 
                   margin={{ top: 10, right: 60, left: 0, bottom: 0 }}
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
                 >
                   <defs>
                     <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
@@ -758,8 +918,8 @@ export function TradingViewChart({
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="aiConfidenceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
                     </linearGradient>
                     <linearGradient id="bollingerGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
@@ -788,6 +948,16 @@ export function TradingViewChart({
                   />
                   <Tooltip content={<CustomTooltip />} />
                   
+                  {/* Crosshair */}
+                  {crosshairX && (
+                    <ReferenceLine 
+                      x={crosshairX} 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={1}
+                      strokeOpacity={0.5}
+                    />
+                  )}
+                  
                   {/* Alert Threshold Lines */}
                   {activeAlerts.map(alert => (
                     <ReferenceLine 
@@ -805,16 +975,23 @@ export function TradingViewChart({
                     />
                   ))}
                   
-                  {/* NOW Reference Line */}
+                  {/* NOW Reference Line with Label */}
                   <ReferenceLine 
                     x={nowTimestamp} 
-                    stroke="hsl(var(--muted-foreground))" 
+                    stroke="#f59e0b" 
                     strokeDasharray="4 4"
-                    strokeWidth={1}
+                    strokeWidth={2}
+                    label={{
+                      value: 'NOW',
+                      position: 'top',
+                      fill: '#f59e0b',
+                      fontSize: 10,
+                      fontWeight: 'bold'
+                    }}
                   />
                   
                   {/* Bollinger Bands */}
-                  {selectedIndicators.includes('bollinger') && (
+                  {selectedIndicators.includes('bollinger') && chartType === 'line' && (
                     <>
                       <Area 
                         type="monotone" 
@@ -852,26 +1029,49 @@ export function TradingViewChart({
                     </>
                   )}
                   
-                  {/* AI Confidence Band */}
-                  <Area 
-                    type="monotone" 
-                    dataKey="aiUpper" 
-                    stroke="none"
-                    fill="url(#aiConfidenceGradient)"
-                    fillOpacity={1}
-                  />
+                  {/* AI Confidence Band - show for both chart types */}
+                  {chartType === 'line' && (
+                    <Area 
+                      type="monotone" 
+                      dataKey="aiUpper" 
+                      stroke="none"
+                      fill="url(#aiConfidenceGradient)"
+                      fillOpacity={1}
+                      name="AI Confidence"
+                    />
+                  )}
 
-                  {/* Actual Price Area */}
-                  <Area
-                    type="monotone"
-                    dataKey="actual"
-                    stroke="none"
-                    fill="url(#actualGradient)"
-                    fillOpacity={1}
-                  />
+                  {/* Candlestick Mode */}
+                  {chartType === 'candlestick' && candlestickData.map((candle, idx) => {
+                    const bullish = candle.close >= candle.open;
+                    const color = bullish ? '#10b981' : '#ef4444';
+                    return (
+                      <ReferenceArea
+                        key={idx}
+                        x1={candle.timestamp}
+                        x2={candle.timestamp}
+                        y1={candle.low}
+                        y2={candle.high}
+                        stroke={color}
+                        strokeOpacity={0.8}
+                        fill="none"
+                      />
+                    );
+                  })}
+
+                  {/* Line Chart Mode - Actual Price Area */}
+                  {chartType === 'line' && (
+                    <Area
+                      type="monotone"
+                      dataKey="actual"
+                      stroke="none"
+                      fill="url(#actualGradient)"
+                      fillOpacity={1}
+                    />
+                  )}
 
                   {/* SMA Lines */}
-                  {selectedIndicators.includes('sma20') && (
+                  {selectedIndicators.includes('sma20') && chartType === 'line' && (
                     <Line 
                       type="monotone" 
                       dataKey="sma20" 
@@ -879,9 +1079,10 @@ export function TradingViewChart({
                       strokeWidth={1.5}
                       dot={false}
                       connectNulls={false}
+                      name="SMA(20)"
                     />
                   )}
-                  {selectedIndicators.includes('sma50') && (
+                  {selectedIndicators.includes('sma50') && chartType === 'line' && (
                     <Line 
                       type="monotone" 
                       dataKey="sma50" 
@@ -889,11 +1090,12 @@ export function TradingViewChart({
                       strokeWidth={1.5}
                       dot={false}
                       connectNulls={false}
+                      name="SMA(50)"
                     />
                   )}
 
                   {/* EMA Lines */}
-                  {selectedIndicators.includes('ema12') && (
+                  {selectedIndicators.includes('ema12') && chartType === 'line' && (
                     <Line 
                       type="monotone" 
                       dataKey="ema12" 
@@ -901,9 +1103,10 @@ export function TradingViewChart({
                       strokeWidth={1.5}
                       dot={false}
                       connectNulls={false}
+                      name="EMA(12)"
                     />
                   )}
-                  {selectedIndicators.includes('ema26') && (
+                  {selectedIndicators.includes('ema26') && chartType === 'line' && (
                     <Line 
                       type="monotone" 
                       dataKey="ema26" 
@@ -911,32 +1114,51 @@ export function TradingViewChart({
                       strokeWidth={1.5}
                       dot={false}
                       connectNulls={false}
+                      name="EMA(26)"
                     />
                   )}
 
                   {/* Actual Price Line */}
-                  <Line 
-                    type="monotone" 
-                    dataKey="actual" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
-                    connectNulls={false}
-                  />
+                  {chartType === 'line' && (
+                    <Line 
+                      type="monotone" 
+                      dataKey="actual" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                      connectNulls={false}
+                      name="Actual Price"
+                    />
+                  )}
 
-                  {/* AESO Forecast Line */}
+                  {/* Candlestick close line */}
+                  {chartType === 'candlestick' && (
+                    <Line 
+                      type="step" 
+                      dataKey="close" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={1}
+                      dot={false}
+                      connectNulls={false}
+                      name="Close"
+                    />
+                  )}
+
+                  {/* AESO Forecast Line - ALWAYS SHOW */}
                   <Line 
                     type="monotone" 
                     dataKey="aesoForecast" 
                     stroke="#3b82f6" 
-                    strokeWidth={1.5}
-                    strokeDasharray="4 4"
+                    strokeWidth={2}
+                    strokeDasharray="6 3"
                     dot={false}
-                    connectNulls={false}
+                    activeDot={{ r: 3, fill: '#3b82f6', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                    connectNulls
+                    name="AESO Forecast"
                   />
 
-                  {/* AI Prediction Line */}
+                  {/* AI Prediction Line - ALWAYS SHOW with connectNulls */}
                   <Line 
                     type="monotone" 
                     dataKey="aiPrediction" 
@@ -945,25 +1167,37 @@ export function TradingViewChart({
                     strokeDasharray="3 3"
                     dot={false}
                     activeDot={{ r: 4, fill: '#10b981', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
-                    connectNulls={false}
+                    connectNulls
+                    name="AI Prediction"
                   />
                 </ComposedChart>
               </ResponsiveContainer>
 
-              {/* Volume Chart */}
-              {volumeData.length > 0 && !isFullscreen && (
-                <ResponsiveContainer width="100%" height={60}>
+              {/* Volume Chart - ALWAYS VISIBLE including fullscreen */}
+              {volumeData.length > 0 && (
+                <ResponsiveContainer width="100%" height={isFullscreen ? 80 : 60}>
                   <ComposedChart 
                     data={volumeData} 
                     margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
                   >
                     <XAxis dataKey="timestamp" hide />
                     <YAxis hide domain={[0, 'auto']} />
-                    <Bar dataKey="volume" radius={[2, 2, 0, 0]} maxBarSize={6}>
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const vol = payload[0]?.value;
+                        return (
+                          <div className="bg-popover/95 backdrop-blur-sm border border-border rounded px-2 py-1 text-xs">
+                            Volume: {((vol as number) / 1000).toFixed(1)}K MW
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="volume" radius={[2, 2, 0, 0]} maxBarSize={8}>
                       {volumeData.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`}
-                          fill={entry.priceUp ? 'hsl(142 76% 36% / 0.5)' : 'hsl(0 84% 60% / 0.5)'}
+                          fill={entry.priceUp ? 'hsl(142 76% 36% / 0.6)' : 'hsl(0 84% 60% / 0.6)'}
                         />
                       ))}
                     </Bar>
