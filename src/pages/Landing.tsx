@@ -8,7 +8,7 @@ import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection'
 
 // Lazy load heavy sections
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
-const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(module => ({ default: module.InvestmentThesisSection })));
+const LandingInvestmentThesis = lazy(() => import('@/components/landing/LandingInvestmentThesis').then(module => ({ default: module.LandingInvestmentThesis })));
 const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
 const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
 const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
@@ -61,7 +61,7 @@ const Landing: React.FC = () => {
           {/* Investment Thesis Section */}
           <section aria-label="Investment Thesis" className="relative">
             <Suspense fallback={<SectionLoader />}>
-              <InvestmentThesisSection />
+              <LandingInvestmentThesis />
             </Suspense>
           </section>
 
