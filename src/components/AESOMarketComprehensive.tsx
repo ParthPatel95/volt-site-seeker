@@ -49,7 +49,7 @@ import { CustomDashboardsPanel } from './aeso/CustomDashboardsPanel';
 import { AESOHistoricalAverages } from './aeso/AESOHistoricalAverages';
 import { usePermissions } from '@/hooks/usePermissions';
 // Phase 1 & 2 Enhanced Components
-import { LivePriceChart } from './aeso/LivePriceChart';
+import { TradingViewChart } from './aeso/TradingViewChart';
 import { PriceTicker } from './aeso/PriceTicker';
 import { MarketPulse } from './aeso/MarketPulse';
 import { HeroPriceCard } from './aeso/HeroPriceCard';
@@ -310,8 +310,8 @@ export function AESOMarketComprehensive() {
               />
             </div>
 
-            {/* Live Price Chart - Now with AI predictions */}
-            <LivePriceChart
+            {/* Trading View Chart - Full trading experience with ticker tape */}
+            <TradingViewChart
               data={historicalPrices?.prices || []}
               currentPrice={currentPrice}
               loading={enhancedLoading}
