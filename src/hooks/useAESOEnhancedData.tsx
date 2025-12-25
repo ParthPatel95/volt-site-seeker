@@ -294,10 +294,11 @@ export function useAESOEnhancedData() {
   };
 
   const getHistoricalPrices = async () => {
-    // Fetch REAL historical prices from AESO API via our edge function
+    // Fetch REAL 30-day historical prices from AESO API via our edge function
     try {
+      // Use 'monthly' timeframe to get ~30 days of hourly data for proper 95% uptime calculation
       const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
-        body: { timeframe: 'daily' }
+        body: { timeframe: 'monthly' }
       });
 
       if (error) throw error;
