@@ -1,11 +1,11 @@
 import React, { lazy, useState } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
-import { LandingBackground } from '@/components/landing/LandingBackground';
-import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { LazySection } from '@/components/LazyErrorBoundary';
 import { WattFundHero } from '@/components/wattfund/WattFundHero';
+import { WattFundDivider } from '@/components/wattfund/WattFundDivider';
+import { StickyProgressNav } from '@/components/wattfund/StickyProgressNav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { InvestmentInquiryForm } from '@/components/landing/InvestmentInquiryForm';
 
@@ -26,9 +26,12 @@ const WattFund: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-watt-navy relative overflow-hidden">
+    <div className="min-h-screen bg-watt-navy text-white relative overflow-hidden">
       {/* Smooth scroll functionality */}
       <SmoothScroll />
+      
+      {/* Sticky Progress Navigation */}
+      <StickyProgressNav />
       
       {/* SEO content */}
       <header>
@@ -53,79 +56,58 @@ const WattFund: React.FC = () => {
           <InvestmentInquiryForm onSuccess={handleFormSuccess} />
         </DialogContent>
       </Dialog>
-
-      {/* Optimized background */}
-      <LandingBackground />
       
       <LandingNavigation />
       
-      <div className="relative z-10 safe-area-pt">
+      <div className="relative z-10">
         <main>
-          {/* New Enhanced Hero Section */}
+          {/* Enhanced Hero Section */}
           <WattFundHero onInquiryClick={() => setShowInquiryForm(true)} />
 
-          <SectionDivider color="cyan" />
-
           {/* Investment Thesis Section */}
-          <section aria-label="Investment Thesis" className="relative">
-            <LazySection componentName="Investment Thesis">
-              <InvestmentThesisSection />
-            </LazySection>
-          </section>
+          <LazySection componentName="Investment Thesis">
+            <InvestmentThesisSection />
+          </LazySection>
 
-          <SectionDivider color="purple" />
+          <WattFundDivider variant="wave" color="bitcoin" />
 
           {/* Fund Overview Section */}
-          <section aria-label="Fund Overview" className="relative">
-            <LazySection componentName="Fund Overview">
-              <FundOverviewSection />
-            </LazySection>
-          </section>
+          <LazySection componentName="Fund Overview">
+            <FundOverviewSection />
+          </LazySection>
 
-          <SectionDivider color="yellow" />
+          <WattFundDivider variant="gradient" color="trust" />
 
           {/* Fund Growth Plan Section */}
-          <section aria-label="Fund Growth Plan" className="relative">
-            <LazySection componentName="Fund Growth Plan">
-              <FundGrowthPlanSection />
-            </LazySection>
-          </section>
+          <LazySection componentName="Fund Growth Plan">
+            <FundGrowthPlanSection />
+          </LazySection>
 
-          <SectionDivider color="cyan" />
+          <WattFundDivider variant="wave" color="success" />
 
           {/* Why Invest Section */}
-          <section aria-label="Why Invest With WattFund" className="relative">
-            <LazySection componentName="Why Invest">
-              <WhyInvestSection />
-            </LazySection>
-          </section>
+          <LazySection componentName="Why Invest">
+            <WhyInvestSection />
+          </LazySection>
 
-          <SectionDivider color="purple" />
+          <WattFundDivider variant="particles" color="bitcoin" />
 
           {/* Market Opportunity Section */}
-          <section aria-label="Market Opportunity" className="relative">
-            <LazySection componentName="Market Opportunity">
-              <MarketOpportunitySection />
-            </LazySection>
-          </section>
+          <LazySection componentName="Market Opportunity">
+            <MarketOpportunitySection />
+          </LazySection>
 
-          <SectionDivider color="yellow" />
+          <WattFundDivider variant="wave" color="trust" />
 
           {/* Investment Process Section */}
-          <section aria-label="Investment Process" className="relative">
-            <LazySection componentName="Investment Process">
-              <InvestmentProcessSection />
-            </LazySection>
-          </section>
-
-          <SectionDivider color="cyan" />
+          <LazySection componentName="Investment Process">
+            <InvestmentProcessSection />
+          </LazySection>
 
           {/* Investor CTA Section */}
-          <section aria-label="Ready to Invest" className="relative">
-            <LazySection componentName="Investment CTA">
-              <InvestorCTASection />
-            </LazySection>
-          </section>
+          <LazySection componentName="Investment CTA">
+            <InvestorCTASection />
+          </LazySection>
         </main>
 
         <LandingFooter />
@@ -136,22 +118,7 @@ const WattFund: React.FC = () => {
         <h2>About WattFund Investment Opportunities</h2>
         <p>
           WattFund offers strategic infrastructure investment opportunities in renewable energy and data center development. 
-          Our multi-fund approach targets $400M total capital deployment across three strategic funds, with proven market opportunities 
-          and explosive growth potential in AI, HPC, and cryptocurrency infrastructure.
-        </p>
-        
-        <h3>Investment Strategy</h3>
-        <ul>
-          <li>Fund I: $25M targeting 12-15 natural gas and hydroelectric opportunities</li>
-          <li>Fund II: $125M focusing on energy storage and smart grid technologies</li>
-          <li>Fund III: $250M for advanced technologies and nuclear energy projects</li>
-        </ul>
-        
-        <h3>Market Opportunity</h3>
-        <p>
-          The digital infrastructure market presents unprecedented growth opportunities with AI and Bitcoin mining creating 
-          exponential demand for power infrastructure. WattFund capitalizes on power cost arbitrage and strategic positioning 
-          in emerging data center markets.
+          Our multi-fund approach targets $400M total capital deployment across three strategic funds.
         </p>
       </div>
     </div>

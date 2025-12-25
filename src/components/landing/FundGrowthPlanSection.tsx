@@ -1,15 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import { ChartContainer } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Target, Clock, Zap, Users, Leaf, ArrowRight } from 'lucide-react';
-import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
+import { TrendingUp, Target, Clock, Users, Zap, Leaf, ArrowRight, CheckCircle } from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 export const FundGrowthPlanSection = () => {
   const fundData = [
-    { fund: "Fund I", size: 25, icon: Users },
-    { fund: "Fund II", size: 125, icon: Zap },
-    { fund: "Fund III", size: 250, icon: Leaf }
+    { fund: "Fund I", size: 25, color: "hsl(var(--watt-success))", status: "active" },
+    { fund: "Fund II", size: 125, color: "hsl(var(--watt-trust))", status: "planned" },
+    { fund: "Fund III", size: 250, color: "hsl(var(--watt-bitcoin))", status: "planned" },
   ];
 
   const fundDetails = [
@@ -19,7 +18,9 @@ export const FundGrowthPlanSection = () => {
       investments: "12-15",
       model: "Flip Model",
       focus: "Natural gas and hydroelectric opportunities",
-      icon: Users
+      icon: Users,
+      color: "watt-success",
+      status: "Active",
     },
     {
       fund: "Fund II",
@@ -27,7 +28,9 @@ export const FundGrowthPlanSection = () => {
       investments: "20-25",
       model: "Flip & Build Model",
       focus: "Energy storage and smart grid technologies",
-      icon: Zap
+      icon: Zap,
+      color: "watt-trust",
+      status: "2025",
     },
     {
       fund: "Fund III",
@@ -35,200 +38,239 @@ export const FundGrowthPlanSection = () => {
       investments: "10-15",
       model: "Build & Brown Field Model",
       focus: "Advanced technologies and nuclear energy",
-      icon: Leaf
-    }
+      icon: Leaf,
+      color: "watt-bitcoin",
+      status: "2026",
+    },
   ];
 
   const chartConfig = {
-    size: { label: "Fund Size ($M)", color: "hsl(var(--watt-trust))" }
+    size: { label: "Fund Size ($M)", color: "hsl(var(--watt-trust))" },
   };
 
-  const keyMetrics = [
-    {
-      icon: Target,
-      label: "Total Capital Target",
-      value: 400,
-      suffix: "M",
-      prefix: "$",
-      description: "Across all three funds"
-    },
-    {
-      icon: TrendingUp,
-      label: "Total Investments",
-      value: 42,
-      suffix: "-55",
-      prefix: "",
-      description: "Strategic energy projects"
-    },
-    {
-      icon: Clock,
-      label: "Timeline",
-      value: 5,
-      suffix: "-7 Years",
-      prefix: "",
-      description: "Fund deployment period"
-    }
-  ];
-
   return (
-    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-watt-light">
-      <div className="max-w-7xl mx-auto">
-        <ScrollReveal direction="up">
-          <div className="text-center mb-8 md:mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/10 border border-watt-bitcoin/30 mb-4">
-              <span className="text-sm font-medium text-watt-bitcoin">Multi-Fund Strategy</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-watt-navy">
-              Fund Growth Plan
-            </h2>
-            <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
-              Multi-fund strategy deploying <span className="font-bold text-watt-navy inline-flex">$<AnimatedCounter end={400} suffix="M" /></span> across three sequential vehicles
-            </p>
-          </div>
-        </ScrollReveal>
+    <section id="growth-plan" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 bg-gradient-to-b from-[#0a1628] via-watt-navy to-[#0a1628] overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-watt-bitcoin/5 rounded-full blur-[150px]" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-watt-trust/5 rounded-full blur-[150px]" />
+      </div>
 
-        {/* Main Fund Overview with Bar Chart */}
-        <ScrollReveal direction="up">
-          <Card className="mb-4 sm:mb-6 md:mb-8 bg-white border-gray-200 shadow-institutional overflow-hidden hover:shadow-xl transition-shadow duration-300">
-            <CardContent className="p-3 sm:p-4 md:p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
-                {/* Chart Section */}
-                <div className="lg:col-span-3 flex flex-col items-center justify-center">
-                  <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={fundData} margin={{ top: 10, right: 15, left: 10, bottom: 15 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--watt-navy) / 0.2)" />
-                        <XAxis 
-                          dataKey="fund" 
-                          stroke="hsl(var(--watt-navy) / 0.6)"
-                          fontSize={10}
-                          tickMargin={5}
-                        />
-                        <YAxis 
-                          stroke="hsl(var(--watt-navy) / 0.6)"
-                          fontSize={10}
-                          tickMargin={5}
-                          width={30}
-                        />
-                        <Bar 
-                          dataKey="size" 
-                          fill="hsl(var(--watt-trust))"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-watt-navy mt-2 sm:mt-4">Fund Size Progression</h3>
-                </div>
+      <div className="max-w-7xl mx-auto relative">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/30 mb-6"
+            whileHover={{ scale: 1.05 }}
+          >
+            <TrendingUp className="w-4 h-4 text-watt-success" />
+            <span className="text-sm font-medium text-watt-success">Multi-Fund Strategy</span>
+          </motion.div>
+          
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
+            Fund <span className="bg-gradient-to-r from-watt-success via-watt-trust to-watt-bitcoin bg-clip-text text-transparent">Growth Plan</span>
+          </h2>
+          <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            Multi-fund strategy deploying <span className="font-bold text-white">$<AnimatedCounter end={400} suffix="M" /></span> across three sequential vehicles
+          </p>
+        </motion.div>
 
-                {/* Key Metrics Panel */}
-                <div className="lg:col-span-2 space-y-3 sm:space-y-4 flex flex-col justify-center">
-                  <h3 className="text-base sm:text-lg font-semibold text-watt-navy mb-2 sm:mb-3">Key Metrics</h3>
-                  {keyMetrics.map((metric, index) => (
-                    <div key={index} className="bg-watt-light rounded-lg p-2 sm:p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <metric.icon className="w-4 sm:w-5 h-4 sm:h-5 text-watt-trust" />
-                        <span className="text-xs sm:text-sm text-watt-navy/60">{metric.label}</span>
-                      </div>
-                      <div className="text-lg sm:text-xl font-bold text-watt-navy inline-flex">
-                        <AnimatedCounter end={metric.value} prefix={metric.prefix} suffix={metric.suffix} />
-                      </div>
-                      <div className="text-xs text-watt-navy/60">{metric.description}</div>
-                    </div>
-                  ))}
+        {/* Visual Timeline */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mb-12"
+        >
+          <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
+            <div className="flex items-center justify-between max-w-4xl mx-auto relative">
+              {/* Connecting line */}
+              <div className="absolute top-8 left-16 right-16 h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-watt-success via-watt-trust to-watt-bitcoin"
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '33%' }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.5, delay: 0.5 }}
+                />
+              </div>
+
+              {fundData.map((fund, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2 }}
+                  className="flex flex-col items-center relative z-10"
+                >
+                  <motion.div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 shadow-lg ${
+                      fund.status === 'active' 
+                        ? 'bg-watt-success' 
+                        : 'bg-white/10 border-2 border-white/30'
+                    }`}
+                    whileHover={{ scale: 1.1 }}
+                    animate={fund.status === 'active' ? {
+                      boxShadow: ['0 0 20px rgba(0,211,149,0.3)', '0 0 40px rgba(0,211,149,0.5)', '0 0 20px rgba(0,211,149,0.3)'],
+                    } : {}}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <span className={`font-bold text-lg ${fund.status === 'active' ? 'text-white' : 'text-white/70'}`}>
+                      {['I', 'II', 'III'][index]}
+                    </span>
+                  </motion.div>
                   
-                  {/* Growth Strategy Summary */}
-                  <div className="bg-watt-trust/10 rounded-lg p-2 sm:p-3 border border-watt-trust/20">
-                    <h4 className="text-xs sm:text-sm font-semibold text-watt-trust mb-1 sm:mb-2">Growth Strategy</h4>
-                    <p className="text-xs text-watt-navy/70 leading-relaxed">
-                      Progressive scaling from land acquisition to full infrastructure deployment, 
-                      with each fund building on proven track records and expanding market reach.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-        
-        {/* Timeline Visual */}
-        <ScrollReveal direction="up" delay={0.1}>
-          <div className="mb-6 md:mb-8 bg-white rounded-xl p-6 border border-gray-200 shadow-institutional">
-            <div className="flex items-center justify-between max-w-4xl mx-auto">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-watt-success flex items-center justify-center mb-2">
-                  <span className="text-white font-bold">I</span>
-                </div>
-                <span className="text-sm font-semibold text-watt-navy">$25M</span>
-                <span className="text-xs text-watt-success">Active</span>
-              </div>
-              <ArrowRight className="w-8 h-8 text-watt-navy/30 mx-4" />
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-watt-trust/20 border-2 border-watt-trust flex items-center justify-center mb-2">
-                  <span className="text-watt-trust font-bold">II</span>
-                </div>
-                <span className="text-sm font-semibold text-watt-navy">$125M</span>
-                <span className="text-xs text-watt-navy/60">Planned 2025</span>
-              </div>
-              <ArrowRight className="w-8 h-8 text-watt-navy/30 mx-4" />
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-watt-bitcoin/20 border-2 border-watt-bitcoin flex items-center justify-center mb-2">
-                  <span className="text-watt-bitcoin font-bold">III</span>
-                </div>
-                <span className="text-sm font-semibold text-watt-navy">$250M</span>
-                <span className="text-xs text-watt-navy/60">Planned 2026</span>
-              </div>
+                  <span className="text-lg font-bold text-white">${fund.size}M</span>
+                  <span className={`text-xs mt-1 px-2 py-0.5 rounded-full ${
+                    fund.status === 'active' 
+                      ? 'text-watt-success bg-watt-success/20' 
+                      : 'text-white/50 bg-white/10'
+                  }`}>
+                    {fund.status === 'active' ? 'Active' : `Planned ${2024 + index}`}
+                  </span>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </ScrollReveal>
+        </motion.div>
 
-        {/* Individual Fund Details */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
-          {fundDetails.map((fund, index) => (
-            <ScrollReveal key={index} delay={index * 0.1} direction="up">
-              <Card className="bg-white border-gray-200 shadow-institutional overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
-                <CardHeader className="pb-2 sm:pb-3 p-3 sm:px-4 md:px-6">
-                  <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
-                    <fund.icon className="w-6 sm:w-8 h-6 sm:h-8 text-watt-trust" />
-                    <div>
-                      <CardTitle className="text-watt-navy text-lg sm:text-xl">{fund.fund}</CardTitle>
-                      <p className="text-watt-trust font-bold text-base sm:text-lg">${fund.size}M</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0 p-3 sm:px-4 md:px-6">
-                  <div className="space-y-2">
-                    <div>
-                      <span className="text-watt-navy/60 text-xs sm:text-sm">Target Investments:</span>
-                      <p className="text-watt-navy font-semibold text-sm sm:text-base">{fund.investments} strategic investments</p>
-                    </div>
-                    <div>
-                      <span className="text-watt-navy/60 text-xs sm:text-sm">Strategy:</span>
-                      <p className="text-watt-bitcoin font-semibold text-sm sm:text-base">{fund.model}</p>
-                    </div>
-                    <div>
-                      <span className="text-watt-navy/60 text-xs sm:text-sm">Focus:</span>
-                      <p className="text-watt-navy/70 text-xs sm:text-sm leading-relaxed">{fund.focus}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </ScrollReveal>
-          ))}
+        {/* Chart and Metrics */}
+        <div className="grid lg:grid-cols-5 gap-6 mb-12">
+          {/* Chart */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="lg:col-span-3 relative"
+          >
+            <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-watt-trust/10 to-watt-bitcoin/10 blur-xl" />
+            
+            <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+              <h3 className="text-lg font-bold text-white mb-6">Fund Size Progression</h3>
+              
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={fundData} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+                    <XAxis 
+                      dataKey="fund" 
+                      stroke="rgba(255,255,255,0.4)"
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      stroke="rgba(255,255,255,0.4)"
+                      fontSize={12}
+                    />
+                    <Bar dataKey="size" radius={[8, 8, 0, 0]} maxBarSize={80}>
+                      {fundData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </motion.div>
+
+          {/* Metrics Panel */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-2 space-y-4"
+          >
+            {[
+              { icon: Target, label: "Total Capital", value: 400, suffix: "M", prefix: "$", color: "text-watt-trust" },
+              { icon: TrendingUp, label: "Total Investments", value: 42, suffix: "-55", color: "text-watt-bitcoin" },
+              { icon: Clock, label: "Timeline", value: 5, suffix: "-7 Years", color: "text-watt-success" },
+            ].map((metric, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 + 0.4 }}
+                whileHover={{ x: 5 }}
+                className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10"
+              >
+                <div className="flex items-center gap-3 mb-1">
+                  <metric.icon className={`w-5 h-5 ${metric.color}`} />
+                  <span className="text-sm text-white/50">{metric.label}</span>
+                </div>
+                <div className={`text-2xl font-bold ${metric.color}`}>
+                  <AnimatedCounter end={metric.value} prefix={metric.prefix || ''} suffix={metric.suffix} />
+                </div>
+              </motion.div>
+            ))}
+
+            <div className="bg-watt-trust/10 rounded-xl p-4 border border-watt-trust/20">
+              <h4 className="text-sm font-semibold text-watt-trust mb-2">Growth Strategy</h4>
+              <p className="text-xs text-white/60 leading-relaxed">
+                Progressive scaling from land acquisition to full infrastructure deployment.
+              </p>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Growth Strategy Description */}
-        <ScrollReveal direction="up">
-          <Card className="bg-watt-light border-gray-200">
-            <CardContent className="p-3 sm:p-4">
-              <p className="text-watt-navy/70 text-center leading-relaxed text-sm sm:text-base">
-                Each successive fund builds on our established track record, expanding our capability to finance larger projects with significant 
-                environmental and financial returns. Our proven methodology scales from strategic land acquisition to full infrastructure deployment.
-              </p>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+        {/* Fund Cards */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {fundDetails.map((fund, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.15 }}
+              whileHover={{ y: -8 }}
+              className="group relative"
+            >
+              <div className={`absolute -inset-1 rounded-2xl bg-${fund.color}/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500`} />
+              
+              <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <motion.div 
+                    className={`w-12 h-12 rounded-xl bg-${fund.color}/20 flex items-center justify-center`}
+                    whileHover={{ rotate: 10 }}
+                  >
+                    <fund.icon className={`w-6 h-6 text-${fund.color}`} />
+                  </motion.div>
+                  <div>
+                    <h4 className="text-lg font-bold text-white">{fund.fund}</h4>
+                    <p className={`text-${fund.color} font-bold`}>${fund.size}M</p>
+                  </div>
+                  <span className={`ml-auto text-xs px-2 py-1 rounded-full ${
+                    fund.status === 'Active' 
+                      ? 'bg-watt-success/20 text-watt-success' 
+                      : 'bg-white/10 text-white/50'
+                  }`}>
+                    {fund.status}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-watt-success" />
+                    <span className="text-white/70 text-sm">{fund.investments} investments</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className={`w-4 h-4 text-${fund.color}`} />
+                    <span className={`text-${fund.color} text-sm font-medium`}>{fund.model}</span>
+                  </div>
+                  <p className="text-white/50 text-xs leading-relaxed">{fund.focus}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
