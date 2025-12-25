@@ -67,7 +67,7 @@ export function HeroPriceCard({
       
       requestAnimationFrame(animate);
     }
-  }, [currentPrice]);
+  }, [currentPrice, displayPrice, loading]);
 
   const hourlyChange = currentPrice - previousHourPrice;
   const hourlyChangePercent = previousHourPrice !== 0 

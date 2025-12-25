@@ -171,18 +171,9 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
     const { x, y, width, height, payload } = props;
     if (!payload) return null;
     
-    const { open, close, high, low } = payload;
+    const { open, close } = payload;
     const isUp = close >= open;
     const color = isUp ? 'hsl(var(--watt-success))' : 'hsl(0, 84%, 60%)';
-    
-    const bodyTop = Math.min(open, close);
-    const bodyHeight = Math.abs(close - open);
-    const wickTop = high;
-    const wickBottom = low;
-    
-    // Calculate pixel positions
-    const priceRange = stats.high - stats.low || 1;
-    const chartHeight = 280 / zoomLevel;
     
     return (
       <g>

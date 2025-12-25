@@ -53,6 +53,7 @@ import { LivePriceChart } from './aeso/LivePriceChart';
 import { PriceTicker } from './aeso/PriceTicker';
 import { MarketPulse } from './aeso/MarketPulse';
 import { HeroPriceCard } from './aeso/HeroPriceCard';
+import { LiveConnectionStatus } from './aeso/LiveConnectionStatus';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
@@ -253,6 +254,14 @@ export function AESOMarketComprehensive() {
 
           {/* Market Data Tab */}
           <TabsContent value="market" className="space-y-6 sm:space-y-8 animate-fade-in">
+            {/* Live Connection Status */}
+            <LiveConnectionStatus
+              lastUpdated={priceTimestamp}
+              onRefresh={handleRefreshAll}
+              isRefreshing={loading}
+              dataSource="AESO Market Data"
+            />
+
             {/* Price Ticker Banner */}
             <PriceTicker
               currentPrice={currentPrice}
