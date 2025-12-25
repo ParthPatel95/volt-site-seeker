@@ -70,18 +70,27 @@ export function LivePriceChart({
 
   // Process data: past actual prices + future AESO forecasts + AI predictions
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    
     const now = new Date();
     const hoursBack = getHoursBack();
     const cutoffPast = subHours(now, hoursBack);
     const cutoffFuture = addHours(now, hoursBack);
     
-    // Normalize and sort all historical data
-    const normalizedData = data
-      .map(d => {
+    console.log('[LivePriceChart] Processing data:', {
+      dataLength: data?.length || 0,
+      aiPredictionsLength: aiPredictions?.length || 0,
+      timeRange,
+      cutoffPast: cutoffPast.toISOString(),
+      cutoffFuture: cutoffFuture.toISOString()
+    });
+    
+    const chartPoints: any[] = [];
+    
+    // Process historical data
+    if (data && data.length > 0) {
+      data.forEach(d => {
         const ts = d.datetime || d.timestamp || '';
-        // Handle different datetime formats
+        if (!ts) return;
+        
         let parsedDate: Date;
         try {
           if (ts.includes('T')) {
@@ -94,44 +103,38 @@ export function LivePriceChart({
           parsedDate = new Date(ts);
         }
         
-        return {
-          timestamp: parsedDate.toISOString(),
-          parsedDate,
-          pool_price: d.pool_price,
-          forecast_pool_price: d.forecast_pool_price,
-          isActual: isBefore(parsedDate, now),
-          isForecast: isAfter(parsedDate, now) || parsedDate.getTime() === now.getTime()
-        };
-      })
-      .filter(d => !isNaN(d.parsedDate.getTime()))
-      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+        // Skip invalid dates
+        if (isNaN(parsedDate.getTime())) return;
+        
+        // Check if within time range
+        if (isBefore(parsedDate, cutoffPast) || isAfter(parsedDate, cutoffFuture)) return;
+        
+        const isPast = isBefore(parsedDate, now);
+        const timestamp = parsedDate.toISOString();
+        
+        const existingPoint = chartPoints.find(p => p.timestamp === timestamp);
+        if (existingPoint) {
+          if (isPast && d.pool_price !== undefined) {
+            existingPoint.actual = d.pool_price;
+          }
+          if (!isPast && d.forecast_pool_price !== undefined) {
+            existingPoint.aesoForecast = d.forecast_pool_price;
+          }
+        } else {
+          chartPoints.push({
+            timestamp,
+            parsedDate,
+            actual: isPast ? d.pool_price : undefined,
+            aesoForecast: !isPast && d.forecast_pool_price ? d.forecast_pool_price : undefined,
+          });
+        }
+      });
+    }
     
-    // Filter to time range
-    const filteredHistorical = normalizedData.filter(d => 
-      isAfter(d.parsedDate, cutoffPast) && isBefore(d.parsedDate, cutoffFuture)
-    );
-    
-    // Build chart data with all three series
-    const chartPoints: any[] = [];
-    
-    // Add historical actual prices
-    filteredHistorical.forEach(d => {
-      const existingPoint = chartPoints.find(p => p.timestamp === d.timestamp);
-      if (existingPoint) {
-        if (d.isActual) existingPoint.actual = d.pool_price;
-        if (d.isForecast && d.forecast_pool_price) existingPoint.aesoForecast = d.forecast_pool_price;
-      } else {
-        chartPoints.push({
-          timestamp: d.timestamp,
-          parsedDate: d.parsedDate,
-          actual: d.isActual ? d.pool_price : undefined,
-          aesoForecast: d.isForecast && d.forecast_pool_price ? d.forecast_pool_price : undefined,
-        });
-      }
-    });
-    
-    // Add AI predictions
+    // Process AI predictions (always for future times)
     if (aiPredictions && aiPredictions.length > 0) {
+      console.log('[LivePriceChart] Processing AI predictions:', aiPredictions.length);
+      
       aiPredictions.forEach(pred => {
         let predDate: Date;
         try {
@@ -140,30 +143,43 @@ export function LivePriceChart({
           predDate = new Date(pred.timestamp);
         }
         
-        if (isAfter(predDate, cutoffPast) && isBefore(predDate, cutoffFuture)) {
-          const existingPoint = chartPoints.find(p => 
-            Math.abs(new Date(p.timestamp).getTime() - predDate.getTime()) < 30 * 60 * 1000 // Within 30 min
-          );
-          
-          if (existingPoint) {
-            existingPoint.aiPrediction = pred.price;
-            existingPoint.aiLower = pred.confidenceLower;
-            existingPoint.aiUpper = pred.confidenceUpper;
-          } else {
-            chartPoints.push({
-              timestamp: predDate.toISOString(),
-              parsedDate: predDate,
-              aiPrediction: pred.price,
-              aiLower: pred.confidenceLower,
-              aiUpper: pred.confidenceUpper,
-            });
-          }
+        if (isNaN(predDate.getTime())) return;
+        if (isBefore(predDate, cutoffPast) || isAfter(predDate, cutoffFuture)) return;
+        
+        const timestamp = predDate.toISOString();
+        
+        // Find existing point within 30 min window
+        const existingPoint = chartPoints.find(p => 
+          Math.abs(new Date(p.timestamp).getTime() - predDate.getTime()) < 30 * 60 * 1000
+        );
+        
+        if (existingPoint) {
+          existingPoint.aiPrediction = pred.price;
+          existingPoint.aiLower = pred.confidenceLower;
+          existingPoint.aiUpper = pred.confidenceUpper;
+        } else {
+          chartPoints.push({
+            timestamp,
+            parsedDate: predDate,
+            aiPrediction: pred.price,
+            aiLower: pred.confidenceLower,
+            aiUpper: pred.confidenceUpper,
+          });
         }
       });
     }
     
-    // Sort final data
-    return chartPoints.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+    // Sort by timestamp
+    const sortedPoints = chartPoints.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+    
+    console.log('[LivePriceChart] Final chart data:', {
+      totalPoints: sortedPoints.length,
+      actualPoints: sortedPoints.filter(p => p.actual !== undefined).length,
+      aesoForecastPoints: sortedPoints.filter(p => p.aesoForecast !== undefined).length,
+      aiPredictionPoints: sortedPoints.filter(p => p.aiPrediction !== undefined).length
+    });
+    
+    return sortedPoints;
   }, [data, aiPredictions, timeRange]);
 
   // Calculate statistics from actual prices only

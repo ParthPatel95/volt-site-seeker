@@ -64,20 +64,30 @@ export function PriceTicker({
   const isPositive = change > 0;
   const isNeutral = change === 0;
 
-  // Last 60 minutes sparkline data
+  // Last 24 hours sparkline data (using hourly data)
   const sparklineData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
-    return data
+    // Filter to last 24 hours and sort by timestamp
+    const filtered = data
       .filter(d => {
         const ts = d.timestamp || d.datetime;
-        return ts ? new Date(ts) >= oneHourAgo : false;
+        if (!ts) return false;
+        const date = new Date(ts);
+        return !isNaN(date.getTime()) && date >= twentyFourHoursAgo;
       })
-      .map(d => ({ price: d.pool_price }))
-      .slice(-30); // Last 30 data points for sparkline
+      .sort((a, b) => {
+        const tsA = new Date(a.timestamp || a.datetime || 0).getTime();
+        const tsB = new Date(b.timestamp || b.datetime || 0).getTime();
+        return tsA - tsB;
+      })
+      .map(d => ({ price: d.pool_price }));
+    
+    // Return last 24 points for a clean sparkline
+    return filtered.slice(-24);
   }, [data]);
 
   const getTrendIcon = () => {
