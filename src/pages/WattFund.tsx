@@ -5,7 +5,7 @@ import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { LazySection } from '@/components/LazyErrorBoundary';
 import { WattFundHero } from '@/components/wattfund/WattFundHero';
 import { WattFundDivider } from '@/components/wattfund/WattFundDivider';
-import { StickyProgressNav } from '@/components/wattfund/StickyProgressNav';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { InvestmentInquiryForm } from '@/components/landing/InvestmentInquiryForm';
 
@@ -30,8 +30,6 @@ const WattFund: React.FC = () => {
       {/* Smooth scroll functionality */}
       <SmoothScroll />
       
-      {/* Sticky Progress Navigation */}
-      <StickyProgressNav />
       
       {/* SEO content */}
       <header>
