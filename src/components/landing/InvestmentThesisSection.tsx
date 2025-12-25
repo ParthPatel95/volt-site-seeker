@@ -1,207 +1,222 @@
-import { ArrowRight, Target, Bitcoin, Cpu, TrendingUp, Sparkles, Zap, Package, Settings, Award, Clock, CheckCircle2 } from 'lucide-react';
-import { ScrollReveal } from './ScrollAnimations';
-import { AnimatedCounter } from '@/components/AnimatedCounter';
+import { motion } from 'framer-motion';
+import { ArrowRight, Target, Bitcoin, Cpu, Sparkles, Zap, Package, Settings, Award, Clock, CheckCircle2 } from 'lucide-react';
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 export const InvestmentThesisSection = () => {
+  const stages = [
+    {
+      stage: 1,
+      icon: Target,
+      title: "Identify Stranded Power",
+      subtitle: "ACQUIRE",
+      color: "gray",
+      borderColor: "border-gray-300",
+      bgGradient: "from-gray-500 to-gray-600",
+      keyPoint: "Below-market acquisition",
+      description: "Target undervalued industrial sites with existing power infrastructure",
+    },
+    {
+      stage: 2,
+      icon: Bitcoin,
+      title: "Deploy Bitcoin Mining",
+      subtitle: "MONETIZE",
+      color: "bitcoin",
+      borderColor: "border-watt-bitcoin",
+      bgGradient: "from-watt-bitcoin to-orange-600",
+      keyPoint: "$250k/MW deployment",
+      description: "Generate immediate cash flow while infrastructure matures",
+      badge: "Year 0-1",
+    },
+    {
+      stage: 3,
+      icon: Cpu,
+      title: "Transition to AI/HPC",
+      subtitle: "TRANSFORM",
+      color: "trust",
+      borderColor: "border-watt-trust",
+      bgGradient: "from-watt-trust to-blue-600",
+      keyPoint: "$6.5M/MW vs $12.5M traditional",
+      description: "Convert proven sites to high-value AI data centers",
+      badge: "Year 2+",
+      savingsBadge: "48% SAVINGS",
+    },
+  ];
+
+  const features = [
+    { icon: Zap, title: "Rapid Deployment", desc: "12-16 weeks vs 24+ months", color: "text-watt-trust" },
+    { icon: Package, title: "Pre-Built & Tested", desc: "Factory-built with QA", color: "text-blue-500" },
+    { icon: Settings, title: "Scalable On Demand", desc: "Add capacity as needed", color: "text-watt-bitcoin" },
+    { icon: Award, title: "Tier 3 Reliability", desc: "99.99% uptime", color: "text-watt-success" },
+  ];
+
   return (
-    <section className="relative z-10 py-12 md:py-16 px-4 sm:px-6 bg-watt-light">
-      <div className="max-w-7xl mx-auto">
+    <section id="thesis" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 bg-gradient-to-b from-watt-navy via-[#0a1628] to-watt-navy overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-watt-trust/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-watt-bitcoin/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 text-watt-navy">
-            Our <span className="text-watt-trust">Thesis</span>
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/30 mb-6"
+            whileHover={{ scale: 1.05 }}
+          >
+            <Sparkles className="w-4 h-4 text-watt-trust" />
+            <span className="text-sm font-medium text-watt-trust">Investment Strategy</span>
+          </motion.div>
+          
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
+            Our <span className="bg-gradient-to-r from-watt-trust to-watt-bitcoin bg-clip-text text-transparent">Thesis</span>
           </h2>
-          <p className="text-base md:text-lg text-watt-bitcoin font-bold">
+          <p className="text-lg md:text-xl text-watt-bitcoin font-bold">
             Stranded Power → Bitcoin Mining → AI/HPC Premium
           </p>
-        </div>
+        </motion.div>
         
-        {/* Three Stage Cards - Horizontal Flow */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {/* Stage 1: ACQUIRE */}
-          <ScrollReveal delay={0.1}>
-            <div className="bg-white rounded-2xl p-6 border-2 border-gray-300 shadow-institutional hover:shadow-xl transition-all duration-300 hover:scale-[1.02] relative">
-              <div className="flex flex-col h-full">
+        {/* Three Stage Cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-16">
+          {stages.map((stage, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.15, duration: 0.5 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="relative group"
+            >
+              {/* Card glow */}
+              <div className={`absolute -inset-1 rounded-2xl bg-gradient-to-r ${stage.bgGradient} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
+              
+              <div className={`relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border ${stage.borderColor} border-opacity-50 h-full`}>
                 {/* Icon */}
-                <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <Target className="w-8 h-8 text-white" />
-                </div>
+                <motion.div 
+                  className={`w-16 h-16 bg-gradient-to-br ${stage.bgGradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg`}
+                  whileHover={{ rotate: [0, -5, 5, 0], scale: 1.1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <stage.icon className="w-8 h-8 text-white" />
+                </motion.div>
                 
-                {/* Badge */}
-                <div className="mb-3">
-                  <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">STAGE 1</span>
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-xs font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full">
+                    STAGE {stage.stage}
+                  </span>
+                  {stage.badge && (
+                    <span className="text-xs font-bold text-watt-success bg-watt-success/20 px-3 py-1 rounded-full">
+                      {stage.badge}
+                    </span>
+                  )}
+                  {stage.savingsBadge && (
+                    <span className="text-xs font-bold text-white bg-watt-success px-3 py-1 rounded-full shadow">
+                      {stage.savingsBadge}
+                    </span>
+                  )}
                 </div>
                 
                 {/* Title */}
-                <h3 className="text-xl font-bold mb-3 text-watt-navy">Identify Stranded Power</h3>
+                <h3 className="text-xl font-bold mb-3 text-white">{stage.title}</h3>
                 
                 {/* Key Point */}
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-sm font-semibold text-gray-700">Below-market acquisition</div>
+                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
+                  <div className="text-sm font-semibold text-white/80">{stage.keyPoint}</div>
                 </div>
                 
                 {/* Description */}
-                <p className="text-watt-navy/70 text-sm leading-relaxed flex-grow">
-                  Target undervalued industrial sites with existing power infrastructure
+                <p className="text-white/60 text-sm leading-relaxed">
+                  {stage.description}
                 </p>
               </div>
               
-              {/* Connecting Arrow (Desktop) */}
-              <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10">
-                <div className="w-6 h-6 bg-watt-bitcoin rounded-full flex items-center justify-center shadow-lg">
-                  <ArrowRight className="w-4 h-4 text-white" />
+              {/* Connecting Arrow */}
+              {index < 2 && (
+                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10">
+                  <motion.div 
+                    className={`w-6 h-6 bg-gradient-to-r ${stages[index + 1].bgGradient} rounded-full flex items-center justify-center shadow-lg`}
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <ArrowRight className="w-4 h-4 text-white" />
+                  </motion.div>
                 </div>
-              </div>
-            </div>
-          </ScrollReveal>
-          
-          {/* Stage 2: MONETIZE */}
-          <ScrollReveal delay={0.2}>
-            <div className="bg-white rounded-2xl p-6 border-2 border-watt-bitcoin shadow-institutional hover:shadow-xl transition-all duration-300 hover:scale-[1.02] relative">
-              <div className="flex flex-col h-full">
-                {/* Icon */}
-                <div className="w-16 h-16 bg-gradient-to-br from-watt-bitcoin to-orange-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <Bitcoin className="w-8 h-8 text-white" />
-                </div>
-                
-                {/* Badges */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="text-xs font-bold text-watt-bitcoin bg-watt-bitcoin/10 px-3 py-1 rounded-full">STAGE 2</span>
-                  <span className="text-xs font-bold text-watt-success bg-watt-success/10 px-3 py-1 rounded-full">Year 0-1</span>
-                </div>
-                
-                {/* Title */}
-                <h3 className="text-xl font-bold mb-3 text-watt-navy">Deploy Bitcoin Mining</h3>
-                
-                {/* Key Metric */}
-                <div className="mb-4 p-4 bg-gradient-to-br from-watt-bitcoin/10 to-orange-100/50 rounded-lg border-2 border-watt-bitcoin/30">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-watt-bitcoin">
-                      $<AnimatedCounter end={250} duration={2000} />k/MW
-                    </span>
-                  </div>
-                  <div className="text-xs text-watt-navy/60 mt-1">deployment cost</div>
-                </div>
-                
-                {/* Description */}
-                <p className="text-watt-navy/70 text-sm leading-relaxed flex-grow">
-                  Generate immediate cash flow while infrastructure matures
-                </p>
-              </div>
-              
-              {/* Connecting Arrow (Desktop) */}
-              <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10">
-                <div className="w-6 h-6 bg-watt-trust rounded-full flex items-center justify-center shadow-lg">
-                  <ArrowRight className="w-4 h-4 text-white" />
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
-          
-          {/* Stage 3: TRANSFORM */}
-          <ScrollReveal delay={0.3}>
-            <div className="bg-white rounded-2xl p-6 border-2 border-watt-trust shadow-institutional hover:shadow-xl transition-all duration-300 hover:scale-[1.02] relative">
-              <div className="flex flex-col h-full">
-                {/* Icon */}
-                <div className="w-16 h-16 bg-gradient-to-br from-watt-trust to-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                  <Cpu className="w-8 h-8 text-white" />
-                </div>
-                
-                {/* Badges */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="text-xs font-bold text-watt-trust bg-watt-trust/10 px-3 py-1 rounded-full">STAGE 3</span>
-                  <span className="text-xs font-bold text-watt-success bg-watt-success/10 px-3 py-1 rounded-full">Year 2+</span>
-                  <span className="text-xs font-bold text-white bg-watt-success px-3 py-1 rounded-full shadow">48% SAVINGS</span>
-                </div>
-                
-                {/* Title */}
-                <h3 className="text-xl font-bold mb-3 text-watt-navy">Transition to AI/HPC</h3>
-                
-                {/* Key Metric */}
-                <div className="mb-4 p-4 bg-gradient-to-br from-watt-trust/10 to-blue-100/50 rounded-lg border-2 border-watt-trust/30">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-3xl font-bold text-watt-trust">
-                      $<AnimatedCounter end={6.5} duration={2000} />M/MW
-                    </span>
-                  </div>
-                  <div className="text-xs text-watt-navy/60">
-                    vs <span className="line-through text-gray-500">$<AnimatedCounter end={12.5} duration={2000} />M</span> traditional
-                  </div>
-                </div>
-                
-                {/* Description */}
-                <p className="text-watt-navy/70 text-sm leading-relaxed flex-grow">
-                  Convert proven sites to high-value AI data centers commanding 10-25x valuations
-                </p>
-              </div>
-            </div>
-          </ScrollReveal>
+              )}
+            </motion.div>
+          ))}
         </div>
         
-        {/* Proprietary Edge Banner - Separate Section */}
-        <ScrollReveal delay={0.4}>
-          <div className="bg-gradient-to-br from-watt-trust/5 via-white to-watt-bitcoin/5 rounded-3xl p-8 md:p-10 lg:p-12 border-2 border-watt-trust/20 shadow-institutional-lg">
+        {/* Proprietary Edge Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="relative"
+        >
+          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-watt-trust/20 via-watt-bitcoin/10 to-watt-success/20 blur-xl" />
+          
+          <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-white/10">
             {/* Header */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-10">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Sparkles className="w-6 h-6 text-watt-trust" />
-                <h3 className="text-2xl md:text-3xl font-bold text-watt-navy">
+                <h3 className="text-2xl md:text-3xl font-bold text-white">
                   Our Proprietary Edge
                 </h3>
               </div>
-              <p className="text-xl font-semibold text-watt-navy mb-2">Modular AI Infrastructure</p>
+              <p className="text-xl font-semibold text-white/90 mb-2">Modular AI Infrastructure</p>
               <p className="text-base text-watt-trust font-medium">Deploy enterprise-grade AI compute in weeks, not years</p>
             </div>
             
-            {/* Feature Cards Grid */}
+            {/* Feature Cards */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              {/* Rapid Deployment */}
-              <div className="bg-white rounded-xl p-5 border border-watt-trust/20 hover:border-watt-trust/40 hover:shadow-lg transition-all duration-300 group">
-                <div className="w-12 h-12 bg-gradient-to-br from-watt-trust/20 to-watt-trust/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Zap className="w-6 h-6 text-watt-trust" />
-                </div>
-                <h4 className="text-sm font-bold text-watt-navy mb-1.5">⚡ Rapid Deployment</h4>
-                <p className="text-xs text-watt-navy/70 leading-relaxed">12-16 weeks vs 24+ months traditional build</p>
-              </div>
-              
-              {/* Pre-Built & Tested */}
-              <div className="bg-white rounded-xl p-5 border border-watt-trust/20 hover:border-watt-trust/40 hover:shadow-lg transition-all duration-300 group">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-                <h4 className="text-sm font-bold text-watt-navy mb-1.5">📦 Pre-Built & Tested</h4>
-                <p className="text-xs text-watt-navy/70 leading-relaxed">Factory-built modules with quality assurance</p>
-              </div>
-              
-              {/* Scalable On Demand */}
-              <div className="bg-white rounded-xl p-5 border border-watt-trust/20 hover:border-watt-trust/40 hover:shadow-lg transition-all duration-300 group">
-                <div className="w-12 h-12 bg-gradient-to-br from-watt-bitcoin/20 to-watt-bitcoin/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Settings className="w-6 h-6 text-watt-bitcoin" />
-                </div>
-                <h4 className="text-sm font-bold text-watt-navy mb-1.5">🔧 Scalable On Demand</h4>
-                <p className="text-xs text-watt-navy/70 leading-relaxed">Add capacity incrementally as demand grows</p>
-              </div>
-              
-              {/* Tier 3 Reliability */}
-              <div className="bg-white rounded-xl p-5 border border-watt-trust/20 hover:border-watt-trust/40 hover:shadow-lg transition-all duration-300 group">
-                <div className="w-12 h-12 bg-gradient-to-br from-watt-success/20 to-watt-success/10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Award className="w-6 h-6 text-watt-success" />
-                </div>
-                <h4 className="text-sm font-bold text-watt-navy mb-1.5">🏆 Tier 3 Reliability</h4>
-                <p className="text-xs text-watt-navy/70 leading-relaxed">99.99% uptime, same as traditional DCs</p>
-              </div>
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-white/20 transition-all group"
+                >
+                  <motion.div 
+                    className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
+                    whileHover={{ rotate: 10 }}
+                  >
+                    <feature.icon className={`w-6 h-6 ${feature.color}`} />
+                  </motion.div>
+                  <h4 className="text-sm font-bold text-white mb-1.5">{feature.title}</h4>
+                  <p className="text-xs text-white/60 leading-relaxed">{feature.desc}</p>
+                </motion.div>
+              ))}
             </div>
             
-            {/* Cost Comparison with Context */}
+            {/* Cost Comparison */}
             <div className="max-w-4xl mx-auto mb-8">
-              <h4 className="text-center text-lg font-bold text-watt-navy mb-6">Infrastructure Cost Comparison</h4>
+              <h4 className="text-center text-lg font-bold text-white mb-6">Infrastructure Cost Comparison</h4>
               <div className="space-y-6">
                 {/* Traditional */}
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-2">
-                    <span className="text-sm font-semibold text-watt-navy/70 w-28">Traditional</span>
-                    <div className="flex-1 h-14 bg-gray-200 rounded-xl overflow-hidden relative shadow-inner">
-                      <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-gray-500 w-full"></div>
+                    <span className="text-sm font-semibold text-white/60 w-28">Traditional</span>
+                    <div className="flex-1 h-14 bg-white/5 rounded-xl overflow-hidden relative">
+                      <motion.div 
+                        className="absolute inset-0 bg-gradient-to-r from-gray-500 to-gray-600"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: '100%' }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, delay: 0.3 }}
+                      />
                       <div className="absolute inset-0 flex items-center justify-end pr-4">
                         <span className="text-white font-bold text-xl">
                           $<AnimatedCounter end={12.5} duration={2000} />M/MW
@@ -209,9 +224,9 @@ export const InvestmentThesisSection = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-watt-navy/60 ml-32 flex items-center gap-1">
+                  <p className="text-xs text-white/40 ml-32 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    Site prep, construction, equipment, custom cooling • 24-36 months
+                    Site prep, construction, equipment • 24-36 months
                   </p>
                 </div>
                 
@@ -219,13 +234,16 @@ export const InvestmentThesisSection = () => {
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-2">
                     <span className="text-sm font-semibold text-watt-trust w-28">WattByte</span>
-                    <div className="flex-1 h-14 bg-watt-trust/10 rounded-xl overflow-hidden relative shadow-inner">
-                      <div 
-                        className="absolute inset-0 bg-gradient-to-r from-watt-trust to-blue-600 rounded-xl shadow-lg"
-                        style={{ width: '52%' }}
-                      ></div>
+                    <div className="flex-1 h-14 bg-white/5 rounded-xl overflow-hidden relative">
+                      <motion.div 
+                        className="absolute inset-0 bg-gradient-to-r from-watt-trust to-blue-600 rounded-xl"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: '52%' }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1.2, delay: 0.5 }}
+                      />
                       <div className="absolute inset-0 flex items-center justify-end pr-4">
-                        <span className="text-watt-navy font-bold text-xl">
+                        <span className="text-white font-bold text-xl">
                           $<AnimatedCounter end={6.5} duration={2000} />M/MW
                         </span>
                       </div>
@@ -233,50 +251,47 @@ export const InvestmentThesisSection = () => {
                   </div>
                   <p className="text-xs text-watt-trust/80 ml-32 flex items-center gap-1 font-medium">
                     <CheckCircle2 className="w-3 h-3" />
-                    Factory-built modular units, rapid deployment • 12-16 weeks
+                    Factory-built modular units • 12-16 weeks
                   </p>
                 </div>
               </div>
             </div>
             
-            {/* Three-Stat Savings Callout */}
-            <div className="max-w-4xl mx-auto mb-6">
-              <div className="grid sm:grid-cols-3 gap-4">
-                {/* Cost Savings */}
-                <div className="bg-watt-success/10 rounded-xl p-5 border-2 border-watt-success/30 text-center hover:scale-105 transition-transform">
-                  <div className="text-3xl font-bold text-watt-success mb-1">
-                    $<AnimatedCounter end={6} duration={2000} />M/MW
-                  </div>
-                  <div className="text-xs font-semibold text-watt-navy/70">Cost Savings</div>
+            {/* Stats */}
+            <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+              <motion.div 
+                className="bg-watt-success/10 rounded-xl p-5 border border-watt-success/30 text-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-3xl font-bold text-watt-success mb-1">
+                  $<AnimatedCounter end={6} duration={2000} />M/MW
                 </div>
-                
-                {/* Speed Advantage */}
-                <div className="bg-watt-trust/10 rounded-xl p-5 border-2 border-watt-trust/30 text-center hover:scale-105 transition-transform">
-                  <div className="text-3xl font-bold text-watt-trust mb-1">
-                    <AnimatedCounter end={80} duration={2000} />% Faster
-                  </div>
-                  <div className="text-xs font-semibold text-watt-navy/70">Time to Deploy</div>
+                <div className="text-xs font-semibold text-white/60">Cost Savings</div>
+              </motion.div>
+              
+              <motion.div 
+                className="bg-watt-trust/10 rounded-xl p-5 border border-watt-trust/30 text-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-3xl font-bold text-watt-trust mb-1">
+                  <AnimatedCounter end={80} duration={2000} />% Faster
                 </div>
-                
-                {/* Quality Parity */}
-                <div className="bg-blue-500/10 rounded-xl p-5 border-2 border-blue-500/30 text-center hover:scale-105 transition-transform">
-                  <div className="text-2xl font-bold text-blue-600 mb-1 flex items-center justify-center gap-2">
-                    <CheckCircle2 className="w-6 h-6" />
-                    Tier 3
-                  </div>
-                  <div className="text-xs font-semibold text-watt-navy/70">Same Performance</div>
+                <div className="text-xs font-semibold text-white/60">Time to Deploy</div>
+              </motion.div>
+              
+              <motion.div 
+                className="bg-blue-500/10 rounded-xl p-5 border border-blue-500/30 text-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-2xl font-bold text-blue-400 mb-1 flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-6 h-6" />
+                  Tier 3
                 </div>
-              </div>
-            </div>
-            
-            {/* Closing Statement */}
-            <div className="text-center">
-              <p className="text-lg font-semibold text-watt-navy/80 italic">
-                Enterprise-grade AI infrastructure at half the cost
-              </p>
+                <div className="text-xs font-semibold text-white/60">Same Performance</div>
+              </motion.div>
             </div>
           </div>
-        </ScrollReveal>
+        </motion.div>
       </div>
     </section>
   );
