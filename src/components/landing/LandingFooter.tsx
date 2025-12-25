@@ -105,12 +105,12 @@ export const LandingFooter = () => {
             © 2025 WattByte Infrastructure Company. All rights reserved.
           </p>
           <div className="flex items-center space-x-6">
-            <a href="#privacy" className="text-xs text-watt-navy/50 hover:text-watt-trust transition-colors">
+            <Link to="/privacy" className="text-xs text-watt-navy/50 hover:text-watt-trust transition-colors">
               Privacy Policy
-            </a>
-            <a href="#terms" className="text-xs text-watt-navy/50 hover:text-watt-trust transition-colors">
+            </Link>
+            <Link to="/terms" className="text-xs text-watt-navy/50 hover:text-watt-trust transition-colors">
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>
