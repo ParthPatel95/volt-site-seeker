@@ -352,271 +352,224 @@ export function TradingViewChart({
 
   return (
     <Card className="border-border overflow-hidden bg-card shadow-sm">
-      {/* Ticker Tape */}
-      <TickerTape
-        currentPrice={currentPrice}
-        changePercent={stats.changePercent}
-        high={stats.high}
-        low={stats.low}
-        average={stats.avg}
-        aiPrediction={nextHourPredictions.aiPrediction}
-        aesoForecast={nextHourPredictions.aesoForecast}
-        negativeHours={stats.negativeHours}
-        volume={stats.volume}
-        volatility={stats.volatility}
-      />
+      {/* Sticky Ticker Tape */}
+      <div className="sticky top-0 z-10 bg-card border-b border-border">
+        <TickerTape
+          currentPrice={currentPrice}
+          changePercent={stats.changePercent}
+          high={stats.high}
+          low={stats.low}
+          average={stats.avg}
+          aiPrediction={nextHourPredictions.aiPrediction}
+          aesoForecast={nextHourPredictions.aesoForecast}
+          negativeHours={stats.negativeHours}
+          volume={stats.volume}
+          volatility={stats.volatility}
+        />
+      </div>
 
-      <CardHeader className="pb-2 pt-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Left: Current Price Panel */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-primary/10 shadow-sm">
-                <BarChart3 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-bold text-foreground">AESO Pool Price</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Live • {timeRange} Historical + Forecast
-                </p>
-              </div>
-              {/* Live Indicator */}
-              <div className="flex items-center gap-1.5 ml-auto">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-                <span className="text-xs font-medium text-emerald-600">Live</span>
-              </div>
-            </div>
-
-            {/* Current Price Display */}
-            <div className="p-4 rounded-xl bg-muted/50 border border-border mb-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <motion.div 
-                    className="text-4xl font-bold text-foreground tabular-nums"
-                    key={currentPrice}
-                    initial={{ scale: 1.02, opacity: 0.8 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    ${currentPrice.toFixed(2)}
-                  </motion.div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-sm font-semibold ${
-                      isPositive ? 'bg-red-500/10 text-red-600' : 'bg-emerald-500/10 text-emerald-600'
-                    }`}>
-                      {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {isPositive ? '+' : ''}{stats.changePercent.toFixed(2)}%
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {isPositive ? '+' : ''}${stats.change.toFixed(2)} CAD/MWh
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Trading Zone Badge */}
-                {tradingZone && (
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold text-white ${tradingZone.color}`}
-                  >
-                    {tradingZone.label}
-                  </motion.div>
-                )}
-              </div>
-
-              {/* OHLC Stats Row */}
-              <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-border">
-                <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Open</p>
-                  <p className="text-sm font-bold text-foreground">${stats.open.toFixed(2)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">High</p>
-                  <p className="text-sm font-bold text-red-500">${stats.high.toFixed(2)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Low</p>
-                  <p className="text-sm font-bold text-emerald-500">${stats.low.toFixed(2)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Close</p>
-                  <p className="text-sm font-bold text-foreground">${stats.close.toFixed(2)}</p>
-                </div>
-              </div>
-
-              {/* Price Level Bar */}
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>${stats.low.toFixed(0)}</span>
-                  <span className="font-medium">Range Position</span>
-                  <span>${stats.high.toFixed(0)}</span>
-                </div>
-                <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="absolute h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500 opacity-40" 
-                    style={{ width: '100%' }}
-                  />
-                  <motion.div 
-                    className="absolute w-3 h-3 -top-0.5 bg-foreground rounded-full shadow-lg ring-2 ring-background"
-                    style={{
-                      left: `calc(${Math.max(0, Math.min(100, ((currentPrice - stats.low) / (stats.high - stats.low || 1)) * 100))}% - 6px)`
-                    }}
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Next Hour Preview */}
-          <div className="lg:w-80">
-            <NextHourPreview
-              aesoForecast={nextHourPredictions.aesoForecast}
-              aiPrediction={nextHourPredictions.aiPrediction}
-              aiConfidence={nextHourPredictions.aiConfidence}
-              currentPrice={currentPrice}
-              loading={loading}
-              aiLoading={aiLoading}
-            />
+      {/* Compact Header Bar with Controls */}
+      <div className="px-3 py-2 border-b border-border flex flex-wrap items-center justify-between gap-2 bg-muted/30">
+        {/* Title & Live Indicator */}
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm text-foreground">AESO Pool Price</span>
+          <div className="flex items-center gap-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[10px] font-medium text-emerald-600">LIVE</span>
           </div>
         </div>
 
-        {/* Controls Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-          {/* Time Range Selector */}
-          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 border border-border">
-            {(['1H', '4H', '24H', '48H', '72H', '1W'] as TimeRange[]).map((range) => (
-              <Button
-                key={range}
-                variant={timeRange === range ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTimeRange(range)}
-                className={`px-3 py-1 h-7 text-xs font-medium ${
-                  timeRange === range 
-                    ? '' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                {range}
-              </Button>
-            ))}
-          </div>
+        {/* Time Range Selector */}
+        <div className="flex items-center gap-1 bg-background rounded-md p-0.5 border border-border">
+          {(['1H', '4H', '24H', '48H', '72H', '1W'] as TimeRange[]).map((range) => (
+            <Button
+              key={range}
+              variant={timeRange === range ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setTimeRange(range)}
+              className={`px-2 py-0.5 h-6 text-[10px] font-medium ${
+                timeRange === range 
+                  ? '' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              {range}
+            </Button>
+          ))}
+        </div>
 
-          {/* Zoom Controls */}
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleZoomIn}
-              className="h-7 text-xs"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
+        {/* Zoom & Legend */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={handleZoomIn} className="h-6 w-6 p-0">
+              <ZoomIn className="w-3 h-3" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleZoomOut}
-              className="h-7 text-xs"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
+            <Button variant="ghost" size="sm" onClick={handleZoomOut} className="h-6 w-6 p-0">
+              <ZoomOut className="w-3 h-3" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleReset}
-              className="h-7 text-xs"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
+            <Button variant="ghost" size="sm" onClick={handleReset} className="h-6 w-6 p-0">
+              <RotateCcw className="w-3 h-3" />
             </Button>
           </div>
-
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-0.5 bg-primary rounded" />
+          <div className="hidden sm:flex items-center gap-3 text-[10px]">
+            <div className="flex items-center gap-1">
+              <div className="w-2.5 h-0.5 bg-primary rounded" />
               <span className="text-muted-foreground">Actual</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-0.5 bg-blue-500 rounded" style={{ borderStyle: 'dashed' }} />
-              <Building2 className="w-3 h-3 text-blue-500" />
+            <div className="flex items-center gap-1">
+              <div className="w-2.5 h-0.5 bg-blue-500 rounded" />
               <span className="text-muted-foreground">AESO</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-0.5 bg-emerald-500 rounded" style={{ borderStyle: 'dashed' }} />
-              <Brain className="w-3 h-3 text-emerald-500" />
+            <div className="flex items-center gap-1">
+              <div className="w-2.5 h-0.5 bg-emerald-500 rounded" />
               <span className="text-muted-foreground">AI</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mt-4">
-          <div className="text-center p-2 rounded-lg bg-muted/50 border border-border">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">VWAP</p>
-            <p className="text-sm font-bold text-foreground">${stats.avg.toFixed(2)}</p>
+      {/* Compact Trading Dashboard - Grid Layout */}
+      <div className="p-3 grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Left: Price & OHLC (takes 2 cols on lg) */}
+        <div className="lg:col-span-2 space-y-2">
+          {/* Price Row with Trading Zone */}
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+            <div className="flex items-baseline gap-3">
+              <motion.span 
+                className="text-3xl font-bold text-foreground tabular-nums"
+                key={currentPrice}
+                initial={{ scale: 1.02, opacity: 0.8 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                ${currentPrice.toFixed(2)}
+              </motion.span>
+              <div className={`flex items-center gap-1 text-sm font-semibold ${
+                isPositive ? 'text-red-500' : 'text-emerald-500'
+              }`}>
+                {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                {isPositive ? '+' : ''}{stats.changePercent.toFixed(2)}%
+              </div>
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                ({isPositive ? '+' : ''}${stats.change.toFixed(2)})
+              </span>
+            </div>
+            {tradingZone && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold text-white ${tradingZone.color}`}
+              >
+                {tradingZone.label}
+              </motion.div>
+            )}
           </div>
-          <div className="text-center p-2 rounded-lg bg-muted/50 border border-border">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Change</p>
-            <p className={`text-sm font-bold ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
-              {isPositive ? '+' : ''}${stats.change.toFixed(2)}
-            </p>
+
+          {/* OHLC + Stats Row */}
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+            <div className="text-center p-1.5 rounded bg-muted/50 border border-border">
+              <p className="text-[9px] text-muted-foreground uppercase">Open</p>
+              <p className="text-xs font-bold text-foreground">${stats.open.toFixed(2)}</p>
+            </div>
+            <div className="text-center p-1.5 rounded bg-muted/50 border border-border">
+              <p className="text-[9px] text-muted-foreground uppercase">High</p>
+              <p className="text-xs font-bold text-red-500">${stats.high.toFixed(2)}</p>
+            </div>
+            <div className="text-center p-1.5 rounded bg-muted/50 border border-border">
+              <p className="text-[9px] text-muted-foreground uppercase">Low</p>
+              <p className="text-xs font-bold text-emerald-500">${stats.low.toFixed(2)}</p>
+            </div>
+            <div className="text-center p-1.5 rounded bg-muted/50 border border-border">
+              <p className="text-[9px] text-muted-foreground uppercase">Close</p>
+              <p className="text-xs font-bold text-foreground">${stats.close.toFixed(2)}</p>
+            </div>
+            <div className="text-center p-1.5 rounded bg-muted/50 border border-border hidden sm:block">
+              <p className="text-[9px] text-muted-foreground uppercase">VWAP</p>
+              <p className="text-xs font-bold text-foreground">${stats.avg.toFixed(2)}</p>
+            </div>
+            <div className="text-center p-1.5 rounded bg-muted/50 border border-border hidden sm:block">
+              <p className="text-[9px] text-muted-foreground uppercase">Volatility</p>
+              <p className={`text-xs font-bold ${stats.volatility > 20 ? 'text-amber-500' : 'text-foreground'}`}>
+                {stats.volatility.toFixed(1)}%
+              </p>
+            </div>
+            {stats.negativeHours > 0 && (
+              <div className="text-center p-1.5 rounded bg-emerald-500/10 border border-emerald-500/20 hidden sm:block">
+                <p className="text-[9px] text-emerald-600 uppercase">Negative</p>
+                <p className="text-xs font-bold text-emerald-600">{stats.negativeHours}h</p>
+              </div>
+            )}
+            {stats.aiAvg > 0 && (
+              <div className="text-center p-1.5 rounded bg-emerald-500/5 border border-emerald-500/20 hidden sm:block">
+                <p className="text-[9px] text-emerald-600 uppercase">AI Avg</p>
+                <p className="text-xs font-bold text-emerald-600">${stats.aiAvg.toFixed(2)}</p>
+              </div>
+            )}
           </div>
-          <div className="text-center p-2 rounded-lg bg-muted/50 border border-border">
-            <div className="flex items-center justify-center gap-1">
-              <Gauge className="w-3 h-3 text-muted-foreground" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Volatility</p>
+
+          {/* Price Level Bar */}
+          <div className="p-2 rounded bg-muted/30 border border-border">
+            <div className="flex justify-between text-[9px] text-muted-foreground mb-1">
+              <span>${stats.low.toFixed(0)}</span>
+              <span className="font-medium">Range Position</span>
+              <span>${stats.high.toFixed(0)}</span>
             </div>
-            <p className={`text-sm font-bold ${stats.volatility > 20 ? 'text-amber-500' : 'text-foreground'}`}>
-              {stats.volatility.toFixed(1)}%
-            </p>
+            <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="absolute h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500 opacity-40" 
+                style={{ width: '100%' }}
+              />
+              <motion.div 
+                className="absolute w-2.5 h-2.5 -top-0.5 bg-foreground rounded-full shadow ring-1 ring-background"
+                style={{
+                  left: `calc(${Math.max(0, Math.min(100, ((currentPrice - stats.low) / (stats.high - stats.low || 1)) * 100))}% - 5px)`
+                }}
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </div>
           </div>
-          {stats.negativeHours > 0 && (
-            <div className="text-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Negative</p>
-              <p className="text-sm font-bold text-emerald-600">{stats.negativeHours}h</p>
-            </div>
-          )}
-          {stats.aiAvg > 0 && (
-            <div className="text-center p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-              <p className="text-[10px] text-emerald-600 uppercase tracking-wider">AI Avg</p>
-              <p className="text-sm font-bold text-emerald-600">${stats.aiAvg.toFixed(2)}</p>
-            </div>
-          )}
-          {stats.aesoAvg > 0 && (
-            <div className="text-center p-2 rounded-lg bg-blue-500/5 border border-blue-500/20">
-              <p className="text-[10px] text-blue-600 uppercase tracking-wider">AESO Avg</p>
-              <p className="text-sm font-bold text-blue-600">${stats.aesoAvg.toFixed(2)}</p>
-            </div>
-          )}
         </div>
-      </CardHeader>
 
-      <CardContent className="pt-2 px-2 sm:px-6">
+        {/* Right: Next Hour Preview */}
+        <div className="lg:col-span-1">
+          <NextHourPreview
+            aesoForecast={nextHourPredictions.aesoForecast}
+            aiPrediction={nextHourPredictions.aiPrediction}
+            aiConfidence={nextHourPredictions.aiConfidence}
+            currentPrice={currentPrice}
+            loading={loading}
+            aiLoading={aiLoading}
+          />
+        </div>
+      </div>
+
+      {/* Chart */}
+      <CardContent className="pt-0 px-2 sm:px-4 pb-3">
         {loading ? (
-          <div className="h-[400px] flex items-center justify-center">
+          <div className="h-[320px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
-              <Activity className="w-8 h-8 animate-pulse text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Loading chart data...</p>
+              <Activity className="w-6 h-6 animate-pulse text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">Loading chart data...</p>
             </div>
           </div>
         ) : chartData.length === 0 ? (
-          <div className="h-[400px] flex items-center justify-center">
+          <div className="h-[320px] flex items-center justify-center">
             <div className="text-center space-y-2">
-              <Activity className="w-8 h-8 mx-auto text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No price data available</p>
+              <Activity className="w-6 h-6 mx-auto text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">No price data available</p>
             </div>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={320}>
             <ComposedChart 
               ref={chartRef}
               data={chartData} 
-              margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
+              margin={{ top: 5, right: 5, left: 0, bottom: 35 }}
             >
               <defs>
                 <linearGradient id="actualGradientTV" x1="0" y1="0" x2="0" y2="1">
@@ -633,36 +586,34 @@ export function TradingViewChart({
                 dataKey="timestamp" 
                 tickFormatter={formatXAxis}
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={10}
+                fontSize={9}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis 
                 domain={['auto', 'auto']}
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={10}
+                fontSize={9}
                 tickFormatter={(v) => `$${v}`}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
               
-              {/* "Now" reference line */}
               <ReferenceLine 
                 x={nowTimestamp} 
                 stroke="hsl(var(--muted-foreground))" 
                 strokeDasharray="5 5"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 label={{ 
                   value: 'NOW', 
                   position: 'top', 
                   fill: 'hsl(var(--muted-foreground))',
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: 700
                 }}
               />
               
-              {/* AI Confidence band */}
               <Area 
                 type="monotone" 
                 dataKey="aiUpper" 
@@ -676,8 +627,6 @@ export function TradingViewChart({
                 stroke="none"
                 fill="transparent"
               />
-
-              {/* Actual prices area fill */}
               <Area
                 type="monotone"
                 dataKey="actual"
@@ -685,46 +634,38 @@ export function TradingViewChart({
                 fill="url(#actualGradientTV)"
                 fillOpacity={1}
               />
-              
-              {/* Actual prices line */}
               <Line 
                 type="monotone" 
                 dataKey="actual" 
                 stroke="hsl(var(--primary))" 
-                strokeWidth={2.5}
+                strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 5, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
                 connectNulls={false}
               />
-              
-              {/* AESO Forecast line */}
               <Line 
                 type="monotone" 
                 dataKey="aesoForecast" 
                 stroke="#3b82f6" 
-                strokeWidth={2}
+                strokeWidth={1.5}
                 strokeDasharray="5 5"
                 dot={false}
-                activeDot={{ r: 4, fill: '#3b82f6', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                activeDot={{ r: 3, fill: '#3b82f6', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
                 connectNulls={false}
               />
-              
-              {/* AI Prediction line */}
               <Line 
                 type="monotone" 
                 dataKey="aiPrediction" 
                 stroke="#10b981" 
-                strokeWidth={2}
+                strokeWidth={1.5}
                 strokeDasharray="3 3"
                 dot={false}
-                activeDot={{ r: 4, fill: '#10b981', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                activeDot={{ r: 3, fill: '#10b981', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
                 connectNulls={false}
               />
-
-              {/* Brush for zoom/pan */}
               <Brush 
                 dataKey="timestamp" 
-                height={30} 
+                height={25} 
                 stroke="hsl(var(--primary))"
                 fill="hsl(var(--muted))"
                 tickFormatter={formatXAxis}
@@ -740,18 +681,18 @@ export function TradingViewChart({
           </ResponsiveContainer>
         )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="relative flex h-2 w-2">
+        {/* Compact Footer */}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
             </span>
             <span>Live • Updates every minute</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
             <Brain className="w-3 h-3" />
-            <span>{aiPredictions?.length || 0} AI predictions loaded</span>
+            <span>{aiPredictions?.length || 0} AI predictions</span>
           </div>
         </div>
       </CardContent>
