@@ -182,17 +182,18 @@ export function LivePriceChart({
     return sortedPoints;
   }, [data, aiPredictions, timeRange]);
 
-  // Calculate statistics from actual prices only
+  // Calculate statistics from actual prices only - including negative prices
   const stats = useMemo(() => {
     const actualPrices = chartData.filter(d => d.actual !== undefined).map(d => d.actual);
     const aiPredPrices = chartData.filter(d => d.aiPrediction !== undefined).map(d => d.aiPrediction);
     
     if (actualPrices.length === 0) {
-      return { high: 0, low: 0, avg: 0, change: 0, changePercent: 0, aiAvg: 0 };
+      return { high: 0, low: 0, avg: 0, change: 0, changePercent: 0, aiAvg: 0, negativeHours: 0, hasNegatives: false };
     }
     
     const high = Math.max(...actualPrices);
     const low = Math.min(...actualPrices);
+    // Net average includes negative prices (which reduce the average - good for consumers)
     const avg = actualPrices.reduce((a, b) => a + b, 0) / actualPrices.length;
     const firstPrice = actualPrices[0];
     const lastPrice = actualPrices[actualPrices.length - 1];
@@ -202,7 +203,11 @@ export function LivePriceChart({
       ? aiPredPrices.reduce((a, b) => a + b, 0) / aiPredPrices.length 
       : 0;
     
-    return { high, low, avg, change, changePercent, aiAvg };
+    // Track negative price hours (AESO can go negative during wind oversupply)
+    const negativeHours = actualPrices.filter(p => p < 0).length;
+    const hasNegatives = negativeHours > 0;
+    
+    return { high, low, avg, change, changePercent, aiAvg, negativeHours, hasNegatives };
   }, [chartData]);
 
   const isPositive = stats.change >= 0;
@@ -356,17 +361,19 @@ export function LivePriceChart({
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">
           <div className="text-center p-2 rounded-lg bg-muted/30">
             <p className="text-xs text-muted-foreground">High</p>
             <p className="text-sm font-bold text-red-600 dark:text-red-400">${stats.high.toFixed(2)}</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-muted/30">
             <p className="text-xs text-muted-foreground">Low</p>
-            <p className="text-sm font-bold text-green-600 dark:text-green-400">${stats.low.toFixed(2)}</p>
+            <p className={`text-sm font-bold ${stats.low < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-green-600 dark:text-green-400'}`}>
+              ${stats.low.toFixed(2)}
+            </p>
           </div>
           <div className="text-center p-2 rounded-lg bg-muted/30">
-            <p className="text-xs text-muted-foreground">Avg (Actual)</p>
+            <p className="text-xs text-muted-foreground">Net Avg</p>
             <p className="text-sm font-bold text-foreground">${stats.avg.toFixed(2)}</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-muted/30">
@@ -375,10 +382,16 @@ export function LivePriceChart({
               {isPositive ? '+' : ''}${stats.change.toFixed(2)}
             </p>
           </div>
-          {stats.aiAvg > 0 && (
+          {stats.hasNegatives && (
             <div className="text-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">AI Avg</p>
-              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">${stats.aiAvg.toFixed(2)}</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">⚡ Negative</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{stats.negativeHours}h</p>
+            </div>
+          )}
+          {stats.aiAvg > 0 && (
+            <div className="text-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-xs text-blue-600 dark:text-blue-400">AI Avg</p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400">${stats.aiAvg.toFixed(2)}</p>
             </div>
           )}
         </div>

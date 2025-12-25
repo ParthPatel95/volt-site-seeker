@@ -151,9 +151,17 @@ const generateFallbackHistoricalPrices = (): AESOHistoricalPrices => {
   
   for (let i = 23; i >= 0; i--) {
     const time = new Date(Date.now() - i * 60 * 60 * 1000);
+    const hour = time.getHours();
     const variation = Math.sin((Date.now() - i * 60 * 60 * 1000) / 100000) * 15;
-    const price = Math.max(20, basePrice + variation + (Math.random() - 0.5) * 8);
-    const forecast = Math.max(20, basePrice + variation + (Math.random() - 0.5) * 6);
+    // AESO can have negative prices during oversupply (typically overnight with high wind)
+    // ~2-3% of hours can be negative, mostly overnight (1am-5am)
+    const isOvernightLowDemand = hour >= 1 && hour <= 5;
+    const negativeEventChance = isOvernightLowDemand ? 0.15 : 0.02; // 15% chance overnight, 2% otherwise
+    const isNegativeEvent = Math.random() < negativeEventChance;
+    const rawPrice = basePrice + variation + (Math.random() - 0.5) * 8;
+    // Negative prices typically range from -$10 to -$60/MWh during oversupply
+    const price = isNegativeEvent ? -(Math.random() * 50 + 10) : rawPrice;
+    const forecast = rawPrice; // Forecast typically doesn't predict negatives well
     
     prices.push({
       datetime: time.toISOString(),

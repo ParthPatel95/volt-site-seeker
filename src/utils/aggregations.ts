@@ -236,3 +236,54 @@ export function calculateCorrelation(x: number[], y: number[]): number {
 
   return denominator === 0 ? 0 : numerator / denominator;
 }
+
+/**
+ * Statistics for negative price events (AESO can have negative prices during oversupply)
+ */
+export interface NegativePriceStats {
+  negativeHours: number;
+  negativePriceSum: number;  // Total "cost" from negative hours (negative value = revenue for consumers)
+  positiveHours: number;
+  positivePriceSum: number;
+  avgNegativePrice: number;
+  avgPositivePrice: number;
+  netAveragePrice: number;   // True average including negatives
+  negativePercentage: number; // % of hours with negative prices
+  totalSavingsFromNegatives: number; // Absolute savings from negative price hours
+}
+
+/**
+ * Calculate statistics for negative price hours
+ * AESO can experience negative prices during wind oversupply conditions (can go to -$60/MWh)
+ */
+export function calculateNegativePriceStats(data: HourlyDataPoint[]): NegativePriceStats {
+  let negativeHours = 0;
+  let negativePriceSum = 0;
+  let positiveHours = 0;
+  let positivePriceSum = 0;
+
+  for (const point of data) {
+    if (point.price < 0) {
+      negativeHours++;
+      negativePriceSum += point.price; // Will be negative
+    } else {
+      positiveHours++;
+      positivePriceSum += point.price;
+    }
+  }
+
+  const totalHours = data.length;
+  const totalPriceSum = negativePriceSum + positivePriceSum;
+
+  return {
+    negativeHours,
+    negativePriceSum,
+    positiveHours,
+    positivePriceSum,
+    avgNegativePrice: negativeHours > 0 ? negativePriceSum / negativeHours : 0,
+    avgPositivePrice: positiveHours > 0 ? positivePriceSum / positiveHours : 0,
+    netAveragePrice: totalHours > 0 ? totalPriceSum / totalHours : 0,
+    negativePercentage: totalHours > 0 ? (negativeHours / totalHours) * 100 : 0,
+    totalSavingsFromNegatives: Math.abs(negativePriceSum), // Positive value = savings
+  };
+}
