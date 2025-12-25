@@ -126,21 +126,27 @@ export function AESOMarketComprehensive() {
   const hasValidPrice = pricing !== null && pricing !== undefined;
   const priceTimestamp = pricing?.timestamp;
 
-  // Calculate 95% uptime average price using REAL historical data
+  // Calculate 95% uptime average price using REAL 30-day historical data
   const calculate95UptimeAverage = (averagePrice: number, currentPrice: number) => {
-    // Use real historical data from historicalPrices if available
+    // Use real 30-day historical data from historicalPrices if available
     if (historicalPrices?.prices && historicalPrices.prices.length > 0) {
       const prices = historicalPrices.prices.map(p => p.pool_price).sort((a, b) => a - b);
-      // Calculate 95th percentile - exclude top 5%
+      // Calculate 95th percentile - exclude top 5% (highest price hours)
       const index95 = Math.floor(prices.length * 0.95);
       const prices95 = prices.slice(0, index95);
       const uptimeAverage = prices95.reduce((sum, p) => sum + p, 0) / prices95.length;
+      
+      // Calculate days covered
+      const hoursOfData = prices.length;
+      const daysOfData = Math.round(hoursOfData / 24);
       
       return {
         uptimeAverage: uptimeAverage,
         uptimePercentage: 95,
         excludedPrices: prices.length - prices95.length,
-        totalDataPoints: prices.length
+        totalDataPoints: prices.length,
+        daysOfData: daysOfData,
+        isLive: true
       };
     }
     // If no historical data, return the average as best estimate
@@ -148,11 +154,20 @@ export function AESOMarketComprehensive() {
       uptimeAverage: averagePrice,
       uptimePercentage: 95,
       excludedPrices: 0,
-      totalDataPoints: 0
+      totalDataPoints: 0,
+      daysOfData: 0,
+      isLive: false
     };
   };
 
   const uptimeData = calculate95UptimeAverage(pricing?.average_price || 0, currentPrice);
+  
+  // Helper to determine data source badge
+  const getDataSourceBadge = (isLive: boolean, dataExists: boolean) => {
+    if (!dataExists) return { label: 'No Data', variant: 'secondary' as const };
+    if (isLive) return { label: 'Live', variant: 'default' as const };
+    return { label: 'Calculated', variant: 'outline' as const };
+  };
 
   // Navigation items for responsive tabs
   const navigationItems: NavigationItem[] = [
@@ -273,7 +288,17 @@ export function AESOMarketComprehensive() {
                       </Badge>
                     </div>
                     <div className="space-y-3 border-l pl-6 border-border/50">
-                      <p className="text-sm font-medium text-muted-foreground">30-Day Average (95% Uptime)</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {uptimeData.daysOfData > 0 ? `${uptimeData.daysOfData}-Day` : '30-Day'} Average (95% Uptime)
+                        </p>
+                        <Badge 
+                          variant={uptimeData.isLive ? 'default' : 'secondary'} 
+                          className="text-[10px] px-1.5 py-0"
+                        >
+                          {uptimeData.isLive ? 'LIVE' : 'EST'}
+                        </Badge>
+                      </div>
                       <div className="space-y-2">
                         <p className="text-2xl lg:text-3xl font-bold text-foreground">
                           ${uptimeData.uptimeAverage.toFixed(2)}
@@ -283,11 +308,11 @@ export function AESOMarketComprehensive() {
                       <div className="flex flex-col gap-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                          {uptimeData.uptimePercentage}% uptime analyzed
+                          {uptimeData.totalDataPoints > 0 ? `${uptimeData.totalDataPoints} hours analyzed` : 'No data available'}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground"></div>
-                          {uptimeData.excludedPrices} spikes excluded
+                          {uptimeData.excludedPrices} spike hours excluded
                         </span>
                       </div>
                     </div>
@@ -357,7 +382,7 @@ export function AESOMarketComprehensive() {
 
             {/* Additional Market Data - Modern Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
-              {/* Operating Reserve */}
+              {/* Operating Reserve - Now using REAL data from useAESOMarketData */}
               <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <CardHeader className="relative pb-3">
@@ -368,32 +393,43 @@ export function AESOMarketComprehensive() {
                       </div>
                       <CardTitle className="text-base font-semibold">Operating Reserve</CardTitle>
                     </div>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">Live</Badge>
+                    <Badge 
+                      variant={operatingReserve ? 'default' : 'secondary'} 
+                      className="text-[10px] px-2 py-0.5"
+                    >
+                      {operatingReserve ? 'LIVE' : 'N/A'}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="relative space-y-3 p-6 pt-2">
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
                     <span className="text-sm text-muted-foreground">Total Reserve</span>
                     <span className="font-bold text-foreground">
-                      {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.12).toFixed(0) : '1,250'} MW
+                      {operatingReserve?.total_reserve_mw 
+                        ? `${Math.round(operatingReserve.total_reserve_mw).toLocaleString()} MW`
+                        : '—'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
                     <span className="text-sm text-muted-foreground">Spinning</span>
                     <span className="font-semibold text-foreground">
-                      {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.07).toFixed(0) : '750'} MW
+                      {operatingReserve?.spinning_reserve_mw 
+                        ? `${Math.round(operatingReserve.spinning_reserve_mw).toLocaleString()} MW`
+                        : '—'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-muted-foreground">Supplemental</span>
                     <span className="font-semibold text-foreground">
-                      {loadData?.current_demand_mw ? Math.round(loadData.current_demand_mw * 0.05).toFixed(0) : '500'} MW
+                      {operatingReserve?.supplemental_reserve_mw 
+                        ? `${Math.round(operatingReserve.supplemental_reserve_mw).toLocaleString()} MW`
+                        : '—'}
                     </span>
                   </div>
                 </CardContent>
               </Card>
               
-              {/* Interchange */}
+              {/* Interchange - Now using REAL data from useAESOMarketData */}
               <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <CardHeader className="relative pb-3">
@@ -404,26 +440,43 @@ export function AESOMarketComprehensive() {
                       </div>
                       <CardTitle className="text-base font-semibold">Interchange</CardTitle>
                     </div>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">Live</Badge>
+                    <Badge 
+                      variant={interchange ? 'default' : 'secondary'} 
+                      className="text-[10px] px-2 py-0.5"
+                    >
+                      {interchange ? 'LIVE' : 'N/A'}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="relative space-y-3 p-6 pt-2">
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
                     <span className="text-sm text-muted-foreground">AB-BC</span>
-                    <span className="font-bold text-red-600 dark:text-red-500">-150 MW</span>
+                    <span className={`font-bold ${(interchange?.alberta_british_columbia || 0) < 0 ? 'text-red-600 dark:text-red-500' : 'text-green-600 dark:text-green-500'}`}>
+                      {interchange?.alberta_british_columbia !== undefined 
+                        ? `${interchange.alberta_british_columbia > 0 ? '+' : ''}${Math.round(interchange.alberta_british_columbia)} MW`
+                        : '—'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
                     <span className="text-sm text-muted-foreground">AB-SK</span>
-                    <span className="font-semibold text-green-600 dark:text-green-500">+75 MW</span>
+                    <span className={`font-semibold ${(interchange?.alberta_saskatchewan || 0) < 0 ? 'text-red-600 dark:text-red-500' : 'text-green-600 dark:text-green-500'}`}>
+                      {interchange?.alberta_saskatchewan !== undefined 
+                        ? `${interchange.alberta_saskatchewan > 0 ? '+' : ''}${Math.round(interchange.alberta_saskatchewan)} MW`
+                        : '—'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-muted-foreground">AB-MT</span>
-                    <span className="font-semibold text-foreground">0 MW</span>
+                    <span className={`font-semibold ${(interchange?.alberta_montana || 0) !== 0 ? (interchange?.alberta_montana || 0) < 0 ? 'text-red-600 dark:text-red-500' : 'text-green-600 dark:text-green-500' : 'text-foreground'}`}>
+                      {interchange?.alberta_montana !== undefined 
+                        ? `${interchange.alberta_montana > 0 ? '+' : ''}${Math.round(interchange.alberta_montana)} MW`
+                        : '—'}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
               
-              {/* Energy Storage */}
+              {/* Energy Storage - Now using REAL data from useAESOMarketData */}
               <Card className="group relative overflow-hidden border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <CardHeader className="relative pb-3">
@@ -434,21 +487,38 @@ export function AESOMarketComprehensive() {
                       </div>
                       <CardTitle className="text-base font-semibold">Energy Storage</CardTitle>
                     </div>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5">Live</Badge>
+                    <Badge 
+                      variant={energyStorage ? 'default' : 'secondary'} 
+                      className="text-[10px] px-2 py-0.5"
+                    >
+                      {energyStorage ? 'LIVE' : 'N/A'}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="relative space-y-3 p-6 pt-2">
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
-                    <span className="text-sm text-muted-foreground">Capacity</span>
-                    <span className="font-bold text-foreground">500 MW</span>
+                    <span className="text-sm text-muted-foreground">Net Output</span>
+                    <span className="font-bold text-foreground">
+                      {energyStorage?.net_storage_mw !== undefined 
+                        ? `${Math.round(energyStorage.net_storage_mw)} MW`
+                        : '—'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
                     <span className="text-sm text-muted-foreground">Charging</span>
-                    <span className="font-semibold text-green-600 dark:text-green-500">+200 MW</span>
+                    <span className="font-semibold text-green-600 dark:text-green-500">
+                      {energyStorage?.charging_mw !== undefined 
+                        ? `+${Math.round(energyStorage.charging_mw)} MW`
+                        : '—'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-muted-foreground">State of Charge</span>
-                    <span className="font-semibold text-foreground">65%</span>
+                    <span className="font-semibold text-foreground">
+                      {energyStorage?.state_of_charge_percent !== undefined 
+                        ? `${Math.round(energyStorage.state_of_charge_percent)}%`
+                        : '—'}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
