@@ -36,7 +36,7 @@ import {
   ReferenceLine,
   Area,
   Cell,
-  ReferenceArea
+  Brush
 } from 'recharts';
 import { 
   Activity, 
@@ -50,16 +50,18 @@ import {
   RefreshCw,
   Loader2,
   ChevronDown,
-  Plus,
-  Trash2,
   X,
   CandlestickChart,
   LineChart,
-  Bug
+  Bug,
+  ZoomIn,
+  ZoomOut,
+  Move,
+  Target
 } from 'lucide-react';
 import { format, subHours, addHours, parseISO, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
-import { usePriceAlerts, PriceAlert } from '@/hooks/usePriceAlerts';
+import { usePriceAlerts } from '@/hooks/usePriceAlerts';
 import { cn } from '@/lib/utils';
 
 interface PriceDataPoint {
@@ -139,7 +141,6 @@ function calculateEMA(data: number[], period: number): (number | null)[] {
     if (i < period - 1) {
       result.push(null);
     } else if (i === period - 1) {
-      // First EMA is SMA
       const slice = data.slice(0, period);
       ema = slice.reduce((a, b) => a + b, 0) / period;
       result.push(ema);
@@ -187,7 +188,6 @@ export function TradingViewChart({
   const [interval, setInterval] = useState('1H');
   const [chartType, setChartType] = useState<ChartType>('line');
   const [showDebug, setShowDebug] = useState(false);
-  const [crosshairX, setCrosshairX] = useState<string | null>(null);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(() => {
     const saved = localStorage.getItem('chart-indicators');
     return saved ? JSON.parse(saved) : [];
@@ -197,12 +197,20 @@ export function TradingViewChart({
   const [newAlertThreshold, setNewAlertThreshold] = useState('');
   const [newAlertCondition, setNewAlertCondition] = useState<'above' | 'below'>('above');
   
+  // Interactive chart state
+  const [brushStartIndex, setBrushStartIndex] = useState<number | undefined>(undefined);
+  const [brushEndIndex, setBrushEndIndex] = useState<number | undefined>(undefined);
+  const [crosshairData, setCrosshairData] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartIndices, setDragStartIndices] = useState<{ start: number, end: number }>({ start: 0, end: 0 });
+  
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const mainChartRef = useRef<HTMLDivElement>(null);
   
   // Use price alerts hook
   const { 
     alerts, 
-    loading: alertsLoading, 
     createAlert, 
     deleteAlert,
     createQuickAlert 
@@ -249,28 +257,15 @@ export function TradingViewChart({
     return range?.hours || 24;
   }, [timeRange]);
 
-  // Handle mouse move for crosshair
-  const handleMouseMove = useCallback((state: any) => {
-    if (state?.activePayload?.[0]?.payload?.timestamp) {
-      setCrosshairX(state.activePayload[0].payload.timestamp);
-    }
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setCrosshairX(null);
-  }, []);
-
-  // Process data for chart - FIXED to show all lines correctly
+  // Process data for chart - COMBINED VIEW
   const chartData = useMemo(() => {
     const now = new Date();
     const hoursBack = getHoursBack();
     const cutoffPast = subHours(now, hoursBack);
     const cutoffFuture = addHours(now, Math.min(hoursBack, 72));
     
-    const chartPoints: any[] = [];
     const pointMap = new Map<string, any>();
     
-    // Debug logging
     console.log('[TradingViewChart] Processing data:', {
       dataPoints: data?.length || 0,
       aiPredictions: aiPredictions?.length || 0,
@@ -298,18 +293,15 @@ export function TradingViewChart({
         if (isBefore(parsedDate, cutoffPast) || isAfter(parsedDate, cutoffFuture)) return;
         
         const isPast = isBefore(parsedDate, now) || Math.abs(parsedDate.getTime() - now.getTime()) < 60000;
-        // Use hour-level key for matching
         const hourKey = `${parsedDate.getFullYear()}-${parsedDate.getMonth()}-${parsedDate.getDate()}-${parsedDate.getHours()}`;
         const timestamp = parsedDate.toISOString();
         
         const existingPoint = pointMap.get(hourKey);
         if (existingPoint) {
-          // Update existing point with both actual and forecast data
           if (d.pool_price !== undefined && isPast) {
             existingPoint.actual = d.pool_price;
             existingPoint.volume = d.ail_mw;
           }
-          // FIXED: Show forecast for ALL times, not just future
           if (d.forecast_pool_price !== undefined) {
             existingPoint.aesoForecast = d.forecast_pool_price;
           }
@@ -323,12 +315,11 @@ export function TradingViewChart({
             volume: isPast ? d.ail_mw : undefined,
           };
           pointMap.set(hourKey, point);
-          chartPoints.push(point);
         }
       });
     }
     
-    // Process AI predictions with hour-level matching
+    // Process AI predictions
     if (aiPredictions && aiPredictions.length > 0) {
       console.log('[TradingViewChart] AI Predictions sample:', aiPredictions.slice(0, 3));
       
@@ -346,13 +337,13 @@ export function TradingViewChart({
         const hourKey = `${predDate.getFullYear()}-${predDate.getMonth()}-${predDate.getDate()}-${predDate.getHours()}`;
         const timestamp = predDate.toISOString();
         
-        // FIXED: Use hourKey for matching instead of time tolerance
         const existingPoint = pointMap.get(hourKey);
         
         if (existingPoint) {
           existingPoint.aiPrediction = pred.price;
           existingPoint.aiLower = pred.confidenceLower;
           existingPoint.aiUpper = pred.confidenceUpper;
+          existingPoint.confidenceScore = pred.confidenceScore;
         } else {
           const point = {
             timestamp,
@@ -361,16 +352,15 @@ export function TradingViewChart({
             aiPrediction: pred.price,
             aiLower: pred.confidenceLower,
             aiUpper: pred.confidenceUpper,
+            confidenceScore: pred.confidenceScore,
           };
           pointMap.set(hourKey, point);
-          chartPoints.push(point);
         }
       });
     }
     
-    const sorted = chartPoints.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+    const sorted = Array.from(pointMap.values()).sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
     
-    // Debug: Count how many points have each data type
     const actualCount = sorted.filter(p => p.actual !== undefined).length;
     const forecastCount = sorted.filter(p => p.aesoForecast !== undefined).length;
     const aiCount = sorted.filter(p => p.aiPrediction !== undefined).length;
@@ -384,50 +374,6 @@ export function TradingViewChart({
     
     return sorted;
   }, [data, aiPredictions, timeRange, getHoursBack]);
-
-  // Generate candlestick data from chart data based on interval
-  const candlestickData = useMemo(() => {
-    if (chartType !== 'candlestick') return [];
-    
-    const intervalHours = TIME_INTERVALS.find(i => i.value === interval)?.hours || 1;
-    const actualData = chartData.filter(d => d.actual !== undefined);
-    
-    if (actualData.length === 0) return [];
-    
-    const candles: any[] = [];
-    let currentCandle: any = null;
-    
-    actualData.forEach((point) => {
-      const pointTime = new Date(point.timestamp).getTime();
-      const candleStart = Math.floor(pointTime / (intervalHours * 3600000)) * (intervalHours * 3600000);
-      
-      if (!currentCandle || currentCandle.startTime !== candleStart) {
-        if (currentCandle) {
-          candles.push(currentCandle);
-        }
-        currentCandle = {
-          startTime: candleStart,
-          timestamp: new Date(candleStart).toISOString(),
-          open: point.actual,
-          high: point.actual,
-          low: point.actual,
-          close: point.actual,
-          volume: point.volume || 0,
-        };
-      } else {
-        currentCandle.high = Math.max(currentCandle.high, point.actual);
-        currentCandle.low = Math.min(currentCandle.low, point.actual);
-        currentCandle.close = point.actual;
-        currentCandle.volume += point.volume || 0;
-      }
-    });
-    
-    if (currentCandle) {
-      candles.push(currentCandle);
-    }
-    
-    return candles;
-  }, [chartData, chartType, interval]);
 
   // Calculate indicators
   const indicatorData = useMemo(() => {
@@ -459,7 +405,7 @@ export function TradingViewChart({
   const chartDataWithIndicators = useMemo(() => {
     const actualDataPoints = chartData.filter(d => d.actual !== undefined);
     
-    return chartData.map((point, idx) => {
+    return chartData.map((point) => {
       const actualIdx = actualDataPoints.findIndex(p => p.timestamp === point.timestamp);
       if (actualIdx === -1) return point;
 
@@ -473,7 +419,7 @@ export function TradingViewChart({
     });
   }, [chartData, indicatorData]);
 
-  // Calculate OHLC and statistics
+  // Calculate statistics
   const stats = useMemo(() => {
     const actualPrices = chartData.filter(d => d.actual !== undefined).map(d => d.actual);
     const volumes = chartData.filter(d => d.volume !== undefined && d.volume > 0).map(d => d.volume);
@@ -506,7 +452,7 @@ export function TradingViewChart({
     );
   }, [aiPredictions]);
 
-  // Volume data with color based on price movement
+  // Volume data
   const volumeData = useMemo(() => {
     let prevPrice = 0;
     return chartData
@@ -516,6 +462,21 @@ export function TradingViewChart({
         if (d.actual !== undefined) prevPrice = d.actual;
         return { ...d, priceUp };
       });
+  }, [chartData]);
+
+  // Find NOW index for jumping to current time
+  const nowIndex = useMemo(() => {
+    const now = new Date();
+    let closestIdx = 0;
+    let closestDiff = Infinity;
+    chartData.forEach((point, idx) => {
+      const diff = Math.abs(point.parsedDate.getTime() - now.getTime());
+      if (diff < closestDiff) {
+        closestDiff = diff;
+        closestIdx = idx;
+      }
+    });
+    return closestIdx;
   }, [chartData]);
 
   const activeAlerts = alerts.filter(a => a.is_active);
@@ -531,6 +492,124 @@ export function TradingViewChart({
       return '';
     }
   };
+
+  // Zoom controls
+  const handleZoomIn = useCallback(() => {
+    const dataLen = chartDataWithIndicators.length;
+    if (dataLen === 0) return;
+    
+    const currentStart = brushStartIndex ?? 0;
+    const currentEnd = brushEndIndex ?? dataLen - 1;
+    const currentRange = currentEnd - currentStart;
+    const newRange = Math.max(5, Math.floor(currentRange * 0.6));
+    const center = Math.floor((currentStart + currentEnd) / 2);
+    
+    setBrushStartIndex(Math.max(0, center - Math.floor(newRange / 2)));
+    setBrushEndIndex(Math.min(dataLen - 1, center + Math.floor(newRange / 2)));
+  }, [brushStartIndex, brushEndIndex, chartDataWithIndicators.length]);
+
+  const handleZoomOut = useCallback(() => {
+    const dataLen = chartDataWithIndicators.length;
+    if (dataLen === 0) return;
+    
+    const currentStart = brushStartIndex ?? 0;
+    const currentEnd = brushEndIndex ?? dataLen - 1;
+    const currentRange = currentEnd - currentStart;
+    const newRange = Math.min(dataLen, Math.floor(currentRange * 1.5));
+    const center = Math.floor((currentStart + currentEnd) / 2);
+    
+    setBrushStartIndex(Math.max(0, center - Math.floor(newRange / 2)));
+    setBrushEndIndex(Math.min(dataLen - 1, center + Math.floor(newRange / 2)));
+  }, [brushStartIndex, brushEndIndex, chartDataWithIndicators.length]);
+
+  const handleResetZoom = useCallback(() => {
+    setBrushStartIndex(undefined);
+    setBrushEndIndex(undefined);
+  }, []);
+
+  const handleJumpToNow = useCallback(() => {
+    const dataLen = chartDataWithIndicators.length;
+    if (dataLen === 0) return;
+    
+    const viewRange = Math.min(24, dataLen); // Show 24 points around NOW
+    setBrushStartIndex(Math.max(0, nowIndex - Math.floor(viewRange / 2)));
+    setBrushEndIndex(Math.min(dataLen - 1, nowIndex + Math.floor(viewRange / 2)));
+  }, [nowIndex, chartDataWithIndicators.length]);
+
+  // Mouse wheel zoom
+  useEffect(() => {
+    const chartEl = mainChartRef.current;
+    if (!chartEl) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        handleZoomIn();
+      } else {
+        handleZoomOut();
+      }
+    };
+
+    chartEl.addEventListener('wheel', handleWheel, { passive: false });
+    return () => chartEl.removeEventListener('wheel', handleWheel);
+  }, [handleZoomIn, handleZoomOut]);
+
+  // Drag to pan
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStartX(e.clientX);
+    setDragStartIndices({
+      start: brushStartIndex ?? 0,
+      end: brushEndIndex ?? chartDataWithIndicators.length - 1
+    });
+  }, [brushStartIndex, brushEndIndex, chartDataWithIndicators.length]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - dragStartX;
+    const dataLen = chartDataWithIndicators.length;
+    const chartWidth = mainChartRef.current?.offsetWidth || 800;
+    const pointsPerPixel = dataLen / chartWidth;
+    const indexDelta = Math.round(deltaX * pointsPerPixel * -0.5);
+    
+    const newStart = Math.max(0, Math.min(dataLen - 10, dragStartIndices.start + indexDelta));
+    const newEnd = Math.max(newStart + 5, Math.min(dataLen - 1, dragStartIndices.end + indexDelta));
+    
+    setBrushStartIndex(newStart);
+    setBrushEndIndex(newEnd);
+  }, [isDragging, dragStartX, dragStartIndices, chartDataWithIndicators.length]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Handle brush change from navigator
+  const handleBrushChange = useCallback((e: any) => {
+    if (e && e.startIndex !== undefined && e.endIndex !== undefined) {
+      setBrushStartIndex(e.startIndex);
+      setBrushEndIndex(e.endIndex);
+    }
+  }, []);
+
+  // Get visible data based on brush
+  const visibleData = useMemo(() => {
+    if (brushStartIndex === undefined || brushEndIndex === undefined) {
+      return chartDataWithIndicators;
+    }
+    return chartDataWithIndicators.slice(brushStartIndex, brushEndIndex + 1);
+  }, [chartDataWithIndicators, brushStartIndex, brushEndIndex]);
+
+  // Handle tooltip/crosshair
+  const handleChartMouseMove = useCallback((state: any) => {
+    if (state?.activePayload?.[0]?.payload) {
+      setCrosshairData(state.activePayload[0].payload);
+    }
+  }, []);
+
+  const handleChartMouseLeave = useCallback(() => {
+    setCrosshairData(null);
+  }, []);
 
   const handleCreateAlert = async () => {
     const threshold = parseFloat(newAlertThreshold);
@@ -555,18 +634,8 @@ export function TradingViewChart({
     }
   };
 
-  const handleQuickAlert = async (type: 'high' | 'low') => {
-    const threshold = type === 'high' ? Math.ceil(currentPrice * 1.1) : Math.floor(currentPrice * 0.9);
-    try {
-      await createQuickAlert(type, threshold);
-      toast.success(`Quick alert created: ${type === 'high' ? 'above' : 'below'} $${threshold}`);
-    } catch (err) {
-      // Error handled in hook
-    }
-  };
-
-  // Custom Tooltip
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  // Enhanced Custom Tooltip with Crosshair Values
+  const EnhancedTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
     
     const now = new Date();
@@ -578,72 +647,88 @@ export function TradingViewChart({
     }
     const isPast = isBefore(labelDate, now);
     
+    // Find all values
+    const actualValue = payload.find((p: any) => p.dataKey === 'actual')?.value;
+    const forecastValue = payload.find((p: any) => p.dataKey === 'aesoForecast')?.value;
+    const aiValue = payload.find((p: any) => p.dataKey === 'aiPrediction')?.value;
+    const aiLower = payload.find((p: any) => p.dataKey === 'aiLower')?.value;
+    const aiUpper = payload.find((p: any) => p.dataKey === 'aiUpper')?.value;
+    
+    // Calculate deltas
+    const aiDelta = actualValue && aiValue ? (aiValue - actualValue).toFixed(2) : null;
+    const forecastDelta = actualValue && forecastValue ? (forecastValue - actualValue).toFixed(2) : null;
+    
     return (
-      <div className="bg-popover/95 backdrop-blur-sm border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
-        <p className="text-xs font-medium text-muted-foreground mb-2 border-b border-border pb-2">
-          {format(labelDate, 'MMM d, yyyy HH:mm')}
-        </p>
-        {payload.map((entry: any, index: number) => {
-          if (entry.value === undefined || entry.value === null) return null;
-          
-          let entryLabel = '';
-          let icon = null;
-          switch (entry.dataKey) {
-            case 'actual':
-              entryLabel = 'Actual';
-              break;
-            case 'aesoForecast':
-              entryLabel = 'AESO Forecast';
-              break;
-            case 'aiPrediction':
-              entryLabel = 'AI Prediction';
-              icon = <Brain className="w-3 h-3 text-emerald-500" />;
-              break;
-            case 'sma20':
-              entryLabel = 'SMA(20)';
-              break;
-            case 'sma50':
-              entryLabel = 'SMA(50)';
-              break;
-            case 'ema12':
-              entryLabel = 'EMA(12)';
-              break;
-            case 'ema26':
-              entryLabel = 'EMA(26)';
-              break;
-            case 'bb_upper':
-              entryLabel = 'BB Upper';
-              break;
-            case 'bb_middle':
-              entryLabel = 'BB Middle';
-              break;
-            case 'bb_lower':
-              entryLabel = 'BB Lower';
-              break;
-            default:
-              return null;
-          }
-          
-          return (
-            <div key={index} className="flex items-center justify-between gap-3 py-0.5">
-              <div className="flex items-center gap-1.5">
-                {icon}
-                <span className="text-xs text-muted-foreground">{entryLabel}</span>
-              </div>
-              <span className="text-sm font-bold" style={{ color: entry.color }}>${entry.value.toFixed(2)}</span>
-            </div>
-          );
-        })}
-        <div className="mt-2 pt-2 border-t border-border">
+      <div className="bg-popover/95 backdrop-blur-md border border-border rounded-lg p-4 shadow-2xl min-w-[220px]">
+        {/* Time header */}
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+          <p className="text-sm font-semibold text-foreground">
+            {format(labelDate, 'MMM d, HH:mm')}
+          </p>
           <Badge variant={isPast ? 'default' : 'secondary'} className="text-[10px]">
             {isPast ? 'Historical' : 'Forecast'}
           </Badge>
+        </div>
+        
+        {/* Values grid */}
+        <div className="space-y-2">
+          {actualValue !== undefined && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-primary" />
+                <span className="text-xs text-muted-foreground">Actual</span>
+              </div>
+              <span className="text-sm font-bold text-primary">${actualValue.toFixed(2)}</span>
+            </div>
+          )}
+          
+          {forecastValue !== undefined && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                <span className="text-xs text-muted-foreground">AESO Forecast</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-blue-500">${forecastValue.toFixed(2)}</span>
+                {forecastDelta && (
+                  <span className={cn("text-[10px]", parseFloat(forecastDelta) >= 0 ? "text-red-500" : "text-emerald-500")}>
+                    {parseFloat(forecastDelta) >= 0 ? '+' : ''}{forecastDelta}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {aiValue !== undefined && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Brain className="w-3 h-3 text-emerald-500" />
+                <span className="text-xs text-muted-foreground">AI Prediction</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-emerald-500">${aiValue.toFixed(2)}</span>
+                {aiDelta && (
+                  <span className={cn("text-[10px]", parseFloat(aiDelta) >= 0 ? "text-red-500" : "text-emerald-500")}>
+                    {parseFloat(aiDelta) >= 0 ? '+' : ''}{aiDelta}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {aiLower !== undefined && aiUpper !== undefined && (
+            <div className="mt-2 pt-2 border-t border-border/50">
+              <p className="text-[10px] text-muted-foreground">
+                AI Confidence Range: ${aiLower.toFixed(2)} - ${aiUpper.toFixed(2)}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  const chartHeight = isFullscreen ? 'calc(100vh - 200px)' : 280;
+  const chartHeight = isFullscreen ? 'calc(100vh - 280px)' : 320;
 
   return (
     <Card 
@@ -662,19 +747,64 @@ export function TradingViewChart({
             <span className="font-bold text-sm">AESO/CAD</span>
           </div>
           
-          {/* Time Interval Dropdown */}
-          <Select value={interval} onValueChange={setInterval}>
-            <SelectTrigger className="w-16 h-7 text-xs border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIME_INTERVALS.map(int => (
-                <SelectItem key={int.value} value={int.value} className="text-xs">
-                  {int.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Time Range Selector */}
+          <div className="hidden sm:flex items-center border border-border rounded overflow-hidden">
+            {TIME_RANGES.map(tr => (
+              <Button
+                key={tr.value}
+                variant={timeRange === tr.value ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 px-2.5 text-xs rounded-none"
+                onClick={() => {
+                  setTimeRange(tr.value as TimeRange);
+                  handleResetZoom();
+                }}
+              >
+                {tr.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1 border border-border rounded overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-none"
+              onClick={handleZoomIn}
+              title="Zoom In (scroll up)"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-none"
+              onClick={handleZoomOut}
+              title="Zoom Out (scroll down)"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-none"
+              onClick={handleResetZoom}
+              title="Reset Zoom"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-none border-l border-border"
+              onClick={handleJumpToNow}
+              title="Jump to Now"
+            >
+              <Target className="w-3.5 h-3.5 mr-1" />
+              NOW
+            </Button>
+          </div>
 
           {/* Chart Type Toggle */}
           <div className="hidden sm:flex items-center border border-border rounded overflow-hidden">
@@ -696,7 +826,7 @@ export function TradingViewChart({
             </Button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             {/* Indicators Popover */}
             <Popover>
               <PopoverTrigger asChild>
@@ -765,7 +895,6 @@ export function TradingViewChart({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Debug Toggle */}
           <Button 
             variant={showDebug ? 'secondary' : 'ghost'}
             size="icon" 
@@ -797,9 +926,8 @@ export function TradingViewChart({
         </div>
       </div>
 
-      {/* ===== INLINE OHLC + SELL/BUY HEADER ===== */}
+      {/* ===== OHLC HEADER ===== */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 border-b border-border bg-card text-xs">
-        {/* OHLC Values */}
         <div className="flex items-center gap-3">
           <span className="text-muted-foreground">
             O <span className="font-mono font-semibold text-foreground">${stats.open.toFixed(2)}</span>
@@ -815,7 +943,6 @@ export function TradingViewChart({
           </span>
         </div>
 
-        {/* Change */}
         <div className={`flex items-center gap-1 font-semibold ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
           {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
           <span>{isPositive ? '+' : ''}${stats.change.toFixed(2)}</span>
@@ -824,93 +951,42 @@ export function TradingViewChart({
 
         <div className="hidden sm:block h-4 w-px bg-border" />
 
-        {/* SELL / BUY Buttons */}
-        <div className="flex items-center gap-2 ml-auto">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-6 px-2 text-xs border-red-500/50 text-red-500 hover:bg-red-500/10"
-            onClick={() => toast.info('Sell signal recorded')}
-          >
-            ${stats.low.toFixed(2)} SELL
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-6 px-2 text-xs border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10"
-            onClick={() => toast.info('Buy signal recorded')}
-          >
-            ${currentPrice.toFixed(2)} BUY
-          </Button>
+        {/* Drag hint */}
+        <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">
+          <Move className="w-3 h-3" />
+          <span className="text-[10px]">Drag to pan • Scroll to zoom</span>
         </div>
 
         {/* Volume */}
-        <div className="hidden md:flex items-center gap-1 text-muted-foreground">
+        <div className="hidden md:flex items-center gap-1 text-muted-foreground ml-auto">
           <span>Vol</span>
           <span className="font-mono font-semibold text-foreground">{(stats.volume / 1000).toFixed(1)}K MW</span>
         </div>
       </div>
 
-      {/* ===== DEBUG PANEL WITH DATA FRESHNESS ===== */}
+      {/* ===== DEBUG PANEL ===== */}
       {showDebug && (
         <div className="px-3 py-2 border-b border-border bg-amber-500/10 text-xs">
           <div className="flex flex-wrap gap-4">
             <span className="text-muted-foreground">
-              Raw Data: <span className="font-mono text-foreground">{data?.length || 0}</span>
+              Raw: <span className="font-mono text-foreground">{data?.length || 0}</span>
             </span>
             <span className="text-muted-foreground">
-              Chart Points: <span className="font-mono text-foreground">{chartData.length}</span>
+              Chart: <span className="font-mono text-foreground">{chartData.length}</span>
             </span>
             <span className="text-muted-foreground">
-              Actual Prices: <span className="font-mono text-primary">{chartData.filter(p => p.actual !== undefined).length}</span>
+              Visible: <span className="font-mono text-primary">{visibleData.length}</span>
             </span>
             <span className="text-muted-foreground">
-              AESO Forecasts: <span className="font-mono text-blue-500">{chartData.filter(p => p.aesoForecast !== undefined).length}</span>
+              Actual: <span className="font-mono text-primary">{chartData.filter(p => p.actual !== undefined).length}</span>
             </span>
             <span className="text-muted-foreground">
-              AI Predictions: <span className="font-mono text-emerald-500">{chartData.filter(p => p.aiPrediction !== undefined).length}</span>
+              AESO: <span className="font-mono text-blue-500">{chartData.filter(p => p.aesoForecast !== undefined).length}</span>
             </span>
             <span className="text-muted-foreground">
-              Volume Points: <span className="font-mono text-foreground">{volumeData.length}</span>
+              AI: <span className="font-mono text-emerald-500">{chartData.filter(p => p.aiPrediction !== undefined).length}</span>
             </span>
-            <span className="text-muted-foreground">
-              Candlesticks: <span className="font-mono text-foreground">{candlestickData.length}</span>
-            </span>
-          </div>
-          {/* Data freshness indicator */}
-          <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-amber-500/20">
-            {data && data.length > 0 && (
-              <span className="text-muted-foreground">
-                Latest Data: <span className="font-mono text-foreground">
-                  {(() => {
-                    const latestTs = data.reduce((latest, d) => {
-                      const ts = d.datetime || d.timestamp || '';
-                      return ts > latest ? ts : latest;
-                    }, '');
-                    if (latestTs) {
-                      const latestDate = new Date(latestTs);
-                      const ageMinutes = Math.round((Date.now() - latestDate.getTime()) / 60000);
-                      return `${format(latestDate, 'HH:mm')} (${ageMinutes}min ago)`;
-                    }
-                    return 'N/A';
-                  })()}
-                </span>
-              </span>
-            )}
-            {aiPredictions && aiPredictions.length > 0 && (
-              <span className="text-muted-foreground">
-                AI Predictions: <span className="font-mono text-emerald-500">
-                  {(() => {
-                    const firstPred = aiPredictions[0];
-                    const lastPred = aiPredictions[aiPredictions.length - 1];
-                    return `${format(new Date(firstPred.timestamp), 'HH:mm')} → ${format(new Date(lastPred.timestamp), 'HH:mm')}`;
-                  })()}
-                </span>
-              </span>
-            )}
-            <span className={`font-medium ${
-              (data?.length || 0) > 0 ? 'text-emerald-500' : 'text-red-500'
-            }`}>
+            <span className={`font-medium ${(data?.length || 0) > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
               {(data?.length || 0) > 0 ? '✓ Real Data' : '⚠ No Data'}
             </span>
           </div>
@@ -918,9 +994,19 @@ export function TradingViewChart({
       )}
 
       {/* ===== MAIN CHART AREA ===== */}
-      <div className={cn("flex", isFullscreen && "flex-1")}>
-        {/* Chart Container */}
-        <div className="flex-1 relative">
+      <div className={cn("flex flex-col", isFullscreen && "flex-1")}>
+        {/* Chart Container with drag handlers */}
+        <div 
+          ref={mainChartRef}
+          className={cn(
+            "flex-1 relative cursor-grab active:cursor-grabbing",
+            isDragging && "cursor-grabbing"
+          )}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
           {loading ? (
             <div className="h-[360px] flex items-center justify-center bg-muted/10">
               <div className="flex flex-col items-center gap-2">
@@ -941,61 +1027,63 @@ export function TradingViewChart({
             </div>
           ) : (
             <>
-              {/* Main Price Chart */}
+              {/* Main Combined Chart */}
               <ResponsiveContainer width="100%" height={chartHeight}>
                 <ComposedChart 
-                  data={chartType === 'candlestick' ? candlestickData : chartDataWithIndicators} 
+                  data={visibleData}
                   margin={{ top: 10, right: 60, left: 0, bottom: 0 }}
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleMouseLeave}
+                  onMouseMove={handleChartMouseMove}
+                  onMouseLeave={handleChartMouseLeave}
                 >
                   <defs>
+                    {/* Actual price gradient */}
                     <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
+                    {/* AI confidence gradient */}
                     <linearGradient id="aiConfidenceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
                     </linearGradient>
+                    {/* Bollinger gradient */}
                     <linearGradient id="bollingerGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
+
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke="hsl(var(--border))" 
+                    opacity={0.5}
+                    vertical={false}
+                  />
+                  
                   <XAxis 
                     dataKey="timestamp" 
                     tickFormatter={formatXAxis}
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={10}
-                    tickLine={false}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                     axisLine={false}
-                    interval="preserveStartEnd"
+                    tickLine={false}
+                    minTickGap={50}
                   />
+                  
                   <YAxis 
-                    domain={['auto', 'auto']}
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={10}
-                    tickFormatter={(v) => `$${v}`}
-                    tickLine={false}
-                    axisLine={false}
                     orientation="right"
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => `$${v}`}
+                    domain={['auto', 'auto']}
                     width={55}
                   />
-                  <Tooltip content={<CustomTooltip />} />
                   
-                  {/* Crosshair */}
-                  {crosshairX && (
-                    <ReferenceLine 
-                      x={crosshairX} 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={1}
-                      strokeOpacity={0.5}
-                    />
-                  )}
-                  
-                  {/* Alert Threshold Lines */}
+                  <Tooltip content={<EnhancedTooltip />} />
+
+                  {/* Alert reference lines */}
                   {activeAlerts.map(alert => (
                     <ReferenceLine 
                       key={alert.id}
@@ -1012,14 +1100,14 @@ export function TradingViewChart({
                     />
                   ))}
                   
-                  {/* NOW Reference Line with Label */}
+                  {/* NOW Reference Line - Animated */}
                   <ReferenceLine 
                     x={nowTimestamp} 
                     stroke="#f59e0b" 
                     strokeDasharray="4 4"
                     strokeWidth={2}
                     label={{
-                      value: 'NOW',
+                      value: '◆ NOW',
                       position: 'top',
                       fill: '#f59e0b',
                       fontSize: 10,
@@ -1027,8 +1115,28 @@ export function TradingViewChart({
                     }}
                   />
                   
-                  {/* Bollinger Bands */}
-                  {selectedIndicators.includes('bollinger') && chartType === 'line' && (
+                  {/* Layer 1: AI Confidence Band (bottom layer) */}
+                  <Area 
+                    type="monotone" 
+                    dataKey="aiUpper" 
+                    stroke="none"
+                    fill="url(#aiConfidenceGradient)"
+                    fillOpacity={1}
+                    name="AI Confidence Upper"
+                    connectNulls
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="aiLower" 
+                    stroke="none"
+                    fill="hsl(var(--background))"
+                    fillOpacity={1}
+                    name="AI Confidence Lower"
+                    connectNulls
+                  />
+
+                  {/* Layer 2: Bollinger Bands */}
+                  {selectedIndicators.includes('bollinger') && (
                     <>
                       <Area 
                         type="monotone" 
@@ -1065,38 +1173,8 @@ export function TradingViewChart({
                       />
                     </>
                   )}
-                  
-                  {/* AI Confidence Band - show for both chart types */}
-                  {chartType === 'line' && (
-                    <Area 
-                      type="monotone" 
-                      dataKey="aiUpper" 
-                      stroke="none"
-                      fill="url(#aiConfidenceGradient)"
-                      fillOpacity={1}
-                      name="AI Confidence"
-                    />
-                  )}
 
-                  {/* Candlestick Mode */}
-                  {chartType === 'candlestick' && candlestickData.map((candle, idx) => {
-                    const bullish = candle.close >= candle.open;
-                    const color = bullish ? '#10b981' : '#ef4444';
-                    return (
-                      <ReferenceArea
-                        key={idx}
-                        x1={candle.timestamp}
-                        x2={candle.timestamp}
-                        y1={candle.low}
-                        y2={candle.high}
-                        stroke={color}
-                        strokeOpacity={0.8}
-                        fill="none"
-                      />
-                    );
-                  })}
-
-                  {/* Line Chart Mode - Actual Price Area */}
+                  {/* Layer 3: Actual Price Area */}
                   {chartType === 'line' && (
                     <Area
                       type="monotone"
@@ -1107,8 +1185,8 @@ export function TradingViewChart({
                     />
                   )}
 
-                  {/* SMA Lines */}
-                  {selectedIndicators.includes('sma20') && chartType === 'line' && (
+                  {/* Layer 4: SMA Lines */}
+                  {selectedIndicators.includes('sma20') && (
                     <Line 
                       type="monotone" 
                       dataKey="sma20" 
@@ -1119,7 +1197,7 @@ export function TradingViewChart({
                       name="SMA(20)"
                     />
                   )}
-                  {selectedIndicators.includes('sma50') && chartType === 'line' && (
+                  {selectedIndicators.includes('sma50') && (
                     <Line 
                       type="monotone" 
                       dataKey="sma50" 
@@ -1131,8 +1209,8 @@ export function TradingViewChart({
                     />
                   )}
 
-                  {/* EMA Lines */}
-                  {selectedIndicators.includes('ema12') && chartType === 'line' && (
+                  {/* Layer 5: EMA Lines */}
+                  {selectedIndicators.includes('ema12') && (
                     <Line 
                       type="monotone" 
                       dataKey="ema12" 
@@ -1143,7 +1221,7 @@ export function TradingViewChart({
                       name="EMA(12)"
                     />
                   )}
-                  {selectedIndicators.includes('ema26') && chartType === 'line' && (
+                  {selectedIndicators.includes('ema26') && (
                     <Line 
                       type="monotone" 
                       dataKey="ema26" 
@@ -1155,381 +1233,260 @@ export function TradingViewChart({
                     />
                   )}
 
-                  {/* Actual Price Line */}
+                  {/* Layer 6: Main Lines (overlaid) */}
+                  {/* Actual Price Line - Solid */}
                   {chartType === 'line' && (
                     <Line 
                       type="monotone" 
                       dataKey="actual" 
                       stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       dot={false}
-                      activeDot={{ r: 4, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                      activeDot={{ r: 5, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
                       connectNulls={false}
                       name="Actual Price"
                     />
                   )}
 
-                  {/* Candlestick close line */}
-                  {chartType === 'candlestick' && (
-                    <Line 
-                      type="step" 
-                      dataKey="close" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={1}
-                      dot={false}
-                      connectNulls={false}
-                      name="Close"
-                    />
-                  )}
-
-                  {/* AESO Forecast Line - ALWAYS SHOW */}
+                  {/* AESO Forecast Line - Dashed */}
                   <Line 
                     type="monotone" 
                     dataKey="aesoForecast" 
                     stroke="#3b82f6" 
                     strokeWidth={2}
-                    strokeDasharray="6 3"
+                    strokeDasharray="8 4"
                     dot={false}
-                    activeDot={{ r: 3, fill: '#3b82f6', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: '#3b82f6', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
                     connectNulls
                     name="AESO Forecast"
                   />
 
-                  {/* AI Prediction Line - ALWAYS SHOW with connectNulls */}
+                  {/* AI Prediction Line - Dotted */}
                   <Line 
                     type="monotone" 
                     dataKey="aiPrediction" 
                     stroke="#10b981" 
-                    strokeWidth={2}
-                    strokeDasharray="3 3"
+                    strokeWidth={2.5}
+                    strokeDasharray="4 4"
                     dot={false}
-                    activeDot={{ r: 4, fill: '#10b981', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                    activeDot={{ r: 5, fill: '#10b981', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
                     connectNulls
                     name="AI Prediction"
                   />
                 </ComposedChart>
               </ResponsiveContainer>
 
-              {/* Volume Chart - ALWAYS VISIBLE including fullscreen */}
-              {volumeData.length > 0 && (
-                <ResponsiveContainer width="100%" height={isFullscreen ? 80 : 60}>
-                  <ComposedChart 
-                    data={volumeData} 
-                    margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
-                  >
-                    <XAxis dataKey="timestamp" hide />
-                    <YAxis hide domain={[0, 'auto']} />
-                    <Tooltip 
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const vol = payload[0]?.value;
-                        return (
-                          <div className="bg-popover/95 backdrop-blur-sm border border-border rounded px-2 py-1 text-xs">
-                            Volume: {((vol as number) / 1000).toFixed(1)}K MW
-                          </div>
-                        );
-                      }}
-                    />
-                    <Bar dataKey="volume" radius={[2, 2, 0, 0]} maxBarSize={8}>
-                      {volumeData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`}
-                          fill={entry.priceUp ? 'hsl(142 76% 36% / 0.6)' : 'hsl(0 84% 60% / 0.6)'}
-                        />
-                      ))}
-                    </Bar>
-                  </ComposedChart>
-                </ResponsiveContainer>
-              )}
-
               {/* Floating Current Price Badge */}
-              <div 
-                className="absolute right-1 top-1/3 transform -translate-y-1/2 z-10"
-              >
-                <div className={`px-2 py-1 rounded text-xs font-bold text-white shadow-lg ${
+              <div className="absolute right-14 top-1/3 transform -translate-y-1/2 z-10">
+                <div className={`px-2 py-1 rounded text-xs font-bold text-white shadow-lg animate-pulse ${
                   isPositive ? 'bg-red-500' : 'bg-emerald-500'
                 }`}>
                   ${currentPrice.toFixed(2)}
                 </div>
               </div>
+
+              {/* Crosshair Value Display */}
+              {crosshairData && (
+                <div className="absolute left-4 top-4 bg-background/90 backdrop-blur-sm border border-border rounded-lg px-3 py-2 text-xs shadow-lg">
+                  <div className="flex items-center gap-4">
+                    {crosshairData.actual !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <span className="font-mono font-bold">${crosshairData.actual.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {crosshairData.aesoForecast !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <span className="font-mono font-bold text-blue-500">${crosshairData.aesoForecast.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {crosshairData.aiPrediction !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <Brain className="w-3 h-3 text-emerald-500" />
+                        <span className="font-mono font-bold text-emerald-500">${crosshairData.aiPrediction.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
 
-        {/* ===== RIGHT SIDEBAR ===== */}
-        <div className={cn(
-          "hidden lg:flex flex-col w-48 border-l border-border bg-muted/20 p-3",
-          isFullscreen && "w-56"
-        )}>
-          {/* Current Price */}
-          <div className="space-y-1 pb-3 border-b border-border">
-            <p className="text-[10px] uppercase text-muted-foreground font-medium">Current Price</p>
-            <p className={`text-xl font-bold ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
-              ${currentPrice.toFixed(2)}
-            </p>
-            <div className={`flex items-center gap-1 text-xs ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
-              {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span>{isPositive ? '+' : ''}{stats.changePercent.toFixed(2)}%</span>
-            </div>
-          </div>
-
-          {/* AI Prediction */}
-          <div className="space-y-1.5 py-3 border-b border-border">
-            <div className="flex items-center gap-1.5">
-              <Brain className="w-3 h-3 text-emerald-500" />
-              <p className="text-[10px] uppercase text-muted-foreground font-medium">AI Prediction</p>
-            </div>
-            {aiLoading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
-                <span className="text-xs text-muted-foreground">Generating...</span>
-              </div>
-            ) : nextHourPrediction ? (
-              <>
-                <p className="text-lg font-bold text-emerald-600">${nextHourPrediction.price.toFixed(2)}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  Confidence: {((nextHourPrediction.confidenceScore || 0.85) * 100).toFixed(0)}%
-                </p>
-              </>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full h-7 text-xs border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10"
-                onClick={onGeneratePredictions}
+        {/* Volume Chart */}
+        {volumeData.length > 0 && !loading && (
+          <div className="h-12 border-t border-border">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart 
+                data={visibleData.filter(d => d.volume)} 
+                margin={{ top: 2, right: 60, left: 0, bottom: 0 }}
               >
-                <Brain className="w-3 h-3 mr-1.5" />
-                Generate
-              </Button>
-            )}
+                <XAxis dataKey="timestamp" hide />
+                <YAxis hide domain={[0, 'auto']} />
+                <Bar dataKey="volume" radius={[2, 2, 0, 0]} maxBarSize={6}>
+                  {visibleData.filter(d => d.volume).map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`}
+                      fill={entry.actual >= (visibleData[index - 1]?.actual || 0) 
+                        ? 'hsl(142 76% 36% / 0.6)' 
+                        : 'hsl(0 84% 60% / 0.6)'}
+                    />
+                  ))}
+                </Bar>
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
+        )}
 
-          {/* Active Alerts */}
-          {activeAlerts.length > 0 && (
-            <div className="space-y-1.5 py-3 border-b border-border">
-              <div className="flex items-center gap-1.5">
-                <Bell className="w-3 h-3 text-amber-500" />
-                <p className="text-[10px] uppercase text-muted-foreground font-medium">Active Alerts</p>
-              </div>
-              <div className="space-y-1 max-h-20 overflow-y-auto">
-                {activeAlerts.slice(0, 3).map(alert => (
-                  <div key={alert.id} className="flex items-center justify-between text-[10px]">
-                    <span className={alert.condition === 'above' ? 'text-red-500' : 'text-emerald-500'}>
-                      {alert.condition === 'above' ? '↑' : '↓'} ${alert.threshold_value}
-                    </span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-4 w-4"
-                      onClick={() => deleteAlert(alert.id!)}
-                    >
-                      <X className="w-2.5 h-2.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+        {/* Mini Navigator Bar */}
+        {chartDataWithIndicators.length > 0 && !loading && (
+          <div className="h-16 px-3 py-2 border-t border-border bg-muted/20">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Navigator</span>
+              <span className="text-[10px] text-muted-foreground">
+                ({brushStartIndex ?? 0} - {brushEndIndex ?? chartDataWithIndicators.length - 1} of {chartDataWithIndicators.length})
+              </span>
             </div>
-          )}
-
-          {/* Session Stats */}
-          <div className="space-y-2 py-3">
-            <p className="text-[10px] uppercase text-muted-foreground font-medium">Session Stats</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <p className="text-muted-foreground">High</p>
-                <p className="font-semibold text-red-500">${stats.high.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Low</p>
-                <p className="font-semibold text-emerald-500">${stats.low.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Open</p>
-                <p className="font-semibold">${stats.open.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Avg Vol</p>
-                <p className="font-semibold">{(stats.volume / 1000).toFixed(1)}K</p>
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height={35}>
+              <ComposedChart 
+                data={chartDataWithIndicators}
+                margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+              >
+                <Area
+                  type="monotone"
+                  dataKey="actual"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={1}
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.1}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="aiPrediction"
+                  stroke="#10b981"
+                  strokeWidth={1}
+                  dot={false}
+                  connectNulls
+                />
+                <Brush
+                  dataKey="timestamp"
+                  height={35}
+                  stroke="hsl(var(--border))"
+                  fill="hsl(var(--muted))"
+                  tickFormatter={() => ''}
+                  startIndex={brushStartIndex}
+                  endIndex={brushEndIndex}
+                  onChange={handleBrushChange}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
-
-          {/* Legend */}
-          <div className="mt-auto pt-3 border-t border-border space-y-1.5">
-            <p className="text-[10px] uppercase text-muted-foreground font-medium">Legend</p>
-            <div className="space-y-1 text-[10px]">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-primary"></div>
-                <span className="text-muted-foreground">Actual Price</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-blue-500" style={{ borderTop: '1px dashed' }}></div>
-                <span className="text-muted-foreground">AESO Forecast</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-0.5 bg-emerald-500" style={{ borderTop: '1px dashed' }}></div>
-                <span className="text-muted-foreground">AI Prediction</span>
-              </div>
-              {selectedIndicators.map(indId => {
-                const ind = AVAILABLE_INDICATORS.find(i => i.id === indId);
-                if (!ind) return null;
-                return (
-                  <div key={indId} className="flex items-center gap-2">
-                    <div className="w-4 h-0.5" style={{ backgroundColor: ind.color }}></div>
-                    <span className="text-muted-foreground">{ind.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* ===== MOBILE STATS BAR ===== */}
-      <div className="lg:hidden grid grid-cols-4 gap-1 px-2 py-2 border-t border-border bg-muted/30 text-center">
-        <div>
-          <p className="text-[9px] text-muted-foreground uppercase">High</p>
-          <p className="text-xs font-bold text-red-500">${stats.high.toFixed(0)}</p>
+      {/* ===== LEGEND & AI PREDICTION FOOTER ===== */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-border bg-muted/20">
+        {/* Legend */}
+        <div className="flex items-center gap-4 text-[10px]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-0.5 bg-primary rounded" />
+            <span className="text-muted-foreground">Actual</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-0.5 bg-blue-500 rounded" style={{ borderTop: '2px dashed' }} />
+            <span className="text-muted-foreground">AESO Forecast</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-0.5 bg-emerald-500 rounded" style={{ borderTop: '2px dotted' }} />
+            <span className="text-muted-foreground">AI Prediction</span>
+          </div>
+          {selectedIndicators.map(indId => {
+            const ind = AVAILABLE_INDICATORS.find(i => i.id === indId);
+            if (!ind) return null;
+            return (
+              <div key={indId} className="flex items-center gap-1.5">
+                <div className="w-4 h-0.5 rounded" style={{ backgroundColor: ind.color }} />
+                <span className="text-muted-foreground">{ind.name}</span>
+              </div>
+            );
+          })}
         </div>
-        <div>
-          <p className="text-[9px] text-muted-foreground uppercase">Low</p>
-          <p className="text-xs font-bold text-emerald-500">${stats.low.toFixed(0)}</p>
-        </div>
-        <div>
-          <p className="text-[9px] text-muted-foreground uppercase">AI Pred</p>
+
+        {/* AI Next Hour Prediction */}
+        <div className="flex items-center gap-3">
           {aiLoading ? (
-            <Loader2 className="w-3 h-3 animate-spin mx-auto text-emerald-500" />
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+              <span className="text-xs text-muted-foreground">Generating predictions...</span>
+            </div>
+          ) : nextHourPrediction ? (
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4 text-emerald-500" />
+              <span className="text-xs text-muted-foreground">Next Hour:</span>
+              <span className="text-sm font-bold text-emerald-500">${nextHourPrediction.price.toFixed(2)}</span>
+              <Badge variant="secondary" className="text-[10px]">
+                {((nextHourPrediction.confidenceScore || 0.85) * 100).toFixed(0)}% conf
+              </Badge>
+            </div>
           ) : (
-            <p className="text-xs font-bold text-emerald-500">
-              {nextHourPrediction ? `$${nextHourPrediction.price.toFixed(0)}` : '--'}
-            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-6 text-xs border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10"
+              onClick={onGeneratePredictions}
+            >
+              <Brain className="w-3 h-3 mr-1.5" />
+              Generate AI Predictions
+            </Button>
           )}
         </div>
-        <div>
-          <p className="text-[9px] text-muted-foreground uppercase">Chg</p>
-          <p className={`text-xs font-bold ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
-            {isPositive ? '+' : ''}{stats.changePercent.toFixed(1)}%
-          </p>
-        </div>
       </div>
 
-      {/* ===== BOTTOM TIME RANGE SELECTOR ===== */}
-      <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-muted/30">
-        <div className="flex items-center gap-1">
-          {TIME_RANGES.map(range => (
-            <Button
-              key={range.value}
-              variant={timeRange === range.value ? 'secondary' : 'ghost'}
-              size="sm"
-              className={`h-6 px-2 text-xs ${
-                timeRange === range.value 
-                  ? 'bg-primary/10 text-primary font-semibold' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => setTimeRange(range.value as TimeRange)}
-            >
-              {range.label}
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{format(new Date(), 'HH:mm')}</span>
-          <span className="text-[10px]">UTC</span>
-        </div>
-      </div>
-
-      {/* ===== ALERTS DIALOG ===== */}
+      {/* ===== ALERT DIALOG ===== */}
       <Dialog open={showAlertDialog} onOpenChange={setShowAlertDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Price Alerts
-            </DialogTitle>
+            <DialogTitle>Create Price Alert</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* Quick Alerts */}
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium">Quick Alerts</p>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 border-red-500/50 text-red-500 hover:bg-red-500/10"
-                  onClick={() => handleQuickAlert('high')}
-                >
-                  <TrendingUp className="w-3.5 h-3.5 mr-1.5" />
-                  Above +10%
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10"
-                  onClick={() => handleQuickAlert('low')}
-                >
-                  <TrendingDown className="w-3.5 h-3.5 mr-1.5" />
-                  Below -10%
-                </Button>
-              </div>
+              <Label>Alert when price goes</Label>
+              <Select value={newAlertCondition} onValueChange={(v) => setNewAlertCondition(v as 'above' | 'below')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="above">Above</SelectItem>
+                  <SelectItem value="below">Below</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Custom Alert */}
-            <div className="space-y-3 pt-3 border-t border-border">
-              <p className="text-sm font-medium">Custom Alert</p>
-              <div className="flex gap-2">
-                <Select value={newAlertCondition} onValueChange={(v: 'above' | 'below') => setNewAlertCondition(v)}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="above">Above</SelectItem>
-                    <SelectItem value="below">Below</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input 
-                    type="number"
-                    placeholder={currentPrice.toFixed(2)}
-                    value={newAlertThreshold}
-                    onChange={(e) => setNewAlertThreshold(e.target.value)}
-                    className="pl-7"
-                  />
-                </div>
-                <Button onClick={handleCreateAlert}>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
+            <div className="space-y-2">
+              <Label>Threshold ($CAD)</Label>
+              <Input 
+                type="number"
+                placeholder="Enter price..."
+                value={newAlertThreshold}
+                onChange={(e) => setNewAlertThreshold(e.target.value)}
+              />
             </div>
-
-            {/* Active Alerts List */}
-            {alerts.length > 0 && (
-              <div className="space-y-2 pt-3 border-t border-border">
-                <p className="text-sm font-medium">Active Alerts ({activeAlerts.length})</p>
-                <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                  {alerts.map(alert => (
-                    <div 
-                      key={alert.id} 
-                      className="flex items-center justify-between p-2 rounded bg-muted/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${alert.is_active ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
-                        <span className={`text-sm ${alert.condition === 'above' ? 'text-red-500' : 'text-emerald-500'}`}>
-                          {alert.condition === 'above' ? '↑' : '↓'} ${alert.threshold_value}
-                        </span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {alert.alert_type.replace('_', ' ')}
-                        </Badge>
-                      </div>
+            {activeAlerts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Active Alerts</Label>
+                <div className="space-y-1 max-h-24 overflow-y-auto">
+                  {activeAlerts.map(alert => (
+                    <div key={alert.id} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
+                      <span className={alert.condition === 'above' ? 'text-red-500' : 'text-emerald-500'}>
+                        {alert.condition === 'above' ? '↑' : '↓'} ${alert.threshold_value}
+                      </span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        className="h-6 w-6"
                         onClick={() => deleteAlert(alert.id!)}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ))}
@@ -1537,11 +1494,9 @@ export function TradingViewChart({
               </div>
             )}
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAlertDialog(false)}>
-              Close
-            </Button>
+            <Button variant="outline" onClick={() => setShowAlertDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateAlert}>Create Alert</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
