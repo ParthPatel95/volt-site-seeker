@@ -115,11 +115,13 @@ export function AESOMarketComprehensive() {
   const loading = basicLoading || enhancedLoading || marketLoading;
 
   // Auto-load AI ensemble predictions on mount
+  const hasLoadedPredictions = React.useRef(false);
   React.useEffect(() => {
-    if (!ensemblePredictions || ensemblePredictions.length === 0) {
+    if (!hasLoadedPredictions.current && (!ensemblePredictions || ensemblePredictions.length === 0)) {
+      hasLoadedPredictions.current = true;
       generateEnsemblePredictions(24);
     }
-  }, []);
+  }, [ensemblePredictions, generateEnsemblePredictions]);
 
   const formatPrice = (cadPrice: number) => {
     return {
