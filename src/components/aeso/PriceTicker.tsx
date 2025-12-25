@@ -3,7 +3,8 @@ import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 
 interface PriceDataPoint {
-  timestamp: string;
+  timestamp?: string;
+  datetime?: string;
   pool_price: number;
 }
 
@@ -71,7 +72,10 @@ export function PriceTicker({
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     
     return data
-      .filter(d => new Date(d.timestamp) >= oneHourAgo)
+      .filter(d => {
+        const ts = d.timestamp || d.datetime;
+        return ts ? new Date(ts) >= oneHourAgo : false;
+      })
       .map(d => ({ price: d.pool_price }))
       .slice(-30); // Last 30 data points for sparkline
   }, [data]);

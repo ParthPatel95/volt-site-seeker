@@ -29,7 +29,8 @@ import {
 import { format, subHours, parseISO, startOfHour, differenceInHours } from 'date-fns';
 
 interface PriceDataPoint {
-  timestamp: string;
+  timestamp?: string;
+  datetime?: string;
   pool_price: number;
   ail_mw?: number;
 }
@@ -58,7 +59,7 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
   const [chartType, setChartType] = useState<ChartType>('line');
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Filter data based on time range
+  // Filter and normalize data based on time range
   const filteredData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
@@ -76,7 +77,12 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
     const cutoff = subHours(now, hoursBack);
     
     return data
-      .filter(d => new Date(d.timestamp) >= cutoff)
+      .map(d => ({
+        ...d,
+        // Normalize to use 'timestamp' field consistently
+        timestamp: d.timestamp || d.datetime || ''
+      }))
+      .filter(d => d.timestamp && new Date(d.timestamp) >= cutoff)
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }, [data, timeRange]);
 
@@ -84,9 +90,10 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
   const candleData = useMemo((): CandleData[] => {
     if (!filteredData || filteredData.length === 0) return [];
     
-    const hourlyGroups = new Map<string, PriceDataPoint[]>();
+    const hourlyGroups = new Map<string, typeof filteredData>();
     
     filteredData.forEach(d => {
+      if (!d.timestamp) return;
       const hourKey = format(startOfHour(new Date(d.timestamp)), 'yyyy-MM-dd HH:00');
       if (!hourlyGroups.has(hourKey)) {
         hourlyGroups.set(hourKey, []);
@@ -144,9 +151,10 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev / 1.5, 0.5));
   const handleReset = () => setZoomLevel(1);
 
-  const formatXAxis = (timestamp: string) => {
+  const formatXAxis = (value: string) => {
     try {
-      const date = new Date(timestamp);
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return '';
       if (timeRange === '1H' || timeRange === '4H') {
         return format(date, 'HH:mm');
       } else if (timeRange === '7D') {
