@@ -306,9 +306,9 @@ export function useAESOEnhancedData() {
       if (data && data.statistics) {
         const historicalData: AESOHistoricalPrices = {
           prices: data.rawHourlyData?.map((item: any) => ({
-            datetime: item.ts,
+            datetime: item.datetime, // Fixed: API returns 'datetime', not 'ts'
             pool_price: item.price,
-            forecast_pool_price: item.price // AESO doesn't provide forecast in historical
+            forecast_pool_price: item.forecast_pool_price || item.price
           })) || [],
           statistics: {
             average_price: data.statistics.average,
