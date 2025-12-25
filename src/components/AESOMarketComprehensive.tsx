@@ -308,7 +308,7 @@ export function AESOMarketComprehensive() {
                       <div className="flex flex-col gap-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                          {uptimeData.totalDataPoints > 0 ? `${uptimeData.totalDataPoints} hours analyzed` : 'No data available'}
+                          {uptimeData.totalDataPoints > 0 ? `${uptimeData.totalDataPoints} hours analyzed` : 'Updating data...'}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground"></div>
