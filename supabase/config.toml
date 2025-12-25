@@ -244,3 +244,9 @@ verify_jwt = false
 
 [functions.aeso-advanced-analytics]
 verify_jwt = false
+
+[functions.pdu-controller]
+verify_jwt = false
+
+[functions.datacenter-automation-engine]
+verify_jwt = false
