@@ -145,48 +145,67 @@ const generateFallbackAssetOutages = (): AESOAssetOutages => {
   };
 };
 
-const generateFallbackHistoricalPrices = (): AESOHistoricalPrices => {
-  const prices = [];
-  const basePrice = 45.67;
-  
-  for (let i = 23; i >= 0; i--) {
-    const time = new Date(Date.now() - i * 60 * 60 * 1000);
-    const hour = time.getHours();
-    const variation = Math.sin((Date.now() - i * 60 * 60 * 1000) / 100000) * 15;
-    // AESO can have negative prices during oversupply (typically overnight with high wind)
-    // ~2-3% of hours can be negative, mostly overnight (1am-5am)
-    const isOvernightLowDemand = hour >= 1 && hour <= 5;
-    const negativeEventChance = isOvernightLowDemand ? 0.15 : 0.02; // 15% chance overnight, 2% otherwise
-    const isNegativeEvent = Math.random() < negativeEventChance;
-    const rawPrice = basePrice + variation + (Math.random() - 0.5) * 8;
-    // Negative prices typically range from -$10 to -$60/MWh during oversupply
-    const price = isNegativeEvent ? -(Math.random() * 50 + 10) : rawPrice;
-    const forecast = rawPrice; // Forecast typically doesn't predict negatives well
+// Fetch real data from aeso_training_data table as fallback
+const fetchFromDatabase = async (): Promise<AESOHistoricalPrices | null> => {
+  try {
+    console.log('[useAESOEnhancedData] Fetching from aeso_training_data database...');
+    const { data, error } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp, pool_price, ail_mw')
+      .order('timestamp', { ascending: false })
+      .limit(720); // Get up to 30 days of hourly data
     
-    prices.push({
-      datetime: time.toISOString(),
-      pool_price: price,
-      forecast_pool_price: forecast
+    if (error) {
+      console.error('[useAESOEnhancedData] Database query error:', error);
+      return null;
+    }
+    
+    if (!data || data.length === 0) {
+      console.warn('[useAESOEnhancedData] No data in aeso_training_data');
+      return null;
+    }
+    
+    // Deduplicate by hour (there can be duplicate entries per hour)
+    const hourlyMap = new Map<string, { timestamp: string; pool_price: number; ail_mw?: number }>();
+    data.forEach(row => {
+      const hourKey = row.timestamp.substring(0, 13); // YYYY-MM-DDTHH
+      if (!hourlyMap.has(hourKey)) {
+        hourlyMap.set(hourKey, row);
+      }
     });
+    
+    const prices = Array.from(hourlyMap.values())
+      .map(row => ({
+        datetime: row.timestamp,
+        pool_price: row.pool_price,
+        forecast_pool_price: row.pool_price, // No separate forecast in training data
+        ail_mw: row.ail_mw
+      }))
+      .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+    
+    const priceValues = prices.map(p => p.pool_price);
+    const avgPrice = priceValues.reduce((sum, price) => sum + price, 0) / priceValues.length;
+    const maxPrice = Math.max(...priceValues);
+    const minPrice = Math.min(...priceValues);
+    const volatility = Math.sqrt(priceValues.reduce((sum, price) => sum + Math.pow(price - avgPrice, 2), 0) / priceValues.length);
+    
+    console.log(`[useAESOEnhancedData] Got ${prices.length} real data points from database`);
+    
+    return {
+      prices,
+      statistics: {
+        average_price: avgPrice,
+        max_price: maxPrice,
+        min_price: minPrice,
+        price_volatility: volatility,
+        total_records: prices.length
+      },
+      timestamp: new Date().toISOString()
+    };
+  } catch (err) {
+    console.error('[useAESOEnhancedData] Database fetch error:', err);
+    return null;
   }
-  
-  const priceValues = prices.map(p => p.pool_price);
-  const avgPrice = priceValues.reduce((sum, price) => sum + price, 0) / priceValues.length;
-  const maxPrice = Math.max(...priceValues);
-  const minPrice = Math.min(...priceValues);
-  const volatility = Math.sqrt(priceValues.reduce((sum, price) => sum + Math.pow(price - avgPrice, 2), 0) / priceValues.length);
-  
-  return {
-    prices,
-    statistics: {
-      average_price: avgPrice,
-      max_price: maxPrice,
-      min_price: minPrice,
-      price_volatility: volatility,
-      total_records: prices.length
-    },
-    timestamp: new Date().toISOString()
-  };
 };
 
 const generateFallbackMarketAnalytics = (): AESOMarketAnalytics => {
@@ -302,28 +321,28 @@ export function useAESOEnhancedData() {
   };
 
   const getHistoricalPrices = async () => {
-    // Fetch REAL 30-day historical prices from AESO API via our edge function
+    // Strategy: Try API first, then fallback to database
     try {
-      // Use 'monthly' timeframe to get ~30 days of hourly data for proper 95% uptime calculation
+      console.log('[useAESOEnhancedData] Fetching historical prices from API...');
       const { data, error } = await supabase.functions.invoke('aeso-historical-pricing', {
         body: { timeframe: 'monthly' }
       });
 
-      if (error) throw error;
-
-      if (data && data.statistics) {
+      if (!error && data && data.rawHourlyData && data.rawHourlyData.length > 0) {
+        console.log(`[useAESOEnhancedData] API returned ${data.rawHourlyData.length} records`);
         const historicalData: AESOHistoricalPrices = {
-          prices: data.rawHourlyData?.map((item: any) => ({
-            datetime: item.datetime, // Fixed: API returns 'datetime', not 'ts'
-            pool_price: item.price,
-            forecast_pool_price: item.forecast_pool_price || item.price
-          })) || [],
+          prices: data.rawHourlyData.map((item: any) => ({
+            datetime: item.datetime || item.ts,
+            pool_price: item.price ?? item.pool_price,
+            forecast_pool_price: item.forecast_pool_price || item.price || item.pool_price,
+            ail_mw: item.ail_mw
+          })),
           statistics: {
-            average_price: data.statistics.average,
-            max_price: data.statistics.peak,
-            min_price: data.statistics.low,
-            price_volatility: data.statistics.volatility || 0,
-            total_records: data.rawHourlyData?.length || 0
+            average_price: data.statistics?.average || 0,
+            max_price: data.statistics?.peak || 0,
+            min_price: data.statistics?.low || 0,
+            price_volatility: data.statistics?.volatility || 0,
+            total_records: data.rawHourlyData.length
           },
           timestamp: new Date().toISOString()
         };
@@ -331,11 +350,26 @@ export function useAESOEnhancedData() {
         checkForAlerts('historical_prices', historicalData);
         return historicalData;
       }
+      
+      // API failed or returned no data, fallback to database
+      console.log('[useAESOEnhancedData] API failed or no data, trying database fallback...');
+      throw new Error('API returned no data');
     } catch (e) {
-      console.error('Error fetching real AESO historical prices:', e);
+      console.warn('[useAESOEnhancedData] API error, using database fallback:', e);
+      
+      // Fallback to direct database query
+      const dbData = await fetchFromDatabase();
+      if (dbData) {
+        console.log(`[useAESOEnhancedData] Database fallback successful: ${dbData.prices.length} records`);
+        setHistoricalPrices(dbData);
+        checkForAlerts('historical_prices', dbData);
+        return dbData;
+      }
+      
+      console.error('[useAESOEnhancedData] Both API and database failed');
+      setHistoricalPrices(null);
+      return null;
     }
-    setHistoricalPrices(null);
-    return null;
   };
 
   const getMarketAnalytics = async () => {
