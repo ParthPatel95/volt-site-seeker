@@ -36,15 +36,13 @@ export const FundOverviewSection = () => {
                 <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
                   <span className="text-xs sm:text-sm text-watt-navy/70">MOIC</span>
                   <span className="text-base sm:text-lg md:text-xl font-bold text-watt-trust">
-                    <AnimatedCounter end={2} suffix=".0-" />
-                    <AnimatedCounter end={2} suffix=".5x" />
+                    2.0-2.5x
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gradient-to-r from-watt-light to-white border border-gray-100">
                   <span className="text-xs sm:text-sm text-watt-navy/70">Net IRR</span>
                   <span className="text-base sm:text-lg md:text-xl font-bold text-watt-success">
-                    <AnimatedCounter end={30} suffix="-" />
-                    <AnimatedCounter end={40} suffix="%" />
+                    30-40%
                   </span>
                 </div>
               </CardContent>

@@ -8,6 +8,7 @@ interface GlowCardProps {
   suffix?: string;
   prefix?: string;
   label: string;
+  sublabel?: string;
   icon: LucideIcon;
   delay?: number;
   gradient?: 'trust' | 'bitcoin' | 'success';
@@ -18,7 +19,8 @@ export const GlowCard = ({
   value,
   suffix = '',
   prefix = '',
-  label, 
+  label,
+  sublabel,
   icon: Icon, 
   delay = 0,
   gradient = 'trust'
@@ -100,6 +102,13 @@ export const GlowCard = ({
         <div className="text-white/70 text-sm md:text-base font-medium">
           {label}
         </div>
+        
+        {/* Sublabel */}
+        {sublabel && (
+          <div className="text-white/40 text-xs mt-1">
+            {sublabel}
+          </div>
+        )}
 
         {/* Decorative corner accent */}
         <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl ${gradientColors[gradient]} opacity-50 rounded-tr-2xl rounded-bl-[80px]`} />

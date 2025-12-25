@@ -123,8 +123,9 @@ export const WattFundHero = ({ onInquiryClick }: WattFundHeroProps) => {
           <GlowCard 
             stat="30-40%"
             value={35}
-            suffix="%+"
+            suffix="%"
             label="Target Net IRR"
+            sublabel="30-40% Range"
             icon={TrendingUp}
             delay={0.6}
             gradient="success"
