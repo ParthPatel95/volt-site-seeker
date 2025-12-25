@@ -2653,6 +2653,194 @@ export type Database = {
           },
         ]
       }
+      datacenter_automation_log: {
+        Row: {
+          action_type: string
+          actual_savings_cad: number | null
+          affected_pdu_count: number | null
+          affected_pdus: string[] | null
+          ai_prediction_price: number | null
+          completed_at: string | null
+          created_at: string | null
+          decision_confidence: number | null
+          duration_seconds: number | null
+          error_message: string | null
+          estimated_savings_cad: number | null
+          executed_at: string | null
+          executed_by: string | null
+          grid_stress_level: string | null
+          id: string
+          market_regime: string | null
+          metadata: Json | null
+          rule_id: string | null
+          status: string | null
+          threshold_price: number | null
+          total_load_affected_kw: number | null
+          trigger_price: number | null
+        }
+        Insert: {
+          action_type: string
+          actual_savings_cad?: number | null
+          affected_pdu_count?: number | null
+          affected_pdus?: string[] | null
+          ai_prediction_price?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          decision_confidence?: number | null
+          duration_seconds?: number | null
+          error_message?: string | null
+          estimated_savings_cad?: number | null
+          executed_at?: string | null
+          executed_by?: string | null
+          grid_stress_level?: string | null
+          id?: string
+          market_regime?: string | null
+          metadata?: Json | null
+          rule_id?: string | null
+          status?: string | null
+          threshold_price?: number | null
+          total_load_affected_kw?: number | null
+          trigger_price?: number | null
+        }
+        Update: {
+          action_type?: string
+          actual_savings_cad?: number | null
+          affected_pdu_count?: number | null
+          affected_pdus?: string[] | null
+          ai_prediction_price?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          decision_confidence?: number | null
+          duration_seconds?: number | null
+          error_message?: string | null
+          estimated_savings_cad?: number | null
+          executed_at?: string | null
+          executed_by?: string | null
+          grid_stress_level?: string | null
+          id?: string
+          market_regime?: string | null
+          metadata?: Json | null
+          rule_id?: string | null
+          status?: string | null
+          threshold_price?: number | null
+          total_load_affected_kw?: number | null
+          trigger_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "datacenter_automation_log_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "datacenter_shutdown_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      datacenter_cost_savings: {
+        Row: {
+          average_price_avoided_cad: number | null
+          created_at: string | null
+          false_positive_count: number | null
+          id: string
+          peak_price_avoided_cad: number | null
+          period_end: string
+          period_start: string
+          resume_count: number | null
+          shutdown_count: number | null
+          total_curtailment_hours: number | null
+          total_energy_avoided_kwh: number | null
+          total_savings_cad: number | null
+          uptime_percentage: number | null
+        }
+        Insert: {
+          average_price_avoided_cad?: number | null
+          created_at?: string | null
+          false_positive_count?: number | null
+          id?: string
+          peak_price_avoided_cad?: number | null
+          period_end: string
+          period_start: string
+          resume_count?: number | null
+          shutdown_count?: number | null
+          total_curtailment_hours?: number | null
+          total_energy_avoided_kwh?: number | null
+          total_savings_cad?: number | null
+          uptime_percentage?: number | null
+        }
+        Update: {
+          average_price_avoided_cad?: number | null
+          created_at?: string | null
+          false_positive_count?: number | null
+          id?: string
+          peak_price_avoided_cad?: number | null
+          period_end?: string
+          period_start?: string
+          resume_count?: number | null
+          shutdown_count?: number | null
+          total_curtailment_hours?: number | null
+          total_energy_avoided_kwh?: number | null
+          total_savings_cad?: number | null
+          uptime_percentage?: number | null
+        }
+        Relationships: []
+      }
+      datacenter_shutdown_rules: {
+        Row: {
+          affected_priority_groups: string[] | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          duration_threshold_minutes: number | null
+          grace_period_seconds: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          name: string
+          notification_channels: string[] | null
+          price_ceiling_cad: number
+          price_floor_cad: number
+          soft_ceiling_cad: number | null
+          trigger_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          affected_priority_groups?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_threshold_minutes?: number | null
+          grace_period_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          notification_channels?: string[] | null
+          price_ceiling_cad: number
+          price_floor_cad: number
+          soft_ceiling_cad?: number | null
+          trigger_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          affected_priority_groups?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_threshold_minutes?: number | null
+          grace_period_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          notification_channels?: string[] | null
+          price_ceiling_cad?: number
+          price_floor_cad?: number
+          soft_ceiling_cad?: number | null
+          trigger_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       distress_alerts: {
         Row: {
           alert_type: string
@@ -3864,6 +4052,116 @@ export type Database = {
         }
         Relationships: []
       }
+      pdu_devices: {
+        Row: {
+          active_outlets: number | null
+          api_endpoint: string | null
+          api_key_encrypted: string | null
+          created_at: string | null
+          created_by: string | null
+          current_load_kw: number | null
+          current_status: string
+          id: string
+          ip_address: string | null
+          last_status_check: string | null
+          location: string | null
+          max_capacity_kw: number | null
+          metadata: Json | null
+          name: string
+          priority_group: string
+          protocol: string
+          total_outlets: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_outlets?: number | null
+          api_endpoint?: string | null
+          api_key_encrypted?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_load_kw?: number | null
+          current_status?: string
+          id?: string
+          ip_address?: string | null
+          last_status_check?: string | null
+          location?: string | null
+          max_capacity_kw?: number | null
+          metadata?: Json | null
+          name: string
+          priority_group?: string
+          protocol?: string
+          total_outlets?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_outlets?: number | null
+          api_endpoint?: string | null
+          api_key_encrypted?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_load_kw?: number | null
+          current_status?: string
+          id?: string
+          ip_address?: string | null
+          last_status_check?: string | null
+          location?: string | null
+          max_capacity_kw?: number | null
+          metadata?: Json | null
+          name?: string
+          priority_group?: string
+          protocol?: string
+          total_outlets?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pdu_power_readings: {
+        Row: {
+          created_at: string | null
+          current_amps: number | null
+          energy_kwh: number | null
+          id: string
+          outlet_states: Json | null
+          pdu_id: string
+          power_factor: number | null
+          power_kw: number
+          timestamp: string | null
+          voltage: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_amps?: number | null
+          energy_kwh?: number | null
+          id?: string
+          outlet_states?: Json | null
+          pdu_id: string
+          power_factor?: number | null
+          power_kw: number
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          current_amps?: number | null
+          energy_kwh?: number | null
+          id?: string
+          outlet_states?: Json | null
+          pdu_id?: string
+          power_factor?: number | null
+          power_kw?: number
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdu_power_readings_pdu_id_fkey"
+            columns: ["pdu_id"]
+            isOneToOne: false
+            referencedRelation: "pdu_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_recommendations: {
         Row: {
           created_at: string
@@ -4024,6 +4322,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      price_ceiling_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          action_log_id: string | null
+          alert_type: string
+          auto_action_taken: boolean | null
+          created_at: string | null
+          current_price: number
+          forecast_breach_hours: number | null
+          grid_stress_level: string | null
+          id: string
+          is_active: boolean | null
+          price_direction: string | null
+          rule_id: string | null
+          threshold_price: number
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          action_log_id?: string | null
+          alert_type: string
+          auto_action_taken?: boolean | null
+          created_at?: string | null
+          current_price: number
+          forecast_breach_hours?: number | null
+          grid_stress_level?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_direction?: string | null
+          rule_id?: string | null
+          threshold_price: number
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          action_log_id?: string | null
+          alert_type?: string
+          auto_action_taken?: boolean | null
+          created_at?: string | null
+          current_price?: number
+          forecast_breach_hours?: number | null
+          grid_stress_level?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_direction?: string | null
+          rule_id?: string | null
+          threshold_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_ceiling_alerts_action_log_id_fkey"
+            columns: ["action_log_id"]
+            isOneToOne: false
+            referencedRelation: "datacenter_automation_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_ceiling_alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "datacenter_shutdown_rules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
