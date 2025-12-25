@@ -209,7 +209,7 @@ export const LandingAcademySection: React.FC = () => {
               {learningPath.map((stage, index) => {
                 const colors = colorConfig[stage.colorKey];
                 return (
-                  <div key={stage.step} className="contents">
+                  <React.Fragment key={stage.step}>
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -239,7 +239,7 @@ export const LandingAcademySection: React.FC = () => {
                         className="hidden sm:block w-8 md:w-12 h-0.5 bg-gray-200 origin-left"
                       />
                     )}
-                  </div>
+                  </React.Fragment>
                 );
               })}
             </div>
