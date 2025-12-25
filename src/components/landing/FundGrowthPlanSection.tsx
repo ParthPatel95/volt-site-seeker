@@ -1,54 +1,9 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Target, Clock, Zap, Users, Leaf, ArrowRight } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-
-// Animated Counter Component
-const AnimatedCounter = ({ end, duration = 2000, suffix = '' }: { end: number; duration?: number; suffix?: string }) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number | null = null;
-          const startValue = 0;
-
-          const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            setCount(Math.floor(easeOutQuart * (end - startValue) + startValue));
-
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            }
-          };
-
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    if (countRef.current) {
-      observer.observe(countRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [end, duration, hasAnimated]);
-
-  return (
-    <div ref={countRef}>
-      {count}{suffix}
-    </div>
-  );
-};
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 export const FundGrowthPlanSection = () => {
   const fundData = [
@@ -94,6 +49,7 @@ export const FundGrowthPlanSection = () => {
       label: "Total Capital Target",
       value: 400,
       suffix: "M",
+      prefix: "$",
       description: "Across all three funds"
     },
     {
@@ -101,6 +57,7 @@ export const FundGrowthPlanSection = () => {
       label: "Total Investments",
       value: 42,
       suffix: "-55",
+      prefix: "",
       description: "Strategic energy projects"
     },
     {
@@ -108,6 +65,7 @@ export const FundGrowthPlanSection = () => {
       label: "Timeline",
       value: 5,
       suffix: "-7 Years",
+      prefix: "",
       description: "Fund deployment period"
     }
   ];
@@ -124,7 +82,7 @@ export const FundGrowthPlanSection = () => {
               Fund Growth Plan
             </h2>
             <p className="text-base md:text-lg text-watt-navy/70 max-w-2xl mx-auto px-2">
-              Multi-fund strategy deploying <span className="font-bold text-watt-navy">$<AnimatedCounter end={400} suffix="M" /></span> across three sequential vehicles
+              Multi-fund strategy deploying <span className="font-bold text-watt-navy inline-flex">$<AnimatedCounter end={400} suffix="M" /></span> across three sequential vehicles
             </p>
           </div>
         </ScrollReveal>
@@ -173,9 +131,8 @@ export const FundGrowthPlanSection = () => {
                         <metric.icon className="w-4 sm:w-5 h-4 sm:h-5 text-watt-trust" />
                         <span className="text-xs sm:text-sm text-watt-navy/60">{metric.label}</span>
                       </div>
-                      <div className="text-lg sm:text-xl font-bold text-watt-navy">
-                        {metric.label === "Total Capital Target" && "$"}
-                        <AnimatedCounter end={metric.value} suffix={metric.suffix} />
+                      <div className="text-lg sm:text-xl font-bold text-watt-navy inline-flex">
+                        <AnimatedCounter end={metric.value} prefix={metric.prefix} suffix={metric.suffix} />
                       </div>
                       <div className="text-xs text-watt-navy/60">{metric.description}</div>
                     </div>

@@ -1,52 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, TrendingUp, DollarSign, Zap, Building2, Clock } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { Target, DollarSign, Zap } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-
-// Animated Counter Component
-const AnimatedCounter = ({ end, duration = 2000, suffix = '' }: { end: number; duration?: number; suffix?: string }) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number | null = null;
-          const startValue = 0;
-
-          const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            setCount(Math.floor(easeOutQuart * (end - startValue) + startValue));
-
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            }
-          };
-
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    if (countRef.current) {
-      observer.observe(countRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [end, duration, hasAnimated]);
-
-  return (
-    <div ref={countRef}>
-      {count}{suffix}
-    </div>
-  );
-};
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 export const FundOverviewSection = () => {
   return (

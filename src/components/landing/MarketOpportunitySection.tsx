@@ -1,55 +1,9 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { TrendingUp, Zap, Bitcoin, Cpu } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts';
-import { useState, useEffect, useRef } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-
-// Animated Counter Component
-const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = '' }: { end: number; duration?: number; suffix?: string; prefix?: string }) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number | null = null;
-          const startValue = 0;
-
-          const animate = (currentTime: number) => {
-            if (!startTime) startTime = currentTime;
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-            setCount(Math.floor(easeOutQuart * (end - startValue) + startValue));
-
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            }
-          };
-
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    if (countRef.current) {
-      observer.observe(countRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [end, duration, hasAnimated]);
-
-  return (
-    <div ref={countRef}>
-      {prefix}{count}{suffix}
-    </div>
-  );
-};
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 export const MarketOpportunitySection = () => {
   const aiGrowthData = [
@@ -176,7 +130,9 @@ export const MarketOpportunitySection = () => {
                 </ChartContainer>
               </div>
               <div className="mt-2 text-center">
-                <p className="text-watt-trust font-semibold text-xs sm:text-sm">125+ GW total demand by 2026</p>
+                <p className="text-watt-trust font-semibold text-xs sm:text-sm inline-flex items-center gap-1">
+                  <AnimatedCounter end={125} suffix="+" /> GW total demand by 2026
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -235,7 +191,9 @@ export const MarketOpportunitySection = () => {
                 </ChartContainer>
               </div>
               <div className="mt-2 text-center">
-                <p className="text-watt-success font-semibold text-xs sm:text-sm">93% cost savings in Newfoundland vs CA Bay</p>
+                <p className="text-watt-success font-semibold text-xs sm:text-sm inline-flex items-center gap-1">
+                  <AnimatedCounter end={93} suffix="%" /> cost savings in Newfoundland vs CA Bay
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -293,7 +251,9 @@ export const MarketOpportunitySection = () => {
                 </ChartContainer>
               </div>
               <div className="mt-2 text-center">
-                <p className="text-watt-bitcoin font-semibold text-xs sm:text-sm">$3.4M+ monthly profit potential at 25 EH/s</p>
+                <p className="text-watt-bitcoin font-semibold text-xs sm:text-sm inline-flex items-center gap-1">
+                  $<AnimatedCounter end={3.4} decimals={1} suffix="M+" /> monthly profit potential at 25 EH/s
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -363,48 +323,52 @@ export const MarketOpportunitySection = () => {
                 </ChartContainer>
               </div>
               <div className="mt-2 text-center">
-                <p className="text-watt-trust font-semibold text-xs sm:text-sm">340% growth in AI training demand YoY</p>
+                <p className="text-watt-trust font-semibold text-xs sm:text-sm inline-flex items-center gap-1">
+                  <AnimatedCounter end={247} suffix="%" /> growth in AI training demand YoY
+                </p>
               </div>
             </CardContent>
           </Card>
           </ScrollReveal>
         </div>
 
-        {/* Market Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-          <ScrollReveal delay={0.1} direction="up">
-            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-trust mb-1 truncate">
-                <AnimatedCounter end={127} prefix="$" suffix="B" />
-              </div>
-              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Total Addressable Market</div>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.2} direction="up">
-            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-bitcoin mb-1 truncate">
-                <AnimatedCounter end={6.5} suffix="x" />
-              </div>
-              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Demand vs Supply Gap</div>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.3} direction="up">
-            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-success mb-1 truncate">
-                <AnimatedCounter end={45} suffix="%" />
-              </div>
-              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Market Share - AI/ML</div>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.4} direction="up">
-            <div className="bg-white rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 border border-gray-200 shadow-institutional text-center min-w-0 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-watt-bitcoin mb-1 truncate">
-                <AnimatedCounter end={25} suffix="%" />
-              </div>
-              <div className="text-watt-navy/70 text-xs sm:text-sm leading-tight">Market Share - Crypto</div>
-            </div>
-          </ScrollReveal>
-        </div>
+        {/* Key Market Stats */}
+        <ScrollReveal direction="up">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <Card className="bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-shadow">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-watt-trust inline-flex">
+                  <AnimatedCounter end={125} suffix="+ GW" />
+                </div>
+                <p className="text-watt-navy/70 text-xs sm:text-sm mt-1">Total Power Demand by 2026</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-shadow">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-watt-bitcoin inline-flex">
+                  <AnimatedCounter end={93} suffix="%" />
+                </div>
+                <p className="text-watt-navy/70 text-xs sm:text-sm mt-1">Max Power Cost Arbitrage</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-shadow">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-watt-success inline-flex">
+                  $<AnimatedCounter end={41} suffix="M" />
+                </div>
+                <p className="text-watt-navy/70 text-xs sm:text-sm mt-1">Annual Profit at 25 EH/s</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-shadow">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-watt-navy inline-flex">
+                  <AnimatedCounter end={247} suffix="%" />
+                </div>
+                <p className="text-watt-navy/70 text-xs sm:text-sm mt-1">AI Training Growth YoY</p>
+              </CardContent>
+            </Card>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
