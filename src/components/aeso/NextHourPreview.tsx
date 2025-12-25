@@ -20,6 +20,7 @@ interface NextHourPreviewProps {
   aiConfidence?: number;
   currentPrice: number;
   loading?: boolean;
+  aiLoading?: boolean;
 }
 
 export function NextHourPreview({
@@ -27,7 +28,8 @@ export function NextHourPreview({
   aiPrediction,
   aiConfidence = 0.85,
   currentPrice,
-  loading = false
+  loading = false,
+  aiLoading = false
 }: NextHourPreviewProps) {
   const [countdown, setCountdown] = useState(0);
 
@@ -137,7 +139,7 @@ export function NextHourPreview({
                   animate={{ opacity: 1, y: 0 }}
                   className="text-xl font-bold text-blue-400 mt-1"
                 >
-                  ${aesoForecast?.toFixed(2) || '--'}
+                  {aesoForecast !== undefined ? `$${aesoForecast.toFixed(2)}` : 'Awaiting data...'}
                 </motion.p>
               )}
             </AnimatePresence>
@@ -158,7 +160,18 @@ export function NextHourPreview({
               )}
             </div>
             <AnimatePresence mode="wait">
-              {loading ? (
+              {aiLoading ? (
+                <motion.div 
+                  key="ai-loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2 mt-2"
+                >
+                  <Brain className="w-4 h-4 animate-pulse text-emerald-400" />
+                  <span className="text-sm text-slate-400">Generating predictions...</span>
+                </motion.div>
+              ) : loading ? (
                 <motion.div 
                   key="loading"
                   initial={{ opacity: 0 }}
@@ -176,23 +189,25 @@ export function NextHourPreview({
                   animate={{ opacity: 1, y: 0 }}
                   className="text-xl font-bold text-emerald-400 mt-1"
                 >
-                  ${aiPrediction?.toFixed(2) || '--'}
+                  {aiPrediction !== undefined ? `$${aiPrediction.toFixed(2)}` : 'Awaiting data...'}
                 </motion.p>
               )}
             </AnimatePresence>
           </div>
 
           {/* Confidence Bar */}
-          <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+          <div className={`p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 ${aiLoading ? 'animate-pulse' : ''}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-slate-400">AI Confidence</span>
-              <span className="text-xs font-semibold text-white">{Math.round(aiConfidence * 100)}%</span>
+              <span className="text-xs font-semibold text-white">
+                {aiLoading ? '...' : `${Math.round(aiConfidence * 100)}%`}
+              </span>
             </div>
             <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
               <motion.div 
                 className={`h-full ${getConfidenceColor(aiConfidence)} rounded-full`}
                 initial={{ width: 0 }}
-                animate={{ width: `${aiConfidence * 100}%` }}
+                animate={{ width: aiLoading ? '50%' : `${aiConfidence * 100}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
               />
             </div>

@@ -51,6 +51,7 @@ interface TradingViewChartProps {
   data: PriceDataPoint[];
   currentPrice: number;
   loading?: boolean;
+  aiLoading?: boolean;
   aiPredictions?: AIPrediction[];
   onRefresh?: () => void;
 }
@@ -61,6 +62,7 @@ export function TradingViewChart({
   data, 
   currentPrice, 
   loading, 
+  aiLoading = false,
   aiPredictions = [],
   onRefresh 
 }: TradingViewChartProps) {
@@ -420,6 +422,7 @@ export function TradingViewChart({
               aiConfidence={nextHourPredictions.aiConfidence}
               currentPrice={currentPrice}
               loading={loading}
+              aiLoading={aiLoading}
             />
           </div>
         </div>
