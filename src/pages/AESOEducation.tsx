@@ -12,8 +12,10 @@ import { GenerationMixSection } from '@/components/aeso-education/GenerationMixS
 import { EnergyForecastSection } from '@/components/aeso-education/EnergyForecastSection';
 import { AESOCTASection } from '@/components/aeso-education/AESOCTASection';
 import { MarketParticipantsSection } from '@/components/aeso-education/MarketParticipantsSection';
+import { AncillaryServicesSection } from '@/components/aeso-education/AncillaryServicesSection';
+import { PPAGuidanceSection } from '@/components/aeso-education/PPAGuidanceSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { Zap, Users, DollarSign, TrendingUp, Calendar, Percent, Banknote, Activity, PieChart, BarChart3 } from 'lucide-react';
+import { Zap, Users, DollarSign, TrendingUp, Calendar, Percent, Banknote, Activity, PieChart, BarChart3, FileText, Battery } from 'lucide-react';
 import LastReviewed from '@/components/academy/LastReviewed';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
@@ -25,11 +27,13 @@ import EducationSectionNav from '@/components/academy/EducationSectionNav';
 const navSections = [
   { id: 'what-is-aeso', icon: Zap, label: 'What is AESO', time: '5 min' },
   { id: 'market-participants', icon: Users, label: 'Participants', time: '6 min' },
-  { id: 'pool-pricing', icon: DollarSign, label: 'Pool Pricing', time: '7 min' },
+  { id: 'pool-pricing', icon: DollarSign, label: 'Pool Pricing', time: '10 min' },
   { id: 'price-trends', icon: TrendingUp, label: 'Price Trends', time: '6 min' },
   { id: 'twelve-cp', icon: Calendar, label: '12CP', time: '8 min' },
   { id: 'savings-programs', icon: Percent, label: 'Savings', time: '6 min' },
   { id: 'rate-65', icon: Banknote, label: 'Rate 65', time: '6 min' },
+  { id: 'ancillary-services', icon: Battery, label: 'Ancillary', time: '12 min' },
+  { id: 'ppa-guidance', icon: FileText, label: 'PPAs', time: '15 min' },
   { id: 'grid-operations', icon: Activity, label: 'Grid Ops', time: '6 min' },
   { id: 'generation-mix', icon: PieChart, label: 'Gen Mix', time: '5 min' },
   { id: 'forecast', icon: BarChart3, label: 'Forecast', time: '5 min' },
@@ -114,6 +118,34 @@ const AESOEducation = () => {
             <KnowledgeCheck
               title="Check Your Understanding: Rate 65"
               questions={AESO_QUIZZES.find(q => q.sectionId === 'rate-65')!.questions}
+            />
+          </div>
+        )}
+
+        <div id="ancillary-services">
+          <AncillaryServicesSection />
+        </div>
+
+        {/* Knowledge Check after Ancillary Services */}
+        {AESO_QUIZZES.find(q => q.sectionId === 'ancillary-services') && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <KnowledgeCheck
+              title="Check Your Understanding: Ancillary Services"
+              questions={AESO_QUIZZES.find(q => q.sectionId === 'ancillary-services')!.questions}
+            />
+          </div>
+        )}
+
+        <div id="ppa-guidance">
+          <PPAGuidanceSection />
+        </div>
+
+        {/* Knowledge Check after PPA Guidance */}
+        {AESO_QUIZZES.find(q => q.sectionId === 'ppa-guidance') && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <KnowledgeCheck
+              title="Check Your Understanding: Power Purchase Agreements"
+              questions={AESO_QUIZZES.find(q => q.sectionId === 'ppa-guidance')!.questions}
             />
           </div>
         )}
