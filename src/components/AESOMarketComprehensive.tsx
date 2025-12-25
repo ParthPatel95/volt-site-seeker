@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +48,11 @@ import { AESOTrainingManager } from './aeso/AESOTrainingManager';
 import { CustomDashboardsPanel } from './aeso/CustomDashboardsPanel';
 import { AESOHistoricalAverages } from './aeso/AESOHistoricalAverages';
 import { usePermissions } from '@/hooks/usePermissions';
+// Phase 1 & 2 Enhanced Components
+import { LivePriceChart } from './aeso/LivePriceChart';
+import { PriceTicker } from './aeso/PriceTicker';
+import { MarketPulse } from './aeso/MarketPulse';
+import { HeroPriceCard } from './aeso/HeroPriceCard';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
@@ -248,132 +253,104 @@ export function AESOMarketComprehensive() {
 
           {/* Market Data Tab */}
           <TabsContent value="market" className="space-y-6 sm:space-y-8 animate-fade-in">
-            {/* Main Data Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {/* Real-time Pricing - Enhanced Card */}
-              <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <CardHeader className="relative pb-3 space-y-2">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg">
-                        <Zap className="w-5 h-5 text-white" />
-                      </div>
-                      <CardTitle className="text-lg font-bold">System Marginal Price</CardTitle>
-                    </div>
-                    {priceTimestamp && (
-                      <Badge variant="outline" className="text-xs font-medium">
-                        {new Date(priceTimestamp).toLocaleTimeString()}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="relative p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-sm font-medium text-muted-foreground">Current Price</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-600 to-yellow-500 bg-clip-text text-transparent">
-                          {hasValidPrice ? `$${currentPrice.toFixed(2)}` : 'Loading...'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">CAD/MWh</p>
-                      </div>
-                      <Badge 
-                        variant={currentPrice > 60 ? 'destructive' : 'default'} 
-                        className="text-xs font-semibold px-3 py-1"
-                      >
-                        {currentPrice > 60 ? '⚡ HIGH DEMAND' : '✓ NORMAL'}
-                      </Badge>
-                    </div>
-                    <div className="space-y-3 border-l pl-6 border-border/50">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {uptimeData.daysOfData > 0 ? `${uptimeData.daysOfData}-Day` : '30-Day'} Average (95% Uptime)
-                        </p>
-                        <Badge 
-                          variant={uptimeData.isLive ? 'default' : 'secondary'} 
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {uptimeData.isLive ? 'LIVE' : 'EST'}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-2xl lg:text-3xl font-bold text-foreground">
-                          ${uptimeData.uptimeAverage.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">CAD/MWh</p>
-                      </div>
-                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                          {uptimeData.totalDataPoints > 0 ? `${uptimeData.totalDataPoints} hours analyzed` : 'Updating data...'}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground"></div>
-                          {uptimeData.excludedPrices} spike hours excluded
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Price Ticker Banner */}
+            <PriceTicker
+              currentPrice={currentPrice}
+              previousPrice={pricing?.average_price || currentPrice}
+              data={historicalPrices?.prices || []}
+              highPrice={historicalPrices?.prices?.length ? Math.max(...historicalPrices.prices.slice(-24).map(p => p.pool_price)) : currentPrice}
+              lowPrice={historicalPrices?.prices?.length ? Math.min(...historicalPrices.prices.slice(-24).map(p => p.pool_price)) : currentPrice}
+              averagePrice={pricing?.average_price || currentPrice}
+              loading={loading}
+            />
 
-              {/* System Load & Demand - Enhanced Card */}
-              <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <CardHeader className="relative pb-3 space-y-2">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-                        <Gauge className="w-5 h-5 text-white" />
-                      </div>
-                      <CardTitle className="text-lg font-bold">System Load & Demand</CardTitle>
-                    </div>
-                    {loadData?.forecast_date && (
-                      <Badge variant="outline" className="text-xs font-medium">
-                        {new Date(loadData.forecast_date).toLocaleTimeString()}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="relative p-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Current Demand</p>
-                      <div className="space-y-1">
-                        <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-                          {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '—'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">GW ({loadData?.current_demand_mw?.toFixed(0) || '—'} MW)</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Peak Forecast</p>
-                      <div className="space-y-1">
-                        <p className="text-2xl font-bold text-foreground">
-                          {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '—'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">GW ({loadData?.peak_forecast_mw?.toFixed(0) || '—'} MW)</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Capacity Margin</p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {loadData?.capacity_margin?.toFixed(1) || '—'}%
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Reserve Margin</p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {loadData?.reserve_margin?.toFixed(1) || '—'}%
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Main Data Grid - Hero Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Enhanced Hero Price Card */}
+              <div className="lg:col-span-2">
+                <HeroPriceCard
+                  currentPrice={currentPrice}
+                  previousHourPrice={historicalPrices?.prices?.length ? historicalPrices.prices[historicalPrices.prices.length - 2]?.pool_price || currentPrice : currentPrice}
+                  averagePrice={pricing?.average_price || 0}
+                  timestamp={priceTimestamp}
+                  percentile={currentPrice && pricing?.average_price ? Math.min(100, Math.max(0, 50 + ((currentPrice - pricing.average_price) / pricing.average_price) * 100)) : 50}
+                  uptimeData={uptimeData}
+                  loading={!hasValidPrice}
+                />
+              </div>
+
+              {/* Market Pulse Widget */}
+              <MarketPulse
+                gridStress={marketAnalytics?.market_stress_score || 25}
+                reserveMargin={loadData?.reserve_margin || 15}
+                windGeneration={generationMix?.wind_mw || 0}
+                solarGeneration={generationMix?.solar_mw || 0}
+                totalDemand={loadData?.current_demand_mw || 0}
+                netInterchange={(interchange?.alberta_british_columbia || 0) + (interchange?.alberta_saskatchewan || 0) + (interchange?.alberta_montana || 0)}
+                loading={loading}
+              />
             </div>
+
+            {/* Live Price Chart */}
+            <LivePriceChart
+              data={historicalPrices?.prices || []}
+              currentPrice={currentPrice}
+              loading={enhancedLoading}
+            />
+
+            {/* System Load & Demand Card */}
+            <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <CardHeader className="relative pb-3 space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                      <Gauge className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <CardTitle className="text-lg font-bold">System Load & Demand</CardTitle>
+                  </div>
+                  {loadData?.forecast_date && (
+                    <Badge variant="outline" className="text-xs font-medium">
+                      {new Date(loadData.forecast_date).toLocaleTimeString()}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="relative p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Current Demand</p>
+                    <div className="space-y-1">
+                      <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                        {loadData?.current_demand_mw ? (loadData.current_demand_mw / 1000).toFixed(1) : '—'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">GW</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Peak Forecast</p>
+                    <div className="space-y-1">
+                      <p className="text-xl sm:text-2xl font-bold text-foreground">
+                        {loadData?.peak_forecast_mw ? (loadData.peak_forecast_mw / 1000).toFixed(1) : '—'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">GW</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Capacity Margin</p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
+                      {loadData?.capacity_margin?.toFixed(1) || '—'}%
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Reserve Margin</p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
+                      {loadData?.reserve_margin?.toFixed(1) || '—'}%
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Historical Averages Section */}
             <div className="mt-6">
