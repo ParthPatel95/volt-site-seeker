@@ -728,14 +728,25 @@ export function TradingViewChart({
     );
   };
 
-  const chartHeight = isFullscreen ? 'calc(100vh - 280px)' : 320;
+  // Responsive chart height - always use numbers for ResponsiveContainer
+  const getChartHeight = useCallback(() => {
+    if (isFullscreen) return undefined; // Will use flex-1 to fill space
+    // Responsive heights based on window width
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) return 240; // mobile
+      if (window.innerWidth < 1024) return 300; // tablet
+    }
+    return 360; // desktop
+  }, [isFullscreen]);
+
+  const chartHeight = getChartHeight();
 
   return (
     <Card 
       ref={chartContainerRef}
       className={cn(
-        "border-border overflow-hidden bg-card shadow-lg",
-        isFullscreen && "fixed inset-0 z-50 rounded-none flex flex-col"
+        "border-border overflow-hidden bg-card shadow-lg flex flex-col",
+        isFullscreen && "fixed inset-0 z-50 rounded-none h-screen w-screen"
       )}
     >
       {/* ===== TOP TOOLBAR ===== */}
@@ -994,13 +1005,17 @@ export function TradingViewChart({
       )}
 
       {/* ===== MAIN CHART AREA ===== */}
-      <div className={cn("flex flex-col", isFullscreen && "flex-1")}>
+      <div className={cn(
+        "flex flex-col overflow-hidden",
+        isFullscreen ? "flex-1 min-h-0" : ""
+      )}>
         {/* Chart Container with drag handlers */}
-        <div 
+        <div
           ref={mainChartRef}
           className={cn(
-            "flex-1 relative cursor-grab active:cursor-grabbing",
-            isDragging && "cursor-grabbing"
+            "relative cursor-grab active:cursor-grabbing p-2 sm:p-3",
+            isDragging && "cursor-grabbing",
+            isFullscreen ? "flex-1 min-h-0" : "h-[240px] sm:h-[300px] lg:h-[360px]"
           )}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -1008,14 +1023,20 @@ export function TradingViewChart({
           onMouseLeave={handleMouseUp}
         >
           {loading ? (
-            <div className="h-[360px] flex items-center justify-center bg-muted/10">
+            <div className={cn(
+              "flex items-center justify-center bg-muted/10 rounded-lg",
+              isFullscreen ? "h-full" : "h-[220px] sm:h-[280px] lg:h-[340px]"
+            )}>
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 <p className="text-xs text-muted-foreground">Loading chart data...</p>
               </div>
             </div>
           ) : chartData.length === 0 ? (
-            <div className="h-[360px] flex items-center justify-center bg-muted/10">
+            <div className={cn(
+              "flex items-center justify-center bg-muted/10 rounded-lg",
+              isFullscreen ? "h-full" : "h-[220px] sm:h-[280px] lg:h-[340px]"
+            )}>
               <div className="text-center space-y-2">
                 <Activity className="w-8 h-8 mx-auto text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">No price data available</p>
@@ -1028,7 +1049,11 @@ export function TradingViewChart({
           ) : (
             <>
               {/* Main Combined Chart */}
-              <ResponsiveContainer width="100%" height={chartHeight}>
+              <div className={cn(
+                "rounded-lg border border-border/50 overflow-hidden",
+                isFullscreen ? "h-full" : ""
+              )}>
+              <ResponsiveContainer width="100%" height={isFullscreen ? "100%" : chartHeight}>
                 <ComposedChart 
                   data={visibleData}
                   margin={{ top: 10, right: 60, left: 0, bottom: 0 }}
@@ -1273,8 +1298,9 @@ export function TradingViewChart({
                     connectNulls
                     name="AI Prediction"
                   />
-                </ComposedChart>
+              </ComposedChart>
               </ResponsiveContainer>
+              </div>
 
               {/* Floating Current Price Badge */}
               <div className="absolute right-14 top-1/3 transform -translate-y-1/2 z-10">
@@ -1316,7 +1342,7 @@ export function TradingViewChart({
 
         {/* Volume Chart */}
         {volumeData.length > 0 && !loading && (
-          <div className="h-12 border-t border-border">
+          <div className="h-10 sm:h-12 flex-shrink-0 mx-2 sm:mx-3 mb-1 border-t border-border/50">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart 
                 data={visibleData.filter(d => d.volume)} 
@@ -1341,7 +1367,7 @@ export function TradingViewChart({
 
         {/* Mini Navigator Bar */}
         {chartDataWithIndicators.length > 0 && !loading && (
-          <div className="h-16 px-3 py-2 border-t border-border bg-muted/20">
+          <div className="h-14 sm:h-16 flex-shrink-0 px-2 sm:px-3 py-1 sm:py-2 border-t border-border bg-muted/20">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] text-muted-foreground uppercase font-medium">Navigator</span>
               <span className="text-[10px] text-muted-foreground">
