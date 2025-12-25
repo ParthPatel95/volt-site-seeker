@@ -5,6 +5,7 @@ import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
 import DecisionCard from '@/components/academy/DecisionCard';
 import CaseStudy from '@/components/academy/CaseStudy';
+import { NegativePricePlaybook } from './NegativePricePlaybook';
 
 const meritOrderStack = [
   { type: 'Wind', cost: 0, capacity: 4500, color: 'bg-emerald-500' },
@@ -344,6 +345,9 @@ export const PoolPricingSection = () => {
             proTip="VoltScout\'s automated curtailment pays for itself in a single major price event. The $48K saved here covered 2+ years of the system cost."
           />
         </div>
+        
+        {/* Negative Price Playbook */}
+        <NegativePricePlaybook />
         
         <SectionSummary
           takeaways={[
