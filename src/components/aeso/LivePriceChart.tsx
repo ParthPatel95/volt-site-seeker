@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   LineChart, 
   Line, 
@@ -14,192 +13,253 @@ import {
   ReferenceLine,
   Area,
   ComposedChart,
-  Bar
+  Legend
 } from 'recharts';
 import { 
   TrendingUp, 
   TrendingDown, 
   Activity, 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw,
-  CandlestickChart,
-  LineChartIcon
+  Brain,
+  Building2
 } from 'lucide-react';
-import { format, subHours, parseISO, startOfHour, differenceInHours } from 'date-fns';
+import { format, subHours, addHours, parseISO, isAfter, isBefore } from 'date-fns';
 
 interface PriceDataPoint {
   timestamp?: string;
   datetime?: string;
   pool_price: number;
+  forecast_pool_price?: number;
   ail_mw?: number;
+}
+
+interface AIPrediction {
+  timestamp: string;
+  price: number;
+  confidenceLower?: number;
+  confidenceUpper?: number;
+  confidenceScore?: number;
 }
 
 interface LivePriceChartProps {
   data: PriceDataPoint[];
   currentPrice: number;
   loading?: boolean;
+  aiPredictions?: AIPrediction[];
+  onRefresh?: () => void;
 }
 
-type TimeRange = '1H' | '4H' | '12H' | '24H' | '7D';
-type ChartType = 'line' | 'candle';
+type TimeRange = '24H' | '48H' | '72H';
 
-interface CandleData {
-  timestamp: string;
-  hour: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
-}
-
-export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartProps) {
+export function LivePriceChart({ 
+  data, 
+  currentPrice, 
+  loading, 
+  aiPredictions = [],
+  onRefresh 
+}: LivePriceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('24H');
-  const [chartType, setChartType] = useState<ChartType>('line');
-  const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Filter and normalize data based on time range
-  const filteredData = useMemo(() => {
+  // Get hours based on time range (for past data)
+  const getHoursBack = () => {
+    switch (timeRange) {
+      case '24H': return 24;
+      case '48H': return 48;
+      case '72H': return 72;
+    }
+  };
+
+  // Process data: past actual prices + future AESO forecasts + AI predictions
+  const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
     const now = new Date();
-    let hoursBack = 24;
+    const hoursBack = getHoursBack();
+    const cutoffPast = subHours(now, hoursBack);
+    const cutoffFuture = addHours(now, hoursBack);
     
-    switch (timeRange) {
-      case '1H': hoursBack = 1; break;
-      case '4H': hoursBack = 4; break;
-      case '12H': hoursBack = 12; break;
-      case '24H': hoursBack = 24; break;
-      case '7D': hoursBack = 168; break;
-    }
+    // Normalize and sort all historical data
+    const normalizedData = data
+      .map(d => {
+        const ts = d.datetime || d.timestamp || '';
+        // Handle different datetime formats
+        let parsedDate: Date;
+        try {
+          if (ts.includes('T')) {
+            parsedDate = parseISO(ts);
+          } else {
+            // Format like "2025-11-25 00:00"
+            parsedDate = new Date(ts.replace(' ', 'T') + ':00');
+          }
+        } catch {
+          parsedDate = new Date(ts);
+        }
+        
+        return {
+          timestamp: parsedDate.toISOString(),
+          parsedDate,
+          pool_price: d.pool_price,
+          forecast_pool_price: d.forecast_pool_price,
+          isActual: isBefore(parsedDate, now),
+          isForecast: isAfter(parsedDate, now) || parsedDate.getTime() === now.getTime()
+        };
+      })
+      .filter(d => !isNaN(d.parsedDate.getTime()))
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
     
-    const cutoff = subHours(now, hoursBack);
-    
-    return data
-      .map(d => ({
-        ...d,
-        // Normalize to use 'timestamp' field consistently
-        timestamp: d.timestamp || d.datetime || ''
-      }))
-      .filter(d => d.timestamp && new Date(d.timestamp) >= cutoff)
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  }, [data, timeRange]);
-
-  // Calculate candlestick data (hourly OHLC)
-  const candleData = useMemo((): CandleData[] => {
-    if (!filteredData || filteredData.length === 0) return [];
-    
-    const hourlyGroups = new Map<string, typeof filteredData>();
-    
-    filteredData.forEach(d => {
-      if (!d.timestamp) return;
-      const hourKey = format(startOfHour(new Date(d.timestamp)), 'yyyy-MM-dd HH:00');
-      if (!hourlyGroups.has(hourKey)) {
-        hourlyGroups.set(hourKey, []);
-      }
-      hourlyGroups.get(hourKey)!.push(d);
-    });
-    
-    const candles: CandleData[] = [];
-    
-    hourlyGroups.forEach((points, hourKey) => {
-      if (points.length === 0) return;
-      
-      const prices = points.map(p => p.pool_price);
-      const sortedByTime = [...points].sort((a, b) => 
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
-      
-      candles.push({
-        timestamp: hourKey,
-        hour: format(new Date(hourKey), 'HH:mm'),
-        open: sortedByTime[0].pool_price,
-        high: Math.max(...prices),
-        low: Math.min(...prices),
-        close: sortedByTime[sortedByTime.length - 1].pool_price,
-        volume: points.reduce((sum, p) => sum + (p.ail_mw || 0), 0) / points.length
-      });
-    });
-    
-    return candles.sort((a, b) => 
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    // Filter to time range
+    const filteredHistorical = normalizedData.filter(d => 
+      isAfter(d.parsedDate, cutoffPast) && isBefore(d.parsedDate, cutoffFuture)
     );
-  }, [filteredData]);
-
-  // Calculate statistics
-  const stats = useMemo(() => {
-    if (!filteredData || filteredData.length === 0) {
-      return { high: 0, low: 0, avg: 0, change: 0, changePercent: 0 };
+    
+    // Build chart data with all three series
+    const chartPoints: any[] = [];
+    
+    // Add historical actual prices
+    filteredHistorical.forEach(d => {
+      const existingPoint = chartPoints.find(p => p.timestamp === d.timestamp);
+      if (existingPoint) {
+        if (d.isActual) existingPoint.actual = d.pool_price;
+        if (d.isForecast && d.forecast_pool_price) existingPoint.aesoForecast = d.forecast_pool_price;
+      } else {
+        chartPoints.push({
+          timestamp: d.timestamp,
+          parsedDate: d.parsedDate,
+          actual: d.isActual ? d.pool_price : undefined,
+          aesoForecast: d.isForecast && d.forecast_pool_price ? d.forecast_pool_price : undefined,
+        });
+      }
+    });
+    
+    // Add AI predictions
+    if (aiPredictions && aiPredictions.length > 0) {
+      aiPredictions.forEach(pred => {
+        let predDate: Date;
+        try {
+          predDate = parseISO(pred.timestamp);
+        } catch {
+          predDate = new Date(pred.timestamp);
+        }
+        
+        if (isAfter(predDate, cutoffPast) && isBefore(predDate, cutoffFuture)) {
+          const existingPoint = chartPoints.find(p => 
+            Math.abs(new Date(p.timestamp).getTime() - predDate.getTime()) < 30 * 60 * 1000 // Within 30 min
+          );
+          
+          if (existingPoint) {
+            existingPoint.aiPrediction = pred.price;
+            existingPoint.aiLower = pred.confidenceLower;
+            existingPoint.aiUpper = pred.confidenceUpper;
+          } else {
+            chartPoints.push({
+              timestamp: predDate.toISOString(),
+              parsedDate: predDate,
+              aiPrediction: pred.price,
+              aiLower: pred.confidenceLower,
+              aiUpper: pred.confidenceUpper,
+            });
+          }
+        }
+      });
     }
     
-    const prices = filteredData.map(d => d.pool_price);
-    const high = Math.max(...prices);
-    const low = Math.min(...prices);
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const firstPrice = prices[0];
-    const lastPrice = prices[prices.length - 1];
+    // Sort final data
+    return chartPoints.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+  }, [data, aiPredictions, timeRange]);
+
+  // Calculate statistics from actual prices only
+  const stats = useMemo(() => {
+    const actualPrices = chartData.filter(d => d.actual !== undefined).map(d => d.actual);
+    const aiPredPrices = chartData.filter(d => d.aiPrediction !== undefined).map(d => d.aiPrediction);
+    
+    if (actualPrices.length === 0) {
+      return { high: 0, low: 0, avg: 0, change: 0, changePercent: 0, aiAvg: 0 };
+    }
+    
+    const high = Math.max(...actualPrices);
+    const low = Math.min(...actualPrices);
+    const avg = actualPrices.reduce((a, b) => a + b, 0) / actualPrices.length;
+    const firstPrice = actualPrices[0];
+    const lastPrice = actualPrices[actualPrices.length - 1];
     const change = lastPrice - firstPrice;
     const changePercent = firstPrice !== 0 ? (change / firstPrice) * 100 : 0;
+    const aiAvg = aiPredPrices.length > 0 
+      ? aiPredPrices.reduce((a, b) => a + b, 0) / aiPredPrices.length 
+      : 0;
     
-    return { high, low, avg, change, changePercent };
-  }, [filteredData]);
+    return { high, low, avg, change, changePercent, aiAvg };
+  }, [chartData]);
 
   const isPositive = stats.change >= 0;
-
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev * 1.5, 4));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev / 1.5, 0.5));
-  const handleReset = () => setZoomLevel(1);
 
   const formatXAxis = (value: string) => {
     try {
       const date = new Date(value);
       if (isNaN(date.getTime())) return '';
-      if (timeRange === '1H' || timeRange === '4H') {
-        return format(date, 'HH:mm');
-      } else if (timeRange === '7D') {
-        return format(date, 'EEE HH:mm');
-      }
-      return format(date, 'HH:mm');
+      return format(date, 'MMM d HH:mm');
     } catch {
       return '';
     }
   };
 
-  // Custom candlestick component
-  const CandlestickBar = (props: any) => {
-    const { x, y, width, height, payload } = props;
-    if (!payload) return null;
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || !payload.length) return null;
     
-    const { open, close } = payload;
-    const isUp = close >= open;
-    const color = isUp ? 'hsl(var(--watt-success))' : 'hsl(0, 84%, 60%)';
+    const now = new Date();
+    let labelDate: Date;
+    try {
+      labelDate = new Date(label);
+    } catch {
+      return null;
+    }
+    const isPast = isBefore(labelDate, now);
     
     return (
-      <g>
-        {/* Wick */}
-        <line
-          x1={x + width / 2}
-          y1={y}
-          x2={x + width / 2}
-          y2={y + height}
-          stroke={color}
-          strokeWidth={1}
-        />
-        {/* Body */}
-        <rect
-          x={x + 2}
-          y={y + (isUp ? height * 0.3 : height * 0.2)}
-          width={Math.max(width - 4, 4)}
-          height={Math.max(height * 0.5, 4)}
-          fill={isUp ? color : color}
-          stroke={color}
-          strokeWidth={1}
-          rx={1}
-        />
-      </g>
+      <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+        <p className="text-xs text-muted-foreground mb-2">
+          {format(labelDate, 'MMM d, yyyy HH:mm')}
+        </p>
+        {payload.map((entry: any, index: number) => {
+          if (entry.value === undefined || entry.value === null) return null;
+          
+          let label = '';
+          let color = entry.color;
+          
+          switch (entry.dataKey) {
+            case 'actual':
+              label = 'Actual Price';
+              break;
+            case 'aesoForecast':
+              label = 'AESO Forecast';
+              break;
+            case 'aiPrediction':
+              label = 'AI Prediction';
+              break;
+            default:
+              return null;
+          }
+          
+          return (
+            <div key={index} className="flex items-center gap-2">
+              <div 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-xs text-muted-foreground">{label}:</span>
+              <span className="text-sm font-semibold">${entry.value.toFixed(2)}</span>
+            </div>
+          );
+        })}
+        <div className="mt-1 pt-1 border-t border-border/50">
+          <Badge variant={isPast ? 'default' : 'secondary'} className="text-[10px]">
+            {isPast ? 'Historical' : 'Forecast'}
+          </Badge>
+        </div>
+      </div>
     );
   };
+
+  // Find the "now" reference line position
+  const nowTimestamp = new Date().toISOString();
 
   return (
     <Card className="border-2 hover:border-primary/50 transition-all duration-300 bg-gradient-to-br from-card to-card/50">
@@ -211,7 +271,9 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
             </div>
             <div>
               <CardTitle className="text-lg font-bold">Live Price Chart</CardTitle>
-              <p className="text-xs text-muted-foreground">Real-time AESO pool price</p>
+              <p className="text-xs text-muted-foreground">
+                Past {timeRange} actual prices + {timeRange} forecast
+              </p>
             </div>
           </div>
           
@@ -243,58 +305,42 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
 
         {/* Controls Row */}
         <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-          {/* Time Range Selector */}
+          {/* Time Range Selector - New 24H/48H/72H */}
           <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-            {(['1H', '4H', '12H', '24H', '7D'] as TimeRange[]).map((range) => (
+            {(['24H', '48H', '72H'] as TimeRange[]).map((range) => (
               <Button
                 key={range}
                 variant={timeRange === range ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setTimeRange(range)}
-                className="px-3 py-1 h-7 text-xs font-medium"
+                className="px-4 py-1 h-8 text-sm font-medium"
               >
                 {range}
               </Button>
             ))}
           </div>
 
-          {/* Chart Type & Zoom Controls */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-              <Button
-                variant={chartType === 'line' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setChartType('line')}
-                className="px-2 py-1 h-7"
-              >
-                <LineChartIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={chartType === 'candle' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setChartType('candle')}
-                className="px-2 py-1 h-7"
-              >
-                <CandlestickChart className="w-4 h-4" />
-              </Button>
+          {/* Legend */}
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-0.5 bg-primary rounded" />
+              <span className="text-muted-foreground">Actual</span>
             </div>
-            
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={handleZoomIn} className="h-7 w-7 p-0">
-                <ZoomIn className="w-3 h-3" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleZoomOut} className="h-7 w-7 p-0">
-                <ZoomOut className="w-3 h-3" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleReset} className="h-7 w-7 p-0">
-                <RotateCcw className="w-3 h-3" />
-              </Button>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-0.5 bg-blue-500 rounded" style={{ borderStyle: 'dashed' }} />
+              <Building2 className="w-3 h-3 text-blue-500" />
+              <span className="text-muted-foreground">AESO</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-0.5 bg-emerald-500 rounded" style={{ borderStyle: 'dashed' }} />
+              <Brain className="w-3 h-3 text-emerald-500" />
+              <span className="text-muted-foreground">AI</span>
             </div>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
           <div className="text-center p-2 rounded-lg bg-muted/30">
             <p className="text-xs text-muted-foreground">High</p>
             <p className="text-sm font-bold text-red-600 dark:text-red-400">${stats.high.toFixed(2)}</p>
@@ -304,7 +350,7 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
             <p className="text-sm font-bold text-green-600 dark:text-green-400">${stats.low.toFixed(2)}</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-muted/30">
-            <p className="text-xs text-muted-foreground">Average</p>
+            <p className="text-xs text-muted-foreground">Avg (Actual)</p>
             <p className="text-sm font-bold text-foreground">${stats.avg.toFixed(2)}</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-muted/30">
@@ -313,28 +359,42 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
               {isPositive ? '+' : ''}${stats.change.toFixed(2)}
             </p>
           </div>
+          {stats.aiAvg > 0 && (
+            <div className="text-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">AI Avg</p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">${stats.aiAvg.toFixed(2)}</p>
+            </div>
+          )}
         </div>
       </CardHeader>
 
       <CardContent className="pt-2">
         {loading ? (
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="h-[350px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
               <Activity className="w-8 h-8 animate-pulse text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Loading chart data...</p>
             </div>
           </div>
-        ) : filteredData.length === 0 ? (
-          <div className="h-[300px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">No data available for selected range</p>
+        ) : chartData.length === 0 ? (
+          <div className="h-[350px] flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <Activity className="w-8 h-8 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No price data available</p>
+              <p className="text-xs text-muted-foreground">Try refreshing or selecting a different time range</p>
+            </div>
           </div>
-        ) : chartType === 'line' ? (
-          <ResponsiveContainer width="100%" height={300 / zoomLevel}>
-            <ComposedChart data={filteredData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        ) : (
+          <ResponsiveContainer width="100%" height={350}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="aiConfidenceGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
@@ -344,6 +404,7 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={10}
                 tickLine={false}
+                interval="preserveStartEnd"
               />
               <YAxis 
                 domain={['auto', 'auto']}
@@ -353,84 +414,94 @@ export function LivePriceChart({ data, currentPrice, loading }: LivePriceChartPr
                 tickLine={false}
                 axisLine={false}
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: '8px',
-                  fontSize: '12px'
+              <Tooltip content={<CustomTooltip />} />
+              
+              {/* "Now" reference line */}
+              <ReferenceLine 
+                x={nowTimestamp} 
+                stroke="hsl(var(--muted-foreground))" 
+                strokeDasharray="5 5"
+                strokeWidth={2}
+                label={{ 
+                  value: 'Now', 
+                  position: 'top', 
+                  fill: 'hsl(var(--muted-foreground))',
+                  fontSize: 11,
+                  fontWeight: 600
                 }}
-                labelFormatter={(label) => {
-                  try {
-                    return format(new Date(label), 'MMM d, HH:mm');
-                  } catch {
-                    return label;
-                  }
-                }}
-                formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
               />
-              <ReferenceLine y={stats.avg} stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" />
+              
+              {/* AI Confidence band (area behind AI line) */}
               <Area 
                 type="monotone" 
-                dataKey="pool_price" 
-                fill="url(#priceGradient)" 
+                dataKey="aiUpper" 
+                fill="url(#aiConfidenceGradient)" 
                 stroke="none"
+                connectNulls={false}
               />
+              
+              {/* Actual price area gradient */}
+              <Area 
+                type="monotone" 
+                dataKey="actual" 
+                fill="url(#actualGradient)" 
+                stroke="none"
+                connectNulls={false}
+              />
+              
+              {/* Actual price line (solid) */}
               <Line
                 type="monotone"
-                dataKey="pool_price"
+                dataKey="actual"
                 stroke="hsl(var(--primary))"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 dot={false}
                 activeDot={{ r: 4, fill: 'hsl(var(--primary))' }}
+                connectNulls={false}
+                name="Actual Price"
               />
-            </ComposedChart>
-          </ResponsiveContainer>
-        ) : (
-          <ResponsiveContainer width="100%" height={300 / zoomLevel}>
-            <ComposedChart data={candleData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-              <XAxis 
-                dataKey="hour" 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={10}
-                tickLine={false}
+              
+              {/* AESO Forecast line (dashed blue) */}
+              <Line
+                type="monotone"
+                dataKey="aesoForecast"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                dot={false}
+                activeDot={{ r: 3, fill: '#3b82f6' }}
+                connectNulls={false}
+                name="AESO Forecast"
               />
-              <YAxis 
-                domain={['auto', 'auto']}
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={10}
-                tickFormatter={(v) => `$${v}`}
-                tickLine={false}
-                axisLine={false}
+              
+              {/* AI Prediction line (dashed green) */}
+              <Line
+                type="monotone"
+                dataKey="aiPrediction"
+                stroke="#10b981"
+                strokeWidth={2}
+                strokeDasharray="4 3"
+                dot={false}
+                activeDot={{ r: 3, fill: '#10b981' }}
+                connectNulls={false}
+                name="AI Prediction"
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: '8px',
-                  fontSize: '12px'
-                }}
-                formatter={(value: number, name: string) => {
-                  const labels: Record<string, string> = {
-                    open: 'Open',
-                    high: 'High',
-                    low: 'Low',
-                    close: 'Close'
-                  };
-                  return [`$${value.toFixed(2)}`, labels[name] || name];
-                }}
-              />
-              <Bar dataKey="low" fill="transparent" />
-              <Bar dataKey="high" shape={<CandlestickBar />} />
             </ComposedChart>
           </ResponsiveContainer>
         )}
 
         {/* Live indicator */}
-        <div className="flex items-center justify-center gap-2 mt-4">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-xs text-muted-foreground">Live • Updates every minute</span>
+        <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span>Live • Updates every minute</span>
+          </div>
+          {aiPredictions && aiPredictions.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Brain className="w-3 h-3 text-emerald-500" />
+              <span>{aiPredictions.length} AI predictions loaded</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

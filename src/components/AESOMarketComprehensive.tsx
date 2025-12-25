@@ -114,6 +114,13 @@ export function AESOMarketComprehensive() {
 
   const loading = basicLoading || enhancedLoading || marketLoading;
 
+  // Auto-load AI ensemble predictions on mount
+  React.useEffect(() => {
+    if (!ensemblePredictions || ensemblePredictions.length === 0) {
+      generateEnsemblePredictions(24);
+    }
+  }, []);
+
   const formatPrice = (cadPrice: number) => {
     return {
       cad: `CA$${cadPrice.toFixed(2)}`,
@@ -125,6 +132,7 @@ export function AESOMarketComprehensive() {
     refreshData();
     refetchEnhanced();
     refetchMarket();
+    generateEnsemblePredictions(24); // Also refresh AI predictions
   };
 
   // Use real market data when available - same logic as working Dashboard
@@ -300,11 +308,19 @@ export function AESOMarketComprehensive() {
               />
             </div>
 
-            {/* Live Price Chart */}
+            {/* Live Price Chart - Now with AI predictions */}
             <LivePriceChart
               data={historicalPrices?.prices || []}
               currentPrice={currentPrice}
               loading={enhancedLoading}
+              aiPredictions={ensemblePredictions?.map(p => ({
+                timestamp: p.target_timestamp,
+                price: p.ensemble_price,
+                confidenceLower: p.confidence_interval_lower,
+                confidenceUpper: p.confidence_interval_upper,
+                confidenceScore: 0.85
+              })) || []}
+              onRefresh={handleRefreshAll}
             />
 
             {/* System Load & Demand Card */}
