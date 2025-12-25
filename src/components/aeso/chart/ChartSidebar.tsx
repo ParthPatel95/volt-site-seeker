@@ -38,6 +38,7 @@ interface ChartSidebarProps {
   loading?: boolean;
   aiLoading?: boolean;
   historicalAccuracy?: number;
+  onGeneratePredictions?: () => void;
 }
 
 export function ChartSidebar({
@@ -48,7 +49,8 @@ export function ChartSidebar({
   aiConfidence = 0.85,
   loading = false,
   aiLoading = false,
-  historicalAccuracy = 87
+  historicalAccuracy = 87,
+  onGeneratePredictions
 }: ChartSidebarProps) {
   const [countdown, setCountdown] = useState(0);
   const [expandedSections, setExpandedSections] = useState({
@@ -269,10 +271,22 @@ export function ChartSidebar({
                         <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
                         <span className="text-xs text-muted-foreground">Loading...</span>
                       </div>
-                    ) : (
+                    ) : aiPrediction !== undefined ? (
                       <p className="text-lg font-bold text-emerald-600">
-                        {aiPrediction !== undefined ? `$${aiPrediction.toFixed(2)}` : '--'}
+                        ${aiPrediction.toFixed(2)}
                       </p>
+                    ) : onGeneratePredictions ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-[10px] h-6 px-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                        onClick={onGeneratePredictions}
+                      >
+                        <Brain className="w-3 h-3 mr-1" />
+                        Generate
+                      </Button>
+                    ) : (
+                      <p className="text-lg font-bold text-muted-foreground">--</p>
                     )}
                   </AnimatePresence>
                 </div>
