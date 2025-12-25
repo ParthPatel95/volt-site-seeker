@@ -51,6 +51,7 @@ interface TradingViewChartProps {
   aiLoading?: boolean;
   aiPredictions?: AIPrediction[];
   onRefresh?: () => void;
+  onGeneratePredictions?: () => void;
 }
 
 type TimeRange = '1H' | '4H' | '24H' | '48H' | '72H' | '1W';
@@ -61,7 +62,8 @@ export function TradingViewChart({
   loading, 
   aiLoading = false,
   aiPredictions = [],
-  onRefresh 
+  onRefresh,
+  onGeneratePredictions
 }: TradingViewChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('24H');
   const [activeTool, setActiveTool] = useState('crosshair');
@@ -209,7 +211,7 @@ export function TradingViewChart({
     return { open, high, low, close, avg, change, changePercent, aiAvg, aesoAvg, negativeHours, volatility, volume };
   }, [chartData, data]);
 
-  // Get next hour predictions
+  // Get next hour predictions with actual confidence from prediction data
   const nextHourPredictions = useMemo(() => {
     const now = new Date();
     const nextHour = new Date(now);
@@ -220,17 +222,22 @@ export function TradingViewChart({
       Math.abs(new Date(d.timestamp).getTime() - nextHour.getTime()) < 30 * 60 * 1000
     )?.aesoForecast;
     
-    const aiPrediction = chartData.find(d => 
+    const aiPredictionPoint = chartData.find(d => 
       d.aiPrediction !== undefined && 
       Math.abs(new Date(d.timestamp).getTime() - nextHour.getTime()) < 30 * 60 * 1000
     );
     
+    // Find matching prediction for confidence score
+    const matchingPred = aiPredictions.find(p => 
+      Math.abs(new Date(p.timestamp).getTime() - nextHour.getTime()) < 30 * 60 * 1000
+    );
+    
     return {
       aesoForecast,
-      aiPrediction: aiPrediction?.aiPrediction,
-      aiConfidence: 0.85
+      aiPrediction: aiPredictionPoint?.aiPrediction,
+      aiConfidence: matchingPred?.confidenceScore ?? 0.85
     };
-  }, [chartData]);
+  }, [chartData, aiPredictions]);
 
   // Volume data for volume chart
   const volumeData = useMemo(() => {
@@ -514,6 +521,7 @@ export function TradingViewChart({
             aiConfidence={nextHourPredictions.aiConfidence}
             loading={loading}
             aiLoading={aiLoading}
+            onGeneratePredictions={onGeneratePredictions}
           />
         </div>
       </div>
@@ -525,6 +533,28 @@ export function TradingViewChart({
         aiPredictionCount={aiPredictions?.length || 0}
       />
 
+      {/* Mobile Stats Bar - Key metrics for smaller screens */}
+      <div className="lg:hidden px-3 py-2 border-t border-border grid grid-cols-4 gap-2 text-center">
+        <div>
+          <p className="text-[10px] text-muted-foreground">High</p>
+          <p className="text-xs font-bold text-red-500">${stats.high.toFixed(0)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Low</p>
+          <p className="text-xs font-bold text-emerald-500">${stats.low.toFixed(0)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">AI Pred</p>
+          <p className="text-xs font-bold text-emerald-600">
+            {aiLoading ? '...' : nextHourPredictions.aiPrediction ? `$${nextHourPredictions.aiPrediction.toFixed(0)}` : '--'}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Vol</p>
+          <p className="text-xs font-bold text-foreground">{stats.volatility.toFixed(0)}%</p>
+        </div>
+      </div>
+      
       {/* Chart Legend - Mobile */}
       <div className="lg:hidden px-3 py-2 border-t border-border flex items-center justify-center gap-4 text-[10px]">
         <div className="flex items-center gap-1">

@@ -315,14 +315,17 @@ export function AESOMarketComprehensive() {
               data={historicalPrices?.prices || []}
               currentPrice={currentPrice}
               loading={enhancedLoading}
+              aiLoading={ensembleLoading}
               aiPredictions={ensemblePredictions?.map(p => ({
                 timestamp: p.target_timestamp,
                 price: p.ensemble_price,
                 confidenceLower: p.confidence_interval_lower,
                 confidenceUpper: p.confidence_interval_upper,
-                confidenceScore: 0.85
+                // Calculate confidence from prediction std: lower std = higher confidence
+                confidenceScore: p.prediction_std ? Math.max(0.5, Math.min(0.95, 1 - (p.prediction_std / p.ensemble_price) * 2)) : 0.85
               })) || []}
               onRefresh={handleRefreshAll}
+              onGeneratePredictions={() => generateEnsemblePredictions(24)}
             />
 
             {/* System Load & Demand Card */}
