@@ -27,7 +27,8 @@ import {
   Brain,
   Factory,
   Calendar,
-  Settings
+  Settings,
+  Server
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -54,6 +55,7 @@ import { PriceTicker } from './aeso/PriceTicker';
 import { MarketPulse } from './aeso/MarketPulse';
 import { HeroPriceCard } from './aeso/HeroPriceCard';
 import { LiveConnectionStatus } from './aeso/LiveConnectionStatus';
+import { DatacenterControlCenter } from './datacenter';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
@@ -189,11 +191,12 @@ export function AESOMarketComprehensive() {
   const navigationItems: NavigationItem[] = [
     { id: 'market', label: 'Market Data', icon: Zap, priority: 1 },
     { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 2 },
-    { id: 'historical', label: 'Historical', icon: Calendar, priority: 3 },
-    { id: 'generation', label: 'Generation', icon: Activity, priority: 4 },
-    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 5 },
-    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 6 },
-    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 7 },
+    { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 3 },
+    { id: 'historical', label: 'Historical', icon: Calendar, priority: 4 },
+    { id: 'generation', label: 'Generation', icon: Activity, priority: 5 },
+    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 6 },
+    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 7 },
+    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 8 },
   ];
 
   // Intelligence helper functions
@@ -581,6 +584,11 @@ export function AESOMarketComprehensive() {
                 )}
               </TabsContent>
             </Tabs>
+          </TabsContent>
+
+          {/* Datacenter Control Tab */}
+          <TabsContent value="datacenter" className="space-y-4 sm:space-y-6 animate-fade-in">
+            <DatacenterControlCenter currentPrice={currentPrice} />
           </TabsContent>
 
           {/* Generation Tab */}
