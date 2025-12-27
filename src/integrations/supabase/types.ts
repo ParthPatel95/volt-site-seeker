@@ -2138,6 +2138,36 @@ export type Database = {
           },
         ]
       }
+      chart_annotations: {
+        Row: {
+          annotation_type: string
+          created_at: string | null
+          data: Json
+          id: string
+          is_visible: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          annotation_type: string
+          created_at?: string | null
+          data: Json
+          id?: string
+          is_visible?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          annotation_type?: string
+          created_at?: string | null
+          data?: Json
+          id?: string
+          is_visible?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       city_power_analysis: {
         Row: {
           analysis_date: string
@@ -2783,6 +2813,56 @@ export type Database = {
           uptime_percentage?: number | null
         }
         Relationships: []
+      }
+      datacenter_notification_settings: {
+        Row: {
+          channel: string
+          created_at: string | null
+          delay_minutes: number | null
+          destination: string | null
+          id: string
+          is_active: boolean | null
+          notify_on_resume: boolean | null
+          notify_on_shutdown: boolean | null
+          notify_on_warning: boolean | null
+          rule_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          delay_minutes?: number | null
+          destination?: string | null
+          id?: string
+          is_active?: boolean | null
+          notify_on_resume?: boolean | null
+          notify_on_shutdown?: boolean | null
+          notify_on_warning?: boolean | null
+          rule_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          delay_minutes?: number | null
+          destination?: string | null
+          id?: string
+          is_active?: boolean | null
+          notify_on_resume?: boolean | null
+          notify_on_shutdown?: boolean | null
+          notify_on_warning?: boolean | null
+          rule_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "datacenter_notification_settings_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "datacenter_shutdown_rules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       datacenter_shutdown_rules: {
         Row: {
@@ -4125,6 +4205,7 @@ export type Database = {
           pdu_id: string
           power_factor: number | null
           power_kw: number
+          temperature_celsius: number | null
           timestamp: string | null
           voltage: number | null
         }
@@ -4137,6 +4218,7 @@ export type Database = {
           pdu_id: string
           power_factor?: number | null
           power_kw: number
+          temperature_celsius?: number | null
           timestamp?: string | null
           voltage?: number | null
         }
@@ -4149,6 +4231,7 @@ export type Database = {
           pdu_id?: string
           power_factor?: number | null
           power_kw?: number
+          temperature_celsius?: number | null
           timestamp?: string | null
           voltage?: number | null
         }
