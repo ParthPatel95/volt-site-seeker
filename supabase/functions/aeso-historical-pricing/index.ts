@@ -19,8 +19,9 @@ interface HistoricalDataPoint {
   datetime: string;
   datetimeMPT?: string; // Mountain Prevailing Time - the reliable timestamp
   price: number;
-  forecast_begin: string;
-  forecast_end: string;
+  forecast_pool_price: number | null; // Forecast price - null if not available
+  rolling_30day_avg: number | null; // 30-day rolling average
+  ail_mw?: number; // Alberta Internal Load
 }
 
 interface WeatherData {
@@ -525,13 +526,20 @@ async function fetchAESOHistoricalData(startDate: Date, endDate: Date, apiKey: s
     }
     
     // Transform to internal format
-    const mappedData: HistoricalDataPoint[] = priceData.map((item: any) => ({
-      datetime: item.begin_datetime_utc,
-      datetimeMPT: item.begin_datetime_mpt, // Add Mountain Time for accurate filtering
-      price: parseFloat(item.pool_price || '0'),
-      forecast_begin: item.begin_datetime_utc || '',
-      forecast_end: item.forecast_pool_price || ''
-    }));
+    // Note: forecast_pool_price is only valid for future hours where pool_price is empty
+    const mappedData: HistoricalDataPoint[] = priceData.map((item: any) => {
+      const poolPrice = item.pool_price && item.pool_price !== '' ? parseFloat(item.pool_price) : null;
+      const forecastPrice = item.forecast_pool_price && item.forecast_pool_price !== '' ? parseFloat(item.forecast_pool_price) : null;
+      const rolling30dayAvg = item.rolling_30day_avg && item.rolling_30day_avg !== '' ? parseFloat(item.rolling_30day_avg) : null;
+      
+      return {
+        datetime: item.begin_datetime_utc,
+        datetimeMPT: item.begin_datetime_mpt, // Add Mountain Time for accurate filtering
+        price: poolPrice ?? 0, // Use 0 for missing pool price (future hours)
+        forecast_pool_price: forecastPrice, // Keep as separate field, null if not available
+        rolling_30day_avg: rolling30dayAvg
+      };
+    });
     
     // Enrich with AIL (load) data if date range allows
     const daysDiff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
