@@ -3,3 +3,7 @@ export { PDUDeviceManager } from './PDUDeviceManager';
 export { ShutdownRulesPanel } from './ShutdownRulesPanel';
 export { AutomationStatusPanel } from './AutomationStatusPanel';
 export { CostSavingsAnalytics } from './CostSavingsAnalytics';
+export { RealTimeAnalytics } from './RealTimeAnalytics';
+export { ShutdownTimeline } from './ShutdownTimeline';
+export { WhatIfAnalysis } from './WhatIfAnalysis';
+export { NotificationSettings } from './NotificationSettings';

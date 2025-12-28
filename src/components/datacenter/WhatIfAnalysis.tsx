@@ -15,21 +15,21 @@ import { cn } from '@/lib/utils';
 
 interface PDUDevice {
   id: string;
-  device_name: string;
-  location: string;
-  priority_group: number;
-  rated_capacity_kw: number;
+  name: string;
+  location: string | null;
+  priority_group: 'critical' | 'high' | 'medium' | 'low';
+  max_capacity_kw: number;
   current_load_kw: number;
-  status: string;
+  current_status: string;
 }
 
 interface ShutdownRule {
   id: string;
-  rule_name: string;
+  name: string;
   price_ceiling_cad: number;
-  soft_ceiling_cad?: number;
-  floor_price_cad?: number;
-  priority_groups_affected: number[];
+  soft_ceiling_cad?: number | null;
+  price_floor_cad?: number;
+  affected_priority_groups: string[];
   is_active: boolean;
 }
 
@@ -60,7 +60,7 @@ export function WhatIfAnalysis({ currentPrice, pdus, rules }: WhatIfAnalysisProp
       };
     }
 
-    const isBelowFloor = activeRule.floor_price_cad && simulatedPrice < activeRule.floor_price_cad;
+    const isBelowFloor = activeRule.price_floor_cad && simulatedPrice < activeRule.price_floor_cad;
     const isAboveSoftCeiling = activeRule.soft_ceiling_cad && simulatedPrice >= activeRule.soft_ceiling_cad;
     const isAboveHardCeiling = simulatedPrice >= activeRule.price_ceiling_cad;
 
@@ -72,16 +72,15 @@ export function WhatIfAnalysis({ currentPrice, pdus, rules }: WhatIfAnalysisProp
     } else if (isAboveHardCeiling) {
       decision = 'shutdown';
       affectedPDUs = pdus.filter(p => 
-        activeRule.priority_groups_affected.includes(p.priority_group) && 
-        p.status === 'online'
+        activeRule.affected_priority_groups.includes(p.priority_group) && 
+        p.current_status === 'online'
       );
     } else if (isAboveSoftCeiling) {
       decision = 'warning';
-      // Only highest priority groups affected at soft ceiling
-      const highestPriority = Math.max(...activeRule.priority_groups_affected);
+      // Only critical priority affected at soft ceiling
       affectedPDUs = pdus.filter(p => 
-        p.priority_group === highestPriority && 
-        p.status === 'online'
+        p.priority_group === 'critical' && 
+        p.current_status === 'online'
       );
     } else {
       decision = 'normal';
@@ -154,8 +153,8 @@ export function WhatIfAnalysis({ currentPrice, pdus, rules }: WhatIfAnalysisProp
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>$0</span>
-            {activeRule?.floor_price_cad && (
-              <span className="text-green-500">Floor: ${activeRule.floor_price_cad}</span>
+            {activeRule?.price_floor_cad && (
+              <span className="text-green-500">Floor: ${activeRule.price_floor_cad}</span>
             )}
             {activeRule?.soft_ceiling_cad && (
               <span className="text-yellow-500">Soft: ${activeRule.soft_ceiling_cad}</span>
@@ -236,8 +235,8 @@ export function WhatIfAnalysis({ currentPrice, pdus, rules }: WhatIfAnalysisProp
               {analysis.affectedPDUs.map(pdu => (
                 <div key={pdu.id} className="flex items-center justify-between p-2 rounded bg-muted/50 text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">P{pdu.priority_group}</Badge>
-                    <span>{pdu.device_name}</span>
+                    <Badge variant="outline" className="text-xs">{pdu.priority_group}</Badge>
+                    <span>{pdu.name}</span>
                   </div>
                   <span className="text-muted-foreground">{pdu.current_load_kw} kW</span>
                 </div>

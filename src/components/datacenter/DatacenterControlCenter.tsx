@@ -22,6 +22,8 @@ import { ShutdownRulesPanel } from './ShutdownRulesPanel';
 import { AutomationStatusPanel } from './AutomationStatusPanel';
 import { RealTimeAnalytics } from './RealTimeAnalytics';
 import { ShutdownTimeline } from './ShutdownTimeline';
+import { WhatIfAnalysis } from './WhatIfAnalysis';
+import { NotificationSettings } from './NotificationSettings';
 import { cn } from '@/lib/utils';
 
 interface DatacenterControlCenterProps {
@@ -273,14 +275,14 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="status" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             <span className="hidden sm:inline">Status</span>
           </TabsTrigger>
           <TabsTrigger value="pdus" className="flex items-center gap-2">
             <Server className="w-4 h-4" />
-            <span className="hidden sm:inline">PDU Devices</span>
+            <span className="hidden sm:inline">PDUs</span>
           </TabsTrigger>
           <TabsTrigger value="rules" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -290,13 +292,38 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Alerts</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="status" className="mt-6">
+        <TabsContent value="status" className="mt-6 space-y-6">
           <AutomationStatusPanel 
             latestDecision={latestDecision}
             analytics={analytics}
             onRefresh={handleRefreshAll}
+          />
+          <WhatIfAnalysis 
+            currentPrice={currentPrice}
+            pdus={pdus.map(p => ({
+              id: p.id,
+              name: p.name,
+              location: p.location,
+              priority_group: p.priority_group,
+              max_capacity_kw: p.max_capacity_kw,
+              current_load_kw: p.current_load_kw,
+              current_status: p.current_status
+            }))}
+            rules={rules.map(r => ({
+              id: r.id,
+              name: r.name,
+              price_ceiling_cad: r.price_ceiling_cad,
+              soft_ceiling_cad: r.soft_ceiling_cad,
+              price_floor_cad: r.price_floor_cad,
+              affected_priority_groups: r.affected_priority_groups,
+              is_active: r.is_active
+            }))}
           />
         </TabsContent>
 
@@ -311,6 +338,15 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
         <TabsContent value="analytics" className="mt-6 space-y-6">
           <RealTimeAnalytics analytics={analytics} onRefresh={(days) => fetchAnalytics(days)} />
           <ShutdownTimeline logs={analytics?.recent_logs || []} />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-6">
+          <NotificationSettings 
+            rules={rules.map(r => ({
+              id: r.id,
+              rule_name: r.name
+            }))}
+          />
         </TabsContent>
       </Tabs>
     </div>
