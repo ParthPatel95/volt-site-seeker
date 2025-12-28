@@ -480,6 +480,24 @@ export function TradingViewChart({
       });
   }, [chartData]);
 
+  // Aggregate data into OHLC candles for candlestick chart
+  const candleData = useMemo(() => {
+    const actualData = chartData
+      .filter(d => d.actual !== undefined)
+      .map(d => ({ timestamp: d.timestamp, actual: d.actual }));
+    
+    if (actualData.length < 2) return [];
+    
+    const candles = aggregateToCandles(actualData, interval === '4H' ? 4 : interval === '1D' ? 24 : interval === '1W' ? 168 : 1);
+    
+    // Add candleBody for bar height calculation
+    return candles.map(c => ({
+      ...c,
+      candleBody: Math.abs(c.close - c.open) || 1,
+      priceRange: c.high - c.low
+    }));
+  }, [chartData, interval]);
+
   // Find NOW index for jumping to current time
   const nowIndex = useMemo(() => {
     const now = new Date();
@@ -1121,7 +1139,7 @@ export function TradingViewChart({
               )}>
               <ResponsiveContainer width="100%" height={isFullscreen ? "100%" : chartHeight}>
                 <ComposedChart 
-                  data={visibleData}
+                  data={chartType === 'candlestick' ? candleData : visibleData}
                   margin={{ top: 10, right: 60, left: 0, bottom: 0 }}
                   onMouseMove={handleChartMouseMove}
                   onMouseLeave={handleChartMouseLeave}
@@ -1384,25 +1402,64 @@ export function TradingViewChart({
                     />
                   )}
 
-                  {/* Candlestick bars (for candlestick chart mode) */}
-                  {chartType === 'candlestick' && (
+                  {/* True OHLC Candlestick rendering */}
+                  {chartType === 'candlestick' && candleData.length > 0 && (
                     <Bar
-                      dataKey="actual"
-                      fill="hsl(var(--primary))"
+                      dataKey="candleBody"
+                      fill="transparent"
                       name="OHLC"
                       isAnimationActive={false}
-                    >
-                      {visibleData.map((entry, index) => {
-                        // Simple bar coloring based on price movement
-                        const prevEntry = visibleData[index - 1];
-                        const isUp = !prevEntry || (entry.actual && prevEntry.actual && entry.actual >= prevEntry.actual);
+                      shape={(props: any) => {
+                        const { x, width, payload } = props;
+                        if (!payload?.open) return null;
+                        
+                        const { open, high, low, close } = payload;
+                        const isUp = close >= open;
+                        const color = isUp ? '#10b981' : '#ef4444';
+                        
+                        // Get Y scale from chart
+                        const yScale = props.yAxis?.scale || ((v: number) => 200 - v);
+                        const openY = yScale(open);
+                        const closeY = yScale(close);
+                        const highY = yScale(high);
+                        const lowY = yScale(low);
+                        
+                        const bodyTop = Math.min(openY, closeY);
+                        const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
+                        const wickX = x + width / 2;
+                        const candleWidth = Math.max(width - 4, 4);
+                        
                         return (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={isUp ? '#10b981' : '#ef4444'}
-                          />
+                          <g>
+                            {/* Wick line (high to low) */}
+                            <line
+                              x1={wickX}
+                              y1={highY}
+                              x2={wickX}
+                              y2={lowY}
+                              stroke={color}
+                              strokeWidth={1}
+                            />
+                            {/* Body rectangle (open to close) */}
+                            <rect
+                              x={x + (width - candleWidth) / 2}
+                              y={bodyTop}
+                              width={candleWidth}
+                              height={bodyHeight}
+                              fill={isUp ? color : color}
+                              stroke={color}
+                              strokeWidth={1}
+                            />
+                          </g>
                         );
-                      })}
+                      }}
+                    >
+                      {candleData.map((entry, index) => (
+                        <Cell
+                          key={`candle-${index}`}
+                          fill={entry.close >= entry.open ? '#10b981' : '#ef4444'}
+                        />
+                      ))}
                     </Bar>
                   )}
 
