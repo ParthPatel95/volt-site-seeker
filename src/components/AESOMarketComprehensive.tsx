@@ -38,6 +38,7 @@ import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
 import { useAESOEnsemble } from '@/hooks/useAESOEnsemble';
+import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
 import { AESOMarketAnalyticsPanel } from './intelligence/AESOMarketAnalyticsPanel';
 import { AESOForecastPanel } from './intelligence/AESOForecastPanel';
 import { AESOOutagesPanel } from './intelligence/AESOOutagesPanel';
@@ -114,6 +115,9 @@ export function AESOMarketComprehensive() {
 
   const { exchangeRate, convertToUSD } = useExchangeRate();
 
+  // Datacenter automation hook for price ceiling data
+  const { rules: datacenterRules } = useDatacenterAutomation();
+
   const loading = basicLoading || enhancedLoading || marketLoading;
 
   // Auto-load AI ensemble predictions on mount
@@ -179,6 +183,18 @@ export function AESOMarketComprehensive() {
   };
 
   const uptimeData = calculate95UptimeAverage(pricing?.average_price || 0, currentPrice);
+  
+  // Calculate price ceilings from active datacenter rules for TradingViewChart
+  const priceCeilings = React.useMemo(() => {
+    const activeRule = datacenterRules.find(r => r.is_active);
+    if (!activeRule) return undefined;
+    return {
+      hardCeiling: activeRule.price_ceiling_cad,
+      softCeiling: activeRule.soft_ceiling_cad || activeRule.price_ceiling_cad * 0.85,
+      floor: activeRule.price_floor_cad,
+      ruleName: activeRule.name
+    };
+  }, [datacenterRules]);
   
   // Helper to determine data source badge
   const getDataSourceBadge = (isLive: boolean, dataExists: boolean) => {
@@ -327,6 +343,7 @@ export function AESOMarketComprehensive() {
                 // Calculate confidence from prediction std: lower std = higher confidence
                 confidenceScore: p.prediction_std ? Math.max(0.5, Math.min(0.95, 1 - (p.prediction_std / p.ensemble_price) * 2)) : 0.85
               })) || []}
+              priceCeilings={priceCeilings}
               onRefresh={handleRefreshAll}
               onGeneratePredictions={() => generateEnsemblePredictions(24)}
             />

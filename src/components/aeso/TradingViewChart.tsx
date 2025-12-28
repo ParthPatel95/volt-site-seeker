@@ -1370,7 +1370,7 @@ export function TradingViewChart({
                   )}
 
                   {/* Layer 6: Main Lines (overlaid) */}
-                  {/* Actual Price Line - Solid */}
+                  {/* Actual Price Line - Solid (for line chart mode) */}
                   {chartType === 'line' && (
                     <Line 
                       type="monotone" 
@@ -1382,6 +1382,28 @@ export function TradingViewChart({
                       connectNulls={false}
                       name="Actual Price"
                     />
+                  )}
+
+                  {/* Candlestick bars (for candlestick chart mode) */}
+                  {chartType === 'candlestick' && (
+                    <Bar
+                      dataKey="actual"
+                      fill="hsl(var(--primary))"
+                      name="OHLC"
+                      isAnimationActive={false}
+                    >
+                      {visibleData.map((entry, index) => {
+                        // Simple bar coloring based on price movement
+                        const prevEntry = visibleData[index - 1];
+                        const isUp = !prevEntry || (entry.actual && prevEntry.actual && entry.actual >= prevEntry.actual);
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={isUp ? '#10b981' : '#ef4444'}
+                          />
+                        );
+                      })}
+                    </Bar>
                   )}
 
                   {/* AESO Forecast Line - Dashed */}
