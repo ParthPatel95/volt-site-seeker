@@ -214,7 +214,7 @@ export function NotificationSettings({ rules }: NotificationSettingsProps) {
         <div className="p-4 rounded-lg border border-dashed border-border space-y-4">
           <p className="text-sm font-medium">Add New Notification</p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>Rule</Label>
               <Select 
@@ -225,11 +225,17 @@ export function NotificationSettings({ rules }: NotificationSettingsProps) {
                   <SelectValue placeholder="Select rule" />
                 </SelectTrigger>
                 <SelectContent>
-                  {rules.map(rule => (
-                    <SelectItem key={rule.id} value={rule.id}>
-                      {rule.rule_name}
+                  {rules.length === 0 ? (
+                    <SelectItem value="_empty" disabled>
+                      No rules configured yet
                     </SelectItem>
-                  ))}
+                  ) : (
+                    rules.map(rule => (
+                      <SelectItem key={rule.id} value={rule.id}>
+                        {rule.rule_name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -285,32 +291,40 @@ export function NotificationSettings({ rules }: NotificationSettingsProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={newSetting.notify_on_warning}
-                onCheckedChange={(v) => setNewSetting(prev => ({ ...prev, notify_on_warning: v }))}
-              />
-              <Label className="text-sm">Warning</Label>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={newSetting.notify_on_warning}
+                  onCheckedChange={(v) => setNewSetting(prev => ({ ...prev, notify_on_warning: v }))}
+                />
+                <Label className="text-sm whitespace-nowrap">Warning</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={newSetting.notify_on_shutdown}
+                  onCheckedChange={(v) => setNewSetting(prev => ({ ...prev, notify_on_shutdown: v }))}
+                />
+                <Label className="text-sm whitespace-nowrap">Shutdown</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={newSetting.notify_on_resume}
+                  onCheckedChange={(v) => setNewSetting(prev => ({ ...prev, notify_on_resume: v }))}
+                />
+                <Label className="text-sm whitespace-nowrap">Resume</Label>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={newSetting.notify_on_shutdown}
-                onCheckedChange={(v) => setNewSetting(prev => ({ ...prev, notify_on_shutdown: v }))}
-              />
-              <Label className="text-sm">Shutdown</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={newSetting.notify_on_resume}
-                onCheckedChange={(v) => setNewSetting(prev => ({ ...prev, notify_on_resume: v }))}
-              />
-              <Label className="text-sm">Resume</Label>
-            </div>
-            <Button onClick={handleAddSetting} disabled={saving} className="ml-auto">
+            <Button onClick={handleAddSetting} disabled={saving || rules.length === 0} className="ml-auto">
               <Plus className="w-4 h-4 mr-2" />
               Add Notification
             </Button>
           </div>
+          
+          {rules.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Create a shutdown rule first in the "Rules" tab before configuring notifications.
+            </p>
+          )}
         </div>
 
         {/* Existing Settings */}
