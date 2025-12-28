@@ -20,7 +20,8 @@ import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
 import { PDUDeviceManager } from './PDUDeviceManager';
 import { ShutdownRulesPanel } from './ShutdownRulesPanel';
 import { AutomationStatusPanel } from './AutomationStatusPanel';
-import { CostSavingsAnalytics } from './CostSavingsAnalytics';
+import { RealTimeAnalytics } from './RealTimeAnalytics';
+import { ShutdownTimeline } from './ShutdownTimeline';
 import { cn } from '@/lib/utils';
 
 interface DatacenterControlCenterProps {
@@ -307,8 +308,9 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
           <ShutdownRulesPanel />
         </TabsContent>
 
-        <TabsContent value="analytics" className="mt-6">
-          <CostSavingsAnalytics analytics={analytics} onRefresh={() => fetchAnalytics()} />
+        <TabsContent value="analytics" className="mt-6 space-y-6">
+          <RealTimeAnalytics analytics={analytics} onRefresh={(days) => fetchAnalytics(days)} />
+          <ShutdownTimeline logs={analytics?.recent_logs || []} />
         </TabsContent>
       </Tabs>
     </div>

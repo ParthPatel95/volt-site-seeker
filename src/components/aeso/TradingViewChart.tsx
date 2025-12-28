@@ -34,6 +34,7 @@ import {
   Tooltip, 
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
   Area,
   Cell,
   Brush
@@ -51,18 +52,22 @@ import {
   Loader2,
   ChevronDown,
   X,
-  CandlestickChart,
+  CandlestickChart as CandlestickIcon,
   LineChart,
   Bug,
   ZoomIn,
   ZoomOut,
   Move,
-  Target
+  Target,
+  AlertTriangle,
+  Server
 } from 'lucide-react';
 import { format, subHours, addHours, parseISO, isAfter, isBefore } from 'date-fns';
 import { toast } from 'sonner';
 import { usePriceAlerts } from '@/hooks/usePriceAlerts';
 import { cn } from '@/lib/utils';
+import { RSIPanel, MACDPanel } from './indicators';
+import { aggregateToCandles } from './CandlestickRenderer';
 
 interface PriceDataPoint {
   timestamp?: string;
@@ -80,18 +85,27 @@ interface AIPrediction {
   confidenceScore?: number;
 }
 
+interface PriceCeiling {
+  hardCeiling: number;
+  softCeiling: number;
+  floor: number;
+  ruleName: string;
+}
+
 interface TradingViewChartProps {
   data: PriceDataPoint[];
   currentPrice: number;
   loading?: boolean;
   aiLoading?: boolean;
   aiPredictions?: AIPrediction[];
+  priceCeilings?: PriceCeiling;
   onRefresh?: () => void;
   onGeneratePredictions?: () => void;
 }
 
 type TimeRange = '1D' | '5D' | '1M' | '3M';
 type ChartType = 'line' | 'candlestick';
+type IndicatorPanel = 'none' | 'rsi' | 'macd';
 
 // Indicator definitions
 const AVAILABLE_INDICATORS = [
@@ -181,6 +195,7 @@ export function TradingViewChart({
   loading, 
   aiLoading = false,
   aiPredictions = [],
+  priceCeilings,
   onRefresh,
   onGeneratePredictions
 }: TradingViewChartProps) {
@@ -188,6 +203,7 @@ export function TradingViewChart({
   const [interval, setInterval] = useState('1H');
   const [chartType, setChartType] = useState<ChartType>('line');
   const [showDebug, setShowDebug] = useState(false);
+  const [indicatorPanel, setIndicatorPanel] = useState<IndicatorPanel>('none');
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(() => {
     const saved = localStorage.getItem('chart-indicators');
     return saved ? JSON.parse(saved) : [];
@@ -832,8 +848,9 @@ export function TradingViewChart({
               size="sm" 
               className="h-7 px-2 text-xs rounded-none"
               onClick={() => setChartType('candlestick')}
+              title="Candlestick Chart"
             >
-              <CandlestickChart className="w-3.5 h-3.5" />
+              <CandlestickIcon className="w-3.5 h-3.5" />
             </Button>
           </div>
 
@@ -883,6 +900,55 @@ export function TradingViewChart({
                       Clear All
                     </Button>
                   )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Oscillator Panel Selector */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                  <Activity className="w-3.5 h-3.5 mr-1" />
+                  Oscillators
+                  {indicatorPanel !== 'none' && (
+                    <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-[10px]">
+                      1
+                    </Badge>
+                  )}
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-3" align="start">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Oscillator Panels</p>
+                  <div className="space-y-1">
+                    <Button
+                      variant={indicatorPanel === 'none' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => setIndicatorPanel('none')}
+                    >
+                      None
+                    </Button>
+                    <Button
+                      variant={indicatorPanel === 'rsi' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => setIndicatorPanel('rsi')}
+                    >
+                      <div className="w-3 h-0.5 rounded bg-purple-500 mr-2" />
+                      RSI (14)
+                    </Button>
+                    <Button
+                      variant={indicatorPanel === 'macd' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => setIndicatorPanel('macd')}
+                    >
+                      <div className="w-3 h-0.5 rounded bg-blue-500 mr-2" />
+                      MACD
+                    </Button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -1124,6 +1190,51 @@ export function TradingViewChart({
                       }}
                     />
                   ))}
+
+                  {/* Price Ceiling Lines from Datacenter Rules */}
+                  {priceCeilings && (
+                    <>
+                      {/* Hard Ceiling - Red danger zone */}
+                      <ReferenceLine 
+                        y={priceCeilings.hardCeiling}
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        label={{
+                          value: `⚠ Hard Ceiling $${priceCeilings.hardCeiling}`,
+                          position: 'left',
+                          fill: '#ef4444',
+                          fontSize: 9,
+                          fontWeight: 'bold'
+                        }}
+                      />
+                      {/* Soft Ceiling - Yellow warning */}
+                      <ReferenceLine 
+                        y={priceCeilings.softCeiling}
+                        stroke="#f59e0b"
+                        strokeDasharray="6 3"
+                        strokeWidth={1.5}
+                        label={{
+                          value: `Soft Ceiling $${priceCeilings.softCeiling}`,
+                          position: 'left',
+                          fill: '#f59e0b',
+                          fontSize: 9
+                        }}
+                      />
+                      {/* Floor - Green */}
+                      <ReferenceLine 
+                        y={priceCeilings.floor}
+                        stroke="#10b981"
+                        strokeDasharray="4 4"
+                        strokeWidth={1}
+                        label={{
+                          value: `Floor $${priceCeilings.floor}`,
+                          position: 'left',
+                          fill: '#10b981',
+                          fontSize: 9
+                        }}
+                      />
+                    </>
+                  )}
                   
                   {/* NOW Reference Line - Animated */}
                   <ReferenceLine 
@@ -1339,6 +1450,16 @@ export function TradingViewChart({
             </>
           )}
         </div>
+
+        {/* RSI Panel */}
+        {indicatorPanel === 'rsi' && !loading && chartData.length > 0 && (
+          <RSIPanel data={chartData} period={14} height={80} />
+        )}
+
+        {/* MACD Panel */}
+        {indicatorPanel === 'macd' && !loading && chartData.length > 0 && (
+          <MACDPanel data={chartData} height={100} />
+        )}
 
         {/* Volume Chart */}
         {volumeData.length > 0 && !loading && (
