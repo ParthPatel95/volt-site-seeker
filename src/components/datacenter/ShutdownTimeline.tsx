@@ -14,19 +14,10 @@ import {
 import { Calendar, Clock, Power, TrendingDown } from 'lucide-react';
 import { format, subDays, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-interface AutomationLogEntry {
-  id: string;
-  action_type: string;
-  trigger_price: number;
-  load_affected_kw: number;
-  status: string;
-  created_at: string;
-  executed_at?: string;
-}
+import { AutomationLog } from '@/hooks/useDatacenterAutomation';
 
 interface ShutdownTimelineProps {
-  logs: AutomationLogEntry[];
+  logs: AutomationLog[];
   periodDays?: number;
 }
 
@@ -41,7 +32,7 @@ export function ShutdownTimeline({ logs, periodDays = 7 }: ShutdownTimelineProps
       const dayLabel = format(date, 'EEE');
       
       const dayLogs = logs.filter(log => {
-        const logDate = format(new Date(log.created_at), 'yyyy-MM-dd');
+        const logDate = format(new Date(log.executed_at), 'yyyy-MM-dd');
         return logDate === dateStr;
       });
       
@@ -55,7 +46,7 @@ export function ShutdownTimeline({ logs, periodDays = 7 }: ShutdownTimelineProps
         const resumeLog = dayLogs.find(l => 
           l.action_type === 'resume' && 
           l.executed_at && 
-          new Date(l.executed_at) > new Date(shutdown.executed_at!)
+          new Date(l.executed_at) > new Date(shutdown.executed_at)
         );
         if (resumeLog && resumeLog.executed_at && shutdown.executed_at) {
           totalDuration += differenceInMinutes(
@@ -82,7 +73,7 @@ export function ShutdownTimeline({ logs, periodDays = 7 }: ShutdownTimelineProps
       .slice(0, 10)
       .map(log => ({
         ...log,
-        formattedTime: format(new Date(log.created_at), 'MMM d, HH:mm'),
+        formattedTime: format(new Date(log.executed_at), 'MMM d, HH:mm'),
         isShutdown: log.action_type === 'shutdown'
       }));
   }, [logs]);
@@ -180,11 +171,11 @@ export function ShutdownTimeline({ logs, periodDays = 7 }: ShutdownTimelineProps
                           {event.action_type.replace('_', ' ')}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          at CA${event.trigger_price.toFixed(2)}
+                          at CA${event.trigger_price?.toFixed(2) ?? 'N/A'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{event.load_affected_kw} kW</span>
+                        <span>{event.total_load_affected_kw} kW</span>
                         <Clock className="w-3 h-3" />
                         <span>{event.formattedTime}</span>
                       </div>
