@@ -36,38 +36,7 @@ interface AESOGenerationMix {
   source?: string;
 }
 
-// Static fallback data when API is unavailable
-const FALLBACK_PRICING: AESOPricing = {
-  current_price: 55.00,
-  average_price: 52.00,
-  peak_price: 95.00,
-  off_peak_price: 35.00,
-  market_conditions: 'fallback',
-  timestamp: new Date().toISOString(),
-  source: 'static_fallback'
-};
-
-const FALLBACK_LOAD: AESOLoadData = {
-  current_demand_mw: 10500,
-  peak_forecast_mw: 12000,
-  reserve_margin: 12.5,
-  capacity_margin: 18.0,
-  forecast_date: new Date().toISOString(),
-  source: 'static_fallback'
-};
-
-const FALLBACK_GENERATION: AESOGenerationMix = {
-  total_generation_mw: 11000,
-  natural_gas_mw: 6050,
-  wind_mw: 2750,
-  hydro_mw: 440,
-  solar_mw: 880,
-  coal_mw: 0,
-  other_mw: 880,
-  renewable_percentage: 37,
-  timestamp: new Date().toISOString(),
-  source: 'static_fallback'
-};
+// No static fallback data - only real AESO data is used
 
 const CACHE_KEY = 'aeso_data_cache';
 
@@ -122,8 +91,8 @@ const fetchAESOData = async () => {
   }
 };
 
-const synthesizePricing = (aesoData: any): AESOPricing => {
-  if (!aesoData) return FALLBACK_PRICING;
+const synthesizePricing = (aesoData: any): AESOPricing | null => {
+  if (!aesoData) return null;
   
   const p = aesoData.pricing;
   if (p && typeof p.current_price === 'number' && Number.isFinite(p.current_price)) {
@@ -187,14 +156,14 @@ export const useAESOData = () => {
   };
 
   return {
-    pricing: synthesizePricing(aesoData) || FALLBACK_PRICING,
-    loadData: (aesoData?.loadData as AESOLoadData) || FALLBACK_LOAD,
-    generationMix: (aesoData?.generationMix as AESOGenerationMix) || FALLBACK_GENERATION,
+    pricing: synthesizePricing(aesoData),
+    loadData: aesoData?.loadData as AESOLoadData | null,
+    generationMix: aesoData?.generationMix as AESOGenerationMix | null,
     loading: isLoading,
     isFetching,
-    hasData: hasData || isFallback,
+    hasData,
     isFallback,
-    connectionStatus: (data ? 'connected' : (cachedData ? 'cached' : 'fallback')) as 'connected' | 'cached' | 'fallback',
+    connectionStatus: (data ? 'connected' : (cachedData ? 'cached' : 'disconnected')) as 'connected' | 'cached' | 'disconnected',
     error: error?.message || null,
     refetch
   };
