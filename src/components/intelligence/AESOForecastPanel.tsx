@@ -2,8 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wind, Sun, Zap, TrendingUp, AlertTriangle, Info } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Wind, Sun, Zap, TrendingUp, Info } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AESOForecastPanelProps {
@@ -21,10 +21,10 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-6 bg-muted rounded w-3/4"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-32 bg-muted rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -32,142 +32,111 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
     );
   }
 
-  // Generate forecast data if not available
-  const getForecastData = () => {
-    if (hasRealData) {
-      return windSolarForecast.forecasts.slice(0, 24).map((forecast: any) => ({
-        time: new Date(forecast.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        wind: forecast.wind_forecast_mw,
-        solar: forecast.solar_forecast_mw,
-        total: forecast.total_renewable_forecast_mw
-      }));
-    }
+  // NO FAKE DATA - Only show real data or "No Data" message
+  if (!hasRealData) {
+    return (
+      <div className="space-y-6">
+        <Alert className="border-muted bg-muted/50">
+          <Info className="h-4 w-4 text-muted-foreground" />
+          <AlertDescription className="text-muted-foreground">
+            <span className="font-medium">No Wind/Solar Data Available</span> — Real-time renewable generation data 
+            is currently unavailable. Please check back later or verify database connectivity.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
-    // Generate sample forecast data (simulated)
-    const data = [];
-    const baseWind = 2500;
-    const baseSolar = 800;
-    
-    for (let i = 0; i < 24; i++) {
-      const hour = new Date(Date.now() + i * 60 * 60 * 1000).getHours();
-      const windVariation = Math.sin(i * 0.3) * 800 + Math.random() * 400;
-      const solarVariation = hour >= 6 && hour <= 18 
-        ? Math.sin((hour - 6) * Math.PI / 12) * 600 + Math.random() * 200
-        : Math.random() * 50;
-      
-      const wind = Math.max(0, baseWind + windVariation);
-      const solar = Math.max(0, baseSolar + solarVariation);
-      
-      data.push({
-        time: new Date(Date.now() + i * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        wind: Math.round(wind),
-        solar: Math.round(solar),
-        total: Math.round(wind + solar)
-      });
-    }
-    return data;
-  };
+  // Use ONLY real data - no fallback generation
+  const forecastData = windSolarForecast.forecasts.slice(0, 24).map((forecast: any) => ({
+    time: new Date(forecast.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    wind: forecast.wind_forecast_mw,
+    solar: forecast.solar_forecast_mw,
+    total: forecast.total_renewable_forecast_mw
+  }));
 
-  const forecastData = getForecastData();
-  const currentData = forecastData[0] || { wind: 0, solar: 0, total: 0 };
-  const totalForecasts = windSolarForecast?.total_forecasts || forecastData.length;
+  const currentData = forecastData[forecastData.length - 1] || { wind: 0, solar: 0, total: 0 };
+  const totalForecasts = windSolarForecast.total_forecasts;
 
-  // Calculate statistics
-  const avgWind = Math.round(forecastData.reduce((sum, item) => sum + item.wind, 0) / forecastData.length);
-  const avgSolar = Math.round(forecastData.reduce((sum, item) => sum + item.solar, 0) / forecastData.length);
-  const peakRenewable = Math.max(...forecastData.map(item => item.total));
-  const renewablePercentage = Math.round((currentData.total / 12000) * 100); // Assuming 12GW total capacity
+  // Calculate statistics from REAL data
+  const avgWind = Math.round(forecastData.reduce((sum: number, item: any) => sum + item.wind, 0) / forecastData.length);
+  const avgSolar = Math.round(forecastData.reduce((sum: number, item: any) => sum + item.solar, 0) / forecastData.length);
+  const peakRenewable = Math.max(...forecastData.map((item: any) => item.total));
+  const renewablePercentage = Math.round((currentData.total / 12000) * 100);
 
   return (
     <div className="space-y-6">
-      {/* Simulated Data Warning */}
-      {!hasRealData && (
-        <Alert className="border-amber-200 bg-amber-50">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            <span className="font-medium">Simulated Data</span> — Wind/solar generation forecasts require AESO premium API subscription. 
-            The data shown below is estimated based on typical patterns.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Current Renewable Generation Overview */}
+      {/* Current Renewable Generation Overview - REAL DATA */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 dark:from-green-950 dark:to-emerald-950 dark:border-green-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Wind Generation</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">Wind Generation</CardTitle>
             <div className="flex items-center gap-1">
-              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Badge className="text-xs bg-green-100 text-green-800 border-green-300">Live</Badge>
               <Wind className="h-4 w-4 text-green-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-800">{currentData.wind} MW</div>
-            <p className="text-xs text-green-600">24h avg: {avgWind} MW</p>
+            <div className="text-2xl font-bold text-green-800 dark:text-green-200">{currentData.wind} MW</div>
+            <p className="text-xs text-green-600 dark:text-green-400">24h avg: {avgWind} MW</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
+        <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 dark:from-yellow-950 dark:to-orange-950 dark:border-yellow-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-700">Solar Generation</CardTitle>
+            <CardTitle className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Solar Generation</CardTitle>
             <div className="flex items-center gap-1">
-              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Badge className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">Live</Badge>
               <Sun className="h-4 w-4 text-yellow-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-800">{currentData.solar} MW</div>
-            <p className="text-xs text-yellow-600">24h avg: {avgSolar} MW</p>
+            <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{currentData.solar} MW</div>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400">24h avg: {avgSolar} MW</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 dark:from-blue-950 dark:to-indigo-950 dark:border-blue-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Total Renewable</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Renewable</CardTitle>
             <div className="flex items-center gap-1">
-              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-300">Live</Badge>
               <Zap className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-800">{currentData.total} MW</div>
-            <p className="text-xs text-blue-600">Peak: {peakRenewable} MW</p>
+            <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">{currentData.total} MW</div>
+            <p className="text-xs text-blue-600 dark:text-blue-400">Peak: {peakRenewable} MW</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 dark:from-purple-950 dark:to-violet-950 dark:border-purple-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700">Renewable Mix</CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">Renewable Mix</CardTitle>
             <div className="flex items-center gap-1">
-              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Badge className="text-xs bg-purple-100 text-purple-800 border-purple-300">Live</Badge>
               <TrendingUp className="h-4 w-4 text-purple-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-800">{renewablePercentage}%</div>
-            <p className="text-xs text-purple-600">of total capacity</p>
+            <div className="text-2xl font-bold text-purple-800 dark:text-purple-200">{renewablePercentage}%</div>
+            <p className="text-xs text-purple-600 dark:text-purple-400">of total capacity</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Renewable Generation Forecast Chart */}
+      {/* Renewable Generation Chart - REAL DATA ONLY */}
       <Card className="col-span-full">
         <CardHeader>
           <CardTitle className="flex items-center flex-wrap gap-2">
             <Wind className="w-5 h-5 text-green-600" />
-            24-Hour Renewable Generation Forecast
+            24-Hour Renewable Generation
             <div className="ml-auto flex items-center gap-2">
-              {hasRealData ? (
-                <Badge className="bg-green-100 text-green-800 border-green-300">
-                  Live Data
-                </Badge>
-              ) : (
-                <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-                  Simulated
-                </Badge>
-              )}
+              <Badge className="bg-green-100 text-green-800 border-green-300">
+                Live Data
+              </Badge>
               <Badge variant="outline">
-                {totalForecasts} forecasts
+                {totalForecasts} records
               </Badge>
             </div>
           </CardTitle>
@@ -208,13 +177,13 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
         </CardContent>
       </Card>
 
-      {/* Forecast Analysis */}
+      {/* Real Data Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-              Forecast Insights
+              Generation Insights
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -248,22 +217,22 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="p-3 bg-green-50 rounded-lg">
-                <h4 className="font-semibold text-sm text-green-800">High Renewable Periods</h4>
-                <p className="text-sm text-green-700">
-                  Expected price suppression during peak wind/solar hours
+              <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                <h4 className="font-semibold text-sm text-green-800 dark:text-green-200">High Renewable Periods</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Price suppression during peak wind/solar generation
                 </p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold text-sm text-blue-800">Grid Balance</h4>
-                <p className="text-sm text-blue-700">
-                  Monitoring for potential curtailment or ramping needs
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <h4 className="font-semibold text-sm text-blue-800 dark:text-blue-200">Grid Balance</h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Monitoring curtailment and ramping needs
                 </p>
               </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <h4 className="font-semibold text-sm text-purple-800">Forecast Accuracy</h4>
-                <p className="text-sm text-purple-700">
-                  Updated every 15 minutes with weather data integration
+              <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                <h4 className="font-semibold text-sm text-purple-800 dark:text-purple-200">Data Source</h4>
+                <p className="text-sm text-purple-700 dark:text-purple-300">
+                  Real-time AESO generation data
                 </p>
               </div>
             </div>

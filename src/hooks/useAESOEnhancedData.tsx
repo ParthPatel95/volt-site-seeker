@@ -84,65 +84,45 @@ export interface AESOMarketAnalytics {
   timestamp: string;
 }
 
-// Generate fallback data functions
-const generateFallbackWindSolarForecast = (): AESOWindSolarForecast => {
-  const forecasts = [];
-  const baseWind = 2500;
-  const baseSolar = 800;
-  
-  for (let i = 0; i < 24; i++) {
-    const hour = new Date(Date.now() + i * 60 * 60 * 1000).getHours();
-    const windVariation = Math.sin(i * 0.3) * 800 + Math.random() * 400;
-    const solarVariation = hour >= 6 && hour <= 18 
-      ? Math.sin((hour - 6) * Math.PI / 12) * 600 + Math.random() * 200
-      : Math.random() * 50;
+// Fetch REAL wind/solar generation data from database
+const fetchRealWindSolarData = async (): Promise<AESOWindSolarForecast | null> => {
+  try {
+    console.log('[useAESOEnhancedData] Fetching REAL wind/solar from aeso_training_data...');
+    const { data, error } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp, generation_wind, generation_solar')
+      .order('timestamp', { ascending: false })
+      .limit(24);
     
-    const wind = Math.max(0, baseWind + windVariation);
-    const solar = Math.max(0, baseSolar + solarVariation);
+    if (error) {
+      console.error('[useAESOEnhancedData] Wind/solar query error:', error);
+      return null;
+    }
     
-    forecasts.push({
-      datetime: new Date(Date.now() + i * 60 * 60 * 1000).toISOString(),
-      wind_forecast_mw: Math.round(wind),
-      solar_forecast_mw: Math.round(solar),
-      total_renewable_forecast_mw: Math.round(wind + solar)
-    });
+    if (!data || data.length === 0) {
+      console.warn('[useAESOEnhancedData] No wind/solar data in database');
+      return null;
+    }
+    
+    // Reverse to chronological order and map to forecast format
+    const forecasts = data.reverse().map(row => ({
+      datetime: row.timestamp,
+      wind_forecast_mw: row.generation_wind || 0,
+      solar_forecast_mw: row.generation_solar || 0,
+      total_renewable_forecast_mw: (row.generation_wind || 0) + (row.generation_solar || 0)
+    }));
+    
+    console.log(`[useAESOEnhancedData] Got ${forecasts.length} real wind/solar records`);
+    
+    return {
+      forecasts,
+      timestamp: new Date().toISOString(),
+      total_forecasts: forecasts.length
+    };
+  } catch (err) {
+    console.error('[useAESOEnhancedData] Wind/solar fetch error:', err);
+    return null;
   }
-  
-  return {
-    forecasts,
-    timestamp: new Date().toISOString(),
-    total_forecasts: forecasts.length
-  };
-};
-
-const generateFallbackAssetOutages = (): AESOAssetOutages => {
-  const outageTypes = ['planned', 'forced', 'maintenance'];
-  const outages = [];
-  
-  for (let i = 0; i < 8; i++) {
-    const capacity = 50 + Math.floor(Math.random() * 400);
-    const startDate = new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000));
-    const duration = Math.floor(Math.random() * 72) + 1;
-    
-    outages.push({
-      asset_name: `ASSET_${String(i + 1).padStart(3, '0')}`,
-      outage_type: outageTypes[Math.floor(Math.random() * outageTypes.length)],
-      capacity_mw: capacity,
-      start_date: startDate.toISOString(),
-      end_date: new Date(startDate.getTime() + duration * 60 * 60 * 1000).toISOString(),
-      status: Math.random() > 0.3 ? 'active' : 'resolved',
-      reason: Math.random() > 0.5 ? 'Scheduled maintenance' : 'Equipment failure'
-    });
-  }
-  
-  const totalCapacity = outages.reduce((sum, outage) => sum + outage.capacity_mw, 0);
-  
-  return {
-    outages,
-    total_outages: outages.length,
-    total_outage_capacity_mw: totalCapacity,
-    timestamp: new Date().toISOString()
-  };
 };
 
 // Fetch real data from aeso_training_data table as fallback
@@ -208,57 +188,7 @@ const fetchFromDatabase = async (): Promise<AESOHistoricalPrices | null> => {
   }
 };
 
-const generateFallbackMarketAnalytics = (): AESOMarketAnalytics => {
-  const stressScore = 35 + Math.floor(Math.random() * 30);
-  const basePrice = 45.67;
-  const variation = Math.sin(Date.now() / 100000) * 10;
-  const nextHourPrice = basePrice + variation;
-  
-  return {
-    market_stress_score: stressScore,
-    price_prediction: {
-      next_hour_prediction: nextHourPrice,
-      confidence: 78 + Math.floor(Math.random() * 15),
-      trend_direction: variation > 0 ? 'increasing' : 'decreasing',
-      predicted_range: {
-        low: nextHourPrice - 5,
-        high: nextHourPrice + 8
-      }
-    },
-    capacity_gap_analysis: {
-      current_gap_mw: 850 + Math.floor(Math.random() * 400),
-      utilization_rate: 72 + Math.floor(Math.random() * 15),
-      status: 'adequate',
-      recommendation: 'normal_operations'
-    },
-    investment_opportunities: [
-      {
-        type: 'generation_expansion',
-        priority: 'high',
-        reason: 'Strong market demand and pricing conditions',
-        potential_return: 'high'
-      },
-      {
-        type: 'renewable_development',
-        priority: 'medium',
-        reason: 'Government incentives and growing demand',
-        potential_return: 'medium'
-      }
-    ],
-    risk_assessment: {
-      risks: [
-        { type: 'price_volatility', level: 'medium', impact: 'moderate' },
-        { type: 'supply_shortage', level: 'low', impact: 'minor' }
-      ],
-      overall_risk_level: 'medium'
-    },
-    market_timing_signals: [
-      { type: 'price_momentum', strength: 'medium', timeframe: 'near_term' },
-      { type: 'demand_growth', strength: 'strong', timeframe: 'medium_term' }
-    ],
-    timestamp: new Date().toISOString()
-  };
-};
+// No more fake market analytics - getMarketAnalytics calculates from real data only
 
 export function useAESOEnhancedData() {
   const [windSolarForecast, setWindSolarForecast] = useState<AESOWindSolarForecast | null>(null);
@@ -305,17 +235,19 @@ export function useAESOEnhancedData() {
   };
 
   const getWindSolarForecast = async () => {
-    // NOTE: AESO does not provide public wind/solar forecast API
-    // This feature requires a paid AESO subscription or alternate data source
-    // For now, return null to indicate no real data available
+    // Fetch REAL wind/solar generation data from aeso_training_data database
+    const data = await fetchRealWindSolarData();
+    if (data) {
+      setWindSolarForecast(data);
+      return data;
+    }
     setWindSolarForecast(null);
     return null;
   };
 
   const getAssetOutages = async () => {
     // NOTE: AESO asset outage data requires authentication and is not in public API
-    // This feature requires proper AESO market participant credentials
-    // For now, return null to indicate no real data available
+    // No fake data - return null when real data not available
     setAssetOutages(null);
     return null;
   };
