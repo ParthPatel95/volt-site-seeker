@@ -2,8 +2,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wind, Sun, Zap, TrendingUp } from 'lucide-react';
+import { Wind, Sun, Zap, TrendingUp, AlertTriangle, Info } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AESOForecastPanelProps {
   windSolarForecast: any;
@@ -11,6 +12,9 @@ interface AESOForecastPanelProps {
 }
 
 export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPanelProps) {
+  // Check if we have real data
+  const hasRealData = windSolarForecast?.forecasts?.length > 0;
+  
   if (loading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -30,8 +34,8 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
 
   // Generate forecast data if not available
   const getForecastData = () => {
-    if (windSolarForecast?.forecasts?.length > 0) {
-      return windSolarForecast.forecasts.slice(0, 24).map(forecast => ({
+    if (hasRealData) {
+      return windSolarForecast.forecasts.slice(0, 24).map((forecast: any) => ({
         time: new Date(forecast.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         wind: forecast.wind_forecast_mw,
         solar: forecast.solar_forecast_mw,
@@ -39,7 +43,7 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
       }));
     }
 
-    // Generate sample forecast data
+    // Generate sample forecast data (simulated)
     const data = [];
     const baseWind = 2500;
     const baseSolar = 800;
@@ -76,12 +80,26 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
 
   return (
     <div className="space-y-6">
+      {/* Simulated Data Warning */}
+      {!hasRealData && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            <span className="font-medium">Simulated Data</span> — Wind/solar generation forecasts require AESO premium API subscription. 
+            The data shown below is estimated based on typical patterns.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Current Renewable Generation Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-700">Wind Generation</CardTitle>
-            <Wind className="h-4 w-4 text-green-600" />
+            <div className="flex items-center gap-1">
+              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Wind className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-800">{currentData.wind} MW</div>
@@ -92,7 +110,10 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
         <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-yellow-700">Solar Generation</CardTitle>
-            <Sun className="h-4 w-4 text-yellow-600" />
+            <div className="flex items-center gap-1">
+              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Sun className="h-4 w-4 text-yellow-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-800">{currentData.solar} MW</div>
@@ -103,7 +124,10 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
         <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-700">Total Renewable</CardTitle>
-            <Zap className="h-4 w-4 text-blue-600" />
+            <div className="flex items-center gap-1">
+              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <Zap className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-800">{currentData.total} MW</div>
@@ -114,7 +138,10 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
         <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-purple-700">Renewable Mix</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+            <div className="flex items-center gap-1">
+              {!hasRealData && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Est.</Badge>}
+              <TrendingUp className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-800">{renewablePercentage}%</div>
@@ -126,12 +153,23 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
       {/* Renewable Generation Forecast Chart */}
       <Card className="col-span-full">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Wind className="w-5 h-5 mr-2 text-green-600" />
+          <CardTitle className="flex items-center flex-wrap gap-2">
+            <Wind className="w-5 h-5 text-green-600" />
             24-Hour Renewable Generation Forecast
-            <Badge variant="outline" className="ml-auto">
-              {totalForecasts} forecasts
-            </Badge>
+            <div className="ml-auto flex items-center gap-2">
+              {hasRealData ? (
+                <Badge className="bg-green-100 text-green-800 border-green-300">
+                  Live Data
+                </Badge>
+              ) : (
+                <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+                  Simulated
+                </Badge>
+              )}
+              <Badge variant="outline">
+                {totalForecasts} forecasts
+              </Badge>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>

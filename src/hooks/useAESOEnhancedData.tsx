@@ -334,7 +334,11 @@ export function useAESOEnhancedData() {
           prices: data.rawHourlyData.map((item: any) => ({
             datetime: item.datetime || item.ts,
             pool_price: item.price ?? item.pool_price,
-            forecast_pool_price: item.forecast_pool_price || item.price || item.pool_price,
+            // Only use forecast_pool_price if it's a valid number, don't fallback to pool_price
+            forecast_pool_price: typeof item.forecast_pool_price === 'number' && item.forecast_pool_price !== null 
+              ? item.forecast_pool_price 
+              : null,
+            rolling_30day_avg: item.rolling_30day_avg ?? null,
             ail_mw: item.ail_mw
           })),
           statistics: {
