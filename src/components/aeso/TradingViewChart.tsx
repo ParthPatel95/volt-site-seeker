@@ -498,6 +498,21 @@ export function TradingViewChart({
     }));
   }, [chartData, interval]);
 
+  // Calculate price domain for candlestick Y-axis scaling
+  const candlePriceDomain = useMemo(() => {
+    if (candleData.length === 0) return { min: 0, max: 100 };
+    
+    const allPrices = candleData.flatMap(c => [c.high, c.low, c.open, c.close]);
+    const min = Math.min(...allPrices);
+    const max = Math.max(...allPrices);
+    const padding = (max - min) * 0.1; // 10% padding
+    
+    return { 
+      min: Math.max(0, min - padding), 
+      max: max + padding 
+    };
+  }, [candleData]);
+
   // Find NOW index for jumping to current time
   const nowIndex = useMemo(() => {
     const now = new Date();
@@ -1186,7 +1201,7 @@ export function TradingViewChart({
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v) => `$${v}`}
-                    domain={['auto', 'auto']}
+                    domain={chartType === 'candlestick' ? [candlePriceDomain.min, candlePriceDomain.max] : ['auto', 'auto']}
                     width={55}
                   />
                   
@@ -1410,15 +1425,27 @@ export function TradingViewChart({
                       name="OHLC"
                       isAnimationActive={false}
                       shape={(props: any) => {
-                        const { x, width, payload } = props;
+                        const { x, width, payload, background } = props;
                         if (!payload?.open) return null;
                         
                         const { open, high, low, close } = payload;
                         const isUp = close >= open;
                         const color = isUp ? '#10b981' : '#ef4444';
                         
-                        // Get Y scale from chart
-                        const yScale = props.yAxis?.scale || ((v: number) => 200 - v);
+                        // Get chart area from background prop
+                        const chartTop = background?.y ?? 10;
+                        const chartHeight = background?.height ?? 300;
+                        
+                        // Create Y scale function based on price domain and chart dimensions
+                        const { min: priceMin, max: priceMax } = candlePriceDomain;
+                        const priceRange = priceMax - priceMin || 1;
+                        
+                        // Scale: converts price to Y pixel (higher prices = lower Y values)
+                        const yScale = (price: number) => {
+                          const normalized = (price - priceMin) / priceRange;
+                          return chartTop + chartHeight - (normalized * chartHeight);
+                        };
+                        
                         const openY = yScale(open);
                         const closeY = yScale(close);
                         const highY = yScale(high);
@@ -1446,7 +1473,7 @@ export function TradingViewChart({
                               y={bodyTop}
                               width={candleWidth}
                               height={bodyHeight}
-                              fill={isUp ? color : color}
+                              fill={color}
                               stroke={color}
                               strokeWidth={1}
                             />
