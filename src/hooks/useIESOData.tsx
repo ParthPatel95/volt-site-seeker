@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { UNIFIED_ENERGY_QUERY_KEY, fetchUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
+import { UNIFIED_ENERGY_QUERY_KEY, unifiedEnergyQueryFn } from '@/hooks/useUnifiedEnergyData';
 
 export interface IESOPricing {
   current_price: number;
@@ -36,7 +36,7 @@ export interface IESOGenerationMix {
 export const useIESOData = () => {
   const { data, isLoading, refetch: queryRefetch } = useQuery({
     queryKey: UNIFIED_ENERGY_QUERY_KEY,
-    queryFn: fetchUnifiedEnergyData,
+    queryFn: unifiedEnergyQueryFn,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,

@@ -7,7 +7,9 @@ const corsHeaders = {
 // ========== SERVER-SIDE RESPONSE CACHE ==========
 // Increased cache TTL to reduce API calls and prevent boot errors from cold starts
 let cachedResponse: { data: EnergyDataResponse; timestamp: number } | null = null;
-const CACHE_TTL_MS = 90 * 1000; // 90 seconds - short enough for fresh data, long enough to prevent cold start storms
+const CACHE_TTL_MS = 120 * 1000; // 120 seconds - increased to reduce cold starts
+const BOOT_TIME = Date.now();
+console.log(`[BOOT] Edge function initialized at ${new Date().toISOString()}`);
 
 interface EnergyDataResponse {
   success: boolean;
@@ -1920,8 +1922,23 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Check if this is a test request to verify ERCOT subscription
     const url = new URL(req.url);
+    
+    // ========== HEALTH CHECK ENDPOINT - RESPOND IMMEDIATELY ==========
+    // Used for pre-warming and keepalive to prevent cold start errors
+    if (url.searchParams.get('healthcheck') === 'true') {
+      const uptime = Math.round((Date.now() - BOOT_TIME) / 1000);
+      return new Response(JSON.stringify({ 
+        status: 'ok', 
+        cached: cachedResponse !== null,
+        cacheAge: cachedResponse ? Math.round((Date.now() - cachedResponse.timestamp) / 1000) : null,
+        uptimeSeconds: uptime
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Check if this is a test request to verify ERCOT subscription
     if (url.searchParams.get('test') === 'ercot-auth') {
       return await testERCOTSubscription();
     }
@@ -1995,7 +2012,7 @@ Deno.serve(async (req) => {
 
     // ========== UPDATE CACHE ==========
     cachedResponse = { data: response, timestamp: Date.now() };
-    console.log('✅ Response cached for 90 seconds');
+    console.log('✅ Response cached for 120 seconds');
 
     // Ensure response serialization doesn't fail
     try {

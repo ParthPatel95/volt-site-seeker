@@ -205,7 +205,17 @@ export function useAESOEnhancedData() {
   }>>([]);
   const { toast } = useToast();
   void toast;
-  const fetchAESOEnhancedData = async (dataType: string) => {
+  
+  // Helper to detect boot errors
+  const isBootError = (error: any): boolean => {
+    const message = error?.message || String(error);
+    return message.includes('503') || 
+           message.includes('BOOT_ERROR') ||
+           message.includes('failed to start') ||
+           message.includes('FunctionsFetchError');
+  };
+  
+  const fetchAESOEnhancedData = async (dataType: string, retryCount = 0): Promise<any> => {
     setLoading(true);
     try {
       console.log('Fetching AESO enhanced data:', dataType);
@@ -213,6 +223,13 @@ export function useAESOEnhancedData() {
       const { data, error } = await supabase.functions.invoke('energy-data-integration');
 
       if (error) {
+        // Retry on boot errors with exponential backoff
+        if (isBootError(error) && retryCount < 3) {
+          const delayMs = (retryCount + 1) * 2000;
+          console.log(`[AESO] Boot error, retry ${retryCount + 1}/3 in ${delayMs}ms...`);
+          await new Promise(r => setTimeout(r, delayMs));
+          return fetchAESOEnhancedData(dataType, retryCount + 1);
+        }
         console.error('AESO Enhanced API error:', error);
         throw error;
       }
@@ -226,6 +243,13 @@ export function useAESOEnhancedData() {
       return data?.aeso || data?.data || data;
 
     } catch (error: any) {
+      // Retry on boot errors
+      if (isBootError(error) && retryCount < 3) {
+        const delayMs = (retryCount + 1) * 2000;
+        console.log(`[AESO] Boot error in catch, retry ${retryCount + 1}/3...`);
+        await new Promise(r => setTimeout(r, delayMs));
+        return fetchAESOEnhancedData(dataType, retryCount + 1);
+      }
       console.error('Error fetching AESO enhanced data:', error);
       // Don't show toast for fallback data - just use fallback silently
       return null;
