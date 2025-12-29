@@ -56,6 +56,8 @@ import { PriceTicker } from './aeso/PriceTicker';
 import { MarketPulse } from './aeso/MarketPulse';
 import { HeroPriceCard } from './aeso/HeroPriceCard';
 import { LiveConnectionStatus } from './aeso/LiveConnectionStatus';
+import { MarketIntelligencePanel } from './aeso/MarketIntelligencePanel';
+import { QuickStatsBar } from './aeso/QuickStatsBar';
 import { DatacenterControlCenter } from './datacenter';
 
 export function AESOMarketComprehensive() {
@@ -329,6 +331,9 @@ export function AESOMarketComprehensive() {
               />
             </div>
 
+            {/* Quick Stats Bar - Real-time market metrics */}
+            <QuickStatsBar />
+
             {/* Trading View Chart - Full trading experience with ticker tape */}
             <TradingViewChart
               data={historicalPrices?.prices || []}
@@ -347,6 +352,9 @@ export function AESOMarketComprehensive() {
               onRefresh={handleRefreshAll}
               onGeneratePredictions={() => generateEnsemblePredictions(24)}
             />
+
+            {/* Market Intelligence Panel - Comprehensive market data */}
+            <MarketIntelligencePanel className="mt-4" />
 
             {/* System Load & Demand Card */}
             <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-card to-card/50">

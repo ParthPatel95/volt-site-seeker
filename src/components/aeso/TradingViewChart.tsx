@@ -395,6 +395,27 @@ export function TradingViewChart({
     
     const sorted = Array.from(pointMap.values()).sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
     
+    // BRIDGE FIX: Connect actual prices to AI predictions seamlessly
+    // Find the last point with actual data and first point with AI prediction (no actual)
+    let lastActualIndex = -1;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (sorted[i].actual !== undefined) {
+        lastActualIndex = i;
+        break;
+      }
+    }
+    const firstPredictionOnlyIndex = sorted.findIndex(p => p.aiPrediction !== undefined && p.actual === undefined);
+    
+    if (lastActualIndex >= 0 && firstPredictionOnlyIndex > lastActualIndex) {
+      const lastActualPoint = sorted[lastActualIndex];
+      // Set the AI prediction at the last actual point to bridge the gap
+      if (lastActualPoint.aiPrediction === undefined) {
+        lastActualPoint.aiPrediction = lastActualPoint.actual;
+        lastActualPoint.aiLower = lastActualPoint.actual;
+        lastActualPoint.aiUpper = lastActualPoint.actual;
+      }
+    }
+    
     const actualCount = sorted.filter(p => p.actual !== undefined).length;
     const forecastCount = sorted.filter(p => p.aesoForecast !== undefined).length;
     const aiCount = sorted.filter(p => p.aiPrediction !== undefined).length;
@@ -403,7 +424,8 @@ export function TradingViewChart({
       totalPoints: sorted.length,
       actualPrices: actualCount,
       aesoForecasts: forecastCount,
-      aiPredictions: aiCount
+      aiPredictions: aiCount,
+      bridgeApplied: lastActualIndex >= 0 && firstPredictionOnlyIndex > lastActualIndex
     });
     
     return sorted;
