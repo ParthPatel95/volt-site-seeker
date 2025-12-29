@@ -194,7 +194,7 @@ serve(async (req) => {
     const availableCapacity = outageData.available_mw || 0;
     const reserveMargin = availableCapacity > 0 && demand > 0 
       ? ((availableCapacity - demand) / demand) * 100 
-      : null;
+      : 15; // Default to 15% if unavailable
     
     const gridStressScore = calculateGridStressScore(
       poolPrice,
@@ -202,6 +202,23 @@ serve(async (req) => {
       orData.price || 0,
       outageData.outages_mw || 0
     );
+    
+    // Calculate renewable penetration percentage
+    const totalGeneration = (generationData.wind_mw || 0) + (generationData.solar_mw || 0) + 
+                            (generationData.natural_gas_mw || 0) + (generationData.coal_mw || 0) + 
+                            (generationData.hydro_mw || 0) + (generationData.other_mw || 0);
+    const renewableMW = (generationData.wind_mw || 0) + (generationData.solar_mw || 0) + (generationData.hydro_mw || 0);
+    const renewablePenetration = totalGeneration > 0 ? (renewableMW / totalGeneration) * 100 : null;
+    
+    // Calculate price spike probability based on multiple factors
+    const priceSpikeProb = calculatePriceSpikeProb(poolPrice, gridStressScore, reserveMargin);
+    
+    console.log('📊 Calculated derived metrics:', {
+      reserveMargin: reserveMargin?.toFixed(2),
+      renewablePenetration: renewablePenetration?.toFixed(2),
+      priceSpikeProb: priceSpikeProb?.toFixed(2),
+      gridStressScore
+    });
     
     // Create training data record with enhanced features
     const trainingData = {
@@ -255,6 +272,8 @@ serve(async (req) => {
       // Market Indicators
       reserve_margin_percent: reserveMargin,
       grid_stress_score: gridStressScore,
+      renewable_penetration: renewablePenetration,
+      price_spike_probability: priceSpikeProb,
       // Temporal features
       is_holiday: isHoliday,
       is_weekend: isWeekend,
@@ -378,4 +397,25 @@ function calculateGridStressScore(
   else if (outagesMW > 0) score += 2;
   
   return Math.min(100, score);
+}
+
+function calculatePriceSpikeProb(price: number, stress: number, reserve: number): number {
+  let prob = 10; // Base probability
+  
+  // Price component
+  if (price > 100) prob += 30;
+  else if (price > 50) prob += 15;
+  else if (price > 30) prob += 5;
+  
+  // Grid stress component
+  if (stress > 70) prob += 40;
+  else if (stress > 40) prob += 20;
+  else if (stress > 20) prob += 10;
+  
+  // Reserve margin component (lower = higher risk)
+  if (reserve < 10) prob += 20;
+  else if (reserve < 15) prob += 10;
+  else if (reserve < 20) prob += 5;
+  
+  return Math.min(prob, 95);
 }

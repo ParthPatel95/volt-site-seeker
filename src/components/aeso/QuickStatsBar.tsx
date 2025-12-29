@@ -27,6 +27,9 @@ interface StatsData {
   renewable_penetration: number | null;
   price_spike_probability: number | null;
   pool_price: number;
+  generation_wind: number | null;
+  generation_solar: number | null;
+  generation_gas: number | null;
 }
 
 export function QuickStatsBar({ className }: QuickStatsBarProps) {
@@ -39,7 +42,8 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
         .select(`
           ail_mw, reserve_margin_percent, grid_stress_score,
           intertie_bc_flow, intertie_sask_flow, intertie_montana_flow,
-          renewable_penetration, price_spike_probability, pool_price
+          renewable_penetration, price_spike_probability, pool_price,
+          generation_wind, generation_solar, generation_gas
         `)
         .order('timestamp', { ascending: false })
         .limit(1)
@@ -57,8 +61,27 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
 
   if (!stats) return null;
 
+  // Calculate fallback values for derived metrics
+  const totalGen = (stats.generation_wind || 0) + (stats.generation_solar || 0) + (stats.generation_gas || 0);
+  const renewablePercent = stats.renewable_penetration ?? 
+    (totalGen > 0 ? ((stats.generation_wind || 0) + (stats.generation_solar || 0)) / totalGen * 100 : 0);
+  
+  const reserveMargin = stats.reserve_margin_percent ?? 15;
+  
+  const stress = stats.grid_stress_score || 0;
+  let spikeProb = stats.price_spike_probability;
+  if (spikeProb === null || spikeProb === undefined) {
+    spikeProb = 10;
+    if (stats.pool_price > 100) spikeProb += 30;
+    else if (stats.pool_price > 50) spikeProb += 15;
+    if (stress > 70) spikeProb += 40;
+    else if (stress > 40) spikeProb += 20;
+    if (reserveMargin < 10) spikeProb += 20;
+    else if (reserveMargin < 15) spikeProb += 10;
+    spikeProb = Math.min(spikeProb, 95);
+  }
+
   const gridStatus = (() => {
-    const stress = stats.grid_stress_score || 0;
     if (stress > 70) return { label: 'Critical', color: 'text-destructive bg-destructive/10' };
     if (stress > 40) return { label: 'Warning', color: 'text-amber-500 bg-amber-500/10' };
     return { label: 'Healthy', color: 'text-emerald-500 bg-emerald-500/10' };
@@ -90,10 +113,10 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
         <span className="text-muted-foreground">Reserve:</span>
         <span className={cn(
           "font-mono font-semibold",
-          (stats.reserve_margin_percent || 0) < 10 ? "text-destructive" :
-          (stats.reserve_margin_percent || 0) < 15 ? "text-amber-500" : "text-emerald-500"
+          reserveMargin < 10 ? "text-destructive" :
+          reserveMargin < 15 ? "text-amber-500" : "text-emerald-500"
         )}>
-          {(stats.reserve_margin_percent || 0).toFixed(1)}%
+          {reserveMargin.toFixed(1)}%
         </span>
       </div>
 
@@ -140,7 +163,7 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
         <Wind className="w-3.5 h-3.5 text-emerald-500" />
         <span className="text-muted-foreground">Renewable:</span>
         <span className="font-mono font-semibold text-emerald-500">
-          {(stats.renewable_penetration || 0).toFixed(1)}%
+          {renewablePercent.toFixed(1)}%
         </span>
       </div>
 
@@ -150,16 +173,16 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
       <div className="flex items-center gap-1.5 whitespace-nowrap">
         <AlertTriangle className={cn(
           "w-3.5 h-3.5",
-          (stats.price_spike_probability || 0) > 50 ? "text-destructive" :
-          (stats.price_spike_probability || 0) > 25 ? "text-amber-500" : "text-emerald-500"
+          spikeProb > 50 ? "text-destructive" :
+          spikeProb > 25 ? "text-amber-500" : "text-emerald-500"
         )} />
         <span className="text-muted-foreground">Spike Risk:</span>
         <span className={cn(
           "font-mono font-semibold",
-          (stats.price_spike_probability || 0) > 50 ? "text-destructive" :
-          (stats.price_spike_probability || 0) > 25 ? "text-amber-500" : "text-emerald-500"
+          spikeProb > 50 ? "text-destructive" :
+          spikeProb > 25 ? "text-amber-500" : "text-emerald-500"
         )}>
-          {(stats.price_spike_probability || 0).toFixed(0)}%
+          {spikeProb.toFixed(0)}%
         </span>
       </div>
     </div>

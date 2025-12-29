@@ -94,15 +94,44 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
     return () => clearInterval(interval);
   }, []);
 
-  const gridHealthStatus = useMemo(() => {
-    if (!marketData) return { status: 'unknown', color: 'text-muted-foreground' };
+  // Calculate fallback values for derived metrics
+  const derivedMetrics = useMemo(() => {
+    if (!marketData) return null;
+    
+    // Calculate renewable penetration if DB value is null
+    const totalGen = (marketData.generation_wind || 0) + (marketData.generation_solar || 0) + (marketData.generation_gas || 0);
+    const renewablePercent = marketData.renewable_penetration ?? 
+      (totalGen > 0 ? ((marketData.generation_wind || 0) + (marketData.generation_solar || 0)) / totalGen * 100 : 0);
+    
+    // Calculate reserve margin fallback (estimate 15% if null)
+    const reserveMargin = marketData.reserve_margin_percent ?? 15;
+    
+    // Calculate spike probability fallback
     const stress = marketData.grid_stress_score || 0;
-    const reserve = marketData.reserve_margin_percent || 0;
+    let spikeProb = marketData.price_spike_probability;
+    if (spikeProb === null || spikeProb === undefined) {
+      spikeProb = 10;
+      if (marketData.pool_price > 100) spikeProb += 30;
+      else if (marketData.pool_price > 50) spikeProb += 15;
+      if (stress > 70) spikeProb += 40;
+      else if (stress > 40) spikeProb += 20;
+      if (reserveMargin < 10) spikeProb += 20;
+      else if (reserveMargin < 15) spikeProb += 10;
+      spikeProb = Math.min(spikeProb, 95);
+    }
+    
+    return { renewablePercent, reserveMargin, spikeProb };
+  }, [marketData]);
+
+  const gridHealthStatus = useMemo(() => {
+    if (!marketData || !derivedMetrics) return { status: 'unknown', color: 'text-muted-foreground' };
+    const stress = marketData.grid_stress_score || 0;
+    const reserve = derivedMetrics.reserveMargin;
     
     if (stress > 70 || reserve < 10) return { status: 'Critical', color: 'text-destructive' };
     if (stress > 40 || reserve < 15) return { status: 'Warning', color: 'text-amber-500' };
     return { status: 'Healthy', color: 'text-emerald-500' };
-  }, [marketData]);
+  }, [marketData, derivedMetrics]);
 
   const formatFlow = (flow: number | null) => {
     if (flow === null || flow === undefined) return '—';
@@ -160,10 +189,10 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <Gauge className="w-4 h-4 text-primary" />
               </div>
               <div className="text-lg font-bold">
-                {(marketData.reserve_margin_percent || 0).toFixed(1)}%
+                {(derivedMetrics?.reserveMargin || 0).toFixed(1)}%
               </div>
               <Progress 
-                value={Math.min(marketData.reserve_margin_percent || 0, 100)} 
+                value={Math.min(derivedMetrics?.reserveMargin || 0, 100)} 
                 className="h-1.5"
               />
             </Card>
@@ -186,16 +215,16 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <span className="text-xs text-muted-foreground">Spike Risk</span>
                 <AlertTriangle className={cn(
                   "w-4 h-4",
-                  (marketData.price_spike_probability || 0) > 50 ? "text-destructive" : 
-                  (marketData.price_spike_probability || 0) > 25 ? "text-amber-500" : "text-emerald-500"
+                  (derivedMetrics?.spikeProb || 0) > 50 ? "text-destructive" : 
+                  (derivedMetrics?.spikeProb || 0) > 25 ? "text-amber-500" : "text-emerald-500"
                 )} />
               </div>
               <div className={cn(
                 "text-lg font-bold",
-                (marketData.price_spike_probability || 0) > 50 ? "text-destructive" : 
-                (marketData.price_spike_probability || 0) > 25 ? "text-amber-500" : "text-emerald-500"
+                (derivedMetrics?.spikeProb || 0) > 50 ? "text-destructive" : 
+                (derivedMetrics?.spikeProb || 0) > 25 ? "text-amber-500" : "text-emerald-500"
               )}>
-                {(marketData.price_spike_probability || 0).toFixed(0)}%
+                {(derivedMetrics?.spikeProb || 0).toFixed(0)}%
               </div>
               <div className="text-[10px] text-muted-foreground">probability</div>
             </Card>
@@ -333,10 +362,10 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <Wind className="w-4 h-4 text-emerald-500" />
               </div>
               <div className="text-lg font-bold text-emerald-500">
-                {(marketData.renewable_penetration || 0).toFixed(1)}%
+                {(derivedMetrics?.renewablePercent || 0).toFixed(1)}%
               </div>
               <Progress 
-                value={Math.min(marketData.renewable_penetration || 0, 100)} 
+                value={Math.min(derivedMetrics?.renewablePercent || 0, 100)} 
                 className="h-1.5"
               />
             </Card>
