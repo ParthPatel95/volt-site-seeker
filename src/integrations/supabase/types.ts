@@ -1320,6 +1320,7 @@ export type Database = {
           generation_coal: number | null
           generation_gas: number | null
           generation_hydro: number | null
+          generation_other: number | null
           generation_outages_mw: number | null
           generation_solar: number | null
           generation_wind: number | null
@@ -1462,6 +1463,7 @@ export type Database = {
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
+          generation_other?: number | null
           generation_outages_mw?: number | null
           generation_solar?: number | null
           generation_wind?: number | null
@@ -1604,6 +1606,7 @@ export type Database = {
           generation_coal?: number | null
           generation_gas?: number | null
           generation_hydro?: number | null
+          generation_other?: number | null
           generation_outages_mw?: number | null
           generation_solar?: number | null
           generation_wind?: number | null
