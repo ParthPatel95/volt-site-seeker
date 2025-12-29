@@ -67,7 +67,8 @@ import { toast } from 'sonner';
 import { usePriceAlerts } from '@/hooks/usePriceAlerts';
 import { cn } from '@/lib/utils';
 import { RSIPanel, MACDPanel } from './indicators';
-import { aggregateToCandles } from './CandlestickRenderer';
+import { aggregateToCandles, generateForecastCandles, CandlestickData, getCandleColor } from './CandlestickRenderer';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PriceDataPoint {
   timestamp?: string;
@@ -482,27 +483,49 @@ export function TradingViewChart({
 
   // Aggregate data into OHLC candles for candlestick chart
   const candleData = useMemo(() => {
+    const now = new Date();
     const actualData = chartData
       .filter(d => d.actual !== undefined)
       .map(d => ({ timestamp: d.timestamp, actual: d.actual }));
     
     if (actualData.length < 2) return [];
     
-    const candles = aggregateToCandles(actualData, interval === '4H' ? 4 : interval === '1D' ? 24 : interval === '1W' ? 168 : 1);
+    const intervalHours = interval === '4H' ? 4 : interval === '1D' ? 24 : interval === '1W' ? 168 : 1;
+    const actualCandles = aggregateToCandles(actualData, intervalHours, now);
+    
+    // Generate forecast candles from AI predictions
+    const lastActualPrice = actualData.length > 0 ? actualData[actualData.length - 1].actual! : currentPrice;
+    
+    // Get future AI predictions (after current time)
+    const futurePredictions = aiPredictions?.filter(pred => {
+      const predTime = new Date(pred.timestamp);
+      return predTime > now;
+    }) || [];
+    
+    const forecastCandles = generateForecastCandles(futurePredictions, lastActualPrice, intervalHours);
+    
+    // Combine actual + forecast candles
+    const allCandles = [...actualCandles, ...forecastCandles];
     
     // Add candleBody for bar height calculation
-    return candles.map(c => ({
+    return allCandles.map(c => ({
       ...c,
       candleBody: Math.abs(c.close - c.open) || 1,
       priceRange: c.high - c.low
     }));
-  }, [chartData, interval]);
+  }, [chartData, interval, aiPredictions, currentPrice]);
 
-  // Calculate price domain for candlestick Y-axis scaling
+  // Calculate price domain for candlestick Y-axis scaling (include forecast candles)
   const candlePriceDomain = useMemo(() => {
     if (candleData.length === 0) return { min: 0, max: 100 };
     
     const allPrices = candleData.flatMap(c => [c.high, c.low, c.open, c.close]);
+    // Also include AI prediction confidence bounds
+    aiPredictions?.forEach(pred => {
+      if (pred.confidenceLower) allPrices.push(pred.confidenceLower);
+      if (pred.confidenceUpper) allPrices.push(pred.confidenceUpper);
+    });
+    
     const min = Math.min(...allPrices);
     const max = Math.max(...allPrices);
     const padding = (max - min) * 0.1; // 10% padding
@@ -511,7 +534,53 @@ export function TradingViewChart({
       min: Math.max(0, min - padding), 
       max: max + padding 
     };
-  }, [candleData]);
+  }, [candleData, aiPredictions]);
+
+  // Stored chart dimensions for candlestick rendering
+  const [chartDimensions, setChartDimensions] = React.useState({ width: 800, height: 300 });
+  
+  // Update chart dimensions on resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (mainChartRef.current) {
+        const rect = mainChartRef.current.getBoundingClientRect();
+        setChartDimensions({
+          width: rect.width,
+          height: Math.max(rect.height - 40, 200) // Account for margins
+        });
+      }
+    };
+    
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, [isFullscreen]);
+
+  // Real-time subscription for live price updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('live-price-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'aeso_training_data'
+        },
+        (payload) => {
+          console.log('[TradingViewChart] Real-time price update:', payload.new);
+          // Trigger refresh when new data arrives
+          if (onRefresh) {
+            onRefresh();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [onRefresh]);
 
   // Find NOW index for jumping to current time
   const nowIndex = useMemo(() => {
@@ -1417,7 +1486,7 @@ export function TradingViewChart({
                     />
                   )}
 
-                  {/* True OHLC Candlestick rendering */}
+                  {/* True OHLC Candlestick rendering with live + forecast candles */}
                   {chartType === 'candlestick' && candleData.length > 0 && (
                     <Bar
                       dataKey="candleBody"
@@ -1428,13 +1497,26 @@ export function TradingViewChart({
                         const { x, width, payload, background } = props;
                         if (!payload?.open) return null;
                         
-                        const { open, high, low, close } = payload;
+                        const { open, high, low, close, isLive, isForecast } = payload;
                         const isUp = close >= open;
-                        const color = isUp ? '#10b981' : '#ef4444';
                         
-                        // Get chart area from background prop
+                        // Different colors for different candle types
+                        let color: string;
+                        let opacity = 1;
+                        let strokeDash = '';
+                        
+                        if (isForecast) {
+                          // Forecast candles: semi-transparent with distinct color
+                          color = isUp ? '#06b6d4' : '#f97316'; // cyan/orange for forecast
+                          opacity = 0.6;
+                          strokeDash = '3 2';
+                        } else {
+                          color = isUp ? '#10b981' : '#ef4444'; // green/red for actual
+                        }
+                        
+                        // Get chart area from background prop with fallback
                         const chartTop = background?.y ?? 10;
-                        const chartHeight = background?.height ?? 300;
+                        const chartHeight = background?.height ?? chartDimensions.height;
                         
                         // Create Y scale function based on price domain and chart dimensions
                         const { min: priceMin, max: priceMax } = candlePriceDomain;
@@ -1457,7 +1539,7 @@ export function TradingViewChart({
                         const candleWidth = Math.max(width - 4, 4);
                         
                         return (
-                          <g>
+                          <g opacity={opacity}>
                             {/* Wick line (high to low) */}
                             <line
                               x1={wickX}
@@ -1465,7 +1547,8 @@ export function TradingViewChart({
                               x2={wickX}
                               y2={lowY}
                               stroke={color}
-                              strokeWidth={1}
+                              strokeWidth={isForecast ? 1 : 1.5}
+                              strokeDasharray={strokeDash}
                             />
                             {/* Body rectangle (open to close) */}
                             <rect
@@ -1473,10 +1556,67 @@ export function TradingViewChart({
                               y={bodyTop}
                               width={candleWidth}
                               height={bodyHeight}
-                              fill={color}
+                              fill={isForecast ? 'transparent' : color}
                               stroke={color}
-                              strokeWidth={1}
+                              strokeWidth={isForecast ? 1.5 : 1}
+                              strokeDasharray={isForecast ? '3 2' : ''}
+                              rx={1}
+                              ry={1}
                             />
+                            {/* Live candle pulsing border */}
+                            {isLive && (
+                              <>
+                                <rect
+                                  x={x + (width - candleWidth) / 2 - 2}
+                                  y={bodyTop - 2}
+                                  width={candleWidth + 4}
+                                  height={bodyHeight + 4}
+                                  fill="none"
+                                  stroke="#f59e0b"
+                                  strokeWidth={2}
+                                  rx={2}
+                                  ry={2}
+                                  style={{ animation: 'pulse 2s infinite' }}
+                                />
+                                {/* LIVE text indicator */}
+                                <text
+                                  x={x + width / 2}
+                                  y={bodyTop - 10}
+                                  textAnchor="middle"
+                                  fontSize={8}
+                                  fontWeight="bold"
+                                  fill="#f59e0b"
+                                >
+                                  LIVE
+                                </text>
+                              </>
+                            )}
+                            {/* Forecast indicator - diagonal line pattern */}
+                            {isForecast && (
+                              <>
+                                <line
+                                  x1={x + (width - candleWidth) / 2}
+                                  y1={bodyTop + bodyHeight / 2}
+                                  x2={x + (width - candleWidth) / 2 + candleWidth}
+                                  y2={bodyTop + bodyHeight / 2}
+                                  stroke={color}
+                                  strokeWidth={0.5}
+                                  strokeDasharray="2 2"
+                                />
+                                {/* Confidence range indicator for forecast */}
+                                {payload.confidenceLower && payload.confidenceUpper && (
+                                  <rect
+                                    x={x + (width - candleWidth) / 2 - 1}
+                                    y={yScale(payload.confidenceUpper)}
+                                    width={candleWidth + 2}
+                                    height={Math.abs(yScale(payload.confidenceLower) - yScale(payload.confidenceUpper))}
+                                    fill={color}
+                                    fillOpacity={0.1}
+                                    stroke="none"
+                                  />
+                                )}
+                              </>
+                            )}
                           </g>
                         );
                       }}
@@ -1484,7 +1624,7 @@ export function TradingViewChart({
                       {candleData.map((entry, index) => (
                         <Cell
                           key={`candle-${index}`}
-                          fill={entry.close >= entry.open ? '#10b981' : '#ef4444'}
+                          fill={getCandleColor(entry as CandlestickData)}
                         />
                       ))}
                     </Bar>
@@ -1654,6 +1794,18 @@ export function TradingViewChart({
             <div className="w-4 h-0.5 bg-emerald-500 rounded" style={{ borderTop: '2px dotted' }} />
             <span className="text-muted-foreground">AI Prediction</span>
           </div>
+          {chartType === 'candlestick' && (
+            <>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 border-2 border-amber-500 rounded-sm" />
+                <span className="text-amber-500 font-medium">LIVE</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 border border-dashed border-cyan-500 rounded-sm opacity-60" />
+                <span className="text-muted-foreground">Forecast</span>
+              </div>
+            </>
+          )}
           {selectedIndicators.map(indId => {
             const ind = AVAILABLE_INDICATORS.find(i => i.id === indId);
             if (!ind) return null;
