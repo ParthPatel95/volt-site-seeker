@@ -300,7 +300,7 @@ const DevelopmentTimelineSection = () => {
             proTip="The fastest path to first hash is a brownfield site with existing interconnection and industrial zoning. These sites can deploy in 3-6 months with container-based infrastructure."
             nextSection={{
               title: "Get Started",
-              href: "#cta"
+              id: "cta"
             }}
           />
         </ScrollReveal>

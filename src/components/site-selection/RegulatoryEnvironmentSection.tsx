@@ -279,7 +279,7 @@ const RegulatoryEnvironmentSection = () => {
             proTip="Before finalizing any site, research recent local news for anti-crypto sentiment. Community opposition can add 12+ months to your timeline even if regulations are favorable."
             nextSection={{
               title: "Climate Analysis",
-              href: "#climate"
+              id: "climate"
             }}
           />
         </ScrollReveal>

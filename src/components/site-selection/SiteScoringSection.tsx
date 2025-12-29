@@ -288,7 +288,7 @@ const SiteScoringSection = () => {
             proTip="Don't let one exceptional criterion (like ultra-low energy cost) blind you to weaknesses elsewhere. A balanced scorecard across all 8 criteria produces better long-term outcomes."
             nextSection={{
               title: "Development Timeline",
-              href: "#timeline"
+              id: "timeline"
             }}
           />
         </ScrollReveal>

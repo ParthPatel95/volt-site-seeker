@@ -310,7 +310,7 @@ const ClimateAnalysisSection = () => {
             proTip="Don't underestimate extreme cold challenges. Sites below -30°C need specialized equipment for cold starts, and frozen roads can delay equipment delivery for months."
             nextSection={{
               title: "Land Acquisition",
-              href: "#land-acquisition"
+              id: "land-acquisition"
             }}
           />
         </ScrollReveal>

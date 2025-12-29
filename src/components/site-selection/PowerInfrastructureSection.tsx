@@ -224,7 +224,7 @@ const PowerInfrastructureSection = () => {
             proTip="Order long-lead equipment (transformers, switchgear) as early as possible - even before final permits. Lead times of 6-12 months can delay your entire project."
             nextSection={{
               title: "Energy Markets",
-              href: "#energy-markets"
+              id: "energy-markets"
             }}
           />
         </ScrollReveal>

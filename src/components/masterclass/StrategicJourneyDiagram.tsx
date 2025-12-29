@@ -47,6 +47,13 @@ const trackColors = {
   }
 };
 
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
+
 export const StrategicJourneyDiagram = ({ 
   currentTrack = 1, 
   completedTracks = [],
@@ -59,7 +66,8 @@ export const StrategicJourneyDiagram = ({
       subtitle: "Find the right location",
       icon: MapPin,
       colorKey: "purple" as const,
-      keyActions: ["Power analysis", "Market research", "Regulatory review"]
+      keyActions: ["Power analysis", "Market research", "Regulatory review"],
+      sectionId: "track-1"
     },
     {
       track: 2,
@@ -67,7 +75,8 @@ export const StrategicJourneyDiagram = ({
       subtitle: "Evaluate all factors",
       icon: ShieldAlert,
       colorKey: "orange" as const,
-      keyActions: ["Due diligence", "Risk scoring", "Break-even calc"]
+      keyActions: ["Due diligence", "Risk scoring", "Break-even calc"],
+      sectionId: "track-2"
     },
     {
       track: 3,
@@ -75,7 +84,8 @@ export const StrategicJourneyDiagram = ({
       subtitle: "Build & operate",
       icon: Zap,
       colorKey: "blue" as const,
-      keyActions: ["Development", "Insurance", "Crisis planning"]
+      keyActions: ["Development", "Insurance", "Crisis planning"],
+      sectionId: "track-3"
     },
     {
       track: 4,
@@ -83,7 +93,8 @@ export const StrategicJourneyDiagram = ({
       subtitle: "Grow operations",
       icon: TrendingUp,
       colorKey: "green" as const,
-      keyActions: ["Capacity plan", "Multi-site", "Portfolio mgmt"]
+      keyActions: ["Capacity plan", "Multi-site", "Portfolio mgmt"],
+      sectionId: "track-4"
     },
     {
       track: 5,
@@ -91,7 +102,8 @@ export const StrategicJourneyDiagram = ({
       subtitle: "Capital & M&A",
       icon: Award,
       colorKey: "pink" as const,
-      keyActions: ["Fundraising", "Partnerships", "Acquisitions"]
+      keyActions: ["Fundraising", "Partnerships", "Acquisitions"],
+      sectionId: "track-5"
     }
   ];
 
@@ -125,7 +137,8 @@ export const StrategicJourneyDiagram = ({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="relative"
+                  className="relative cursor-pointer"
+                  onClick={() => scrollToSection(stage.sectionId)}
                 >
                   {/* Stage Circle */}
                   <div className={cn(
@@ -229,7 +242,8 @@ export const StrategicJourneyDiagram = ({
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="relative"
+                  className="relative cursor-pointer"
+                  onClick={() => scrollToSection(stage.sectionId)}
                 >
                   {/* Circle on Timeline */}
                   <div className={cn(

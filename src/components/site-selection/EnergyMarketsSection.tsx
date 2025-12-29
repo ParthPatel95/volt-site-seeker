@@ -265,7 +265,7 @@ const EnergyMarketsSection = () => {
             proTip="When evaluating international jurisdictions, factor in currency risk, political stability, and infrastructure quality. The cheapest energy doesn't help if you can't reliably operate."
             nextSection={{
               title: "Regulatory Environment",
-              href: "#regulatory"
+              id: "regulatory"
             }}
           />
         </ScrollReveal>

@@ -191,7 +191,7 @@ export const RegulatoryRiskSection = () => {
         <RiskSectionSummary 
           title="Regulatory Risk"
           keyTakeaways={keyTakeaways}
-          nextSection={{ name: "Financial Risk", href: "#financial-risk" }}
+          nextSection={{ name: "Financial Risk", id: "financial-risk" }}
         />
       </div>
     </section>

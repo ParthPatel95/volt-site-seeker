@@ -169,6 +169,7 @@ export const CrisisManagementSection = () => {
         <RiskSectionSummary 
           title="Crisis Management"
           keyTakeaways={keyTakeaways}
+          nextSection={{ name: "Scaling Your Operation", id: "track-4" }}
         />
       </div>
     </section>

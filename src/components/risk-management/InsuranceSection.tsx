@@ -181,7 +181,7 @@ export const InsuranceSection = () => {
         <RiskSectionSummary 
           title="Insurance & Risk Transfer"
           keyTakeaways={keyTakeaways}
-          nextSection={{ name: "Crisis Management", href: "#crisis" }}
+          nextSection={{ name: "Crisis Management", id: "crisis" }}
         />
       </div>
     </section>

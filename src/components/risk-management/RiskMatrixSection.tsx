@@ -172,7 +172,7 @@ export const RiskMatrixSection = () => {
         <RiskSectionSummary 
           title="Risk Matrix"
           keyTakeaways={keyTakeaways}
-          nextSection={{ name: "Insurance & Risk Transfer", href: "#insurance" }}
+          nextSection={{ name: "Insurance & Risk Transfer", id: "insurance" }}
         />
       </div>
     </section>
