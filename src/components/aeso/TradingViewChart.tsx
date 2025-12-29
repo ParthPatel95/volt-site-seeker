@@ -536,25 +536,53 @@ export function TradingViewChart({
     };
   }, [candleData, aiPredictions]);
 
-  // Stored chart dimensions for candlestick rendering
-  const [chartDimensions, setChartDimensions] = React.useState({ width: 800, height: 300 });
+  // Stored chart dimensions for candlestick rendering - use actual chart area
+  const [chartArea, setChartArea] = React.useState({ 
+    top: 10, 
+    height: 300, 
+    width: 800,
+    marginRight: 60,
+    marginLeft: 0,
+    marginTop: 10,
+    marginBottom: 0
+  });
   
-  // Update chart dimensions on resize
+  // Update chart dimensions on resize - critical for candlestick Y-axis scaling
   useEffect(() => {
     const updateDimensions = () => {
       if (mainChartRef.current) {
         const rect = mainChartRef.current.getBoundingClientRect();
-        setChartDimensions({
-          width: rect.width,
-          height: Math.max(rect.height - 40, 200) // Account for margins
+        // Chart margins from ComposedChart: { top: 10, right: 60, left: 0, bottom: 0 }
+        const marginTop = 10;
+        const marginRight = 60;
+        const marginBottom = 0;
+        const marginLeft = 0;
+        
+        // Calculate actual chart drawing area
+        const chartWidth = rect.width - marginLeft - marginRight;
+        const chartHeight = Math.max(rect.height - marginTop - marginBottom - 20, 200); // Extra 20 for padding
+        
+        setChartArea({
+          top: marginTop,
+          height: chartHeight,
+          width: chartWidth,
+          marginRight,
+          marginLeft,
+          marginTop,
+          marginBottom
         });
       }
     };
     
+    // Initial update after render
+    const timer = setTimeout(updateDimensions, 100);
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, [isFullscreen]);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, [isFullscreen, chartType]);
 
   // Real-time subscription for live price updates
   useEffect(() => {
@@ -1493,8 +1521,9 @@ export function TradingViewChart({
                       fill="transparent"
                       name="OHLC"
                       isAnimationActive={false}
+                      background={{ fill: 'transparent' }}
                       shape={(props: any) => {
-                        const { x, width, payload, background } = props;
+                        const { x, width, payload, background, viewBox } = props;
                         if (!payload?.open) return null;
                         
                         const { open, high, low, close, isLive, isForecast } = payload;
@@ -1508,15 +1537,15 @@ export function TradingViewChart({
                         if (isForecast) {
                           // Forecast candles: semi-transparent with distinct color
                           color = isUp ? '#06b6d4' : '#f97316'; // cyan/orange for forecast
-                          opacity = 0.6;
-                          strokeDash = '3 2';
+                          opacity = 0.65;
+                          strokeDash = '4 2';
                         } else {
                           color = isUp ? '#10b981' : '#ef4444'; // green/red for actual
                         }
                         
-                        // Get chart area from background prop with fallback
-                        const chartTop = background?.y ?? 10;
-                        const chartHeight = background?.height ?? chartDimensions.height;
+                        // Use viewBox first (most reliable), then background, then fallback to chartArea
+                        const chartTop = viewBox?.y ?? background?.y ?? chartArea.top;
+                        const chartHeight = viewBox?.height ?? background?.height ?? chartArea.height;
                         
                         // Create Y scale function based on price domain and chart dimensions
                         const { min: priceMin, max: priceMax } = candlePriceDomain;
@@ -1534,20 +1563,20 @@ export function TradingViewChart({
                         const lowY = yScale(low);
                         
                         const bodyTop = Math.min(openY, closeY);
-                        const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
+                        const bodyHeight = Math.max(Math.abs(closeY - openY), 3); // Min 3px for visibility
                         const wickX = x + width / 2;
-                        const candleWidth = Math.max(width - 4, 4);
+                        const candleWidth = Math.max(width - 4, 6); // Min 6px width
                         
                         return (
                           <g opacity={opacity}>
-                            {/* Wick line (high to low) */}
+                            {/* Wick line (high to low) - draw first so body overlays it */}
                             <line
                               x1={wickX}
                               y1={highY}
                               x2={wickX}
                               y2={lowY}
                               stroke={color}
-                              strokeWidth={isForecast ? 1 : 1.5}
+                              strokeWidth={isForecast ? 1 : 2}
                               strokeDasharray={strokeDash}
                             />
                             {/* Body rectangle (open to close) */}
@@ -1558,8 +1587,8 @@ export function TradingViewChart({
                               height={bodyHeight}
                               fill={isForecast ? 'transparent' : color}
                               stroke={color}
-                              strokeWidth={isForecast ? 1.5 : 1}
-                              strokeDasharray={isForecast ? '3 2' : ''}
+                              strokeWidth={isForecast ? 2 : 1}
+                              strokeDasharray={isForecast ? '4 2' : ''}
                               rx={1}
                               ry={1}
                             />
@@ -1567,52 +1596,58 @@ export function TradingViewChart({
                             {isLive && (
                               <>
                                 <rect
-                                  x={x + (width - candleWidth) / 2 - 2}
-                                  y={bodyTop - 2}
-                                  width={candleWidth + 4}
-                                  height={bodyHeight + 4}
+                                  x={x + (width - candleWidth) / 2 - 3}
+                                  y={bodyTop - 3}
+                                  width={candleWidth + 6}
+                                  height={bodyHeight + 6}
                                   fill="none"
                                   stroke="#f59e0b"
                                   strokeWidth={2}
-                                  rx={2}
-                                  ry={2}
-                                  style={{ animation: 'pulse 2s infinite' }}
+                                  rx={3}
+                                  ry={3}
+                                  className="animate-pulse"
                                 />
                                 {/* LIVE text indicator */}
                                 <text
                                   x={x + width / 2}
-                                  y={bodyTop - 10}
+                                  y={Math.max(bodyTop - 12, chartTop + 12)}
                                   textAnchor="middle"
-                                  fontSize={8}
+                                  fontSize={9}
                                   fontWeight="bold"
                                   fill="#f59e0b"
+                                  className="animate-pulse"
                                 >
                                   LIVE
                                 </text>
                               </>
                             )}
-                            {/* Forecast indicator - diagonal line pattern */}
+                            {/* Forecast indicator - hatched pattern inside body */}
                             {isForecast && (
                               <>
+                                {/* Horizontal center line for forecast */}
                                 <line
-                                  x1={x + (width - candleWidth) / 2}
+                                  x1={x + (width - candleWidth) / 2 + 2}
                                   y1={bodyTop + bodyHeight / 2}
-                                  x2={x + (width - candleWidth) / 2 + candleWidth}
+                                  x2={x + (width - candleWidth) / 2 + candleWidth - 2}
                                   y2={bodyTop + bodyHeight / 2}
                                   stroke={color}
-                                  strokeWidth={0.5}
+                                  strokeWidth={1}
                                   strokeDasharray="2 2"
+                                  opacity={0.7}
                                 />
-                                {/* Confidence range indicator for forecast */}
-                                {payload.confidenceLower && payload.confidenceUpper && (
+                                {/* Confidence range shaded area */}
+                                {payload.confidenceLower !== undefined && payload.confidenceUpper !== undefined && (
                                   <rect
-                                    x={x + (width - candleWidth) / 2 - 1}
+                                    x={x + (width - candleWidth) / 2}
                                     y={yScale(payload.confidenceUpper)}
-                                    width={candleWidth + 2}
+                                    width={candleWidth}
                                     height={Math.abs(yScale(payload.confidenceLower) - yScale(payload.confidenceUpper))}
                                     fill={color}
-                                    fillOpacity={0.1}
-                                    stroke="none"
+                                    fillOpacity={0.15}
+                                    stroke={color}
+                                    strokeWidth={0.5}
+                                    strokeDasharray="2 2"
+                                    rx={1}
                                   />
                                 )}
                               </>
