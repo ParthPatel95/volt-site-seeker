@@ -11,7 +11,7 @@ import { StrategicJourneyDiagram } from "@/components/masterclass/StrategicJourn
 import { IntegratedDecisionFramework } from "@/components/masterclass/IntegratedDecisionFramework";
 import { PortfolioRiskDashboard } from "@/components/masterclass/PortfolioRiskDashboard";
 import { MasterclassCTASection } from "@/components/masterclass/MasterclassCTASection";
-import { MapPin, ShieldAlert, Zap, TrendingUp, Award, GraduationCap, Target, BarChart3, Scale, Building2, Users, DollarSign } from "lucide-react";
+import { MapPin, ShieldAlert, Zap, TrendingUp, GraduationCap, DollarSign, BookOpen, BarChart3 } from "lucide-react";
 
 // Lazy load existing sections from the 3 modules
 const PowerInfrastructureSection = lazy(() => import("@/components/site-selection/PowerInfrastructureSection"));
@@ -34,6 +34,10 @@ const CapitalRaisingSection = lazy(() => import("@/components/scaling/CapitalRai
 const PartnershipModelsSection = lazy(() => import("@/components/scaling/PartnershipModelsSection").then(m => ({ default: m.PartnershipModelsSection })));
 const MergersAcquisitionsSection = lazy(() => import("@/components/scaling/MergersAcquisitionsSection").then(m => ({ default: m.MergersAcquisitionsSection })));
 
+// Lazy load new academic enhancement components
+const AcademicEnhancementsSection = lazy(() => import("@/components/academy/AcademicEnhancementsSection"));
+const Glossary = lazy(() => import("@/components/academy/Glossary"));
+
 // Section navigation config
 const masterclassSections = [
   { id: 'intro', icon: GraduationCap, label: 'Introduction', time: '5 min' },
@@ -42,6 +46,8 @@ const masterclassSections = [
   { id: 'track-3', icon: Zap, label: 'Execution', time: '15 min' },
   { id: 'track-4', icon: TrendingUp, label: 'Scaling', time: '25 min' },
   { id: 'track-5', icon: DollarSign, label: 'Capital', time: '20 min' },
+  { id: 'frameworks', icon: BarChart3, label: 'Frameworks', time: '15 min' },
+  { id: 'glossary', icon: BookOpen, label: 'Glossary', time: '5 min' },
 ];
 
 const SectionLoader = () => (
@@ -187,6 +193,44 @@ const StrategicOperationsMasterclass = () => {
           <Suspense fallback={<SectionLoader />}><PartnershipModelsSection /></Suspense>
           <SectionDivider color="yellow" />
           <Suspense fallback={<SectionLoader />}><MergersAcquisitionsSection /></Suspense>
+        </div>
+
+        <SectionDivider color="purple" />
+
+        {/* Strategic Frameworks Section */}
+        <div id="frameworks" className="border-t-4 border-indigo-500">
+          <div className="bg-indigo-500/10 py-4">
+            <div className="container mx-auto px-4">
+              <h2 className="text-2xl font-bold text-foreground">Strategic Analysis Frameworks</h2>
+              <p className="text-muted-foreground">Academic tools for strategic decision-making</p>
+            </div>
+          </div>
+          <Suspense fallback={<SectionLoader />}>
+            <AcademicEnhancementsSection variant="strategic-frameworks" />
+          </Suspense>
+          <SectionDivider color="cyan" />
+          <Suspense fallback={<SectionLoader />}>
+            <AcademicEnhancementsSection variant="quantitative-tools" />
+          </Suspense>
+        </div>
+
+        <SectionDivider color="yellow" />
+
+        {/* Glossary Section */}
+        <div id="glossary" className="border-t-4 border-teal-500">
+          <div className="bg-teal-500/10 py-4">
+            <div className="container mx-auto px-4">
+              <h2 className="text-2xl font-bold text-foreground">Mining Glossary</h2>
+              <p className="text-muted-foreground">Comprehensive terminology reference</p>
+            </div>
+          </div>
+          <section className="py-16 bg-muted/30">
+            <div className="container mx-auto px-4 max-w-4xl">
+              <Suspense fallback={<SectionLoader />}>
+                <Glossary />
+              </Suspense>
+            </div>
+          </section>
         </div>
 
         <SectionDivider color="purple" />

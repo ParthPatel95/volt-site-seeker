@@ -3,6 +3,8 @@ import { TrendingDown, Bitcoin } from "lucide-react";
 import { RiskLearningObjectives } from "./RiskLearningObjectives";
 import { RiskSectionSummary } from "./RiskSectionSummary";
 import { BreakEvenCalculator } from "./BreakEvenCalculator";
+import { CleanSparkSurvivalCase, HalvingPreparationCase } from "@/components/academy/MasterclassCaseStudies";
+import ExpertQuote, { expertQuotes } from "@/components/academy/ExpertQuote";
 
 export const MarketRiskSection = () => {
   const marketRisks = [
@@ -150,6 +152,24 @@ export const MarketRiskSection = () => {
                 <div className="text-sm text-muted-foreground">High-Cost Operator</div>
                 <div className="text-xs text-muted-foreground mt-1">30 J/TH, $0.08/kWh</div>
               </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Expert Quote */}
+        <ScrollReveal delay={350}>
+          <div className="my-8">
+            <ExpertQuote {...expertQuotes.riskManagement} variant="featured" />
+          </div>
+        </ScrollReveal>
+
+        {/* Case Studies */}
+        <ScrollReveal delay={400}>
+          <div className="my-12">
+            <h3 className="text-2xl font-bold text-foreground mb-6">Real-World Case Studies</h3>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <CleanSparkSurvivalCase />
+              <HalvingPreparationCase />
             </div>
           </div>
         </ScrollReveal>
