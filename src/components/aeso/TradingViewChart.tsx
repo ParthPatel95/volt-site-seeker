@@ -986,7 +986,10 @@ export function TradingViewChart({
       )}
     >
       {/* ===== TOP TOOLBAR with OHLC Display ===== */}
-      <div className="flex items-center justify-between h-12 px-3 border-b border-border bg-muted/30">
+      <div className={cn(
+        "flex items-center justify-between h-12 px-3 border-b border-border bg-muted/30",
+        isFullscreen && "relative z-[60]"
+      )}>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Symbol & Live OHLC - TradingView Style */}
           <div className="flex items-center gap-2 px-2 py-1 rounded bg-background border border-border">
@@ -1239,7 +1242,10 @@ export function TradingViewChart({
       </div>
 
       {/* ===== MOBILE OHLC HEADER (visible on small screens) ===== */}
-      <div className="sm:hidden flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 border-b border-border bg-card text-xs">
+      <div className={cn(
+        "sm:hidden flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 border-b border-border bg-card text-xs",
+        isFullscreen && "relative z-[60]"
+      )}>
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">O <span className="font-mono font-semibold text-foreground">${stats.open.toFixed(2)}</span></span>
           <span className="text-red-500">H <span className="font-mono font-semibold">${stats.high.toFixed(2)}</span></span>
@@ -1779,7 +1785,10 @@ export function TradingViewChart({
               </div>
 
               {/* Floating Current Price Badge */}
-              <div className="absolute right-14 top-1/3 transform -translate-y-1/2 z-10">
+              <div className={cn(
+                "absolute right-14 top-1/3 transform -translate-y-1/2",
+                isFullscreen ? "z-[55]" : "z-10"
+              )}>
                 <div className={`px-2 py-1 rounded text-xs font-bold text-white shadow-lg animate-pulse ${
                   isPositive ? 'bg-red-500' : 'bg-emerald-500'
                 }`}>
@@ -1952,7 +1961,10 @@ export function TradingViewChart({
       </div>
 
       {/* ===== LEGEND & AI PREDICTION FOOTER ===== */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-border bg-muted/20">
+      <div className={cn(
+        "flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-border bg-muted/20",
+        isFullscreen && "relative z-[60]"
+      )}>
         {/* Legend */}
         <div className="flex items-center gap-4 text-[10px]">
           <div className="flex items-center gap-1.5">
@@ -2023,7 +2035,7 @@ export function TradingViewChart({
 
       {/* ===== ALERT DIALOG ===== */}
       <Dialog open={showAlertDialog} onOpenChange={setShowAlertDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md z-[70]">
           <DialogHeader>
             <DialogTitle>Create Price Alert</DialogTitle>
           </DialogHeader>
