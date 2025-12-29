@@ -220,6 +220,56 @@ serve(async (req) => {
       gridStressScore
     });
     
+    // Fetch last 24 hours of price data for rolling analytics calculations
+    let priceRollingAvg24h = null;
+    let priceRollingStd24h = null;
+    let priceVolatility6h = null;
+    let priceMomentum3h = null;
+    
+    const { data: recentPrices, error: pricesError } = await supabase
+      .from('aeso_training_data')
+      .select('pool_price, timestamp')
+      .gte('timestamp', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('timestamp', { ascending: true });
+    
+    if (!pricesError && recentPrices && recentPrices.length >= 3) {
+      const prices = recentPrices.map(r => r.pool_price).filter(p => p !== null && p !== undefined) as number[];
+      
+      if (prices.length >= 3) {
+        // 24h rolling average
+        priceRollingAvg24h = prices.reduce((a, b) => a + b, 0) / prices.length;
+        
+        // 24h rolling standard deviation
+        const variance = prices.reduce((sum, p) => sum + Math.pow(p - priceRollingAvg24h!, 2), 0) / prices.length;
+        priceRollingStd24h = Math.sqrt(variance);
+        
+        // 6h volatility (last 6 prices)
+        const last6 = prices.slice(-6);
+        if (last6.length >= 2) {
+          const min6 = Math.min(...last6);
+          const max6 = Math.max(...last6);
+          const avg6 = last6.reduce((a, b) => a + b, 0) / last6.length;
+          priceVolatility6h = avg6 > 0 ? ((max6 - min6) / avg6) * 100 : 0;
+        }
+        
+        // 3h momentum (price change over last 3 hours)
+        const last3 = prices.slice(-3);
+        if (last3.length >= 2) {
+          priceMomentum3h = last3[last3.length - 1] - last3[0];
+        }
+        
+        console.log('📊 Rolling analytics calculated:', {
+          avg24h: priceRollingAvg24h?.toFixed(2),
+          std24h: priceRollingStd24h?.toFixed(2),
+          volatility6h: priceVolatility6h?.toFixed(1),
+          momentum3h: priceMomentum3h?.toFixed(2),
+          pricesUsed: prices.length
+        });
+      }
+    } else {
+      console.log('⚠️ Could not calculate rolling analytics:', pricesError?.message || 'Not enough data');
+    }
+    
     // Create training data record with enhanced features
     const trainingData = {
       timestamp: currentTime.toISOString(),
@@ -243,7 +293,6 @@ serve(async (req) => {
       load_forecast_3h: loadForecast3h,
       load_forecast_24h: loadForecast24h,
       // Note: Wind, solar, and pool price forecasts are NOT available via AESO public API
-      // These fields exist in the database but will remain null
       wind_forecast_1h: null,
       wind_forecast_3h: null,
       wind_forecast_24h: null,
@@ -258,17 +307,22 @@ serve(async (req) => {
       intertie_sask_flow: intertieData.sask_flow || 0,
       intertie_montana_flow: intertieData.montana_flow || 0,
       total_interchange_flow: intertieData.total_flow || 0,
-      interchange_net: intertieData.total_flow || 0, // Keep for backward compatibility
+      interchange_net: intertieData.total_flow || 0,
       // Operating Reserve - Enhanced mapping from energy-data-integration
       operating_reserve_price: orData?.price ?? null,
       spinning_reserve_mw: orData?.spinning_mw ?? orData?.total_mw ?? null,
       supplemental_reserve_mw: orData?.supplemental_mw ?? null,
       operating_reserve: orData?.total_mw ?? (orData?.spinning_mw || 0) + (orData?.supplemental_mw || 0),
-      // Generation Outages & Capacity
+      // Generation Outages & Capacity - Use calculated values from energy-data-integration
       generation_outages_mw: outageData.outages_mw || 0,
       available_capacity_mw: outageData.available_mw || null,
-      outage_capacity_mw: outageData.outages_mw || 0, // Keep for backward compatibility
-      transmission_outages_count: 0, // Will be enhanced in future with transmission API
+      outage_capacity_mw: outageData.outages_mw || 0,
+      transmission_outages_count: 0,
+      // Rolling Price Analytics - Calculated from historical data
+      price_rolling_avg_24h: priceRollingAvg24h,
+      price_rolling_std_24h: priceRollingStd24h,
+      price_volatility_6h: priceVolatility6h,
+      price_momentum_3h: priceMomentum3h,
       // Market Indicators
       reserve_margin_percent: reserveMargin,
       grid_stress_score: gridStressScore,

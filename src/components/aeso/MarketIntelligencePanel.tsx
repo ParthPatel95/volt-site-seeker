@@ -120,7 +120,27 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
       spikeProb = Math.min(spikeProb, 95);
     }
     
-    return { renewablePercent, reserveMargin, spikeProb };
+    // Calculate available capacity from generation + reserves if DB value is null
+    const availableCapacity = marketData.available_capacity_mw ?? 
+      ((marketData.generation_wind || 0) + (marketData.generation_solar || 0) + 
+       (marketData.generation_gas || 0) + (marketData.spinning_reserve_mw || 0));
+    
+    // Calculate rolling analytics fallbacks
+    const rollingAvg24h = marketData.price_rolling_avg_24h ?? marketData.pool_price;
+    const rollingStd24h = marketData.price_rolling_std_24h ?? 0;
+    const volatility6h = marketData.price_volatility_6h ?? 0;
+    const momentum3h = marketData.price_momentum_3h ?? 0;
+    
+    return { 
+      renewablePercent, 
+      reserveMargin, 
+      spikeProb, 
+      availableCapacity,
+      rollingAvg24h,
+      rollingStd24h,
+      volatility6h,
+      momentum3h
+    };
   }, [marketData]);
 
   const gridHealthStatus = useMemo(() => {
@@ -338,9 +358,12 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <Zap className="w-4 h-4 text-emerald-500" />
               </div>
               <div className="text-lg font-bold text-emerald-500">
-                {((marketData.available_capacity_mw || 0) / 1000).toFixed(1)}K
+                {((derivedMetrics?.availableCapacity || 0) / 1000).toFixed(1)}K
               </div>
-              <div className="text-[10px] text-muted-foreground">MW available</div>
+              <div className="text-[10px] text-muted-foreground">
+                MW available
+                {!marketData.available_capacity_mw && <span className="ml-1 opacity-60">(calc)</span>}
+              </div>
             </Card>
 
             {/* Outages */}
@@ -352,7 +375,10 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
               <div className="text-lg font-bold text-amber-500">
                 {((marketData.outage_capacity_mw || 0) / 1000).toFixed(1)}K
               </div>
-              <div className="text-[10px] text-muted-foreground">MW offline</div>
+              <div className="text-[10px] text-muted-foreground">
+                MW offline
+                {(marketData.outage_capacity_mw || 0) === 0 && <span className="ml-1 opacity-60">(est)</span>}
+              </div>
             </Card>
 
             {/* Renewable Penetration */}
@@ -441,9 +467,12 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <BarChart3 className="w-4 h-4 text-primary" />
               </div>
               <div className="text-lg font-bold">
-                ${(marketData.price_rolling_avg_24h || 0).toFixed(2)}
+                ${(derivedMetrics?.rollingAvg24h || marketData.pool_price || 0).toFixed(2)}
               </div>
-              <div className="text-[10px] text-muted-foreground">rolling average</div>
+              <div className="text-[10px] text-muted-foreground">
+                rolling average
+                {!marketData.price_rolling_avg_24h && <span className="ml-1 opacity-60">(current)</span>}
+              </div>
             </Card>
 
             {/* Price Std Dev */}
@@ -453,9 +482,13 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <Activity className="w-4 h-4 text-amber-500" />
               </div>
               <div className="text-lg font-bold">
-                ±${(marketData.price_rolling_std_24h || 0).toFixed(2)}
+                ±${(derivedMetrics?.rollingStd24h || 0).toFixed(2)}
               </div>
-              <div className="text-[10px] text-muted-foreground">24h volatility</div>
+              <div className="text-[10px] text-muted-foreground">
+                24h volatility
+                {!marketData.price_rolling_std_24h && (derivedMetrics?.rollingStd24h || 0) === 0 && 
+                  <span className="ml-1 opacity-60">(pending)</span>}
+              </div>
             </Card>
 
             {/* 6h Volatility */}
@@ -464,34 +497,42 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
                 <span className="text-xs text-muted-foreground">Volatility 6h</span>
                 <TrendingUp className={cn(
                   "w-4 h-4",
-                  (marketData.price_volatility_6h || 0) > 30 ? "text-destructive" : "text-emerald-500"
+                  (derivedMetrics?.volatility6h || 0) > 30 ? "text-destructive" : "text-emerald-500"
                 )} />
               </div>
               <div className={cn(
                 "text-lg font-bold",
-                (marketData.price_volatility_6h || 0) > 30 ? "text-destructive" : "text-emerald-500"
+                (derivedMetrics?.volatility6h || 0) > 30 ? "text-destructive" : "text-emerald-500"
               )}>
-                {(marketData.price_volatility_6h || 0).toFixed(1)}%
+                {(derivedMetrics?.volatility6h || 0).toFixed(1)}%
               </div>
-              <div className="text-[10px] text-muted-foreground">price swing</div>
+              <div className="text-[10px] text-muted-foreground">
+                price swing
+                {!marketData.price_volatility_6h && (derivedMetrics?.volatility6h || 0) === 0 && 
+                  <span className="ml-1 opacity-60">(pending)</span>}
+              </div>
             </Card>
 
             {/* Price Momentum */}
             <Card className="p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Momentum 3h</span>
-                {(marketData.price_momentum_3h || 0) >= 0 ? 
+                {(derivedMetrics?.momentum3h || 0) >= 0 ? 
                   <TrendingUp className="w-4 h-4 text-emerald-500" /> :
                   <TrendingDown className="w-4 h-4 text-destructive" />
                 }
               </div>
               <div className={cn(
                 "text-lg font-bold",
-                (marketData.price_momentum_3h || 0) >= 0 ? "text-emerald-500" : "text-destructive"
+                (derivedMetrics?.momentum3h || 0) >= 0 ? "text-emerald-500" : "text-destructive"
               )}>
-                {(marketData.price_momentum_3h || 0) >= 0 ? '+' : ''}{(marketData.price_momentum_3h || 0).toFixed(2)}
+                {(derivedMetrics?.momentum3h || 0) >= 0 ? '+' : ''}{(derivedMetrics?.momentum3h || 0).toFixed(2)}
               </div>
-              <div className="text-[10px] text-muted-foreground">price trend</div>
+              <div className="text-[10px] text-muted-foreground">
+                price trend
+                {!marketData.price_momentum_3h && (derivedMetrics?.momentum3h || 0) === 0 && 
+                  <span className="ml-1 opacity-60">(pending)</span>}
+              </div>
             </Card>
           </div>
         </TabsContent>

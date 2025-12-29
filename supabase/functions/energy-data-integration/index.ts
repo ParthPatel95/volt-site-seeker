@@ -1203,6 +1203,31 @@ async function fetchAESOData() {
     loadData = tempLoadData;
   }
 
+  // Calculate generationOutages (available capacity and outage estimates)
+  // AESO doesn't provide direct outage data via public API, so we calculate from available sources
+  let generationOutages: any = undefined;
+  if (generationMix && loadData && operatingReserve) {
+    const totalGeneration = generationMix.total_generation_mw || 0;
+    const currentDemand = loadData.current_demand_mw || 0;
+    const reserves = operatingReserve.total_mw || 0;
+    
+    // Available capacity = current generation + reserves
+    const estimatedAvailableCapacity = totalGeneration + reserves;
+    
+    // Typical Alberta installed capacity is ~18,000-20,000 MW
+    // Estimate outages as difference between typical capacity and available
+    const typicalInstalledCapacity = 18500; // Conservative estimate
+    const estimatedOutages = Math.max(0, typicalInstalledCapacity - estimatedAvailableCapacity);
+    
+    generationOutages = {
+      available_mw: Math.round(estimatedAvailableCapacity),
+      outages_mw: Math.round(estimatedOutages),
+      timestamp: new Date().toISOString(),
+      source: 'calculated_from_csd'
+    };
+    console.log('✅ AESO Generation Capacity calculated:', generationOutages);
+  }
+
   console.log('AESO return summary (APIM)', {
     pricingSource: pricing?.source,
     currentPrice: pricing?.current_price,
@@ -1211,7 +1236,8 @@ async function fetchAESOData() {
     mixSource: generationMix?.source,
     capacityMargin: loadData?.capacity_margin,
     hasOperatingReserve: !!operatingReserve,
-    hasIntertieFlows: !!intertieFlows
+    hasIntertieFlows: !!intertieFlows,
+    hasGenerationOutages: !!generationOutages
   });
 
   return { 
@@ -1219,7 +1245,8 @@ async function fetchAESOData() {
     loadData, 
     generationMix,
     operatingReserve,
-    intertieFlows
+    intertieFlows,
+    generationOutages
   };
 }
 
