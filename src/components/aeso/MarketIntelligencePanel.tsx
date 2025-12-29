@@ -1,0 +1,482 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Activity, 
+  Zap, 
+  Thermometer, 
+  Wind, 
+  ArrowLeftRight,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
+  Gauge,
+  Cloud,
+  Sun,
+  Droplets,
+  BarChart3
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+
+interface MarketData {
+  timestamp: string;
+  pool_price: number;
+  ail_mw: number;
+  reserve_margin_percent: number | null;
+  spinning_reserve_mw: number | null;
+  supplemental_reserve_mw: number | null;
+  grid_stress_score: number | null;
+  price_spike_probability: number | null;
+  market_stress_score: number | null;
+  intertie_bc_flow: number | null;
+  intertie_sask_flow: number | null;
+  intertie_montana_flow: number | null;
+  interchange_net: number | null;
+  temperature_calgary: number | null;
+  temperature_edmonton: number | null;
+  wind_speed: number | null;
+  cloud_cover: number | null;
+  renewable_penetration: number | null;
+  generation_wind: number | null;
+  generation_solar: number | null;
+  generation_gas: number | null;
+  price_rolling_avg_24h: number | null;
+  price_rolling_std_24h: number | null;
+  price_volatility_6h: number | null;
+  price_momentum_3h: number | null;
+  available_capacity_mw: number | null;
+  outage_capacity_mw: number | null;
+}
+
+interface MarketIntelligencePanelProps {
+  className?: string;
+}
+
+export function MarketIntelligencePanel({ className }: MarketIntelligencePanelProps) {
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('aeso_training_data')
+          .select(`
+            timestamp, pool_price, ail_mw, reserve_margin_percent, 
+            spinning_reserve_mw, supplemental_reserve_mw, grid_stress_score,
+            price_spike_probability, market_stress_score, intertie_bc_flow,
+            intertie_sask_flow, intertie_montana_flow, interchange_net,
+            temperature_calgary, temperature_edmonton, wind_speed, cloud_cover,
+            renewable_penetration, generation_wind, generation_solar, generation_gas,
+            price_rolling_avg_24h, price_rolling_std_24h, price_volatility_6h,
+            price_momentum_3h, available_capacity_mw, outage_capacity_mw
+          `)
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error) throw error;
+        setMarketData(data);
+      } catch (err) {
+        console.error('[MarketIntelligencePanel] Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarketData();
+    const interval = setInterval(fetchMarketData, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const gridHealthStatus = useMemo(() => {
+    if (!marketData) return { status: 'unknown', color: 'text-muted-foreground' };
+    const stress = marketData.grid_stress_score || 0;
+    const reserve = marketData.reserve_margin_percent || 0;
+    
+    if (stress > 70 || reserve < 10) return { status: 'Critical', color: 'text-destructive' };
+    if (stress > 40 || reserve < 15) return { status: 'Warning', color: 'text-amber-500' };
+    return { status: 'Healthy', color: 'text-emerald-500' };
+  }, [marketData]);
+
+  const formatFlow = (flow: number | null) => {
+    if (flow === null || flow === undefined) return '—';
+    const abs = Math.abs(flow);
+    const direction = flow >= 0 ? 'Export' : 'Import';
+    return `${direction} ${abs.toFixed(0)}`;
+  };
+
+  if (loading) {
+    return (
+      <div className={cn("animate-pulse space-y-4", className)}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-24 bg-muted rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!marketData) return null;
+
+  return (
+    <div className={cn("space-y-4", className)}>
+      <Tabs defaultValue="grid" className="w-full">
+        <TabsList className="grid w-full grid-cols-5 h-8">
+          <TabsTrigger value="grid" className="text-xs">Grid Health</TabsTrigger>
+          <TabsTrigger value="interties" className="text-xs">Interties</TabsTrigger>
+          <TabsTrigger value="supply" className="text-xs">Supply</TabsTrigger>
+          <TabsTrigger value="weather" className="text-xs">Weather</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
+        </TabsList>
+
+        {/* Grid Health Panel */}
+        <TabsContent value="grid" className="mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Grid Status */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Grid Status</span>
+                <Activity className={cn("w-4 h-4", gridHealthStatus.color)} />
+              </div>
+              <div className={cn("text-lg font-bold", gridHealthStatus.color)}>
+                {gridHealthStatus.status}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                Stress: {(marketData.grid_stress_score || 0).toFixed(0)}%
+              </div>
+            </Card>
+
+            {/* Reserve Margin */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Reserve Margin</span>
+                <Gauge className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-lg font-bold">
+                {(marketData.reserve_margin_percent || 0).toFixed(1)}%
+              </div>
+              <Progress 
+                value={Math.min(marketData.reserve_margin_percent || 0, 100)} 
+                className="h-1.5"
+              />
+            </Card>
+
+            {/* Spinning Reserve */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Spinning Reserve</span>
+                <Zap className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="text-lg font-bold">
+                {((marketData.spinning_reserve_mw || 0) / 1000).toFixed(1)}K
+              </div>
+              <div className="text-[10px] text-muted-foreground">MW available</div>
+            </Card>
+
+            {/* Spike Probability */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Spike Risk</span>
+                <AlertTriangle className={cn(
+                  "w-4 h-4",
+                  (marketData.price_spike_probability || 0) > 50 ? "text-destructive" : 
+                  (marketData.price_spike_probability || 0) > 25 ? "text-amber-500" : "text-emerald-500"
+                )} />
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.price_spike_probability || 0) > 50 ? "text-destructive" : 
+                (marketData.price_spike_probability || 0) > 25 ? "text-amber-500" : "text-emerald-500"
+              )}>
+                {(marketData.price_spike_probability || 0).toFixed(0)}%
+              </div>
+              <div className="text-[10px] text-muted-foreground">probability</div>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Interties Panel */}
+        <TabsContent value="interties" className="mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* BC Intertie */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">BC</span>
+                <ArrowLeftRight className={cn(
+                  "w-4 h-4",
+                  (marketData.intertie_bc_flow || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+                )} />
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.intertie_bc_flow || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+              )}>
+                {formatFlow(marketData.intertie_bc_flow)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {Math.abs(marketData.intertie_bc_flow || 0).toFixed(0)} MW
+              </div>
+            </Card>
+
+            {/* Saskatchewan Intertie */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Saskatchewan</span>
+                <ArrowLeftRight className={cn(
+                  "w-4 h-4",
+                  (marketData.intertie_sask_flow || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+                )} />
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.intertie_sask_flow || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+              )}>
+                {formatFlow(marketData.intertie_sask_flow)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {Math.abs(marketData.intertie_sask_flow || 0).toFixed(0)} MW
+              </div>
+            </Card>
+
+            {/* Montana Intertie */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Montana</span>
+                <ArrowLeftRight className={cn(
+                  "w-4 h-4",
+                  (marketData.intertie_montana_flow || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+                )} />
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.intertie_montana_flow || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+              )}>
+                {formatFlow(marketData.intertie_montana_flow)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {Math.abs(marketData.intertie_montana_flow || 0).toFixed(0)} MW
+              </div>
+            </Card>
+
+            {/* Net Interchange */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Net Flow</span>
+                {(marketData.interchange_net || 0) >= 0 ? 
+                  <TrendingUp className="w-4 h-4 text-emerald-500" /> :
+                  <TrendingDown className="w-4 h-4 text-blue-500" />
+                }
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.interchange_net || 0) >= 0 ? "text-emerald-500" : "text-blue-500"
+              )}>
+                {(marketData.interchange_net || 0) >= 0 ? 'Net Export' : 'Net Import'}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {Math.abs(marketData.interchange_net || 0).toFixed(0)} MW
+              </div>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Supply Panel */}
+        <TabsContent value="supply" className="mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Current Demand */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Demand</span>
+                <Activity className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-lg font-bold">
+                {((marketData.ail_mw || 0) / 1000).toFixed(1)}K
+              </div>
+              <div className="text-[10px] text-muted-foreground">MW (AIL)</div>
+            </Card>
+
+            {/* Available Capacity */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Capacity</span>
+                <Zap className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="text-lg font-bold text-emerald-500">
+                {((marketData.available_capacity_mw || 0) / 1000).toFixed(1)}K
+              </div>
+              <div className="text-[10px] text-muted-foreground">MW available</div>
+            </Card>
+
+            {/* Outages */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Outages</span>
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="text-lg font-bold text-amber-500">
+                {((marketData.outage_capacity_mw || 0) / 1000).toFixed(1)}K
+              </div>
+              <div className="text-[10px] text-muted-foreground">MW offline</div>
+            </Card>
+
+            {/* Renewable Penetration */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Renewable %</span>
+                <Wind className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="text-lg font-bold text-emerald-500">
+                {(marketData.renewable_penetration || 0).toFixed(1)}%
+              </div>
+              <Progress 
+                value={Math.min(marketData.renewable_penetration || 0, 100)} 
+                className="h-1.5"
+              />
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Weather Panel */}
+        <TabsContent value="weather" className="mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Calgary Temp */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Calgary</span>
+                <Thermometer className="w-4 h-4 text-orange-500" />
+              </div>
+              <div className="text-lg font-bold">
+                {(marketData.temperature_calgary || 0).toFixed(1)}°C
+              </div>
+              <div className="text-[10px] text-muted-foreground">Temperature</div>
+            </Card>
+
+            {/* Edmonton Temp */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Edmonton</span>
+                <Thermometer className="w-4 h-4 text-orange-500" />
+              </div>
+              <div className="text-lg font-bold">
+                {(marketData.temperature_edmonton || 0).toFixed(1)}°C
+              </div>
+              <div className="text-[10px] text-muted-foreground">Temperature</div>
+            </Card>
+
+            {/* Wind Speed */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Wind</span>
+                <Wind className="w-4 h-4 text-blue-500" />
+              </div>
+              <div className="text-lg font-bold">
+                {(marketData.wind_speed || 0).toFixed(1)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">km/h</div>
+            </Card>
+
+            {/* Cloud Cover */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Clouds</span>
+                {(marketData.cloud_cover || 0) > 50 ? 
+                  <Cloud className="w-4 h-4 text-slate-400" /> :
+                  <Sun className="w-4 h-4 text-amber-400" />
+                }
+              </div>
+              <div className="text-lg font-bold">
+                {(marketData.cloud_cover || 0).toFixed(0)}%
+              </div>
+              <Progress 
+                value={Math.min(marketData.cloud_cover || 0, 100)} 
+                className="h-1.5"
+              />
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Price Analytics Panel */}
+        <TabsContent value="analytics" className="mt-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* 24h Avg Price */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">24h Avg</span>
+                <BarChart3 className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-lg font-bold">
+                ${(marketData.price_rolling_avg_24h || 0).toFixed(2)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">rolling average</div>
+            </Card>
+
+            {/* Price Std Dev */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Std Dev</span>
+                <Activity className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="text-lg font-bold">
+                ±${(marketData.price_rolling_std_24h || 0).toFixed(2)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">24h volatility</div>
+            </Card>
+
+            {/* 6h Volatility */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Volatility 6h</span>
+                <TrendingUp className={cn(
+                  "w-4 h-4",
+                  (marketData.price_volatility_6h || 0) > 30 ? "text-destructive" : "text-emerald-500"
+                )} />
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.price_volatility_6h || 0) > 30 ? "text-destructive" : "text-emerald-500"
+              )}>
+                {(marketData.price_volatility_6h || 0).toFixed(1)}%
+              </div>
+              <div className="text-[10px] text-muted-foreground">price swing</div>
+            </Card>
+
+            {/* Price Momentum */}
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Momentum 3h</span>
+                {(marketData.price_momentum_3h || 0) >= 0 ? 
+                  <TrendingUp className="w-4 h-4 text-emerald-500" /> :
+                  <TrendingDown className="w-4 h-4 text-destructive" />
+                }
+              </div>
+              <div className={cn(
+                "text-lg font-bold",
+                (marketData.price_momentum_3h || 0) >= 0 ? "text-emerald-500" : "text-destructive"
+              )}>
+                {(marketData.price_momentum_3h || 0) >= 0 ? '+' : ''}{(marketData.price_momentum_3h || 0).toFixed(2)}
+              </div>
+              <div className="text-[10px] text-muted-foreground">price trend</div>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Last Update Timestamp */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-[10px] text-muted-foreground">
+          Last Updated: {marketData.timestamp ? format(new Date(marketData.timestamp), 'MMM d, HH:mm') : '—'}
+        </span>
+        <Badge variant="outline" className="text-[10px]">
+          Live Market Data
+        </Badge>
+      </div>
+    </div>
+  );
+}
