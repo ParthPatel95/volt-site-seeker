@@ -1,8 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Factory, Zap, Clock, TrendingDown } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AlertTriangle, Factory, TrendingDown, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AssetOutage {
   total_outages?: number;
@@ -28,10 +29,10 @@ export function ERCOTOutagesPanel({ assetOutages, loading }: ERCOTOutagesPanelPr
         {[...Array(2)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-6 bg-muted rounded w-3/4"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-gray-100 rounded"></div>
+              <div className="h-64 bg-muted rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -39,27 +40,21 @@ export function ERCOTOutagesPanel({ assetOutages, loading }: ERCOTOutagesPanelPr
     );
   }
 
-  // Generate mock data if no real data available
-  const mockOutageData = {
-    total_outages: 12,
-    total_capacity_mw: 3030,
-    outages_by_type: [
-      { type: 'Nuclear', count: 1, capacity_mw: 1280 },
-      { type: 'Natural Gas', count: 5, capacity_mw: 1200 },
-      { type: 'Coal', count: 3, capacity_mw: 400 },
-      { type: 'Wind', count: 3, capacity_mw: 150 }
-    ]
-  };
+  // Check if we have real outage data
+  const hasRealData = assetOutages && 
+    (assetOutages.total_outages !== undefined || 
+     (assetOutages.outages_by_type && assetOutages.outages_by_type.length > 0));
 
-  const displayData = assetOutages || mockOutageData;
-
-  if (!displayData) {
+  if (!hasRealData) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center text-muted-foreground">
-          No outage data available
-        </CardContent>
-      </Card>
+      <Alert className="border-muted bg-muted/50">
+        <Info className="h-4 w-4 text-muted-foreground" />
+        <AlertDescription className="text-muted-foreground">
+          <span className="font-medium">No ERCOT Outage Data Available</span> — Generation asset outage 
+          information requires authenticated access to ERCOT data services. Real-time outage data is 
+          not currently available through the public API.
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -71,9 +66,14 @@ export function ERCOTOutagesPanel({ assetOutages, loading }: ERCOTOutagesPanelPr
             <AlertTriangle className="w-5 h-5 text-orange-600" />
             <span>Generation Asset Outages</span>
           </div>
-          <Badge variant="outline">
-            {displayData.total_outages || 0} Active
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              Live Data
+            </Badge>
+            <Badge variant="outline">
+              {assetOutages.total_outages || 0} Active
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -82,7 +82,7 @@ export function ERCOTOutagesPanel({ assetOutages, loading }: ERCOTOutagesPanelPr
             <h4 className="text-sm font-medium mb-4">Outages by Resource Type</h4>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={displayData.outages_by_type || []}>
+                <BarChart data={assetOutages.outages_by_type || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="type" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} label={{ value: 'Count', angle: -90, position: 'insideLeft' }} />
@@ -109,13 +109,13 @@ export function ERCOTOutagesPanel({ assetOutages, loading }: ERCOTOutagesPanelPr
                     <span className="text-sm font-medium">Total Offline Capacity</span>
                   </div>
                   <span className="text-xl font-bold text-orange-600">
-                    {((displayData.total_capacity_mw || 0) / 1000).toFixed(1)} GW
+                    {((assetOutages.total_capacity_mw || 0) / 1000).toFixed(1)} GW
                   </span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                {(displayData.outages_by_type || []).map((item: any, index: number) => (
+                {(assetOutages.outages_by_type || []).map((item, index) => (
                   <div key={item.type} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
@@ -140,7 +140,7 @@ export function ERCOTOutagesPanel({ assetOutages, loading }: ERCOTOutagesPanelPr
             <div>
               <p className="font-medium text-sm">Outage Impact Assessment</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Current outages represent approximately {(((displayData.total_capacity_mw || 0) / 80000) * 100).toFixed(1)}% 
+                Current outages represent approximately {(((assetOutages.total_capacity_mw || 0) / 80000) * 100).toFixed(1)}% 
                 of total ERCOT generation capacity. Monitor system reliability and reserve margins during peak demand periods.
               </p>
             </div>

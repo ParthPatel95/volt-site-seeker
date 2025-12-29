@@ -40,145 +40,93 @@ export function useEIAData() {
   const [energyPrices, setEnergyPrices] = useState<EnergyPrice[]>([]);
   const [transmissionData, setTransmissionData] = useState<any>(null);
   const [generationData, setGenerationData] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchEIAData = async (request: EIARequest) => {
     setLoading(true);
+    setError(null);
+    
     try {
       console.log('Fetching EIA data:', request);
       
-      const { data, error } = await supabase.functions.invoke('eia-data-integration', {
+      const { data, error: fetchError } = await supabase.functions.invoke('eia-data-integration', {
         body: request
       });
 
-      if (error) {
-        console.error('EIA function error:', error);
-        // Don't throw error, instead show a warning and use fallback data
+      if (fetchError) {
+        console.error('EIA function error:', fetchError);
+        setError('EIA API temporarily unavailable');
         toast({
-          title: "EIA API Notice",
-          description: "Using cached data while EIA API is being updated",
-          variant: "default"
+          title: "EIA Data Unavailable",
+          description: "Unable to fetch EIA data. Please try again later.",
+          variant: "destructive"
         });
-        
-        // Generate fallback data based on request type
-        const fallbackData = generateFallbackData(request);
-        return fallbackData;
+        return { success: false, error: fetchError.message };
       }
 
-      if (!data.success) {
+      if (!data?.success) {
         console.warn('EIA API returned unsuccessful response:', data);
-        const fallbackData = generateFallbackData(request);
-        return fallbackData;
+        setError('No data available from EIA API');
+        return { success: false, error: 'No data available' };
       }
 
       switch (request.action) {
         case 'get_power_plants':
           setPowerPlants(data.power_plants || []);
-          toast({
-            title: "EIA Data Loaded",
-            description: `Found ${data.power_plants?.length || 0} power plants`,
-          });
+          if (data.power_plants?.length > 0) {
+            toast({
+              title: "EIA Data Loaded",
+              description: `Found ${data.power_plants.length} power plants`,
+            });
+          }
           break;
           
         case 'get_energy_prices':
           setEnergyPrices(data.energy_prices || []);
-          toast({
-            title: "Energy Prices Updated",
-            description: "Latest pricing data loaded",
-          });
+          if (data.energy_prices?.length > 0) {
+            toast({
+              title: "Energy Prices Updated",
+              description: "Latest pricing data loaded",
+            });
+          }
           break;
           
         case 'get_transmission_lines':
           setTransmissionData(data.transmission_data || null);
-          toast({
-            title: "Transmission Data Loaded",
-            description: "Infrastructure data updated",
-          });
+          if (data.transmission_data) {
+            toast({
+              title: "Transmission Data Loaded",
+              description: "Infrastructure data updated",
+            });
+          }
           break;
           
         case 'get_generation_data':
           setGenerationData(data.generation_data || []);
-          toast({
-            title: "Generation Data Updated",
-            description: "Power generation statistics loaded",
-          });
+          if (data.generation_data?.length > 0) {
+            toast({
+              title: "Generation Data Updated",
+              description: "Power generation statistics loaded",
+            });
+          }
           break;
       }
 
       return data;
-    } catch (error: any) {
-      console.error('EIA data error:', error);
-      
-      // Generate fallback data instead of throwing error
-      const fallbackData = generateFallbackData(request);
+    } catch (err: any) {
+      console.error('EIA data error:', err);
+      setError('Failed to fetch EIA data');
       
       toast({
-        title: "Using Cached Data",
-        description: "EIA API temporarily unavailable, showing cached data",
-        variant: "default"
+        title: "EIA Data Error",
+        description: "Unable to fetch data from EIA. Please try again later.",
+        variant: "destructive"
       });
       
-      return fallbackData;
+      return { success: false, error: err.message };
     } finally {
       setLoading(false);
-    }
-  };
-
-  const generateFallbackData = (request: EIARequest) => {
-    switch (request.action) {
-      case 'get_power_plants':
-        const fallbackPlants = Array.from({ length: 15 }, (_, index) => ({
-          id: `fallback_${index}`,
-          name: `${request.state || 'TX'} Power Plant ${index + 1}`,
-          state: request.state || 'TX',
-          capacity_mw: Math.floor(Math.random() * 500) + 50,
-          fuel_type: request.fuel_type || ['NG', 'COL', 'SUN', 'WND'][Math.floor(Math.random() * 4)],
-          utility_name: ['CenterPoint Energy', 'Oncor', 'AEP Texas'][Math.floor(Math.random() * 3)],
-          coordinates: { lat: 32.7767, lng: -96.7970 },
-          operational_status: 'OP',
-          commissioning_year: 2020,
-          data_source: 'Cached',
-          last_updated: new Date().toISOString()
-        }));
-        setPowerPlants(fallbackPlants);
-        return { success: true, power_plants: fallbackPlants };
-        
-      case 'get_energy_prices':
-        const fallbackPrices = Array.from({ length: 6 }, (_, index) => ({
-          period: new Date(Date.now() - index * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 7),
-          price_cents_per_kwh: 9.5 + Math.random() * 3,
-          revenue_thousand_dollars: 900000,
-          sales_thousand_mwh: 100000,
-          state: request.region || 'TX',
-          sector: 'total'
-        }));
-        setEnergyPrices(fallbackPrices);
-        return { success: true, energy_prices: fallbackPrices };
-        
-      case 'get_transmission_lines':
-        const fallbackTransmission = {
-          analysis: {
-            total_lines_analyzed: 1500,
-            efficiency_rating: 'Good',
-            grid_reliability: 'High'
-          }
-        };
-        setTransmissionData(fallbackTransmission);
-        return { success: true, transmission_data: fallbackTransmission };
-        
-      case 'get_generation_data':
-        const fallbackGeneration = Array.from({ length: 8 }, (_, index) => ({
-          period: new Date(Date.now() - index * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 7),
-          generation_mwh: 750000 + Math.random() * 250000,
-          fuel_type: request.fuel_type || 'NG',
-          location: request.state || 'TX',
-          type_name: 'Natural Gas'
-        }));
-        setGenerationData(fallbackGeneration);
-        return { success: true, generation_data: fallbackGeneration };
-        
-      default:
-        return { success: false, error: 'Unknown action' };
     }
   };
 
@@ -212,8 +160,17 @@ export function useEIAData() {
     });
   };
 
+  const clearData = () => {
+    setPowerPlants([]);
+    setEnergyPrices([]);
+    setTransmissionData(null);
+    setGenerationData([]);
+    setError(null);
+  };
+
   return {
     loading,
+    error,
     powerPlants,
     energyPrices,
     transmissionData,
@@ -225,6 +182,7 @@ export function useEIAData() {
     setPowerPlants,
     setEnergyPrices,
     setTransmissionData,
-    setGenerationData
+    setGenerationData,
+    clearData
   };
 }
