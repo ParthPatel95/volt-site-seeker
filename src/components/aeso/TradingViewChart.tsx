@@ -76,6 +76,21 @@ interface PriceDataPoint {
   pool_price: number;
   forecast_pool_price?: number;
   ail_mw?: number;
+  generation_wind?: number;
+  generation_solar?: number;
+  generation_gas?: number;
+  generation_coal?: number;
+  generation_hydro?: number;
+}
+
+interface GenerationMixData {
+  timestamp: string;
+  wind: number;
+  solar: number;
+  gas: number;
+  coal: number;
+  hydro: number;
+  total: number;
 }
 
 interface AIPrediction {
@@ -221,6 +236,7 @@ export function TradingViewChart({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartIndices, setDragStartIndices] = useState<{ start: number, end: number }>({ start: 0, end: 0 });
+  const [generationData, setGenerationData] = useState<GenerationMixData[]>([]);
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const mainChartRef = useRef<HTMLDivElement>(null);
@@ -619,6 +635,44 @@ export function TradingViewChart({
       window.removeEventListener('resize', updateDimensions);
     };
   }, [isFullscreen, chartType]);
+
+  // Fetch generation mix data
+  useEffect(() => {
+    const fetchGenerationData = async () => {
+      try {
+        const hoursBack = TIME_RANGES.find(r => r.value === timeRange)?.hours || 24;
+        const { data: genData, error } = await supabase
+          .from('aeso_training_data')
+          .select('timestamp, generation_wind, generation_solar, generation_gas, generation_coal, generation_hydro')
+          .order('timestamp', { ascending: false })
+          .limit(hoursBack);
+        
+        if (error) {
+          console.error('[TradingViewChart] Generation data error:', error);
+          return;
+        }
+        
+        if (genData && genData.length > 0) {
+          const mapped: GenerationMixData[] = genData.reverse().map(row => ({
+            timestamp: row.timestamp,
+            wind: row.generation_wind || 0,
+            solar: row.generation_solar || 0,
+            gas: row.generation_gas || 0,
+            coal: row.generation_coal || 0,
+            hydro: row.generation_hydro || 0,
+            total: (row.generation_wind || 0) + (row.generation_solar || 0) + 
+                   (row.generation_gas || 0) + (row.generation_coal || 0) + (row.generation_hydro || 0)
+          }));
+          setGenerationData(mapped);
+          console.log('[TradingViewChart] Fetched generation data:', mapped.length, 'points');
+        }
+      } catch (err) {
+        console.error('[TradingViewChart] Generation fetch error:', err);
+      }
+    };
+    
+    fetchGenerationData();
+  }, [timeRange]);
 
   // Real-time subscription for live price updates
   useEffect(() => {
@@ -1556,18 +1610,27 @@ export function TradingViewChart({
                         const { open, high, low, close, isLive, isForecast } = payload;
                         const isUp = close >= open;
                         
-                        // Different colors for different candle types
-                        let color: string;
+                        // TradingView-style colors: green for bullish, red for bearish
+                        const bullishColor = '#26a69a'; // TradingView green
+                        const bearishColor = '#ef5350'; // TradingView red
+                        const forecastBullish = '#4dd0e1'; // Cyan for forecast up
+                        const forecastBearish = '#ffab40'; // Orange for forecast down
+                        
+                        let bodyColor: string;
+                        let wickColor: string;
                         let opacity = 1;
-                        let strokeDash = '';
+                        let isFilled = true;
                         
                         if (isForecast) {
-                          // Forecast candles: semi-transparent with distinct color
-                          color = isUp ? '#06b6d4' : '#f97316'; // cyan/orange for forecast
-                          opacity = 0.65;
-                          strokeDash = '4 2';
+                          bodyColor = isUp ? forecastBullish : forecastBearish;
+                          wickColor = bodyColor;
+                          opacity = 0.7;
+                          isFilled = false; // Hollow forecast candles
                         } else {
-                          color = isUp ? '#10b981' : '#ef4444'; // green/red for actual
+                          bodyColor = isUp ? bullishColor : bearishColor;
+                          wickColor = bodyColor;
+                          // TradingView: hollow for bullish (close > open), filled for bearish
+                          isFilled = !isUp;
                         }
                         
                         // Use viewBox first (most reliable), then background, then fallback to chartArea
@@ -1590,94 +1653,88 @@ export function TradingViewChart({
                         const lowY = yScale(low);
                         
                         const bodyTop = Math.min(openY, closeY);
-                        const bodyHeight = Math.max(Math.abs(closeY - openY), 3); // Min 3px for visibility
+                        const bodyHeight = Math.max(Math.abs(closeY - openY), 2); // Min 2px for visibility
                         const wickX = x + width / 2;
-                        const candleWidth = Math.max(width - 4, 6); // Min 6px width
+                        const candleWidth = Math.max(width * 0.8, 4); // 80% of available width, min 4px
                         
                         return (
                           <g opacity={opacity}>
-                            {/* Wick line (high to low) - draw first so body overlays it */}
+                            {/* Upper wick (high to body top) */}
                             <line
                               x1={wickX}
                               y1={highY}
                               x2={wickX}
-                              y2={lowY}
-                              stroke={color}
-                              strokeWidth={isForecast ? 1 : 2}
-                              strokeDasharray={strokeDash}
+                              y2={bodyTop}
+                              stroke={wickColor}
+                              strokeWidth={1}
                             />
-                            {/* Body rectangle (open to close) */}
+                            {/* Lower wick (body bottom to low) */}
+                            <line
+                              x1={wickX}
+                              y1={bodyTop + bodyHeight}
+                              x2={wickX}
+                              y2={lowY}
+                              stroke={wickColor}
+                              strokeWidth={1}
+                            />
+                            {/* Body rectangle */}
                             <rect
                               x={x + (width - candleWidth) / 2}
                               y={bodyTop}
                               width={candleWidth}
                               height={bodyHeight}
-                              fill={isForecast ? 'transparent' : color}
-                              stroke={color}
-                              strokeWidth={isForecast ? 2 : 1}
-                              strokeDasharray={isForecast ? '4 2' : ''}
-                              rx={1}
-                              ry={1}
+                              fill={isFilled ? bodyColor : 'transparent'}
+                              stroke={bodyColor}
+                              strokeWidth={isForecast ? 1.5 : 1}
+                              strokeDasharray={isForecast ? '3 2' : ''}
                             />
-                            {/* Live candle pulsing border */}
+                            {/* Live candle glow effect */}
                             {isLive && (
                               <>
                                 <rect
-                                  x={x + (width - candleWidth) / 2 - 3}
-                                  y={bodyTop - 3}
-                                  width={candleWidth + 6}
-                                  height={bodyHeight + 6}
+                                  x={x + (width - candleWidth) / 2 - 2}
+                                  y={bodyTop - 2}
+                                  width={candleWidth + 4}
+                                  height={bodyHeight + 4}
                                   fill="none"
-                                  stroke="#f59e0b"
+                                  stroke="#ffc107"
                                   strokeWidth={2}
-                                  rx={3}
-                                  ry={3}
+                                  rx={2}
+                                  ry={2}
                                   className="animate-pulse"
                                 />
-                                {/* LIVE text indicator */}
+                                {/* Live indicator dot */}
+                                <circle
+                                  cx={x + width / 2}
+                                  cy={Math.max(highY - 10, chartTop + 5)}
+                                  r={4}
+                                  fill="#ffc107"
+                                  className="animate-pulse"
+                                />
                                 <text
                                   x={x + width / 2}
-                                  y={Math.max(bodyTop - 12, chartTop + 12)}
+                                  y={Math.max(highY - 18, chartTop + 2)}
                                   textAnchor="middle"
-                                  fontSize={9}
+                                  fontSize={8}
                                   fontWeight="bold"
-                                  fill="#f59e0b"
-                                  className="animate-pulse"
+                                  fill="#ffc107"
                                 >
-                                  LIVE
+                                  ●
                                 </text>
                               </>
                             )}
-                            {/* Forecast indicator - hatched pattern inside body */}
-                            {isForecast && (
-                              <>
-                                {/* Horizontal center line for forecast */}
-                                <line
-                                  x1={x + (width - candleWidth) / 2 + 2}
-                                  y1={bodyTop + bodyHeight / 2}
-                                  x2={x + (width - candleWidth) / 2 + candleWidth - 2}
-                                  y2={bodyTop + bodyHeight / 2}
-                                  stroke={color}
-                                  strokeWidth={1}
-                                  strokeDasharray="2 2"
-                                  opacity={0.7}
-                                />
-                                {/* Confidence range shaded area */}
-                                {payload.confidenceLower !== undefined && payload.confidenceUpper !== undefined && (
-                                  <rect
-                                    x={x + (width - candleWidth) / 2}
-                                    y={yScale(payload.confidenceUpper)}
-                                    width={candleWidth}
-                                    height={Math.abs(yScale(payload.confidenceLower) - yScale(payload.confidenceUpper))}
-                                    fill={color}
-                                    fillOpacity={0.15}
-                                    stroke={color}
-                                    strokeWidth={0.5}
-                                    strokeDasharray="2 2"
-                                    rx={1}
-                                  />
-                                )}
-                              </>
+                            {/* Forecast confidence band */}
+                            {isForecast && payload.confidenceLower !== undefined && payload.confidenceUpper !== undefined && (
+                              <rect
+                                x={x + (width - candleWidth) / 2 - 2}
+                                y={yScale(payload.confidenceUpper)}
+                                width={candleWidth + 4}
+                                height={Math.abs(yScale(payload.confidenceLower) - yScale(payload.confidenceUpper))}
+                                fill={bodyColor}
+                                fillOpacity={0.1}
+                                stroke="none"
+                                rx={1}
+                              />
                             )}
                           </g>
                         );
@@ -1769,16 +1826,27 @@ export function TradingViewChart({
           <MACDPanel data={chartData} height={100} />
         )}
 
-        {/* Volume/Energy Load Chart - TradingView Style */}
-        {!loading && (chartType === 'candlestick' ? candleData.length > 0 : volumeData.length > 0) && (
-          <div className="h-16 sm:h-20 flex-shrink-0 mx-2 sm:mx-3 mb-1 border-t border-border/50">
+        {/* Generation Mix & Volume Chart - Stacked Bar */}
+        {!loading && generationData.length > 0 && (
+          <div className="h-24 sm:h-28 flex-shrink-0 mx-2 sm:mx-3 mb-1 border-t border-border/50">
             <div className="flex items-center justify-between px-1 pt-1">
-              <span className="text-[10px] text-muted-foreground font-medium">Vol - AIL (MW)</span>
-              <span className="text-[10px] text-muted-foreground">Energy Load</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-muted-foreground font-medium">Generation Mix (MW)</span>
+                <div className="flex items-center gap-2 text-[9px]">
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-emerald-500" /><span>Wind</span></div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-amber-400" /><span>Solar</span></div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-orange-500" /><span>Gas</span></div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-slate-600" /><span>Coal</span></div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-blue-500" /><span>Hydro</span></div>
+                </div>
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                Total: {((generationData[generationData.length - 1]?.total || 0) / 1000).toFixed(1)}K MW
+              </span>
             </div>
             <ResponsiveContainer width="100%" height="85%">
               <ComposedChart 
-                data={chartType === 'candlestick' ? candleData : visibleData.filter(d => d.volume)} 
+                data={generationData}
                 margin={{ top: 2, right: 60, left: 0, bottom: 0 }}
               >
                 <XAxis dataKey="timestamp" hide />
@@ -1790,36 +1858,48 @@ export function TradingViewChart({
                 <Tooltip 
                   content={({ active, payload }) => {
                     if (!active || !payload?.[0]) return null;
-                    const data = payload[0].payload;
-                    const vol = data.volume || data.ail_mw || 0;
+                    const data = payload[0].payload as GenerationMixData;
                     return (
-                      <div className="bg-popover/95 border border-border rounded px-2 py-1 text-xs">
-                        <span className="text-muted-foreground">Load: </span>
-                        <span className="font-mono font-bold">{(vol / 1000).toFixed(1)}K MW</span>
+                      <div className="bg-popover/95 backdrop-blur border border-border rounded-lg px-3 py-2 text-xs shadow-lg">
+                        <div className="text-muted-foreground text-[10px] mb-1.5">
+                          {format(new Date(data.timestamp), 'MMM d, HH:mm')}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-emerald-500" />Wind</span>
+                            <span className="font-mono font-bold">{(data.wind / 1000).toFixed(1)}K</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-amber-400" />Solar</span>
+                            <span className="font-mono font-bold">{(data.solar / 1000).toFixed(1)}K</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-orange-500" />Gas</span>
+                            <span className="font-mono font-bold">{(data.gas / 1000).toFixed(1)}K</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-slate-600" />Coal</span>
+                            <span className="font-mono font-bold">{(data.coal / 1000).toFixed(1)}K</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-blue-500" />Hydro</span>
+                            <span className="font-mono font-bold">{(data.hydro / 1000).toFixed(1)}K</span>
+                          </div>
+                          <div className="border-t border-border pt-1 mt-1 flex items-center justify-between gap-3">
+                            <span className="font-medium">Total</span>
+                            <span className="font-mono font-bold">{(data.total / 1000).toFixed(1)}K MW</span>
+                          </div>
+                        </div>
                       </div>
                     );
                   }}
                 />
-                <Bar 
-                  dataKey={chartType === 'candlestick' ? 'volume' : 'volume'} 
-                  radius={[1, 1, 0, 0]} 
-                  maxBarSize={10}
-                  minPointSize={2}
-                >
-                  {(chartType === 'candlestick' ? candleData : visibleData.filter(d => d.volume)).map((entry: any, index: number, arr: any[]) => {
-                    // Color based on price movement (green = price up, red = price down)
-                    const prevClose = index > 0 ? (arr[index - 1]?.close || arr[index - 1]?.actual) : null;
-                    const currClose = entry.close || entry.actual;
-                    const isUp = prevClose ? currClose >= prevClose : true;
-                    
-                    return (
-                      <Cell 
-                        key={`vol-${index}`}
-                        fill={isUp ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'}
-                      />
-                    );
-                  })}
-                </Bar>
+                {/* Stacked bars for each generation source */}
+                <Bar dataKey="wind" stackId="gen" fill="#10b981" radius={[0, 0, 0, 0]} maxBarSize={12} />
+                <Bar dataKey="solar" stackId="gen" fill="#fbbf24" radius={[0, 0, 0, 0]} maxBarSize={12} />
+                <Bar dataKey="gas" stackId="gen" fill="#f97316" radius={[0, 0, 0, 0]} maxBarSize={12} />
+                <Bar dataKey="coal" stackId="gen" fill="#475569" radius={[0, 0, 0, 0]} maxBarSize={12} />
+                <Bar dataKey="hydro" stackId="gen" fill="#3b82f6" radius={[2, 2, 0, 0]} maxBarSize={12} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
