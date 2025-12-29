@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
+import { Link } from "react-router-dom";
 
 interface MasterclassCTASectionProps {
   totalTracks?: number;
@@ -20,6 +21,13 @@ const trackBadgeColors = [
   { bg: "bg-green-500", lightBg: "bg-green-500/20", text: "text-green-600" },
   { bg: "bg-pink-500", lightBg: "bg-pink-500/20", text: "text-pink-600" }
 ];
+
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
 
 export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCompletedTracks }: MasterclassCTASectionProps) => {
   const [completedTracks, setCompletedTracks] = useState<number[]>(propCompletedTracks || []);
@@ -44,6 +52,9 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
 
   const progressPercentage = Math.round((completedTracks.length / totalTracks) * 100);
   const isComplete = completedTracks.length === totalTracks;
+  
+  // Get the next incomplete track
+  const nextIncompleteTrack = [1, 2, 3, 4, 5].find(t => !completedTracks.includes(t)) || 1;
 
   const topicsLearned = [
     "Site evaluation using VoltScore™ methodology",
@@ -55,9 +66,9 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
   ];
 
   const nextSteps = [
-    { icon: Target, title: "Apply VoltScore™", description: "Use the framework to evaluate your next site" },
-    { icon: Users, title: "Join Community", description: "Connect with other mining operators" },
-    { icon: Zap, title: "Book Consultation", description: "Get expert advice on your specific situation" }
+    { icon: Target, title: "Apply VoltScore™", description: "Use the framework to evaluate your next site", href: "/voltscout" },
+    { icon: Users, title: "Join Community", description: "Connect with other mining operators", href: "/wattfund" },
+    { icon: Zap, title: "Book Consultation", description: "Get expert advice on your specific situation", href: "/contact" }
   ];
 
   return (
@@ -146,20 +157,21 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
                 <h3 className="text-xl font-bold text-foreground mb-6">What's Next?</h3>
                 <div className="grid md:grid-cols-3 gap-4">
                   {nextSteps.map((step, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.5 + index * 0.1 }}
-                      className="bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer shadow-sm"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                        <step.icon className="w-5 h-5 text-primary" />
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-1">{step.title}</h4>
-                      <p className="text-sm text-muted-foreground">{step.description}</p>
-                    </motion.div>
+                    <Link to={step.href} key={index}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                        className="bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer shadow-sm h-full"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                          <step.icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <h4 className="font-semibold text-foreground mb-1">{step.title}</h4>
+                        <p className="text-sm text-muted-foreground">{step.description}</p>
+                      </motion.div>
+                    </Link>
                   ))}
                 </div>
               </motion.div>
@@ -244,11 +256,19 @@ export const MasterclassCTASection = ({ totalTracks = 5, completedTracks: propCo
                     </p>
                     
                     <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                      <Button size="lg" className="gap-2">
-                        Resume Track {Math.min(...[1, 2, 3, 4, 5].filter(t => !completedTracks.includes(t)))}
+                      <Button 
+                        size="lg" 
+                        className="gap-2"
+                        onClick={() => scrollToSection(`track-${nextIncompleteTrack}`)}
+                      >
+                        Resume Track {nextIncompleteTrack}
                         <ArrowRight className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" size="lg">
+                      <Button 
+                        variant="outline" 
+                        size="lg"
+                        onClick={() => scrollToSection('intro')}
+                      >
                         View All Tracks
                       </Button>
                     </div>

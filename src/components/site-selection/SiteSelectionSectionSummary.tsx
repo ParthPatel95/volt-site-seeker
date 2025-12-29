@@ -1,5 +1,4 @@
 import { CheckCircle2, ArrowRight, Lightbulb } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface SiteSelectionSectionSummaryProps {
   title?: string;
@@ -7,10 +6,17 @@ interface SiteSelectionSectionSummaryProps {
   proTip?: string;
   nextSection?: {
     title: string;
-    href: string;
+    id: string;
   };
   variant?: 'light' | 'dark';
 }
+
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
 
 const SiteSelectionSectionSummary = ({ 
   title = "Section Summary",
@@ -55,8 +61,8 @@ const SiteSelectionSectionSummary = ({
           )}
           
           {nextSection && (
-            <Link 
-              to={nextSection.href}
+            <button 
+              onClick={() => scrollToSection(nextSection.id)}
               className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
                 isDark 
                   ? 'text-watt-purple hover:text-white' 
@@ -65,7 +71,7 @@ const SiteSelectionSectionSummary = ({
             >
               Next: {nextSection.title}
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           )}
         </div>
       </div>

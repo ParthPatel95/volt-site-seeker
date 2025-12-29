@@ -276,7 +276,7 @@ const DueDiligenceSection = () => {
             proTip="Never skip Phase I environmental. A $3,000 assessment can save you from millions in remediation liability. If Phase I identifies concerns, budget $15-50K for Phase II."
             nextSection={{
               title: "Site Scoring",
-              href: "#site-scoring"
+              id: "site-scoring"
             }}
           />
         </ScrollReveal>

@@ -247,7 +247,7 @@ export const MergersAcquisitionsSection = () => {
         <ScrollReveal delay={400}>
           <ScalingSectionSummary 
             keyTakeaways={keyTakeaways}
-            nextSectionId="scaling-cta"
+            nextSectionId="masterclass-cta"
             nextSectionTitle="Course Completion"
           />
         </ScrollReveal>

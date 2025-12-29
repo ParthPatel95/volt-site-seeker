@@ -6,9 +6,16 @@ interface RiskSectionSummaryProps {
   keyTakeaways: string[];
   nextSection?: {
     name: string;
-    href: string;
+    id: string;
   };
 }
+
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
 
 export const RiskSectionSummary = ({ title, keyTakeaways, nextSection }: RiskSectionSummaryProps) => {
   return (
@@ -31,13 +38,13 @@ export const RiskSectionSummary = ({ title, keyTakeaways, nextSection }: RiskSec
         </ul>
 
         {nextSection && (
-          <a 
-            href={nextSection.href}
+          <button 
+            onClick={() => scrollToSection(nextSection.id)}
             className="inline-flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors font-medium"
           >
             Continue to {nextSection.name}
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </button>
         )}
       </div>
     </ScrollReveal>

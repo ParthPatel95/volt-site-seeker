@@ -292,7 +292,7 @@ const LandAcquisitionSection = () => {
             proTip="Even if you plan to purchase, consider a lease-to-own structure. This lets you start operations faster while the purchase closes, and provides an exit if regulatory or power issues emerge."
             nextSection={{
               title: "Due Diligence",
-              href: "#due-diligence"
+              id: "due-diligence"
             }}
           />
         </ScrollReveal>
