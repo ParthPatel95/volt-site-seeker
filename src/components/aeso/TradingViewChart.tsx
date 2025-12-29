@@ -481,20 +481,49 @@ export function TradingViewChart({
       });
   }, [chartData]);
 
-  // Aggregate data into OHLC candles for candlestick chart
+  // Aggregate data into OHLC candles for candlestick chart - Include volume (load) data
   const candleData = useMemo(() => {
     const now = new Date();
     const actualData = chartData
       .filter(d => d.actual !== undefined)
-      .map(d => ({ timestamp: d.timestamp, actual: d.actual }));
+      .map(d => ({ 
+        timestamp: d.timestamp, 
+        actual: d.actual,
+        volume: d.volume || d.ail_mw || 0  // Include energy load as volume
+      }));
     
     if (actualData.length < 2) return [];
     
     const intervalHours = interval === '4H' ? 4 : interval === '1D' ? 24 : interval === '1W' ? 168 : 1;
     const actualCandles = aggregateToCandles(actualData, intervalHours, now);
     
+    // Add volume data to candles - sum or average the volumes in each candle period
+    const candlesWithVolume = actualCandles.map((candle, index) => {
+      // Find all data points within this candle's time period
+      const candleTime = new Date(candle.timestamp).getTime();
+      const nextCandleTime = candleTime + intervalHours * 60 * 60 * 1000;
+      
+      const candleDataPoints = actualData.filter(d => {
+        const pointTime = new Date(d.timestamp).getTime();
+        return pointTime >= candleTime && pointTime < nextCandleTime;
+      });
+      
+      // Calculate average volume for this candle period
+      const volumes = candleDataPoints.map(d => d.volume).filter(v => v > 0);
+      const avgVolume = volumes.length > 0 
+        ? volumes.reduce((a, b) => a + b, 0) / volumes.length 
+        : 0;
+      
+      return {
+        ...candle,
+        volume: Math.round(avgVolume),
+        ail_mw: Math.round(avgVolume)
+      };
+    });
+    
     // Generate forecast candles from AI predictions
     const lastActualPrice = actualData.length > 0 ? actualData[actualData.length - 1].actual! : currentPrice;
+    const lastVolume = candlesWithVolume.length > 0 ? candlesWithVolume[candlesWithVolume.length - 1].volume : 10000;
     
     // Get future AI predictions (after current time)
     const futurePredictions = aiPredictions?.filter(pred => {
@@ -504,8 +533,15 @@ export function TradingViewChart({
     
     const forecastCandles = generateForecastCandles(futurePredictions, lastActualPrice, intervalHours);
     
+    // Add estimated volume to forecast candles (based on recent average)
+    const forecastWithVolume = forecastCandles.map(c => ({
+      ...c,
+      volume: Math.round(lastVolume * (0.95 + Math.random() * 0.1)), // Slight variation
+      ail_mw: Math.round(lastVolume * (0.95 + Math.random() * 0.1))
+    }));
+    
     // Combine actual + forecast candles
-    const allCandles = [...actualCandles, ...forecastCandles];
+    const allCandles = [...candlesWithVolume, ...forecastWithVolume];
     
     // Add candleBody for bar height calculation
     return allCandles.map(c => ({
@@ -895,13 +931,28 @@ export function TradingViewChart({
         isFullscreen && "fixed inset-0 z-50 rounded-none h-screen w-screen"
       )}
     >
-      {/* ===== TOP TOOLBAR ===== */}
-      <div className="flex items-center justify-between h-11 px-3 border-b border-border bg-muted/30">
-        <div className="flex items-center gap-2">
-          {/* Symbol */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-background border border-border">
-            <Activity className="w-4 h-4 text-red-500" />
-            <span className="font-bold text-sm">AESO/CAD</span>
+      {/* ===== TOP TOOLBAR with OHLC Display ===== */}
+      <div className="flex items-center justify-between h-12 px-3 border-b border-border bg-muted/30">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Symbol & Live OHLC - TradingView Style */}
+          <div className="flex items-center gap-2 px-2 py-1 rounded bg-background border border-border">
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-bold text-sm">AESO/CAD</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 ml-2 pl-2 border-l border-border text-xs">
+              <span className="text-muted-foreground">O</span>
+              <span className="font-mono font-semibold">${stats.open.toFixed(2)}</span>
+              <span className="text-red-500">H</span>
+              <span className="font-mono font-semibold text-red-500">${stats.high.toFixed(2)}</span>
+              <span className="text-emerald-500">L</span>
+              <span className="font-mono font-semibold text-emerald-500">${stats.low.toFixed(2)}</span>
+              <span className="text-muted-foreground">C</span>
+              <span className={`font-mono font-semibold ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>${stats.close.toFixed(2)}</span>
+              <span className={`ml-1 ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
+                {isPositive ? '+' : ''}{stats.change.toFixed(2)} ({isPositive ? '+' : ''}{stats.changePercent.toFixed(1)}%)
+              </span>
+            </div>
           </div>
           
           {/* Time Range Selector */}
@@ -1133,41 +1184,17 @@ export function TradingViewChart({
         </div>
       </div>
 
-      {/* ===== OHLC HEADER ===== */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 border-b border-border bg-card text-xs">
-        <div className="flex items-center gap-3">
-          <span className="text-muted-foreground">
-            O <span className="font-mono font-semibold text-foreground">${stats.open.toFixed(2)}</span>
-          </span>
-          <span className="text-muted-foreground">
-            H <span className="font-mono font-semibold text-red-500">${stats.high.toFixed(2)}</span>
-          </span>
-          <span className="text-muted-foreground">
-            L <span className="font-mono font-semibold text-emerald-500">${stats.low.toFixed(2)}</span>
-          </span>
-          <span className="text-muted-foreground">
-            C <span className="font-mono font-semibold text-foreground">${stats.close.toFixed(2)}</span>
-          </span>
+      {/* ===== MOBILE OHLC HEADER (visible on small screens) ===== */}
+      <div className="sm:hidden flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 border-b border-border bg-card text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">O <span className="font-mono font-semibold text-foreground">${stats.open.toFixed(2)}</span></span>
+          <span className="text-red-500">H <span className="font-mono font-semibold">${stats.high.toFixed(2)}</span></span>
+          <span className="text-emerald-500">L <span className="font-mono font-semibold">${stats.low.toFixed(2)}</span></span>
+          <span className="text-muted-foreground">C <span className="font-mono font-semibold text-foreground">${stats.close.toFixed(2)}</span></span>
         </div>
-
         <div className={`flex items-center gap-1 font-semibold ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>
           {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-          <span>{isPositive ? '+' : ''}${stats.change.toFixed(2)}</span>
-          <span className="text-[10px]">({isPositive ? '+' : ''}{stats.changePercent.toFixed(2)}%)</span>
-        </div>
-
-        <div className="hidden sm:block h-4 w-px bg-border" />
-
-        {/* Drag hint */}
-        <div className="hidden md:flex items-center gap-1.5 text-muted-foreground">
-          <Move className="w-3 h-3" />
-          <span className="text-[10px]">Drag to pan • Scroll to zoom</span>
-        </div>
-
-        {/* Volume */}
-        <div className="hidden md:flex items-center gap-1 text-muted-foreground ml-auto">
-          <span>Vol</span>
-          <span className="font-mono font-semibold text-foreground">{(stats.volume / 1000).toFixed(1)}K MW</span>
+          <span>{isPositive ? '+' : ''}${stats.change.toFixed(2)} ({isPositive ? '+' : ''}{stats.changePercent.toFixed(1)}%)</span>
         </div>
       </div>
 
@@ -1742,25 +1769,56 @@ export function TradingViewChart({
           <MACDPanel data={chartData} height={100} />
         )}
 
-        {/* Volume Chart */}
-        {volumeData.length > 0 && !loading && (
-          <div className="h-10 sm:h-12 flex-shrink-0 mx-2 sm:mx-3 mb-1 border-t border-border/50">
-            <ResponsiveContainer width="100%" height="100%">
+        {/* Volume/Energy Load Chart - TradingView Style */}
+        {!loading && (chartType === 'candlestick' ? candleData.length > 0 : volumeData.length > 0) && (
+          <div className="h-16 sm:h-20 flex-shrink-0 mx-2 sm:mx-3 mb-1 border-t border-border/50">
+            <div className="flex items-center justify-between px-1 pt-1">
+              <span className="text-[10px] text-muted-foreground font-medium">Vol - AIL (MW)</span>
+              <span className="text-[10px] text-muted-foreground">Energy Load</span>
+            </div>
+            <ResponsiveContainer width="100%" height="85%">
               <ComposedChart 
-                data={visibleData.filter(d => d.volume)} 
+                data={chartType === 'candlestick' ? candleData : visibleData.filter(d => d.volume)} 
                 margin={{ top: 2, right: 60, left: 0, bottom: 0 }}
               >
                 <XAxis dataKey="timestamp" hide />
-                <YAxis hide domain={[0, 'auto']} />
-                <Bar dataKey="volume" radius={[2, 2, 0, 0]} maxBarSize={6}>
-                  {visibleData.filter(d => d.volume).map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`}
-                      fill={entry.actual >= (visibleData[index - 1]?.actual || 0) 
-                        ? 'hsl(142 76% 36% / 0.6)' 
-                        : 'hsl(0 84% 60% / 0.6)'}
-                    />
-                  ))}
+                <YAxis 
+                  hide 
+                  domain={[0, 'auto']} 
+                  orientation="right"
+                />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.[0]) return null;
+                    const data = payload[0].payload;
+                    const vol = data.volume || data.ail_mw || 0;
+                    return (
+                      <div className="bg-popover/95 border border-border rounded px-2 py-1 text-xs">
+                        <span className="text-muted-foreground">Load: </span>
+                        <span className="font-mono font-bold">{(vol / 1000).toFixed(1)}K MW</span>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar 
+                  dataKey={chartType === 'candlestick' ? 'volume' : 'volume'} 
+                  radius={[1, 1, 0, 0]} 
+                  maxBarSize={10}
+                  minPointSize={2}
+                >
+                  {(chartType === 'candlestick' ? candleData : visibleData.filter(d => d.volume)).map((entry: any, index: number, arr: any[]) => {
+                    // Color based on price movement (green = price up, red = price down)
+                    const prevClose = index > 0 ? (arr[index - 1]?.close || arr[index - 1]?.actual) : null;
+                    const currClose = entry.close || entry.actual;
+                    const isUp = prevClose ? currClose >= prevClose : true;
+                    
+                    return (
+                      <Cell 
+                        key={`vol-${index}`}
+                        fill={isUp ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'}
+                      />
+                    );
+                  })}
                 </Bar>
               </ComposedChart>
             </ResponsiveContainer>
