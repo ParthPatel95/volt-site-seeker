@@ -6,7 +6,7 @@ import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
-import { Bitcoin, History, Settings, Wallet, Cpu, Thermometer, Users, Leaf, TrendingUp, Gift, Globe, Rocket } from 'lucide-react';
+import { Bitcoin, History, Settings, Wallet, Cpu, Thermometer, Users, Leaf, TrendingUp, Gift, Globe, Rocket, Shield, Scale, Network, Code } from 'lucide-react';
 import LastReviewed from '@/components/academy/LastReviewed';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
@@ -19,6 +19,10 @@ const bitcoinSections = [
   { id: 'what-is-bitcoin', icon: Bitcoin, label: 'What is Bitcoin', time: '5 min' },
   { id: 'history', icon: History, label: 'History', time: '6 min' },
   { id: 'how-it-works', icon: Settings, label: 'How it Works', time: '8 min' },
+  { id: 'cryptography', icon: Shield, label: 'Cryptography', time: '45 min' },
+  { id: 'consensus', icon: Scale, label: 'Consensus', time: '40 min' },
+  { id: 'network', icon: Network, label: 'Network', time: '35 min' },
+  { id: 'scripting', icon: Code, label: 'Scripting', time: '40 min' },
   { id: 'wallets', icon: Wallet, label: 'Wallets', time: '5 min' },
   { id: 'mining', icon: Cpu, label: 'Mining', time: '7 min' },
   { id: 'cooling', icon: Thermometer, label: 'Cooling', time: '6 min' },
@@ -47,6 +51,12 @@ const BitcoinBenefitsSection = lazy(() => import('@/components/bitcoin-education
 const GlobalBitcoinAdoptionSection = lazy(() => import('@/components/bitcoin-education/GlobalBitcoinAdoptionSection'));
 const BitcoinFutureSection = lazy(() => import('@/components/bitcoin-education/BitcoinFutureSection'));
 const BitcoinCTASection = lazy(() => import('@/components/bitcoin-education/BitcoinCTASection'));
+
+// Advanced Masterclass Sections
+const CryptographyDeepDiveSection = lazy(() => import('@/components/bitcoin-education/CryptographyDeepDiveSection'));
+const ConsensusGameTheorySection = lazy(() => import('@/components/bitcoin-education/ConsensusGameTheorySection'));
+const NetworkArchitectureSection = lazy(() => import('@/components/bitcoin-education/NetworkArchitectureSection'));
+const BitcoinScriptingSection = lazy(() => import('@/components/bitcoin-education/BitcoinScriptingSection'));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
@@ -132,6 +142,70 @@ const BitcoinEducation: React.FC = () => {
           </div>
 
           <SectionDivider color="yellow" />
+
+          {/* Advanced: Cryptography Deep Dive */}
+          <div id="cryptography">
+            <section aria-label="Cryptography Deep Dive">
+              <Suspense fallback={<SectionLoader />}>
+                <CryptographyDeepDiveSection />
+              </Suspense>
+            </section>
+          </div>
+
+          {/* Knowledge Check after Cryptography */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'cryptography') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: Cryptography"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'cryptography')!.questions}
+              />
+            </div>
+          )}
+
+          <SectionDivider color="cyan" />
+
+          {/* Advanced: Consensus & Game Theory */}
+          <div id="consensus">
+            <section aria-label="Consensus and Game Theory">
+              <Suspense fallback={<SectionLoader />}>
+                <ConsensusGameTheorySection />
+              </Suspense>
+            </section>
+          </div>
+
+          {/* Knowledge Check after Consensus */}
+          {BITCOIN_QUIZZES.find(q => q.sectionId === 'consensus') && (
+            <div className="max-w-4xl mx-auto px-4 py-8">
+              <KnowledgeCheck
+                title="Check Your Understanding: Consensus"
+                questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'consensus')!.questions}
+              />
+            </div>
+          )}
+
+          <SectionDivider color="purple" />
+
+          {/* Advanced: Network Architecture */}
+          <div id="network">
+            <section aria-label="Network Architecture">
+              <Suspense fallback={<SectionLoader />}>
+                <NetworkArchitectureSection />
+              </Suspense>
+            </section>
+          </div>
+
+          <SectionDivider color="yellow" />
+
+          {/* Advanced: Bitcoin Scripting */}
+          <div id="scripting">
+            <section aria-label="Bitcoin Scripting">
+              <Suspense fallback={<SectionLoader />}>
+                <BitcoinScriptingSection />
+              </Suspense>
+            </section>
+          </div>
+
+          <SectionDivider color="cyan" />
 
           {/* Bitcoin Wallets & Storage */}
           <div id="wallets">

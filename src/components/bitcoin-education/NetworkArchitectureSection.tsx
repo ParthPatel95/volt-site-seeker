@@ -118,7 +118,7 @@ const NetworkArchitectureSection = () => {
   ];
 
   const propagationSteps = [
-    { step: 1, title: 'Miner Finds Block', description: 'Miner's node validates the new block locally', time: '0ms' },
+    { step: 1, title: 'Miner Finds Block', description: "Miner's node validates the new block locally", time: '0ms' },
     { step: 2, title: 'Compact Block Relay', description: 'Send block header + short transaction IDs (BIP 152)', time: '~50ms' },
     { step: 3, title: 'Peer Validation', description: 'Receiving nodes validate header and request missing txs', time: '~100ms' },
     { step: 4, title: 'Full Block Assembly', description: 'Node reconstructs full block from mempool + missing txs', time: '~200ms' },

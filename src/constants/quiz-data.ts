@@ -123,6 +123,67 @@ export const BITCOIN_QUIZZES: QuizSet[] = [
     ],
   },
   {
+    sectionId: 'cryptography',
+    title: 'Cryptography Deep Dive',
+    questions: [
+      {
+        id: 'crypto-1',
+        question: 'What elliptic curve does Bitcoin use for digital signatures?',
+        options: ['secp256r1', 'secp256k1', 'ed25519', 'P-256'],
+        correctIndex: 1,
+        explanation: 'Bitcoin uses the secp256k1 curve, chosen for its efficiency and non-standard construction that reduces backdoor concerns.',
+      },
+      {
+        id: 'crypto-2',
+        question: 'How many bits is a SHA-256 hash output?',
+        options: ['128 bits', '256 bits', '512 bits', '1024 bits'],
+        correctIndex: 1,
+        explanation: 'SHA-256 produces a fixed 256-bit (32-byte) output regardless of input size.',
+      },
+      {
+        id: 'crypto-3',
+        question: 'Which signature scheme was added with the Taproot upgrade?',
+        options: ['ECDSA', 'Schnorr', 'RSA', 'EdDSA'],
+        correctIndex: 1,
+        explanation: 'Taproot (November 2021) introduced Schnorr signatures, enabling key aggregation and improved privacy.',
+      },
+      {
+        id: 'crypto-4',
+        question: 'What is the purpose of RIPEMD-160 in Bitcoin address generation?',
+        options: ['Encrypt the private key', 'Shorten the public key hash', 'Sign transactions', 'Generate random numbers'],
+        correctIndex: 1,
+        explanation: 'RIPEMD-160 creates a shorter 160-bit hash of the SHA-256 public key hash, making addresses more compact.',
+      },
+    ],
+  },
+  {
+    sectionId: 'consensus',
+    title: 'Consensus & Game Theory',
+    questions: [
+      {
+        id: 'consensus-1',
+        question: 'What percentage of hashpower is typically needed for a profitable selfish mining attack?',
+        options: ['10%', '25%', '33%', '51%'],
+        correctIndex: 2,
+        explanation: 'Research shows selfish mining becomes marginally profitable above ~33% hashpower.',
+      },
+      {
+        id: 'consensus-2',
+        question: 'How many confirmations are recommended for large transactions?',
+        options: ['1', '3', '6', '12'],
+        correctIndex: 2,
+        explanation: 'Six confirmations (~1 hour) is the industry standard for irreversibility of large transactions.',
+      },
+      {
+        id: 'consensus-3',
+        question: 'What is the Nash Equilibrium strategy for rational Bitcoin miners?',
+        options: ['Selfish mining', 'Honest mining', 'Empty block mining', 'Transaction censoring'],
+        correctIndex: 1,
+        explanation: 'Honest mining is the Nash Equilibrium - no miner can improve their outcome by unilaterally deviating from protocol rules.',
+      },
+    ],
+  },
+  {
     sectionId: 'wallets',
     title: 'Bitcoin Wallets',
     questions: [
