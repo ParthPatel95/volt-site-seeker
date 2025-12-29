@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
+const BOOT_TIME = new Date().toISOString();
+console.log(`[BOOT] aeso-drift-detector initialized at ${BOOT_TIME}`);
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,6 +15,15 @@ serve(async (req) => {
   }
 
   try {
+    // Health check endpoint for pre-warming
+    const url = new URL(req.url);
+    if (url.searchParams.get('healthcheck') === 'true') {
+      return new Response(
+        JSON.stringify({ status: 'ok', boot_time: BOOT_TIME, timestamp: new Date().toISOString() }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
