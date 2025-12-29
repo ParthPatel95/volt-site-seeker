@@ -90,6 +90,7 @@ interface GenerationMixData {
   gas: number;
   coal: number;
   hydro: number;
+  other: number;
   total: number;
 }
 
@@ -643,7 +644,7 @@ export function TradingViewChart({
         const hoursBack = TIME_RANGES.find(r => r.value === timeRange)?.hours || 24;
         const { data: genData, error } = await supabase
           .from('aeso_training_data')
-          .select('timestamp, generation_wind, generation_solar, generation_gas, generation_coal, generation_hydro')
+          .select('timestamp, generation_wind, generation_solar, generation_gas, generation_coal, generation_hydro, generation_other')
           .order('timestamp', { ascending: false })
           .limit(hoursBack);
         
@@ -660,8 +661,10 @@ export function TradingViewChart({
             gas: row.generation_gas || 0,
             coal: row.generation_coal || 0,
             hydro: row.generation_hydro || 0,
+            other: row.generation_other || 0,
             total: (row.generation_wind || 0) + (row.generation_solar || 0) + 
-                   (row.generation_gas || 0) + (row.generation_coal || 0) + (row.generation_hydro || 0)
+                   (row.generation_gas || 0) + (row.generation_coal || 0) + 
+                   (row.generation_hydro || 0) + (row.generation_other || 0)
           }));
           setGenerationData(mapped);
           console.log('[TradingViewChart] Fetched generation data:', mapped.length, 'points');
@@ -1839,7 +1842,7 @@ export function TradingViewChart({
         {!loading && generationData.length > 0 && (
           <div className="h-24 sm:h-28 flex-shrink-0 mx-2 sm:mx-3 mb-1 border-t border-border/50">
             <div className="flex items-center justify-between px-1 pt-1">
-              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
                 <span className="text-[10px] text-muted-foreground font-medium">Generation Mix (MW)</span>
                 <div className="flex items-center gap-2 text-[9px]">
                   <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-emerald-500" /><span>Wind</span></div>
@@ -1847,6 +1850,7 @@ export function TradingViewChart({
                   <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-orange-500" /><span>Gas</span></div>
                   <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-slate-600" /><span>Coal</span></div>
                   <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-blue-500" /><span>Hydro</span></div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-violet-500" /><span>Other</span></div>
                 </div>
               </div>
               <span className="text-[10px] text-muted-foreground">
@@ -1894,6 +1898,10 @@ export function TradingViewChart({
                             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-blue-500" />Hydro</span>
                             <span className="font-mono font-bold">{(data.hydro / 1000).toFixed(1)}K</span>
                           </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-violet-500" />Other</span>
+                            <span className="font-mono font-bold">{(data.other / 1000).toFixed(1)}K</span>
+                          </div>
                           <div className="border-t border-border pt-1 mt-1 flex items-center justify-between gap-3">
                             <span className="font-medium">Total</span>
                             <span className="font-mono font-bold">{(data.total / 1000).toFixed(1)}K MW</span>
@@ -1908,7 +1916,8 @@ export function TradingViewChart({
                 <Bar dataKey="solar" stackId="gen" fill="#fbbf24" radius={[0, 0, 0, 0]} maxBarSize={12} />
                 <Bar dataKey="gas" stackId="gen" fill="#f97316" radius={[0, 0, 0, 0]} maxBarSize={12} />
                 <Bar dataKey="coal" stackId="gen" fill="#475569" radius={[0, 0, 0, 0]} maxBarSize={12} />
-                <Bar dataKey="hydro" stackId="gen" fill="#3b82f6" radius={[2, 2, 0, 0]} maxBarSize={12} />
+                <Bar dataKey="hydro" stackId="gen" fill="#3b82f6" radius={[0, 0, 0, 0]} maxBarSize={12} />
+                <Bar dataKey="other" stackId="gen" fill="#8b5cf6" radius={[2, 2, 0, 0]} maxBarSize={12} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

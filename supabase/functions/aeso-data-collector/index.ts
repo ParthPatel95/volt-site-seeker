@@ -220,6 +220,7 @@ serve(async (req) => {
       generation_wind: generationData.wind_mw || 0,
       generation_solar: generationData.solar_mw || 0,
       generation_hydro: generationData.hydro_mw || 0,
+      generation_other: generationData.other_mw || 0,
       // NEW: Actual load forecasts from AESO Actual Forecast API
       load_forecast_1h: loadForecast1h,
       load_forecast_3h: loadForecast3h,
