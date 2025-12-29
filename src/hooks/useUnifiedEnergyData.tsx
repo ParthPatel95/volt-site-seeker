@@ -32,13 +32,13 @@ const cacheUnifiedData = (data: UnifiedEnergyData) => {
   }
 };
 
-// Get cached data (valid for 30 minutes)
+// Get cached data (valid for 60 minutes - extended for emergency fallback)
 const getCachedUnifiedData = (): UnifiedEnergyData | null => {
   try {
     const cached = localStorage.getItem(UNIFIED_CACHE_KEY);
     if (cached) {
       const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < 30 * 60 * 1000) {
+      if (Date.now() - timestamp < 60 * 60 * 1000) { // 60 minutes
         return data;
       }
     }
@@ -48,12 +48,33 @@ const getCachedUnifiedData = (): UnifiedEnergyData | null => {
   return null;
 };
 
-// Shared query function with fallback handling
-export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
+// Helper to detect boot errors (503, BOOT_ERROR, connection failures)
+const isBootError = (error: any): boolean => {
+  const message = error?.message || String(error);
+  return message.includes('503') || 
+         message.includes('BOOT_ERROR') ||
+         message.includes('failed to start') ||
+         message.includes('FunctionsFetchError') ||
+         message.includes('Failed to send');
+};
+
+// Helper for delay
+const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+// Shared query function with boot error retry logic
+export const fetchUnifiedEnergyData = async (retryCount = 0): Promise<UnifiedEnergyData> => {
   try {
     const { data, error } = await supabase.functions.invoke('energy-data-integration');
     
     if (error) {
+      // Check if it's a boot error - retry with exponential backoff
+      if (isBootError(error) && retryCount < 3) {
+        const delayMs = (retryCount + 1) * 2000; // 2s, 4s, 6s
+        console.log(`[Energy] Boot error detected, retry ${retryCount + 1}/3 in ${delayMs}ms...`);
+        await delay(delayMs);
+        return fetchUnifiedEnergyData(retryCount + 1);
+      }
+      
       console.warn('Unified energy data fetch error, using cache:', error);
       const cached = getCachedUnifiedData();
       if (cached) return cached;
@@ -67,6 +88,14 @@ export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
     
     return data as UnifiedEnergyData;
   } catch (e) {
+    // Retry on boot errors
+    if (isBootError(e) && retryCount < 3) {
+      const delayMs = (retryCount + 1) * 2000;
+      console.log(`[Energy] Boot error in catch, retry ${retryCount + 1}/3 in ${delayMs}ms...`);
+      await delay(delayMs);
+      return fetchUnifiedEnergyData(retryCount + 1);
+    }
+    
     console.error('Energy data integration failed:', e);
     const cached = getCachedUnifiedData();
     if (cached) {
@@ -78,10 +107,36 @@ export const fetchUnifiedEnergyData = async (): Promise<UnifiedEnergyData> => {
   }
 };
 
+// Pre-warm the edge function on module load to prevent cold starts
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    supabase.functions.invoke('energy-data-integration', {
+      body: { healthcheck: 'true' }
+    }).then(() => {
+      console.log('[Energy] Pre-warm successful');
+    }).catch(() => {
+      // Silent pre-warm failure is ok
+    });
+  }, 1000);
+  
+  // Keep function warm with periodic health checks every 4 minutes
+  setInterval(() => {
+    supabase.functions.invoke('energy-data-integration', {
+      body: { healthcheck: 'true' }
+    }).catch(() => {});
+  }, 4 * 60 * 1000);
+}
+
+// Internal fetch function with retry support
+const fetchWithRetry = (retryCount = 0): Promise<UnifiedEnergyData> => fetchUnifiedEnergyData(retryCount);
+
+// Wrapper for useQuery compatibility - this is what hooks should use
+export const unifiedEnergyQueryFn = () => fetchWithRetry(0);
+
 // Shared query config to avoid repetition
 const sharedQueryConfig = {
   queryKey: UNIFIED_ENERGY_QUERY_KEY,
-  queryFn: fetchUnifiedEnergyData,
+  queryFn: unifiedEnergyQueryFn,
   staleTime: 2 * 60 * 1000, // 2 minutes - data is fresh
   gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
   refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
