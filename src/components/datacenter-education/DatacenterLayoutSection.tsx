@@ -10,7 +10,7 @@ const DatacenterLayoutSection = () => {
       id: 'mining-floor',
       name: 'Mining Floor',
       icon: Server,
-      color: 'bg-watt-bitcoin',
+      color: 'bg-[hsl(var(--watt-bitcoin))]',
       position: { top: '30%', left: '20%', width: '40%', height: '50%' },
       description: 'Main mining hall housing thousands of ASIC miners in organized racks',
       specs: ['5,000-50,000 miners', 'Hot/cold aisle containment', 'Cable management systems'],
@@ -118,7 +118,7 @@ const DatacenterLayoutSection = () => {
               {/* Compass */}
               <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center">
                 <div className="relative w-8 h-8">
-                  <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-watt-bitcoin">N</div>
+                  <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[hsl(var(--watt-bitcoin))]">N</div>
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[8px] text-muted-foreground">S</div>
                 </div>
               </div>
@@ -137,7 +137,7 @@ const DatacenterLayoutSection = () => {
               <h3 className="font-semibold text-foreground">Facility Zones</h3>
               
               {activeZoneData ? (
-                <div className="p-6 bg-card rounded-xl border border-watt-bitcoin">
+                <div className="p-6 bg-card rounded-xl border border-[hsl(var(--watt-bitcoin))]">
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-10 h-10 rounded-lg ${activeZoneData.color} flex items-center justify-center`}>
                       <activeZoneData.icon className="w-5 h-5 text-white" />
@@ -148,7 +148,7 @@ const DatacenterLayoutSection = () => {
                   <ul className="space-y-2">
                     {activeZoneData.specs.map((spec, i) => (
                       <li key={i} className="text-sm text-foreground flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--watt-bitcoin))]" />
                         {spec}
                       </li>
                     ))}
@@ -168,7 +168,7 @@ const DatacenterLayoutSection = () => {
                     key={zone.id}
                     className={`p-3 rounded-lg border text-left transition-colors ${
                       activeZone === zone.id
-                        ? 'bg-muted border-watt-bitcoin'
+                        ? 'bg-muted border-[hsl(var(--watt-bitcoin))]'
                         : 'bg-card border-border hover:border-muted-foreground'
                     }`}
                     onMouseEnter={() => setActiveZone(zone.id)}
@@ -187,11 +187,11 @@ const DatacenterLayoutSection = () => {
 
         {/* Alberta Heartland 135 Callout */}
         <ScrollReveal delay={0.3}>
-          <div className="mt-12 p-6 md:p-8 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl text-white">
+          <div className="mt-12 p-6 md:p-8 bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] rounded-2xl text-white">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-1 bg-watt-bitcoin/20 text-watt-bitcoin text-xs font-medium rounded">
+                  <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin)/0.2)] text-[hsl(var(--watt-bitcoin))] text-xs font-medium rounded">
                     Featured Facility
                   </span>
                 </div>
@@ -203,11 +203,11 @@ const DatacenterLayoutSection = () => {
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="p-4 bg-white/10 rounded-xl">
-                  <div className="text-2xl font-bold text-watt-bitcoin">135 MW</div>
+                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">135 MW</div>
                   <div className="text-xs text-white/60">Power Capacity</div>
                 </div>
                 <div className="p-4 bg-white/10 rounded-xl">
-                  <div className="text-2xl font-bold text-watt-bitcoin">26 Acres</div>
+                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">26 Acres</div>
                   <div className="text-xs text-white/60">Facility Size</div>
                 </div>
               </div>

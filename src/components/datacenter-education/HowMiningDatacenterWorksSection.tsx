@@ -39,7 +39,7 @@ const HowMiningDatacenterWorksSection = () => {
       title: 'ASIC Miners',
       subtitle: '3-5kW per unit',
       description: 'Specialized hardware that performs SHA-256 calculations to mine Bitcoin blocks.',
-      color: 'from-watt-bitcoin to-orange-600',
+      color: 'from-[hsl(var(--watt-bitcoin))] to-orange-600',
       details: ['Hash computation', 'Block validation', 'Heat generation'],
     },
     {
@@ -75,7 +75,7 @@ const HowMiningDatacenterWorksSection = () => {
       title: 'Bitcoin Rewards',
       subtitle: '3.125 BTC/block',
       description: 'Successful blocks earn Bitcoin rewards distributed among pool participants.',
-      color: 'from-watt-bitcoin to-yellow-500',
+      color: 'from-[hsl(var(--watt-bitcoin))] to-yellow-500',
       details: ['Block rewards', 'Transaction fees', 'Pool payouts'],
     },
   ];
@@ -118,8 +118,8 @@ const HowMiningDatacenterWorksSection = () => {
                     {/* Step card */}
                     <div className={`relative p-4 rounded-xl border transition-all duration-300 ${
                       activeStep === step.id 
-                        ? 'bg-card border-watt-bitcoin shadow-lg shadow-watt-bitcoin/20' 
-                        : 'bg-card/50 border-border hover:border-watt-bitcoin/50'
+                        ? 'bg-card border-[hsl(var(--watt-bitcoin))] shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.2)]' 
+                        : 'bg-card/50 border-border hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
                     }`}>
                       {/* Icon with gradient background */}
                       <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-3`}>
@@ -129,7 +129,7 @@ const HowMiningDatacenterWorksSection = () => {
                       <h3 className="text-sm font-semibold text-foreground text-center mb-1 line-clamp-1">
                         {step.title}
                       </h3>
-                      <p className="text-xs text-watt-bitcoin font-medium text-center">
+                      <p className="text-xs text-[hsl(var(--watt-bitcoin))] font-medium text-center">
                         {step.subtitle}
                       </p>
 
@@ -140,7 +140,7 @@ const HowMiningDatacenterWorksSection = () => {
                           <ul className="space-y-1">
                             {step.details.map((detail, i) => (
                               <li key={i} className="text-xs text-foreground flex items-center gap-1">
-                                <span className="w-1 h-1 rounded-full bg-watt-bitcoin" />
+                                <span className="w-1 h-1 rounded-full bg-[hsl(var(--watt-bitcoin))]" />
                                 {detail}
                               </li>
                             ))}
@@ -168,7 +168,7 @@ const HowMiningDatacenterWorksSection = () => {
                   
                   <div 
                     className={`flex items-start gap-4 p-4 rounded-xl border bg-card/50 hover:bg-card transition-colors cursor-pointer ${
-                      activeStep === step.id ? 'border-watt-bitcoin' : 'border-border'
+                      activeStep === step.id ? 'border-[hsl(var(--watt-bitcoin))]' : 'border-border'
                     }`}
                     onClick={() => setActiveStep(activeStep === step.id ? null : step.id)}
                   >
@@ -178,14 +178,14 @@ const HowMiningDatacenterWorksSection = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-foreground">{step.title}</h3>
-                        <span className="text-xs text-watt-bitcoin font-medium">{step.subtitle}</span>
+                        <span className="text-xs text-[hsl(var(--watt-bitcoin))] font-medium">{step.subtitle}</span>
                       </div>
                       <p className="text-sm text-muted-foreground">{step.description}</p>
                       {activeStep === step.id && (
                         <ul className="mt-2 space-y-1">
                           {step.details.map((detail, i) => (
                             <li key={i} className="text-xs text-foreground flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--watt-bitcoin))]" />
                               {detail}
                             </li>
                           ))}
@@ -203,7 +203,7 @@ const HowMiningDatacenterWorksSection = () => {
         <ScrollReveal delay={0.5}>
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-muted/30 rounded-2xl border border-border">
             <div className="text-center">
-              <div className="text-2xl font-bold text-watt-bitcoin">8 Steps</div>
+              <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">8 Steps</div>
               <div className="text-sm text-muted-foreground">Power to Bitcoin</div>
             </div>
             <div className="text-center">

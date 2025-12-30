@@ -5,7 +5,7 @@ import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 
 const EnergyFlowVisualizationSection = () => {
   const energyBreakdown = [
-    { label: 'Mining Computation', percentage: 95, color: 'bg-watt-bitcoin', icon: Server },
+    { label: 'Mining Computation', percentage: 95, color: 'bg-[hsl(var(--watt-bitcoin))]', icon: Server },
     { label: 'Cooling Overhead', percentage: 3, color: 'bg-cyan-500', icon: Wind },
     { label: 'Infrastructure', percentage: 1.5, color: 'bg-yellow-500', icon: Zap },
     { label: 'Network & Other', percentage: 0.5, color: 'bg-purple-500', icon: Zap },
@@ -47,14 +47,14 @@ const EnergyFlowVisualizationSection = () => {
 
               {/* Arrow */}
               <div className="flex items-center justify-center">
-                <div className="w-full h-4 md:h-6 bg-gradient-to-r from-yellow-500 to-watt-bitcoin rounded relative overflow-hidden">
+                <div className="w-full h-4 md:h-6 bg-gradient-to-r from-yellow-500 to-[hsl(var(--watt-bitcoin))] rounded relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-flow" />
                 </div>
               </div>
 
               {/* Mining */}
               <div className="text-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-watt-bitcoin flex items-center justify-center mx-auto mb-2">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[hsl(var(--watt-bitcoin))] flex items-center justify-center mx-auto mb-2">
                   <Server className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
                 <div className="text-sm md:text-base font-semibold text-foreground">Mining</div>
@@ -65,12 +65,12 @@ const EnergyFlowVisualizationSection = () => {
               <div className="flex flex-col items-center gap-2">
                 {/* Heat arrow */}
                 <div className="flex items-center w-full">
-                  <div className="flex-1 h-2 md:h-3 bg-gradient-to-r from-watt-bitcoin to-red-500 rounded" />
+                  <div className="flex-1 h-2 md:h-3 bg-gradient-to-r from-[hsl(var(--watt-bitcoin))] to-red-500 rounded" />
                   <ArrowRight className="w-4 h-4 text-red-500" />
                 </div>
                 {/* Bitcoin arrow */}
                 <div className="flex items-center w-full">
-                  <div className="flex-1 h-1 md:h-1.5 bg-gradient-to-r from-watt-bitcoin to-green-500 rounded" />
+                  <div className="flex-1 h-1 md:h-1.5 bg-gradient-to-r from-[hsl(var(--watt-bitcoin))] to-green-500 rounded" />
                   <ArrowRight className="w-3 h-3 text-green-500" />
                 </div>
               </div>
@@ -122,7 +122,7 @@ const EnergyFlowVisualizationSection = () => {
                   <div className="flex-1">
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-medium text-foreground">{item.label}</span>
-                      <span className="text-sm font-bold text-watt-bitcoin">
+                      <span className="text-sm font-bold text-[hsl(var(--watt-bitcoin))]">
                         <AnimatedCounter end={item.percentage} decimals={item.percentage < 1 ? 1 : 0} suffix="%" />
                       </span>
                     </div>
@@ -144,7 +144,7 @@ const EnergyFlowVisualizationSection = () => {
           <div className="grid md:grid-cols-4 gap-4">
             {efficiencyMetrics.map((metric, index) => (
               <div key={index} className="p-6 bg-card rounded-xl border border-border text-center">
-                <div className="text-3xl font-bold text-watt-bitcoin mb-1">
+                <div className="text-3xl font-bold text-[hsl(var(--watt-bitcoin))] mb-1">
                   <AnimatedCounter end={metric.value} decimals={metric.value < 10 ? 1 : 0} />
                   <span className="text-lg ml-1">{metric.unit}</span>
                 </div>
@@ -157,9 +157,9 @@ const EnergyFlowVisualizationSection = () => {
 
         {/* Key insight */}
         <ScrollReveal delay={0.4}>
-          <div className="mt-12 p-6 bg-gradient-to-r from-watt-bitcoin/10 to-yellow-500/10 rounded-2xl border border-watt-bitcoin/30">
+          <div className="mt-12 p-6 bg-gradient-to-r from-[hsl(var(--watt-bitcoin)/0.1)] to-yellow-500/10 rounded-2xl border border-[hsl(var(--watt-bitcoin)/0.3)]">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-watt-bitcoin flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-[hsl(var(--watt-bitcoin))] flex items-center justify-center flex-shrink-0">
                 <Zap className="w-6 h-6 text-white" />
               </div>
               <div>
