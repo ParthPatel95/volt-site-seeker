@@ -253,7 +253,7 @@ export const EnergyForecastSection = () => {
       </div>
 
       {/* Pro Tip */}
-      <AESOKeyInsight variant="tip" title="Combine Forecasting with Grid Programs" theme="light" className="mt-8">
+      <AESOKeyInsight variant="pro-tip" title="Combine Forecasting with Grid Programs" theme="light" className="mt-8">
         <p>
           Price forecasting becomes even more powerful when combined with grid program participation. When the model 
           predicts high prices, you're already curtailed — and getting <strong>paid</strong> through Operating Reserve 
