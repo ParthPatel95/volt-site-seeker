@@ -58,16 +58,12 @@ const DatacenterEducation = () => {
       
       {/* Section 5: Cooling Systems */}
       <Suspense fallback={<SectionLoader />}>
-        <div id="cooling-systems">
-          <CoolingSystemsVisualSection />
-        </div>
+        <CoolingSystemsVisualSection />
       </Suspense>
       
       {/* Section 6: Mining Hardware */}
       <Suspense fallback={<SectionLoader />}>
-        <div id="mining-hardware">
-          <MiningHardwareShowcaseSection />
-        </div>
+        <MiningHardwareShowcaseSection />
       </Suspense>
       
       {/* Section 7: Operations & Monitoring */}

@@ -115,7 +115,7 @@ const MiningHardwareShowcaseSection = () => {
   const dailyProfit = dailyRevenue - dailyPowerCost;
 
   return (
-    <DCESectionWrapper theme="accent" id="hardware">
+    <DCESectionWrapper theme="accent" id="mining-hardware">
       <LearningObjectives
         objectives={[
           "Compare latest 2024/2025 ASIC miners: hashrate, efficiency, and pricing",

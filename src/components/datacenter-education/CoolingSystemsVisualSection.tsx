@@ -140,7 +140,7 @@ const CoolingSystemsVisualSection = () => {
   const fanCount72 = Math.ceil(totalCFM / 65000);
 
   return (
-    <DCESectionWrapper theme="light" id="cooling">
+    <DCESectionWrapper theme="light" id="cooling-systems">
       <LearningObjectives
         objectives={[
           "Compare air, hydro (RDHX), and immersion cooling systems",
