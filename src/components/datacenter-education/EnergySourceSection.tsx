@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, DollarSign, Clock, TrendingUp, ArrowDown, Sparkles, Shield } from 'lucide-react';
-import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, DollarSign, Clock, TrendingUp, ArrowDown, Sparkles, Shield, AlertTriangle } from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+import { 
+  DCESectionWrapper, 
+  DCESectionHeader, 
+  DCEContentCard, 
+  DCEStatCard,
+  DCEKeyInsight,
+  DCEDeepDive,
+  DCECallout 
+} from './shared';
 
 // Import AI-generated 3D images
 import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
@@ -182,67 +191,79 @@ const EnergySourceSection = () => {
     { phase: 'Testing & Commissioning', duration: '1-2 months', description: 'Protection testing, energization' },
   ];
 
+  const tabs = [
+    { id: 'grid', label: 'Grid Connection', icon: Zap },
+    { id: 'ppa', label: 'Power Purchasing', icon: DollarSign },
+    { id: 'site', label: 'Site Selection', icon: MapPin },
+  ];
+
   return (
-    <section id="energy-source" className="py-16 md:py-24 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <LearningObjectives
-          objectives={[
-            "Understand the power journey from transmission lines to your facility",
-            "Compare power purchasing methods: wholesale, PPA, BTM, and retail",
-            "Evaluate site selection criteria for optimal mining operations",
-            "Navigate the utility interconnection process and timeline"
-          ]}
-          estimatedTime="8 min"
-        />
-        
-        <ScrollReveal>
-          <div className="text-center mb-12">
-            <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
-              Section 1 • Grid Connection
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Energy Source to Facility
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              How Bitcoin mining facilities connect to the electrical grid and purchase power at wholesale rates
-            </p>
-          </div>
-        </ScrollReveal>
+    <DCESectionWrapper theme="accent" id="energy-source">
+      <LearningObjectives
+        objectives={[
+          "Understand the power journey from transmission lines to your facility",
+          "Compare power purchasing methods: wholesale, PPA, BTM, and retail",
+          "Evaluate site selection criteria for optimal mining operations",
+          "Navigate the utility interconnection process and timeline"
+        ]}
+        estimatedTime="8 min"
+      />
+      
+      <DCESectionHeader
+        badge="Section 1 • Grid Connection"
+        badgeIcon={Zap}
+        title="Energy Source to Facility"
+        description="How Bitcoin mining facilities connect to the electrical grid and purchase power at wholesale rates"
+      />
 
-        {/* Tab Navigation */}
-        <ScrollReveal delay={0.05}>
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            {[
-              { id: 'grid', label: 'Grid Connection', icon: Zap },
-              { id: 'ppa', label: 'Power Purchasing', icon: DollarSign },
-              { id: 'site', label: 'Site Selection', icon: MapPin },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-watt-bitcoin text-white shadow-lg shadow-watt-bitcoin/30'
-                    : 'bg-card border border-border text-muted-foreground hover:border-watt-bitcoin/50'
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </ScrollReveal>
+      {/* Tab Navigation */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="flex flex-wrap justify-center gap-2 mb-10"
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
+              activeTab === tab.id
+                ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                : 'bg-card border border-border text-muted-foreground hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
+      </motion.div>
 
-        {/* Grid Connection Tab - Immersive 3D Redesign */}
+      {/* Grid Connection Tab */}
+      <AnimatePresence mode="wait">
         {activeTab === 'grid' && (
-          <>
+          <motion.div
+            key="grid"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
             {/* Immersive Hero Cards */}
             <div className="mb-12 space-y-6">
               {gridConnectionSteps.map((step, index) => (
-                <ScrollReveal key={step.step} delay={index * 0.1}>
+                <motion.div
+                  key={step.step}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
                   <div
                     className={`relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 group ${
-                      activeGridStep === index ? 'ring-2 ring-watt-bitcoin shadow-2xl shadow-watt-bitcoin/20' : 'hover:shadow-xl'
+                      activeGridStep === index 
+                        ? 'ring-2 ring-[hsl(var(--watt-bitcoin))] shadow-2xl shadow-[hsl(var(--watt-bitcoin)/0.2)]' 
+                        : 'hover:shadow-xl'
                     }`}
                     onClick={() => setActiveGridStep(activeGridStep === index ? null : index)}
                     onMouseEnter={() => setHoveredStep(index)}
@@ -263,9 +284,24 @@ const EnergySourceSection = () => {
                       
                       {/* Animated Power Flow Particles */}
                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className={`absolute w-2 h-2 rounded-full bg-watt-bitcoin animate-[flowRight_4s_linear_infinite] opacity-60`} style={{ top: '30%', animationDelay: '0s' }} />
-                        <div className={`absolute w-2 h-2 rounded-full bg-watt-bitcoin animate-[flowRight_4s_linear_infinite] opacity-60`} style={{ top: '50%', animationDelay: '1s' }} />
-                        <div className={`absolute w-2 h-2 rounded-full bg-watt-bitcoin animate-[flowRight_4s_linear_infinite] opacity-60`} style={{ top: '70%', animationDelay: '2s' }} />
+                        <motion.div 
+                          className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
+                          style={{ top: '30%' }}
+                          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <motion.div 
+                          className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
+                          style={{ top: '50%' }}
+                          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: 'linear', delay: 1 }}
+                        />
+                        <motion.div 
+                          className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
+                          style={{ top: '70%' }}
+                          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: 'linear', delay: 2 }}
+                        />
                       </div>
 
                       {/* Content Overlay */}
@@ -327,111 +363,142 @@ const EnergySourceSection = () => {
                     </div>
 
                     {/* Expanded Details Panel */}
-                    {activeGridStep === index && (
-                      <div className="p-6 bg-card border-t border-border animate-fade-in">
-                        <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                          <Shield className="w-4 h-4 text-watt-bitcoin" />
-                          Key Equipment & Infrastructure
-                        </h4>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          {step.details.map((detail, i) => (
-                            <div key={i} className="flex items-center gap-2 text-sm">
-                              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                              <span className="text-muted-foreground">{detail}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {activeGridStep === index && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="p-6 bg-card border-t border-border"
+                        >
+                          <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+                            Key Equipment & Infrastructure
+                          </h4>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            {step.details.map((detail, i) => (
+                              <div key={i} className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                <span className="text-muted-foreground">{detail}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Connection Arrow Between Steps */}
                   {index < gridConnectionSteps.length - 1 && (
                     <div className="flex justify-center py-2">
-                      <div className="w-10 h-10 rounded-full bg-watt-bitcoin/20 flex items-center justify-center animate-pulse">
-                        <ArrowDown className="w-5 h-5 text-watt-bitcoin" />
-                      </div>
+                      <motion.div 
+                        className="w-10 h-10 rounded-full bg-[hsl(var(--watt-bitcoin)/0.2)] flex items-center justify-center"
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <ArrowDown className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+                      </motion.div>
                     </div>
                   )}
-                </ScrollReveal>
+                </motion.div>
               ))}
             </div>
 
-            {/* Total Journey Summary */}
-            <ScrollReveal delay={0.3}>
-              <div className="p-6 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl text-white mb-8">
-                <h3 className="text-lg font-semibold mb-4 text-center">Complete Grid Journey</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-watt-bitcoin">
-                      <AnimatedCounter end={500} suffix=" km+" />
-                    </div>
-                    <div className="text-xs text-white/70">Max Transmission Distance</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">
-                      138kV → 600V
-                    </div>
-                    <div className="text-xs text-white/70">Voltage Step-Down</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">
-                      <AnimatedCounter end={12} suffix="-30 mo" />
-                    </div>
-                    <div className="text-xs text-white/70">Interconnection Timeline</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">
-                      $<AnimatedCounter end={10} suffix="-30M" />
-                    </div>
-                    <div className="text-xs text-white/70">Typical Project Cost</div>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
+            {/* Key Insight */}
+            <DCEKeyInsight variant="insight" className="mb-8">
+              Large mining operations (10+ MW) typically connect at transmission or sub-transmission voltage levels 
+              (25kV-138kV) to access wholesale power rates and avoid distribution charges that can add $15-25/MWh to costs.
+            </DCEKeyInsight>
 
-            {/* Interconnection Timeline */}
-            <ScrollReveal delay={0.2}>
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <h3 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-watt-bitcoin" />
-                  Interconnection Timeline
-                </h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Typical timeline from application to energization: 12-30 months for large facilities
-                </p>
-                
-                <div className="relative">
-                  {/* Timeline bar */}
-                  <div className="hidden md:block absolute top-6 left-0 right-0 h-1 bg-muted rounded-full" />
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                    {interconnectionTimeline.map((phase, i) => (
-                      <div key={phase.phase} className="relative text-center">
-                        <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-watt-bitcoin/10 border-2 border-watt-bitcoin flex items-center justify-center font-bold text-watt-bitcoin">
-                          {i + 1}
-                        </div>
-                        <div className="font-semibold text-foreground text-xs mb-1">{phase.phase}</div>
-                        <div className="text-xs text-watt-bitcoin font-medium mb-1">{phase.duration}</div>
-                        <p className="text-[10px] text-muted-foreground">{phase.description}</p>
-                      </div>
-                    ))}
+            {/* Total Journey Summary */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="p-6 bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] rounded-2xl text-white mb-8"
+            >
+              <h3 className="text-lg font-semibold mb-4 text-center">Complete Grid Journey</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">
+                    <AnimatedCounter end={500} suffix=" km+" />
                   </div>
+                  <div className="text-xs text-white/70">Max Transmission Distance</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">138kV → 600V</div>
+                  <div className="text-xs text-white/70">Voltage Step-Down</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">
+                    <AnimatedCounter end={12} suffix="-30 mo" />
+                  </div>
+                  <div className="text-xs text-white/70">Interconnection Timeline</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">
+                    $<AnimatedCounter end={10} suffix="-30M" />
+                  </div>
+                  <div className="text-xs text-white/70">Typical Project Cost</div>
                 </div>
               </div>
-            </ScrollReveal>
-          </>
+            </motion.div>
+
+            {/* Interconnection Timeline Deep Dive */}
+            <DCEDeepDive title="Interconnection Timeline Details" icon={Clock}>
+              <p className="text-sm text-muted-foreground mb-6">
+                Typical timeline from application to energization: 12-30 months for large facilities
+              </p>
+              
+              <div className="relative">
+                {/* Timeline bar */}
+                <div className="hidden md:block absolute top-6 left-0 right-0 h-1 bg-muted rounded-full" />
+                
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                  {interconnectionTimeline.map((phase, i) => (
+                    <div key={phase.phase} className="relative text-center">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] border-2 border-[hsl(var(--watt-bitcoin))] flex items-center justify-center font-bold text-[hsl(var(--watt-bitcoin))]">
+                        {i + 1}
+                      </div>
+                      <div className="font-semibold text-foreground text-xs mb-1">{phase.phase}</div>
+                      <div className="text-xs text-[hsl(var(--watt-bitcoin))] font-medium mb-1">{phase.duration}</div>
+                      <p className="text-[10px] text-muted-foreground">{phase.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </DCEDeepDive>
+          </motion.div>
         )}
 
         {/* Power Purchasing Tab */}
         {activeTab === 'ppa' && (
-          <ScrollReveal delay={0.1}>
+          <motion.div
+            key="ppa"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <DCEKeyInsight variant="info" className="mb-8">
+              Power costs represent 70-80% of Bitcoin mining operational expenses. Choosing the right purchasing 
+              strategy can mean the difference between profitability and losses during bear markets.
+            </DCEKeyInsight>
+
             <div className="grid md:grid-cols-2 gap-4">
-              {powerPurchaseTypes.map((ppa) => (
-                <div key={ppa.type} className="bg-card rounded-2xl border border-border p-5 hover:border-watt-bitcoin/50 transition-colors">
+              {powerPurchaseTypes.map((ppa, index) => (
+                <motion.div
+                  key={ppa.type}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="bg-card rounded-2xl border border-border p-5 hover:border-[hsl(var(--watt-bitcoin)/0.5)] hover:shadow-lg hover:shadow-[hsl(var(--watt-bitcoin)/0.1)] transition-all duration-300"
+                >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-bold text-foreground">{ppa.type}</h3>
-                    <span className="px-2 py-1 bg-watt-bitcoin/10 text-watt-bitcoin rounded text-xs font-medium">
+                    <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] rounded text-xs font-medium">
                       {ppa.typicalRate}
                     </span>
                   </div>
@@ -440,7 +507,7 @@ const EnergySourceSection = () => {
                   
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                      <h4 className="text-xs font-medium text-green-600 mb-2 flex items-center gap-1">
+                      <h4 className="text-xs font-medium text-emerald-600 mb-2 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" /> Advantages
                       </h4>
                       <ul className="space-y-1">
@@ -450,7 +517,9 @@ const EnergySourceSection = () => {
                       </ul>
                     </div>
                     <div>
-                      <h4 className="text-xs font-medium text-red-500 mb-2">Considerations</h4>
+                      <h4 className="text-xs font-medium text-amber-600 mb-2 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Considerations
+                      </h4>
                       <ul className="space-y-1">
                         {ppa.cons.map((con, i) => (
                           <li key={i} className="text-xs text-muted-foreground">• {con}</li>
@@ -461,35 +530,56 @@ const EnergySourceSection = () => {
                   
                   <div className="flex items-center justify-between pt-3 border-t border-border text-xs">
                     <span className="text-muted-foreground">Min Load: <span className="text-foreground font-medium">{ppa.minLoad}</span></span>
-                    <span className={`font-medium ${ppa.savings === 'Baseline' ? 'text-muted-foreground' : 'text-green-600'}`}>
+                    <span className={`font-medium ${ppa.savings === 'Baseline' ? 'text-muted-foreground' : 'text-emerald-600'}`}>
                       {ppa.savings !== 'Baseline' && <TrendingUp className="w-3 h-3 inline mr-1" />}
                       {ppa.savings}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </ScrollReveal>
+
+            <DCEKeyInsight variant="pro-tip" className="mt-8">
+              Behind-the-meter (BTM) arrangements with stranded gas or curtailed renewables offer the lowest 
+              power costs ($20-50/MWh) but require co-location with the generation source, often in remote areas.
+            </DCEKeyInsight>
+          </motion.div>
         )}
 
         {/* Site Selection Tab */}
         {activeTab === 'site' && (
-          <ScrollReveal delay={0.1}>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {siteSelectionCriteria.map((category) => (
-                <div key={category.category} className="bg-card rounded-2xl border border-border p-5">
+          <motion.div
+            key="site"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {siteSelectionCriteria.map((category, index) => (
+                <motion.div
+                  key={category.category}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="bg-card rounded-2xl border border-border p-5 hover:border-[hsl(var(--watt-bitcoin)/0.3)] transition-colors"
+                >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-foreground text-sm">{category.category}</h3>
-                    <span className="px-2 py-1 bg-watt-bitcoin text-white rounded-full text-xs font-bold">
+                    <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin))] text-white rounded-full text-xs font-bold">
                       {category.weight}%
                     </span>
                   </div>
                   
                   {/* Weight bar */}
                   <div className="h-2 bg-muted rounded-full mb-4 overflow-hidden">
-                    <div 
-                      className="h-full bg-watt-bitcoin rounded-full transition-all duration-500"
-                      style={{ width: `${category.weight}%` }}
+                    <motion.div 
+                      className="h-full bg-[hsl(var(--watt-bitcoin))] rounded-full"
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${category.weight}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8, delay: index * 0.1 }}
                     />
                   </div>
                   
@@ -501,16 +591,26 @@ const EnergySourceSection = () => {
                       </li>
                     ))}
                   </ul>
-                </div>
+                </motion.div>
               ))}
             </div>
+
+            <DCEKeyInsight variant="success" className="mb-8">
+              The ideal site combines low energy costs (under $40/MWh), cold climate for free cooling (8,000+ hours/year), 
+              and proximity to existing grid infrastructure (under 5km to substation) to minimize interconnection costs.
+            </DCEKeyInsight>
             
             {/* Key Metrics Banner */}
-            <div className="mt-8 p-5 bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl text-white">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="p-5 bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] rounded-2xl text-white"
+            >
               <h3 className="text-lg font-semibold mb-4">WattByte Site Selection Metrics</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-watt-bitcoin">
+                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">
                     <AnimatedCounter end={50} suffix="+" />
                   </div>
                   <div className="text-xs text-white/70">Sites Evaluated</div>
@@ -534,44 +634,24 @@ const EnergySourceSection = () => {
                   <div className="text-xs text-white/70">Target Uptime</div>
                 </div>
               </div>
-            </div>
-          </ScrollReveal>
+            </motion.div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        <SectionSummary
-          takeaways={[
-            "Large mining ops connect at transmission/distribution level (25-138kV) for lowest rates",
-            "Behind-the-meter (BTM) offers 40-60% savings but requires co-location with generation",
-            "Interconnection takes 12-30 months — start the process early",
-            "Site selection weighs power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
-          ]}
-          nextSteps={[
-            { title: "Electrical Infrastructure", href: "#electrical", description: "Learn about transformers, switchgear, and PDUs" }
-          ]}
-          proTip="Self-retailer status in AESO can save 15-30% vs regulated retail rates, but requires 24/7 market monitoring."
-        />
-      </div>
-
-      {/* CSS for animations */}
-      <style>{`
-        @keyframes flowRight {
-          0% {
-            left: 0%;
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            left: 100%;
-            opacity: 0;
-          }
-        }
-      `}</style>
-    </section>
+      <SectionSummary
+        takeaways={[
+          "Large mining ops connect at transmission/distribution level (25-138kV) for lowest rates",
+          "Behind-the-meter (BTM) offers 40-60% savings but requires co-location with generation",
+          "Interconnection takes 12-30 months — start the process early",
+          "Site selection weighs power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
+        ]}
+        nextSteps={[
+          { title: "Electrical Infrastructure", href: "#electrical", description: "Learn about transformers, switchgear, and PDUs" }
+        ]}
+        proTip="Self-retailer status in AESO can save 15-30% vs regulated retail rates, but requires 24/7 market monitoring."
+      />
+    </DCESectionWrapper>
   );
 };
 
