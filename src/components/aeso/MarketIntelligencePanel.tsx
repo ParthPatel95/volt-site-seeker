@@ -57,9 +57,17 @@ interface MarketIntelligencePanelProps {
   className?: string;
 }
 
+interface CalculatedAnalytics {
+  rollingAvg24h: number;
+  rollingStd24h: number;
+  volatility6h: number;
+  momentum3h: number;
+}
+
 export function MarketIntelligencePanel({ className }: MarketIntelligencePanelProps) {
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [calculatedAnalytics, setCalculatedAnalytics] = useState<CalculatedAnalytics | null>(null);
 
   useEffect(() => {
     const fetchMarketData = async () => {
@@ -94,6 +102,93 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch and calculate real-time analytics if database values are null
+  useEffect(() => {
+    const calculateAnalytics = async () => {
+      if (!marketData) return;
+      
+      // Check if we need to calculate any analytics
+      const needsCalculation = 
+        marketData.price_rolling_avg_24h === null ||
+        marketData.price_rolling_std_24h === null ||
+        marketData.price_volatility_6h === null ||
+        marketData.price_momentum_3h === null;
+      
+      if (!needsCalculation) {
+        setCalculatedAnalytics(null);
+        return;
+      }
+
+      try {
+        // Fetch last 24 hours of price data
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: priceHistory, error } = await supabase
+          .from('aeso_training_data')
+          .select('timestamp, pool_price')
+          .gte('timestamp', twentyFourHoursAgo)
+          .order('timestamp', { ascending: true });
+
+        if (error || !priceHistory || priceHistory.length < 2) {
+          console.warn('[MarketIntelligencePanel] Insufficient price history for analytics');
+          return;
+        }
+
+        const prices = priceHistory.map(p => p.pool_price);
+        
+        // Calculate 24h rolling average
+        const rollingAvg24h = prices.reduce((a, b) => a + b, 0) / prices.length;
+        
+        // Calculate 24h standard deviation
+        const variance = prices.reduce((sum, p) => sum + Math.pow(p - rollingAvg24h, 2), 0) / prices.length;
+        const rollingStd24h = Math.sqrt(variance);
+        
+        // Calculate 6h volatility (last 6 hours of data)
+        const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+        const last6hPrices = priceHistory
+          .filter(p => p.timestamp >= sixHoursAgo)
+          .map(p => p.pool_price);
+        
+        let volatility6h = 0;
+        if (last6hPrices.length > 1) {
+          const min6h = Math.min(...last6hPrices);
+          const max6h = Math.max(...last6hPrices);
+          const avg6h = last6hPrices.reduce((a, b) => a + b, 0) / last6hPrices.length;
+          volatility6h = avg6h > 0 ? ((max6h - min6h) / avg6h) * 100 : 0;
+        }
+        
+        // Calculate 3h momentum (price change over last 3 hours)
+        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+        const last3hPrices = priceHistory
+          .filter(p => p.timestamp >= threeHoursAgo)
+          .map(p => p.pool_price);
+        
+        let momentum3h = 0;
+        if (last3hPrices.length >= 2) {
+          momentum3h = last3hPrices[last3hPrices.length - 1] - last3hPrices[0];
+        }
+
+        setCalculatedAnalytics({
+          rollingAvg24h,
+          rollingStd24h,
+          volatility6h,
+          momentum3h
+        });
+        
+        console.log('[MarketIntelligencePanel] Calculated real-time analytics:', {
+          rollingAvg24h: rollingAvg24h.toFixed(2),
+          rollingStd24h: rollingStd24h.toFixed(2),
+          volatility6h: volatility6h.toFixed(2),
+          momentum3h: momentum3h.toFixed(2),
+          dataPoints: prices.length
+        });
+      } catch (err) {
+        console.error('[MarketIntelligencePanel] Analytics calculation error:', err);
+      }
+    };
+
+    calculateAnalytics();
+  }, [marketData]);
+
   // Calculate fallback values for derived metrics
   const derivedMetrics = useMemo(() => {
     if (!marketData) return null;
@@ -120,16 +215,15 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
       spikeProb = Math.min(spikeProb, 95);
     }
     
-    // Calculate available capacity from generation + reserves if DB value is null
+    // Calculate available capacity as demand + spinning reserves (more accurate)
     const availableCapacity = marketData.available_capacity_mw ?? 
-      ((marketData.generation_wind || 0) + (marketData.generation_solar || 0) + 
-       (marketData.generation_gas || 0) + (marketData.spinning_reserve_mw || 0));
+      ((marketData.ail_mw || 0) + (marketData.spinning_reserve_mw || 0));
     
-    // Calculate rolling analytics fallbacks
-    const rollingAvg24h = marketData.price_rolling_avg_24h ?? marketData.pool_price;
-    const rollingStd24h = marketData.price_rolling_std_24h ?? 0;
-    const volatility6h = marketData.price_volatility_6h ?? 0;
-    const momentum3h = marketData.price_momentum_3h ?? 0;
+    // Use calculated analytics or database values
+    const rollingAvg24h = marketData.price_rolling_avg_24h ?? calculatedAnalytics?.rollingAvg24h ?? marketData.pool_price;
+    const rollingStd24h = marketData.price_rolling_std_24h ?? calculatedAnalytics?.rollingStd24h ?? 0;
+    const volatility6h = marketData.price_volatility_6h ?? calculatedAnalytics?.volatility6h ?? 0;
+    const momentum3h = marketData.price_momentum_3h ?? calculatedAnalytics?.momentum3h ?? 0;
     
     return { 
       renewablePercent, 
@@ -139,9 +233,10 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
       rollingAvg24h,
       rollingStd24h,
       volatility6h,
-      momentum3h
+      momentum3h,
+      hasCalculatedAnalytics: calculatedAnalytics !== null
     };
-  }, [marketData]);
+  }, [marketData, calculatedAnalytics]);
 
   const gridHealthStatus = useMemo(() => {
     if (!marketData || !derivedMetrics) return { status: 'unknown', color: 'text-muted-foreground' };
@@ -471,7 +566,8 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
               </div>
               <div className="text-[10px] text-muted-foreground">
                 rolling average
-                {!marketData.price_rolling_avg_24h && <span className="ml-1 opacity-60">(current)</span>}
+                {!marketData.price_rolling_avg_24h && derivedMetrics?.hasCalculatedAnalytics && 
+                  <span className="ml-1 opacity-60">(calc)</span>}
               </div>
             </Card>
 
@@ -486,8 +582,8 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
               </div>
               <div className="text-[10px] text-muted-foreground">
                 24h volatility
-                {!marketData.price_rolling_std_24h && (derivedMetrics?.rollingStd24h || 0) === 0 && 
-                  <span className="ml-1 opacity-60">(pending)</span>}
+                {!marketData.price_rolling_std_24h && derivedMetrics?.hasCalculatedAnalytics && 
+                  <span className="ml-1 opacity-60">(calc)</span>}
               </div>
             </Card>
 
@@ -508,8 +604,8 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
               </div>
               <div className="text-[10px] text-muted-foreground">
                 price swing
-                {!marketData.price_volatility_6h && (derivedMetrics?.volatility6h || 0) === 0 && 
-                  <span className="ml-1 opacity-60">(pending)</span>}
+                {!marketData.price_volatility_6h && derivedMetrics?.hasCalculatedAnalytics && 
+                  <span className="ml-1 opacity-60">(calc)</span>}
               </div>
             </Card>
 
@@ -530,8 +626,8 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
               </div>
               <div className="text-[10px] text-muted-foreground">
                 price trend
-                {!marketData.price_momentum_3h && (derivedMetrics?.momentum3h || 0) === 0 && 
-                  <span className="ml-1 opacity-60">(pending)</span>}
+                {!marketData.price_momentum_3h && derivedMetrics?.hasCalculatedAnalytics && 
+                  <span className="ml-1 opacity-60">(calc)</span>}
               </div>
             </Card>
           </div>
