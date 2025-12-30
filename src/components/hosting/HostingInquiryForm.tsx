@@ -87,7 +87,7 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-watt-navy">
+          <DialogTitle className="text-2xl font-bold text-[hsl(var(--watt-navy))]">
             Request Hosting Information
           </DialogTitle>
           <DialogDescription>
@@ -103,10 +103,10 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
                 id="fullName"
                 {...register('fullName')}
                 placeholder="John Doe"
-                className={errors.fullName ? 'border-red-500' : ''}
+                className={errors.fullName ? 'border-destructive' : ''}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-500">{errors.fullName.message}</p>
+                <p className="text-sm text-destructive">{errors.fullName.message}</p>
               )}
             </div>
 
@@ -116,10 +116,10 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
                 id="companyName"
                 {...register('companyName')}
                 placeholder="Mining Company LLC"
-                className={errors.companyName ? 'border-red-500' : ''}
+                className={errors.companyName ? 'border-destructive' : ''}
               />
               {errors.companyName && (
-                <p className="text-sm text-red-500">{errors.companyName.message}</p>
+                <p className="text-sm text-destructive">{errors.companyName.message}</p>
               )}
             </div>
           </div>
@@ -131,10 +131,10 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
                 id="phone"
                 {...register('phone')}
                 placeholder="+1 (555) 123-4567"
-                className={errors.phone ? 'border-red-500' : ''}
+                className={errors.phone ? 'border-destructive' : ''}
               />
               {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone.message}</p>
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
               )}
             </div>
 
@@ -145,10 +145,10 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
                 type="email"
                 {...register('email')}
                 placeholder="john@miningco.com"
-                className={errors.email ? 'border-red-500' : ''}
+                className={errors.email ? 'border-destructive' : ''}
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+                <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
           </div>
@@ -159,7 +159,7 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
               value={packageInterest}
               onValueChange={(value) => setValue('packageInterest', value as any)}
             >
-              <SelectTrigger className={errors.packageInterest ? 'border-red-500' : ''}>
+              <SelectTrigger className={errors.packageInterest ? 'border-destructive' : ''}>
                 <SelectValue placeholder="Select a package" />
               </SelectTrigger>
               <SelectContent>
@@ -171,7 +171,7 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
               </SelectContent>
             </Select>
             {errors.packageInterest && (
-              <p className="text-sm text-red-500">{errors.packageInterest.message}</p>
+              <p className="text-sm text-destructive">{errors.packageInterest.message}</p>
             )}
           </div>
 
@@ -207,10 +207,10 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
               {...register('message')}
               placeholder="Tell us about your hosting requirements, timeline, or any specific questions..."
               rows={4}
-              className={errors.message ? 'border-red-500' : ''}
+              className={errors.message ? 'border-destructive' : ''}
             />
             {errors.message && (
-              <p className="text-sm text-red-500">{errors.message.message}</p>
+              <p className="text-sm text-destructive">{errors.message.message}</p>
             )}
           </div>
 
@@ -226,7 +226,7 @@ export const HostingInquiryForm = ({ isOpen, onClose, selectedPackage = 'byom' }
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white"
+              className="bg-[hsl(var(--watt-bitcoin))] hover:bg-[hsl(var(--watt-bitcoin)/0.9)] text-white"
             >
               {isSubmitting ? (
                 <>

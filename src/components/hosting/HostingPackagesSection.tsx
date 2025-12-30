@@ -11,7 +11,7 @@ const packages = [
     id: 'byom' as PackageType,
     name: 'Bring Your Own Machine',
     badge: 'Flexible',
-    badgeColor: 'bg-watt-trust/10 text-watt-trust border-watt-trust/20',
+    badgeColor: 'bg-[hsl(var(--watt-trust)/0.1)] text-[hsl(var(--watt-trust))] border-[hsl(var(--watt-trust)/0.2)]',
     icon: Zap,
     rate: '7.8¢',
     setupFee: '$20/miner',
@@ -23,15 +23,15 @@ const packages = [
       '24/7 technical support',
       'Direct AESO grid connection'
     ],
-    borderColor: 'hover:border-watt-trust',
-    glowColor: 'hover:shadow-watt-trust/20',
+    borderColor: 'hover:border-[hsl(var(--watt-trust))]',
+    glowColor: 'hover:shadow-[hsl(var(--watt-trust)/0.2)]',
     popular: false
   },
   {
     id: 'buyhost' as PackageType,
     name: 'Buy & Host',
     badge: 'Most Popular',
-    badgeColor: 'bg-watt-bitcoin/10 text-watt-bitcoin border-watt-bitcoin/20',
+    badgeColor: 'bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] border-[hsl(var(--watt-bitcoin)/0.2)]',
     icon: TrendingUp,
     rate: '7.5¢',
     setupFee: '$20/miner',
@@ -43,15 +43,15 @@ const packages = [
       'Maintenance & repairs included',
       'Optimized mining operations'
     ],
-    borderColor: 'hover:border-watt-bitcoin',
-    glowColor: 'hover:shadow-watt-bitcoin/20',
+    borderColor: 'hover:border-[hsl(var(--watt-bitcoin))]',
+    glowColor: 'hover:shadow-[hsl(var(--watt-bitcoin)/0.2)]',
     popular: true
   },
   {
     id: 'industrial' as PackageType,
     name: 'Industrial Clients',
     badge: 'Best Value',
-    badgeColor: 'bg-watt-success/10 text-watt-success border-watt-success/20',
+    badgeColor: 'bg-[hsl(var(--watt-success)/0.1)] text-[hsl(var(--watt-success))] border-[hsl(var(--watt-success)/0.2)]',
     icon: Building2,
     rate: '7.1¢',
     setupFee: 'Custom',
@@ -64,8 +64,8 @@ const packages = [
       'Dedicated account manager',
       'Volume pricing discounts'
     ],
-    borderColor: 'hover:border-watt-success',
-    glowColor: 'hover:shadow-watt-success/20',
+    borderColor: 'hover:border-[hsl(var(--watt-success))]',
+    glowColor: 'hover:shadow-[hsl(var(--watt-success)/0.2)]',
     popular: false
   }
 ];
@@ -80,14 +80,14 @@ export const HostingPackagesSection = () => {
   };
 
   return (
-    <section className="py-12 md:py-16 bg-white">
+    <section className="py-12 md:py-16 bg-card">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-3xl md:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--watt-navy))] mb-4">
               Choose Your Hosting Package
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-[hsl(var(--watt-navy)/0.7)] max-w-2xl mx-auto">
               Flexible hosting solutions designed for every scale of operation
             </p>
           </div>
@@ -98,10 +98,10 @@ export const HostingPackagesSection = () => {
             const Icon = pkg.icon;
             return (
               <ScrollReveal key={pkg.id} delay={index * 0.15}>
-                <div className={`group relative bg-white border-2 border-border rounded-2xl p-6 transition-all duration-500 ${pkg.borderColor} ${pkg.glowColor} ${pkg.popular ? 'shadow-xl scale-105 border-watt-bitcoin/30' : 'shadow-sm hover:shadow-xl hover:-translate-y-1'}`}>
+                <div className={`group relative bg-card border-2 border-border rounded-2xl p-6 transition-all duration-500 ${pkg.borderColor} ${pkg.glowColor} ${pkg.popular ? 'shadow-xl scale-105 border-[hsl(var(--watt-bitcoin)/0.3)]' : 'shadow-sm hover:shadow-xl hover:-translate-y-1'}`}>
                   {/* Popular Badge with Animation */}
                   {pkg.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-watt-bitcoin to-watt-bitcoin/80 text-white text-sm font-semibold rounded-full shadow-lg animate-pulse">
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-[hsl(var(--watt-bitcoin))] to-[hsl(var(--watt-bitcoin)/0.8)] text-white text-sm font-semibold rounded-full shadow-lg animate-pulse">
                       <span className="flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5" />
                         Most Popular
@@ -112,7 +112,7 @@ export const HostingPackagesSection = () => {
                   {/* Shimmer effect on popular card */}
                   {pkg.popular && (
                     <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-watt-bitcoin/5 to-transparent" />
+                      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-[hsl(var(--watt-bitcoin)/0.05)] to-transparent" />
                     </div>
                   )}
                   
@@ -122,24 +122,24 @@ export const HostingPackagesSection = () => {
                       <span>{pkg.badge}</span>
                     </div>
                     
-                    <h3 className="text-2xl font-bold text-watt-navy mb-2">
+                    <h3 className="text-2xl font-bold text-[hsl(var(--watt-navy))] mb-2">
                       {pkg.name}
                     </h3>
-                    <p className="text-sm text-watt-navy/60">
+                    <p className="text-sm text-[hsl(var(--watt-navy)/0.6)]">
                       {pkg.description}
                     </p>
                   </div>
 
                   <div className="mb-6 relative z-10">
                     <div className="flex items-baseline mb-1">
-                      <span className="text-5xl font-bold text-watt-navy group-hover:text-watt-bitcoin transition-colors duration-300">{pkg.rate}</span>
-                      <span className="text-xl text-watt-navy/60 ml-2">/kWh</span>
+                      <span className="text-5xl font-bold text-[hsl(var(--watt-navy))] group-hover:text-[hsl(var(--watt-bitcoin))] transition-colors duration-300">{pkg.rate}</span>
+                      <span className="text-xl text-[hsl(var(--watt-navy)/0.6)] ml-2">/kWh</span>
                     </div>
-                    <div className="text-sm text-watt-navy/60 mb-2">
-                      Setup Fee: <span className="font-semibold text-watt-navy">{pkg.setupFee}</span>
+                    <div className="text-sm text-[hsl(var(--watt-navy)/0.6)] mb-2">
+                      Setup Fee: <span className="font-semibold text-[hsl(var(--watt-navy))]">{pkg.setupFee}</span>
                     </div>
                     {pkg.minimum && (
-                      <div className="text-sm font-medium text-watt-bitcoin">
+                      <div className="text-sm font-medium text-[hsl(var(--watt-bitcoin))]">
                         {pkg.minimum}
                       </div>
                     )}
@@ -148,17 +148,17 @@ export const HostingPackagesSection = () => {
                   <ul className="space-y-3 mb-6 relative z-10">
                     {pkg.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start group/item">
-                        <div className="w-5 h-5 rounded-full bg-watt-success/10 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5 group-hover/item:bg-watt-success/20 transition-colors">
-                          <Check className="w-3 h-3 text-watt-success" />
+                        <div className="w-5 h-5 rounded-full bg-[hsl(var(--watt-success)/0.1)] flex items-center justify-center flex-shrink-0 mr-2 mt-0.5 group-hover/item:bg-[hsl(var(--watt-success)/0.2)] transition-colors">
+                          <Check className="w-3 h-3 text-[hsl(var(--watt-success))]" />
                         </div>
-                        <span className="text-sm text-watt-navy/70">{feature}</span>
+                        <span className="text-sm text-[hsl(var(--watt-navy)/0.7)]">{feature}</span>
                       </li>
                     ))}
                   </ul>
 
                   <Button 
                     onClick={() => handleGetStarted(pkg.id)}
-                    className={`w-full relative z-10 transition-all duration-300 ${pkg.popular ? 'bg-watt-bitcoin hover:bg-watt-bitcoin/90 hover:shadow-lg hover:shadow-watt-bitcoin/30' : 'bg-watt-navy hover:bg-watt-navy/90 hover:shadow-lg'} text-white`}
+                    className={`w-full relative z-10 transition-all duration-300 ${pkg.popular ? 'bg-[hsl(var(--watt-bitcoin))] hover:bg-[hsl(var(--watt-bitcoin)/0.9)] hover:shadow-lg hover:shadow-[hsl(var(--watt-bitcoin)/0.3)]' : 'bg-[hsl(var(--watt-navy))] hover:bg-[hsl(var(--watt-navy)/0.9)] hover:shadow-lg'} text-white`}
                   >
                     Get Started
                   </Button>

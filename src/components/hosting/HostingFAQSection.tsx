@@ -39,18 +39,18 @@ const faqs = [
 
 export const HostingFAQSection = () => {
   return (
-    <section className="py-12 md:py-16 bg-white">
+    <section className="py-12 md:py-16 bg-card">
       <div className="max-w-4xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-10">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-watt-navy/5 border border-watt-navy/10 rounded-full mb-4">
-              <HelpCircle className="w-4 h-4 text-watt-navy" />
-              <span className="text-sm font-medium text-watt-navy">Common Questions</span>
+            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-[hsl(var(--watt-navy)/0.05)] border border-[hsl(var(--watt-navy)/0.1)] rounded-full mb-4">
+              <HelpCircle className="w-4 h-4 text-[hsl(var(--watt-navy))]" />
+              <span className="text-sm font-medium text-[hsl(var(--watt-navy))]">Common Questions</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--watt-navy))] mb-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-[hsl(var(--watt-navy)/0.7)] max-w-2xl mx-auto">
               Everything you need to know about hosting with WattByte
             </p>
           </div>
@@ -62,12 +62,12 @@ export const HostingFAQSection = () => {
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`}
-                className="bg-watt-light border border-border rounded-xl px-6 data-[state=open]:shadow-md transition-shadow duration-300"
+                className="bg-muted/50 border border-border rounded-xl px-6 data-[state=open]:shadow-md transition-shadow duration-300"
               >
-                <AccordionTrigger className="text-left font-semibold text-watt-navy hover:text-watt-bitcoin transition-colors py-5">
+                <AccordionTrigger className="text-left font-semibold text-[hsl(var(--watt-navy))] hover:text-[hsl(var(--watt-bitcoin))] transition-colors py-5">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-watt-navy/70 pb-5">
+                <AccordionContent className="text-[hsl(var(--watt-navy)/0.7)] pb-5">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
