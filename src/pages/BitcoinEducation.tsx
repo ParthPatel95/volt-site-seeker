@@ -60,13 +60,13 @@ const BitcoinScriptingSection = lazy(() => import('@/components/bitcoin-educatio
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
-    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-watt-bitcoin border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-[hsl(var(--watt-bitcoin))] border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
 const BitcoinEducation: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white text-watt-navy relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <SmoothScroll />
       
       {/* SEO content */}

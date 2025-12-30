@@ -8,19 +8,19 @@ export const HostingCTASection = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   return (
-    <section className="relative py-16 md:py-24 bg-gradient-to-br from-watt-navy via-watt-navy/95 to-watt-navy/90 overflow-hidden">
+    <section className="relative py-16 md:py-24 bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-navy)/0.9)] overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-watt-bitcoin/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-watt-trust/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[hsl(var(--watt-trust)/0.1)] rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
         <ScrollReveal>
           {/* Urgency Badge */}
-          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-watt-success/20 border border-watt-success/30 rounded-full mb-6 animate-pulse">
-            <Zap className="w-4 h-4 text-watt-success" />
-            <span className="text-sm font-medium text-watt-success">Limited Capacity Available</span>
+          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-[hsl(var(--watt-success)/0.2)] border border-[hsl(var(--watt-success)/0.3)] rounded-full mb-6 animate-pulse">
+            <Zap className="w-4 h-4 text-[hsl(var(--watt-success))]" />
+            <span className="text-sm font-medium text-[hsl(var(--watt-success))]">Limited Capacity Available</span>
           </div>
 
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
@@ -34,7 +34,7 @@ export const HostingCTASection = () => {
             <Button 
               onClick={() => setIsFormOpen(true)}
               size="lg"
-              className="group bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg shadow-watt-bitcoin/30 hover:shadow-xl hover:shadow-watt-bitcoin/40 transition-all duration-300"
+              className="group bg-[hsl(var(--watt-bitcoin))] hover:bg-[hsl(var(--watt-bitcoin)/0.9)] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)] hover:shadow-xl hover:shadow-[hsl(var(--watt-bitcoin)/0.4)] transition-all duration-300"
             >
               <MessageSquare className="w-5 h-5 mr-2" />
               Request Information
@@ -53,7 +53,7 @@ export const HostingCTASection = () => {
 
           {/* Response Time Indicator */}
           <div className="inline-flex items-center space-x-3 px-6 py-3 bg-white/5 border border-white/10 rounded-full">
-            <Clock className="w-5 h-5 text-watt-bitcoin" />
+            <Clock className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
             <span className="text-sm text-white/70">
               Average response time: <span className="font-semibold text-white">Under 2 hours</span>
             </span>

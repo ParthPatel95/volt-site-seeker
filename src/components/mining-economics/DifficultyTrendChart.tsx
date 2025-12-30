@@ -43,13 +43,13 @@ const DifficultyTrendChart = () => {
           <p className="font-bold text-foreground mb-1">{label}</p>
           <div className="space-y-1 text-sm">
             <p className="text-muted-foreground">
-              Difficulty: <span className="font-semibold text-watt-bitcoin">{data.difficulty.toFixed(2)} T</span>
+              Difficulty: <span className="font-semibold text-[hsl(var(--watt-bitcoin))]">{data.difficulty.toFixed(2)} T</span>
             </p>
             <p className="text-muted-foreground">
-              Hashrate: <span className="font-semibold text-watt-purple">{data.hashrate} EH/s</span>
+              Hashrate: <span className="font-semibold text-[hsl(var(--watt-purple))]">{data.hashrate} EH/s</span>
             </p>
             {data.event && (
-              <p className="text-watt-success font-medium mt-2 pt-2 border-t border-border">
+              <p className="text-[hsl(var(--watt-success))] font-medium mt-2 pt-2 border-t border-border">
                 📌 {data.event}
               </p>
             )}
@@ -71,8 +71,8 @@ const DifficultyTrendChart = () => {
     <div className="bg-background rounded-2xl shadow-lg border border-border p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
-          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-watt-success" />
+        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[hsl(var(--watt-success))]" />
             Difficulty Trend Analysis
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -186,7 +186,7 @@ const DifficultyTrendChart = () => {
       <div className="mt-6 grid md:grid-cols-3 gap-4">
         {events.map((event, idx) => (
           <div key={idx} className="flex items-start gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-watt-success flex-shrink-0 mt-0.5" />
+            <Calendar className="w-4 h-4 text-[hsl(var(--watt-success))] flex-shrink-0 mt-0.5" />
             <div>
               <span className="font-medium text-foreground">{event.date}</span>
               <p className="text-muted-foreground">{event.event}</p>
@@ -197,8 +197,8 @@ const DifficultyTrendChart = () => {
 
       {/* Key Insights */}
       <div className="mt-6 grid md:grid-cols-2 gap-4">
-        <div className="bg-watt-bitcoin/10 rounded-lg p-4 flex items-start gap-3">
-          <Zap className="w-5 h-5 text-watt-bitcoin flex-shrink-0 mt-0.5" />
+        <div className="bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg p-4 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-[hsl(var(--watt-bitcoin))] flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-foreground">7x Growth Since 2020</p>
             <p className="text-sm text-muted-foreground">
@@ -206,8 +206,8 @@ const DifficultyTrendChart = () => {
             </p>
           </div>
         </div>
-        <div className="bg-watt-success/10 rounded-lg p-4 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-watt-success flex-shrink-0 mt-0.5" />
+        <div className="bg-[hsl(var(--watt-success)/0.1)] rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-[hsl(var(--watt-success))] flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-foreground">Plan for ~5%/month Growth</p>
             <p className="text-sm text-muted-foreground">
