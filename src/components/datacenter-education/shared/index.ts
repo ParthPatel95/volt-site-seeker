@@ -4,3 +4,4 @@ export { DCEContentCard, DCEStatCard } from './DCEContentCard';
 export { DCEKeyInsight } from './DCEKeyInsight';
 export { DCEDeepDive, DCEStepByStep, DCEProcessFlow } from './DCEDeepDive';
 export { DCEQuote, DCECallout } from './DCEQuote';
+export { DCEDisclaimer, DataQualityBadge, SourceCitation } from './DCEDisclaimer';
