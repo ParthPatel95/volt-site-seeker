@@ -68,15 +68,25 @@ const DatacenterHeroSectionV2 = () => {
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
         <div className="text-center mb-6 md:mb-8">
-          {/* Badge */}
+          {/* Badge Row with Time and Level */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-[hsl(var(--watt-bitcoin)/0.2)] border border-[hsl(var(--watt-bitcoin)/0.3)] mb-4 md:mb-6"
+            className="flex flex-wrap items-center justify-center gap-2 mb-4 md:mb-6"
           >
-            <div className="w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))] animate-pulse" />
-            <span className="text-[hsl(var(--watt-bitcoin))] text-xs md:text-sm font-medium">Engineer-Grade Education</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--watt-bitcoin)/0.2)] border border-[hsl(var(--watt-bitcoin)/0.3)]">
+              <div className="w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))] animate-pulse" />
+              <span className="text-[hsl(var(--watt-bitcoin))] text-xs font-medium">Engineer-Grade</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
+              <Target className="w-3 h-3 text-white/70" />
+              <span className="text-white/70 text-xs">Intermediate-Advanced</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
+              <BookOpen className="w-3 h-3 text-white/70" />
+              <span className="text-white/70 text-xs">~75 min total</span>
+            </div>
           </motion.div>
 
           {/* Title */}

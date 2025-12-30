@@ -95,6 +95,19 @@ const AirflowContainmentSection = () => {
 
   return (
     <DCESectionWrapper theme="light" id="airflow">
+      <LearningObjectives
+        objectives={[
+          "Compare Hot Aisle vs Cold Aisle containment strategies and when to use each",
+          "Understand Computational Fluid Dynamics (CFD) basics for facility design",
+          "Identify and solve common airflow problems: bypass, recirculation, short-cycling",
+          "Learn temperature sensor placement for effective thermal monitoring"
+        ]}
+        estimatedTime="8 min"
+        prerequisites={[
+          { title: "Facility Design", href: "#facility-design" }
+        ]}
+      />
+      
       <DCESectionHeader
         badge="Section 4 • Thermal Management"
         badgeIcon={Wind}
