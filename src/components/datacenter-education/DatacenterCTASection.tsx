@@ -14,7 +14,7 @@ const DatacenterCTASection = () => {
       description: 'Professional colocation services starting at 7.1¢/kWh with 95% uptime guarantee',
       buttonText: 'View Hosting Packages',
       route: '/hosting',
-      color: 'from-watt-bitcoin to-orange-600',
+      color: 'from-[hsl(var(--watt-bitcoin))] to-orange-600',
     },
     {
       icon: MapPin,
@@ -35,7 +35,7 @@ const DatacenterCTASection = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-watt-navy">
+    <section className="py-16 md:py-24 bg-[hsl(var(--watt-navy))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
