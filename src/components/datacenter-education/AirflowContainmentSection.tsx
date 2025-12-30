@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wind, Thermometer, ArrowRight, ArrowUp, ArrowDown, Info, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
+import { Wind, Thermometer, ArrowRight, ArrowUp, ArrowDown, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
 import {
   DCESectionWrapper,
   DCESectionHeader,
-  DCEContentCard,
   DCEKeyInsight,
   DCEDeepDive
 } from './shared';
@@ -15,46 +14,55 @@ import miningFloorInterior from '@/assets/datacenter-mining-floor-interior.jpg';
 const AirflowContainmentSection = () => {
   const [activeContainment, setActiveContainment] = useState<'hot' | 'cold'>('hot');
 
+
   const containmentTypes = {
     hot: {
       name: 'Hot Aisle Containment (HAC)',
-      description: 'Hot exhaust air is contained and directed to return/exhaust. Room ambient stays cool. Most common for mining.',
+      description: 'Hot exhaust air is contained and directed to return/exhaust. Room ambient stays cool. ASHRAE recommends HAC for high-density deployments.',
       advantages: [
-        'Room stays comfortable for workers',
-        'Electronics in room run cooler',
-        'Fire suppression unaffected',
-        'Most common implementation',
+        'Room stays comfortable (68-75°F) for personnel',
+        'Non-IT electronics in room run cooler',
+        'Fire suppression systems operate normally',
+        'Most common implementation (70%+ of facilities)',
+        'Lower risk of recirculation'
       ],
       disadvantages: [
-        'Hot aisle can exceed 120°F (49°C)',
-        'Requires sealed ceiling/plenum',
-        'More complex structure',
+        'Hot aisle can exceed 120°F (49°C) — PPE may be required',
+        'Requires sealed ceiling/plenum system',
+        'More complex structural design',
+        'Higher initial construction cost'
       ],
       temperatures: {
         coldAisle: '65-80°F (18-27°C)',
         hotAisle: '95-130°F (35-55°C)',
         room: '68-75°F (20-24°C)',
       },
+      ashraeClass: 'A1 (Recommended)',
+      thermalDesignPower: '5-8 kW/rack typical',
     },
     cold: {
       name: 'Cold Aisle Containment (CAC)',
-      description: 'Cold supply air is contained and delivered to equipment intakes. Hot exhaust mixes in room.',
+      description: 'Cold supply air is contained and delivered to equipment intakes. Hot exhaust mixes with room air. Simpler construction but less efficient.',
       advantages: [
-        'Simpler to implement',
-        'Works with raised floor',
-        'Lower construction cost',
-        'Easier expansion',
+        'Simpler to implement retrofit',
+        'Works with raised floor plenums',
+        'Lower construction cost (15-20% savings)',
+        'Easier expansion/modification',
+        'No personnel access restrictions'
       ],
       disadvantages: [
-        'Room runs hot (not comfortable)',
-        'Electronics in room run warmer',
-        'Fire suppression challenges',
+        'Room runs hot (85-100°F) — uncomfortable for workers',
+        'Higher HVAC load for building',
+        'Fire suppression may need modification',
+        'Risk of short-cycling at row ends'
       ],
       temperatures: {
         coldAisle: '65-75°F (18-24°C)',
         hotAisle: '95-120°F (35-49°C)',
         room: '85-100°F (29-38°C)',
       },
+      ashraeClass: 'A2 (Allowable)',
+      thermalDesignPower: '3-5 kW/rack typical',
     },
   };
 
@@ -63,35 +71,39 @@ const AirflowContainmentSection = () => {
   const airflowProblems = [
     {
       name: 'Bypass Air',
-      description: 'Cold air that bypasses equipment and goes directly to return. Wastes cooling capacity.',
-      causes: ['Gaps in containment', 'Missing blanking panels', 'Cable openings'],
-      impact: 'Up to 40% cooling capacity loss',
-      solution: 'Seal gaps, install blanking panels',
+      description: 'Cold air that bypasses equipment and goes directly to return without performing cooling work.',
+      causes: ['Gaps in containment panels', 'Missing blanking panels in racks', 'Cable openings', 'Oversized floor tiles'],
+      impact: 'Up to 40% cooling capacity loss — documented by Uptime Institute',
+      solution: 'Seal all gaps >6mm, install blanking panels, use brush grommets for cables',
+      metric: 'CFM wasted / CFM supplied × 100%',
     },
     {
       name: 'Recirculation',
-      description: 'Hot exhaust air that recirculates to equipment intakes. Causes overheating.',
-      causes: ['Inadequate exhaust', 'Poor containment', 'Unbalanced airflow'],
-      impact: 'Inlet temps 10-20°F higher than supply',
-      solution: 'Improve containment, balance CFM',
+      description: 'Hot exhaust air that recirculates back to equipment intakes, raising inlet temperatures.',
+      causes: ['Inadequate exhaust capacity', 'Poor containment seals', 'Unbalanced supply/return CFM'],
+      impact: 'Inlet temps 10-20°F higher than supply air — reduces equipment life',
+      solution: 'Increase exhaust CFM, improve containment integrity, balance airflow',
+      metric: '(T_inlet - T_supply) / (T_exhaust - T_supply) × 100%',
     },
     {
       name: 'Short-Cycling',
-      description: 'Hot air from one row immediately enters adjacent cold aisle.',
-      causes: ['Missing aisle doors', 'Incorrect rack placement', 'Open ends'],
-      impact: 'Hot spots, premature equipment failure',
-      solution: 'Install end caps, maintain row integrity',
+      description: 'Hot air from one row immediately enters adjacent cold aisle without proper exhaust.',
+      causes: ['Missing aisle end doors', 'Incorrect rack placement (gaps)', 'Open ends without caps'],
+      impact: 'Hot spots, thermal throttling, premature equipment failure',
+      solution: 'Install end caps/doors, maintain row integrity, avoid gaps in rack rows',
+      metric: 'ΔT across aisle vs design ΔT',
     },
   ];
 
   const sensorPlacement = [
-    { location: 'Cold Aisle Inlet', purpose: 'Monitor supply air delivery', target: '65-80°F' },
-    { location: 'Hot Aisle Exhaust', purpose: 'Verify heat removal', target: 'Under 130°F' },
-    { location: 'Rack Inlet (Front)', purpose: 'Equipment intake temp', target: 'Under 95°F' },
-    { location: 'Rack Exhaust (Rear)', purpose: 'Equipment exhaust', target: 'Under 120°F' },
-    { location: 'Room Ambient', purpose: 'General room conditions', target: '68-80°F' },
-    { location: 'Outside Air', purpose: 'Economizer control', target: 'Variable' },
+    { location: 'Cold Aisle Inlet', purpose: 'Monitor supply air delivery', target: '65-80°F', ashrae: 'ASHRAE TC 9.9' },
+    { location: 'Hot Aisle Exhaust', purpose: 'Verify heat removal', target: 'Under 130°F', ashrae: 'Equipment limit' },
+    { location: 'Rack Inlet (Front)', purpose: 'Equipment intake temp', target: 'Under 95°F', ashrae: 'A1 allowable max' },
+    { location: 'Rack Exhaust (Rear)', purpose: 'Equipment exhaust ΔT', target: 'Under 120°F', ashrae: 'Typical delta 30-50°F' },
+    { location: 'Room Ambient', purpose: 'General room conditions', target: '68-80°F', ashrae: 'Worker comfort' },
+    { location: 'Outside Air', purpose: 'Economizer control decisions', target: 'Variable', ashrae: 'Free cooling threshold' },
   ];
+
 
   return (
     <DCESectionWrapper theme="light" id="airflow">
