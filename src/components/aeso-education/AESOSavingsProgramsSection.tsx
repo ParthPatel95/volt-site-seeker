@@ -271,7 +271,7 @@ export const AESOSavingsProgramsSection = () => {
       </div>
 
       {/* Pro Tip */}
-      <AESOKeyInsight variant="tip" title="Revenue Stacking Strategy" theme="light" className="mt-8">
+      <AESOKeyInsight variant="pro-tip" title="Revenue Stacking Strategy" theme="light" className="mt-8">
         <p>
           Smart operators <strong>stack multiple revenue streams</strong>: participate in Operating Reserve during 
           normal operations, commit to LSS for emergency availability, and capture Demand Response payments during 

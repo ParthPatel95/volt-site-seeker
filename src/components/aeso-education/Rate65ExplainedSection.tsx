@@ -417,7 +417,7 @@ export const Rate65ExplainedSection = () => {
       </AESOKeyInsight>
 
       {/* Pro Tip */}
-      <AESOKeyInsight variant="tip" title="Pro Tip: Combine Rate 65 with Self-Retailer Status" theme="light">
+      <AESOKeyInsight variant="pro-tip" title="Pro Tip: Combine Rate 65 with Self-Retailer Status" theme="light">
         <p>
           Rate 65 unlocks <strong>delivery cost savings</strong>, but combining it with <strong>Self-Retailer status</strong> 
           unlocks the full potential: direct pool access eliminates retailer margins (typically $3-8/MWh), and 

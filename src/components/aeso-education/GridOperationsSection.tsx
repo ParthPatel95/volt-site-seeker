@@ -315,7 +315,7 @@ export const GridOperationsSection = () => {
       </div>
 
       {/* Opportunity for Flexible Loads */}
-      <AESOKeyInsight variant="tip" title="Opportunity for Flexible Loads" theme="light">
+      <AESOKeyInsight variant="pro-tip" title="Opportunity for Flexible Loads" theme="light">
         <p>
           During EEA events, pool prices often spike to <strong>$999/MWh</strong> or higher. Flexible loads that 
           can curtail during these periods not only avoid extreme costs but can also earn revenue by participating 

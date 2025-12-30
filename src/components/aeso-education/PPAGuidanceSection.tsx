@@ -463,7 +463,7 @@ export const PPAGuidanceSection = () => {
       />
 
       {/* Pro Tip */}
-      <AESOKeyInsight variant="tip" title="Pro Tip: Consider a Layered Approach" theme="light" className="mt-8">
+      <AESOKeyInsight variant="pro-tip" title="Pro Tip: Consider a Layered Approach" theme="light" className="mt-8">
         <p>
           Many sophisticated operators use a <strong>layered hedging strategy</strong>: 50% fixed PPA for budget certainty, 
           30% floating for market upside, and 20% full pool exposure for optimization. This provides protection 
