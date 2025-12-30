@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Box, Grid, Ruler, CheckCircle, ArrowRight, Zap, Wind, Shield, DollarSign } from 'lucide-react';
-import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+import {
+  DCESectionWrapper,
+  DCESectionHeader,
+  DCEContentCard,
+  DCEKeyInsight,
+  DCEDeepDive
+} from './shared';
 import datacenter3dExterior from '@/assets/datacenter-3d-exterior.jpg';
 import containerDeployment from '@/assets/datacenter-container-deployment.jpg';
 
@@ -103,205 +110,247 @@ const FacilityDesignSection = () => {
     { metric: 'Max Capacity', warehouse: '100+ MW', container: '50 MW', modular: '50 MW', best: 'warehouse' },
   ];
 
+  const facilityButtons = [
+    { id: 'warehouse' as const, name: 'Warehouse', icon: Building2, capacity: '50-200 MW' },
+    { id: 'container' as const, name: 'Container', icon: Box, capacity: '1-2 MW/unit' },
+    { id: 'modular' as const, name: 'Prefab Modular', icon: Grid, capacity: '5-10 MW/unit' },
+  ];
+
   return (
-    <section id="facility-design" className="py-16 md:py-24 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal>
-          <div className="text-center mb-12">
-            <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
-              Section 3 • Building Types
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Facility Design & Layout
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              Compare warehouse, container, and modular datacenter architectures for Bitcoin mining
-            </p>
-            {/* Industry Estimate Disclaimer */}
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200">
-              <span className="text-amber-600 text-sm">📊</span>
-              <span className="text-xs text-amber-700">Build costs and timelines are industry estimates</span>
-            </div>
-          </div>
-        </ScrollReveal>
+    <DCESectionWrapper theme="accent" id="facility-design">
+      <DCESectionHeader
+        badge="Section 3 • Building Types"
+        badgeIcon={Building2}
+        title="Facility Design & Layout"
+        description="Compare warehouse, container, and modular datacenter architectures for Bitcoin mining"
+      />
 
-        {/* Facility Type Selector */}
-        <ScrollReveal delay={0.05}>
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            {[
-              { id: 'warehouse' as const, name: 'Warehouse', icon: Building2, capacity: '50-200 MW' },
-              { id: 'container' as const, name: 'Container', icon: Box, capacity: '1-2 MW/unit' },
-              { id: 'modular' as const, name: 'Prefab Modular', icon: Grid, capacity: '5-10 MW/unit' },
-            ].map((type) => (
-              <button
-                key={type.id}
-                onClick={() => setActiveFacilityType(type.id)}
-                className={`flex items-center gap-3 px-5 py-3 rounded-xl transition-all ${
-                  activeFacilityType === type.id
-                    ? 'bg-watt-bitcoin text-white shadow-lg shadow-watt-bitcoin/30'
-                    : 'bg-card border border-border hover:border-watt-bitcoin/50'
-                }`}
-              >
-                <type.icon className="w-5 h-5" />
-                <div className="text-left">
-                  <div className="font-semibold text-sm">{type.name}</div>
-                  <div className={`text-xs ${activeFacilityType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
-                    {type.capacity}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </ScrollReveal>
+      {/* Industry Estimate Disclaimer */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="flex justify-center mb-8"
+      >
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200">
+          <span className="text-amber-600 text-sm">📊</span>
+          <span className="text-xs text-amber-700">Build costs and timelines are industry estimates</span>
+        </div>
+      </motion.div>
 
-        {/* Active Facility Details */}
-        <ScrollReveal delay={0.1}>
-          <div className="grid lg:grid-cols-2 gap-6 mb-12">
-            {/* Image */}
-            <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden">
-              <img 
-                src={currentFacility.image} 
-                alt={currentFacility.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-1">{currentFacility.name}</h3>
-                <p className="text-white/70 text-sm">{currentFacility.subtitle}</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="px-2 py-1 bg-watt-bitcoin/90 text-white rounded text-xs font-medium">
-                    Build: {currentFacility.buildTime}
-                  </span>
-                  <span className="px-2 py-1 bg-white/20 text-white rounded text-xs">
-                    {currentFacility.capex}
-                  </span>
-                </div>
+      {/* Facility Type Selector */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="flex flex-wrap justify-center gap-3 mb-10"
+      >
+        {facilityButtons.map((type) => (
+          <button
+            key={type.id}
+            onClick={() => setActiveFacilityType(type.id)}
+            className={`flex items-center gap-3 px-5 py-3 rounded-xl transition-all ${
+              activeFacilityType === type.id
+                ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                : 'bg-card border border-border hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
+            }`}
+          >
+            <type.icon className="w-5 h-5" />
+            <div className="text-left">
+              <div className="font-semibold text-sm">{type.name}</div>
+              <div className={`text-xs ${activeFacilityType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                {type.capacity}
               </div>
             </div>
+          </button>
+        ))}
+      </motion.div>
 
-            {/* Details */}
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <p className="text-muted-foreground mb-6">{currentFacility.description}</p>
-              
-              {/* Key Metrics */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-3 bg-muted/50 rounded-xl text-center">
-                  <Zap className="w-5 h-5 text-watt-bitcoin mx-auto mb-1" />
-                  <div className="text-xs text-muted-foreground">Build Time</div>
-                  <div className="font-semibold text-foreground">{currentFacility.buildTime}</div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-xl text-center">
-                  <DollarSign className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                  <div className="text-xs text-muted-foreground">CapEx</div>
-                  <div className="font-semibold text-foreground">{currentFacility.capex}</div>
-                </div>
-              </div>
-
-              {/* Specifications */}
-              <h4 className="font-semibold text-foreground mb-3">Specifications</h4>
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                {Object.entries(currentFacility.specs).map(([key, value]) => (
-                  <div key={key} className="text-sm">
-                    <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}: </span>
-                    <span className="text-foreground font-medium">{value}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Best For */}
-              <div className="p-3 bg-watt-bitcoin/10 rounded-lg">
-                <span className="text-sm font-medium text-foreground">Best For: </span>
-                <span className="text-sm text-muted-foreground">{currentFacility.bestFor}</span>
+      {/* Active Facility Details */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeFacilityType}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="grid lg:grid-cols-2 gap-6 mb-12"
+        >
+          {/* Image */}
+          <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden">
+            <img 
+              src={currentFacility.image} 
+              alt={currentFacility.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-1">{currentFacility.name}</h3>
+              <p className="text-white/70 text-sm">{currentFacility.subtitle}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin)/0.9)] text-white rounded text-xs font-medium">
+                  Build: {currentFacility.buildTime}
+                </span>
+                <span className="px-2 py-1 bg-white/20 text-white rounded text-xs">
+                  {currentFacility.capex}
+                </span>
               </div>
             </div>
           </div>
-        </ScrollReveal>
 
-        {/* Space Allocation Layout */}
-        <ScrollReveal delay={0.15}>
-          <div className="bg-card rounded-2xl border border-border p-6 mb-12">
-            <h3 className="text-xl font-bold text-foreground mb-6">Space Allocation</h3>
-            <div className="space-y-4">
-              {currentFacility.layout.map((area, i) => (
-                <div key={area.name} className="flex items-center gap-4">
-                  <div className="w-24 text-sm font-medium text-foreground">{area.name}</div>
-                  <div className="flex-1">
-                    <div className="relative h-8 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-watt-bitcoin to-watt-bitcoin/70 rounded-full transition-all duration-700 flex items-center justify-end pr-3"
-                        style={{ width: `${area.percentage}%` }}
-                      >
-                        <span className="text-xs font-bold text-white">{area.percentage}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-40 text-xs text-muted-foreground hidden sm:block">{area.description}</div>
+          {/* Details */}
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <p className="text-muted-foreground mb-6">{currentFacility.description}</p>
+            
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="p-3 bg-muted/50 rounded-xl text-center">
+                <Zap className="w-5 h-5 text-[hsl(var(--watt-bitcoin))] mx-auto mb-1" />
+                <div className="text-xs text-muted-foreground">Build Time</div>
+                <div className="font-semibold text-foreground">{currentFacility.buildTime}</div>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-xl text-center">
+                <DollarSign className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
+                <div className="text-xs text-muted-foreground">CapEx</div>
+                <div className="font-semibold text-foreground">{currentFacility.capex}</div>
+              </div>
+            </div>
+
+            {/* Specifications */}
+            <h4 className="font-semibold text-foreground mb-3">Specifications</h4>
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {Object.entries(currentFacility.specs).map(([key, value]) => (
+                <div key={key} className="text-sm">
+                  <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}: </span>
+                  <span className="text-foreground font-medium">{value}</span>
                 </div>
               ))}
             </div>
-          </div>
-        </ScrollReveal>
 
-        {/* Comparison Table */}
-        <ScrollReveal delay={0.2}>
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-foreground">Facility Type Comparison</h3>
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded">
-                Industry Estimates
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm bg-card rounded-xl border border-border">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-4 px-4 font-medium text-foreground">Metric</th>
-                    <th className="text-center py-4 px-4 font-medium text-foreground">Warehouse</th>
-                    <th className="text-center py-4 px-4 font-medium text-foreground">Container</th>
-                    <th className="text-center py-4 px-4 font-medium text-foreground">Modular</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonMetrics.map((row) => (
-                    <tr key={row.metric} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="py-3 px-4 font-medium text-foreground">{row.metric}</td>
-                      <td className={`py-3 px-4 text-center ${row.best === 'warehouse' ? 'text-watt-bitcoin font-semibold' : 'text-muted-foreground'}`}>
-                        {row.best === 'warehouse' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                        {row.warehouse}
-                      </td>
-                      <td className={`py-3 px-4 text-center ${row.best === 'container' ? 'text-watt-bitcoin font-semibold' : 'text-muted-foreground'}`}>
-                        {row.best === 'container' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                        {row.container}
-                      </td>
-                      <td className={`py-3 px-4 text-center ${row.best === 'modular' ? 'text-watt-bitcoin font-semibold' : 'text-muted-foreground'}`}>
-                        {row.best === 'modular' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                        {row.modular}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Best For */}
+            <div className="p-3 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg">
+              <span className="text-sm font-medium text-foreground">Best For: </span>
+              <span className="text-sm text-muted-foreground">{currentFacility.bestFor}</span>
             </div>
           </div>
-        </ScrollReveal>
+        </motion.div>
+      </AnimatePresence>
 
-        {/* Civil Requirements */}
-        <ScrollReveal delay={0.25}>
-          <div>
-            <h3 className="text-xl font-bold text-foreground mb-6">Site Civil Requirements</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {civilRequirements.map((req) => (
-                <div key={req.name} className="bg-card rounded-xl border border-border p-4 text-center hover:border-watt-bitcoin/50 transition-colors">
-                  <req.icon className="w-8 h-8 text-watt-bitcoin mx-auto mb-2" />
-                  <div className="font-semibold text-foreground text-sm mb-1">{req.name}</div>
-                  <div className="text-xs text-muted-foreground">{req.description}</div>
+      {/* Space Allocation Layout */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="bg-card rounded-2xl border border-border p-6 mb-12"
+      >
+        <h3 className="text-xl font-bold text-foreground mb-6">Space Allocation</h3>
+        <div className="space-y-4">
+          {currentFacility.layout.map((area, i) => (
+            <div key={area.name} className="flex items-center gap-4">
+              <div className="w-24 text-sm font-medium text-foreground">{area.name}</div>
+              <div className="flex-1">
+                <div className="relative h-8 bg-muted rounded-full overflow-hidden">
+                  <motion.div 
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-[hsl(var(--watt-bitcoin))] to-[hsl(var(--watt-bitcoin)/0.7)] rounded-full flex items-center justify-end pr-3"
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${area.percentage}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: i * 0.1 }}
+                  >
+                    <span className="text-xs font-bold text-white">{area.percentage}%</span>
+                  </motion.div>
                 </div>
-              ))}
+              </div>
+              <div className="w-40 text-xs text-muted-foreground hidden sm:block">{area.description}</div>
             </div>
-          </div>
-        </ScrollReveal>
-      </div>
-    </section>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Key Insight */}
+      <DCEKeyInsight variant="insight" className="mb-8">
+        Warehouse-style buildings offer the lowest cost per kW ($150-250) and best PUE (1.15-1.25), but require 
+        12-18 months to build. Containers deploy in 4-8 weeks but cost 2x more per kW.
+      </DCEKeyInsight>
+
+      {/* Comparison Table */}
+      <DCEDeepDive title="Facility Type Comparison" icon={Building2} className="mb-12">
+        <div className="flex items-center justify-end mb-4">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+            Industry Estimates
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm bg-card rounded-xl">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-4 px-4 font-medium text-foreground">Metric</th>
+                <th className="text-center py-4 px-4 font-medium text-foreground">Warehouse</th>
+                <th className="text-center py-4 px-4 font-medium text-foreground">Container</th>
+                <th className="text-center py-4 px-4 font-medium text-foreground">Modular</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparisonMetrics.map((row) => (
+                <tr key={row.metric} className="border-b border-border/50 hover:bg-muted/30">
+                  <td className="py-3 px-4 font-medium text-foreground">{row.metric}</td>
+                  <td className={`py-3 px-4 text-center ${row.best === 'warehouse' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
+                    {row.best === 'warehouse' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                    {row.warehouse}
+                  </td>
+                  <td className={`py-3 px-4 text-center ${row.best === 'container' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
+                    {row.best === 'container' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                    {row.container}
+                  </td>
+                  <td className={`py-3 px-4 text-center ${row.best === 'modular' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
+                    {row.best === 'modular' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                    {row.modular}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DCEDeepDive>
+
+      {/* Civil Requirements */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+      >
+        <h3 className="text-xl font-bold text-foreground mb-6">Site Civil Requirements</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {civilRequirements.map((req, index) => (
+            <motion.div
+              key={req.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+              className="bg-card rounded-xl border border-border p-4 text-center hover:border-[hsl(var(--watt-bitcoin)/0.5)] hover:shadow-lg transition-all duration-300"
+            >
+              <req.icon className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-2" />
+              <div className="font-semibold text-foreground text-sm mb-1">{req.name}</div>
+              <div className="text-xs text-muted-foreground">{req.description}</div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      <SectionSummary
+        takeaways={[
+          "Warehouse buildings: lowest cost ($150-250/kW), best PUE, but 12-18 month build time",
+          "Containers: fastest deployment (4-8 weeks), highly scalable, but higher cost ($300-500/kW)",
+          "Modular prefab: balance of speed and cost, good for phased expansion",
+          "65% of facility space typically dedicated to mining floor in warehouse designs"
+        ]}
+        nextSteps={[
+          { title: "Airflow & Containment", href: "#airflow", description: "Learn hot/cold aisle strategies for thermal management" }
+        ]}
+        proTip="For stranded energy sites with uncertain timelines, start with containers and transition to permanent structures once power agreements are finalized."
+      />
+    </DCESectionWrapper>
   );
 };
 
