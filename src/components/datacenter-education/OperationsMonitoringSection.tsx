@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Monitor, Bell, Clock, Shield, Wrench, Activity, Zap, Thermometer, Cpu, Wifi, Users, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Monitor, Bell, Clock, Shield, Wrench, Activity, Zap, Thermometer, Cpu, Wifi, Users, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
@@ -74,6 +74,116 @@ const OperationsMonitoringSection = () => {
     { name: 'Capacity Planning', description: 'Power/cooling headroom analysis' },
     { name: 'Alarm Management', description: 'Tiered escalation with mobile notifications' },
     { name: 'Reporting & Analytics', description: 'PUE, uptime, efficiency trends' },
+  ];
+
+  // KPI Framework - MTBF/MTTR Industry Standards
+  const kpiFramework = {
+    mtbf: {
+      name: 'MTBF (Mean Time Between Failures)',
+      definition: 'Average operational time between equipment failures',
+      formula: 'MTBF = Total Operating Time / Number of Failures',
+      targets: [
+        { component: 'ASIC Miners', target: '8,760 hrs (1 year)', typical: '4,000-12,000 hrs' },
+        { component: 'Power Supplies', target: '50,000 hrs', typical: '40,000-100,000 hrs' },
+        { component: 'Cooling Fans', target: '70,000 hrs', typical: '50,000-100,000 hrs' },
+        { component: 'Transformers', target: '200,000 hrs', typical: '150,000-300,000 hrs' },
+      ],
+    },
+    mttr: {
+      name: 'MTTR (Mean Time To Repair)',
+      definition: 'Average time to restore equipment to operational status',
+      formula: 'MTTR = Total Downtime / Number of Repairs',
+      targets: [
+        { component: 'ASIC Miners', target: '< 4 hrs', typical: '1-8 hrs (hot-swap)' },
+        { component: 'PDU/Breakers', target: '< 2 hrs', typical: '30 min - 4 hrs' },
+        { component: 'Cooling System', target: '< 1 hr', typical: '15 min - 2 hrs' },
+        { component: 'Network Issues', target: '< 30 min', typical: '5 min - 1 hr' },
+      ],
+    },
+    availability: {
+      name: 'System Availability',
+      definition: 'Percentage of time system is operational',
+      formula: 'Availability = MTBF / (MTBF + MTTR) × 100%',
+      tiers: [
+        { tier: 'Tier I', availability: '99.671%', downtime: '28.8 hrs/year', description: 'Basic site infrastructure' },
+        { tier: 'Tier II', availability: '99.741%', downtime: '22.0 hrs/year', description: 'Redundant capacity' },
+        { tier: 'Tier III', availability: '99.982%', downtime: '1.6 hrs/year', description: 'Concurrently maintainable' },
+        { tier: 'Tier IV', availability: '99.995%', downtime: '0.4 hrs/year', description: 'Fault tolerant' },
+      ],
+    },
+  };
+
+  // Incident Management Lifecycle
+  const incidentLifecycle = [
+    { phase: 'Detection', duration: '< 1 min', description: 'Automated sensor/DCIM alert triggered', tools: ['SNMP traps', 'Modbus polling', 'SCADA alarms'] },
+    { phase: 'Triage', duration: '1-5 min', description: 'NOC operator assesses severity and scope', tools: ['Runbook lookup', 'Impact analysis', 'Escalation matrix'] },
+    { phase: 'Escalation', duration: '5-15 min', description: 'Notify appropriate on-call personnel', tools: ['PagerDuty', 'SMS/call trees', 'Slack alerts'] },
+    { phase: 'Response', duration: '15 min - 2 hrs', description: 'Technician dispatched, troubleshooting begins', tools: ['Remote access', 'Thermal camera', 'Spare parts'] },
+    { phase: 'Resolution', duration: 'Variable', description: 'Root cause addressed, system restored', tools: ['Component swap', 'Config change', 'Vendor support'] },
+    { phase: 'Post-Mortem', duration: '24-48 hrs', description: 'Document findings, update procedures', tools: ['RCA template', 'CMDB update', 'Runbook revision'] },
+  ];
+
+  // Spare Parts Inventory Strategy
+  const sparePartsInventory = {
+    critical: {
+      name: 'Critical Spares (On-Site)',
+      description: 'Must be available 24/7 for immediate replacement',
+      items: [
+        { part: 'Hash boards', quantity: '2-5% of fleet', leadTime: 'Immediate', cost: 'High' },
+        { part: 'Control boards', quantity: '1-2% of fleet', leadTime: 'Immediate', cost: 'Medium' },
+        { part: 'Power supplies', quantity: '5% of fleet', leadTime: 'Immediate', cost: 'Medium' },
+        { part: 'PDU breakers', quantity: '10% of installed', leadTime: 'Immediate', cost: 'Low' },
+        { part: 'Network switches', quantity: '2 per rack row', leadTime: 'Immediate', cost: 'Medium' },
+      ],
+    },
+    consumables: {
+      name: 'Consumables (Weekly Restock)',
+      description: 'High-turnover items consumed during normal operations',
+      items: [
+        { part: 'Air filters (MERV 8)', quantity: '1 month supply', leadTime: '1 week', cost: 'Low' },
+        { part: 'Thermal paste', quantity: '50+ tubes', leadTime: '1 week', cost: 'Low' },
+        { part: 'Cable ties/labels', quantity: 'Bulk stock', leadTime: '1 week', cost: 'Low' },
+        { part: 'Fan assemblies', quantity: '2% of fleet', leadTime: '1 week', cost: 'Low' },
+      ],
+    },
+    strategic: {
+      name: 'Strategic Spares (Warehouse)',
+      description: 'Long-lead items kept in regional warehouse',
+      items: [
+        { part: 'Dry cooler fans', quantity: 'N+1 per site', leadTime: '4-8 weeks', cost: 'High' },
+        { part: 'VFD drives', quantity: '1 per critical pump', leadTime: '4-8 weeks', cost: 'High' },
+        { part: 'Transformer bushings', quantity: 'Per OEM spec', leadTime: '12+ weeks', cost: 'Very High' },
+        { part: 'Switchgear components', quantity: 'Per OEM spec', leadTime: '8-16 weeks', cost: 'Very High' },
+      ],
+    },
+  };
+
+  // SLA Tier Definitions
+  const slaTiers = [
+    {
+      tier: 'Platinum',
+      uptime: '99.99%',
+      responseTime: '< 15 min',
+      resolutionTime: '< 4 hrs',
+      penalty: '10% credit per 0.01% below SLA',
+      features: ['Dedicated NOC team', '24/7 on-site staff', 'Real-time dashboards', 'Quarterly reviews'],
+    },
+    {
+      tier: 'Gold',
+      uptime: '99.9%',
+      responseTime: '< 30 min',
+      resolutionTime: '< 8 hrs',
+      penalty: '5% credit per 0.1% below SLA',
+      features: ['Shared NOC coverage', '24/7 remote monitoring', 'Monthly reports', 'Bi-annual reviews'],
+    },
+    {
+      tier: 'Silver',
+      uptime: '99.5%',
+      responseTime: '< 1 hr',
+      resolutionTime: '< 24 hrs',
+      penalty: '2% credit per 0.5% below SLA',
+      features: ['Business hours support', 'After-hours on-call', 'Quarterly reports', 'Annual reviews'],
+    },
   ];
 
   const currentShift = shifts[activeShift];
@@ -358,12 +468,221 @@ const OperationsMonitoringSection = () => {
         </div>
       </motion.div>
 
+      {/* KPI Framework - MTBF/MTTR */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        className="mt-8"
+      >
+        <DCEDeepDive title="Reliability KPIs: MTBF, MTTR & Availability" icon={Gauge}>
+          <div className="space-y-6">
+            {/* MTBF */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-bold text-foreground mb-2">{kpiFramework.mtbf.name}</h4>
+              <p className="text-sm text-muted-foreground mb-3">{kpiFramework.mtbf.definition}</p>
+              <div className="bg-background rounded-lg p-3 mb-4 font-mono text-sm text-[hsl(var(--watt-bitcoin))]">
+                {kpiFramework.mtbf.formula}
+              </div>
+              <div className="grid md:grid-cols-2 gap-2">
+                {kpiFramework.mtbf.targets.map((t) => (
+                  <div key={t.component} className="flex justify-between items-center px-3 py-2 bg-muted/50 rounded-lg text-xs">
+                    <span className="font-medium text-foreground">{t.component}</span>
+                    <span className="text-muted-foreground">{t.typical}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* MTTR */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-bold text-foreground mb-2">{kpiFramework.mttr.name}</h4>
+              <p className="text-sm text-muted-foreground mb-3">{kpiFramework.mttr.definition}</p>
+              <div className="bg-background rounded-lg p-3 mb-4 font-mono text-sm text-[hsl(var(--watt-bitcoin))]">
+                {kpiFramework.mttr.formula}
+              </div>
+              <div className="grid md:grid-cols-2 gap-2">
+                {kpiFramework.mttr.targets.map((t) => (
+                  <div key={t.component} className="flex justify-between items-center px-3 py-2 bg-muted/50 rounded-lg text-xs">
+                    <span className="font-medium text-foreground">{t.component}</span>
+                    <span className="text-[hsl(var(--watt-bitcoin))]">{t.target}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Availability Tiers */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-bold text-foreground mb-2">{kpiFramework.availability.name}</h4>
+              <p className="text-sm text-muted-foreground mb-3">{kpiFramework.availability.definition}</p>
+              <div className="bg-background rounded-lg p-3 mb-4 font-mono text-sm text-[hsl(var(--watt-bitcoin))]">
+                {kpiFramework.availability.formula}
+              </div>
+              <div className="space-y-2">
+                {kpiFramework.availability.tiers.map((tier) => (
+                  <div key={tier.tier} className="flex items-center justify-between px-3 py-2 bg-muted/50 rounded-lg text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-foreground w-16">{tier.tier}</span>
+                      <span className="text-[hsl(var(--watt-bitcoin))] font-mono">{tier.availability}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <span>{tier.downtime}/yr</span>
+                      <span className="hidden md:inline">• {tier.description}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DCEDeepDive>
+      </motion.div>
+
+      {/* Incident Management Lifecycle */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="mt-8"
+      >
+        <DCEContentCard variant="bordered">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+            Incident Management Lifecycle
+          </h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Structured response process from detection to post-mortem
+          </p>
+          <div className="space-y-3">
+            {incidentLifecycle.map((phase, index) => (
+              <div key={phase.phase} className="flex items-start gap-4 p-3 bg-muted/30 rounded-xl border border-border">
+                <div className="w-8 h-8 rounded-full bg-[hsl(var(--watt-bitcoin))] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-foreground">{phase.phase}</span>
+                    <span className="text-xs px-2 py-0.5 bg-muted rounded text-muted-foreground">{phase.duration}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{phase.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {phase.tools.map((tool) => (
+                      <span key={tool} className="text-[10px] px-2 py-0.5 bg-background rounded border border-border text-foreground">
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DCEContentCard>
+      </motion.div>
+
+      {/* SLA Tiers */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.55 }}
+        className="mt-8"
+      >
+        <DCEContentCard variant="elevated">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+            SLA Tier Definitions
+          </h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            {slaTiers.map((sla) => (
+              <div key={sla.tier} className="bg-muted/30 rounded-xl p-4 border border-border">
+                <div className="text-center mb-4">
+                  <div className={`inline-block px-4 py-1 rounded-full text-sm font-bold mb-2 ${
+                    sla.tier === 'Platinum' ? 'bg-purple-500/20 text-purple-500' :
+                    sla.tier === 'Gold' ? 'bg-yellow-500/20 text-yellow-500' :
+                    'bg-gray-500/20 text-gray-500'
+                  }`}>
+                    {sla.tier}
+                  </div>
+                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">{sla.uptime}</div>
+                  <div className="text-xs text-muted-foreground">Uptime SLA</div>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Response:</span>
+                    <span className="font-medium text-foreground">{sla.responseTime}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Resolution:</span>
+                    <span className="font-medium text-foreground">{sla.resolutionTime}</span>
+                  </div>
+                  <div className="pt-2 border-t border-border">
+                    <span className="text-muted-foreground text-[10px]">{sla.penalty}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DCEContentCard>
+      </motion.div>
+
+      {/* Spare Parts Inventory */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="mt-8"
+      >
+        <DCEDeepDive title="Spare Parts Inventory Strategy" icon={Wrench}>
+          <div className="space-y-4">
+            {Object.values(sparePartsInventory).map((category) => (
+              <div key={category.name} className="bg-muted/30 rounded-xl p-4 border border-border">
+                <h4 className="font-bold text-foreground mb-1">{category.name}</h4>
+                <p className="text-sm text-muted-foreground mb-3">{category.description}</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 px-2 font-medium text-foreground">Part</th>
+                        <th className="text-left py-2 px-2 font-medium text-foreground">Quantity</th>
+                        <th className="text-left py-2 px-2 font-medium text-foreground">Lead Time</th>
+                        <th className="text-left py-2 px-2 font-medium text-foreground">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {category.items.map((item) => (
+                        <tr key={item.part} className="border-b border-border/50">
+                          <td className="py-2 px-2 text-foreground">{item.part}</td>
+                          <td className="py-2 px-2 text-muted-foreground">{item.quantity}</td>
+                          <td className="py-2 px-2 text-muted-foreground">{item.leadTime}</td>
+                          <td className="py-2 px-2">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                              item.cost === 'Very High' ? 'bg-red-500/10 text-red-500' :
+                              item.cost === 'High' ? 'bg-orange-500/10 text-orange-500' :
+                              item.cost === 'Medium' ? 'bg-yellow-500/10 text-yellow-500' :
+                              'bg-green-500/10 text-green-500'
+                            }`}>
+                              {item.cost}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DCEDeepDive>
+      </motion.div>
+
       <SectionSummary
         takeaways={[
           "24/7 NOC with 3 shifts (9 staff/day) monitors power, temps, and hashrate continuously",
-          "4-tier alarm system: Critical (immediate), Major (15-30 min), Minor (next window), Info (ack only)",
-          "DCIM provides real-time visibility into PUE, capacity, assets, and trends",
-          "Preventive maintenance prevents costly unplanned downtime — uptime is revenue"
+          "KPI framework: MTBF targets equipment reliability, MTTR minimizes downtime, Availability = MTBF/(MTBF+MTTR)",
+          "6-phase incident lifecycle: Detection → Triage → Escalation → Response → Resolution → Post-Mortem",
+          "Spare parts strategy: Critical (on-site immediate), Consumables (weekly restock), Strategic (warehouse)"
         ]}
       />
     </DCESectionWrapper>
