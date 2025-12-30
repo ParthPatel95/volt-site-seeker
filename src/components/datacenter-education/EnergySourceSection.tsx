@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, DollarSign, Clock, TrendingUp, ArrowDown, Sparkles, Shield, AlertTriangle } from 'lucide-react';
+import { 
+  Globe, Zap, MapPin, FileText, ArrowRight, CheckCircle, Building2, 
+  DollarSign, Clock, TrendingUp, ArrowDown, Sparkles, Shield, 
+  AlertTriangle, BookOpen, Calculator, Info, ChevronDown
+} from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
@@ -11,8 +15,12 @@ import {
   DCEStatCard,
   DCEKeyInsight,
   DCEDeepDive,
-  DCECallout 
+  DCECallout,
+  DCEDisclaimer,
+  DataQualityBadge,
+  SourceCitation
 } from './shared';
+import { ElectricalPrimer } from './primers';
 
 // Import AI-generated 3D images
 import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
@@ -24,118 +32,238 @@ const EnergySourceSection = () => {
   const [activeTab, setActiveTab] = useState<'grid' | 'ppa' | 'site'>('grid');
   const [activeGridStep, setActiveGridStep] = useState<number | null>(null);
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+  const [showTransmissionPhysics, setShowTransmissionPhysics] = useState(false);
+
+  // Educational content for transmission physics
+  const transmissionPhysicsExplainer = {
+    title: "Why High Voltage? The Physics of Power Transmission",
+    content: `When electricity flows through a conductor, some energy is inevitably lost as heat. This loss 
+    follows a fundamental law of physics: P = I²R, where power loss equals current squared times resistance.
+    
+    The key insight is that losses scale with the SQUARE of current. Double the current, quadruple the losses.
+    
+    Since Power = Voltage × Current (P = V × I), we can transmit the same power using either:
+    • High voltage / Low current (efficient)
+    • Low voltage / High current (inefficient)
+    
+    This is why transmission lines operate at 138kV-500kV: by increasing voltage 100×, we reduce current 
+    100× and losses by 10,000×.`,
+    example: {
+      scenario: "Transmitting 100 MW over 100 km",
+      highVoltage: {
+        voltage: "345 kV",
+        current: "167 A",
+        resistance: "5 Ω (typical for 100km)",
+        loss: "139 kW (0.14%)"
+      },
+      lowVoltage: {
+        voltage: "12.47 kV (distribution)",
+        current: "4,620 A",
+        resistance: "5 Ω",
+        loss: "107 MW (107%!) — impossible"
+      }
+    }
+  };
 
   const gridConnectionSteps = [
     {
       step: 1,
-      title: 'Transmission Network',
+      title: 'High-Voltage Transmission Network',
       voltage: '138kV - 500kV',
-      distance: '10-100+ km',
+      voltageExplanation: 'Extra-high voltage (EHV) for bulk power transfer. 500kV is the highest common voltage in North America.',
+      distance: '50-500+ km from generation',
       image: electricalUtilityFeed,
-      description: 'High-voltage bulk power transmission from generation sources across vast distances. Mining facilities tap into this network at strategic interconnection points.',
+      description: 'Bulk power transmission from generating stations to load centers. These tower lines form the backbone of the electrical grid, carrying power from remote hydro dams, coal plants, and wind farms to population centers.',
       icon: Zap,
       color: 'from-red-500 to-orange-500',
+      physicsNote: 'At 345kV, current is reduced 29× compared to 12kV distribution, reducing I²R losses by 841×',
       details: [
-        'Aluminum conductor steel reinforced (ACSR) cables',
-        'Lattice steel or monopole tower structures',
-        'Corona rings and vibration dampers',
-        'SCADA monitoring and protection',
+        { item: 'Conductor: ACSR (Aluminum Conductor Steel Reinforced)', explanation: 'Aluminum for conductivity, steel core for tensile strength' },
+        { item: 'Tower structures: Lattice steel (100-200 ft tall)', explanation: 'Height provides safety clearance and reduces right-of-way width' },
+        { item: 'Corona rings & grading rings', explanation: 'Prevents corona discharge at high voltage stress points' },
+        { item: 'SCADA monitoring & protection', explanation: 'Real-time monitoring, automatic fault isolation' },
       ],
-      cost: '$1-3M per km for new lines',
-      timeline: '2-5 years for new construction',
+      costRange: {
+        low: '$1M/km',
+        high: '$5M/km',
+        factors: ['Terrain (mountain vs. flat)', 'Urban vs. rural right-of-way', 'Environmental permitting', 'Conductor size (ampacity)']
+      },
+      timeline: {
+        typical: '3-7 years',
+        explanation: 'Environmental assessment, land acquisition, and regulatory approval dominate timeline'
+      },
+      standards: ['IEEE C2 (NESC)', 'NERC Reliability Standards', 'CEC/NEC'],
     },
     {
       step: 2,
       title: 'Transmission Substation',
-      voltage: '138kV → 69kV/25kV',
-      distance: '1-10 km to facility',
+      voltage: '138kV → 69kV or 25kV',
+      voltageExplanation: 'Step-down to sub-transmission or primary distribution voltage. Large mining facilities may connect directly at this level.',
+      distance: '5-50 km to major loads',
       image: gridTransmissionSubstation,
-      description: 'Large outdoor substations with power transformers, circuit breakers, and protective relaying. Mining facilities may connect directly at this level.',
+      description: 'Power transformers convert high transmission voltage to distribution voltage. These outdoor yards contain circuit breakers, disconnect switches, instrument transformers, and protective relaying to monitor and control power flow.',
       icon: Building2,
       color: 'from-orange-500 to-yellow-500',
+      physicsNote: 'Transformer efficiency typically 99.5%+ — losses are primarily iron core (magnetization) and copper winding (I²R)',
       details: [
-        'SF6 or vacuum circuit breakers',
-        'Oil-filled power transformers',
-        'Capacitor banks for power factor',
-        'Revenue metering equipment',
+        { item: 'Power transformers (50-200 MVA)', explanation: 'Oil-immersed for cooling; tap changers adjust voltage ±10%' },
+        { item: 'SF6 or oil circuit breakers', explanation: 'Interrupt fault currents up to 63kA in milliseconds' },
+        { item: 'Capacitor banks', explanation: 'Correct power factor, reduce reactive power charges' },
+        { item: 'Revenue metering (CT/PT)', explanation: 'Accuracy class 0.2 for billing-grade measurement' },
       ],
-      cost: '$5-20M for new substation',
-      timeline: '18-36 months construction',
+      costRange: {
+        low: '$8M',
+        high: '$50M+',
+        factors: ['Voltage class', 'Number of feeders', 'Redundancy (N+1 vs N)', 'Land cost in urban areas']
+      },
+      timeline: {
+        typical: '24-48 months',
+        explanation: 'Engineering, procurement, construction, and commissioning phases'
+      },
+      standards: ['IEEE C57 (Transformers)', 'IEEE C37 (Switchgear)', 'ANSI/NETA'],
     },
     {
       step: 3,
       title: 'Distribution System',
-      voltage: '25kV - 15kV',
-      distance: '0.5-5 km',
+      voltage: '25kV - 12.47kV',
+      voltageExplanation: 'Primary distribution voltage. 25kV common in Canada, 12.47kV common in US.',
+      distance: '1-10 km to end customers',
       image: electricalMvSwitchgear,
-      description: 'Medium voltage feeders deliver power to commercial and industrial customers. Smaller mining operations may connect at distribution level.',
+      description: 'Medium-voltage feeders deliver power to commercial and industrial customers. Smaller mining operations (under 10 MW) may connect at this distribution level, though costs per kW are typically higher than transmission-level connection.',
       icon: MapPin,
       color: 'from-yellow-500 to-green-500',
+      physicsNote: 'Distribution losses average 2-6% due to longer distances at lower voltage and many transformation points',
       details: [
-        'Underground or overhead feeders',
-        'Sectionalizing switches',
-        'Voltage regulators',
-        'Reclosers and fuses',
+        { item: 'Underground or overhead feeders', explanation: 'Underground costs 5-10× more but has fewer outages' },
+        { item: 'Sectionalizing switches', explanation: 'Isolate faulted sections, restore service to healthy segments' },
+        { item: 'Voltage regulators', explanation: 'Maintain voltage within ±5% of nominal (ANSI C84.1)' },
+        { item: 'Reclosers and fuses', explanation: 'Automatic fault clearing; 80% of faults are temporary' },
       ],
-      cost: '$100-500K per km',
-      timeline: '6-18 months',
+      costRange: {
+        low: '$100K/km',
+        high: '$800K/km',
+        factors: ['Overhead vs. underground', 'Conductor sizing', 'Urban vs. rural', 'Trenching conditions']
+      },
+      timeline: {
+        typical: '6-18 months',
+        explanation: 'Shorter engineering cycle, fewer permits than transmission'
+      },
+      standards: ['IEEE 1547 (Interconnection)', 'NEC Article 230', 'Local utility standards'],
     },
     {
       step: 4,
       title: 'Customer Service Entrance',
-      voltage: '600V (CAN) / 480V (US)',
-      distance: 'On-site',
+      voltage: '600V (Canada) / 480V (US)',
+      voltageExplanation: 'Secondary voltage for facility distribution. Canada uses 600V for industrial; US uses 480V (NEMA standards).',
+      distance: 'On customer premises',
       image: gridServiceEntrance,
-      description: 'Customer-owned pad-mounted transformer, main disconnect, and revenue metering. This is where facility ownership begins.',
+      description: 'The point of demarcation between utility and customer ownership. Includes pad-mounted transformer, main disconnect switch, and revenue-grade metering. For mining facilities, this typically ranges from 5-25 MW per service entrance.',
       icon: Globe,
       color: 'from-green-500 to-cyan-500',
+      physicsNote: 'Final transformation from MV to LV. Pad-mount transformers are typically 500-2500 kVA.',
       details: [
-        'Pad-mounted transformer',
-        'Main service disconnect',
-        'CT/PT metering cabinet',
-        'Surge protection devices',
+        { item: 'Pad-mounted transformer', explanation: 'Oil-filled or dry-type; sized for 80% continuous loading' },
+        { item: 'Main service disconnect', explanation: 'Utility-accessible, lockable in OFF position per code' },
+        { item: 'CT/PT metering cabinet', explanation: 'Revenue-grade accuracy for billing; demand metering for industrial' },
+        { item: 'Surge protection devices (SPD)', explanation: 'Type 1 at service entrance per NEC 242' },
       ],
-      cost: '$200-800K for 10MW service',
-      timeline: '3-6 months installation',
+      costRange: {
+        low: '$150K',
+        high: '$1M+',
+        factors: ['Service size (kW)', 'Distance from distribution line', 'Transformer type', 'Metering requirements']
+      },
+      timeline: {
+        typical: '3-6 months',
+        explanation: 'Standard utility process for commercial/industrial customers'
+      },
+      standards: ['NEC 230', 'CSA C22.1 Section 6', 'Utility interconnection tariff'],
     },
   ];
 
   const powerPurchaseTypes = [
     {
-      type: 'Self-Retailer (Wholesale)',
-      description: 'Direct pool access with no retailer markup. Purchase power at real-time market prices. Best for large loads with risk tolerance.',
-      pros: ['Lowest average cost', 'Access to negative prices', 'Full market exposure'],
-      cons: ['Price volatility risk', 'Requires 24/7 monitoring', 'Minimum load requirements'],
-      typicalRate: '$40-80/MWh average',
-      minLoad: '5+ MW typically',
-      savings: '15-30% vs retail',
+      type: 'Self-Retailer (Wholesale Market)',
+      marketExample: 'AESO (Alberta), ERCOT (Texas), PJM (Eastern US)',
+      description: 'Direct participation in the wholesale electricity market. Purchase power at real-time or day-ahead market prices without a retail intermediary. Available only in deregulated markets.',
+      howItWorks: [
+        'Register as a self-retailer with the system operator (e.g., AESO, ERCOT)',
+        'Submit load forecasts and receive hourly/sub-hourly settlement',
+        'Pay pool price + transmission + ancillary charges',
+        'Manage price risk through financial hedges or physical PPAs'
+      ],
+      pros: ['Lowest average cost in stable markets', 'Access to negative price periods (pay to consume!)', 'No retail margin (5-15% savings)', 'Full transparency into pricing'],
+      cons: ['Extreme price volatility (AESO reached $999/MWh in 2022)', 'Requires 24/7 operations monitoring', 'Minimum load requirements (typically 5+ MW)', 'Financial hedging expertise needed'],
+      priceRange: {
+        low: '$25/MWh',
+        high: '$150/MWh',
+        typical: '$40-70/MWh average (varies by market and year)',
+        note: 'Pool prices can spike to $1,000+/MWh during shortages or drop below $0 during oversupply'
+      },
+      minLoad: '5+ MW (varies by market)',
+      suitableFor: 'Large operators with risk management capability and 24/7 operations teams',
     },
     {
-      type: 'Fixed PPA (Power Purchase Agreement)',
-      description: 'Long-term contract with fixed or indexed pricing. Price certainty for project financing. Common for new builds.',
-      pros: ['Price certainty', 'Bankable for financing', 'Hedge against volatility'],
-      cons: ['May miss low prices', 'Contract obligations', 'Termination penalties'],
-      typicalRate: '$50-70/MWh fixed',
-      minLoad: '10+ MW typical',
-      savings: '5-15% vs retail',
+      type: 'Fixed Power Purchase Agreement (PPA)',
+      marketExample: 'Available in all markets',
+      description: 'Long-term bilateral contract with a power generator or retailer for fixed or indexed pricing. Provides price certainty for project financing and shields from market volatility.',
+      howItWorks: [
+        'Negotiate term (5-20 years), volume, and price structure',
+        'Physical PPA: actual electrons delivered to your meter',
+        'Virtual PPA: financial contract for difference, often with renewables',
+        'Sleeved PPA: third party handles scheduling and imbalance'
+      ],
+      pros: ['Price certainty for financial modeling', 'Bankable for project/debt financing', 'Hedge against price spikes', 'Potential green energy claims (with renewables)'],
+      cons: ['May miss low market price periods', 'Long-term contractual obligations', 'Termination penalties can be substantial', 'Creditworthiness requirements'],
+      priceRange: {
+        low: '$45/MWh',
+        high: '$85/MWh',
+        typical: '$55-70/MWh (2024 market)',
+        note: 'Indexed PPAs may track natural gas prices + fixed adder'
+      },
+      minLoad: '10+ MW typical (smaller available at premium)',
+      suitableFor: 'Operators seeking predictable costs for 5+ year horizons, project finance requirements',
     },
     {
-      type: 'Behind-the-Meter (BTM)',
-      description: 'Co-located with generation source. No transmission/distribution charges. Stranded gas, hydro, solar, or curtailed wind.',
-      pros: ['Lowest possible cost', 'No grid fees', 'Excess energy monetized'],
-      cons: ['Site-specific', 'Generation variability', 'Remote locations often'],
-      typicalRate: '$20-50/MWh',
-      minLoad: 'Varies by source',
-      savings: '40-60% vs retail',
+      type: 'Behind-the-Meter (BTM) / Co-Location',
+      marketExample: 'Stranded gas wells (West Texas, Bakken), curtailed wind/solar, stranded hydro',
+      description: 'Co-locate mining facility directly at or near generation source. Power is consumed before reaching the grid, avoiding transmission/distribution charges entirely. Often involves stranded or curtailed energy resources.',
+      howItWorks: [
+        'Identify stranded generation asset (flared gas, curtailed renewables)',
+        'Negotiate direct offtake agreement with generator owner',
+        'Install mining equipment on-site or adjacent',
+        'Power flows directly from generator to load, bypassing grid'
+      ],
+      pros: ['Lowest possible energy cost ($15-40/MWh)', 'No transmission or distribution charges', 'Often remote = lower land costs', 'Potential emissions reduction credit (flare gas)'],
+      cons: ['Site-specific availability and capacity', 'Generation variability (especially renewables)', 'Remote locations = logistics challenges', 'Equipment mobility may be required'],
+      priceRange: {
+        low: '$15/MWh',
+        high: '$50/MWh',
+        typical: '$20-35/MWh',
+        note: 'Stranded gas can be as low as $10-15/MWh; curtailed solar/wind $15-25/MWh'
+      },
+      minLoad: 'Varies widely (500 kW mobile to 50+ MW permanent)',
+      suitableFor: 'Operators with logistical capabilities, tolerance for remote operations, flexible equipment',
     },
     {
-      type: 'Regulated Retail',
-      description: 'Standard utility rate. Simplest to implement. Higher cost but predictable. Suitable for smaller operations.',
-      pros: ['Simple billing', 'Predictable', 'No minimum load'],
-      cons: ['Highest cost', 'No optimization', 'Rate increases'],
-      typicalRate: '$80-120/MWh',
+      type: 'Regulated Retail Rate',
+      marketExample: 'Vertically integrated utilities (most of US, regulated provinces)',
+      description: 'Standard utility service under regulated tariff. Simplest arrangement with predictable monthly bills, but typically highest all-in cost. No market participation or volume commitment required.',
+      howItWorks: [
+        'Apply for commercial/industrial service with local utility',
+        'Rate class determined by demand level and voltage',
+        'Monthly bill = energy charges + demand charges + riders',
+        'Limited optimization opportunity beyond time-of-use rates'
+      ],
+      pros: ['Simple and predictable billing', 'No minimum load commitment', 'No market risk or monitoring required', 'Reliable utility service'],
+      cons: ['Highest all-in cost typically', 'Limited optimization potential', 'Subject to periodic rate increases', 'Demand charges can add significantly to cost'],
+      priceRange: {
+        low: '$60/MWh',
+        high: '$150/MWh',
+        typical: '$80-120/MWh all-in',
+        note: 'Demand charges ($5-20/kW-month) can add $10-30/MWh equivalent'
+      },
       minLoad: 'Any size',
-      savings: 'Baseline',
+      suitableFor: 'Small operators (<5 MW), proof-of-concept deployments, regulated markets with no alternatives',
     },
   ];
 
@@ -143,98 +271,284 @@ const EnergySourceSection = () => {
     {
       category: 'Power Infrastructure',
       weight: 35,
+      rationale: 'Interconnection costs and timeline often determine project viability. Proximity to existing infrastructure is paramount.',
       factors: [
-        { name: 'Substation proximity', detail: '<5 km to HV substation ideal' },
-        { name: 'Available capacity', detail: 'MW headroom on existing circuits' },
-        { name: 'Interconnection cost', detail: '$200-500/kW typical' },
-        { name: 'Grid stability', detail: 'Frequency deviation history' },
+        { 
+          name: 'Substation proximity', 
+          detail: 'Ideally <5 km to HV substation',
+          impact: 'Each km of new line adds $100K-500K cost and 1-2 months timeline'
+        },
+        { 
+          name: 'Available capacity (headroom)', 
+          detail: 'MW available on existing circuits',
+          impact: 'Capacity-constrained areas require network upgrades, adding years to timeline'
+        },
+        { 
+          name: 'Interconnection cost estimate', 
+          detail: '$150-500/kW typical, varies widely',
+          impact: 'For 100 MW: $15M-50M interconnection budget'
+        },
+        { 
+          name: 'Grid reliability history', 
+          detail: 'SAIDI/SAIFI metrics, frequency stability',
+          impact: 'Poor reliability = lost mining time = lost revenue'
+        },
       ],
     },
     {
       category: 'Energy Cost',
       weight: 30,
+      rationale: 'Energy is 70-80% of operating cost. Even $5/MWh difference equals $4.4M/year for 100 MW facility.',
       factors: [
-        { name: 'Wholesale market access', detail: 'Self-retailer eligibility' },
-        { name: 'Average pool price', detail: 'Historical price analysis' },
-        { name: 'Transmission charges', detail: '$10-15/MWh in AESO' },
-        { name: 'Peak demand charges', detail: 'Can add $5-20/MWh' },
+        { 
+          name: 'Wholesale market access', 
+          detail: 'Self-retailer eligibility, market structure',
+          impact: 'Wholesale access typically saves 10-25% vs regulated retail'
+        },
+        { 
+          name: 'Historical average pool price', 
+          detail: 'Multi-year price data and volatility',
+          impact: 'AESO averages $60-80/MWh; ERCOT can average $40-60/MWh'
+        },
+        { 
+          name: 'Transmission charges', 
+          detail: 'Varies by zone and utility',
+          impact: 'Can add $8-25/MWh depending on congestion and distance from generation'
+        },
+        { 
+          name: 'Demand charges', 
+          detail: 'Peak demand pricing structure',
+          impact: 'Flat 24/7 load like mining helps minimize demand charge impact'
+        },
       ],
     },
     {
       category: 'Climate & Cooling',
       weight: 20,
+      rationale: 'Cooling is the second largest operating cost. Cold climates enable free-air cooling 70-90% of the year.',
       factors: [
-        { name: 'Average temperature', detail: '<15°C avg = free cooling' },
-        { name: 'Humidity levels', detail: '<60% RH optimal for evap' },
-        { name: 'Heating degree days', detail: 'Cold climate advantage' },
-        { name: 'Extreme weather risk', detail: 'Storms, floods, etc.' },
+        { 
+          name: 'Annual average temperature', 
+          detail: '<10°C avg enables high free-cooling hours',
+          impact: 'Cold climate can reduce PUE from 1.4 to 1.1, saving 20%+ on cooling'
+        },
+        { 
+          name: 'Humidity levels', 
+          detail: '<60% RH optimal for evaporative cooling',
+          impact: 'High humidity limits evaporative cooling effectiveness'
+        },
+        { 
+          name: 'Free cooling hours', 
+          detail: 'Hours below 15°C (ASHRAE economizer threshold)',
+          impact: 'Northern Alberta: 7,500+ hours; Houston: 1,500 hours'
+        },
+        { 
+          name: 'Extreme weather risk', 
+          detail: 'Tornado, flood, wildfire, ice storm exposure',
+          impact: 'Insurance cost and potential operational disruption'
+        },
       ],
     },
     {
       category: 'Land & Logistics',
       weight: 15,
+      rationale: 'Physical site requirements for construction, operations, and equipment delivery.',
       factors: [
-        { name: 'Land cost', detail: '$5-50K/acre varies widely' },
-        { name: 'Zoning/permits', detail: 'Industrial or agricultural' },
-        { name: 'Road access', detail: 'Heavy equipment delivery' },
-        { name: 'Internet connectivity', detail: 'Fiber or fixed wireless' },
+        { 
+          name: 'Land cost and availability', 
+          detail: '$5-50K/acre depending on location',
+          impact: 'Industrial-zoned land with power access commands premium'
+        },
+        { 
+          name: 'Zoning and permitting', 
+          detail: 'Industrial, agricultural, or special use',
+          impact: 'Some jurisdictions require conditional use permits, adding 6-12 months'
+        },
+        { 
+          name: 'Road access', 
+          detail: 'County/highway access for heavy equipment',
+          impact: 'Transformers can weigh 50+ tons; road upgrades may be required'
+        },
+        { 
+          name: 'Internet connectivity', 
+          detail: 'Fiber or fixed wireless with redundancy',
+          impact: 'Mining requires low-latency, high-availability internet'
+        },
       ],
     },
   ];
 
   const interconnectionTimeline = [
-    { phase: 'Application', duration: '1-2 months', description: 'Submit interconnection request, initial studies' },
-    { phase: 'System Impact Study', duration: '2-4 months', description: 'Grid operator analyzes network effects' },
-    { phase: 'Facilities Study', duration: '2-3 months', description: 'Detailed engineering and cost estimate' },
-    { phase: 'Agreement & Permits', duration: '1-2 months', description: 'Sign agreements, obtain permits' },
-    { phase: 'Construction', duration: '6-18 months', description: 'Build substation, run feeders' },
-    { phase: 'Testing & Commissioning', duration: '1-2 months', description: 'Protection testing, energization' },
+    { 
+      phase: 'Pre-Application', 
+      duration: '1-3 months', 
+      description: 'Site selection, load study, initial utility discussions',
+      activities: ['Load characterization', 'Preliminary engineering', 'Utility pre-consultation'],
+      risk: 'Low — mostly internal planning'
+    },
+    { 
+      phase: 'Application & Screening', 
+      duration: '1-2 months', 
+      description: 'Submit formal interconnection request, initial feasibility screening',
+      activities: ['Application fee ($1K-50K)', 'Load data submission', 'Queue position assignment'],
+      risk: 'Low — procedural'
+    },
+    { 
+      phase: 'System Impact Study', 
+      duration: '3-6 months', 
+      description: 'Utility models network effects of proposed load',
+      activities: ['Power flow analysis', 'Short circuit study', 'Thermal loading assessment'],
+      risk: 'Medium — may identify required network upgrades'
+    },
+    { 
+      phase: 'Facilities Study', 
+      duration: '2-4 months', 
+      description: 'Detailed engineering and binding cost estimate',
+      activities: ['Detailed design', 'Material procurement specs', 'Cost allocation'],
+      risk: 'Medium — final cost numbers; may differ significantly from estimates'
+    },
+    { 
+      phase: 'Agreements & Permits', 
+      duration: '2-4 months', 
+      description: 'Execute interconnection agreement, obtain permits',
+      activities: ['Legal review', 'Construction permits', 'Environmental clearances'],
+      risk: 'Variable — jurisdiction-dependent'
+    },
+    { 
+      phase: 'Construction', 
+      duration: '6-18 months', 
+      description: 'Build customer substation, utility upgrades if required',
+      activities: ['Substation construction', 'Feeder installation', 'Protection coordination'],
+      risk: 'High — supply chain, weather, labor availability'
+    },
+    { 
+      phase: 'Testing & Commissioning', 
+      duration: '1-2 months', 
+      description: 'Protection testing, utility witness testing, energization',
+      activities: ['Relay testing', 'Insulation testing', 'Utility inspection', 'Meter sealing'],
+      risk: 'Low if construction completed properly'
+    },
   ];
 
   const tabs = [
-    { id: 'grid', label: 'Grid Connection', icon: Zap },
-    { id: 'ppa', label: 'Power Purchasing', icon: DollarSign },
-    { id: 'site', label: 'Site Selection', icon: MapPin },
+    { id: 'grid', label: 'Grid Connection', icon: Zap, description: 'Power journey to facility' },
+    { id: 'ppa', label: 'Power Purchasing', icon: DollarSign, description: 'Wholesale vs retail' },
+    { id: 'site', label: 'Site Selection', icon: MapPin, description: 'Criteria and trade-offs' },
   ];
 
   return (
     <DCESectionWrapper theme="accent" id="energy-source">
       <LearningObjectives
         objectives={[
-          "Understand the power journey from transmission lines to your facility",
-          "Compare power purchasing methods: wholesale, PPA, BTM, and retail",
-          "Evaluate site selection criteria for optimal mining operations",
-          "Navigate the utility interconnection process and timeline"
+          "Understand WHY transmission uses high voltage (P = I²R losses)",
+          "Trace power from generation to facility across 4 voltage transformation stages",
+          "Compare 4 power purchasing strategies: self-retailer, PPA, BTM, and regulated retail",
+          "Evaluate site selection criteria using a weighted scoring framework",
+          "Estimate interconnection timelines and identify critical path activities"
         ]}
-        estimatedTime="8 min"
+        estimatedTime="12 min"
       />
       
       <DCESectionHeader
         badge="Section 1 • Grid Connection"
         badgeIcon={Zap}
         title="Energy Source to Facility"
-        description="How Bitcoin mining facilities connect to the electrical grid and purchase power at wholesale rates"
+        description="How Bitcoin mining facilities connect to the electrical grid and secure competitive power rates"
       />
+
+      {/* Physics Primer Callout */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mb-10"
+      >
+        <button
+          onClick={() => setShowTransmissionPhysics(!showTransmissionPhysics)}
+          className="w-full flex items-center justify-between p-5 bg-card border border-border rounded-2xl hover:border-[hsl(var(--watt-bitcoin)/0.5)] transition-all"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--watt-bitcoin))] to-orange-600 flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-foreground">First Principles: Why High Voltage?</h3>
+              <p className="text-sm text-muted-foreground">Understanding P = I²R — the physics of efficient power transmission</p>
+            </div>
+          </div>
+          <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${showTransmissionPhysics ? 'rotate-180' : ''}`} />
+        </button>
+        
+        <AnimatePresence>
+          {showTransmissionPhysics && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="p-6 bg-card border-x border-b border-border rounded-b-2xl">
+                <ElectricalPrimer />
+                
+                {/* Additional worked example */}
+                <div className="mt-6 p-4 bg-muted/50 rounded-xl">
+                  <h4 className="font-bold text-foreground mb-3 flex items-center gap-2">
+                    <Calculator className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+                    Worked Example: 100 MW Transmission
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                      <div className="text-sm font-semibold text-emerald-700 mb-2">At 345 kV (Transmission)</div>
+                      <div className="space-y-1 text-sm">
+                        <p>Current = 100 MW ÷ (345 kV × √3) = <strong>167 A</strong></p>
+                        <p>Loss over 100 km (5Ω) = 167² × 5 = <strong>139 kW</strong></p>
+                        <p className="text-emerald-600 font-semibold">Loss rate: 0.14%</p>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                      <div className="text-sm font-semibold text-red-700 mb-2">At 12.47 kV (Distribution)</div>
+                      <div className="space-y-1 text-sm">
+                        <p>Current = 100 MW ÷ (12.47 kV × √3) = <strong>4,620 A</strong></p>
+                        <p>Loss over 100 km (5Ω) = 4620² × 5 = <strong>107 MW</strong></p>
+                        <p className="text-red-600 font-semibold">Loss rate: 107% — more than 100% of power!</p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    This example illustrates why bulk power is always transmitted at high voltage. The squared relationship 
+                    between current and losses (P = I²R) makes low-voltage transmission of large power quantities physically impractical.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Tab Navigation */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="flex flex-wrap justify-center gap-2 mb-10"
+        className="flex flex-wrap justify-center gap-3 mb-10"
       >
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
+            className={`flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all ${
               activeTab === tab.id
                 ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
                 : 'bg-card border border-border text-muted-foreground hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
             }`}
           >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
+            <tab.icon className="w-5 h-5" />
+            <div className="text-left">
+              <div className="text-sm font-semibold">{tab.label}</div>
+              <div className={`text-xs ${activeTab === tab.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                {tab.description}
+              </div>
+            </div>
           </button>
         ))}
       </motion.div>
@@ -249,7 +563,14 @@ const EnergySourceSection = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Immersive Hero Cards */}
+            {/* Variability Disclaimer */}
+            <DCEDisclaimer severity="caution">
+              <strong>Cost and Timeline Variability:</strong> Infrastructure costs and timelines vary significantly based on location, existing grid conditions, 
+              utility policies, and market conditions. Ranges provided reflect industry experience across 
+              North American markets as of 2024. Actual project costs may fall outside these ranges.
+            </DCEDisclaimer>
+
+            {/* Grid Connection Steps */}
             <div className="mb-12 space-y-6">
               {gridConnectionSteps.map((step, index) => (
                 <motion.div
@@ -284,24 +605,15 @@ const EnergySourceSection = () => {
                       
                       {/* Animated Power Flow Particles */}
                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <motion.div 
-                          className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
-                          style={{ top: '30%' }}
-                          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
-                          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                        />
-                        <motion.div 
-                          className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
-                          style={{ top: '50%' }}
-                          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
-                          transition={{ duration: 4, repeat: Infinity, ease: 'linear', delay: 1 }}
-                        />
-                        <motion.div 
-                          className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
-                          style={{ top: '70%' }}
-                          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
-                          transition={{ duration: 4, repeat: Infinity, ease: 'linear', delay: 2 }}
-                        />
+                        {[30, 50, 70].map((top, i) => (
+                          <motion.div 
+                            key={i}
+                            className="absolute w-2 h-2 rounded-full bg-[hsl(var(--watt-bitcoin))]"
+                            style={{ top: `${top}%` }}
+                            animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: 'linear', delay: i }}
+                          />
+                        ))}
                       </div>
 
                       {/* Content Overlay */}
@@ -324,22 +636,29 @@ const EnergySourceSection = () => {
                             </span>
                           </div>
                           
+                          {/* Voltage Explanation */}
+                          <p className="text-white/70 text-xs mb-2 italic">
+                            {step.voltageExplanation}
+                          </p>
+                          
                           {/* Description */}
                           <p className="text-white/80 text-sm md:text-base mb-4 max-w-lg">
                             {step.description}
                           </p>
 
-                          {/* Quick Stats */}
+                          {/* Quick Stats with Range Indicators */}
                           <div className="flex flex-wrap gap-4">
                             <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg relative">
-                              <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded">Est.</span>
-                              <div className="text-xs text-white/60">Cost</div>
-                              <div className="text-sm font-semibold text-white">{step.cost}</div>
+                              <DataQualityBadge quality="estimate" />
+                              <div className="text-xs text-white/60 mt-2">Cost Range</div>
+                              <div className="text-sm font-semibold text-white">
+                                {step.costRange.low} - {step.costRange.high}
+                              </div>
                             </div>
                             <div className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg relative">
-                              <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded">Est.</span>
-                              <div className="text-xs text-white/60">Timeline</div>
-                              <div className="text-sm font-semibold text-white">{step.timeline}</div>
+                              <DataQualityBadge quality="estimate" />
+                              <div className="text-xs text-white/60 mt-2">Timeline</div>
+                              <div className="text-sm font-semibold text-white">{step.timeline.typical}</div>
                             </div>
                           </div>
                         </div>
@@ -357,7 +676,7 @@ const EnergySourceSection = () => {
                         <div className={`px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs text-white/80 transition-all ${
                           hoveredStep === index ? 'opacity-100' : 'opacity-0'
                         }`}>
-                          Click for details
+                          Click for technical details
                         </div>
                       </div>
                     </div>
@@ -370,19 +689,58 @@ const EnergySourceSection = () => {
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="p-6 bg-card border-t border-border"
+                          className="bg-card border-t border-border"
                         >
-                          <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
-                            Key Equipment & Infrastructure
-                          </h4>
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {step.details.map((detail, i) => (
-                              <div key={i} className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                                <span className="text-muted-foreground">{detail}</span>
+                          <div className="p-6">
+                            {/* Physics Note */}
+                            <div className="mb-6 p-4 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                              <h4 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                                <Calculator className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+                                Engineering Context
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{step.physicsNote}</p>
+                            </div>
+
+                            {/* Equipment Details */}
+                            <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                              <Shield className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+                              Key Equipment & Infrastructure
+                            </h4>
+                            <div className="grid md:grid-cols-2 gap-4 mb-6">
+                              {step.details.map((detail, i) => (
+                                <div key={i} className="p-3 bg-muted/50 rounded-lg">
+                                  <div className="flex items-start gap-2">
+                                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <div className="text-sm font-medium text-foreground">{detail.item}</div>
+                                      <div className="text-xs text-muted-foreground">{detail.explanation}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Cost Factors */}
+                            <div className="mb-6">
+                              <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                                <DollarSign className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+                                Cost Factors ({step.costRange.low} - {step.costRange.high})
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {step.costRange.factors.map((factor, i) => (
+                                  <span key={i} className="px-3 py-1 bg-muted rounded-full text-xs text-muted-foreground">
+                                    {factor}
+                                  </span>
+                                ))}
                               </div>
-                            ))}
+                            </div>
+
+                            {/* Standards Reference */}
+                            <div className="p-3 bg-muted/30 rounded-lg">
+                              <div className="text-xs text-muted-foreground">
+                                <strong>Applicable Standards:</strong> {step.standards.join(' • ')}
+                              </div>
+                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -408,65 +766,83 @@ const EnergySourceSection = () => {
             {/* Key Insight */}
             <DCEKeyInsight variant="insight" className="mb-8">
               Large mining operations (10+ MW) typically connect at transmission or sub-transmission voltage levels 
-              (25kV-138kV) to access wholesale power rates and avoid distribution charges that can add $15-25/MWh to costs.
+              (25kV-138kV) to access wholesale power rates. Distribution-level connection adds $15-25/MWh in 
+              charges that transmission customers avoid.
             </DCEKeyInsight>
 
-            {/* Total Journey Summary */}
+            {/* Summary Statistics */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="p-6 bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] rounded-2xl text-white mb-8"
             >
-              <h3 className="text-lg font-semibold mb-4 text-center">Complete Grid Journey</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Typical Large Facility Grid Connection</h3>
+                <DataQualityBadge quality="estimate" />
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">
-                    <AnimatedCounter end={500} suffix=" km+" />
-                  </div>
-                  <div className="text-xs text-white/70">Max Transmission Distance</div>
+                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">138-500 kV</div>
+                  <div className="text-xs text-white/70">Transmission Voltage</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-white">138kV → 600V</div>
-                  <div className="text-xs text-white/70">Voltage Step-Down</div>
+                  <div className="text-2xl font-bold text-white">600-480 V</div>
+                  <div className="text-xs text-white/70">Service Voltage</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-white">
-                    <AnimatedCounter end={12} suffix="-30 mo" />
-                  </div>
+                  <div className="text-2xl font-bold text-white">12-36 mo</div>
                   <div className="text-xs text-white/70">Interconnection Timeline</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-white">
-                    $<AnimatedCounter end={10} suffix="-30M" />
-                  </div>
-                  <div className="text-xs text-white/70">Typical Project Cost</div>
+                  <div className="text-2xl font-bold text-white">$10-50M</div>
+                  <div className="text-xs text-white/70">Infrastructure Cost (50+ MW)</div>
                 </div>
               </div>
             </motion.div>
 
             {/* Interconnection Timeline Deep Dive */}
-            <DCEDeepDive title="Interconnection Timeline Details" icon={Clock}>
+            <DCEDeepDive title="Interconnection Timeline: Critical Path Analysis" icon={Clock}>
               <p className="text-sm text-muted-foreground mb-6">
-                Typical timeline from application to energization: 12-30 months for large facilities
+                Interconnection is typically the longest lead-time activity for new mining facilities. 
+                Understanding the process helps identify opportunities to accelerate and risks to mitigate.
               </p>
               
-              <div className="relative">
-                {/* Timeline bar */}
-                <div className="hidden md:block absolute top-6 left-0 right-0 h-1 bg-muted rounded-full" />
-                
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                  {interconnectionTimeline.map((phase, i) => (
-                    <div key={phase.phase} className="relative text-center">
-                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] border-2 border-[hsl(var(--watt-bitcoin))] flex items-center justify-center font-bold text-[hsl(var(--watt-bitcoin))]">
-                        {i + 1}
-                      </div>
-                      <div className="font-semibold text-foreground text-xs mb-1">{phase.phase}</div>
-                      <div className="text-xs text-[hsl(var(--watt-bitcoin))] font-medium mb-1">{phase.duration}</div>
-                      <p className="text-[10px] text-muted-foreground">{phase.description}</p>
+              <div className="space-y-4">
+                {interconnectionTimeline.map((phase, i) => (
+                  <div key={phase.phase} className="flex gap-4 items-start">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] border-2 border-[hsl(var(--watt-bitcoin))] flex items-center justify-center font-bold text-[hsl(var(--watt-bitcoin))] text-sm">
+                      {i + 1}
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1 pb-4 border-b border-border last:border-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-foreground">{phase.phase}</h4>
+                        <span className="text-sm font-medium text-[hsl(var(--watt-bitcoin))]">{phase.duration}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{phase.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {phase.activities.map((activity, j) => (
+                          <span key={j} className="px-2 py-0.5 bg-muted rounded text-xs text-foreground">{activity}</span>
+                        ))}
+                      </div>
+                      <div className={`text-xs px-2 py-1 rounded inline-block ${
+                        phase.risk.includes('Low') ? 'bg-emerald-100 text-emerald-700' :
+                        phase.risk.includes('Medium') ? 'bg-amber-100 text-amber-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        Risk: {phase.risk}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-semibold text-foreground mb-2">Total Timeline: 16-39 months</h4>
+                <p className="text-sm text-muted-foreground">
+                  The most variable phases are System Impact Study and Construction. Network upgrade requirements 
+                  discovered during studies can add 12-24 months and $5-20M to project scope.
+                </p>
               </div>
             </DCEDeepDive>
           </motion.div>
@@ -481,12 +857,19 @@ const EnergySourceSection = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
+            <DCEDisclaimer severity="informational">
+              <strong>Market-Specific Information:</strong> Power purchasing structures and availability vary significantly by jurisdiction. 
+              Self-retailer options require deregulated markets (Alberta, Texas, parts of Midwest). 
+              Price ranges reflect 2023-2024 market conditions and will vary with natural gas prices and market dynamics.
+            </DCEDisclaimer>
+
             <DCEKeyInsight variant="info" className="mb-8">
-              Power costs represent 70-80% of Bitcoin mining operational expenses. Choosing the right purchasing 
-              strategy can mean the difference between profitability and losses during bear markets.
+              Energy costs represent 70-80% of Bitcoin mining operational expenses. A $10/MWh 
+              improvement on a 100 MW facility equals $8.8M annual savings — often the difference 
+              between profit and loss during bear markets.
             </DCEKeyInsight>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-6">
               {powerPurchaseTypes.map((ppa, index) => (
                 <motion.div
                   key={ppa.type}
@@ -494,46 +877,83 @@ const EnergySourceSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="bg-card rounded-2xl border border-border p-5 hover:border-[hsl(var(--watt-bitcoin)/0.5)] hover:shadow-lg hover:shadow-[hsl(var(--watt-bitcoin)/0.1)] transition-all duration-300"
+                  className="bg-card rounded-2xl border border-border overflow-hidden hover:border-[hsl(var(--watt-bitcoin)/0.5)] hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-bold text-foreground">{ppa.type}</h3>
-                    <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] rounded text-xs font-medium">
-                      {ppa.typicalRate}
-                    </span>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-4">{ppa.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <h4 className="text-xs font-medium text-emerald-600 mb-2 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Advantages
-                      </h4>
-                      <ul className="space-y-1">
-                        {ppa.pros.map((pro, i) => (
-                          <li key={i} className="text-xs text-muted-foreground">• {pro}</li>
-                        ))}
-                      </ul>
+                  {/* Header */}
+                  <div className="p-5 border-b border-border bg-muted/30">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold text-foreground text-lg">{ppa.type}</h3>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-medium text-amber-600 mb-2 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Considerations
-                      </h4>
-                      <ul className="space-y-1">
-                        {ppa.cons.map((con, i) => (
-                          <li key={i} className="text-xs text-muted-foreground">• {con}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    <p className="text-xs text-muted-foreground italic">{ppa.marketExample}</p>
                   </div>
-                  
-                  <div className="flex items-center justify-between pt-3 border-t border-border text-xs">
-                    <span className="text-muted-foreground">Min Load: <span className="text-foreground font-medium">{ppa.minLoad}</span></span>
-                    <span className={`font-medium ${ppa.savings === 'Baseline' ? 'text-muted-foreground' : 'text-emerald-600'}`}>
-                      {ppa.savings !== 'Baseline' && <TrendingUp className="w-3 h-3 inline mr-1" />}
-                      {ppa.savings}
-                    </span>
+
+                  {/* Content */}
+                  <div className="p-5">
+                    <p className="text-sm text-muted-foreground mb-4">{ppa.description}</p>
+                    
+                    {/* How It Works */}
+                    <div className="mb-4">
+                      <h4 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">How It Works</h4>
+                      <ol className="space-y-1">
+                        {ppa.howItWorks.map((step, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                            <span className="text-[hsl(var(--watt-bitcoin))] font-bold">{i + 1}.</span>
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    {/* Price Range */}
+                    <div className="mb-4 p-3 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-muted-foreground">Price Range</span>
+                        <DataQualityBadge quality="estimate" />
+                      </div>
+                      <div className="text-lg font-bold text-[hsl(var(--watt-bitcoin))]">
+                        {ppa.priceRange.low} - {ppa.priceRange.high}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Typical: {ppa.priceRange.typical}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-2 italic">{ppa.priceRange.note}</p>
+                    </div>
+                    
+                    {/* Pros/Cons Grid */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <h4 className="text-xs font-medium text-emerald-600 mb-2 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" /> Advantages
+                        </h4>
+                        <ul className="space-y-1">
+                          {ppa.pros.map((pro, i) => (
+                            <li key={i} className="text-xs text-muted-foreground">• {pro}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-medium text-amber-600 mb-2 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" /> Considerations
+                        </h4>
+                        <ul className="space-y-1">
+                          {ppa.cons.map((con, i) => (
+                            <li key={i} className="text-xs text-muted-foreground">• {con}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    
+                    {/* Footer */}
+                    <div className="pt-3 border-t border-border">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          Min Load: <span className="text-foreground font-medium">{ppa.minLoad}</span>
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-2 italic">
+                        Best for: {ppa.suitableFor}
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -541,7 +961,8 @@ const EnergySourceSection = () => {
 
             <DCEKeyInsight variant="pro-tip" className="mt-8">
               Behind-the-meter (BTM) arrangements with stranded gas or curtailed renewables offer the lowest 
-              power costs ($20-50/MWh) but require co-location with the generation source, often in remote areas.
+              power costs ($15-40/MWh) but require co-location with the generation source, specialized 
+              equipment for mobility, and tolerance for operational complexity in remote locations.
             </DCEKeyInsight>
           </motion.div>
         )}
@@ -555,7 +976,13 @@ const EnergySourceSection = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <DCEDisclaimer severity="informational">
+              <strong>Weighting Framework:</strong> The weights shown (35%, 30%, 20%, 15%) represent a typical prioritization for large-scale 
+              Bitcoin mining. Actual weights should be adjusted based on operator priorities, capital 
+              constraints, and risk tolerance.
+            </DCEDisclaimer>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               {siteSelectionCriteria.map((category, index) => (
                 <motion.div
                   key={category.category}
@@ -565,9 +992,9 @@ const EnergySourceSection = () => {
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="bg-card rounded-2xl border border-border p-5 hover:border-[hsl(var(--watt-bitcoin)/0.3)] transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-foreground text-sm">{category.category}</h3>
-                    <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin))] text-white rounded-full text-xs font-bold">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-foreground">{category.category}</h3>
+                    <span className="px-3 py-1 bg-[hsl(var(--watt-bitcoin))] text-white rounded-full text-sm font-bold">
                       {category.weight}%
                     </span>
                   </div>
@@ -582,12 +1009,15 @@ const EnergySourceSection = () => {
                       transition={{ duration: 0.8, delay: index * 0.1 }}
                     />
                   </div>
+
+                  <p className="text-xs text-muted-foreground italic mb-4">{category.rationale}</p>
                   
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {category.factors.map((factor, i) => (
-                      <li key={i} className="text-sm">
+                      <li key={i} className="text-sm border-l-2 border-[hsl(var(--watt-bitcoin)/0.3)] pl-3">
                         <div className="font-medium text-foreground">{factor.name}</div>
-                        <div className="text-xs text-muted-foreground">{factor.detail}</div>
+                        <div className="text-xs text-muted-foreground mb-1">{factor.detail}</div>
+                        <div className="text-xs text-[hsl(var(--watt-bitcoin))]">Impact: {factor.impact}</div>
                       </li>
                     ))}
                   </ul>
@@ -596,60 +1026,73 @@ const EnergySourceSection = () => {
             </div>
 
             <DCEKeyInsight variant="success" className="mb-8">
-              The ideal site combines low energy costs (under $40/MWh), cold climate for free cooling (8,000+ hours/year), 
-              and proximity to existing grid infrastructure (under 5km to substation) to minimize interconnection costs.
+              The ideal site combines low energy costs (under $45/MWh all-in), cold climate for free cooling 
+              (7,000+ hours/year below 15°C), and proximity to existing HV infrastructure (under 5km to 
+              substation) to minimize interconnection costs and timeline.
             </DCEKeyInsight>
             
-            {/* Key Metrics Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="p-5 bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] rounded-2xl text-white"
-            >
-              <h3 className="text-lg font-semibold mb-4">WattByte Site Selection Metrics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">
-                    <AnimatedCounter end={50} suffix="+" />
+            {/* Trade-off Matrix */}
+            <DCEDeepDive title="Common Site Trade-offs" icon={MapPin}>
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-2">Remote BTM vs. Grid-Connected</h4>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium text-emerald-600 mb-1">Remote BTM Advantage</div>
+                      <p className="text-muted-foreground">40-60% lower energy cost, no grid dependency</p>
+                    </div>
+                    <div>
+                      <div className="font-medium text-amber-600 mb-1">Remote BTM Challenge</div>
+                      <p className="text-muted-foreground">Higher logistics cost, limited growth capacity, staff challenges</p>
+                    </div>
                   </div>
-                  <div className="text-xs text-white/70">Sites Evaluated</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">
-                    $<AnimatedCounter end={40} suffix="/MWh" />
+
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-2">Cold Climate vs. Low Energy Cost</h4>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium text-emerald-600 mb-1">Cold Climate Advantage</div>
+                      <p className="text-muted-foreground">PUE 1.05-1.15 achievable, lower cooling CapEx</p>
+                    </div>
+                    <div>
+                      <div className="font-medium text-amber-600 mb-1">Cold Climate Challenge</div>
+                      <p className="text-muted-foreground">May have higher energy prices, seasonal construction limits</p>
+                    </div>
                   </div>
-                  <div className="text-xs text-white/70">Target All-In Cost</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">
-                    <AnimatedCounter end={5} suffix=" km" />
+
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-2">Speed vs. Scale</h4>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium text-emerald-600 mb-1">Fast Deployment</div>
+                      <p className="text-muted-foreground">Containers at existing substation: 8-16 weeks</p>
+                    </div>
+                    <div>
+                      <div className="font-medium text-amber-600 mb-1">Large Scale</div>
+                      <p className="text-muted-foreground">New 100+ MW greenfield: 24-48 months</p>
+                    </div>
                   </div>
-                  <div className="text-xs text-white/70">Max Substation Distance</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">
-                    <AnimatedCounter end={99.5} decimals={1} suffix="%" />
-                  </div>
-                  <div className="text-xs text-white/70">Target Uptime</div>
                 </div>
               </div>
-            </motion.div>
+            </DCEDeepDive>
           </motion.div>
         )}
       </AnimatePresence>
 
       <SectionSummary
         takeaways={[
-          "Large mining ops connect at transmission/distribution level (25-138kV) for lowest rates",
-          "Behind-the-meter (BTM) offers 40-60% savings but requires co-location with generation",
-          "Interconnection takes 12-30 months — start the process early",
-          "Site selection weighs power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
+          "High voltage transmission (138-500kV) reduces I²R losses exponentially — essential physics for bulk power",
+          "Large mining facilities connect at transmission/sub-transmission level to access wholesale rates",
+          "Power purchasing options range from $15/MWh (BTM) to $120/MWh (regulated retail) — a 8× cost difference",
+          "Interconnection typically takes 16-36 months — early engagement with utility is critical path",
+          "Site selection balances power infrastructure (35%), energy cost (30%), climate (20%), and logistics (15%)"
         ]}
         nextSteps={[
-          { title: "Electrical Infrastructure", href: "#electrical", description: "Learn about transformers, switchgear, and PDUs" }
+          { title: "Electrical Infrastructure", href: "#electrical", description: "Explore transformer physics, switchgear, and PDU systems" }
         ]}
-        proTip="Self-retailer status in AESO can save 15-30% vs regulated retail rates, but requires 24/7 market monitoring."
+        proTip="Self-retailer status in deregulated markets (AESO, ERCOT) can save 15-25% vs regulated retail rates, but requires sophisticated price risk management and 24/7 market monitoring capability."
       />
     </DCESectionWrapper>
   );
