@@ -96,7 +96,7 @@ const SectionNavigation = () => {
     <>
       {/* Progress bar at top */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
-        <div className="h-full bg-watt-bitcoin transition-all duration-150" style={{ width: `${scrollProgress}%` }} />
+        <div className="h-full bg-[hsl(var(--watt-bitcoin))] transition-all duration-150" style={{ width: `${scrollProgress}%` }} />
       </div>
 
       {/* Desktop sidebar navigation */}
@@ -105,12 +105,12 @@ const SectionNavigation = () => {
           {/* Progress indicator */}
           <div className="px-2 py-2 mb-2 border-b border-border">
             <div className="flex items-center gap-2 mb-1">
-              <BookOpen className="w-3.5 h-3.5 text-watt-bitcoin" />
+              <BookOpen className="w-3.5 h-3.5 text-[hsl(var(--watt-bitcoin))]" />
               <span className="text-[10px] font-medium text-foreground">{progressPercentage}% Complete</span>
             </div>
             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
-                className="h-full bg-watt-bitcoin transition-all duration-300 rounded-full"
+                className="h-full bg-[hsl(var(--watt-bitcoin))] transition-all duration-300 rounded-full"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
@@ -131,7 +131,7 @@ const SectionNavigation = () => {
                   onClick={() => scrollToSection(section.id)}
                   className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left ${
                     isActive
-                      ? 'bg-watt-bitcoin text-white'
+                      ? 'bg-[hsl(var(--watt-bitcoin))] text-white'
                       : isCompleted
                         ? 'text-green-600 hover:bg-muted'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -186,7 +186,7 @@ const SectionNavigation = () => {
               <span className="text-[10px] font-medium text-foreground">{progressPercentage}%</span>
               <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-watt-bitcoin transition-all duration-300 rounded-full"
+                  className="h-full bg-[hsl(var(--watt-bitcoin))] transition-all duration-300 rounded-full"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
@@ -205,7 +205,7 @@ const SectionNavigation = () => {
                   onClick={() => scrollToSection(section.id)}
                   className={`flex flex-col items-center p-1.5 min-w-[48px] min-h-[48px] rounded-xl transition-all touch-manipulation ${
                     isActive 
-                      ? 'text-white bg-watt-bitcoin' 
+                      ? 'text-white bg-[hsl(var(--watt-bitcoin))]' 
                       : isCompleted 
                         ? 'text-green-600 bg-green-500/10' 
                         : 'text-muted-foreground'
