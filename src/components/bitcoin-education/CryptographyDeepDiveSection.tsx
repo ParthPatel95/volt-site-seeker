@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { BitcoinSectionWrapper, BitcoinSectionHeader, BitcoinKeyInsight } from './shared';
 
 const CryptographyDeepDiveSection = () => {
   const [inputText, setInputText] = useState('Hello, Bitcoin!');
@@ -22,7 +23,6 @@ const CryptographyDeepDiveSection = () => {
     "Recognize why cryptographic security is computationally unbreakable"
   ];
 
-  // Simulated SHA-256 visualization steps
   const sha256Steps = [
     { step: 1, name: "Message Padding", description: "Pad message to 512-bit blocks, append length", example: "Hello → 48656C6C6F...80...00000028" },
     { step: 2, name: "Initialize Hash Values", description: "Set 8 initial hash values (h0-h7) from square roots of first 8 primes", example: "h0 = 6a09e667, h1 = bb67ae85..." },
@@ -32,7 +32,6 @@ const CryptographyDeepDiveSection = () => {
     { step: 6, name: "Concatenate Output", description: "Combine 8 32-bit words into 256-bit hash", example: "ba7816bf8f01cfea...→ 64 hex characters" }
   ];
 
-  // ECDSA key generation steps
   const ecdsaSteps = [
     { 
       step: 1, 
@@ -71,7 +70,6 @@ const CryptographyDeepDiveSection = () => {
     }
   ];
 
-  // secp256k1 curve parameters
   const curveParams = [
     { name: "p (Prime)", value: "2²⁵⁶ - 2³² - 977", description: "Field characteristic (prime number defining the finite field)", hex: "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F" },
     { name: "a", value: "0", description: "Curve coefficient (y² = x³ + ax + b)", hex: "0" },
@@ -81,7 +79,6 @@ const CryptographyDeepDiveSection = () => {
     { name: "h (Cofactor)", value: "1", description: "Cofactor of the curve", hex: "1" }
   ];
 
-  // Schnorr vs ECDSA comparison
   const signatureComparison = [
     { feature: "Signature Size", ecdsa: "~71-72 bytes (DER encoded)", schnorr: "64 bytes (fixed)", advantage: "schnorr" },
     { feature: "Batch Verification", ecdsa: "Not possible", schnorr: "Aggregated verification", advantage: "schnorr" },
@@ -128,9 +125,7 @@ const CryptographyDeepDiveSection = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Simulate a simple hash visualization
   const simulateHash = (input: string) => {
-    // This is a simplified visualization, not actual SHA-256
     let hash = 0;
     for (let i = 0; i < input.length; i++) {
       const char = input.charCodeAt(i);
@@ -141,502 +136,353 @@ const CryptographyDeepDiveSection = () => {
   };
 
   return (
-    <section id="cryptography" className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal>
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              <Shield className="w-4 h-4" />
-              Advanced Module
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Cryptography Deep Dive
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Master the mathematical foundations that make Bitcoin secure: elliptic curves, 
-              digital signatures, and hash functions that would take billions of years to break.
-            </p>
-          </div>
-        </ScrollReveal>
+    <BitcoinSectionWrapper theme="gradient" id="cryptography">
+      <ScrollReveal>
+        <BitcoinSectionHeader
+          badge="Advanced Module"
+          badgeIcon={Shield}
+          title="Cryptography Deep Dive"
+          description="Master the mathematical foundations that make Bitcoin secure: elliptic curves, digital signatures, and hash functions that would take billions of years to break."
+          theme="light"
+        />
+      </ScrollReveal>
 
-        <ScrollReveal delay={50}>
-          <LearningObjectives 
-            objectives={learningObjectives}
-            estimatedTime="45-60 minutes"
-            prerequisites={[
-              { title: "What is Bitcoin?", href: "#what-is-bitcoin" },
-              { title: "How Bitcoin Works", href: "#how-it-works" }
-            ]}
-          />
-        </ScrollReveal>
+      <ScrollReveal delay={50}>
+        <LearningObjectives 
+          objectives={learningObjectives}
+          estimatedTime="45-60 minutes"
+          prerequisites={[
+            { title: "What is Bitcoin?", href: "#what-is-bitcoin" },
+            { title: "How Bitcoin Works", href: "#how-it-works" }
+          ]}
+        />
+      </ScrollReveal>
 
-        {/* Interactive Visualization Tabs */}
-        <ScrollReveal delay={100}>
-          <Tabs defaultValue="sha256" className="mb-12" onValueChange={(v) => setActiveVisualization(v as any)}>
-            <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="sha256" className="flex items-center gap-2">
-                <Hash className="w-4 h-4" />
-                SHA-256 Hashing
-              </TabsTrigger>
-              <TabsTrigger value="ecdsa" className="flex items-center gap-2">
-                <Key className="w-4 h-4" />
-                ECDSA & Keys
-              </TabsTrigger>
-              <TabsTrigger value="address" className="flex items-center gap-2">
-                <Fingerprint className="w-4 h-4" />
-                Address Types
-              </TabsTrigger>
-            </TabsList>
+      {/* Interactive Visualization Tabs */}
+      <ScrollReveal delay={100}>
+        <Tabs defaultValue="sha256" className="mb-12" onValueChange={(v) => setActiveVisualization(v as any)}>
+          <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsTrigger value="sha256" className="flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              SHA-256 Hashing
+            </TabsTrigger>
+            <TabsTrigger value="ecdsa" className="flex items-center gap-2">
+              <Key className="w-4 h-4" />
+              ECDSA & Keys
+            </TabsTrigger>
+            <TabsTrigger value="address" className="flex items-center gap-2">
+              <Fingerprint className="w-4 h-4" />
+              Address Types
+            </TabsTrigger>
+          </TabsList>
 
-            {/* SHA-256 Tab */}
-            <TabsContent value="sha256">
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Hash className="w-5 h-5 text-primary" />
-                    SHA-256: The Foundation of Bitcoin Mining
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                    <p className="text-sm text-muted-foreground mb-4">
-                      SHA-256 (Secure Hash Algorithm 256-bit) is a cryptographic hash function that takes any input 
-                      and produces a fixed 256-bit (32-byte) output. It's used in Bitcoin for:
-                    </p>
-                    <ul className="grid md:grid-cols-2 gap-2 text-sm">
-                      <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Proof-of-work mining</li>
-                      <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Transaction IDs (TXID)</li>
-                      <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Block header hashing</li>
-                      <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Merkle tree construction</li>
-                      <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Address generation</li>
-                      <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" /> Script hashing (P2SH)</li>
-                    </ul>
-                  </div>
+          {/* SHA-256 Tab */}
+          <TabsContent value="sha256">
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Hash className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+                  SHA-256: The Foundation of Bitcoin Mining
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                  <p className="text-base text-foreground leading-relaxed mb-4">
+                    SHA-256 (Secure Hash Algorithm 256-bit) is a cryptographic hash function that takes any input 
+                    and produces a fixed 256-bit (32-byte) output. It's used in Bitcoin for:
+                  </p>
+                  <ul className="grid md:grid-cols-2 gap-2 text-base">
+                    <li className="flex items-center gap-2 text-foreground"><Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> Proof-of-work mining</li>
+                    <li className="flex items-center gap-2 text-foreground"><Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> Transaction IDs (TXID)</li>
+                    <li className="flex items-center gap-2 text-foreground"><Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> Block header hashing</li>
+                    <li className="flex items-center gap-2 text-foreground"><Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> Merkle tree construction</li>
+                    <li className="flex items-center gap-2 text-foreground"><Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> Address generation</li>
+                    <li className="flex items-center gap-2 text-foreground"><Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> Script hashing (P2SH)</li>
+                  </ul>
+                </div>
 
-                  {/* Interactive Hash Demo */}
-                  <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-6 border border-primary/20">
-                    <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Binary className="w-5 h-5 text-primary" />
-                      Interactive Hash Demonstration
-                    </h4>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm text-muted-foreground mb-2 block">Input Message:</label>
-                        <Input 
-                          value={inputText}
-                          onChange={(e) => setInputText(e.target.value)}
-                          placeholder="Type anything..."
-                          className="font-mono"
-                        />
-                      </div>
+                {/* Interactive Hash Demo */}
+                <div className="bg-gradient-to-r from-[hsl(var(--watt-bitcoin)/0.05)] to-[hsl(var(--watt-bitcoin)/0.1)] rounded-xl p-6 border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                  <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Binary className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+                    Interactive Hash Demonstration
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-base text-foreground mb-2 block font-medium">Input Message:</label>
+                      <Input 
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        placeholder="Type anything..."
+                        className="font-mono"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+                      <span className="text-base text-foreground">Even a tiny change creates a completely different hash (avalanche effect)</span>
+                    </div>
+                    <div>
+                      <label className="text-base text-foreground mb-2 block font-medium">SHA-256 Output (simulated):</label>
                       <div className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-amber-500" />
-                        <span className="text-sm text-muted-foreground">Even a tiny change creates a completely different hash (avalanche effect)</span>
-                      </div>
-                      <div>
-                        <label className="text-sm text-muted-foreground mb-2 block">SHA-256 Output (simulated):</label>
-                        <div className="flex items-center gap-2">
-                          <code className="flex-1 bg-background p-3 rounded-lg text-xs font-mono text-primary break-all border border-border">
-                            {simulateHash(inputText)}
-                          </code>
-                          <Button 
-                            variant="outline" 
-                            size="icon"
-                            onClick={() => copyToClipboard(simulateHash(inputText))}
-                          >
-                            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                          </Button>
-                        </div>
+                        <code className="flex-1 bg-background p-3 rounded-lg text-sm font-mono text-[hsl(var(--watt-bitcoin))] break-all border border-border">
+                          {simulateHash(inputText)}
+                        </code>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => copyToClipboard(simulateHash(inputText))}
+                        >
+                          {copied ? <Check className="w-4 h-4 text-[hsl(var(--watt-success))]" /> : <Copy className="w-4 h-4" />}
+                        </Button>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* SHA-256 Algorithm Steps */}
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-4">SHA-256 Algorithm Steps</h4>
-                    <div className="space-y-3">
-                      {sha256Steps.map((step, index) => (
-                        <div key={index} className="flex gap-4 p-4 bg-card rounded-lg border border-border hover:border-primary/30 transition-colors">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                            {step.step}
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-medium text-foreground">{step.name}</h5>
-                            <p className="text-sm text-muted-foreground">{step.description}</p>
-                            <code className="text-xs text-primary/80 mt-1 block font-mono">{step.example}</code>
-                          </div>
+                {/* SHA-256 Algorithm Steps */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-4 text-lg">SHA-256 Algorithm Steps</h4>
+                  <div className="space-y-3">
+                    {sha256Steps.map((step, index) => (
+                      <div key={index} className="flex gap-4 p-4 bg-card rounded-lg border border-border hover:border-[hsl(var(--watt-bitcoin)/0.3)] transition-colors">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] flex items-center justify-center font-bold text-sm">
+                          {step.step}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Key Properties */}
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
-                      <h5 className="font-medium text-green-600 dark:text-green-400 mb-2">Deterministic</h5>
-                      <p className="text-sm text-muted-foreground">Same input always produces same output</p>
-                    </div>
-                    <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-                      <h5 className="font-medium text-blue-600 dark:text-blue-400 mb-2">One-Way</h5>
-                      <p className="text-sm text-muted-foreground">Cannot reverse hash to find input</p>
-                    </div>
-                    <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20">
-                      <h5 className="font-medium text-purple-600 dark:text-purple-400 mb-2">Collision Resistant</h5>
-                      <p className="text-sm text-muted-foreground">Infeasible to find two inputs with same hash</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ECDSA Tab */}
-            <TabsContent value="ecdsa">
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Key className="w-5 h-5 text-primary" />
-                    ECDSA & The secp256k1 Curve
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                    <p className="text-sm text-muted-foreground">
-                      <strong>Elliptic Curve Digital Signature Algorithm (ECDSA)</strong> is the cryptographic algorithm 
-                      that secures Bitcoin transactions. It uses the <strong>secp256k1</strong> curve, specifically chosen 
-                      for its efficiency and security properties. The name comes from: <em>Standards for Efficient 
-                      Cryptography, Prime field, 256-bit, Koblitz curve #1</em>.
-                    </p>
-                  </div>
-
-                  {/* Curve Visualization */}
-                  <div className="bg-gradient-to-br from-primary/5 via-background to-primary/10 rounded-xl p-6 border border-primary/20">
-                    <h4 className="font-semibold text-foreground mb-4">The secp256k1 Elliptic Curve</h4>
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex-1">
-                        <div className="aspect-square max-w-[300px] mx-auto bg-background rounded-lg border-2 border-primary/30 p-4 relative overflow-hidden">
-                          {/* Simplified curve visualization */}
-                          <svg viewBox="0 0 100 100" className="w-full h-full">
-                            <defs>
-                              <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8"/>
-                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3"/>
-                              </linearGradient>
-                            </defs>
-                            {/* Axes */}
-                            <line x1="5" y1="50" x2="95" y2="50" stroke="currentColor" strokeOpacity="0.2" strokeWidth="0.5"/>
-                            <line x1="50" y1="5" x2="50" y2="95" stroke="currentColor" strokeOpacity="0.2" strokeWidth="0.5"/>
-                            {/* Curve approximation y² = x³ + 7 */}
-                            <path 
-                              d="M 20,50 Q 25,20 35,15 T 60,50 Q 65,80 75,85 T 95,50" 
-                              fill="none" 
-                              stroke="url(#curveGrad)" 
-                              strokeWidth="2"
-                            />
-                            <path 
-                              d="M 20,50 Q 25,80 35,85 T 60,50 Q 65,20 75,15 T 95,50" 
-                              fill="none" 
-                              stroke="url(#curveGrad)" 
-                              strokeWidth="2"
-                            />
-                            {/* Generator point G */}
-                            <circle cx="35" cy="30" r="3" fill="hsl(var(--primary))" />
-                            <text x="40" y="28" className="text-[6px] fill-primary font-bold">G</text>
-                            {/* Public key point K */}
-                            <circle cx="70" cy="35" r="3" fill="hsl(142, 76%, 36%)" />
-                            <text x="75" y="33" className="text-[6px] fill-green-600 font-bold">K</text>
-                          </svg>
-                          <div className="absolute bottom-2 left-2 text-xs text-muted-foreground">
-                            y² = x³ + 7 (mod p)
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-1 space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                          The curve equation <code className="text-primary">y² = x³ + 7</code> over a finite field 
-                          creates a set of points that form a mathematical group. Point multiplication on this 
-                          curve is easy to compute forward but practically impossible to reverse.
-                        </p>
-                        <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
-                          <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5" />
-                            <p className="text-xs text-muted-foreground">
-                              <strong className="text-amber-600 dark:text-amber-400">Security basis:</strong> Given K = k × G, 
-                              finding k from K and G is the <em>Elliptic Curve Discrete Logarithm Problem (ECDLP)</em> — 
-                              believed to require ~2¹²⁸ operations (computationally infeasible).
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Curve Parameters */}
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-4">secp256k1 Parameters</h4>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-2 px-3 text-muted-foreground font-medium">Parameter</th>
-                            <th className="text-left py-2 px-3 text-muted-foreground font-medium">Value</th>
-                            <th className="text-left py-2 px-3 text-muted-foreground font-medium hidden md:table-cell">Description</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {curveParams.map((param, index) => (
-                            <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
-                              <td className="py-2 px-3 font-mono text-primary">{param.name}</td>
-                              <td className="py-2 px-3">{param.value}</td>
-                              <td className="py-2 px-3 text-muted-foreground hidden md:table-cell">{param.description}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Key Generation Steps */}
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-4">Key Generation Process</h4>
-                    <div className="space-y-4">
-                      {ecdsaSteps.map((step, index) => (
-                        <div key={index} className="relative pl-8 pb-4 border-l-2 border-primary/30 last:border-l-0">
-                          <div className="absolute -left-3 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-                            {step.step}
-                          </div>
-                          <div className="bg-card rounded-lg p-4 border border-border ml-2">
-                            <h5 className="font-medium text-foreground mb-1">{step.name}</h5>
-                            <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
-                            <code className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-mono block mb-2">
-                              {step.formula}
-                            </code>
-                            <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                              <Shield className="w-3 h-3" /> {step.security}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Schnorr vs ECDSA */}
-                  <div className="bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl p-6 border border-purple-500/20">
-                    <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Layers className="w-5 h-5 text-purple-500" />
-                      Schnorr Signatures (Taproot Upgrade)
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Bitcoin's Taproot upgrade (November 2021) introduced Schnorr signatures alongside ECDSA, 
-                      offering improved efficiency, privacy, and enabling advanced smart contract capabilities.
-                    </p>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-2 px-3 text-muted-foreground font-medium">Feature</th>
-                            <th className="text-left py-2 px-3 text-muted-foreground font-medium">ECDSA</th>
-                            <th className="text-left py-2 px-3 text-muted-foreground font-medium">Schnorr</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {signatureComparison.map((row, index) => (
-                            <tr key={index} className="border-b border-border/50">
-                              <td className="py-2 px-3 font-medium">{row.feature}</td>
-                              <td className={`py-2 px-3 ${row.advantage === 'ecdsa' ? 'text-green-600 dark:text-green-400' : ''}`}>
-                                {row.ecdsa}
-                              </td>
-                              <td className={`py-2 px-3 ${row.advantage === 'schnorr' ? 'text-green-600 dark:text-green-400' : ''}`}>
-                                {row.schnorr}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Address Types Tab */}
-            <TabsContent value="address">
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Fingerprint className="w-5 h-5 text-primary" />
-                    Bitcoin Address Types
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                    <p className="text-sm text-muted-foreground">
-                      Bitcoin addresses have evolved through four generations, each improving on efficiency, 
-                      security, or functionality. Understanding address types helps you identify transaction 
-                      types and optimize fees.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4">
-                    {addressTypes.map((addr, index) => (
-                      <div key={index} className="bg-card rounded-xl p-5 border border-border hover:border-primary/30 transition-colors">
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                          <div className="flex-shrink-0">
-                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-mono font-bold ${
-                              index === 0 ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' :
-                              index === 1 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                              index === 2 ? 'bg-green-500/20 text-green-600 dark:text-green-400' :
-                              'bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                            }`}>
-                              {addr.type}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-foreground font-medium mb-1">{addr.description}</p>
-                            <p className="text-xs text-muted-foreground">Prefix: <span className="font-mono text-primary">{addr.prefix}</span></p>
-                          </div>
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-border">
-                          <p className="text-xs text-muted-foreground mb-2">Example Address:</p>
-                          <code className="text-xs font-mono text-primary/80 bg-primary/5 px-2 py-1 rounded block break-all">
-                            {addr.example}
-                          </code>
-                        </div>
-                        <div className="mt-3">
-                          <p className="text-xs text-muted-foreground mb-1">Locking Script:</p>
-                          <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded block">
-                            {addr.script}
-                          </code>
+                        <div className="flex-1">
+                          <h5 className="font-medium text-foreground">{step.name}</h5>
+                          <p className="text-base text-muted-foreground">{step.description}</p>
+                          <code className="text-sm text-[hsl(var(--watt-bitcoin)/0.8)] mt-1 block font-mono">{step.example}</code>
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
 
-                  {/* Address Evolution Timeline */}
-                  <div className="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-6 border border-primary/20">
-                    <h4 className="font-semibold text-foreground mb-4">Address Evolution</h4>
-                    <div className="flex items-center justify-between text-sm overflow-x-auto pb-2">
-                      <div className="text-center px-4">
-                        <div className="w-3 h-3 rounded-full bg-orange-500 mx-auto mb-2"></div>
-                        <p className="font-medium">2009</p>
-                        <p className="text-xs text-muted-foreground">P2PKH</p>
+                {/* Key Properties */}
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-[hsl(var(--watt-success)/0.1)] rounded-lg p-4 border border-[hsl(var(--watt-success)/0.2)]">
+                    <h5 className="font-medium text-[hsl(var(--watt-success))] mb-2">Deterministic</h5>
+                    <p className="text-base text-foreground">Same input always produces same output</p>
+                  </div>
+                  <div className="bg-[hsl(var(--watt-trust)/0.1)] rounded-lg p-4 border border-[hsl(var(--watt-trust)/0.2)]">
+                    <h5 className="font-medium text-[hsl(var(--watt-trust))] mb-2">One-Way</h5>
+                    <p className="text-base text-foreground">Cannot reverse hash to find input</p>
+                  </div>
+                  <div className="bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg p-4 border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                    <h5 className="font-medium text-[hsl(var(--watt-bitcoin))] mb-2">Collision Resistant</h5>
+                    <p className="text-base text-foreground">Infeasible to find two inputs with same hash</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ECDSA Tab */}
+          <TabsContent value="ecdsa">
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Key className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+                  ECDSA & The secp256k1 Curve
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                  <p className="text-base text-foreground leading-relaxed">
+                    <strong>Elliptic Curve Digital Signature Algorithm (ECDSA)</strong> is the cryptographic algorithm 
+                    that secures Bitcoin transactions. It uses the <strong>secp256k1</strong> curve, specifically chosen 
+                    for its efficiency and security properties. The name comes from: <em>Standards for Efficient 
+                    Cryptography, Prime field, 256-bit, Koblitz curve #1</em>.
+                  </p>
+                </div>
+
+                {/* Curve Visualization */}
+                <div className="bg-gradient-to-br from-[hsl(var(--watt-bitcoin)/0.05)] via-background to-[hsl(var(--watt-bitcoin)/0.1)] rounded-xl p-6 border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                  <h4 className="font-semibold text-foreground mb-4 text-lg">The secp256k1 Elliptic Curve</h4>
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1">
+                      <div className="aspect-square max-w-[300px] mx-auto bg-background rounded-lg border-2 border-[hsl(var(--watt-bitcoin)/0.3)] p-4 relative overflow-hidden">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
+                          <defs>
+                            <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="hsl(var(--watt-bitcoin))" stopOpacity="0.8"/>
+                              <stop offset="100%" stopColor="hsl(var(--watt-bitcoin))" stopOpacity="0.3"/>
+                            </linearGradient>
+                          </defs>
+                          <line x1="5" y1="50" x2="95" y2="50" stroke="currentColor" strokeOpacity="0.2" strokeWidth="0.5"/>
+                          <line x1="50" y1="5" x2="50" y2="95" stroke="currentColor" strokeOpacity="0.2" strokeWidth="0.5"/>
+                          <path 
+                            d="M 20,50 Q 25,20 35,15 T 60,50 Q 65,80 75,85 T 95,50" 
+                            fill="none" 
+                            stroke="url(#curveGrad)" 
+                            strokeWidth="2"
+                          />
+                          <path 
+                            d="M 20,50 Q 25,80 35,85 T 60,50 Q 65,20 75,15 T 95,50" 
+                            fill="none" 
+                            stroke="url(#curveGrad)" 
+                            strokeWidth="2"
+                          />
+                          <circle cx="35" cy="35" r="3" fill="hsl(var(--watt-bitcoin))" />
+                          <text x="38" y="33" fontSize="6" fill="hsl(var(--watt-bitcoin))">G</text>
+                          <circle cx="60" cy="65" r="3" fill="hsl(var(--watt-success))" />
+                          <text x="63" y="63" fontSize="6" fill="hsl(var(--watt-success))">K</text>
+                        </svg>
                       </div>
-                      <div className="flex-1 h-0.5 bg-gradient-to-r from-orange-500 to-blue-500"></div>
-                      <div className="text-center px-4">
-                        <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-2"></div>
-                        <p className="font-medium">2012</p>
-                        <p className="text-xs text-muted-foreground">P2SH (BIP 16)</p>
-                      </div>
-                      <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-500 to-green-500"></div>
-                      <div className="text-center px-4">
-                        <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-2"></div>
-                        <p className="font-medium">2017</p>
-                        <p className="text-xs text-muted-foreground">SegWit (BIP 141)</p>
-                      </div>
-                      <div className="flex-1 h-0.5 bg-gradient-to-r from-green-500 to-purple-500"></div>
-                      <div className="text-center px-4">
-                        <div className="w-3 h-3 rounded-full bg-purple-500 mx-auto mb-2"></div>
-                        <p className="font-medium">2021</p>
-                        <p className="text-xs text-muted-foreground">Taproot (BIP 341)</p>
-                      </div>
+                      <p className="text-sm text-muted-foreground text-center mt-2">
+                        y² = x³ + 7 (mod p)
+                      </p>
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      {curveParams.slice(0, 4).map((param, index) => (
+                        <div key={index} className="bg-card rounded-lg p-3 border border-border">
+                          <div className="flex justify-between items-start">
+                            <span className="font-medium text-[hsl(var(--watt-bitcoin))]">{param.name}</span>
+                            <span className="text-sm font-mono text-foreground">{param.value}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{param.description}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </ScrollReveal>
+                </div>
 
-        {/* Security Analysis */}
-        <ScrollReveal delay={150}>
-          <div className="bg-gradient-to-br from-green-500/10 via-background to-blue-500/10 rounded-2xl p-8 border border-green-500/20 mb-12">
-            <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
-              <Lock className="w-6 h-6 text-green-500" />
-              Why Bitcoin's Cryptography is Unbreakable
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="bg-card rounded-lg p-4 border border-border">
-                  <h4 className="font-medium text-foreground mb-2">Private Key Space</h4>
-                  <p className="text-3xl font-bold text-primary mb-2">2²⁵⁶</p>
-                  <p className="text-sm text-muted-foreground">
-                    Possible private keys — more than atoms in the observable universe (≈10⁸⁰)
+                {/* Key Generation Steps */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-4 text-lg">Key Generation Process</h4>
+                  <div className="space-y-4">
+                    {ecdsaSteps.map((step, index) => (
+                      <div key={index} className="bg-card rounded-lg p-4 border border-border">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] flex items-center justify-center font-bold">
+                            {step.step}
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="font-medium text-foreground mb-1">{step.name}</h5>
+                            <p className="text-base text-muted-foreground mb-2">{step.description}</p>
+                            <div className="flex flex-wrap gap-4">
+                              <code className="text-sm bg-muted px-2 py-1 rounded text-[hsl(var(--watt-bitcoin))]">{step.formula}</code>
+                              <span className="text-sm text-[hsl(var(--watt-success))]">🔒 {step.security}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <BitcoinKeyInsight type="insight" title="Why secp256k1?">
+                  Bitcoin uses secp256k1 instead of the more common NIST curves because: (1) it wasn't designed by a government agency, reducing fears of backdoors, (2) its simple parameters (a=0, b=7) allow for efficient computation, and (3) it was already well-studied when Bitcoin launched.
+                </BitcoinKeyInsight>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Address Types Tab */}
+          <TabsContent value="address">
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Fingerprint className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+                  Bitcoin Address Types
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                  <p className="text-base text-foreground leading-relaxed">
+                    Bitcoin addresses are derived from public keys through a series of hashing steps. 
+                    Different address types offer different features, security properties, and transaction fee costs.
                   </p>
                 </div>
-                <div className="bg-card rounded-lg p-4 border border-border">
-                  <h4 className="font-medium text-foreground mb-2">Brute Force Time</h4>
-                  <p className="text-3xl font-bold text-primary mb-2">10⁶⁰+ years</p>
-                  <p className="text-sm text-muted-foreground">
-                    With all computers on Earth working together
-                  </p>
+
+                <div className="space-y-4">
+                  {addressTypes.map((addr, index) => (
+                    <div key={index} className="bg-card rounded-xl p-5 border border-border hover:border-[hsl(var(--watt-bitcoin)/0.3)] transition-colors">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <span className="inline-block px-2 py-1 rounded text-sm font-bold bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] mb-2">
+                            {addr.type}
+                          </span>
+                          <p className="text-base text-foreground">{addr.description}</p>
+                        </div>
+                        <code className="text-sm text-muted-foreground">{addr.prefix}</code>
+                      </div>
+                      <div className="bg-muted rounded-lg p-3 mb-3">
+                        <p className="text-sm text-muted-foreground mb-1">Example Address:</p>
+                        <code className="text-xs font-mono text-foreground break-all">{addr.example}</code>
+                      </div>
+                      <div className="bg-[hsl(var(--watt-bitcoin)/0.05)] rounded-lg p-3">
+                        <p className="text-sm text-muted-foreground mb-1">Script:</p>
+                        <code className="text-xs font-mono text-[hsl(var(--watt-bitcoin))]">{addr.script}</code>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div className="space-y-4">
-                <div className="bg-card rounded-lg p-4 border border-border">
-                  <h4 className="font-medium text-foreground mb-2">Hash Collision</h4>
-                  <p className="text-3xl font-bold text-primary mb-2">2¹²⁸ ops</p>
-                  <p className="text-sm text-muted-foreground">
-                    Birthday attack on SHA-256 (still computationally infeasible)
-                  </p>
-                </div>
-                <div className="bg-card rounded-lg p-4 border border-border">
-                  <h4 className="font-medium text-foreground mb-2">Quantum Threat</h4>
-                  <p className="text-3xl font-bold text-amber-500 mb-2">Distant</p>
-                  <p className="text-sm text-muted-foreground">
-                    Would need ~1,500+ error-corrected qubits (current: ~1,000 noisy qubits)
-                  </p>
-                </div>
-              </div>
+
+                <BitcoinKeyInsight type="success" title="Best Practice">
+                  Use Taproot (bc1p...) addresses when your wallet supports them. They offer the best privacy, 
+                  lowest fees, and future-proof compatibility with Bitcoin's evolving features.
+                </BitcoinKeyInsight>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </ScrollReveal>
+
+      {/* Schnorr vs ECDSA Comparison */}
+      <ScrollReveal delay={150}>
+        <Card className="border-border bg-card mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Layers className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+              Schnorr Signatures vs ECDSA
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-foreground font-bold">Feature</th>
+                    <th className="text-center py-3 px-4 text-foreground font-bold">ECDSA</th>
+                    <th className="text-center py-3 px-4 text-foreground font-bold">Schnorr</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signatureComparison.map((row, index) => (
+                    <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-3 px-4 font-medium text-foreground">{row.feature}</td>
+                      <td className={`py-3 px-4 text-center ${row.advantage === 'ecdsa' ? 'bg-[hsl(var(--watt-success)/0.1)] font-bold text-[hsl(var(--watt-success))]' : 'text-muted-foreground'}`}>
+                        {row.ecdsa}
+                      </td>
+                      <td className={`py-3 px-4 text-center ${row.advantage === 'schnorr' ? 'bg-[hsl(var(--watt-success)/0.1)] font-bold text-[hsl(var(--watt-success))]' : row.advantage === 'tie' ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {row.schnorr}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </ScrollReveal>
+          </CardContent>
+        </Card>
+      </ScrollReveal>
 
-        {/* Academic Resources */}
-        <ScrollReveal delay={200}>
-          <div className="bg-muted/30 rounded-xl p-6 border border-border mb-8">
-            <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Further Reading
-            </h4>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="font-medium text-foreground mb-2">Academic Papers:</p>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>• Nakamoto, S. (2008). "Bitcoin: A Peer-to-Peer Electronic Cash System"</li>
-                  <li>• Koblitz, N. (1987). "Elliptic Curve Cryptosystems"</li>
-                  <li>• FIPS 180-4: Secure Hash Standard (SHA-256 specification)</li>
-                </ul>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-2">Recommended Books:</p>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>• "Mastering Bitcoin" by Andreas Antonopoulos (Ch. 4)</li>
-                  <li>• "Programming Bitcoin" by Jimmy Song</li>
-                  <li>• "Bitcoin and Cryptocurrency Technologies" (Princeton)</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal delay={250}>
-          <SectionSummary
-            takeaways={[
-              "SHA-256 produces a unique 256-bit fingerprint of any data — mining involves finding hashes below a target",
-              "ECDSA uses the secp256k1 elliptic curve to create unforgeable digital signatures from private keys",
-              "Private keys are 256-bit random numbers; public keys are derived via one-way point multiplication",
-              "Bitcoin addresses evolved from P2PKH (1...) to P2TR (bc1p...) for better efficiency and privacy",
-              "Schnorr signatures (Taproot) enable key aggregation, batch verification, and advanced scripting",
-              "Breaking Bitcoin's cryptography would require more computational power than exists in the universe"
-            ]}
-            proTip="Always use Taproot (bc1p...) addresses when possible — they offer the best privacy, lowest fees, and future-proof your transactions for advanced features."
-            nextSteps={[
-              { title: "Consensus & Game Theory", href: "#consensus" },
-              { title: "Network Architecture", href: "#network" }
-            ]}
-          />
-        </ScrollReveal>
-      </div>
-    </section>
+      {/* Section Summary */}
+      <ScrollReveal delay={200}>
+        <SectionSummary
+          title="Cryptography Summary"
+          takeaways={[
+            "SHA-256 provides the foundation for Bitcoin's proof-of-work and data integrity",
+            "ECDSA with secp256k1 secures transactions through mathematically provable signatures",
+            "Private keys generate public keys via one-way elliptic curve multiplication",
+            "Address types have evolved from P2PKH to P2TR, improving privacy and efficiency",
+            "Schnorr signatures (Taproot) offer key aggregation and improved privacy",
+            "The cryptographic security is based on problems that would take billions of years to solve"
+          ]}
+          nextSteps={[{ title: "Consensus & Game Theory", href: "#consensus" }]}
+        />
+      </ScrollReveal>
+    </BitcoinSectionWrapper>
   );
 };
 
