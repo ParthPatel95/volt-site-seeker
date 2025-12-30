@@ -61,9 +61,9 @@ const BitcoinEconomicsSection: React.FC = () => {
         
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/20 mb-4">
-              <BarChart3 className="w-4 h-4 text-watt-success" />
-              <span className="text-sm font-medium text-watt-success">Economics</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--watt-success)/0.1)] border border-[hsl(var(--watt-success)/0.2)] mb-4">
+              <BarChart3 className="w-4 h-4 text-[hsl(var(--watt-success))]" />
+              <span className="text-sm font-medium text-[hsl(var(--watt-success))]">Economics</span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Bitcoin Economics
@@ -79,28 +79,28 @@ const BitcoinEconomicsSection: React.FC = () => {
         <ScrollReveal direction="up" delay={0.1}>
           <div className="grid md:grid-cols-4 gap-4 mb-12">
             <div className="bg-muted rounded-2xl p-6 text-center">
-              <Coins className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
+              <Coins className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-3" />
               <div className="text-3xl font-bold text-foreground mb-1">
                 <AnimatedCounter end={21} suffix="M" />
               </div>
               <div className="text-sm text-muted-foreground">Maximum Supply</div>
             </div>
             <div className="bg-muted rounded-2xl p-6 text-center">
-              <TrendingUp className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
+              <TrendingUp className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-3" />
               <div className="text-3xl font-bold text-foreground mb-1">
                 ~<AnimatedCounter end={19} suffix=".8M" />
               </div>
               <div className="text-sm text-muted-foreground">Currently Mined</div>
             </div>
             <div className="bg-muted rounded-2xl p-6 text-center">
-              <Clock className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
+              <Clock className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-3" />
               <div className="text-3xl font-bold text-foreground mb-1">
                 ~<AnimatedCounter end={2140} />
               </div>
               <div className="text-sm text-muted-foreground">Last BTC Mined</div>
             </div>
             <div className="bg-muted rounded-2xl p-6 text-center">
-              <Percent className="w-8 h-8 text-watt-bitcoin mx-auto mb-3" />
+              <Percent className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-3" />
               <div className="text-3xl font-bold text-foreground mb-1">
                 <AnimatedCounter end={94} suffix="%" />
               </div>
@@ -111,7 +111,7 @@ const BitcoinEconomicsSection: React.FC = () => {
 
         {/* The Halving Explained */}
         <ScrollReveal direction="up" delay={0.2}>
-          <div className="bg-gradient-to-r from-watt-navy to-watt-navy/90 rounded-2xl p-6 md:p-8 mb-8">
+          <div className="bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] rounded-2xl p-6 md:p-8 mb-8">
             <h3 className="text-2xl font-bold text-white mb-4 text-center">The Halving Explained</h3>
             <p className="text-white/80 text-center max-w-2xl mx-auto mb-8">
               Every 210,000 blocks (~4 years), the block reward is cut in half. This controlled supply 
@@ -122,14 +122,14 @@ const BitcoinEconomicsSection: React.FC = () => {
             <div className="flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-4">
               {[50, 25, 12.5, 6.25, 3.125].map((reward, index) => (
                 <div key={reward} className="flex items-center">
-                  <div className="bg-watt-bitcoin/20 border border-watt-bitcoin/40 rounded-lg p-4 text-center min-w-[80px]">
+                  <div className="bg-[hsl(var(--watt-bitcoin)/0.2)] border border-[hsl(var(--watt-bitcoin)/0.4)] rounded-lg p-4 text-center min-w-[80px]">
                     <div className="text-lg font-bold text-white">{reward}</div>
                     <div className="text-xs text-white/60">BTC</div>
                   </div>
                   {index < 4 && (
                     <div className="mx-2 flex items-center">
-                      <ArrowDown className="w-4 h-4 text-watt-bitcoin rotate-[-90deg]" />
-                      <span className="text-xs text-watt-bitcoin ml-1">÷2</span>
+                      <ArrowDown className="w-4 h-4 text-[hsl(var(--watt-bitcoin))] rotate-[-90deg]" />
+                      <span className="text-xs text-[hsl(var(--watt-bitcoin))] ml-1">÷2</span>
                     </div>
                   )}
                 </div>
@@ -151,9 +151,9 @@ const BitcoinEconomicsSection: React.FC = () => {
                   {halvingEvents.map((event) => (
                     <tr key={event.year} className="border-b border-white/5">
                       <td className="py-3 px-4 text-white font-medium">{event.year}</td>
-                      <td className="py-3 px-4 text-watt-bitcoin">{event.reward} BTC</td>
+                      <td className="py-3 px-4 text-[hsl(var(--watt-bitcoin))]">{event.reward} BTC</td>
                       <td className="py-3 px-4 text-white/80">{event.priceAtHalving}</td>
-                      <td className="py-3 px-4 text-watt-success">{event.priceOneYearLater}</td>
+                      <td className="py-3 px-4 text-[hsl(var(--watt-success))]">{event.priceOneYearLater}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -169,8 +169,8 @@ const BitcoinEconomicsSection: React.FC = () => {
               <h3 className="text-xl font-bold text-foreground mb-4">Supply Dynamics</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-watt-bitcoin/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-watt-bitcoin text-sm">1</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-[hsl(var(--watt-bitcoin))] text-sm">1</span>
                   </div>
                   <div>
                     <span className="font-medium text-foreground">Fixed Maximum</span>
@@ -178,8 +178,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-watt-bitcoin/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-watt-bitcoin text-sm">2</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-[hsl(var(--watt-bitcoin))] text-sm">2</span>
                   </div>
                   <div>
                     <span className="font-medium text-foreground">Decreasing Issuance</span>
@@ -187,8 +187,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-watt-bitcoin/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-watt-bitcoin text-sm">3</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-[hsl(var(--watt-bitcoin))] text-sm">3</span>
                   </div>
                   <div>
                     <span className="font-medium text-foreground">Lost Coins</span>
@@ -202,8 +202,8 @@ const BitcoinEconomicsSection: React.FC = () => {
               <h3 className="text-xl font-bold text-foreground mb-4">Demand Drivers</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-watt-trust/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-watt-trust text-sm">1</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--watt-trust)/0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-[hsl(var(--watt-trust))] text-sm">1</span>
                   </div>
                   <div>
                     <span className="font-medium text-foreground">Institutional Adoption</span>
@@ -211,8 +211,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-watt-trust/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-watt-trust text-sm">2</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--watt-trust)/0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-[hsl(var(--watt-trust))] text-sm">2</span>
                   </div>
                   <div>
                     <span className="font-medium text-foreground">Store of Value</span>
@@ -220,8 +220,8 @@ const BitcoinEconomicsSection: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-watt-trust/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-watt-trust text-sm">3</span>
+                  <div className="w-6 h-6 rounded-full bg-[hsl(var(--watt-trust)/0.1)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-[hsl(var(--watt-trust))] text-sm">3</span>
                   </div>
                   <div>
                     <span className="font-medium text-foreground">Global Access</span>
