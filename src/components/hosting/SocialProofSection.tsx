@@ -45,14 +45,14 @@ export const SocialProofSection = () => {
   }, []);
 
   return (
-    <section className="py-12 md:py-16 bg-watt-light">
+    <section className="py-12 md:py-16 bg-muted/30">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-3xl md:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--watt-navy))] mb-4">
               Trusted by Miners Worldwide
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-[hsl(var(--watt-navy)/0.7)] max-w-2xl mx-auto">
               Join hundreds of satisfied clients who trust WattByte for their hosting needs
             </p>
           </div>
@@ -65,16 +65,16 @@ export const SocialProofSection = () => {
               const Icon = stat.icon;
               return (
                 <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-watt-bitcoin/10 mb-3">
-                    <Icon className="w-6 h-6 text-watt-bitcoin" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[hsl(var(--watt-bitcoin)/0.1)] mb-3">
+                    <Icon className="w-6 h-6 text-[hsl(var(--watt-bitcoin))]" />
                   </div>
-                  <div className="text-2xl md:text-4xl font-bold text-watt-navy">
+                  <div className="text-2xl md:text-4xl font-bold text-[hsl(var(--watt-navy))]">
                     <AnimatedCounter 
                       end={stat.value} 
                       suffix={stat.suffix} 
                     />
                   </div>
-                  <div className="text-sm text-watt-navy/60">{stat.label}</div>
+                  <div className="text-sm text-[hsl(var(--watt-navy)/0.6)]">{stat.label}</div>
                 </div>
               );
             })}
@@ -83,9 +83,9 @@ export const SocialProofSection = () => {
 
         {/* Testimonials Carousel */}
         <ScrollReveal delay={0.2}>
-          <div className="relative bg-white rounded-2xl shadow-lg p-6 md:p-8 max-w-3xl mx-auto">
+          <div className="relative bg-card rounded-2xl shadow-lg p-6 md:p-8 max-w-3xl mx-auto">
             {/* Quote Mark */}
-            <div className="absolute -top-4 left-8 text-6xl text-watt-bitcoin/20 font-serif">"</div>
+            <div className="absolute -top-4 left-8 text-6xl text-[hsl(var(--watt-bitcoin)/0.2)] font-serif">"</div>
             
             <div className="relative min-h-[200px]">
               {testimonials.map((testimonial, index) => (
@@ -100,25 +100,25 @@ export const SocialProofSection = () => {
                   {/* Stars */}
                   <div className="flex items-center space-x-1 mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-watt-bitcoin fill-watt-bitcoin" />
+                      <Star key={i} className="w-5 h-5 text-[hsl(var(--watt-bitcoin))] fill-[hsl(var(--watt-bitcoin))]" />
                     ))}
                   </div>
 
                   {/* Content */}
-                  <p className="text-lg text-watt-navy mb-6 italic">
+                  <p className="text-lg text-[hsl(var(--watt-navy))] mb-6 italic">
                     "{testimonial.content}"
                   </p>
 
                   {/* Author */}
                   <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-watt-navy/10 flex items-center justify-center mr-4">
-                      <span className="text-lg font-bold text-watt-navy">
+                    <div className="w-12 h-12 rounded-full bg-[hsl(var(--watt-navy)/0.1)] flex items-center justify-center mr-4">
+                      <span className="text-lg font-bold text-[hsl(var(--watt-navy))]">
                         {testimonial.name.charAt(0)}
                       </span>
                     </div>
                     <div>
-                      <div className="font-semibold text-watt-navy">{testimonial.name}</div>
-                      <div className="text-sm text-watt-navy/60">
+                      <div className="font-semibold text-[hsl(var(--watt-navy))]">{testimonial.name}</div>
+                      <div className="text-sm text-[hsl(var(--watt-navy)/0.6)]">
                         {testimonial.role}
                         {testimonial.company && ` · ${testimonial.company}`}
                       </div>
@@ -136,8 +136,8 @@ export const SocialProofSection = () => {
                   onClick={() => setActiveTestimonial(index)}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     index === activeTestimonial 
-                      ? 'w-6 bg-watt-bitcoin' 
-                      : 'w-2 bg-watt-navy/20 hover:bg-watt-navy/40'
+                      ? 'w-6 bg-[hsl(var(--watt-bitcoin))]' 
+                      : 'w-2 bg-[hsl(var(--watt-navy)/0.2)] hover:bg-[hsl(var(--watt-navy)/0.4)]'
                   }`}
                 />
               ))}

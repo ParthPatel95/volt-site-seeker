@@ -22,8 +22,8 @@ export const LiveFacilityStats = () => {
         ? `$${pricing.current_price.toFixed(2)}/MWh` 
         : loading ? 'Loading...' : '$45.00/MWh',
       subtext: 'Live wholesale rate',
-      colorClass: 'text-watt-bitcoin',
-      bgClass: 'bg-watt-bitcoin/20',
+      colorClass: 'text-[hsl(var(--watt-bitcoin))]',
+      bgClass: 'bg-[hsl(var(--watt-bitcoin)/0.2)]',
       animate: false
     },
     {
@@ -32,8 +32,8 @@ export const LiveFacilityStats = () => {
       numericValue: 135,
       suffix: 'MW',
       subtext: 'Total available power',
-      colorClass: 'text-watt-success',
-      bgClass: 'bg-watt-success/20',
+      colorClass: 'text-[hsl(var(--watt-success))]',
+      bgClass: 'bg-[hsl(var(--watt-success)/0.2)]',
       animate: true
     },
     {
@@ -42,8 +42,8 @@ export const LiveFacilityStats = () => {
       numericValue: 99.99,
       suffix: '%',
       subtext: 'Current month',
-      colorClass: 'text-watt-trust',
-      bgClass: 'bg-watt-trust/20',
+      colorClass: 'text-[hsl(var(--watt-trust))]',
+      bgClass: 'bg-[hsl(var(--watt-trust)/0.2)]',
       animate: true
     },
     {
@@ -51,8 +51,8 @@ export const LiveFacilityStats = () => {
       label: 'Outside Temp',
       value: '-5°C',
       subtext: 'Natural cooling active',
-      colorClass: 'text-watt-trust',
-      bgClass: 'bg-watt-trust/20',
+      colorClass: 'text-[hsl(var(--watt-trust))]',
+      bgClass: 'bg-[hsl(var(--watt-trust)/0.2)]',
       animate: false
     },
     {
@@ -61,8 +61,8 @@ export const LiveFacilityStats = () => {
       numericValue: 45,
       suffix: 'MW',
       subtext: 'Open for new clients',
-      colorClass: 'text-watt-bitcoin',
-      bgClass: 'bg-watt-bitcoin/20',
+      colorClass: 'text-[hsl(var(--watt-bitcoin))]',
+      bgClass: 'bg-[hsl(var(--watt-bitcoin)/0.2)]',
       animate: true
     },
     {
@@ -81,12 +81,12 @@ export const LiveFacilityStats = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-br from-watt-navy via-watt-navy/95 to-watt-navy/90 overflow-hidden">
+    <section className="py-12 md:py-16 bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-navy)/0.9)] overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-10">
             <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full mb-4">
-              <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-[hsl(var(--watt-success))] rounded-full animate-pulse" />
               <span className="text-sm font-medium text-white">Live Facility Data</span>
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
@@ -130,7 +130,7 @@ export const LiveFacilityStats = () => {
         {/* Live Indicator */}
         <ScrollReveal delay={0.4}>
           <div className="mt-8 flex items-center justify-center space-x-2">
-            <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-[hsl(var(--watt-success))] rounded-full animate-pulse" />
             <span className="text-sm text-white/50">Data updates every 5 minutes</span>
           </div>
         </ScrollReveal>

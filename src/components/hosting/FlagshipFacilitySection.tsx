@@ -11,14 +11,14 @@ export const FlagshipFacilitySection = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 bg-white">
+    <section className="py-12 md:py-16 bg-card">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-3xl md:text-5xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-[hsl(var(--watt-navy))] mb-4">
               Our Flagship Facility
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-[hsl(var(--watt-navy)/0.7)] max-w-2xl mx-auto">
               Alberta Heartland 135 - A fully owned, world-class mining infrastructure site
             </p>
           </div>
@@ -33,12 +33,12 @@ export const FlagshipFacilitySection = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 left-4">
-                <div className="bg-watt-navy/90 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold">
+                <div className="bg-[hsl(var(--watt-navy)/0.9)] backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold">
                   Alberta Heartland 135
                 </div>
               </div>
               <div className="absolute bottom-4 right-4">
-                <div className="bg-watt-bitcoin/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+                <div className="bg-[hsl(var(--watt-bitcoin)/0.9)] backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
                   Under Development
                 </div>
               </div>
@@ -47,10 +47,10 @@ export const FlagshipFacilitySection = () => {
 
           <ScrollReveal delay={0.2}>
             <div>
-              <h3 className="text-2xl font-bold text-watt-navy mb-4">
+              <h3 className="text-2xl font-bold text-[hsl(var(--watt-navy))] mb-4">
                 Strategic Location, Premium Infrastructure
               </h3>
-              <p className="text-watt-navy/70 mb-6">
+              <p className="text-[hsl(var(--watt-navy)/0.7)] mb-6">
                 Located in Alberta's industrial heartland, our flagship facility combines direct grid access, 
                 cold climate efficiency, and world-class infrastructure to provide the optimal environment 
                 for large-scale Bitcoin mining operations.
@@ -60,18 +60,18 @@ export const FlagshipFacilitySection = () => {
                 {specs.map((spec, index) => {
                   const Icon = spec.icon;
                   return (
-                    <div key={index} className="bg-watt-light rounded-lg p-4">
-                      <Icon className="w-5 h-5 text-watt-bitcoin mb-2" />
-                      <div className="text-sm text-watt-navy/60 mb-1">{spec.label}</div>
-                      <div className="text-xl font-bold text-watt-navy">{spec.value}</div>
+                    <div key={index} className="bg-muted/50 rounded-lg p-4">
+                      <Icon className="w-5 h-5 text-[hsl(var(--watt-bitcoin))] mb-2" />
+                      <div className="text-sm text-[hsl(var(--watt-navy)/0.6)] mb-1">{spec.label}</div>
+                      <div className="text-xl font-bold text-[hsl(var(--watt-navy))]">{spec.value}</div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="mt-6 p-4 bg-watt-success/10 border border-watt-success/20 rounded-lg">
-                <p className="text-sm text-watt-navy">
-                  <strong className="text-watt-success">100% Owned:</strong> Complete control over operations, 
+              <div className="mt-6 p-4 bg-[hsl(var(--watt-success)/0.1)] border border-[hsl(var(--watt-success)/0.2)] rounded-lg">
+                <p className="text-sm text-[hsl(var(--watt-navy))]">
+                  <strong className="text-[hsl(var(--watt-success))]">100% Owned:</strong> Complete control over operations, 
                   maintenance, and client service delivery ensures the highest quality hosting experience.
                 </p>
               </div>
