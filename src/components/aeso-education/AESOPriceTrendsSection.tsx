@@ -253,7 +253,8 @@ export const AESOPriceTrendsSection = () => {
             <span className="text-sm font-medium text-foreground">Historical Analysis</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Price <span className="text-watt-bitcoin">Trends</span> & Patterns
+            Price <span className="text-[hsl(var(--watt-bitcoin))]">Trends</span> & Patterns
+            
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Understanding historical price patterns helps optimize operations and maximize savings
@@ -274,7 +275,7 @@ export const AESOPriceTrendsSection = () => {
               onClick={() => setActiveView(view.key as typeof activeView)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeView === view.key
-                  ? 'bg-watt-bitcoin text-white'
+                  ? 'bg-[hsl(var(--watt-bitcoin))] text-white'
                   : 'bg-background text-muted-foreground hover:bg-muted border border-border'
               }`}
             >
@@ -299,7 +300,7 @@ export const AESOPriceTrendsSection = () => {
             if (isInitialLoading) {
               return (
                 <div className="flex flex-col items-center justify-center h-80 gap-4">
-                  <Loader2 className="w-8 h-8 text-watt-bitcoin animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] animate-spin" />
                   <p className="text-muted-foreground">Loading live AESO data...</p>
                 </div>
               );
@@ -313,7 +314,7 @@ export const AESOPriceTrendsSection = () => {
                   <p className="text-muted-foreground">{dataError}</p>
                   <button 
                     onClick={() => fetchHistoricalTenYearData(95)}
-                    className="px-4 py-2 bg-watt-bitcoin text-white rounded-lg text-sm"
+                    className="px-4 py-2 bg-[hsl(var(--watt-bitcoin))] text-white rounded-lg text-sm"
                   >
                     Retry
                   </button>
@@ -329,7 +330,7 @@ export const AESOPriceTrendsSection = () => {
                   <p className="text-muted-foreground">No data available</p>
                   <button 
                     onClick={() => fetchHistoricalTenYearData(95)}
-                    className="px-4 py-2 bg-watt-bitcoin text-white rounded-lg text-sm"
+                    className="px-4 py-2 bg-[hsl(var(--watt-bitcoin))] text-white rounded-lg text-sm"
                   >
                     Load Data
                   </button>
@@ -377,7 +378,7 @@ export const AESOPriceTrendsSection = () => {
                     <span className="text-muted-foreground">All-In (Energy + Trans.)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-watt-bitcoin"></div>
+                    <div className="w-3 h-3 rounded bg-[hsl(var(--watt-bitcoin))]"></div>
                     <span className="text-muted-foreground">With 12CP (No Trans.)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -406,7 +407,7 @@ export const AESOPriceTrendsSection = () => {
                               <p className="font-bold text-foreground mb-2">{label} {data.isYTD ? '(YTD)' : ''}</p>
                               <div className="space-y-1">
                                 <div className="flex justify-between gap-4">
-                                  <span className="text-watt-navy/60">Pool Energy:</span>
+                                  <span className="text-muted-foreground">Pool Energy:</span>
                                   <span className="font-medium">${data.avgPriceUSD.toFixed(2)} USD</span>
                                 </div>
                                 <div className="flex justify-between gap-4 text-red-600">
@@ -483,9 +484,9 @@ export const AESOPriceTrendsSection = () => {
                   )}
                   
                   {/* 12CP Savings Card */}
-                  <div className="p-4 rounded-lg bg-gradient-to-br from-watt-bitcoin/10 to-watt-bitcoin/5 border border-watt-bitcoin/20">
-                    <p className="text-xs text-watt-bitcoin mb-1 font-medium">12CP Transmission Savings</p>
-                    <p className="text-2xl font-bold text-watt-bitcoin">${convertToUSD(TWELVE_CP_SAVINGS_CAD).toFixed(2)} <span className="text-sm font-normal text-muted-foreground">USD/MWh</span></p>
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-[hsl(var(--watt-bitcoin)/0.1)] to-[hsl(var(--watt-bitcoin)/0.05)] border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                    <p className="text-xs text-[hsl(var(--watt-bitcoin))] mb-1 font-medium">12CP Transmission Savings</p>
+                    <p className="text-2xl font-bold text-[hsl(var(--watt-bitcoin))]">${convertToUSD(TWELVE_CP_SAVINGS_CAD).toFixed(2)} <span className="text-sm font-normal text-muted-foreground">USD/MWh</span></p>
                     <p className="text-xs text-muted-foreground mt-1">Avoid 12 peaks = zero transmission</p>
                   </div>
                   
@@ -615,9 +616,9 @@ export const AESOPriceTrendsSection = () => {
               </div>
 
               {/* Key Insight */}
-              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-watt-navy to-watt-navy/90 text-white">
+              <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-[hsl(var(--watt-navy))] to-[hsl(var(--watt-navy)/0.9)] text-white">
                 <div className="flex items-start gap-3">
-                  <Zap className="w-5 h-5 text-watt-bitcoin shrink-0 mt-0.5" />
+                  <Zap className="w-5 h-5 text-[hsl(var(--watt-bitcoin))] shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold">Key Insight for Bitcoin Miners</p>
                     <p className="text-sm text-white/80 mt-1">
@@ -831,7 +832,7 @@ export const AESOPriceTrendsSection = () => {
               {loadingDaily ? (
                 <div className="h-80 flex items-center justify-center">
                   <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-watt-bitcoin animate-spin mx-auto mb-2" />
+                    <RefreshCw className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] animate-spin mx-auto mb-2" />
                     <p className="text-muted-foreground">Loading live pricing data...</p>
                   </div>
                 </div>
@@ -908,11 +909,11 @@ export const AESOPriceTrendsSection = () => {
             {priceDrivers.map((driver, i) => (
               <div 
                 key={i}
-                className="p-5 rounded-xl bg-background border border-border hover:border-watt-bitcoin/30 transition-all hover:shadow-md"
+                className="p-5 rounded-xl bg-background border border-border hover:border-[hsl(var(--watt-bitcoin)/0.3)] transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-3 rounded-lg bg-watt-bitcoin/10 w-fit">
-                    <driver.icon className="w-5 h-5 text-watt-bitcoin" />
+                  <div className="p-3 rounded-lg bg-[hsl(var(--watt-bitcoin)/0.1)] w-fit">
+                    <driver.icon className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
                   </div>
                   {driver.verified && (
                     <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Verified</span>
