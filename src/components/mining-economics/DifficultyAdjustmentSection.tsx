@@ -1,8 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { Activity, Clock, AlertTriangle, Info } from 'lucide-react';
+import { Activity, Clock, AlertTriangle, Info, TrendingUp, TrendingDown } from 'lucide-react';
 import ProgressiveDisclosure from '@/components/academy/ProgressiveDisclosure';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MECSectionWrapper, MECSectionHeader, MECContentCard, MECKeyInsight, MECDeepDive, MECStepByStep, MECCallout } from './shared';
+import { motion } from 'framer-motion';
 
 const DifficultyTrendChart = lazy(() => import('./DifficultyTrendChart'));
 
@@ -16,75 +18,67 @@ const DifficultyAdjustmentSection = () => {
     { date: "Dec 2024", difficulty: 103.92, hashrate: 743, change: "+44.3%" },
   ];
 
+  const adjustmentSteps = [
+    { number: "1", title: "Measure Time", description: "Calculate actual time to mine 2,016 blocks" },
+    { number: "2", title: "Compare Target", description: "Target is 20,160 minutes (2 weeks)" },
+    { number: "3", title: "Calculate Ratio", description: "Actual time ÷ Target time" },
+    { number: "4", title: "Adjust Difficulty", description: "Up if blocks too fast, down if too slow" },
+  ];
+
   const basicContent = (
-    <div className="space-y-4">
-      <div className="bg-muted/50 rounded-xl p-6">
-        <h4 className="font-bold text-foreground mb-3">Why Does Difficulty Matter?</h4>
-        <p className="text-muted-foreground mb-4">
+    <div className="space-y-6">
+      <MECContentCard variant="default">
+        <h4 className="font-bold text-foreground mb-3 text-lg">Why Does Difficulty Matter?</h4>
+        <p className="text-muted-foreground mb-6 leading-relaxed">
           Bitcoin automatically adjusts how hard it is to mine every ~2 weeks. When more miners join, 
-          difficulty goes up. When miners leave, it goes down. This keeps blocks coming every ~10 minutes.
+          difficulty goes up. When miners leave, it goes down. This keeps blocks coming every ~10 minutes 
+          and directly affects how much BTC you earn.
         </p>
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-background rounded-lg p-4 text-center">
-            <div className="text-3xl mb-2">📈</div>
-            <div className="font-bold text-red-500">Difficulty Up</div>
+          <div className="bg-background rounded-lg p-4 text-center border border-border">
+            <TrendingUp className="w-8 h-8 mx-auto mb-2" style={{ color: '#ef4444' }} />
+            <div className="font-bold" style={{ color: '#ef4444' }}>Difficulty Up</div>
             <div className="text-sm text-muted-foreground">= Less BTC for you</div>
           </div>
-          <div className="bg-background rounded-lg p-4 text-center">
-            <div className="text-3xl mb-2">📉</div>
-            <div className="font-bold text-watt-success">Difficulty Down</div>
+          <div className="bg-background rounded-lg p-4 text-center border border-border">
+            <TrendingDown className="w-8 h-8 mx-auto mb-2" style={{ color: 'hsl(var(--watt-success))' }} />
+            <div className="font-bold" style={{ color: 'hsl(var(--watt-success))' }}>Difficulty Down</div>
             <div className="text-sm text-muted-foreground">= More BTC for you</div>
           </div>
         </div>
-        <div className="mt-4 p-3 bg-watt-bitcoin/10 rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-watt-bitcoin">Key fact:</strong> Difficulty has increased ~600% over the past 5 years. 
-            Plan for continued growth when modeling your mining operation.
-          </p>
-        </div>
-      </div>
+      </MECContentCard>
+
+      <MECKeyInsight variant="warning" title="Key Fact">
+        Difficulty has increased ~600% over the past 5 years. Plan for continued growth 
+        when modeling your mining operation — assume 3-5% monthly growth in your projections.
+      </MECKeyInsight>
     </div>
   );
 
   const intermediateContent = (
     <div className="space-y-6">
       {/* How It Works */}
-      <div className="bg-gradient-to-r from-watt-bitcoin/10 to-watt-success/10 rounded-2xl p-8">
+      <div 
+        className="rounded-2xl p-8"
+        style={{ background: 'linear-gradient(135deg, hsl(var(--watt-bitcoin) / 0.1), hsl(var(--watt-success) / 0.1))' }}
+      >
         <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-watt-bitcoin" />
+          <Activity className="w-5 h-5" style={{ color: 'hsl(var(--watt-bitcoin))' }} />
           How Difficulty Adjustment Works
         </h3>
         
-        <div className="grid md:grid-cols-4 gap-4">
-          {[
-            { step: "1", title: "Measure Time", desc: "Calculate actual time to mine 2,016 blocks" },
-            { step: "2", title: "Compare Target", desc: "Target is 20,160 minutes (2 weeks)" },
-            { step: "3", title: "Calculate Ratio", desc: "Actual time ÷ Target time" },
-            { step: "4", title: "Adjust Difficulty", desc: "Up if blocks too fast, down if too slow" },
-          ].map((item, idx) => (
-            <div key={idx} className="bg-background/60 rounded-xl p-4 text-center">
-              <div className="w-10 h-10 bg-watt-bitcoin text-white rounded-full flex items-center justify-center font-bold mx-auto mb-3">
-                {item.step}
-              </div>
-              <h4 className="font-semibold text-foreground mb-1">{item.title}</h4>
-              <p className="text-sm text-muted-foreground">{item.desc}</p>
-            </div>
-          ))}
-        </div>
+        <MECStepByStep steps={adjustmentSteps} />
 
-        <div className="mt-6 p-4 bg-background/60 rounded-xl">
-          <p className="text-sm text-muted-foreground text-center">
-            <strong className="text-watt-bitcoin">Key Formula:</strong> New Difficulty = Old Difficulty × (Actual Time / Target Time) — 
-            Limited to ±300% adjustment per epoch for stability
-          </p>
-        </div>
+        <MECCallout variant="formula" title="Key Formula" className="mt-6">
+          New Difficulty = Old Difficulty × (Actual Time / Target Time) — Limited to ±300% per epoch
+        </MECCallout>
       </div>
 
       {/* Impact on Mining */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-watt-navy rounded-2xl p-6 text-white">
-          <h4 className="font-bold mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-watt-bitcoin" />
+        <MECContentCard variant="dark">
+          <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5" style={{ color: 'hsl(var(--watt-bitcoin))' }} />
             Revenue Impact
           </h4>
           <p className="text-white/70 text-sm mb-4">
@@ -92,45 +86,27 @@ const DifficultyAdjustmentSection = () => {
             reducing daily BTC earnings proportionally.
           </p>
           <div className="space-y-3">
-            <div className="flex justify-between p-3 bg-white/10 rounded-lg">
-              <span>+10% difficulty</span>
-              <span className="text-red-400 font-bold">-9.1% revenue</span>
-            </div>
-            <div className="flex justify-between p-3 bg-white/10 rounded-lg">
-              <span>+20% difficulty</span>
-              <span className="text-red-400 font-bold">-16.7% revenue</span>
-            </div>
-            <div className="flex justify-between p-3 bg-white/10 rounded-lg">
-              <span>+50% difficulty</span>
-              <span className="text-red-400 font-bold">-33.3% revenue</span>
-            </div>
+            {[
+              { diff: "+10%", impact: "-9.1%" },
+              { diff: "+20%", impact: "-16.7%" },
+              { diff: "+50%", impact: "-33.3%" },
+            ].map((item, idx) => (
+              <div key={idx} className="flex justify-between p-3 bg-white/10 rounded-lg">
+                <span className="text-white/80">{item.diff} difficulty</span>
+                <span className="font-bold" style={{ color: '#ef4444' }}>{item.impact} revenue</span>
+              </div>
+            ))}
           </div>
-        </div>
+        </MECContentCard>
 
-        <div className="bg-watt-bitcoin/10 border border-watt-bitcoin/20 rounded-2xl p-6">
-          <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-watt-bitcoin" />
-            Planning Considerations
-          </h4>
-          <ul className="space-y-3 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 bg-watt-bitcoin rounded-full mt-2" />
-              <span>Network hashrate has grown 40-90% annually over the past 5 years</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 bg-watt-bitcoin rounded-full mt-2" />
-              <span>Financial models should assume 3-5% monthly difficulty growth</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 bg-watt-bitcoin rounded-full mt-2" />
-              <span>Hardware efficiency determines how long you remain profitable as difficulty rises</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 bg-watt-bitcoin rounded-full mt-2" />
-              <span>Negative adjustments are rare but occur during major events (China ban 2021: -28%)</span>
-            </li>
+        <MECKeyInsight variant="warning" title="Planning Considerations">
+          <ul className="space-y-2 mt-2">
+            <li>• Network hashrate has grown 40-90% annually over the past 5 years</li>
+            <li>• Financial models should assume 3-5% monthly difficulty growth</li>
+            <li>• Hardware efficiency determines how long you remain profitable</li>
+            <li>• Negative adjustments are rare (China ban 2021: -28%)</li>
           </ul>
-        </div>
+        </MECKeyInsight>
       </div>
     </div>
   );
@@ -142,27 +118,14 @@ const DifficultyAdjustmentSection = () => {
       {/* Interactive Chart */}
       <Suspense fallback={
         <div className="bg-background rounded-2xl border border-border p-6 flex items-center justify-center h-96">
-          <div className="w-8 h-8 border-2 border-watt-bitcoin border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'hsl(var(--watt-bitcoin))', borderTopColor: 'transparent' }} />
         </div>
       }>
         <DifficultyTrendChart />
       </Suspense>
 
       {/* Historical Table */}
-      <div className="bg-background rounded-2xl shadow-lg border border-border p-6">
-        <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-          Historical Difficulty Data
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">Year-over-year comparison of Bitcoin mining difficulty and network hashrate.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </h3>
+      <MECContentCard variant="elevated" headerIcon={Activity} headerTitle="Historical Difficulty Data" headerIconColor="bitcoin">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -175,55 +138,58 @@ const DifficultyAdjustmentSection = () => {
             </thead>
             <tbody>
               {difficultyHistory.map((row, idx) => (
-                <tr key={idx} className="border-b border-border">
+                <motion.tr 
+                  key={idx} 
+                  className="border-b border-border"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  viewport={{ once: true }}
+                >
                   <td className="py-3 px-4 font-medium text-foreground">{row.date}</td>
                   <td className="py-3 px-4 text-right text-foreground">{row.difficulty.toFixed(2)} T</td>
-                  <td className="py-3 px-4 text-right text-watt-purple">{row.hashrate} EH/s</td>
-                  <td className={`py-3 px-4 text-right font-bold ${row.change.startsWith('+') ? 'text-watt-success' : 'text-red-500'}`}>
+                  <td className="py-3 px-4 text-right" style={{ color: 'hsl(var(--watt-purple))' }}>{row.hashrate} EH/s</td>
+                  <td 
+                    className="py-3 px-4 text-right font-bold"
+                    style={{ color: row.change.startsWith('+') ? 'hsl(var(--watt-success))' : '#ef4444' }}
+                  >
                     {row.change}
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </MECContentCard>
     </div>
   );
 
   return (
-    <section id="difficulty" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <div className="text-center mb-12">
-            <span className="inline-block px-3 py-1 bg-watt-bitcoin/10 text-watt-bitcoin rounded-full text-sm font-medium mb-4">
-              Difficulty Adjustment
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Understanding Difficulty Adjustments
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Bitcoin's difficulty adjusts every 2,016 blocks (~2 weeks) to maintain 
-              10-minute block times. This mechanism directly impacts mining revenue.
-            </p>
-          </div>
-        </ScrollReveal>
+    <MECSectionWrapper id="difficulty" theme="light">
+      <ScrollReveal>
+        <MECSectionHeader
+          badge="Difficulty Adjustment"
+          badgeIcon={Activity}
+          title="Understanding Difficulty Adjustments"
+          description="Bitcoin's difficulty adjusts every 2,016 blocks (~2 weeks) to maintain 10-minute block times. This mechanism directly impacts mining revenue."
+          accentColor="bitcoin"
+        />
+      </ScrollReveal>
 
-        <ScrollReveal delay={100}>
-          <ProgressiveDisclosure
-            basicContent={basicContent}
-            intermediateContent={intermediateContent}
-            expertContent={expertContent}
-            defaultLevel="intermediate"
-            labels={{
-              basic: "Overview",
-              intermediate: "How it Works",
-              expert: "Full Analysis"
-            }}
-          />
-        </ScrollReveal>
-      </div>
-    </section>
+      <ScrollReveal delay={100}>
+        <ProgressiveDisclosure
+          basicContent={basicContent}
+          intermediateContent={intermediateContent}
+          expertContent={expertContent}
+          defaultLevel="intermediate"
+          labels={{
+            basic: "Overview",
+            intermediate: "How it Works",
+            expert: "Full Analysis"
+          }}
+        />
+      </ScrollReveal>
+    </MECSectionWrapper>
   );
 };
 
