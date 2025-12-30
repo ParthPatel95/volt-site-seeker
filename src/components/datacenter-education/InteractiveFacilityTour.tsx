@@ -272,7 +272,7 @@ const InteractiveFacilityTour = () => {
       />
       
       <DCESectionHeader
-        badge="Section 4 • Virtual Walkthrough"
+        badge="Section 9 • Virtual Walkthrough"
         badgeIcon={Building2}
         title="Interactive Facility Tour"
         description="Explore warehouse-style and modular container datacenter architectures with professional engineering layouts"

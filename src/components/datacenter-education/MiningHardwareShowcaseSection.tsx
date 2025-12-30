@@ -130,7 +130,7 @@ const MiningHardwareShowcaseSection = () => {
       />
       
       <DCESectionHeader
-        badge="Section 3 • ASIC Technology"
+        badge="Section 6 • ASIC Technology"
         badgeIcon={Cpu}
         title="Mining Hardware Showcase"
         description="Compare the latest 2024/2025 ASIC miners powering Bitcoin's 750+ EH/s network hashrate"
@@ -371,7 +371,7 @@ const MiningHardwareShowcaseSection = () => {
       >
         <DCEContentCard variant="bordered">
           <h3 className="text-lg font-semibold text-foreground mb-4">ASIC Hardware Lifecycle</h3>
-          <div className="grid md:grid-cols-5 gap-4">
+          <div className="grid md:grid-cols-5 gap-4 mb-6">
             <div className="text-center p-3 bg-green-500/10 rounded-xl border border-green-500/20">
               <div className="text-lg font-bold text-green-500 mb-1">Year 1</div>
               <div className="text-sm text-foreground font-medium">Peak ROI</div>
@@ -398,6 +398,64 @@ const MiningHardwareShowcaseSection = () => {
               <div className="text-xs text-muted-foreground mt-1">Recycle or secondary markets</div>
             </div>
           </div>
+          
+          {/* Deep Dive: Why ASICs Depreciate */}
+          <DCEDeepDive title="Why ASICs Depreciate So Fast" icon={Info} defaultOpen={false}>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h5 className="font-semibold text-foreground mb-3">The Efficiency Race</h5>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Bitcoin mining is a zero-sum competition. As network hashrate grows, your share of block rewards shrinks 
+                  proportionally. New miners with better efficiency (lower J/TH) directly outcompete older hardware.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                    <span className="text-xs text-muted-foreground">S9 (2016)</span>
+                    <span className="text-xs font-mono text-foreground">100 J/TH</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                    <span className="text-xs text-muted-foreground">S19 (2020)</span>
+                    <span className="text-xs font-mono text-foreground">30 J/TH</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                    <span className="text-xs text-muted-foreground">S21 Pro (2024)</span>
+                    <span className="text-xs font-mono text-foreground">15 J/TH</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                    <span className="text-xs text-foreground font-medium">Next Gen (2025+)</span>
+                    <span className="text-xs font-mono text-[hsl(var(--watt-bitcoin))]">~10 J/TH</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h5 className="font-semibold text-foreground mb-3">Failure Modes</h5>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[hsl(var(--watt-bitcoin))]">•</span>
+                    <span><strong>Hashboard failure:</strong> Individual ASIC chips fail over time due to thermal stress cycles</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[hsl(var(--watt-bitcoin))]">•</span>
+                    <span><strong>Fan degradation:</strong> Bearings wear out, reducing airflow and causing overheating</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[hsl(var(--watt-bitcoin))]">•</span>
+                    <span><strong>PSU wear:</strong> Capacitors age and efficiency drops, increasing power consumption</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[hsl(var(--watt-bitcoin))]">•</span>
+                    <span><strong>Connector corrosion:</strong> Environmental factors degrade electrical connections</span>
+                  </li>
+                </ul>
+                <div className="mt-4 p-3 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                  <p className="text-xs text-foreground">
+                    <strong>Pro Tip:</strong> Immersion cooling extends hardware life 2-3x by eliminating thermal cycling, 
+                    dust, and fan wear — offsetting higher upfront costs.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </DCEDeepDive>
         </DCEContentCard>
       </motion.div>
       

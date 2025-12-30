@@ -142,6 +142,19 @@ const ElectricalInfrastructureSection = () => {
 
   return (
     <DCESectionWrapper theme="light" id="electrical">
+      <LearningObjectives
+        objectives={[
+          "Trace the complete voltage step-down chain: 138kV → 25kV → 600V → 240V → 12V DC",
+          "Understand transformer sizing, protection coordination, and efficiency ratings",
+          "Learn key electrical equipment: switchgear, PDUs, protective relays, arc flash mitigation",
+          "Calculate power losses at each transformation stage (~2.5% total system loss)"
+        ]}
+        estimatedTime="10 min"
+        prerequisites={[
+          { title: "Energy Source", href: "#energy-source" }
+        ]}
+      />
+      
       <DCESectionHeader
         badge="Section 2 • Electrical Systems"
         badgeIcon={Zap}

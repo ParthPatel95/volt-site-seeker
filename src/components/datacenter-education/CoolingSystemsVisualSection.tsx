@@ -155,7 +155,7 @@ const CoolingSystemsVisualSection = () => {
       />
       
       <DCESectionHeader
-        badge="Section 2 • Thermal Engineering"
+        badge="Section 5 • Thermal Engineering"
         badgeIcon={Thermometer}
         title="Cooling Systems Deep Dive"
         description="Every watt of electricity becomes heat. Here's how professional mining operations manage thermal loads."
