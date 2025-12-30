@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Wind, Droplets, Waves, Thermometer, CheckCircle, XCircle, TrendingDown, Calculator, Info } from 'lucide-react';
-import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { motion } from 'framer-motion';
+import { Wind, Droplets, Waves, Thermometer, CheckCircle, XCircle, TrendingDown, Calculator, Info, Lightbulb, Zap } from 'lucide-react';
 import { PUE_RANGES, DATA_DISCLAIMER } from '@/constants/mining-data';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
 import DecisionCard from '@/components/academy/DecisionCard';
 import CaseStudy from '@/components/academy/CaseStudy';
+import { DCESectionWrapper, DCESectionHeader, DCEContentCard, DCEKeyInsight, DCEDeepDive, DCEStepByStep } from './shared';
 import airCooledImage from '@/assets/datacenter-air-cooled.jpg';
 import hydroImage from '@/assets/datacenter-hydro.jpg';
 import immersionImage from '@/assets/datacenter-immersion.jpg';
@@ -29,7 +30,7 @@ const CoolingSystemsVisualSection = () => {
         { step: 'Air flows through cold aisle, across miners (front-to-back)', detail: 'Each miner needs 200-350 CFM' },
         { step: 'Hot exhaust air (95-130°F) collected in hot aisle', detail: 'ΔT of 30-50°F across miners' },
         { step: 'Exhaust fans pull hot air out of building', detail: '48x 72" fans = 3.1M CFM typical' },
-        { step: 'Evaporative cooling optional in dry climates', detail: 'Drops intake 15-20°F when RH <30%' },
+        { step: 'Evaporative cooling optional in dry climates', detail: 'Drops intake 15-20°F when RH less than 30%' },
       ],
       engineering: {
         cfmPerKw: '100-120 CFM per kW IT load',
@@ -61,7 +62,7 @@ const CoolingSystemsVisualSection = () => {
         { step: 'Hot exhaust air passes through RDHX coils', detail: 'Removes 80-100% of heat at rack' },
         { step: 'Warm water (55°F) returns to chiller plant', detail: '10°F ΔT design typical' },
         { step: 'Chillers or cooling towers reject heat outdoors', detail: 'Free cooling below 45°F ambient' },
-        { step: 'Closed-loop system minimizes water losses', detail: 'Makeup water: <0.1% daily' },
+        { step: 'Closed-loop system minimizes water losses', detail: 'Makeup water: less than 0.1% daily' },
       ],
       engineering: {
         gpmPerKw: '0.25-0.4 GPM per kW at 10°F ΔT',
@@ -120,7 +121,7 @@ const CoolingSystemsVisualSection = () => {
     { metric: 'CapEx ($/kW IT)', air: '$50-150', hydro: '$300-500', immersion: '$500-800', winner: 'air' },
     { metric: 'Power Density (kW/rack)', air: '5-8', hydro: '20-40', immersion: '50-100+', winner: 'immersion' },
     { metric: 'Maintenance Complexity', air: 'Low', hydro: 'Medium', immersion: 'High', winner: 'air' },
-    { metric: 'Noise Level (dB)', air: '85-95', hydro: '70-80', immersion: '<50', winner: 'immersion' },
+    { metric: 'Noise Level (dB)', air: '85-95', hydro: '70-80', immersion: 'Less than 50', winner: 'immersion' },
     { metric: 'Water Usage (WUE)', air: '0.0-2.0', hydro: '0.5-1.5', immersion: '0.0', winner: 'immersion', winnerAlt: 'air' },
     { metric: 'Hardware Lifespan', air: '3-4 years', hydro: '3-4 years', immersion: '5-7 years', winner: 'immersion' },
     { metric: 'Overclock Potential', air: 'Limited', hydro: 'Limited', immersion: '+20-30%', winner: 'immersion' },
@@ -139,288 +140,295 @@ const CoolingSystemsVisualSection = () => {
   const fanCount72 = Math.ceil(totalCFM / 65000);
 
   return (
-    <section className="py-16 md:py-24 bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <LearningObjectives
-          objectives={[
-            "Compare air, hydro (RDHX), and immersion cooling systems",
-            "Understand PUE ratings and what they mean for operating costs",
-            "Learn engineering specs: CFM requirements, temperature ranges, water flow rates",
-            "Know when to choose each cooling method based on your facility requirements"
-          ]}
-          estimatedTime="12 min"
-          prerequisites={[
-            { title: "Power Journey", href: "/datacenter-education#power-journey" }
-          ]}
-        />
-        
-        <ScrollReveal>
-          <div className="text-center mb-10">
-            <span className="inline-block px-4 py-1 rounded-full bg-watt-bitcoin/10 text-watt-bitcoin text-sm font-medium mb-4">
-              Section 2 • Thermal Engineering
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Cooling Systems Deep Dive
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Every watt of electricity becomes heat. Here's how professional mining operations manage thermal loads.
-            </p>
-          </div>
-        </ScrollReveal>
+    <DCESectionWrapper theme="light" id="cooling">
+      <LearningObjectives
+        objectives={[
+          "Compare air, hydro (RDHX), and immersion cooling systems",
+          "Understand PUE ratings and what they mean for operating costs",
+          "Learn engineering specs: CFM requirements, temperature ranges, water flow rates",
+          "Know when to choose each cooling method based on your facility requirements"
+        ]}
+        estimatedTime="12 min"
+        prerequisites={[
+          { title: "Power Journey", href: "/datacenter-education#power-journey" }
+        ]}
+      />
+      
+      <DCESectionHeader
+        badge="Section 2 • Thermal Engineering"
+        badgeIcon={Thermometer}
+        title="Cooling Systems Deep Dive"
+        description="Every watt of electricity becomes heat. Here's how professional mining operations manage thermal loads."
+        theme="light"
+      />
 
-        {/* Cooling Type Selector */}
-        <ScrollReveal delay={0.1}>
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            {coolingSystems.map((system) => (
-              <button
-                key={system.id}
-                onClick={() => setActiveCooling(system.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-                  activeCooling === system.id
-                    ? 'bg-watt-bitcoin text-white shadow-lg shadow-watt-bitcoin/30'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                <system.icon className="w-5 h-5" />
-                {system.name}
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  activeCooling === system.id ? 'bg-white/20' : 'bg-background'
-                }`}>
-                  PUE {system.pue.split(' ')[0]}
-                </span>
-              </button>
+      {/* Cooling Type Selector */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="flex flex-wrap justify-center gap-3 mb-10"
+      >
+        {coolingSystems.map((system) => (
+          <button
+            key={system.id}
+            onClick={() => setActiveCooling(system.id)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
+              activeCooling === system.id
+                ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            <system.icon className="w-5 h-5" />
+            {system.name}
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              activeCooling === system.id ? 'bg-white/20' : 'bg-background'
+            }`}>
+              PUE {system.pue.split(' ')[0]}
+            </span>
+          </button>
+        ))}
+      </motion.div>
+
+      {/* Active System Detail with Real Image */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="grid lg:grid-cols-2 gap-6 mb-12"
+      >
+        {/* Real Facility Image */}
+        <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden border border-border">
+          <img 
+            src={activeSys.image} 
+            alt={activeSys.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <activeSys.icon className="w-6 h-6 text-[hsl(var(--watt-bitcoin))]" />
+              <span className="text-white font-bold text-lg">{activeSys.name}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-[hsl(var(--watt-bitcoin)/0.9)] text-white rounded text-xs font-medium">
+                PUE: {activeSys.pue}
+              </span>
+              <span className="px-2 py-1 bg-white/20 text-white rounded text-xs">
+                {activeSys.pueNote}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Details */}
+        <DCEContentCard variant="default">
+          <p className="text-muted-foreground mb-5">{activeSys.description}</p>
+
+          <div className="mb-5">
+            <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Info className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
+              How It Works
+            </h4>
+            <ol className="space-y-2">
+              {activeSys.howItWorks.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="w-5 h-5 rounded-full bg-[hsl(var(--watt-bitcoin)/0.2)] text-[hsl(var(--watt-bitcoin))] flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <span className="text-foreground">{item.step}</span>
+                    <span className="text-muted-foreground text-xs block">{item.detail}</span>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* Temperature Specs */}
+          <div className="grid grid-cols-2 gap-2 mb-5">
+            {Object.entries(activeSys.temperatures).map(([key, value]) => (
+              <div key={key} className="p-2 bg-muted/50 rounded-lg">
+                <div className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
+                <div className="text-sm font-semibold text-foreground">{value}</div>
+              </div>
             ))}
           </div>
-        </ScrollReveal>
 
-        {/* Active System Detail with Real Image */}
-        <ScrollReveal delay={0.2}>
-          <div className="grid lg:grid-cols-2 gap-6 mb-12">
-            {/* Real Facility Image */}
-            <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden">
-              <img 
-                src={activeSys.image} 
-                alt={activeSys.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <activeSys.icon className="w-6 h-6 text-watt-bitcoin" />
-                  <span className="text-white font-bold text-lg">{activeSys.name}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-1 bg-watt-bitcoin/90 text-white rounded text-xs font-medium">
-                    PUE: {activeSys.pue}
-                  </span>
-                  <span className="px-2 py-1 bg-white/20 text-white rounded text-xs">
-                    {activeSys.pueNote}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Details */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground mb-5">{activeSys.description}</p>
-
-              <div className="mb-5">
-                <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Info className="w-4 h-4 text-watt-bitcoin" />
-                  How It Works
-                </h4>
-                <ol className="space-y-2">
-                  {activeSys.howItWorks.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="w-5 h-5 rounded-full bg-watt-bitcoin/20 text-watt-bitcoin flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                        {i + 1}
-                      </span>
-                      <div>
-                        <span className="text-foreground">{item.step}</span>
-                        <span className="text-muted-foreground text-xs block">{item.detail}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              {/* Temperature Specs */}
-              <div className="grid grid-cols-2 gap-2 mb-5">
-                {Object.entries(activeSys.temperatures).map(([key, value]) => (
-                  <div key={key} className="p-2 bg-muted/50 rounded-lg">
-                    <div className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
-                    <div className="text-sm font-semibold text-foreground">{value}</div>
-                  </div>
+              <h4 className="font-semibold text-foreground mb-2 flex items-center gap-1 text-sm">
+                <CheckCircle className="w-4 h-4 text-green-500" /> Pros
+              </h4>
+              <ul className="space-y-1">
+                {activeSys.pros.map((pro, i) => (
+                  <li key={i} className="text-xs text-muted-foreground">• {pro}</li>
                 ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-1 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> Pros
-                  </h4>
-                  <ul className="space-y-1">
-                    {activeSys.pros.map((pro, i) => (
-                      <li key={i} className="text-xs text-muted-foreground">• {pro}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-1 text-sm">
-                    <XCircle className="w-4 h-4 text-red-500" /> Cons
-                  </h4>
-                  <ul className="space-y-1">
-                    {activeSys.cons.map((con, i) => (
-                      <li key={i} className="text-xs text-muted-foreground">• {con}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-4 p-3 bg-watt-bitcoin/10 rounded-lg">
-                <span className="text-sm font-medium text-foreground">Best For: </span>
-                <span className="text-sm text-muted-foreground">{activeSys.bestFor}</span>
-              </div>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-foreground mb-2 flex items-center gap-1 text-sm">
+                <XCircle className="w-4 h-4 text-red-500" /> Cons
+              </h4>
+              <ul className="space-y-1">
+                {activeSys.cons.map((con, i) => (
+                  <li key={i} className="text-xs text-muted-foreground">• {con}</li>
+                ))}
+              </ul>
             </div>
           </div>
-        </ScrollReveal>
 
-        {/* Engineering Specifications Panel */}
-        <ScrollReveal delay={0.25}>
-          <div className="mb-12 p-5 bg-muted/30 rounded-2xl border border-border">
-            <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-watt-bitcoin" />
+          <div className="mt-4 p-3 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg border border-[hsl(var(--watt-bitcoin)/0.2)]">
+            <span className="text-sm font-medium text-foreground">Best For: </span>
+            <span className="text-sm text-muted-foreground">{activeSys.bestFor}</span>
+          </div>
+        </DCEContentCard>
+      </motion.div>
+
+      {/* Engineering Specifications Panel */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.25 }}
+        className="mb-12"
+      >
+        <DCEContentCard variant="bordered">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 rounded-lg bg-[hsl(var(--watt-bitcoin)/0.15)]">
+              <Calculator className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+            </div>
+            <h4 className="font-semibold text-foreground">
               Engineering Specifications: {activeSys.name}
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {Object.entries(activeSys.engineering).map(([key, value]) => (
-                <div key={key} className="p-3 bg-card rounded-lg border border-border">
-                  <div className="text-xs text-muted-foreground capitalize mb-1">
-                    {key.replace(/([A-Z])/g, ' $1')}
-                  </div>
-                  <div className="text-sm font-semibold text-foreground">{value}</div>
-                </div>
-              ))}
-            </div>
           </div>
-        </ScrollReveal>
-
-        {/* CFM Calculator for Air-Cooled */}
-        {activeCooling === 'air' && (
-          <ScrollReveal delay={0.27}>
-            <div className="mb-12">
-              <button
-                onClick={() => setShowCFMCalculator(!showCFMCalculator)}
-                className="w-full p-4 bg-muted/50 rounded-xl border border-border hover:border-watt-bitcoin/50 transition-colors flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <Calculator className="w-6 h-6 text-watt-bitcoin" />
-                  <div className="text-left">
-                    <div className="font-semibold text-foreground">Airflow (CFM) Calculator</div>
-                    <div className="text-sm text-muted-foreground">Calculate exhaust fan and intake requirements</div>
-                  </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {Object.entries(activeSys.engineering).map(([key, value]) => (
+              <div key={key} className="p-3 bg-muted/50 rounded-lg border border-border">
+                <div className="text-xs text-muted-foreground capitalize mb-1">
+                  {key.replace(/([A-Z])/g, ' $1')}
                 </div>
-                <span className="text-watt-bitcoin text-sm">{showCFMCalculator ? 'Hide' : 'Show'}</span>
-              </button>
+                <div className="text-sm font-semibold text-foreground">{value}</div>
+              </div>
+            ))}
+          </div>
+        </DCEContentCard>
+      </motion.div>
+
+      {/* Key Insight */}
+      <DCEKeyInsight variant="insight" title="PUE Optimization" delay={0.3}>
+        <p>
+          Power Usage Effectiveness (PUE) directly impacts profitability. A facility with PUE 1.10 uses 10% more power 
+          than just the IT load, while PUE 1.30 wastes 30% on cooling and overhead. At $0.05/kWh, this difference 
+          on a 50MW site equals <strong>$2.2M/year</strong> in additional operating costs.
+        </p>
+      </DCEKeyInsight>
+
+      {/* CFM Calculator for Air-Cooled */}
+      {activeCooling === 'air' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="mt-8"
+        >
+          <DCEDeepDive title="Airflow (CFM) Calculator" icon={Calculator} defaultOpen={showCFMCalculator}>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Number of Miners</label>
+                <input
+                  type="range"
+                  min="50"
+                  max="5000"
+                  step="50"
+                  value={minerCount}
+                  onChange={(e) => setMinerCount(Number(e.target.value))}
+                  className="w-full accent-[hsl(var(--watt-bitcoin))]"
+                />
+                <div className="text-lg font-bold text-[hsl(var(--watt-bitcoin))]">{minerCount.toLocaleString()} miners</div>
+                
+                <label className="block text-sm font-medium text-foreground mb-2 mt-4">Power per Miner (W)</label>
+                <input
+                  type="range"
+                  min="2000"
+                  max="5000"
+                  step="100"
+                  value={minerWatts}
+                  onChange={(e) => setMinerWatts(Number(e.target.value))}
+                  className="w-full accent-[hsl(var(--watt-bitcoin))]"
+                />
+                <div className="text-lg font-bold text-[hsl(var(--watt-bitcoin))]">{minerWatts.toLocaleString()}W per miner</div>
+              </div>
               
-              {showCFMCalculator && (
-                <div className="mt-4 p-5 bg-card rounded-xl border border-border">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Number of Miners</label>
-                      <input
-                        type="range"
-                        min="50"
-                        max="5000"
-                        step="50"
-                        value={minerCount}
-                        onChange={(e) => setMinerCount(Number(e.target.value))}
-                        className="w-full"
-                      />
-                      <div className="text-lg font-bold text-watt-bitcoin">{minerCount.toLocaleString()} miners</div>
-                      
-                      <label className="block text-sm font-medium text-foreground mb-2 mt-4">Power per Miner (W)</label>
-                      <input
-                        type="range"
-                        min="2000"
-                        max="5500"
-                        step="100"
-                        value={minerWatts}
-                        onChange={(e) => setMinerWatts(Number(e.target.value))}
-                        className="w-full"
-                      />
-                      <div className="text-lg font-bold text-watt-bitcoin">{minerWatts.toLocaleString()}W</div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <div className="text-xs text-muted-foreground">Total IT Load</div>
-                        <div className="text-xl font-bold text-foreground">{totalKW.toFixed(1)} MW</div>
-                      </div>
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <div className="text-xs text-muted-foreground">Total Airflow Required</div>
-                        <div className="text-xl font-bold text-watt-bitcoin">{(totalCFM / 1000000).toFixed(2)}M CFM</div>
-                      </div>
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <div className="text-xs text-muted-foreground">Intake Opening (@ 400 fpm)</div>
-                        <div className="text-lg font-bold text-foreground">{intakeArea.toFixed(0)} sq ft</div>
-                      </div>
-                      <div className="p-3 bg-muted/50 rounded-lg">
-                        <div className="text-xs text-muted-foreground">72" Exhaust Fans Needed</div>
-                        <div className="text-lg font-bold text-foreground">{fanCount72} fans</div>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    * Based on 280 CFM per miner average. Actual requirements vary by model. Consult ASHRAE guidelines for precise engineering.
-                  </p>
+              <div className="space-y-3">
+                <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                  <div className="text-xs text-muted-foreground">Total IT Load</div>
+                  <div className="text-xl font-bold text-foreground">{totalKW.toFixed(1)} kW ({(totalKW / 1000).toFixed(2)} MW)</div>
                 </div>
-              )}
+                <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                  <div className="text-xs text-muted-foreground">Required Airflow</div>
+                  <div className="text-xl font-bold text-[hsl(var(--watt-bitcoin))]">{totalCFM.toLocaleString()} CFM</div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                  <div className="text-xs text-muted-foreground">Intake Area Needed</div>
+                  <div className="text-xl font-bold text-foreground">{intakeArea.toFixed(0)} sq ft</div>
+                </div>
+                <div className="p-3 bg-[hsl(var(--watt-bitcoin)/0.1)] rounded-lg border border-[hsl(var(--watt-bitcoin)/0.2)]">
+                  <div className="text-xs text-muted-foreground">72" Exhaust Fans Required</div>
+                  <div className="text-xl font-bold text-[hsl(var(--watt-bitcoin))]">{fanCount72} fans</div>
+                </div>
+              </div>
             </div>
-          </ScrollReveal>
-        )}
+          </DCEDeepDive>
+        </motion.div>
+      )}
 
-        {/* Comparison Table */}
-        <ScrollReveal delay={0.3}>
-          <h3 className="text-xl font-semibold text-foreground mb-4 text-center">
-            Side-by-Side Comparison
-          </h3>
+      {/* Comparison Table */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="mt-10"
+      >
+        <DCEContentCard variant="elevated">
+          <h3 className="text-xl font-bold text-foreground mb-6">Cooling Method Comparison</h3>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-3 text-muted-foreground font-medium text-sm">Metric</th>
-                  <th className="p-3 text-center">
+                  <th className="text-left py-3 px-4 font-medium text-foreground">Metric</th>
+                  <th className="text-center py-3 px-4 font-medium text-foreground">
                     <div className="flex items-center justify-center gap-2">
-                      <Wind className="w-4 h-4 text-cyan-500" />
-                      <span className="text-foreground font-medium text-sm">Air-Cooled</span>
+                      <Wind className="w-4 h-4" /> Air
                     </div>
                   </th>
-                  <th className="p-3 text-center">
+                  <th className="text-center py-3 px-4 font-medium text-foreground">
                     <div className="flex items-center justify-center gap-2">
-                      <Droplets className="w-4 h-4 text-blue-500" />
-                      <span className="text-foreground font-medium text-sm">Hydro (RDHX)</span>
+                      <Droplets className="w-4 h-4" /> Hydro
                     </div>
                   </th>
-                  <th className="p-3 text-center">
+                  <th className="text-center py-3 px-4 font-medium text-foreground">
                     <div className="flex items-center justify-center gap-2">
-                      <Waves className="w-4 h-4 text-purple-500" />
-                      <span className="text-foreground font-medium text-sm">Immersion</span>
+                      <Waves className="w-4 h-4" /> Immersion
                     </div>
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {comparisonData.map((row, i) => (
-                  <tr key={i} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="p-3 text-muted-foreground text-sm">{row.metric}</td>
-                    <td className={`p-3 text-center text-sm ${row.winner === 'air' || row.winnerAlt === 'air' ? 'text-watt-bitcoin font-semibold' : 'text-foreground'}`}>
+                {comparisonData.map((row) => (
+                  <tr key={row.metric} className="border-b border-border/50 hover:bg-muted/30">
+                    <td className="py-3 px-4 text-foreground">{row.metric}</td>
+                    <td className={`py-3 px-4 text-center ${row.winner === 'air' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
                       {row.air}
                     </td>
-                    <td className={`p-3 text-center text-sm ${row.winner === 'hydro' ? 'text-watt-bitcoin font-semibold' : 'text-foreground'}`}>
+                    <td className={`py-3 px-4 text-center ${row.winner === 'hydro' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
                       {row.hydro}
                     </td>
-                    <td className={`p-3 text-center text-sm ${row.winner === 'immersion' ? 'text-watt-bitcoin font-semibold' : 'text-foreground'}`}>
+                    <td className={`py-3 px-4 text-center ${row.winner === 'immersion' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
                       {row.immersion}
                     </td>
                   </tr>
@@ -428,131 +436,18 @@ const CoolingSystemsVisualSection = () => {
               </tbody>
             </table>
           </div>
-        </ScrollReveal>
+        </DCEContentCard>
+      </motion.div>
 
-        {/* PUE Explanation */}
-        <ScrollReveal delay={0.4}>
-          <div className="mt-10 p-5 bg-muted/30 rounded-2xl border border-border">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-watt-bitcoin/10 flex items-center justify-center flex-shrink-0">
-                <TrendingDown className="w-6 h-6 text-watt-bitcoin" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-foreground mb-2">Understanding PUE (Power Usage Effectiveness)</h4>
-                <p className="text-muted-foreground text-sm mb-4">
-                  PUE = Total Facility Power ÷ IT Equipment Power. A PUE of 1.0 means 100% of power goes to computing. 
-                  A PUE of 1.15 means 15% overhead goes to cooling, lighting, and losses.
-                </p>
-                <div className="grid grid-cols-4 gap-3 text-center">
-                  <div className="p-2 bg-red-500/10 rounded-lg">
-                    <div className="text-lg font-bold text-red-500">2.0+</div>
-                    <div className="text-xs text-muted-foreground">Inefficient</div>
-                  </div>
-                  <div className="p-2 bg-yellow-500/10 rounded-lg">
-                    <div className="text-lg font-bold text-yellow-500">1.4-1.6</div>
-                    <div className="text-xs text-muted-foreground">Average</div>
-                  </div>
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <div className="text-lg font-bold text-green-500">1.1-1.3</div>
-                    <div className="text-xs text-muted-foreground">Good</div>
-                  </div>
-                  <div className="p-2 bg-watt-bitcoin/10 rounded-lg">
-                    <div className="text-lg font-bold text-watt-bitcoin">&lt;1.1</div>
-                    <div className="text-xs text-muted-foreground">Excellent</div>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  WattByte Alberta targets PUE 1.15 using air cooling with 8,000+ hours of free cooling annually.
-                </p>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* Decision Card */}
-        <ScrollReveal delay={0.45}>
-          <div className="mt-12">
-            <DecisionCard
-              title="Choose Your Cooling Method"
-              question="Answer based on your facility requirements to find the best cooling approach."
-              criteria={['Budget', 'Efficiency', 'Density', 'Simplicity', 'Climate Flexibility']}
-              options={[
-                {
-                  id: 'air',
-                  name: 'Air-Cooled',
-                  icon: Wind,
-                  description: 'Hot/cold aisle with exhaust fans. Lowest cost, proven at GW+ scale.',
-                  bestFor: 'Cold climates like Alberta, cost-focused large-scale operations',
-                  scores: { 'Budget': 5, 'Efficiency': 3, 'Density': 2, 'Simplicity': 5, 'Climate Flexibility': 2 },
-                  recommended: true
-                },
-                {
-                  id: 'hydro',
-                  name: 'Hydro (RDHX)',
-                  icon: Droplets,
-                  description: 'Rear-door heat exchangers with chilled water. Higher density, consistent performance.',
-                  bestFor: 'Medium to large facilities needing climate independence',
-                  scores: { 'Budget': 3, 'Efficiency': 4, 'Density': 4, 'Simplicity': 3, 'Climate Flexibility': 5 }
-                },
-                {
-                  id: 'immersion',
-                  name: 'Immersion',
-                  icon: Waves,
-                  description: 'Hardware submerged in dielectric fluid. Maximum efficiency and overclocking.',
-                  bestFor: 'New builds, premium hosting, hot climates, maximum efficiency',
-                  scores: { 'Budget': 1, 'Efficiency': 5, 'Density': 5, 'Simplicity': 1, 'Climate Flexibility': 5 }
-                }
-              ]}
-            />
-          </div>
-        </ScrollReveal>
-
-        {/* Case Study */}
-        <ScrollReveal delay={0.5}>
-          <div className="mt-12">
-            <CaseStudy
-              title="10 MW Air-Cooled Mining Facility"
-              location="Central Alberta, Canada"
-              date="Operational 2023"
-              capacity="10 MW IT Load"
-              metrics={[
-                { label: 'PUE Achieved', value: '1.18' },
-                { label: 'Miners', value: '2,800' },
-                { label: 'Free Cooling', value: '8,200 hrs/yr' },
-                { label: 'Annual Savings', value: '$1.2M' }
-              ]}
-              whatWorked={[
-                'Leveraged Alberta climate for 8,200+ hours of free cooling annually',
-                'Hot/cold aisle containment with 48x 72" exhaust fans delivering 3.1M CFM',
-                'Simple maintenance - staff can replace fans without specialized training',
-                'Zero water usage - no cooling towers, no makeup water costs'
-              ]}
-              lessonsLearned={[
-                'Dust management is critical - install high-quality intake filters',
-                'Winter freeze protection needed for glycol loops in -40°C conditions',
-                'Noise mitigation required for community - 500m setback from residences',
-                'Plan for 20% extra airflow capacity for future hardware upgrades'
-              ]}
-              proTip="In cold climates, air cooling often beats immersion on TCO despite lower efficiency. Run a 5-year model with your actual power rates."
-            />
-          </div>
-        </ScrollReveal>
-        
-        <SectionSummary
-          takeaways={[
-            "Air cooling is lowest cost (PUE 1.20-1.40) — best for cold climates like Alberta with 8,000+ free cooling hours",
-            "Hydro/RDHX enables higher density (30 kW/rack) with consistent cooling regardless of ambient temperature",
-            "Immersion achieves best efficiency (PUE 1.02-1.08) and enables +30% overclocking, but highest upfront cost",
-            "Choose based on: budget, climate, power density needs, and noise constraints"
-          ]}
-          proTip="For a 100MW facility in Alberta, air cooling can save $2-3M annually in OPEX vs immersion, while immersion saves on floor space. Run the numbers for your specific case."
-          nextSteps={[
-            { title: "Mining Hardware", href: "/datacenter-education#hardware" },
-            { title: "Facility Tour", href: "/datacenter-education#facility-tour" }
-          ]}
-        />
-      </div>
-    </section>
+      <SectionSummary
+        takeaways={[
+          `Air cooling: Lowest cost (PUE ${PUE_RANGES.AIR_COOLED.min.toFixed(2)}-${PUE_RANGES.AIR_COOLED.max.toFixed(2)}), best for cold climates like Alberta with 8,000+ free cooling hours`,
+          `Hydro cooling (RDHX): Balanced approach (PUE ${PUE_RANGES.HYDRO_COOLED.min.toFixed(2)}-${PUE_RANGES.HYDRO_COOLED.max.toFixed(2)}), enables 30+ kW per rack density`,
+          `Immersion cooling: Highest efficiency (PUE ${PUE_RANGES.IMMERSION_SINGLE_PHASE.min.toFixed(2)}-${PUE_RANGES.IMMERSION_SINGLE_PHASE.max.toFixed(2)}) with +30% overclock potential and 2-3x hardware lifespan`,
+          "Choose based on climate, budget, density requirements, and operational expertise"
+        ]}
+      />
+    </DCESectionWrapper>
   );
 };
 
