@@ -245,6 +245,144 @@ const InteractiveFacilityTour = () => {
     },
   };
 
+  // Commissioning Phases (Industry Standard)
+  const commissioningPhases = [
+    {
+      phase: 'Phase 1: Pre-Commissioning',
+      duration: '2-4 weeks',
+      description: 'Verify all equipment installed per drawings, megger testing, visual inspection',
+      activities: [
+        'Punch list walkthrough with contractor',
+        'Megger test all cables (>1 MΩ/kV)',
+        'Torque check on all connections',
+        'Clean equipment and remove debris',
+        'Verify nameplate ratings match design',
+      ],
+      gatekeeper: 'All punch items resolved before energization',
+    },
+    {
+      phase: 'Phase 2: Energization',
+      duration: '1-2 weeks',
+      description: 'Step-by-step energization from utility POI to distribution',
+      activities: [
+        'Utility interconnection agreement signed',
+        'Energize main substation (under utility supervision)',
+        'Test protective relays with secondary injection',
+        'Energize unit subs one at a time',
+        'Verify voltages at all distribution points',
+      ],
+      gatekeeper: 'All protective devices tested and set correctly',
+    },
+    {
+      phase: 'Phase 3: Mechanical Commissioning',
+      duration: '1-2 weeks',
+      description: 'Start cooling systems, balance airflow, verify thermal performance',
+      activities: [
+        'Start pumps and fans on VFDs',
+        'Balance water flow per design GPM',
+        'Verify air velocities with anemometer',
+        'Run heat load test (staged)',
+        'Adjust VFD setpoints for efficiency',
+      ],
+      gatekeeper: 'Cooling capacity verified at design load',
+    },
+    {
+      phase: 'Phase 4: IT Load Testing',
+      duration: '2-4 weeks',
+      description: 'Stage miner deployment, validate power and cooling at each step',
+      activities: [
+        'Deploy 25% load, run 48 hrs stable',
+        'Deploy 50% load, verify temps',
+        'Deploy 75% load, check for hot spots',
+        'Deploy 100% load, 72-hr burn-in',
+        'Document steady-state metrics',
+      ],
+      gatekeeper: 'All zones at design temperature under full load',
+    },
+    {
+      phase: 'Phase 5: Handoff & Training',
+      duration: '1 week',
+      description: 'Transfer operations to site team, training and documentation',
+      activities: [
+        'O&M manual delivery',
+        'Operator training (DCIM, BMS, safety)',
+        'Emergency procedure walkthrough',
+        'Spare parts inventory handoff',
+        'Warranty documentation',
+      ],
+      gatekeeper: 'Site team signed off on training',
+    },
+  ];
+
+  // Safety & Egress Considerations
+  const safetyEgress = {
+    exitRequirements: {
+      name: 'Emergency Egress (IBC/NFPA 101)',
+      requirements: [
+        { rule: 'Max travel distance', spec: '200 ft (unsprinklered) / 250 ft (sprinklered) to nearest exit' },
+        { rule: 'Exit width', spec: '0.2 in per occupant (min 32" clear)' },
+        { rule: 'Two exits required', spec: 'If occupant load > 50 or travel distance > 75 ft' },
+        { rule: 'Exit signage', spec: 'Illuminated EXIT signs, emergency lighting on battery backup' },
+        { rule: 'Door swing', spec: 'Outward swing in direction of egress for high-occupancy areas' },
+      ],
+    },
+    arcFlashZones: {
+      name: 'Arc Flash Boundaries (NFPA 70E)',
+      zones: [
+        { boundary: 'Prohibited Approach', distance: '< 1 inch', ppe: 'PPE Cat 4 + specialized training' },
+        { boundary: 'Restricted Approach', distance: '< 12 inches', ppe: 'PPE Cat 3-4, qualified only' },
+        { boundary: 'Limited Approach', distance: '3.5 ft (480V)', ppe: 'PPE Cat 2, shock hazard training' },
+        { boundary: 'Arc Flash Boundary', distance: 'Per study (6-20 ft typical)', ppe: 'Rated PPE required beyond' },
+      ],
+    },
+    lockoutTagout: {
+      name: 'LOTO Procedures (OSHA 1910.147)',
+      steps: [
+        'Notify affected employees of shutdown',
+        'Identify all energy sources (electrical, mechanical, pneumatic)',
+        'Isolate equipment from energy sources',
+        'Apply lockout/tagout devices',
+        'Verify zero energy state (try to start)',
+        'Perform maintenance work',
+        'Remove LOTO devices, notify personnel, restore power',
+      ],
+    },
+    fireProtection: {
+      name: 'Fire Protection Systems',
+      systems: [
+        { type: 'VESDA (Very Early Smoke Detection)', location: 'Mining floor, electrical rooms', response: 'Pre-alarm notification' },
+        { type: 'Sprinkler (Wet/Dry)', location: 'General areas, offices', response: 'Water suppression' },
+        { type: 'Clean Agent (FM-200/Novec)', location: 'Electrical rooms, immersion areas', response: 'Non-damaging suppression' },
+        { type: 'Fire Extinguishers', location: 'Every 75 ft, CO2/dry chem near electrical', response: 'Manual suppression' },
+      ],
+    },
+  };
+
+  // Walkthrough Modes
+  const walkthroughModes = [
+    {
+      mode: 'Investor Tour',
+      duration: '30-45 min',
+      focus: 'High-level overview, key metrics, security',
+      path: ['NOC & Security', 'Main Substation', 'Mining Pod A (observation)', 'Cooling overview'],
+      restrictions: 'No photography near equipment, hard hats required in active areas',
+    },
+    {
+      mode: 'Technical Due Diligence',
+      duration: '2-4 hours',
+      focus: 'Detailed equipment inspection, documentation review',
+      path: ['Full substation walkdown', 'All mining pods', 'Cooling plant', 'Electrical rooms', 'BMS/DCIM demo'],
+      restrictions: 'NDA required, escort at all times, PPE required',
+    },
+    {
+      mode: 'Operator Training',
+      duration: '8+ hours (multi-day)',
+      focus: 'Hands-on system operation, emergency procedures',
+      path: ['All zones covered', 'Control room training', 'Emergency drills', 'LOTO practice'],
+      restrictions: 'Full PPE, safety training prerequisite',
+    },
+  ];
+
   const currentFacility = facilityConfigs[facilityType];
   const facilityZones = currentFacility.zones;
 
@@ -466,8 +604,167 @@ const InteractiveFacilityTour = () => {
         </motion.div>
       )}
 
+      {/* Commissioning Phases */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.35 }}
+        className="mb-8"
+      >
+        <DCEDeepDive title="Commissioning Phases (Industry Standard)" icon={CheckCircle}>
+          <div className="space-y-4">
+            {commissioningPhases.map((phase, index) => (
+              <div key={phase.phase} className="bg-muted/30 rounded-xl p-4 border border-border">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[hsl(var(--watt-bitcoin))] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-foreground">{phase.phase}</h4>
+                      <span className="text-xs px-2 py-0.5 bg-muted rounded text-muted-foreground">{phase.duration}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">{phase.description}</p>
+                    <div className="space-y-1 mb-3">
+                      {phase.activities.map((activity, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <span className="text-[hsl(var(--watt-bitcoin))]">•</span>
+                          <span>{activity}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-xs bg-yellow-500/10 text-yellow-600 rounded-lg px-3 py-2 border border-yellow-500/20">
+                      <strong>Gate:</strong> {phase.gatekeeper}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DCEDeepDive>
+      </motion.div>
+
+      {/* Safety & Egress */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="mb-8"
+      >
+        <DCEContentCard variant="bordered">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+            Safety & Egress Considerations
+          </h3>
+          
+          <div className="space-y-4">
+            {/* Exit Requirements */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-semibold text-foreground mb-3">{safetyEgress.exitRequirements.name}</h4>
+              <div className="space-y-2">
+                {safetyEgress.exitRequirements.requirements.map((req) => (
+                  <div key={req.rule} className="flex items-start gap-3 text-xs">
+                    <span className="font-medium text-foreground min-w-[140px]">{req.rule}:</span>
+                    <span className="text-muted-foreground">{req.spec}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Arc Flash Zones */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-semibold text-foreground mb-3">{safetyEgress.arcFlashZones.name}</h4>
+              <div className="space-y-2">
+                {safetyEgress.arcFlashZones.zones.map((zone) => (
+                  <div key={zone.boundary} className="flex items-center justify-between px-3 py-2 bg-background rounded-lg border border-border text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-3 h-3 rounded-full ${
+                        zone.boundary === 'Prohibited Approach' ? 'bg-red-500' :
+                        zone.boundary === 'Restricted Approach' ? 'bg-orange-500' :
+                        zone.boundary === 'Limited Approach' ? 'bg-yellow-500' : 'bg-blue-500'
+                      }`} />
+                      <span className="font-medium text-foreground">{zone.boundary}</span>
+                    </div>
+                    <span className="text-muted-foreground">{zone.distance}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* LOTO Procedure */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-semibold text-foreground mb-3">{safetyEgress.lockoutTagout.name}</h4>
+              <div className="flex flex-wrap gap-2">
+                {safetyEgress.lockoutTagout.steps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-background rounded-lg border border-border text-xs">
+                    <span className="w-5 h-5 rounded-full bg-[hsl(var(--watt-bitcoin))] text-white flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+                    <span className="text-muted-foreground">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Fire Protection */}
+            <div className="bg-muted/30 rounded-xl p-4 border border-border">
+              <h4 className="font-semibold text-foreground mb-3">{safetyEgress.fireProtection.name}</h4>
+              <div className="grid md:grid-cols-2 gap-2">
+                {safetyEgress.fireProtection.systems.map((system) => (
+                  <div key={system.type} className="px-3 py-2 bg-background rounded-lg border border-border text-xs">
+                    <div className="font-medium text-foreground mb-0.5">{system.type}</div>
+                    <div className="text-muted-foreground">{system.location}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DCEContentCard>
+      </motion.div>
+
+      {/* Walkthrough Modes */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        className="mb-8"
+      >
+        <DCEContentCard variant="elevated">
+          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-[hsl(var(--watt-bitcoin))]" />
+            Walkthrough Modes
+          </h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            {walkthroughModes.map((mode) => (
+              <div key={mode.mode} className="bg-muted/30 rounded-xl p-4 border border-border">
+                <div className="text-center mb-3">
+                  <div className="font-bold text-foreground mb-1">{mode.mode}</div>
+                  <span className="text-xs px-2 py-0.5 bg-[hsl(var(--watt-bitcoin)/0.1)] text-[hsl(var(--watt-bitcoin))] rounded">
+                    {mode.duration}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">{mode.focus}</p>
+                <div className="text-xs space-y-1 mb-3">
+                  <div className="font-medium text-foreground">Path:</div>
+                  {mode.path.map((stop, i) => (
+                    <div key={i} className="flex items-center gap-1 text-muted-foreground">
+                      <span className="text-[hsl(var(--watt-bitcoin))]">→</span>
+                      <span>{stop}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[10px] text-muted-foreground bg-background rounded-lg p-2 border border-border">
+                  ⚠️ {mode.restrictions}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DCEContentCard>
+      </motion.div>
+
       {/* Key Insight */}
-      <DCEKeyInsight variant="insight" title="Facility Architecture Decision" delay={0.35}>
+      <DCEKeyInsight variant="insight" title="Facility Architecture Decision" delay={0.5}>
         <p>
           <strong>Warehouse builds</strong> offer the lowest $/MW cost and scale to 100+ MW, but require 12-18 months 
           to construct. <strong>Container solutions</strong> deploy in weeks and can be relocated, but cost 30-50% more 
@@ -480,8 +777,8 @@ const InteractiveFacilityTour = () => {
         takeaways={[
           "Warehouse air-cooled: Lowest cost, 135MW+ scale, 12-18 month build, PUE 1.15-1.25",
           "Container hydro: Modular 1MW units, 4-6 week deploy, PUE 1.15-1.30, relocatable",
-          "Container immersion: Highest efficiency PUE 1.02-1.08, +30% overclock, zero water",
-          "All facilities share core zones: substation, mining floor, cooling, NOC/security"
+          "5-phase commissioning: Pre-commission → Energization → Mechanical → IT Load → Handoff",
+          "Safety critical: NFPA 70E arc flash boundaries, IBC egress codes, OSHA LOTO procedures"
         ]}
       />
     </DCESectionWrapper>
