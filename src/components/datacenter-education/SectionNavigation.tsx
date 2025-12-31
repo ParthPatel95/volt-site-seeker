@@ -178,8 +178,8 @@ const SectionNavigation = () => {
       </nav>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed bottom-4 left-2 right-2 z-50 lg:hidden">
-        <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-1.5 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <nav className="fixed bottom-4 left-2 right-2 z-40 lg:hidden safe-area-inset-bottom">
+        <div className="bg-card/95 backdrop-blur-sm rounded-2xl border border-border shadow-lg p-1.5 overflow-x-auto scrollbar-hide touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
           {/* Mobile progress indicator */}
           <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border">
             <div className="flex items-center gap-2">

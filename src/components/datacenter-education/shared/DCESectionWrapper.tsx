@@ -31,7 +31,7 @@ export const DCESectionWrapper: React.FC<DCESectionWrapperProps> = ({
   return (
     <section
       id={id}
-      className={`relative py-16 md:py-24 lg:py-32 overflow-hidden ${getThemeClasses()} ${className}`}
+      className={`relative py-16 md:py-24 lg:py-32 overflow-hidden scroll-mt-20 ${getThemeClasses()} ${className}`}
     >
       {/* Subtle pattern overlay for dark themes */}
       {(theme === 'dark' || theme === 'gradient') && (

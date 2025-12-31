@@ -168,27 +168,29 @@ const CoolingSystemsVisualSection = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex flex-wrap justify-center gap-3 mb-10"
+        className="mb-10"
       >
-        {coolingSystems.map((system) => (
-          <button
-            key={system.id}
-            onClick={() => setActiveCooling(system.id)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-              activeCooling === system.id
-                ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            <system.icon className="w-5 h-5" />
-            {system.name}
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              activeCooling === system.id ? 'bg-white/20' : 'bg-background'
-            }`}>
-              PUE {system.pue.split(' ')[0]}
-            </span>
-          </button>
-        ))}
+        <div className="flex overflow-x-auto pb-2 gap-2 sm:gap-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
+          {coolingSystems.map((system) => (
+            <button
+              key={system.id}
+              onClick={() => setActiveCooling(system.id)}
+              className={`flex-shrink-0 snap-start flex items-center gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all ${
+                activeCooling === system.id
+                  ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              <system.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="whitespace-nowrap">{system.name}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
+                activeCooling === system.id ? 'bg-white/20' : 'bg-background'
+              }`}>
+                PUE {system.pue.split(' ')[0]}
+              </span>
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Active System Detail with Real Image */}
@@ -200,7 +202,7 @@ const CoolingSystemsVisualSection = () => {
         className="grid lg:grid-cols-2 gap-6 mb-12"
       >
         {/* Real Facility Image */}
-        <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden border border-border">
+        <div className="relative aspect-video md:h-96 md:aspect-auto rounded-2xl overflow-hidden border border-border">
           <img 
             src={activeSys.image} 
             alt={activeSys.name}
