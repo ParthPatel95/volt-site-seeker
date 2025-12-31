@@ -250,3 +250,6 @@ verify_jwt = false
 
 [functions.datacenter-automation-engine]
 verify_jwt = false
+
+[functions.miner-controller]
+verify_jwt = false
