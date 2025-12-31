@@ -391,9 +391,9 @@ const FacilityDesignSection = () => {
   ];
 
   const facilityButtons = [
-    { id: 'warehouse' as const, name: 'Steel Building', icon: Building2, capacity: '25-200+ MW' },
-    { id: 'container' as const, name: 'Container', icon: Box, capacity: '1-2 MW each' },
-    { id: 'modular' as const, name: 'Prefab Modular', icon: Grid, capacity: '5-15 MW each' },
+    { id: 'warehouse' as const, name: 'Steel Building', shortName: 'Steel', icon: Building2, capacity: '25-200+ MW' },
+    { id: 'container' as const, name: 'Container', shortName: 'Container', icon: Box, capacity: '1-2 MW each' },
+    { id: 'modular' as const, name: 'Prefab Modular', shortName: 'Modular', icon: Grid, capacity: '5-15 MW each' },
   ];
 
   return (
@@ -589,27 +589,32 @@ const FacilityDesignSection = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="flex flex-wrap justify-center gap-3 mb-10"
+        className="mb-10"
       >
-        {facilityButtons.map((type) => (
-          <button
-            key={type.id}
-            onClick={() => setActiveFacilityType(type.id)}
-            className={`flex items-center gap-3 px-5 py-3 rounded-xl transition-all ${
-              activeFacilityType === type.id
-                ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
-                : 'bg-card border border-border hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
-            }`}
-          >
-            <type.icon className="w-5 h-5" />
-            <div className="text-left">
-              <div className="font-semibold text-sm">{type.name}</div>
-              <div className={`text-xs ${activeFacilityType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
-                {type.capacity}
+        <div className="flex overflow-x-auto pb-2 gap-2 sm:gap-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
+          {facilityButtons.map((type) => (
+            <button
+              key={type.id}
+              onClick={() => setActiveFacilityType(type.id)}
+              className={`flex-shrink-0 snap-start flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 rounded-xl transition-all min-w-[120px] ${
+                activeFacilityType === type.id
+                  ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                  : 'bg-card border border-border hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
+              }`}
+            >
+              <type.icon className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left">
+                <div className="font-semibold text-sm whitespace-nowrap">
+                  <span className="sm:hidden">{type.shortName}</span>
+                  <span className="hidden sm:inline">{type.name}</span>
+                </div>
+                <div className={`text-xs whitespace-nowrap ${activeFacilityType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                  {type.capacity}
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Active Facility Details */}
@@ -623,7 +628,7 @@ const FacilityDesignSection = () => {
           className="grid lg:grid-cols-2 gap-6 mb-12"
         >
           {/* Image */}
-          <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden">
+          <div className="relative aspect-video md:h-96 md:aspect-auto rounded-2xl overflow-hidden">
             <img 
               src={currentFacility.image} 
               alt={currentFacility.name}
@@ -760,39 +765,42 @@ const FacilityDesignSection = () => {
 
       {/* Comparison Table */}
       <DCEDeepDive title="Facility Type Comparison Matrix" icon={Building2} className="mb-12">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-3 font-medium text-foreground">Metric</th>
-                <th className="text-center py-3 px-3 font-medium text-foreground">Steel Building</th>
-                <th className="text-center py-3 px-3 font-medium text-foreground">Container</th>
-                <th className="text-center py-3 px-3 font-medium text-foreground">Prefab Modular</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonMetrics.map((row) => (
-                <tr key={row.metric} className="border-b border-border/50 hover:bg-muted/30">
-                  <td className="py-3 px-3">
-                    <div className="font-medium text-foreground">{row.metric}</div>
-                    <div className="text-xs text-muted-foreground">{row.note}</div>
-                  </td>
-                  <td className={`py-3 px-3 text-center ${row.best === 'warehouse' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
-                    {row.best === 'warehouse' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                    {row.warehouse}
-                  </td>
-                  <td className={`py-3 px-3 text-center ${row.best === 'container' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
-                    {row.best === 'container' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                    {row.container}
-                  </td>
-                  <td className={`py-3 px-3 text-center ${row.best === 'modular' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
-                    {row.best === 'modular' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                    {row.modular}
-                  </td>
+        <div className="relative">
+          <div className="overflow-x-auto pb-2 scrollbar-hide">
+            <table className="w-full text-sm min-w-[600px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-3 font-medium text-foreground min-w-[140px]">Metric</th>
+                  <th className="text-center py-3 px-3 font-medium text-foreground min-w-[100px]">Steel Building</th>
+                  <th className="text-center py-3 px-3 font-medium text-foreground min-w-[100px]">Container</th>
+                  <th className="text-center py-3 px-3 font-medium text-foreground min-w-[100px]">Prefab Modular</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {comparisonMetrics.map((row) => (
+                  <tr key={row.metric} className="border-b border-border/50 hover:bg-muted/30">
+                    <td className="py-3 px-3">
+                      <div className="font-medium text-foreground">{row.metric}</div>
+                      <div className="text-xs text-muted-foreground">{row.note}</div>
+                    </td>
+                    <td className={`py-3 px-3 text-center ${row.best === 'warehouse' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
+                      {row.best === 'warehouse' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                      {row.warehouse}
+                    </td>
+                    <td className={`py-3 px-3 text-center ${row.best === 'container' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
+                      {row.best === 'container' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                      {row.container}
+                    </td>
+                    <td className={`py-3 px-3 text-center ${row.best === 'modular' ? 'text-[hsl(var(--watt-bitcoin))] font-semibold' : 'text-muted-foreground'}`}>
+                      {row.best === 'modular' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                      {row.modular}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="absolute top-0 right-0 bottom-2 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none md:hidden" />
         </div>
       </DCEDeepDive>
 

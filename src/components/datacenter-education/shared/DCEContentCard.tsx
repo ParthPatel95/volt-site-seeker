@@ -50,7 +50,7 @@ export const DCEContentCard: React.FC<DCEContentCardProps> = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
-      className={`rounded-2xl p-6 md:p-8 ${getVariantClasses()} ${hoverClasses} ${className}`}
+      className={`rounded-2xl p-4 sm:p-6 md:p-8 ${getVariantClasses()} ${hoverClasses} ${className}`}
     >
       {header && (
         <div className="flex items-start gap-4 mb-6">

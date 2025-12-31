@@ -530,27 +530,29 @@ const EnergySourceSection = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="flex flex-wrap justify-center gap-3 mb-10"
+        className="mb-10"
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all ${
-              activeTab === tab.id
-                ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
-                : 'bg-card border border-border text-muted-foreground hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
-            }`}
-          >
-            <tab.icon className="w-5 h-5" />
-            <div className="text-left">
-              <div className="text-sm font-semibold">{tab.label}</div>
-              <div className={`text-xs ${activeTab === tab.id ? 'text-white/70' : 'text-muted-foreground'}`}>
-                {tab.description}
+        <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex-shrink-0 snap-start flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all min-w-[140px] md:min-w-0 ${
+                activeTab === tab.id
+                  ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                  : 'bg-card border border-border text-muted-foreground hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
+              }`}
+            >
+              <tab.icon className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left">
+                <div className="text-sm font-semibold whitespace-nowrap">{tab.label}</div>
+                <div className={`text-xs whitespace-nowrap ${activeTab === tab.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                  {tab.description}
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Grid Connection Tab */}

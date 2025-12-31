@@ -217,7 +217,7 @@ const OperationsMonitoringSection = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative rounded-2xl overflow-hidden mb-10 h-48 md:h-72 border border-border"
+        className="relative rounded-2xl overflow-hidden mb-10 aspect-[16/9] md:aspect-[21/9] border border-border"
       >
         <img 
           src={nocInterior} 
@@ -411,37 +411,40 @@ const OperationsMonitoringSection = () => {
             Regular maintenance ensures uptime and extends equipment life
           </p>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-3 font-medium text-foreground">Task</th>
-                  <th className="text-left py-3 px-3 font-medium text-foreground">Frequency</th>
-                  <th className="text-left py-3 px-3 font-medium text-foreground">Duration</th>
-                  <th className="text-left py-3 px-3 font-medium text-foreground">Criticality</th>
-                </tr>
-              </thead>
-              <tbody>
-                {maintenanceTasks.map((task) => (
-                  <tr key={task.task} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="py-3 px-3 text-foreground">{task.task}</td>
-                    <td className="py-3 px-3">
-                      <span className="px-2 py-1 bg-muted rounded text-xs">{task.frequency}</span>
-                    </td>
-                    <td className="py-3 px-3 text-muted-foreground">{task.duration}</td>
-                    <td className="py-3 px-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        task.criticality === 'Critical' ? 'bg-red-500/10 text-red-500' :
-                        task.criticality === 'High' ? 'bg-orange-500/10 text-orange-500' :
-                        'bg-yellow-500/10 text-yellow-500'
-                      }`}>
-                        {task.criticality}
-                      </span>
-                    </td>
+          <div className="relative">
+            <div className="overflow-x-auto pb-2 scrollbar-hide">
+              <table className="w-full text-sm min-w-[500px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-3 font-medium text-foreground min-w-[200px]">Task</th>
+                    <th className="text-left py-3 px-3 font-medium text-foreground min-w-[80px]">Frequency</th>
+                    <th className="text-left py-3 px-3 font-medium text-foreground min-w-[80px]">Duration</th>
+                    <th className="text-left py-3 px-3 font-medium text-foreground min-w-[80px]">Criticality</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {maintenanceTasks.map((task) => (
+                    <tr key={task.task} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-3 px-3 text-foreground">{task.task}</td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-1 bg-muted rounded text-xs whitespace-nowrap">{task.frequency}</span>
+                      </td>
+                      <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">{task.duration}</td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                          task.criticality === 'Critical' ? 'bg-red-500/10 text-red-500' :
+                          task.criticality === 'High' ? 'bg-orange-500/10 text-orange-500' :
+                          'bg-yellow-500/10 text-yellow-500'
+                        }`}>
+                          {task.criticality}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="absolute top-0 right-0 bottom-2 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none md:hidden" />
           </div>
         </DCEContentCard>
       </motion.div>

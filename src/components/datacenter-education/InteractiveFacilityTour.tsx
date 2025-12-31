@@ -423,35 +423,40 @@ const InteractiveFacilityTour = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex flex-wrap justify-center gap-3 mb-8"
+        className="mb-8"
       >
-        {[
-          { id: 'air' as FacilityType, name: 'Air-Cooled Warehouse', icon: Building2, desc: '135MW Steel Building' },
-          { id: 'hydro' as FacilityType, name: 'Hydro Container', icon: Box, desc: '40ft RDHX Containers' },
-          { id: 'immersion' as FacilityType, name: 'Immersion Container', icon: Waves, desc: '40ft Dielectric Tanks' },
-        ].map((type) => (
-          <button
-            key={type.id}
-            onClick={() => {
-              setFacilityType(type.id);
-              setActiveZone(null);
-              setExploredZones(new Set());
-            }}
-            className={`flex items-center gap-3 px-5 py-3 rounded-xl border transition-all ${
-              facilityType === type.id
-                ? 'bg-[hsl(var(--watt-bitcoin))] text-white border-[hsl(var(--watt-bitcoin))] shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
-                : 'bg-card border-border hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
-            }`}
-          >
-            <type.icon className="w-5 h-5" />
-            <div className="text-left">
-              <div className="font-semibold text-sm">{type.name}</div>
-              <div className={`text-xs ${facilityType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
-                {type.desc}
+        <div className="flex overflow-x-auto pb-2 gap-2 sm:gap-3 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
+          {[
+            { id: 'air' as FacilityType, name: 'Air-Cooled Warehouse', shortName: 'Air-Cooled', icon: Building2, desc: '135MW Steel Building' },
+            { id: 'hydro' as FacilityType, name: 'Hydro Container', shortName: 'Hydro', icon: Box, desc: '40ft RDHX Containers' },
+            { id: 'immersion' as FacilityType, name: 'Immersion Container', shortName: 'Immersion', icon: Waves, desc: '40ft Dielectric Tanks' },
+          ].map((type) => (
+            <button
+              key={type.id}
+              onClick={() => {
+                setFacilityType(type.id);
+                setActiveZone(null);
+                setExploredZones(new Set());
+              }}
+              className={`flex-shrink-0 snap-start flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 rounded-xl border transition-all min-w-[130px] ${
+                facilityType === type.id
+                  ? 'bg-[hsl(var(--watt-bitcoin))] text-white border-[hsl(var(--watt-bitcoin))] shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
+                  : 'bg-card border-border hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
+              }`}
+            >
+              <type.icon className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left">
+                <div className="font-semibold text-sm whitespace-nowrap">
+                  <span className="sm:hidden">{type.shortName}</span>
+                  <span className="hidden sm:inline">{type.name}</span>
+                </div>
+                <div className={`text-xs whitespace-nowrap ${facilityType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                  {type.desc}
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Facility Image Header */}
@@ -460,7 +465,7 @@ const InteractiveFacilityTour = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.15 }}
-        className="relative rounded-2xl overflow-hidden mb-6 h-48 md:h-64 border border-border"
+        className="relative rounded-2xl overflow-hidden mb-6 aspect-[16/9] md:aspect-[21/9] border border-border"
       >
         <img 
           src={currentFacility.image} 

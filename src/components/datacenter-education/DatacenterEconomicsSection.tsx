@@ -459,29 +459,32 @@ const DatacenterEconomicsSection = () => {
             Total installed cost including building, electrical, cooling, and infrastructure
           </p>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Facility Type</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Cost per MW</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Build Time</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">PUE</th>
-                  <th className="text-left py-3 px-4 font-medium text-foreground">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {buildCostComparison.map((row) => (
-                  <tr key={row.type} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="py-3 px-4 font-medium text-foreground">{row.type}</td>
-                    <td className="py-3 px-4 text-[hsl(var(--watt-bitcoin))] font-mono">{row.costPerMW}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{row.buildTime}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{row.pue}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{row.notes}</td>
+          <div className="relative">
+            <div className="overflow-x-auto pb-2 scrollbar-hide">
+              <table className="w-full text-sm min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 font-medium text-foreground min-w-[140px]">Facility Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground min-w-[100px]">Cost per MW</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground min-w-[80px]">Build Time</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground min-w-[80px]">PUE</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground min-w-[100px]">Notes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {buildCostComparison.map((row) => (
+                    <tr key={row.type} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-3 px-4 font-medium text-foreground whitespace-nowrap">{row.type}</td>
+                      <td className="py-3 px-4 text-[hsl(var(--watt-bitcoin))] font-mono whitespace-nowrap">{row.costPerMW}</td>
+                      <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">{row.buildTime}</td>
+                      <td className="py-3 px-4 text-muted-foreground whitespace-nowrap">{row.pue}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{row.notes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="absolute top-0 right-0 bottom-2 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none md:hidden" />
           </div>
         </DCEContentCard>
       </motion.div>

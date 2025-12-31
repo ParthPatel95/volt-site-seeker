@@ -132,7 +132,7 @@ const AirflowContainmentSection = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="relative rounded-2xl overflow-hidden mb-10 h-48 md:h-64"
+        className="relative rounded-2xl overflow-hidden mb-10 aspect-[16/9] md:aspect-[21/9]"
       >
         <img 
           src={miningFloorInterior} 
@@ -165,23 +165,24 @@ const AirflowContainmentSection = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="flex justify-center gap-3 mb-10"
+        className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 mb-10"
       >
         {[
-          { id: 'hot' as const, name: 'Hot Aisle Containment', icon: '🔴' },
-          { id: 'cold' as const, name: 'Cold Aisle Containment', icon: '🔵' },
+          { id: 'hot' as const, name: 'Hot Aisle Containment', shortName: 'Hot Aisle', icon: '🔴' },
+          { id: 'cold' as const, name: 'Cold Aisle Containment', shortName: 'Cold Aisle', icon: '🔵' },
         ].map((type) => (
           <button
             key={type.id}
             onClick={() => setActiveContainment(type.id)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 rounded-xl font-medium transition-all ${
               activeContainment === type.id
                 ? 'bg-[hsl(var(--watt-bitcoin))] text-white shadow-lg shadow-[hsl(var(--watt-bitcoin)/0.3)]'
                 : 'bg-card border border-border text-muted-foreground hover:border-[hsl(var(--watt-bitcoin)/0.5)]'
             }`}
           >
             <span>{type.icon}</span>
-            {type.name}
+            <span className="sm:hidden">{type.shortName}</span>
+            <span className="hidden sm:inline">{type.name}</span>
           </button>
         ))}
       </motion.div>
