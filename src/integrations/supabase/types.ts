@@ -3547,6 +3547,87 @@ export type Database = {
         }
         Relationships: []
       }
+      hydro_miners: {
+        Row: {
+          api_credentials: Json | null
+          api_port: number
+          chip_temp_avg_c: number | null
+          created_at: string
+          current_hashrate_th: number | null
+          current_status: string
+          fan_speed_avg: number | null
+          firmware_type: string
+          http_port: number
+          id: string
+          inlet_temp_c: number | null
+          ip_address: unknown
+          last_seen: string | null
+          location: string | null
+          mac_address: string | null
+          model: string
+          name: string
+          outlet_temp_c: number | null
+          pool_url: string | null
+          power_consumption_w: number | null
+          priority_group: string
+          target_hashrate_th: number | null
+          updated_at: string
+          worker_name: string | null
+        }
+        Insert: {
+          api_credentials?: Json | null
+          api_port?: number
+          chip_temp_avg_c?: number | null
+          created_at?: string
+          current_hashrate_th?: number | null
+          current_status?: string
+          fan_speed_avg?: number | null
+          firmware_type?: string
+          http_port?: number
+          id?: string
+          inlet_temp_c?: number | null
+          ip_address: unknown
+          last_seen?: string | null
+          location?: string | null
+          mac_address?: string | null
+          model: string
+          name: string
+          outlet_temp_c?: number | null
+          pool_url?: string | null
+          power_consumption_w?: number | null
+          priority_group?: string
+          target_hashrate_th?: number | null
+          updated_at?: string
+          worker_name?: string | null
+        }
+        Update: {
+          api_credentials?: Json | null
+          api_port?: number
+          chip_temp_avg_c?: number | null
+          created_at?: string
+          current_hashrate_th?: number | null
+          current_status?: string
+          fan_speed_avg?: number | null
+          firmware_type?: string
+          http_port?: number
+          id?: string
+          inlet_temp_c?: number | null
+          ip_address?: unknown
+          last_seen?: string | null
+          location?: string | null
+          mac_address?: string | null
+          model?: string
+          name?: string
+          outlet_temp_c?: number | null
+          pool_url?: string | null
+          power_consumption_w?: number | null
+          priority_group?: string
+          target_hashrate_th?: number | null
+          updated_at?: string
+          worker_name?: string | null
+        }
+        Relationships: []
+      }
       industry_intel_results: {
         Row: {
           address: string | null
@@ -3996,6 +4077,107 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      miner_control_log: {
+        Row: {
+          action: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          execution_status: string
+          id: string
+          miner_ids: string[]
+          response_data: Json | null
+          target_power_w: number | null
+          trigger_reason: string | null
+          triggered_by: string
+        }
+        Insert: {
+          action: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          miner_ids: string[]
+          response_data?: Json | null
+          target_power_w?: number | null
+          trigger_reason?: string | null
+          triggered_by?: string
+        }
+        Update: {
+          action?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          miner_ids?: string[]
+          response_data?: Json | null
+          target_power_w?: number | null
+          trigger_reason?: string | null
+          triggered_by?: string
+        }
+        Relationships: []
+      }
+      miner_power_readings: {
+        Row: {
+          accepted_shares: number | null
+          chip_temp_avg_c: number | null
+          chip_temp_max_c: number | null
+          efficiency_jth: number | null
+          fan_speeds: Json | null
+          hardware_errors: number | null
+          hashrate_th: number | null
+          id: string
+          inlet_temp_c: number | null
+          miner_id: string
+          outlet_temp_c: number | null
+          power_w: number | null
+          rejected_shares: number | null
+          timestamp: string
+        }
+        Insert: {
+          accepted_shares?: number | null
+          chip_temp_avg_c?: number | null
+          chip_temp_max_c?: number | null
+          efficiency_jth?: number | null
+          fan_speeds?: Json | null
+          hardware_errors?: number | null
+          hashrate_th?: number | null
+          id?: string
+          inlet_temp_c?: number | null
+          miner_id: string
+          outlet_temp_c?: number | null
+          power_w?: number | null
+          rejected_shares?: number | null
+          timestamp?: string
+        }
+        Update: {
+          accepted_shares?: number | null
+          chip_temp_avg_c?: number | null
+          chip_temp_max_c?: number | null
+          efficiency_jth?: number | null
+          fan_speeds?: Json | null
+          hardware_errors?: number | null
+          hashrate_th?: number | null
+          id?: string
+          inlet_temp_c?: number | null
+          miner_id?: string
+          outlet_temp_c?: number | null
+          power_w?: number | null
+          rejected_shares?: number | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "miner_power_readings_miner_id_fkey"
+            columns: ["miner_id"]
+            isOneToOne: false
+            referencedRelation: "hydro_miners"
             referencedColumns: ["id"]
           },
         ]
