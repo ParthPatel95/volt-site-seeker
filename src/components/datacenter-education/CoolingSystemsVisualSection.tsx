@@ -398,8 +398,9 @@ const CoolingSystemsVisualSection = () => {
       >
         <DCEContentCard variant="elevated">
           <h3 className="text-xl font-bold text-foreground mb-6">Cooling Method Comparison</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="relative">
+            <div className="overflow-x-auto pb-2 scrollbar-hide">
+              <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 font-medium text-foreground">Metric</th>
@@ -436,7 +437,9 @@ const CoolingSystemsVisualSection = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
+            <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none md:hidden" />
           </div>
         </DCEContentCard>
       </motion.div>
