@@ -620,7 +620,7 @@ const EnergySourceSection = () => {
 
                       {/* Content Overlay */}
                       <div className="absolute inset-0 flex items-center">
-                        <div className="p-6 md:p-10 max-w-2xl">
+                        <div className="p-4 sm:p-6 md:p-8 lg:p-10 w-full max-w-[90%] sm:max-w-[80%] lg:max-w-[70%]">
                           {/* Step Badge */}
                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-xs font-medium text-white/80 mb-3">
                             <Sparkles className="w-3 h-3" />
@@ -644,7 +644,7 @@ const EnergySourceSection = () => {
                           </p>
                           
                           {/* Description */}
-                          <p className="text-white/80 text-sm md:text-base mb-4 max-w-lg">
+                          <p className="text-white/80 text-sm md:text-base mb-4">
                             {step.description}
                           </p>
 

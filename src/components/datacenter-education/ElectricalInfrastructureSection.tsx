@@ -809,8 +809,9 @@ const ElectricalInfrastructureSection = () => {
           Unit substation sizing for mining facilities (25kV → 600V, dry-type, indoor installation)
         </p>
         
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="relative">
+          <div className="overflow-x-auto pb-2 scrollbar-hide">
+            <table className="w-full text-sm min-w-[650px]">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-3 font-medium text-foreground">kVA</th>
@@ -836,6 +837,8 @@ const ElectricalInfrastructureSection = () => {
               ))}
             </tbody>
           </table>
+          </div>
+          <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none md:hidden" />
         </div>
         <p className="text-xs text-muted-foreground mt-3">
           *At 80% loading factor (continuous duty derating per NEC/CSA). Miners estimated at 3.5 kW each.
