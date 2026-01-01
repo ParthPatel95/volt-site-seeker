@@ -38,70 +38,72 @@ export const LiveERCOTData = () => {
   };
 
   return (
-    <Card className="bg-white backdrop-blur-sm border border-gray-200 hover:border-watt-trust/30 transition-all duration-300 group shadow-institutional">
+    <Card className="bg-card border border-border hover:border-primary/30 hover:shadow-md-soft transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Zap className="w-6 h-6 text-watt-trust group-hover:scale-110 transition-transform duration-300" />
-            <CardTitle className="text-watt-navy text-xl">ERCOT Live Data</CardTitle>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-primary" />
+            </div>
+            <CardTitle className="text-foreground text-lg font-semibold">ERCOT Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
             {hasData ? (
               <>
-                <div className="w-2 h-2 bg-watt-trust rounded-full animate-pulse"></div>
-                <Badge className="bg-watt-trust/20 text-watt-trust text-xs border-watt-trust/30">Live</Badge>
+                <div className="w-2 h-2 bg-data-positive rounded-full animate-pulse"></div>
+                <Badge className="bg-data-positive/10 text-data-positive text-xs border-data-positive/20">Live</Badge>
               </>
             ) : error ? (
               <>
-                <AlertCircle className="w-4 h-4 text-watt-bitcoin" />
-                <Badge className="bg-watt-bitcoin/20 text-watt-bitcoin text-xs border-watt-bitcoin/30">Unavailable</Badge>
+                <AlertCircle className="w-4 h-4 text-data-negative" />
+                <Badge className="bg-data-negative/10 text-data-negative text-xs border-data-negative/20">Unavailable</Badge>
               </>
             ) : (
-              <Badge className="bg-gray-200 text-gray-600 text-xs">Loading...</Badge>
+              <Badge className="bg-muted text-muted-foreground text-xs">Loading...</Badge>
             )}
           </div>
         </div>
-        <p className="text-watt-navy/70 text-sm">Electric Reliability Council of Texas</p>
+        <p className="text-muted-foreground text-sm">Electric Reliability Council of Texas</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Live Metrics Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating && pricing?.current_price ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
+        <div className="grid grid-cols-2 gap-3">
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-primary/30 ${isAnimating && pricing?.current_price ? 'scale-[1.02] border-primary/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <DollarSign className="w-4 h-4 text-watt-trust flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Current Price</span>
+              <DollarSign className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Current Price</span>
             </div>
-            <div className="text-lg font-bold text-watt-trust">
+            <div className="text-lg font-semibold text-primary tabular-nums">
               {formatPrice(pricing?.current_price)}/MWh
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && pricing?.average_price ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-data-warning/30 ${isAnimating && pricing?.average_price ? 'scale-[1.02] border-data-warning/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Average Price</span>
+              <TrendingUp className="w-4 h-4 text-data-warning flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Average Price</span>
             </div>
-            <div className="text-lg font-bold text-watt-bitcoin">
+            <div className="text-lg font-semibold text-data-warning tabular-nums">
               {formatPrice(pricing?.average_price)}/MWh
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30 ${isAnimating && loadData?.current_demand_mw ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-data-positive/30 ${isAnimating && loadData?.current_demand_mw ? 'scale-[1.02] border-data-positive/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Activity className="w-4 h-4 text-watt-success flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Current Demand</span>
+              <Activity className="w-4 h-4 text-data-positive flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Current Demand</span>
             </div>
-            <div className="text-lg font-bold text-watt-success">
+            <div className="text-lg font-semibold text-data-positive tabular-nums">
               {formatMW(loadData?.current_demand_mw)} MW
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && loadData?.peak_forecast_mw ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-data-warning/30 ${isAnimating && loadData?.peak_forecast_mw ? 'scale-[1.02] border-data-warning/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Zap className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Peak Forecast</span>
+              <Zap className="w-4 h-4 text-data-warning flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Peak Forecast</span>
             </div>
-            <div className="text-lg font-bold text-watt-bitcoin">
+            <div className="text-lg font-semibold text-data-warning tabular-nums">
               {formatMW(loadData?.peak_forecast_mw)} MW
             </div>
           </div>
@@ -110,14 +112,14 @@ export const LiveERCOTData = () => {
         {/* Market Conditions */}
         {pricing && (
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-watt-navy">Market Conditions</h4>
+            <h4 className="text-sm font-semibold text-foreground">Market Conditions</h4>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-watt-navy/70">Status</span>
+              <span className="text-sm text-muted-foreground">Status</span>
               <Badge 
                 className={`text-xs ${
                   pricing.market_conditions === 'high_demand' 
-                    ? 'bg-watt-bitcoin/20 text-watt-bitcoin border-watt-bitcoin/30'
-                    : 'bg-watt-success/20 text-watt-success border-watt-success/30'
+                    ? 'bg-data-negative/10 text-data-negative border-data-negative/20'
+                    : 'bg-data-positive/10 text-data-positive border-data-positive/20'
                 }`}
               >
                 {pricing.market_conditions === 'high_demand' ? 'High Demand' : 'Normal'}
@@ -125,12 +127,12 @@ export const LiveERCOTData = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-watt-navy/70">Peak Price</span>
-                <span className="text-sm font-medium text-watt-navy">{formatPrice(pricing.peak_price)}/MWh</span>
+                <span className="text-sm text-muted-foreground">Peak Price</span>
+                <span className="text-sm font-medium text-foreground tabular-nums">{formatPrice(pricing.peak_price)}/MWh</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-watt-navy/70">Off-Peak Price</span>
-                <span className="text-sm font-medium text-watt-navy">{formatPrice(pricing.off_peak_price)}/MWh</span>
+                <span className="text-sm text-muted-foreground">Off-Peak Price</span>
+                <span className="text-sm font-medium text-foreground tabular-nums">{formatPrice(pricing.off_peak_price)}/MWh</span>
               </div>
             </div>
           </div>

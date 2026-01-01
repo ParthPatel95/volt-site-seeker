@@ -26,8 +26,6 @@ export const LiveAESOData = () => {
     return <LiveMarketSkeleton />;
   }
 
-  // hasData is now provided by the hook
-
   // Format value or show placeholder
   const formatPrice = (value: number | undefined | null) => {
     if (value === undefined || value === null) return '--';
@@ -45,74 +43,76 @@ export const LiveAESOData = () => {
   };
 
   return (
-    <Card className="bg-white backdrop-blur-sm border border-gray-200 hover:border-watt-success/30 transition-all duration-300 group shadow-institutional">
+    <Card className="bg-card border border-border hover:border-data-positive/30 hover:shadow-md-soft transition-all duration-300 group">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Activity className="w-6 h-6 text-watt-success group-hover:scale-110 transition-transform duration-300" />
-            <CardTitle className="text-watt-navy text-xl">AESO Live Data</CardTitle>
+            <div className="w-8 h-8 rounded-lg bg-data-positive/10 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-data-positive" />
+            </div>
+            <CardTitle className="text-foreground text-lg font-semibold">AESO Live Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
             {isRetrying ? (
               <>
-                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                <Badge className="bg-yellow-500/20 text-yellow-600 text-xs border-yellow-500/30">Retrying...</Badge>
+                <div className="w-2 h-2 bg-data-warning rounded-full animate-pulse"></div>
+                <Badge className="bg-data-warning/10 text-data-warning text-xs border-data-warning/20">Retrying...</Badge>
               </>
             ) : hasData ? (
               <>
-                <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
-                <Badge className="bg-watt-success/20 text-watt-success text-xs border-watt-success/30">Live</Badge>
+                <div className="w-2 h-2 bg-data-positive rounded-full animate-pulse"></div>
+                <Badge className="bg-data-positive/10 text-data-positive text-xs border-data-positive/20">Live</Badge>
               </>
             ) : error ? (
               <>
-                <AlertCircle className="w-4 h-4 text-watt-bitcoin" />
-                <Badge className="bg-watt-bitcoin/20 text-watt-bitcoin text-xs border-watt-bitcoin/30">Unavailable</Badge>
+                <AlertCircle className="w-4 h-4 text-data-negative" />
+                <Badge className="bg-data-negative/10 text-data-negative text-xs border-data-negative/20">Unavailable</Badge>
               </>
             ) : (
-              <Badge className="bg-gray-200 text-gray-600 text-xs">Loading...</Badge>
+              <Badge className="bg-muted text-muted-foreground text-xs">Loading...</Badge>
             )}
           </div>
         </div>
-        <p className="text-watt-navy/70 text-sm">Alberta Electric System Operator</p>
+        <p className="text-muted-foreground text-sm">Alberta Electric System Operator</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/30 ${isAnimating && pricing?.current_price ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
+        <div className="grid grid-cols-2 gap-3">
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-primary/30 ${isAnimating && pricing?.current_price ? 'scale-[1.02] border-primary/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <DollarSign className="w-4 h-4 text-watt-trust flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Current Price</span>
+              <DollarSign className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Current Price</span>
             </div>
-            <div className="text-lg font-bold text-watt-trust">
+            <div className="text-lg font-semibold text-primary tabular-nums">
               {formatPrice(pricing?.current_price)}/MWh
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && generationMix?.total_generation_mw ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-data-warning/30 ${isAnimating && generationMix?.total_generation_mw ? 'scale-[1.02] border-data-warning/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Zap className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Total Generation</span>
+              <Zap className="w-4 h-4 text-data-warning flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Total Generation</span>
             </div>
-            <div className="text-lg font-bold text-watt-bitcoin">
+            <div className="text-lg font-semibold text-data-warning tabular-nums">
               {formatMW(generationMix?.total_generation_mw)} MW
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/30 ${isAnimating && generationMix?.renewable_percentage ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-data-positive/30 ${isAnimating && generationMix?.renewable_percentage ? 'scale-[1.02] border-data-positive/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-watt-success flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Renewables</span>
+              <TrendingUp className="w-4 h-4 text-data-positive flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Renewables</span>
             </div>
-            <div className="text-lg font-bold text-watt-success">
+            <div className="text-lg font-semibold text-data-positive tabular-nums">
               {formatPercent(generationMix?.renewable_percentage)}
             </div>
           </div>
           
-          <div className={`bg-watt-light rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/30 ${isAnimating && loadData?.current_demand_mw ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-muted/50 rounded-lg p-4 transition-all duration-500 border border-border hover:border-data-warning/30 ${isAnimating && loadData?.current_demand_mw ? 'scale-[1.02] border-data-warning/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Activity className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Current Demand</span>
+              <Activity className="w-4 h-4 text-data-warning flex-shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Current Demand</span>
             </div>
-            <div className="text-lg font-bold text-watt-bitcoin">
+            <div className="text-lg font-semibold text-data-warning tabular-nums">
               {formatMW(loadData?.current_demand_mw)} MW
             </div>
           </div>
@@ -120,23 +120,23 @@ export const LiveAESOData = () => {
 
         {generationMix && (
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-watt-navy">Generation Mix</h4>
+            <h4 className="text-sm font-semibold text-foreground">Generation Mix</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-watt-navy/70">Natural Gas</span>
-                <span className="text-sm font-medium text-watt-navy">{formatMW(generationMix.natural_gas_mw)} MW</span>
+                <span className="text-sm text-muted-foreground">Natural Gas</span>
+                <span className="text-sm font-medium text-foreground tabular-nums">{formatMW(generationMix.natural_gas_mw)} MW</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-watt-navy/70">Wind</span>
-                <span className="text-sm font-medium text-watt-success">{formatMW(generationMix.wind_mw)} MW</span>
+                <span className="text-sm text-muted-foreground">Wind</span>
+                <span className="text-sm font-medium text-data-positive tabular-nums">{formatMW(generationMix.wind_mw)} MW</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-watt-navy/70">Hydro</span>
-                <span className="text-sm font-medium text-watt-trust">{formatMW(generationMix.hydro_mw)} MW</span>
+                <span className="text-sm text-muted-foreground">Hydro</span>
+                <span className="text-sm font-medium text-primary tabular-nums">{formatMW(generationMix.hydro_mw)} MW</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-watt-navy/70">Solar</span>
-                <span className="text-sm font-medium text-watt-bitcoin">{formatMW(generationMix.solar_mw)} MW</span>
+                <span className="text-sm text-muted-foreground">Solar</span>
+                <span className="text-sm font-medium text-data-warning tabular-nums">{formatMW(generationMix.solar_mw)} MW</span>
               </div>
             </div>
           </div>
