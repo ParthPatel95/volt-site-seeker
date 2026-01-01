@@ -144,13 +144,13 @@ export function ERCOTMarketComprehensive() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-2 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-background p-2 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
           <div className="min-w-0 flex-1">
             <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-foreground flex items-center flex-wrap gap-2">
-              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-600 flex-shrink-0" />
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-market-ercot flex-shrink-0" />
               <span className="break-words leading-tight">ERCOT Market & Intelligence Hub</span>
             </h1>
             <p className="text-xs sm:text-sm lg:text-base text-muted-foreground break-words mt-1">
@@ -160,7 +160,7 @@ export function ERCOTMarketComprehensive() {
           <Button 
             onClick={handleRefreshAll}
             disabled={loading || isRefreshing}
-            className="bg-gradient-to-r from-orange-600 to-orange-700 flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4"
+            className="bg-market-ercot hover:bg-market-ercot/90 text-white flex-shrink-0 w-full sm:w-auto min-h-[44px] px-3 sm:px-4"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading || isRefreshing ? 'animate-spin' : ''}`} />
             <span className="text-sm">Refresh All Data</span>
