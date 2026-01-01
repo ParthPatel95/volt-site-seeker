@@ -5,150 +5,174 @@
 @tailwind utilities;
 
 /* ============================================================================
-   VOLTSCOUT INDUSTRIAL DESIGN SYSTEM
-   Professional-grade energy trading platform aesthetic
-   Inspired by Bloomberg Terminal, Refinitiv Eikon, Linear, Vercel
+   VOLTSCOUT PROFESSIONAL DESIGN SYSTEM v2.0
+   A modern, industrial-grade energy trading platform
+   Inspired by Linear, Vercel, Bloomberg Terminal, Raycast
    ============================================================================ */
+
+/* ============================================================================
+   CUSTOM FONTS
+   ============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* ---- PROFESSIONAL LIGHT MODE ---- */
-    --background: 0 0% 99%;                /* Near white #FCFCFC */
-    --foreground: 220 20% 14%;             /* Dark slate #1E2530 */
+    /* ---- LIGHT MODE - Clean & Professional ---- */
+    --background: 210 20% 98%;              /* Soft off-white #F8FAFC */
+    --foreground: 222 47% 11%;              /* Deep slate #0F172A - MAX contrast */
 
-    --card: 0 0% 100%;                     /* Pure white */
-    --card-foreground: 220 20% 14%;
+    --card: 0 0% 100%;                      /* Pure white cards */
+    --card-foreground: 222 47% 11%;
     --card-elevated: 0 0% 100%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 14%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 55%;                /* Professional blue #3478F6 */
+    --primary: 221 83% 53%;                 /* Vibrant blue #3B82F6 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;              /* Light gray surface #F4F5F7 */
-    --secondary-foreground: 220 20% 25%;
+    --secondary: 210 40% 96%;               /* Light cool gray #F1F5F9 */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;        /* Clear gray #64748B - 4.5:1 ratio */
 
-    --accent: 217 91% 55%;                 /* Same as primary for consistency */
+    --accent: 221 83% 53%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;              /* Muted red #DC2626 */
+    --destructive: 0 84% 60%;               /* Bright red #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 55%;
+    --border: 214 32% 91%;                  /* Subtle border #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
 
-    --radius: 0.5rem;                      /* Slightly smaller radius for industrial look */
+    --radius: 0.625rem;                     /* 10px - Modern rounded */
 
     /* Sidebar - Light */
-    --sidebar-background: 220 20% 98%;
-    --sidebar-foreground: 220 20% 14%;
-    --sidebar-primary: 217 91% 55%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 220 20% 14%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 55%;
-    --sidebar-muted: 220 10% 50%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
+    --sidebar-muted: 215 16% 47%;
 
-    /* Data Visualization Colors */
-    --data-positive: 142 71% 45%;          /* Green #22C55E */
-    --data-negative: 0 84% 60%;            /* Red #EF4444 */
-    --data-warning: 38 92% 50%;            /* Amber #F59E0B */
-    --data-neutral: 220 10% 50%;           /* Gray */
-    --data-info: 217 91% 55%;              /* Blue */
+    /* Data Visualization */
+    --data-positive: 142 76% 36%;           /* Green #16A34A */
+    --data-negative: 0 84% 60%;             /* Red #EF4444 */
+    --data-warning: 38 92% 50%;             /* Amber #F59E0B */
+    --data-neutral: 215 16% 47%;            /* Gray */
+    --data-info: 221 83% 53%;               /* Blue */
 
     /* Status Colors */
-    --status-online: 142 71% 45%;
+    --status-online: 142 76% 36%;
     --status-offline: 0 84% 60%;
     --status-warning: 38 92% 50%;
-    --status-idle: 220 10% 50%;
+    --status-idle: 215 16% 47%;
 
     /* Chart Colors */
-    --chart-primary: 217 91% 55%;
-    --chart-secondary: 263 70% 50%;
-    --chart-tertiary: 142 71% 45%;
-    --chart-quaternary: 38 92% 50%;
-    --chart-grid: 220 13% 91%;
+    --chart-1: 221 83% 53%;                 /* Primary blue */
+    --chart-2: 263 70% 50%;                 /* Purple */
+    --chart-3: 142 76% 36%;                 /* Green */
+    --chart-4: 38 92% 50%;                  /* Amber */
+    --chart-5: 0 84% 60%;                   /* Red */
+    --chart-grid: 214 32% 91%;
 
-    /* Brand tokens (legacy + arbitrary hsl(var(--watt-*))) */
-    --watt-bitcoin: 36 94% 53%;
-    --watt-coinbase: 217 91% 55%;
-    --watt-navy: 220 50% 15%;
-    --watt-trust: 195 85% 41%;
+    /* Market Colors */
+    --market-ercot: 221 83% 53%;            /* Blue */
+    --market-aeso: 142 76% 36%;             /* Green */
+    --market-miso: 263 70% 50%;             /* Purple */
+    --market-caiso: 38 92% 50%;             /* Amber */
+    --market-nyiso: 0 84% 60%;              /* Red */
+    --market-pjm: 172 66% 50%;              /* Teal */
+    --market-spp: 328 85% 70%;              /* Pink */
+    --market-ieso: 199 89% 48%;             /* Cyan */
+
+    /* Glass Effect */
+    --glass-bg: 0 0% 100% / 0.8;
+    --glass-border: 214 32% 91% / 0.6;
   }
 
   .dark {
-    /* ---- PROFESSIONAL DARK MODE ---- */
-    --background: 222 47% 11%;             /* Deep slate #0F172A */
-    --foreground: 210 40% 98%;             /* Near white #F8FAFC */
+    /* ---- DARK MODE - Professional Terminal Style ---- */
+    --background: 222 47% 6%;               /* Near black #070B14 */
+    --foreground: 210 40% 98%;              /* Near white #F8FAFC */
 
-    --card: 222 47% 13%;                   /* Elevated slate #131B2E */
+    --card: 222 47% 9%;                     /* Dark card #0D1321 */
     --card-foreground: 210 40% 98%;
-    --card-elevated: 222 47% 15%;
+    --card-elevated: 222 47% 11%;
     
-    --popover: 222 47% 13%;
+    --popover: 222 47% 9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;                /* Brighter blue for dark mode #4B8BF5 */
+    --primary: 217 91% 60%;                 /* Bright blue #4B8BF5 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 47% 18%;              /* Dark surface */
+    --secondary: 222 47% 14%;               /* Dark surface */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 47% 18%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 222 47% 14%;
+    --muted-foreground: 215 20% 65%;        /* Light gray for dark mode */
 
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 47% 22%;
-    --input: 222 47% 22%;
+    --border: 222 47% 18%;
+    --input: 222 47% 18%;
     --ring: 217 91% 60%;
 
     /* Sidebar - Dark */
-    --sidebar-background: 222 47% 9%;      /* Darker than main bg */
+    --sidebar-background: 222 47% 5%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 15%;
+    --sidebar-accent: 222 47% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 20%;
+    --sidebar-border: 222 47% 16%;
     --sidebar-ring: 217 91% 60%;
     --sidebar-muted: 215 20% 55%;
 
-    /* Data Visualization Colors - Brighter for dark mode */
+    /* Data Visualization - Brighter for dark */
     --data-positive: 142 76% 50%;
-    --data-negative: 0 84% 60%;
+    --data-negative: 0 84% 65%;
     --data-warning: 38 92% 55%;
     --data-neutral: 215 20% 55%;
     --data-info: 217 91% 60%;
 
     /* Status Colors */
     --status-online: 142 76% 50%;
-    --status-offline: 0 84% 60%;
+    --status-offline: 0 84% 65%;
     --status-warning: 38 92% 55%;
     --status-idle: 215 20% 55%;
 
     /* Chart Colors */
-    --chart-primary: 217 91% 60%;
-    --chart-secondary: 263 70% 55%;
-    --chart-tertiary: 142 76% 50%;
-    --chart-quaternary: 38 92% 55%;
-    --chart-grid: 222 47% 22%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 263 70% 60%;
+    --chart-3: 142 76% 50%;
+    --chart-4: 38 92% 55%;
+    --chart-5: 0 84% 65%;
+    --chart-grid: 222 47% 18%;
 
-    /* Brand tokens (legacy + arbitrary hsl(var(--watt-*))) */
-    --watt-bitcoin: 36 94% 53%;
-    --watt-coinbase: 217 91% 55%;
-    --watt-navy: 220 50% 15%;
-    --watt-trust: 195 85% 41%;
+    /* Market Colors - Brighter for dark mode */
+    --market-ercot: 217 91% 60%;
+    --market-aeso: 142 76% 50%;
+    --market-miso: 263 70% 60%;
+    --market-caiso: 38 92% 55%;
+    --market-nyiso: 0 84% 65%;
+    --market-pjm: 172 66% 55%;
+    --market-spp: 328 85% 75%;
+    --market-ieso: 199 89% 55%;
+
+    /* Glass Effect */
+    --glass-bg: 222 47% 9% / 0.8;
+    --glass-border: 222 47% 20% / 0.6;
   }
 }
 
@@ -173,25 +197,29 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Typography Scale */
+  /* Typography Scale - Responsive */
   h1 {
-    @apply text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight;
+    @apply text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground;
   }
 
   h2 {
-    @apply text-xl sm:text-2xl font-semibold tracking-tight;
+    @apply text-xl sm:text-2xl font-semibold tracking-tight text-foreground;
   }
 
   h3 {
-    @apply text-lg font-semibold tracking-tight;
+    @apply text-lg font-semibold tracking-tight text-foreground;
   }
 
   h4 {
-    @apply text-base font-medium;
+    @apply text-base font-medium text-foreground;
+  }
+
+  p {
+    @apply text-foreground;
   }
 
   /* Monospace for data */
@@ -205,6 +233,39 @@
    ============================================================================ */
 
 @layer utilities {
+  /* Typography Utilities */
+  .heading-xl {
+    @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground;
+  }
+  
+  .heading-lg {
+    @apply text-2xl sm:text-3xl font-semibold tracking-tight text-foreground;
+  }
+  
+  .heading-md {
+    @apply text-xl sm:text-2xl font-semibold text-foreground;
+  }
+  
+  .heading-sm {
+    @apply text-lg font-medium text-foreground;
+  }
+  
+  .body-lg {
+    @apply text-base sm:text-lg text-foreground;
+  }
+  
+  .body-md {
+    @apply text-sm sm:text-base text-foreground;
+  }
+  
+  .body-sm {
+    @apply text-xs sm:text-sm text-muted-foreground;
+  }
+  
+  .caption {
+    @apply text-xs text-muted-foreground;
+  }
+
   /* Data Colors */
   .text-data-positive {
     color: hsl(var(--data-positive));
@@ -236,7 +297,7 @@
 
   /* Status Indicators */
   .status-dot {
-    @apply w-2 h-2 rounded-full;
+    @apply w-2 h-2 rounded-full animate-pulse;
   }
 
   .status-online {
@@ -255,22 +316,34 @@
     background-color: hsl(var(--status-idle));
   }
 
-  /* Industrial Shadows - Subtle */
-  .shadow-subtle {
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  /* Modern Shadows */
+  .shadow-sm-soft {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.04);
   }
 
-  .shadow-card {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 2px 6px 0 rgb(0 0 0 / 0.03);
+  .shadow-md-soft {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.04);
   }
 
-  .shadow-elevated {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  .shadow-lg-soft {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  }
+
+  .shadow-glow-primary {
+    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.25);
+  }
+
+  /* Glass Effect */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--glass-border));
   }
 
   /* Responsive Container */
   .container-responsive {
-    @apply w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8;
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
   /* Touch Targets */
@@ -278,9 +351,9 @@
     @apply min-h-[44px] min-w-[44px];
   }
 
-  /* Responsive Text Utilities */
+  /* Responsive Text */
   .text-responsive-xs {
-    @apply text-[10px] sm:text-xs;
+    @apply text-[11px] sm:text-xs;
   }
 
   .text-responsive-sm {
@@ -303,51 +376,19 @@
     @apply text-xl sm:text-2xl lg:text-3xl;
   }
 
-  .text-responsive-3xl {
-    @apply text-2xl sm:text-3xl lg:text-4xl;
-  }
-
-  /* Scroll Container - for horizontal scroll areas */
+  /* Scroll Container */
   .scroll-container {
-    @apply overflow-x-auto -mx-3 px-3 sm:-mx-0 sm:px-0 scrollbar-hide;
+    @apply overflow-x-auto scrollbar-hide;
   }
 
-  /* Table responsive wrapper */
-  .table-responsive {
-    @apply overflow-x-auto -mx-3 sm:mx-0 rounded-lg;
+  /* Card Padding */
+  .card-padding {
+    @apply p-4 sm:p-5 lg:p-6;
   }
 
-  /* Card responsive padding */
-  .card-responsive {
-    @apply p-3 sm:p-4 lg:p-6;
-  }
-
-  /* Grid responsive gaps */
+  /* Gap Utilities */
   .gap-responsive {
     @apply gap-3 sm:gap-4 lg:gap-6;
-  }
-
-  /* Safe Area for mobile */
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  /* Smooth Transitions */
-  .transition-default {
-    @apply transition-all duration-150 ease-out;
-  }
-
-  .transition-colors-fast {
-    @apply transition-colors duration-100 ease-out;
-  }
-
-  /* Focus States */
-  .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Safe Area */
@@ -356,6 +397,11 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+
+  /* Focus Ring */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Hide Scrollbar */
@@ -379,36 +425,31 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.15);
+    background: hsl(var(--muted-foreground) / 0.2);
     border-radius: 2px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.25);
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 
-  /* Glow Effects - Minimal */
-  .glow-subtle {
-    box-shadow: 0 0 20px -8px hsl(var(--primary) / 0.3);
-  }
-
-  /* Grid Patterns */
-  .bg-grid {
+  /* Grid Pattern */
+  .bg-grid-pattern {
     background-image: 
-      linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+      linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
-  /* Animations - Functional Only */
+  /* Animations */
   .animate-fade-in {
-    animation: fadeIn 0.2s ease-out forwards;
+    animation: fadeIn 0.25s ease-out forwards;
   }
 
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
@@ -416,6 +457,37 @@
     }
   }
 
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out forwards;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Pulse Subtle */
   .animate-pulse-subtle {
     animation: pulseSub 2s ease-in-out infinite;
   }
@@ -436,55 +508,30 @@
 }
 
 /* ============================================================================
-   LEGACY BRAND COLORS (for compatibility)
-   ============================================================================ */
-
-@layer utilities {
-  /* Keep some brand colors for specific use cases */
-  .text-watt-bitcoin { color: hsl(36 94% 53%); }
-  .bg-watt-bitcoin { background-color: hsl(36 94% 53%); }
-  .text-watt-success { color: hsl(var(--data-positive)); }
-  .bg-watt-success { background-color: hsl(var(--data-positive)); }
-  .text-watt-warning { color: hsl(var(--data-warning)); }
-  .bg-watt-warning { background-color: hsl(var(--data-warning)); }
-  
-  /* Gradient utilities */
-  .bg-watt-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(263 70% 50%));
-  }
-}
-
-/* ============================================================================
-   COMPONENT OVERRIDES
+   COMPONENT CLASSES
    ============================================================================ */
 
 @layer components {
-  /* Industrial Card Style */
-  .card-industrial {
-    @apply bg-card border border-border/60 rounded-lg shadow-subtle;
+  /* Professional Card */
+  .card-professional {
+    @apply bg-card border border-border rounded-xl shadow-sm-soft transition-all duration-200;
   }
 
-  .card-industrial:hover {
-    @apply border-border shadow-card;
+  .card-professional:hover {
+    @apply shadow-md-soft border-border/80;
   }
 
-  /* Data Cell */
-  .data-cell {
-    @apply font-mono text-sm tabular-nums;
+  /* Metric Card */
+  .metric-card {
+    @apply bg-card border border-border rounded-xl p-4 sm:p-5;
   }
 
-  /* Section Header */
-  .section-header {
-    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3;
-  }
-
-  /* Metric Display */
   .metric-value {
-    @apply text-2xl font-semibold tabular-nums tracking-tight;
+    @apply text-2xl sm:text-3xl font-semibold tabular-nums tracking-tight text-foreground;
   }
 
   .metric-label {
-    @apply text-xs text-muted-foreground font-medium;
+    @apply text-sm text-muted-foreground font-medium;
   }
 
   .metric-change {
@@ -499,14 +546,67 @@
     @apply text-data-negative;
   }
 
+  /* Section Header */
+  .section-header {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+
+  /* Data Cell */
+  .data-cell {
+    @apply font-mono text-sm tabular-nums text-foreground;
+  }
+
   /* Nav Link Active */
   .nav-link-active {
-    @apply bg-secondary text-foreground border-l-2 border-primary;
+    @apply bg-primary/10 text-primary border-l-2 border-primary font-medium;
+  }
+
+  /* Market Badge */
+  .market-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  /* Input Clean */
+  .input-clean {
+    @apply bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all;
+  }
+
+  /* Button Group */
+  .btn-group {
+    @apply inline-flex rounded-lg border border-border overflow-hidden;
+  }
+
+  .btn-group > button {
+    @apply px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border-r border-border last:border-r-0;
+  }
+
+  .btn-group > button.active {
+    @apply bg-primary text-primary-foreground;
   }
 }
 
 /* ============================================================================
-   SCROLLBAR GLOBAL HIDING
+   LEGACY BRAND COLORS (compatibility)
+   ============================================================================ */
+
+@layer utilities {
+  .text-watt-success { color: hsl(var(--data-positive)); }
+  .bg-watt-success { background-color: hsl(var(--data-positive)); }
+  .text-watt-warning { color: hsl(var(--data-warning)); }
+  .bg-watt-warning { background-color: hsl(var(--data-warning)); }
+  .text-watt-primary { color: hsl(var(--primary)); }
+  .bg-watt-primary { background-color: hsl(var(--primary)); }
+  .border-watt-primary { border-color: hsl(var(--primary)); }
+  .text-watt-secondary { color: hsl(var(--market-aeso)); }
+  .bg-watt-secondary { background-color: hsl(var(--market-aeso)); }
+  .border-watt-secondary { border-color: hsl(var(--market-aeso)); }
+  .text-watt-accent { color: hsl(var(--market-miso)); }
+  .bg-watt-accent { background-color: hsl(var(--market-miso)); }
+  .border-watt-accent { border-color: hsl(var(--market-miso)); }
+}
+
+/* ============================================================================
+   SCROLLBAR HIDING
    ============================================================================ */
 
 @layer base {
@@ -517,8 +617,7 @@
   }
 
   html::-webkit-scrollbar,
-  body::-webkit-scrollbar,
-  ::-webkit-scrollbar {
+  body::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
@@ -526,7 +625,7 @@
 }
 
 /* ============================================================================
-   REACT GRID LAYOUT STYLES
+   REACT GRID LAYOUT
    ============================================================================ */
 
 .react-grid-layout {
