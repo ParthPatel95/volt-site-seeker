@@ -132,38 +132,38 @@ export const Dashboard = () => {
   }
 
   return (
-    <ResponsivePageContainer className="min-h-screen bg-gradient-to-br from-background to-watt-light/10">
-      <div className="space-y-8 animate-fade-in py-6">
-        {/* Header with Wattbytes Branding */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="space-y-2 sm:space-y-3">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-watt-primary leading-tight">
+    <ResponsivePageContainer className="min-h-screen bg-gradient-to-br from-background to-muted/10">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in py-4 sm:py-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="space-y-1 sm:space-y-2 min-w-0">
+            <h1 className="text-responsive-2xl font-bold text-foreground leading-tight truncate">
               WattBytes Energy Dashboard
             </h1>
-            <p className="text-muted-foreground flex items-center gap-2 text-sm sm:text-base">
-              <Clock className="w-4 h-4" />
-              Last updated: {lastUpdated.toLocaleTimeString()}
+            <p className="text-muted-foreground flex items-center gap-2 text-responsive-sm">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="truncate">Last updated: {lastUpdated.toLocaleTimeString()}</span>
             </p>
           </div>
           <Button 
             onClick={refreshData}
             disabled={isLoading}
-            size="lg"
-            className="bg-watt-primary hover:bg-watt-primary/90 text-white shadow-watt-glow transition-all duration-300 hover:shadow-lg hover:scale-105 self-start sm:self-center w-full sm:w-auto"
+            size="default"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 w-full sm:w-auto flex-shrink-0"
           >
-            <RefreshCw className={`w-4 sm:w-5 h-4 sm:h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Refreshing...' : 'Refresh Data'}
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="sm:inline">{isLoading ? 'Refreshing...' : 'Refresh'}</span>
           </Button>
         </div>
 
         {/* USA Markets */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Globe className="w-5 h-5 text-watt-primary" />
-              <h2 className="text-xl font-bold text-foreground">United States Markets</h2>
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">United States Markets</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {/* ERCOT Price Card */}
               <Card className="border-l-4 border-watt-primary hover:shadow-lg transition-all duration-300 group bg-gradient-to-br from-card to-watt-primary/5">
                 <CardContent className="p-6">

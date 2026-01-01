@@ -258,12 +258,70 @@
 
   /* Responsive Container */
   .container-responsive {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8;
   }
 
   /* Touch Targets */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Responsive Text Utilities */
+  .text-responsive-xs {
+    @apply text-[10px] sm:text-xs;
+  }
+
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+
+  .text-responsive-3xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+
+  /* Scroll Container - for horizontal scroll areas */
+  .scroll-container {
+    @apply overflow-x-auto -mx-3 px-3 sm:-mx-0 sm:px-0 scrollbar-hide;
+  }
+
+  /* Table responsive wrapper */
+  .table-responsive {
+    @apply overflow-x-auto -mx-3 sm:mx-0 rounded-lg;
+  }
+
+  /* Card responsive padding */
+  .card-responsive {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+
+  /* Grid responsive gaps */
+  .gap-responsive {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+
+  /* Safe Area for mobile */
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   /* Smooth Transitions */
