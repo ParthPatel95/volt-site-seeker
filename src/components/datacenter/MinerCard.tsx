@@ -51,24 +51,24 @@ export function MinerCard({
     switch (status) {
       case 'mining':
         return { 
-          color: 'bg-emerald-500', 
-          textColor: 'text-emerald-500',
+          color: 'bg-data-positive', 
+          textColor: 'text-data-positive',
           label: 'Mining', 
           pulse: true,
           icon: Zap
         };
       case 'sleeping':
         return { 
-          color: 'bg-blue-500', 
-          textColor: 'text-blue-500',
+          color: 'bg-primary', 
+          textColor: 'text-primary',
           label: 'Sleeping', 
           pulse: false,
           icon: Moon
         };
       case 'idle':
         return { 
-          color: 'bg-yellow-500', 
-          textColor: 'text-yellow-500',
+          color: 'bg-data-warning', 
+          textColor: 'text-data-warning',
           label: 'Idle', 
           pulse: false,
           icon: Power
@@ -83,16 +83,16 @@ export function MinerCard({
         };
       case 'error':
         return { 
-          color: 'bg-destructive', 
-          textColor: 'text-destructive',
+          color: 'bg-data-negative', 
+          textColor: 'text-data-negative',
           label: 'Error', 
           pulse: true,
           icon: AlertTriangle
         };
       case 'rebooting':
         return { 
-          color: 'bg-purple-500', 
-          textColor: 'text-purple-500',
+          color: 'bg-primary', 
+          textColor: 'text-primary',
           label: 'Rebooting', 
           pulse: true,
           icon: RotateCcw
@@ -108,25 +108,22 @@ export function MinerCard({
     }
   };
 
-  const getPriorityConfig = (priority: string) => {
+  const getPriorityVariant = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return { variant: 'destructive' as const, label: 'Critical' };
+        return 'error';
       case 'high':
-        return { variant: 'default' as const, label: 'High', className: 'bg-orange-500 hover:bg-orange-500/90' };
+        return 'warning';
       case 'medium':
-        return { variant: 'secondary' as const, label: 'Medium' };
+        return 'info';
       case 'low':
-        return { variant: 'outline' as const, label: 'Low' };
       case 'curtailable':
-        return { variant: 'outline' as const, label: 'Curtailable', className: 'border-dashed' };
       default:
-        return { variant: 'outline' as const, label: priority };
+        return 'muted';
     }
   };
 
   const statusConfig = getStatusConfig(miner.current_status);
-  const priorityConfig = getPriorityConfig(miner.priority_group);
   const StatusIcon = statusConfig.icon;
   
   const specs = MODEL_SPECS[miner.model] || { hashrate: 0, power: 0 };
@@ -134,14 +131,12 @@ export function MinerCard({
     ? ((miner.current_hashrate_th || 0) / specs.hashrate) * 100 
     : 0;
   
-  // Calculate efficiency
   const efficiency = miner.current_hashrate_th && miner.power_consumption_w
     ? (miner.power_consumption_w / miner.current_hashrate_th).toFixed(1)
     : '--';
 
-  // Temperature gradient calculation
   const maxTemp = Math.max(miner.inlet_temp_c || 0, miner.outlet_temp_c || 0);
-  const tempColor = maxTemp > 55 ? 'text-destructive' : maxTemp > 45 ? 'text-yellow-500' : 'text-emerald-500';
+  const tempColor = maxTemp > 55 ? 'text-data-negative' : maxTemp > 45 ? 'text-data-warning' : 'text-data-positive';
 
   const handleCardClick = () => {
     if (onSelect) {
@@ -156,15 +151,14 @@ export function MinerCard({
   return (
     <Card 
       className={cn(
-        "group relative overflow-hidden transition-all duration-200 cursor-pointer",
-        "hover:shadow-lg hover:shadow-primary/5",
-        selected && "ring-2 ring-primary bg-primary/5",
-        miner.current_status === 'error' && "border-destructive",
-        miner.current_status === 'mining' && "border-emerald-500/50"
+        "group relative transition-all duration-150 cursor-pointer",
+        selected && "ring-1 ring-primary bg-primary/5",
+        miner.current_status === 'error' && "border-data-negative/50",
+        miner.current_status === 'mining' && "border-data-positive/30"
       )}
       onClick={handleCardClick}
     >
-      {/* Selection checkbox overlay */}
+      {/* Selection checkbox */}
       <div 
         className={cn(
           "absolute top-3 left-3 z-10 transition-opacity",
@@ -179,57 +173,55 @@ export function MinerCard({
       </div>
 
       <CardContent className="p-4 space-y-4">
-        {/* Header: Status + Priority */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={cn(
-              "w-2.5 h-2.5 rounded-full",
+              "w-2 h-2 rounded-full",
               statusConfig.color,
               statusConfig.pulse && "animate-pulse"
             )} />
-            <span className={cn("text-sm font-medium", statusConfig.textColor)}>
+            <span className={cn("text-xs font-medium", statusConfig.textColor)}>
               {statusConfig.label}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs font-normal">
+          <div className="flex items-center gap-1.5">
+            <Badge variant="muted" className="text-[10px] font-mono">
               {miner.model}
             </Badge>
             <Badge 
-              variant={priorityConfig.variant}
-              className={cn("text-xs", priorityConfig.className)}
+              variant={getPriorityVariant(miner.priority_group) as any}
+              className="text-[10px]"
             >
-              {priorityConfig.label}
+              {miner.priority_group}
             </Badge>
           </div>
         </div>
 
         {/* Miner Name */}
-        <div>
-          <h3 className="font-semibold text-lg truncate">{miner.name}</h3>
-        </div>
+        <h3 className="font-semibold truncate">{miner.name}</h3>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           {/* Hashrate */}
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Zap className="w-3.5 h-3.5" />
-              <span className="text-xs">Hashrate</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Zap className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wide">Hashrate</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold font-mono">
+              <span className="text-lg font-bold font-mono">
                 {miner.current_hashrate_th?.toFixed(1) || '0'}
               </span>
-              <span className="text-xs text-muted-foreground">TH/s</span>
+              <span className="text-[10px] text-muted-foreground">TH/s</span>
             </div>
             {specs.hashrate > 0 && (
-              <div className="w-full bg-muted rounded-full h-1.5">
+              <div className="w-full bg-muted rounded-full h-1">
                 <div 
                   className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    hashratePercent >= 90 ? "bg-emerald-500" : 
-                    hashratePercent >= 70 ? "bg-yellow-500" : "bg-destructive"
+                    "h-1 rounded-full transition-all",
+                    hashratePercent >= 90 ? "bg-data-positive" : 
+                    hashratePercent >= 70 ? "bg-data-warning" : "bg-data-negative"
                   )}
                   style={{ width: `${Math.min(100, hashratePercent)}%` }}
                 />
@@ -239,50 +231,46 @@ export function MinerCard({
 
           {/* Power */}
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Power className="w-3.5 h-3.5" />
-              <span className="text-xs">Power</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Power className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wide">Power</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold font-mono">
+              <span className="text-lg font-bold font-mono">
                 {miner.power_consumption_w ? (miner.power_consumption_w / 1000).toFixed(2) : '0'}
               </span>
-              <span className="text-xs text-muted-foreground">kW</span>
+              <span className="text-[10px] text-muted-foreground">kW</span>
             </div>
           </div>
 
           {/* Temperature */}
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Thermometer className="w-3.5 h-3.5" />
-              <span className="text-xs">Coolant</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Thermometer className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wide">Coolant</span>
             </div>
-            <div className={cn("flex items-baseline gap-1", tempColor)}>
-              <span className="text-sm font-mono">
-                {miner.inlet_temp_c?.toFixed(0) || '--'}°
-              </span>
-              <span className="text-xs text-muted-foreground">→</span>
-              <span className="text-sm font-mono">
-                {miner.outlet_temp_c?.toFixed(0) || '--'}°C
-              </span>
+            <div className={cn("flex items-baseline gap-1 font-mono text-sm", tempColor)}>
+              <span>{miner.inlet_temp_c?.toFixed(0) || '--'}°</span>
+              <span className="text-muted-foreground">→</span>
+              <span>{miner.outlet_temp_c?.toFixed(0) || '--'}°C</span>
             </div>
           </div>
 
           {/* Efficiency */}
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Cpu className="w-3.5 h-3.5" />
-              <span className="text-xs">Efficiency</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Cpu className="w-3 h-3" />
+              <span className="text-[10px] uppercase tracking-wide">Efficiency</span>
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-sm font-mono">{efficiency}</span>
-              <span className="text-xs text-muted-foreground">J/TH</span>
+              <span className="text-[10px] text-muted-foreground">J/TH</span>
             </div>
           </div>
         </div>
 
-        {/* Footer: IP + Firmware + Last seen */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border/50">
+        {/* Footer */}
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-2 border-t border-border">
           <Wifi className="w-3 h-3" />
           <span className="font-mono">{miner.ip_address}</span>
           <span>•</span>
@@ -295,38 +283,38 @@ export function MinerCard({
           )}
         </div>
 
-        {/* Action Buttons */}
+        {/* Actions */}
         <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
           {isMining ? (
             <Button 
               variant="outline"
               size="sm" 
-              className="flex-1 border-blue-500/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-500"
+              className="flex-1 text-xs"
               onClick={() => onSleep?.(miner.id)}
               disabled={disabled || !canControl || miner.priority_group === 'critical'}
             >
-              <Moon className="w-3.5 h-3.5 mr-1.5" />
+              <Moon className="w-3 h-3 mr-1.5" />
               Sleep
             </Button>
           ) : isSleeping ? (
             <Button 
               variant="default"
               size="sm" 
-              className="flex-1"
+              className="flex-1 text-xs"
               onClick={() => onWake?.(miner.id)}
               disabled={disabled || miner.current_status === 'offline'}
             >
-              <Power className="w-3.5 h-3.5 mr-1.5" />
+              <Power className="w-3 h-3 mr-1.5" />
               Wake
             </Button>
           ) : (
             <Button 
               variant="outline"
               size="sm" 
-              className="flex-1"
+              className="flex-1 text-xs"
               disabled={true}
             >
-              <WifiOff className="w-3.5 h-3.5 mr-1.5" />
+              <WifiOff className="w-3 h-3 mr-1.5" />
               Offline
             </Button>
           )}
@@ -336,14 +324,14 @@ export function MinerCard({
             onClick={() => onReboot?.(miner.id)}
             disabled={disabled || !canControl}
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => onViewDetails?.(miner)}
           >
-            <Settings className="w-3.5 h-3.5" />
+            <Settings className="w-3 h-3" />
           </Button>
         </div>
       </CardContent>
@@ -357,12 +345,12 @@ function getTimeAgo(dateString: string): string {
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m`;
   
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return `${diffHours}h`;
   
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return `${diffDays}d`;
 }

@@ -236,35 +236,34 @@ export function AESOMarketComprehensive() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-slate-50/50 to-primary/5 dark:from-background dark:via-slate-950/50 dark:to-primary/5">
-      <div className="container-responsive py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
-        {/* Modern Header with Glassmorphism */}
-        <div className="relative overflow-hidden rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 shadow-lg p-4 sm:p-6 lg:p-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
-          <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-lg">
-                  <MapPin className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent leading-tight">
+    <div className="min-h-screen bg-background">
+      <div className="container-responsive py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Clean Professional Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <MapPin className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
                   AESO Market Hub
                 </h1>
+                <p className="text-sm text-muted-foreground">
+                  Alberta electricity market data & analytics
+                </p>
               </div>
-              <p className="text-sm sm:text-base text-muted-foreground pl-14 sm:pl-16">
-                Real-time market data with advanced analytics for Alberta's electricity system
-              </p>
             </div>
-            <Button 
-              onClick={handleRefreshAll}
-              disabled={loading}
-              size="lg"
-              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              <span className="font-medium">Refresh Data</span>
-            </Button>
           </div>
+          <Button 
+            onClick={handleRefreshAll}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
 
