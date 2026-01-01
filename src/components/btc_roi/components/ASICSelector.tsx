@@ -41,7 +41,7 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
     switch (type) {
       case 'hydro': return 'text-blue-500 bg-blue-50 border-blue-200';
       case 'immersion': return 'text-purple-500 bg-purple-50 border-purple-200';
-      default: return 'text-gray-500 bg-gray-50 border-gray-200';
+      default: return 'text-muted-foreground bg-muted border-border';
     }
   };
 
@@ -50,22 +50,22 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-watt-bitcoin" />
-          <span className="text-sm font-medium text-watt-navy">Select Mining Hardware</span>
+          <Cpu className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-foreground">Select Mining Hardware</span>
         </div>
-        <Badge variant="outline" className="text-xs border-gray-200 text-watt-navy/60">
+        <Badge variant="outline" className="text-xs border-border text-muted-foreground">
           {asics.length} miners
         </Badge>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-watt-navy/40" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search models..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-9 bg-white border-gray-200 text-watt-navy placeholder:text-watt-navy/40"
+          className="pl-9 h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
         />
       </div>
 
@@ -79,8 +79,8 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
             className={cn(
               "h-7 px-2.5 text-xs transition-all",
               manufacturer === mfr
-                ? "bg-watt-bitcoin text-white border-watt-bitcoin hover:bg-watt-bitcoin/90"
-                : "bg-white border-gray-200 text-watt-navy/70 hover:bg-gray-50 hover:border-gray-300"
+                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                : "bg-background border-border text-muted-foreground hover:bg-muted hover:border-border"
             )}
             onClick={() => setManufacturer(mfr)}
           >
@@ -99,8 +99,8 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
             className={cn(
               "h-7 px-2.5 text-xs transition-all flex items-center gap-1",
               coolingType === type
-                ? "bg-watt-trust text-white border-watt-trust hover:bg-watt-trust/90"
-                : "bg-white border-gray-200 text-watt-navy/70 hover:bg-gray-50"
+                ? "bg-secondary text-secondary-foreground border-secondary hover:bg-secondary/90"
+                : "bg-background border-border text-muted-foreground hover:bg-muted"
             )}
             onClick={() => setCoolingType(type)}
           >
@@ -113,10 +113,10 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
       {/* ASIC Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 text-watt-bitcoin animate-spin" />
+          <Loader2 className="w-6 h-6 text-primary animate-spin" />
         </div>
       ) : asics.length === 0 ? (
-        <div className="text-center py-8 text-watt-navy/60 text-sm">
+        <div className="text-center py-8 text-muted-foreground text-sm">
           No miners found matching your criteria
         </div>
       ) : (
@@ -127,13 +127,13 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
               className={cn(
                 "p-3 rounded-lg border text-left transition-all hover:shadow-md",
                 selectedASIC?.id === asic.id
-                  ? "bg-watt-bitcoin/5 border-watt-bitcoin shadow-sm"
-                  : "bg-white border-gray-200 hover:border-gray-300"
+                  ? "bg-primary/5 border-primary shadow-sm"
+                  : "bg-card border-border hover:border-border"
               )}
               onClick={() => onSelectASIC(asic)}
             >
               <div className="flex items-start justify-between mb-1">
-                <span className="font-semibold text-xs text-watt-navy truncate">
+                <span className="font-semibold text-xs text-foreground truncate">
                   {asic.model}
                 </span>
                 <Badge 
@@ -143,19 +143,19 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
                   {getCoolingIcon(asic.cooling_type)}
                 </Badge>
               </div>
-              <div className="text-[10px] text-watt-navy/60 mb-1.5">{asic.manufacturer}</div>
+              <div className="text-[10px] text-muted-foreground mb-1.5">{asic.manufacturer}</div>
               <div className="grid grid-cols-2 gap-x-2 text-[10px]">
                 <div>
-                  <span className="text-watt-navy/50">Hashrate:</span>
-                  <span className="text-watt-navy font-medium ml-1">{asic.hashrate_th} TH/s</span>
+                  <span className="text-muted-foreground">Hashrate:</span>
+                  <span className="text-foreground font-medium ml-1">{asic.hashrate_th} TH/s</span>
                 </div>
                 <div>
-                  <span className="text-watt-navy/50">Efficiency:</span>
-                  <span className="text-watt-navy font-medium ml-1">{asic.efficiency_jth} J/TH</span>
+                  <span className="text-muted-foreground">Efficiency:</span>
+                  <span className="text-foreground font-medium ml-1">{asic.efficiency_jth} J/TH</span>
                 </div>
               </div>
               {asic.market_price_usd && (
-                <div className="mt-1.5 text-xs font-semibold text-watt-success">
+                <div className="mt-1.5 text-xs font-semibold text-market-positive">
                   ~${asic.market_price_usd.toLocaleString()}
                 </div>
               )}
@@ -169,7 +169,7 @@ export const ASICSelector: React.FC<ASICSelectorProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-watt-navy/60 hover:text-watt-navy hover:bg-gray-50"
+          className="w-full text-muted-foreground hover:text-foreground hover:bg-muted"
           onClick={() => setShowAll(!showAll)}
         >
           {showAll ? `Show Less` : `Show All ${asics.length} ASICs`}

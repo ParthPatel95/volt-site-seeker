@@ -28,7 +28,7 @@ export const CumulativeNoiseSection = () => {
   const energyReduction = Math.pow(10, advantage / 10);
 
   return (
-    <section id="cumulative" className="py-16 md:py-24 bg-watt-light">
+    <section id="cumulative" className="py-16 md:py-24 bg-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal delay={50}>
           <LearningObjectives 
@@ -39,14 +39,14 @@ export const CumulativeNoiseSection = () => {
 
         <ScrollReveal>
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-success/10 rounded-full mb-4">
-              <Calculator className="h-4 w-4 text-watt-success" />
-              <span className="text-sm font-medium text-watt-success">Sound Mathematics</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-market-positive/10 rounded-full mb-4">
+              <Calculator className="h-4 w-4 text-market-positive" />
+              <span className="text-sm font-medium text-market-positive">Sound Mathematics</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Cumulative Noise Calculations
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               When combining multiple noise sources, sound doesn't simply add up linearly. 
               Understanding logarithmic addition is crucial for accurate facility planning.
             </p>
@@ -55,58 +55,58 @@ export const CumulativeNoiseSection = () => {
 
         {/* Formula Explanation */}
         <ScrollReveal delay={100}>
-          <Card className="bg-white border-none shadow-institutional mb-8">
+          <Card className="bg-card border-border shadow-lg mb-8">
             <CardContent className="p-6 md:p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy mb-4">The Logarithmic Addition Formula</h3>
-                  <div className="bg-watt-navy text-white rounded-xl p-6 font-mono mb-4">
+                  <h3 className="text-xl font-bold text-foreground mb-4">The Logarithmic Addition Formula</h3>
+                  <div className="bg-card-dark text-white rounded-xl p-6 font-mono mb-4">
                     <p className="text-lg mb-2">L<sub>total</sub> = 10 × log₁₀(∑10<sup>(Li/10)</sup>)</p>
                     <p className="text-sm text-white/70 mt-4">For n identical sources at level L:</p>
                     <p className="text-lg">L<sub>total</sub> = L + 10 × log₁₀(n)</p>
                   </div>
-                  <div className="space-y-3 text-sm text-watt-navy/70">
+                  <div className="space-y-3 text-sm text-muted-foreground">
                     <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-watt-coinbase flex-shrink-0 mt-0.5" />
+                      <Info className="h-4 w-4 text-secondary flex-shrink-0 mt-0.5" />
                       <p><strong>2 identical sources:</strong> +3 dB (2× energy)</p>
                     </div>
                     <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-watt-coinbase flex-shrink-0 mt-0.5" />
+                      <Info className="h-4 w-4 text-secondary flex-shrink-0 mt-0.5" />
                       <p><strong>10 identical sources:</strong> +10 dB (10× energy)</p>
                     </div>
                     <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-watt-coinbase flex-shrink-0 mt-0.5" />
+                      <Info className="h-4 w-4 text-secondary flex-shrink-0 mt-0.5" />
                       <p><strong>100 identical sources:</strong> +20 dB (100× energy)</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Visual Example */}
-                <div className="bg-watt-light rounded-xl p-6">
-                  <h4 className="font-semibold text-watt-navy mb-4">Visual Example: Adding Sources</h4>
+                <div className="bg-muted rounded-xl p-6">
+                  <h4 className="font-semibold text-foreground mb-4">Visual Example: Adding Sources</h4>
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-watt-coinbase/20 rounded-lg flex items-center justify-center">
-                        <span className="font-mono font-bold text-watt-coinbase">67 dB</span>
+                      <div className="w-16 h-16 bg-secondary/20 rounded-lg flex items-center justify-center">
+                        <span className="font-mono font-bold text-secondary">67 dB</span>
                       </div>
-                      <Plus className="h-5 w-5 text-watt-navy/50" />
-                      <div className="w-16 h-16 bg-watt-coinbase/20 rounded-lg flex items-center justify-center">
-                        <span className="font-mono font-bold text-watt-coinbase">67 dB</span>
+                      <Plus className="h-5 w-5 text-muted-foreground" />
+                      <div className="w-16 h-16 bg-secondary/20 rounded-lg flex items-center justify-center">
+                        <span className="font-mono font-bold text-secondary">67 dB</span>
                       </div>
-                      <Equal className="h-5 w-5 text-watt-navy/50" />
-                      <div className="w-16 h-16 bg-watt-success/20 rounded-lg flex items-center justify-center border-2 border-watt-success">
-                        <span className="font-mono font-bold text-watt-success">70 dB</span>
+                      <Equal className="h-5 w-5 text-muted-foreground" />
+                      <div className="w-16 h-16 bg-market-positive/20 rounded-lg flex items-center justify-center border-2 border-market-positive">
+                        <span className="font-mono font-bold text-market-positive">70 dB</span>
                       </div>
                     </div>
-                    <p className="text-sm text-watt-navy/60">
+                    <p className="text-sm text-muted-foreground">
                       Two 67 dB sources = 70 dB total (not 134 dB!)
                     </p>
                     
-                    <div className="border-t border-watt-navy/10 pt-4 mt-4">
-                      <p className="text-sm text-watt-navy/70 mb-2">With 30 containers at 67 dB each:</p>
-                      <div className="bg-white rounded-lg p-4">
-                        <p className="font-mono text-lg text-watt-navy">
-                          67 + 10 × log₁₀(30) = 67 + 14.77 = <strong className="text-watt-bitcoin">81.8 dB</strong>
+                    <div className="border-t border-border pt-4 mt-4">
+                      <p className="text-sm text-muted-foreground mb-2">With 30 containers at 67 dB each:</p>
+                      <div className="bg-card rounded-lg p-4">
+                        <p className="font-mono text-lg text-foreground">
+                          67 + 10 × log₁₀(30) = 67 + 14.77 = <strong className="text-primary">81.8 dB</strong>
                         </p>
                       </div>
                     </div>
@@ -119,7 +119,7 @@ export const CumulativeNoiseSection = () => {
 
         {/* Interactive Calculator */}
         <ScrollReveal delay={200}>
-          <Card className="bg-gradient-to-br from-watt-navy to-watt-navy/90 text-white border-none shadow-xl mb-8">
+          <Card className="bg-gradient-to-br from-card-dark to-card-dark/90 text-white border-none shadow-xl mb-8">
             <CardContent className="p-6 md:p-8">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <Calculator className="h-5 w-5" />
@@ -179,7 +179,7 @@ export const CumulativeNoiseSection = () => {
                 <div className="space-y-4">
                   <div className="bg-white/10 rounded-xl p-6">
                     <p className="text-sm text-white/70 mb-2">Total Cumulative Noise at Source</p>
-                    <p className="text-4xl font-bold text-watt-bitcoin font-mono">
+                    <p className="text-4xl font-bold text-primary font-mono">
                       {cumulativeDb.toFixed(1)} dB
                     </p>
                     <p className="text-xs text-white/50 mt-2">
@@ -187,15 +187,15 @@ export const CumulativeNoiseSection = () => {
                     </p>
                   </div>
 
-                  <div className="bg-watt-success/20 rounded-xl p-4">
+                  <div className="bg-market-positive/20 rounded-xl p-4">
                     <p className="text-sm font-semibold mb-2">Comparison vs Air-Cooled ({airCooledDb.toFixed(1)} dB)</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-2xl font-bold text-watt-success font-mono">-{advantage.toFixed(1)} dB</p>
+                        <p className="text-2xl font-bold text-market-positive font-mono">-{advantage.toFixed(1)} dB</p>
                         <p className="text-xs text-white/60">Noise reduction</p>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-watt-success font-mono">{energyReduction.toFixed(0)}×</p>
+                        <p className="text-2xl font-bold text-market-positive font-mono">{energyReduction.toFixed(0)}×</p>
                         <p className="text-xs text-white/60">Less sound energy</p>
                       </div>
                     </div>
@@ -208,36 +208,36 @@ export const CumulativeNoiseSection = () => {
 
         {/* Alberta Heartland Case Study Preview */}
         <ScrollReveal delay={300}>
-          <Card className="bg-white border-2 border-watt-bitcoin/20 shadow-institutional">
+          <Card className="bg-card border-2 border-primary/20 shadow-lg">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-watt-bitcoin/10 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                   <span className="text-xl">🏭</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-watt-navy">Alberta Heartland 45MW Case Study</h3>
-                  <p className="text-sm text-watt-navy/60">30 Bitmain Hydro Containers</p>
+                  <h3 className="text-lg font-bold text-foreground">Alberta Heartland 45MW Case Study</h3>
+                  <p className="text-sm text-muted-foreground">30 Bitmain Hydro Containers</p>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <div className="bg-watt-light rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-watt-navy font-mono">30</p>
-                  <p className="text-sm text-watt-navy/60">Hydro Containers</p>
+                <div className="bg-muted rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-foreground font-mono">30</p>
+                  <p className="text-sm text-muted-foreground">Hydro Containers</p>
                 </div>
-                <div className="bg-watt-light rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-watt-coinbase font-mono">67 dB</p>
-                  <p className="text-sm text-watt-navy/60">Per Container</p>
+                <div className="bg-muted rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-secondary font-mono">67 dB</p>
+                  <p className="text-sm text-muted-foreground">Per Container</p>
                 </div>
-                <div className="bg-watt-bitcoin/10 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-watt-bitcoin font-mono">81.8 dB</p>
-                  <p className="text-sm text-watt-navy/60">Total at Source</p>
+                <div className="bg-primary/10 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-primary font-mono">81.8 dB</p>
+                  <p className="text-sm text-muted-foreground">Total at Source</p>
                 </div>
               </div>
 
-              <p className="text-sm text-watt-navy/70">
+              <p className="text-sm text-muted-foreground">
                 If this facility used air-cooled containers instead: <strong>109.8 dB</strong> — that's 
-                <strong className="text-watt-success"> 630× more sound energy</strong> at the source!
+                <strong className="text-market-positive"> 630× more sound energy</strong> at the source!
               </p>
             </CardContent>
           </Card>
