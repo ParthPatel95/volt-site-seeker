@@ -12,3 +12,4 @@ export { MinerCard } from './MinerCard';
 export { MinerRegistrationDialog } from './MinerRegistrationDialog';
 export { MinerDetailSheet } from './MinerDetailSheet';
 export { FleetStatsHeader } from './FleetStatsHeader';
+export { MinerFleetTestRunner } from './MinerFleetTestRunner';
