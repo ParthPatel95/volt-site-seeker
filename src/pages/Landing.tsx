@@ -17,13 +17,13 @@ const LandingAcademySection = lazy(() => import('@/components/landing/LandingAca
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
-    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-watt-trust border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
 const Landing: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white text-watt-navy relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Smooth scroll functionality */}
       <SmoothScroll />
       
@@ -58,7 +58,7 @@ const Landing: React.FC = () => {
 
           <SectionDivider color="purple" />
 
-          {/* Alberta Facility Hub - Moved above Investment Thesis */}
+          {/* Alberta Facility Hub */}
           <section aria-label="Alberta Facility" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <AlbertaFacilityHub />

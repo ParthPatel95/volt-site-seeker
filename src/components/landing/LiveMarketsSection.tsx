@@ -36,35 +36,35 @@ export const LiveMarketsSection = () => {
 
   const getConnectionStatus = () => {
     if (isFetching && !dataUpdatedAt) {
-      return { label: 'Connecting...', color: 'bg-watt-bitcoin/20 text-watt-bitcoin border-watt-bitcoin/30', icon: Wifi };
+      return { label: 'Connecting...', color: 'bg-data-warning/20 text-data-warning border-data-warning/30', icon: Wifi };
     }
     if (isError && !dataUpdatedAt) {
-      return { label: 'Offline', color: 'bg-red-500/20 text-red-600 border-red-500/30', icon: WifiOff };
+      return { label: 'Offline', color: 'bg-data-negative/20 text-data-negative border-data-negative/30', icon: WifiOff };
     }
     if (isSuccess || dataUpdatedAt) {
-      return { label: 'Live', color: 'bg-watt-success/20 text-watt-success border-watt-success/30', icon: Wifi };
+      return { label: 'Live', color: 'bg-data-positive/20 text-data-positive border-data-positive/30', icon: Wifi };
     }
-    return { label: 'Connecting...', color: 'bg-watt-bitcoin/20 text-watt-bitcoin border-watt-bitcoin/30', icon: Wifi };
+    return { label: 'Connecting...', color: 'bg-data-warning/20 text-data-warning border-data-warning/30', icon: Wifi };
   };
 
   const status = getConnectionStatus();
   const StatusIcon = status.icon;
 
   return (
-    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-white">
+    <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <ScrollReveal delay={0.1}>
           <div className="text-center mb-8 md:mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/20 mb-4">
-              <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-watt-success">Real-Time Market Data</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-data-positive/10 border border-data-positive/20 mb-4">
+              <div className="w-2 h-2 bg-data-positive rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-data-positive">Real-Time Market Data</span>
             </div>
             
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-watt-navy mb-3 sm:mb-4 leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4 leading-tight">
               Live Energy Markets
             </h2>
-            <p className="text-base sm:text-lg text-watt-navy/70 max-w-2xl mx-auto leading-relaxed px-2 mb-6">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2 mb-6">
               Track real-time electricity prices and grid conditions across North American markets
             </p>
 
@@ -76,7 +76,7 @@ export const LiveMarketsSection = () => {
               </Badge>
               
               {lastUpdated && (
-                <span className="text-xs text-watt-navy/60">
+                <span className="text-xs text-muted-foreground">
                   Updated: {lastUpdated}
                 </span>
               )}
@@ -86,7 +86,7 @@ export const LiveMarketsSection = () => {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isFetching}
-                className="text-watt-navy/60 hover:text-watt-navy hover:bg-watt-light text-xs gap-1.5"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted text-xs gap-1.5"
               >
                 <RefreshCw className={`w-3 h-3 ${isFetching ? 'animate-spin' : ''}`} />
                 Refresh
@@ -105,9 +105,9 @@ export const LiveMarketsSection = () => {
 
         {/* Footer */}
         <ScrollReveal delay={0.3}>
-          <div className="mt-6 p-4 bg-watt-light border border-gray-200 rounded-lg">
-            <div className="text-sm text-watt-navy/70 text-center flex items-center justify-center gap-2">
-              <span className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></span>
+          <div className="mt-6 p-4 bg-muted/50 border border-border rounded-lg">
+            <div className="text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
+              <span className="w-2 h-2 bg-data-positive rounded-full animate-pulse"></span>
               <span>Data refreshes every 5 minutes from ERCOT and AESO official sources</span>
             </div>
           </div>
