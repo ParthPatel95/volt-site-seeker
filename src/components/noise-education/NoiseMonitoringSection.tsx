@@ -35,7 +35,7 @@ const measurementPositions = [
 
 export const NoiseMonitoringSection = () => {
   return (
-    <section id="monitoring" className="py-16 md:py-24 bg-white">
+    <section id="monitoring" className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <LearningObjectives
@@ -52,14 +52,14 @@ export const NoiseMonitoringSection = () => {
           />
 
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-coinbase/10 rounded-full mb-4">
-              <Activity className="h-4 w-4 text-watt-coinbase" />
-              <span className="text-sm font-medium text-watt-coinbase">Monitoring</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
+              <Activity className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Monitoring</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Monitoring & Measurement
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Proper noise measurement is essential for demonstrating compliance and tracking
               performance over time.
             </p>
@@ -72,17 +72,17 @@ export const NoiseMonitoringSection = () => {
             const Icon = method.icon;
             return (
               <ScrollReveal key={idx} delay={idx * 100}>
-                <Card className="bg-white border-none shadow-institutional h-full">
+                <Card className="bg-card border-border h-full">
                   <CardContent className="p-6">
-                    <div className="w-12 h-12 bg-watt-coinbase/10 rounded-xl flex items-center justify-center mb-4">
-                      <Icon className="h-6 w-6 text-watt-coinbase" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                      <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <h3 className="text-xl font-bold text-watt-navy mb-2">{method.title}</h3>
-                    <p className="text-watt-navy/70 text-sm mb-4">{method.description}</p>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{method.title}</h3>
+                    <p className="text-muted-foreground text-sm mb-4">{method.description}</p>
                     <ul className="space-y-1">
                       {method.specs.map((spec, sidx) => (
-                        <li key={sidx} className="text-xs text-watt-navy/60 flex items-start gap-2">
-                          <span className="text-watt-coinbase">•</span>
+                        <li key={sidx} className="text-xs text-muted-foreground flex items-start gap-2">
+                          <span className="text-primary">•</span>
                           {spec}
                         </li>
                       ))}
@@ -123,58 +123,58 @@ export const NoiseMonitoringSection = () => {
 
         {/* Sample Report */}
         <ScrollReveal delay={500}>
-          <Card className="bg-white border-none shadow-institutional">
+          <Card className="bg-card border-border">
             <CardContent className="p-6 md:p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Sample Noise Monitoring Report
               </h3>
               
-              <div className="bg-watt-light rounded-xl p-6 font-mono text-sm">
-                <div className="border-b border-watt-navy/10 pb-4 mb-4">
-                  <p className="font-bold text-watt-navy">Alberta Heartland 45MW Mining Facility</p>
-                  <p className="text-watt-navy/60">Noise Compliance Report - Q4 2024</p>
+              <div className="bg-muted rounded-xl p-6 font-mono text-sm">
+                <div className="border-b border-border pb-4 mb-4">
+                  <p className="font-bold text-foreground">Alberta Heartland 45MW Mining Facility</p>
+                  <p className="text-muted-foreground">Noise Compliance Report - Q4 2024</p>
                 </div>
 
                 <table className="w-full">
                   <thead>
-                    <tr className="text-left text-watt-navy/60">
+                    <tr className="text-left text-muted-foreground">
                       <th className="pb-2">Location</th>
                       <th className="pb-2">Leq (dBA)</th>
                       <th className="pb-2">Limit</th>
                       <th className="pb-2">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="text-watt-navy">
-                    <tr className="border-t border-watt-navy/5">
+                  <tbody className="text-foreground">
+                    <tr className="border-t border-border">
                       <td className="py-2">Property Boundary (N)</td>
                       <td>32.4</td>
                       <td>50</td>
-                      <td className="text-watt-success">✓ Pass</td>
+                      <td className="text-data-positive">✓ Pass</td>
                     </tr>
-                    <tr className="border-t border-watt-navy/5">
+                    <tr className="border-t border-border">
                       <td className="py-2">Property Boundary (S)</td>
                       <td>28.7</td>
                       <td>50</td>
-                      <td className="text-watt-success">✓ Pass</td>
+                      <td className="text-data-positive">✓ Pass</td>
                     </tr>
-                    <tr className="border-t border-watt-navy/5">
+                    <tr className="border-t border-border">
                       <td className="py-2">Nearest Residence (1.7km)</td>
                       <td>17.2</td>
                       <td>40</td>
-                      <td className="text-watt-success">✓ Pass</td>
+                      <td className="text-data-positive">✓ Pass</td>
                     </tr>
-                    <tr className="border-t border-watt-navy/5">
+                    <tr className="border-t border-border">
                       <td className="py-2">Ambient Background</td>
                       <td>28.5</td>
                       <td>-</td>
-                      <td className="text-watt-navy/50">Reference</td>
+                      <td className="text-muted-foreground">Reference</td>
                     </tr>
                   </tbody>
                 </table>
 
-                <div className="mt-4 pt-4 border-t border-watt-navy/10">
-                  <p className="text-watt-navy/60">
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-muted-foreground">
                     <strong>Conclusion:</strong> Facility operates well within all applicable noise limits.
                     Sound levels at nearest residence are below ambient background.
                   </p>

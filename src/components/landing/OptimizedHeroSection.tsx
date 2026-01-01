@@ -28,7 +28,7 @@ export const OptimizedHeroSection = () => {
         <div className="w-full px-6 sm:px-8 lg:px-16 max-w-2xl">
           {/* Main heading */}
           <ScrollReveal delay={0.1}>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-8 leading-tight text-watt-navy tracking-tight">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-8 leading-tight text-foreground tracking-tight">
               Building Digital<br />
               <span className="text-watt-bitcoin">Infrastructure</span><br />
               at Scale
@@ -38,7 +38,7 @@ export const OptimizedHeroSection = () => {
           {/* Description */}
           <ScrollReveal delay={0.2}>
             <div className="mb-10 sm:mb-12">
-              <p className="text-lg md:text-xl text-watt-navy/70 leading-relaxed font-normal">
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-normal">
                 WattByte acquires and develops strategic power infrastructure for AI, 
                 high-performance computing, and Bitcoin mining operations.
               </p>
@@ -52,16 +52,16 @@ export const OptimizedHeroSection = () => {
                 <div className="text-4xl sm:text-5xl md:text-6xl font-bold text-watt-bitcoin mb-2">
                   1,429<span className="text-3xl sm:text-4xl md:text-5xl">MW</span>
                 </div>
-                <div className="text-sm sm:text-base text-watt-navy/60 font-medium uppercase tracking-wider">
+                <div className="text-sm sm:text-base text-muted-foreground font-medium uppercase tracking-wider">
                   Global Pipeline
                 </div>
               </div>
-              <div className="hidden sm:block w-px h-16 bg-watt-navy/20" />
+              <div className="hidden sm:block w-px h-16 bg-border" />
               <div>
                 <div className="text-4xl sm:text-5xl md:text-6xl font-bold text-watt-trust mb-2">
                   135<span className="text-3xl sm:text-4xl md:text-5xl">MW</span>
                 </div>
-                <div className="text-sm sm:text-base text-watt-navy/60 font-medium uppercase tracking-wider">
+                <div className="text-sm sm:text-base text-muted-foreground font-medium uppercase tracking-wider">
                   Under Development
                 </div>
               </div>

@@ -147,13 +147,13 @@ export const VoltMarketHomepage: React.FC = () => {
 
               <div className="space-y-6 relative z-10">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                  <span className="text-gray-900 block">GridBazaar</span>
+                  <span className="text-foreground block">GridBazaar</span>
                   <span className="text-watt-primary block mt-2">
                     Energy Infrastructure
                   </span>
                 </h1>
 
-                <p className="text-lg md:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
                   The world's most advanced energy infrastructure marketplace with real-time analytics and AI-powered insights. 
                   Join the revolution in energy asset trading.
                 </p>
@@ -163,9 +163,9 @@ export const VoltMarketHomepage: React.FC = () => {
               <div className="max-w-3xl mx-auto">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-watt-gradient rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                  <div className="relative bg-white rounded-2xl border-2 border-gray-200 hover:border-watt-primary/30 transition-all duration-300 shadow-lg">
+                  <div className="relative bg-card rounded-2xl border-2 border-border hover:border-watt-primary/30 transition-all duration-300 shadow-lg">
                     <div className="flex items-center p-2">
-                      <Search className="ml-4 text-gray-400 w-6 h-6" />
+                      <Search className="ml-4 text-muted-foreground w-6 h-6" />
                       <Input
                         placeholder="Search power assets, locations, mining facilities..."
                         value={searchQuery}
@@ -210,20 +210,20 @@ export const VoltMarketHomepage: React.FC = () => {
       </section>
 
       {/* Why GridBazaar Leads */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <section className="py-20 bg-gradient-to-br from-muted/50 to-primary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
+            <Badge className="mb-6 bg-primary/10 text-primary border-primary/20">
               <BarChart3 className="w-4 h-4 mr-2" />
               Market Leadership
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               Why GridBazaar
-              <span className="text-blue-600 block">
+              <span className="text-primary block">
                 Leads the Market
               </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               The first and only marketplace built specifically for energy infrastructure professionals
             </p>
           </div>
@@ -252,13 +252,13 @@ export const VoltMarketHomepage: React.FC = () => {
                   icon: "📈"
                 }
               ].map((advantage, index) => (
-                <div key={index} className="flex items-start space-x-6 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <div key={index} className="flex items-start space-x-6 p-6 bg-card rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-chart-secondary rounded-2xl flex items-center justify-center flex-shrink-0">
                     <span className="text-2xl">{advantage.icon}</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{advantage.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{advantage.description}</p>
+                    <h3 className="text-xl font-bold text-foreground mb-3">{advantage.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{advantage.description}</p>
                   </div>
                 </div>
               ))}
@@ -268,8 +268,8 @@ export const VoltMarketHomepage: React.FC = () => {
                 <div className="w-32 h-32 bg-gradient-to-br from-watt-primary to-watt-secondary rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
                   <span className="text-5xl">👑</span>
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-6">Market Leadership</h3>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                <h3 className="text-3xl font-bold text-foreground mb-6">Market Leadership</h3>
+                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
                   GridBazaar processes over $2B in energy infrastructure opportunities with 99.9% uptime and enterprise-grade security.
                 </p>
                 <Badge className="bg-gradient-to-r from-watt-primary to-watt-secondary text-white px-6 py-2 text-lg">
@@ -282,20 +282,20 @@ export const VoltMarketHomepage: React.FC = () => {
       </section>
 
       {/* Market Opportunity */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="mb-6 bg-green-100 text-green-700 border-green-200">
+            <Badge className="mb-6 bg-data-positive/10 text-data-positive border-data-positive/20">
               <TrendingUp className="w-4 h-4 mr-2" />
               Market Opportunity
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               Massive Market
-              <span className="text-green-600 block">
+              <span className="text-data-positive block">
                 Opportunity
               </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               The global energy infrastructure market represents unprecedented investment opportunities
             </p>
           </div>
@@ -307,38 +307,38 @@ export const VoltMarketHomepage: React.FC = () => {
                 label: "Global Energy Infrastructure Market",
                 description: "Total addressable market size",
                 trend: "+8.2% CAGR",
-                gradient: "from-blue-500 to-blue-600"
+                gradient: "from-primary to-primary/80"
               },
               {
                 value: "$890B",
                 label: "Annual Energy Investment",
                 description: "Yearly capital deployment",
                 trend: "+12% YoY",
-                gradient: "from-green-500 to-green-600"
+                gradient: "from-data-positive to-data-positive/80"
               },
               {
                 value: "450GW",
                 label: "Renewable Capacity Growth",
                 description: "New capacity needed by 2030",
                 trend: "+15% annually",
-                gradient: "from-purple-500 to-purple-600"
+                gradient: "from-chart-secondary to-chart-secondary/80"
               },
               {
                 value: "$1.2T",
                 label: "Mining Infrastructure Value",
                 description: "Bitcoin mining market cap",
                 trend: "+45% growth",
-                gradient: "from-orange-500 to-orange-600"
+                gradient: "from-watt-bitcoin to-watt-bitcoin/80"
               }
             ].map((stat, index) => (
-              <Card key={index} className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-white to-gray-50/30 border-0 shadow-lg">
+              <Card key={index} className="group text-center p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-card border-border shadow-lg">
                 <div className={`w-16 h-16 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                   <TrendingUp className="w-8 h-8 text-white" />
                 </div>
-                <div className="text-4xl font-bold text-gray-900 mb-3">{stat.value}</div>
-                <div className="text-lg font-semibold text-gray-700 mb-2">{stat.label}</div>
-                <div className="text-sm text-gray-500 mb-4">{stat.description}</div>
-                <Badge className="bg-green-50 text-green-600 border-green-200">
+                <div className="text-4xl font-bold text-foreground mb-3">{stat.value}</div>
+                <div className="text-lg font-semibold text-foreground/80 mb-2">{stat.label}</div>
+                <div className="text-sm text-muted-foreground mb-4">{stat.description}</div>
+                <Badge className="bg-data-positive/10 text-data-positive border-data-positive/20">
                   {stat.trend}
                 </Badge>
               </Card>
