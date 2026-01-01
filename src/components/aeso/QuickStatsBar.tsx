@@ -6,9 +6,7 @@ import {
   ArrowLeftRight, 
   Wind, 
   Zap,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -55,13 +53,12 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
     };
 
     fetchStats();
-    const interval = setInterval(fetchStats, 30000); // Refresh every 30s
+    const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, []);
 
   if (!stats) return null;
 
-  // Calculate fallback values for derived metrics
   const totalGen = (stats.generation_wind || 0) + (stats.generation_solar || 0) + (stats.generation_gas || 0);
   const renewablePercent = stats.renewable_penetration ?? 
     (totalGen > 0 ? ((stats.generation_wind || 0) + (stats.generation_solar || 0)) / totalGen * 100 : 0);
@@ -82,39 +79,33 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
   }
 
   const gridStatus = (() => {
-    if (stress > 70) return { label: 'Critical', color: 'text-destructive bg-destructive/10' };
-    if (stress > 40) return { label: 'Warning', color: 'text-amber-500 bg-amber-500/10' };
-    return { label: 'Healthy', color: 'text-emerald-500 bg-emerald-500/10' };
+    if (stress > 70) return { label: 'Critical', variant: 'error' as const };
+    if (stress > 40) return { label: 'Warning', variant: 'warning' as const };
+    return { label: 'Healthy', variant: 'success' as const };
   })();
-
-  const formatFlow = (flow: number | null, name: string) => {
-    if (flow === null) return null;
-    const direction = flow >= 0 ? '↑' : '↓';
-    return `${name}: ${direction}${Math.abs(flow).toFixed(0)}`;
-  };
 
   return (
     <div className={cn(
-      "flex items-center gap-2 px-3 py-1.5 bg-muted/30 border-t border-border overflow-x-auto text-[11px]",
+      "flex items-center gap-4 px-4 py-2 bg-muted/30 border border-border/50 rounded-lg overflow-x-auto text-xs",
       className
     )}>
       {/* Demand */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
-        <Activity className="w-3.5 h-3.5 text-primary" />
-        <span className="text-muted-foreground">Demand:</span>
-        <span className="font-mono font-semibold">{((stats.ail_mw || 0) / 1000).toFixed(1)}K MW</span>
+      <div className="flex items-center gap-2 whitespace-nowrap">
+        <Activity className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Demand</span>
+        <span className="font-mono font-semibold">{((stats.ail_mw || 0) / 1000).toFixed(2)} GW</span>
       </div>
 
       <div className="w-px h-4 bg-border" />
 
       {/* Reserve Margin */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
-        <Gauge className="w-3.5 h-3.5 text-blue-500" />
-        <span className="text-muted-foreground">Reserve:</span>
+      <div className="flex items-center gap-2 whitespace-nowrap">
+        <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Reserve</span>
         <span className={cn(
           "font-mono font-semibold",
-          reserveMargin < 10 ? "text-destructive" :
-          reserveMargin < 15 ? "text-amber-500" : "text-emerald-500"
+          reserveMargin < 10 ? "text-data-negative" :
+          reserveMargin < 15 ? "text-data-warning" : "text-data-positive"
         )}>
           {reserveMargin.toFixed(1)}%
         </span>
@@ -123,10 +114,10 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
       <div className="w-px h-4 bg-border" />
 
       {/* Grid Status */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
-        <Zap className={cn("w-3.5 h-3.5", gridStatus.color.split(' ')[0])} />
-        <span className="text-muted-foreground">Grid:</span>
-        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", gridStatus.color)}>
+      <div className="flex items-center gap-2 whitespace-nowrap">
+        <Zap className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Grid</span>
+        <Badge variant={gridStatus.variant} className="text-[10px] px-1.5 py-0 h-4 font-mono">
           {gridStatus.label}
         </Badge>
       </div>
@@ -134,23 +125,23 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
       <div className="w-px h-4 bg-border" />
 
       {/* Interties */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
-        <ArrowLeftRight className="w-3.5 h-3.5 text-purple-500" />
+      <div className="flex items-center gap-2 whitespace-nowrap">
+        <ArrowLeftRight className="w-3.5 h-3.5 text-muted-foreground" />
         <span className={cn(
           "font-mono text-[10px]",
-          (stats.intertie_bc_flow || 0) < 0 ? "text-blue-500" : "text-emerald-500"
+          (stats.intertie_bc_flow || 0) < 0 ? "text-primary" : "text-data-positive"
         )}>
           BC:{(stats.intertie_bc_flow || 0) >= 0 ? '+' : ''}{(stats.intertie_bc_flow || 0).toFixed(0)}
         </span>
         <span className={cn(
           "font-mono text-[10px]",
-          (stats.intertie_sask_flow || 0) < 0 ? "text-blue-500" : "text-emerald-500"
+          (stats.intertie_sask_flow || 0) < 0 ? "text-primary" : "text-data-positive"
         )}>
           SK:{(stats.intertie_sask_flow || 0) >= 0 ? '+' : ''}{(stats.intertie_sask_flow || 0).toFixed(0)}
         </span>
         <span className={cn(
           "font-mono text-[10px]",
-          (stats.intertie_montana_flow || 0) < 0 ? "text-blue-500" : "text-emerald-500"
+          (stats.intertie_montana_flow || 0) < 0 ? "text-primary" : "text-data-positive"
         )}>
           MT:{(stats.intertie_montana_flow || 0) >= 0 ? '+' : ''}{(stats.intertie_montana_flow || 0).toFixed(0)}
         </span>
@@ -159,10 +150,10 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
       <div className="w-px h-4 bg-border" />
 
       {/* Renewable */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
-        <Wind className="w-3.5 h-3.5 text-emerald-500" />
-        <span className="text-muted-foreground">Renewable:</span>
-        <span className="font-mono font-semibold text-emerald-500">
+      <div className="flex items-center gap-2 whitespace-nowrap">
+        <Wind className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">Renewable</span>
+        <span className="font-mono font-semibold text-data-positive">
           {renewablePercent.toFixed(1)}%
         </span>
       </div>
@@ -170,17 +161,17 @@ export function QuickStatsBar({ className }: QuickStatsBarProps) {
       <div className="w-px h-4 bg-border" />
 
       {/* Spike Risk */}
-      <div className="flex items-center gap-1.5 whitespace-nowrap">
+      <div className="flex items-center gap-2 whitespace-nowrap">
         <AlertTriangle className={cn(
           "w-3.5 h-3.5",
-          spikeProb > 50 ? "text-destructive" :
-          spikeProb > 25 ? "text-amber-500" : "text-emerald-500"
+          spikeProb > 50 ? "text-data-negative" :
+          spikeProb > 25 ? "text-data-warning" : "text-muted-foreground"
         )} />
-        <span className="text-muted-foreground">Spike Risk:</span>
+        <span className="text-muted-foreground">Spike Risk</span>
         <span className={cn(
           "font-mono font-semibold",
-          spikeProb > 50 ? "text-destructive" :
-          spikeProb > 25 ? "text-amber-500" : "text-emerald-500"
+          spikeProb > 50 ? "text-data-negative" :
+          spikeProb > 25 ? "text-data-warning" : "text-data-positive"
         )}>
           {spikeProb.toFixed(0)}%
         </span>
