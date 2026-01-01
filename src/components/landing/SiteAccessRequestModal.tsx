@@ -76,80 +76,80 @@ export const SiteAccessRequestModal = ({ children }: SiteAccessRequestModalProps
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-white border-gray-200">
+      <DialogContent className="sm:max-w-[500px] bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-watt-navy text-center">
+          <DialogTitle className="text-2xl font-bold text-foreground text-center">
             Request Available Sites Portfolio
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-watt-navy">Full Name *</Label>
+            <Label htmlFor="fullName" className="text-foreground">Full Name *</Label>
             <Input
               id="fullName"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               required
-              className="bg-watt-light border-gray-300 text-watt-navy"
+              className="bg-muted border-border text-foreground"
               placeholder="Enter your full name"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-watt-navy">Email Address *</Label>
+            <Label htmlFor="email" className="text-foreground">Email Address *</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
-              className="bg-watt-light border-gray-300 text-watt-navy"
+              className="bg-muted border-border text-foreground"
               placeholder="Enter your email address"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-watt-navy">Phone Number *</Label>
+            <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
             <Input
               id="phone"
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
-              className="bg-watt-light border-gray-300 text-watt-navy"
+              className="bg-muted border-border text-foreground"
               placeholder="Enter your phone number"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="companyName" className="text-watt-navy">Company Name *</Label>
+            <Label htmlFor="companyName" className="text-foreground">Company Name *</Label>
             <Input
               id="companyName"
               value={formData.companyName}
               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
               required
-              className="bg-watt-light border-gray-300 text-watt-navy"
+              className="bg-muted border-border text-foreground"
               placeholder="Enter your company name"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="powerRequirement" className="text-watt-navy">Power Requirement *</Label>
+            <Label htmlFor="powerRequirement" className="text-foreground">Power Requirement *</Label>
             <Input
               id="powerRequirement"
               value={formData.powerRequirement}
               onChange={(e) => setFormData({ ...formData, powerRequirement: e.target.value })}
               required
-              className="bg-watt-light border-gray-300 text-watt-navy"
+              className="bg-muted border-border text-foreground"
               placeholder="e.g., 50MW, 100MW, 500MW+"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location" className="text-watt-navy">Preferred Location *</Label>
+            <Label htmlFor="location" className="text-foreground">Preferred Location *</Label>
             <Select value={formData.location} onValueChange={(value) => setFormData({ ...formData, location: value })}>
-              <SelectTrigger className="bg-watt-light border-gray-300 text-watt-navy">
+              <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Select preferred location" />
               </SelectTrigger>
               <SelectContent>
