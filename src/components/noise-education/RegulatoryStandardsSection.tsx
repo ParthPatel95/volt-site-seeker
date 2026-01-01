@@ -69,7 +69,7 @@ const compliancePathway = [
 
 export const RegulatoryStandardsSection = () => {
   return (
-    <section id="standards" className="py-16 md:py-24 bg-white">
+    <section id="standards" className="py-16 md:py-24 bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal delay={50}>
           <LearningObjectives 
@@ -80,14 +80,14 @@ export const RegulatoryStandardsSection = () => {
 
         <ScrollReveal>
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-bitcoin/10 rounded-full mb-4">
-              <Shield className="h-4 w-4 text-watt-bitcoin" />
-              <span className="text-sm font-medium text-watt-bitcoin">Regulations</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Regulations</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Regulatory Standards & Compliance
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Mining facilities must comply with various noise regulations. Understanding applicable standards
               is essential for site selection and engineering design.
             </p>
@@ -100,25 +100,25 @@ export const RegulatoryStandardsSection = () => {
             const Icon = standard.icon;
             return (
               <ScrollReveal key={idx} delay={idx * 100}>
-                <Card className="bg-white border-none shadow-institutional h-full hover:shadow-lg transition-shadow">
+                <Card className="bg-card border-border shadow-lg h-full hover:shadow-xl transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className={`w-12 h-12 bg-${standard.color}/10 rounded-xl flex items-center justify-center`}>
                         <Icon className={`h-6 w-6 text-${standard.color}`} />
                       </div>
-                      <h3 className="text-xl font-bold text-watt-navy">{standard.name}</h3>
+                      <h3 className="text-xl font-bold text-foreground">{standard.name}</h3>
                     </div>
 
                     <div className="space-y-3 mb-4">
                       {standard.limits.map((limit, lidx) => (
-                        <div key={lidx} className="flex justify-between items-center py-2 border-b border-watt-navy/5 last:border-0">
-                          <span className="text-sm text-watt-navy/70">{limit.context}</span>
+                        <div key={lidx} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+                          <span className="text-sm text-muted-foreground">{limit.context}</span>
                           <Badge 
                             variant="outline"
                             className={`font-mono font-bold ${
                               limit.severity === 'strict' ? 'border-red-300 text-red-600 bg-red-50' :
                               limit.severity === 'moderate' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
-                              'border-watt-success/30 text-watt-success bg-watt-success/10'
+                              'border-market-positive/30 text-market-positive bg-market-positive/10'
                             }`}
                           >
                             {limit.limit}
@@ -127,7 +127,7 @@ export const RegulatoryStandardsSection = () => {
                       ))}
                     </div>
 
-                    <p className="text-xs text-watt-navy/50">{standard.notes}</p>
+                    <p className="text-xs text-muted-foreground">{standard.notes}</p>
                   </CardContent>
                 </Card>
               </ScrollReveal>
@@ -137,64 +137,64 @@ export const RegulatoryStandardsSection = () => {
 
         {/* Alberta Heartland Compliance Check */}
         <ScrollReveal delay={500}>
-          <Card className="bg-gradient-to-br from-watt-success/10 to-watt-success/5 border-2 border-watt-success/20 shadow-institutional mb-12">
+          <Card className="bg-gradient-to-br from-market-positive/10 to-market-positive/5 border-2 border-market-positive/20 shadow-lg mb-12">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-watt-success/20 rounded-xl flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-watt-success" />
+                <div className="w-12 h-12 bg-market-positive/20 rounded-xl flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-market-positive" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">Alberta Heartland 45MW: Compliance Check</h3>
-                  <p className="text-sm text-watt-navy/60">30 Hydro Containers • 1.7km to Nearest Residence</p>
+                  <h3 className="text-xl font-bold text-foreground">Alberta Heartland 45MW: Compliance Check</h3>
+                  <p className="text-sm text-muted-foreground">30 Hydro Containers • 1.7km to Nearest Residence</p>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 text-sm font-semibold text-watt-navy">Standard</th>
-                      <th className="text-center py-3 text-sm font-semibold text-watt-navy">Limit</th>
-                      <th className="text-center py-3 text-sm font-semibold text-watt-navy">Our Level</th>
-                      <th className="text-center py-3 text-sm font-semibold text-watt-navy">Margin</th>
-                      <th className="text-center py-3 text-sm font-semibold text-watt-navy">Status</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 text-sm font-semibold text-foreground">Standard</th>
+                      <th className="text-center py-3 text-sm font-semibold text-foreground">Limit</th>
+                      <th className="text-center py-3 text-sm font-semibold text-foreground">Our Level</th>
+                      <th className="text-center py-3 text-sm font-semibold text-foreground">Margin</th>
+                      <th className="text-center py-3 text-sm font-semibold text-foreground">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-watt-navy/5">
-                      <td className="py-4 text-sm text-watt-navy">WHO Night (Residential)</td>
-                      <td className="py-4 text-center font-mono text-watt-navy">45 dBA</td>
-                      <td className="py-4 text-center font-mono text-watt-coinbase font-bold">~17 dBA</td>
-                      <td className="py-4 text-center font-mono text-watt-success">-28 dB</td>
+                    <tr className="border-b border-border">
+                      <td className="py-4 text-sm text-foreground">WHO Night (Residential)</td>
+                      <td className="py-4 text-center font-mono text-foreground">45 dBA</td>
+                      <td className="py-4 text-center font-mono text-secondary font-bold">~17 dBA</td>
+                      <td className="py-4 text-center font-mono text-market-positive">-28 dB</td>
                       <td className="py-4 text-center">
-                        <Badge className="bg-watt-success text-white">✓ Excellent</Badge>
+                        <Badge className="bg-market-positive text-white">✓ Excellent</Badge>
                       </td>
                     </tr>
-                    <tr className="border-b border-watt-navy/5">
-                      <td className="py-4 text-sm text-watt-navy">Alberta AUC Rule 012</td>
-                      <td className="py-4 text-center font-mono text-watt-navy">40 dBA</td>
-                      <td className="py-4 text-center font-mono text-watt-coinbase font-bold">~17 dBA</td>
-                      <td className="py-4 text-center font-mono text-watt-success">-23 dB</td>
+                    <tr className="border-b border-border">
+                      <td className="py-4 text-sm text-foreground">Alberta AUC Rule 012</td>
+                      <td className="py-4 text-center font-mono text-foreground">40 dBA</td>
+                      <td className="py-4 text-center font-mono text-secondary font-bold">~17 dBA</td>
+                      <td className="py-4 text-center font-mono text-market-positive">-23 dB</td>
                       <td className="py-4 text-center">
-                        <Badge className="bg-watt-success text-white">✓ Excellent</Badge>
+                        <Badge className="bg-market-positive text-white">✓ Excellent</Badge>
                       </td>
                     </tr>
-                    <tr className="border-b border-watt-navy/5">
-                      <td className="py-4 text-sm text-watt-navy">OSHA Workplace (On-site)</td>
-                      <td className="py-4 text-center font-mono text-watt-navy">90 dBA</td>
-                      <td className="py-4 text-center font-mono text-watt-coinbase font-bold">81.8 dBA</td>
-                      <td className="py-4 text-center font-mono text-watt-success">-8 dB</td>
+                    <tr className="border-b border-border">
+                      <td className="py-4 text-sm text-foreground">OSHA Workplace (On-site)</td>
+                      <td className="py-4 text-center font-mono text-foreground">90 dBA</td>
+                      <td className="py-4 text-center font-mono text-secondary font-bold">81.8 dBA</td>
+                      <td className="py-4 text-center font-mono text-market-positive">-8 dB</td>
                       <td className="py-4 text-center">
-                        <Badge className="bg-watt-success text-white">✓ Compliant</Badge>
+                        <Badge className="bg-market-positive text-white">✓ Compliant</Badge>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              <div className="mt-6 p-4 bg-white rounded-lg">
-                <p className="text-sm text-watt-navy/70">
-                  <strong className="text-watt-success">Result:</strong> At 1.7km distance, our 45MW facility produces 
+              <div className="mt-6 p-4 bg-card rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-market-positive">Result:</strong> At 1.7km distance, our 45MW facility produces 
                   approximately <strong>17 dBA</strong> at the nearest residence — well below the threshold of perception 
                   (typically 25-30 dBA in rural areas) and far exceeding all regulatory requirements.
                 </p>
@@ -205,22 +205,22 @@ export const RegulatoryStandardsSection = () => {
 
         {/* Compliance Pathway */}
         <ScrollReveal delay={600}>
-          <Card className="bg-white border-none shadow-institutional">
+          <Card className="bg-card border-border shadow-lg">
             <CardContent className="p-6 md:p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-6">Regulatory Compliance Pathway</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">Regulatory Compliance Pathway</h3>
               <div className="relative">
                 {/* Timeline Line */}
-                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-watt-navy/10 hidden md:block" />
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border hidden md:block" />
                 
                 <div className="space-y-4 md:space-y-6">
                   {compliancePathway.map((item, idx) => (
                     <div key={idx} className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-watt-bitcoin/10 flex items-center justify-center flex-shrink-0 z-10 border-4 border-white">
-                        <span className="font-bold text-watt-bitcoin">{item.step}</span>
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 z-10 border-4 border-card">
+                        <span className="font-bold text-primary">{item.step}</span>
                       </div>
                       <div className="flex-1 pt-2">
-                        <h4 className="font-semibold text-watt-navy">{item.title}</h4>
-                        <p className="text-sm text-watt-navy/60">{item.description}</p>
+                        <h4 className="font-semibold text-foreground">{item.title}</h4>
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
                       </div>
                     </div>
                   ))}
