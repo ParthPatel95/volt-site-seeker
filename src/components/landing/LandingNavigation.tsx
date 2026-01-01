@@ -20,16 +20,16 @@ export const LandingNavigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4 bg-white/95 backdrop-blur-sm border-b border-gray-200 safe-area-pt shadow-institutional">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 sm:p-3 md:p-4 bg-background/95 backdrop-blur-sm border-b border-border safe-area-pt shadow-subtle">
       <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0 cursor-pointer hover:opacity-80 transition-opacity">
         <EnhancedLogo className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain flex-shrink-0" />
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-watt-navy flex items-center">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground flex items-center">
             <span className="truncate">Watt</span>
             <Bitcoin className="inline w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 -mx-0.5 flex-shrink-0 text-watt-bitcoin" />
             <span className="truncate">yte</span>
           </h1>
-          <p className="text-xs sm:text-sm truncate text-watt-navy/60">Infrastructure Company</p>
+          <p className="text-xs sm:text-sm truncate text-muted-foreground">Infrastructure Company</p>
         </div>
       </Link>
       
@@ -39,7 +39,7 @@ export const LandingNavigation = () => {
           variant="ghost" 
           size="sm"
           onClick={() => navigate('/academy')}
-          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-watt-bitcoin hover:bg-watt-bitcoin/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
         >
           <GraduationCap className="h-4 w-4" />
           Academy
@@ -48,7 +48,7 @@ export const LandingNavigation = () => {
           variant="ghost" 
           size="sm"
           onClick={() => navigate('/hosting')}
-          className="text-watt-navy hover:text-watt-bitcoin hover:bg-watt-bitcoin/5 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-watt-bitcoin hover:bg-watt-bitcoin/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
         >
           <Zap className="h-4 w-4" />
           Hosting
@@ -78,19 +78,19 @@ export const LandingNavigation = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="lg:hidden p-2 text-watt-navy hover:bg-watt-bitcoin/5"
+              className="lg:hidden p-2 text-foreground hover:bg-muted/50"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-80 bg-white border-l border-gray-200 p-0">
+          <SheetContent side="right" className="w-80 bg-background border-l border-border p-0">
             <div className="flex flex-col h-full">
               {/* Header */}
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-4 border-b border-border">
                 <div className="flex items-center space-x-2">
                   <EnhancedLogo className="w-8 h-8" />
-                  <span className="font-bold text-watt-navy flex items-center">
+                  <span className="font-bold text-foreground flex items-center">
                     Watt<Bitcoin className="w-4 h-4 text-watt-bitcoin -mx-0.5" />yte
                   </span>
                 </div>
@@ -102,14 +102,14 @@ export const LandingNavigation = () => {
                 <div className="px-4 space-y-1">
                   <button
                     onClick={() => handleNavigate('/academy')}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-watt-navy hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left font-medium"
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left font-medium"
                   >
                     <GraduationCap className="h-5 w-5" />
                     Academy
                   </button>
                   <button
                     onClick={() => handleNavigate('/hosting')}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-watt-navy hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left font-medium"
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left font-medium"
                   >
                     <Server className="h-5 w-5" />
                     Hosting
@@ -118,53 +118,53 @@ export const LandingNavigation = () => {
 
                 {/* Learn Section */}
                 <div className="mt-4 px-4">
-                  <p className="px-3 py-2 text-xs font-semibold text-watt-navy/50 uppercase tracking-wider">Learn</p>
+                  <p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Learn</p>
                   <div className="space-y-1">
                     <button
                       onClick={() => handleNavigate('/bitcoin')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Bitcoin className="h-4 w-4" />
                       Bitcoin 101
                     </button>
                     <button
                       onClick={() => handleNavigate('/datacenters')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Server className="h-4 w-4" />
                       Datacenters 101
                     </button>
                     <button
                       onClick={() => handleNavigate('/aeso-101')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Zap className="h-4 w-4" />
                       AESO 101
                     </button>
                     <button
                       onClick={() => handleNavigate('/hydro-datacenters')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Droplets className="h-4 w-4" />
                       Hydro Datacenters 101
                     </button>
                     <button
                       onClick={() => handleNavigate('/electrical-infrastructure')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <CircuitBoard className="h-4 w-4" />
                       Electrical Infrastructure 101
                     </button>
                     <button
                       onClick={() => handleNavigate('/noise-management')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Volume2 className="h-4 w-4" />
                       Noise Management 101
                     </button>
                     <button
                       onClick={() => handleNavigate('/immersion-cooling')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Waves className="h-4 w-4" />
                       Immersion Cooling 101
@@ -174,18 +174,18 @@ export const LandingNavigation = () => {
 
                 {/* Company Section */}
                 <div className="mt-4 px-4">
-                  <p className="px-3 py-2 text-xs font-semibold text-watt-navy/50 uppercase tracking-wider">Company</p>
+                  <p className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Company</p>
                   <div className="space-y-1">
                     <button
                       onClick={() => handleNavigate('/about')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <Users className="h-4 w-4" />
                       About Us
                     </button>
                     <button
                       onClick={() => handleNavigate('/wattfund')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-watt-navy/80 hover:bg-watt-bitcoin/5 hover:text-watt-bitcoin transition-colors text-left text-sm"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-watt-bitcoin/10 hover:text-watt-bitcoin transition-colors text-left text-sm"
                     >
                       <TrendingUp className="h-4 w-4" />
                       WattFund
@@ -195,7 +195,7 @@ export const LandingNavigation = () => {
               </div>
 
               {/* Footer CTAs */}
-              <div className="p-4 border-t border-gray-100 space-y-2">
+              <div className="p-4 border-t border-border space-y-2">
                 <Button 
                   onClick={() => handleNavigate('/app')}
                   className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white font-semibold"
