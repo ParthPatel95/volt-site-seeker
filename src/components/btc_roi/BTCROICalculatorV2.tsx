@@ -195,41 +195,41 @@ export const BTCROICalculatorV2: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-watt-light p-3 sm:p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-background p-2 sm:p-4 lg:p-6">
+      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 lg:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-watt-bitcoin rounded-xl shadow-institutional">
-              <Bitcoin className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="p-2 sm:p-2.5 bg-primary rounded-lg sm:rounded-xl flex-shrink-0">
+              <Bitcoin className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-watt-navy">Profitability Calculator</h1>
-              <p className="text-sm text-watt-navy/60">Real-time Bitcoin mining analysis</p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">Profitability Calculator</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Real-time Bitcoin mining analysis</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="bg-white border-gray-200 text-watt-navy hover:bg-gray-50"
+              className="flex-1 sm:flex-none"
             >
               <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} />
-              Refresh
+              <span className="sm:inline">Refresh</span>
             </Button>
             {networkData && (
-              <Badge className="bg-watt-success/10 text-watt-success border-watt-success/20">
-                <span className="w-2 h-2 bg-watt-success rounded-full mr-2 animate-pulse" />
-                Live Data
+              <Badge variant="outline" className="text-xs flex-shrink-0">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse" />
+                Live
               </Badge>
             )}
           </div>
         </div>
 
         {/* Live Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <StatsCard
             icon={<Bitcoin className="w-4 h-4" />}
             label="BTC Price"

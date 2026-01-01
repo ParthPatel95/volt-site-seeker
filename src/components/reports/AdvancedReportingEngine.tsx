@@ -357,25 +357,27 @@ export function AdvancedReportingEngine() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Advanced Reporting Engine</h1>
-          <p className="text-muted-foreground">Create, schedule, and manage custom reports</p>
+    <div className="container mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-responsive-2xl font-bold">Advanced Reporting Engine</h1>
+          <p className="text-muted-foreground text-responsive-sm">Create, schedule, and manage custom reports</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2 w-full sm:w-auto">
           <FileText className="w-4 h-4" />
-          New Report
+          <span>New Report</span>
         </Button>
       </div>
 
       <Tabs defaultValue="reports" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="reports">My Reports</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="create">Create Report</TabsTrigger>
-          <TabsTrigger value="schedule">Scheduling</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4">
+            <TabsTrigger value="reports" className="text-xs sm:text-sm px-3 sm:px-4">My Reports</TabsTrigger>
+            <TabsTrigger value="templates" className="text-xs sm:text-sm px-3 sm:px-4">Templates</TabsTrigger>
+            <TabsTrigger value="create" className="text-xs sm:text-sm px-3 sm:px-4">Create</TabsTrigger>
+            <TabsTrigger value="schedule" className="text-xs sm:text-sm px-3 sm:px-4">Scheduling</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="reports" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">

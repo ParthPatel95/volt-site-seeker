@@ -526,26 +526,28 @@ export function UserManagementSystem() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage users, roles, and permissions</p>
+    <div className="container mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-responsive-2xl font-bold">User Management</h1>
+          <p className="text-muted-foreground text-responsive-sm">Manage users, roles, and permissions</p>
         </div>
-        <Button className="gap-2" onClick={() => setActiveTab('create')}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => setActiveTab('create')}>
           <UserPlus className="w-4 h-4" />
-          Add User
+          <span>Add User</span>
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="roles">Roles</TabsTrigger>
-          <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="create">Create User</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5">
+            <TabsTrigger value="users" className="text-xs sm:text-sm px-2.5 sm:px-4">Users</TabsTrigger>
+            <TabsTrigger value="roles" className="text-xs sm:text-sm px-2.5 sm:px-4">Roles</TabsTrigger>
+            <TabsTrigger value="permissions" className="text-xs sm:text-sm px-2.5 sm:px-4">Permissions</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2.5 sm:px-4">Analytics</TabsTrigger>
+            <TabsTrigger value="create" className="text-xs sm:text-sm px-2.5 sm:px-4">Create</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="users" className="space-y-4">
           {/* Filters */}

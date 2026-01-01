@@ -136,30 +136,30 @@ export function AdvancedAnalyticsDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-2 sm:p-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 lg:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Advanced Analytics</h1>
-          <p className="text-sm sm:text-base text-gray-600">Comprehensive market intelligence and performance metrics</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-responsive-2xl font-bold text-foreground">Advanced Analytics</h1>
+          <p className="text-responsive-sm text-muted-foreground">Comprehensive market intelligence and performance metrics</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-md border">
+          <div className="flex rounded-md border overflow-hidden">
             {['7D', '1M', '3M', '1Y'].map((range) => (
               <Button
                 key={range}
                 variant={timeRange === range ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setTimeRange(range)}
-                className="rounded-none first:rounded-l-md last:rounded-r-md"
+                className="rounded-none first:rounded-l-md last:rounded-r-md px-2.5 sm:px-3 text-xs sm:text-sm"
               >
                 {range}
               </Button>
             ))}
           </div>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
+          <Button variant="outline" size="sm" className="px-2.5 sm:px-3">
+            <Download className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>
@@ -239,14 +239,16 @@ export function AdvancedAnalyticsDashboard() {
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="geographic">Geographic</TabsTrigger>
-          <TabsTrigger value="sectors">Sectors</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="risk">Risk Analysis</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0 scrollbar-hide">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-4">Overview</TabsTrigger>
+            <TabsTrigger value="geographic" className="text-xs sm:text-sm px-2.5 sm:px-4">Geographic</TabsTrigger>
+            <TabsTrigger value="sectors" className="text-xs sm:text-sm px-2.5 sm:px-4">Sectors</TabsTrigger>
+            <TabsTrigger value="performance" className="text-xs sm:text-sm px-2.5 sm:px-4">Performance</TabsTrigger>
+            <TabsTrigger value="risk" className="text-xs sm:text-sm px-2.5 sm:px-4">Risk</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Market Trends Chart */}

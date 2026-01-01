@@ -1012,17 +1012,17 @@ export function TradingViewChart({
     >
       {/* ===== TOP TOOLBAR with OHLC Display ===== */}
       <div className={cn(
-        "flex items-center justify-between h-12 px-3 border-b border-border bg-muted/30",
+        "flex items-center justify-between gap-2 px-2 sm:px-3 py-2 border-b border-border bg-muted/30 overflow-x-auto scrollbar-hide",
         isFullscreen && "relative z-[60]"
       )}>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap min-w-0">
           {/* Symbol & Live OHLC - TradingView Style */}
-          <div className="flex items-center gap-2 px-2 py-1 rounded bg-background border border-border">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 py-1 rounded bg-background border border-border flex-shrink-0">
             <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-bold text-sm">AESO/CAD</span>
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-bold text-xs sm:text-sm">AESO/CAD</span>
             </div>
-            <div className="hidden sm:flex items-center gap-2 ml-2 pl-2 border-l border-border text-xs">
+            <div className="hidden lg:flex items-center gap-2 ml-2 pl-2 border-l border-border text-xs">
               <span className="text-muted-foreground">O</span>
               <span className="font-mono font-semibold">${stats.open.toFixed(2)}</span>
               <span className="text-red-500">H</span>
@@ -1037,14 +1037,25 @@ export function TradingViewChart({
             </div>
           </div>
           
-          {/* Time Range Selector */}
-          <div className="hidden sm:flex items-center border border-border rounded overflow-hidden">
+          {/* Time Range Selector - Mobile dropdown, desktop buttons */}
+          <Select value={timeRange} onValueChange={(value: TimeRange) => { setTimeRange(value); handleResetZoom(); }}>
+            <SelectTrigger className="w-16 h-7 sm:hidden text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_RANGES.map(tr => (
+                <SelectItem key={tr.value} value={tr.value}>{tr.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <div className="hidden sm:flex items-center border border-border rounded overflow-hidden flex-shrink-0">
             {TIME_RANGES.map(tr => (
               <Button
                 key={tr.value}
                 variant={timeRange === tr.value ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-7 px-2.5 text-xs rounded-none"
+                className="h-7 px-2 sm:px-2.5 text-xs rounded-none"
                 onClick={() => {
                   setTimeRange(tr.value as TimeRange);
                   handleResetZoom();
@@ -1056,11 +1067,11 @@ export function TradingViewChart({
           </div>
 
           {/* Zoom Controls */}
-          <div className="flex items-center gap-1 border border-border rounded overflow-hidden">
+          <div className="flex items-center gap-0.5 border border-border rounded overflow-hidden flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs rounded-none"
+              className="h-7 px-1.5 sm:px-2 text-xs rounded-none touch-target"
               onClick={handleZoomIn}
               title="Zoom In (scroll up)"
             >
@@ -1069,7 +1080,7 @@ export function TradingViewChart({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs rounded-none"
+              className="h-7 px-1.5 sm:px-2 text-xs rounded-none touch-target"
               onClick={handleZoomOut}
               title="Zoom Out (scroll down)"
             >
@@ -1078,7 +1089,7 @@ export function TradingViewChart({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs rounded-none"
+              className="h-7 px-1.5 sm:px-2 text-xs rounded-none touch-target hidden sm:flex"
               onClick={handleResetZoom}
               title="Reset Zoom"
             >
@@ -1087,17 +1098,17 @@ export function TradingViewChart({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs rounded-none border-l border-border"
+              className="h-7 px-1.5 sm:px-2 text-xs rounded-none border-l border-border touch-target"
               onClick={handleJumpToNow}
               title="Jump to Now"
             >
-              <Target className="w-3.5 h-3.5 mr-1" />
-              NOW
+              <Target className="w-3.5 h-3.5 sm:mr-1" />
+              <span className="hidden sm:inline">NOW</span>
             </Button>
           </div>
 
           {/* Chart Type Toggle */}
-          <div className="hidden sm:flex items-center border border-border rounded overflow-hidden">
+          <div className="hidden md:flex items-center border border-border rounded overflow-hidden flex-shrink-0">
             <Button 
               variant={chartType === 'line' ? 'secondary' : 'ghost'}
               size="sm" 
