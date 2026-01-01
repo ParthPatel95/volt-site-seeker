@@ -11,7 +11,7 @@ interface VoltMarketLayoutProps {
 
 const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-watt-light/20 to-background">
+    <div className="min-h-screen bg-background">
       {/* New Unified Navigation */}
       <VoltMarketNavigation />
 
@@ -26,7 +26,7 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Zap className="w-6 h-6 text-watt-primary" />
+                <Zap className="w-6 h-6 text-primary" />
                 <span className="text-lg font-bold text-foreground">GridBazaar</span>
               </div>
               <p className="text-muted-foreground text-sm">
@@ -37,33 +37,33 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
             <div>
               <h3 className="font-semibold text-foreground mb-4">Platform</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/voltmarket/listings" className="hover:text-watt-primary transition-colors">Browse Listings</Link></li>
-                <li><Link to="/voltmarket/search" className="hover:text-watt-primary transition-colors">Advanced Search</Link></li>
-                <li><Link to="/voltmarket/portfolio" className="hover:text-watt-primary transition-colors">Portfolio Manager</Link></li>
-                <li><Link to="/voltmarket/documents" className="hover:text-watt-primary transition-colors">Document Center</Link></li>
-                <li><Link to="/voltmarket/loi-center" className="hover:text-watt-primary transition-colors">LOI Center</Link></li>
-                <li><Link to="/voltmarket/due-diligence" className="hover:text-watt-primary transition-colors">Due Diligence</Link></li>
-                <li><Link to="/voltmarket/verification" className="hover:text-watt-primary transition-colors">Get Verified</Link></li>
+                <li><Link to="/voltmarket/listings" className="hover:text-primary transition-colors">Browse Listings</Link></li>
+                <li><Link to="/voltmarket/search" className="hover:text-primary transition-colors">Advanced Search</Link></li>
+                <li><Link to="/voltmarket/portfolio" className="hover:text-primary transition-colors">Portfolio Manager</Link></li>
+                <li><Link to="/voltmarket/documents" className="hover:text-primary transition-colors">Document Center</Link></li>
+                <li><Link to="/voltmarket/loi-center" className="hover:text-primary transition-colors">LOI Center</Link></li>
+                <li><Link to="/voltmarket/due-diligence" className="hover:text-primary transition-colors">Due Diligence</Link></li>
+                <li><Link to="/voltmarket/verification" className="hover:text-primary transition-colors">Get Verified</Link></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold text-foreground mb-4">Support</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-watt-primary transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-watt-primary transition-colors">Contact Support</a></li>
-                <li><a href="#" className="hover:text-watt-primary transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-watt-primary transition-colors">API Access</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Contact Support</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">API Access</a></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold text-foreground mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/about" className="hover:text-watt-primary transition-colors">About Us</Link></li>
-                <li><Link to="/privacy" className="hover:text-watt-primary transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-watt-primary transition-colors">Terms of Service</Link></li>
-                <li><a href="#" className="hover:text-watt-primary transition-colors">Security</a></li>
+                <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Security</a></li>
               </ul>
             </div>
           </div>
@@ -73,10 +73,10 @@ const VoltMarketLayoutContent: React.FC<VoltMarketLayoutProps> = ({ children }) 
               © 2025 GridBazaar. All rights reserved.
             </p>
             <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-              <Badge variant="secondary" className="text-xs bg-watt-success/10 text-watt-success border-watt-success/20">
+              <Badge variant="secondary" className="text-xs bg-market-positive/10 text-market-positive border-market-positive/20">
                 Real-time Enabled
               </Badge>
-              <Badge variant="secondary" className="text-xs bg-watt-primary/10 text-watt-primary border-watt-primary/20">
+              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                 Enhanced Security
               </Badge>
             </div>

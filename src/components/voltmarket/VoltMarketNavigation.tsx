@@ -83,22 +83,22 @@ export const VoltMarketNavigation: React.FC = () => {
   return (
     <>
       {/* Main Navigation Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-watt-primary/10 shadow-sm">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-primary/10 shadow-sm">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <div className="flex items-center justify-between h-16 min-w-0">
             {/* Logo & Brand - Responsive Width */}
             <div className="flex-shrink-0 min-w-0">
               <Link to="/voltmarket/home" className="flex items-center gap-2 sm:gap-3 group min-w-0">
-                <div className="p-2 bg-watt-gradient rounded-xl group-hover:shadow-watt-glow transition-all duration-300 flex-shrink-0">
-                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="p-2 bg-gradient-to-r from-primary to-secondary rounded-xl group-hover:shadow-lg transition-all duration-300 flex-shrink-0">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
                 </div>
                 <div className="hidden sm:flex flex-col min-w-0">
-                  <span className="text-lg lg:text-xl font-bold bg-gradient-to-r from-watt-primary to-watt-secondary bg-clip-text text-transparent truncate">
+                  <span className="text-lg lg:text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent truncate">
                     GridBazaar
                   </span>
                   <span className="text-xs text-muted-foreground -mt-1 hidden lg:block truncate">Energy Infrastructure Marketplace</span>
                 </div>
-                <span className="sm:hidden text-lg font-bold text-watt-primary">GB</span>
+                <span className="sm:hidden text-lg font-bold text-primary">GB</span>
               </Link>
             </div>
 
@@ -115,7 +115,7 @@ export const VoltMarketNavigation: React.FC = () => {
                         to={item.path}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                           isActive 
-                            ? 'text-watt-primary bg-watt-primary/5' 
+                            ? 'text-primary bg-primary/5' 
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         }`}
                       >
@@ -134,14 +134,14 @@ export const VoltMarketNavigation: React.FC = () => {
                         to={item.path}
                         className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                           isActive 
-                            ? 'text-watt-primary bg-watt-primary/5' 
+                            ? 'text-primary bg-primary/5' 
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
                         <span>{item.name}</span>
                         {item.badge > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-watt-warning text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
+                          <span className="absolute -top-1 -right-1 bg-market-warning text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
                             {item.badge}
                           </span>
                         )}
@@ -159,7 +159,7 @@ export const VoltMarketNavigation: React.FC = () => {
                   {/* Create Listing CTA - Simplified */}
                   {profile?.role === 'seller' && (
                     <Link to="/voltmarket/create-listing">
-                      <Button size="sm" className="bg-watt-gradient hover:opacity-90 text-white shadow-sm text-sm">
+                      <Button size="sm" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground shadow-sm text-sm">
                         <Plus className="w-4 h-4" />
                         <span className="hidden md:inline ml-1">List</span>
                       </Button>
@@ -170,7 +170,7 @@ export const VoltMarketNavigation: React.FC = () => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="flex items-center gap-1 sm:gap-2 p-1 hover:bg-muted/50 rounded-full min-w-0">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-watt-gradient rounded-full flex items-center justify-center text-white font-medium text-xs sm:text-sm flex-shrink-0">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-primary-foreground font-medium text-xs sm:text-sm flex-shrink-0">
                           {getInitials(profile?.company_name || 'User')}
                         </div>
                         <div className="hidden lg:block text-left min-w-0">
@@ -178,7 +178,7 @@ export const VoltMarketNavigation: React.FC = () => {
                             {profile?.company_name?.split(' ')[0] || 'User'}
                           </div>
                           {profile?.is_id_verified && (
-                            <div className="text-xs text-watt-success mt-0.5">Verified</div>
+                            <div className="text-xs text-market-positive mt-0.5">Verified</div>
                           )}
                         </div>
                         <ChevronDown className="w-3 h-3 text-muted-foreground hidden lg:block flex-shrink-0" />
@@ -218,7 +218,7 @@ export const VoltMarketNavigation: React.FC = () => {
                            <Shield className="w-4 h-4 mr-2" />
                            {profile?.is_id_verified ? 'Verified' : 'Get Verified'}
                            {profile?.is_id_verified && (
-                             <Badge className="ml-auto bg-watt-success/10 text-watt-success border-watt-success/20 text-xs">
+                             <Badge className="ml-auto bg-market-positive/10 text-market-positive border-market-positive/20 text-xs">
                                ✓
                              </Badge>
                            )}
@@ -248,13 +248,13 @@ export const VoltMarketNavigation: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link to="/voltmarket/auth">
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-watt-primary text-sm">
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary text-sm">
                       <span className="hidden sm:inline">Sign In</span>
                       <span className="sm:hidden">In</span>
                     </Button>
                   </Link>
                   <Link to="/voltmarket/auth">
-                    <Button size="sm" className="bg-watt-gradient hover:opacity-90 text-white text-sm">
+                    <Button size="sm" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground text-sm">
                       <span className="hidden sm:inline">Get Started</span>
                       <span className="sm:hidden">Start</span>
                     </Button>
@@ -289,7 +289,7 @@ export const VoltMarketNavigation: React.FC = () => {
                       to={item.path}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
                         isActive 
-                          ? 'text-watt-primary bg-watt-primary/5' 
+                          ? 'text-primary bg-primary/5' 
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                       }`}
                     >
@@ -312,14 +312,14 @@ export const VoltMarketNavigation: React.FC = () => {
                             to={item.path}
                             className={`relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                               isActive 
-                                ? 'text-watt-primary bg-watt-primary/10' 
-                                : 'text-muted-foreground hover:text-watt-primary hover:bg-muted/50'
+                                ? 'text-primary bg-primary/10' 
+                                : 'text-muted-foreground hover:text-primary hover:bg-muted/50'
                             }`}
                           >
                             <Icon className="w-5 h-5" />
                             {item.name}
                             {item.badge > 0 && (
-                              <Badge className="ml-auto bg-watt-warning text-white text-xs">
+                              <Badge className="ml-auto bg-market-warning text-white text-xs">
                                 {item.badge}
                               </Badge>
                             )}
@@ -330,7 +330,7 @@ export const VoltMarketNavigation: React.FC = () => {
 
                     {profile?.role === 'seller' && (
                       <Link to="/voltmarket/create-listing">
-                        <Button className="w-full bg-watt-gradient hover:opacity-90 text-white mb-2">
+                        <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-primary-foreground mb-2">
                           <Plus className="w-4 h-4 mr-2" />
                           Create Listing
                         </Button>
@@ -352,8 +352,8 @@ export const VoltMarketNavigation: React.FC = () => {
               to="/voltmarket/home"
               className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/home') 
-                  ? 'text-watt-primary bg-watt-primary/10' 
-                  : 'text-muted-foreground hover:text-watt-primary'
+                  ? 'text-primary bg-primary/10' 
+                  : 'text-muted-foreground hover:text-primary'
               }`}
             >
               <Home className="w-4 h-4" />
@@ -364,8 +364,8 @@ export const VoltMarketNavigation: React.FC = () => {
               to="/voltmarket/listings"
               className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/listings') 
-                  ? 'text-watt-primary bg-watt-primary/10' 
-                  : 'text-muted-foreground hover:text-watt-primary'
+                  ? 'text-primary bg-primary/10' 
+                  : 'text-muted-foreground hover:text-primary'
               }`}
             >
               <Search className="w-4 h-4" />
@@ -376,8 +376,8 @@ export const VoltMarketNavigation: React.FC = () => {
               to="/voltmarket/contact-messages"
               className={`relative flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/contact-messages') 
-                  ? 'text-watt-primary bg-watt-primary/10' 
-                  : 'text-muted-foreground hover:text-watt-primary'
+                  ? 'text-primary bg-primary/10' 
+                  : 'text-muted-foreground hover:text-primary'
               }`}
             >
               <MessageSquare className="w-4 h-4" />
@@ -388,8 +388,8 @@ export const VoltMarketNavigation: React.FC = () => {
               to="/voltmarket/watchlist"
               className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/watchlist') 
-                  ? 'text-watt-primary bg-watt-primary/10' 
-                  : 'text-muted-foreground hover:text-watt-primary'
+                  ? 'text-primary bg-primary/10' 
+                  : 'text-muted-foreground hover:text-primary'
               }`}
             >
               <Heart className="w-4 h-4" />
@@ -400,8 +400,8 @@ export const VoltMarketNavigation: React.FC = () => {
               to="/voltmarket/dashboard"
               className={`flex flex-col items-center gap-1 p-2 rounded-lg touch-target transition-all duration-200 ${
                 isActiveRoute('/voltmarket/dashboard') 
-                  ? 'text-watt-primary bg-watt-primary/10' 
-                  : 'text-muted-foreground hover:text-watt-primary'
+                  ? 'text-primary bg-primary/10' 
+                  : 'text-muted-foreground hover:text-primary'
               }`}
             >
               <User className="w-4 h-4" />
