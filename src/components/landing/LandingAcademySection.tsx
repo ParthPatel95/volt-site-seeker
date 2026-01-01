@@ -208,39 +208,39 @@ export const LandingAcademySection: React.FC = () => {
             <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap">
               {learningPath.map((stage, index) => {
                 const colors = colorConfig[stage.colorKey];
-                return (
-                  <React.Fragment key={stage.step}>
+                const StageIcon = stage.icon;
+                return [
+                  <motion.div
+                    key={`stage-${stage.step}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1 * index }}
+                    className="relative group"
+                  >
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5, delay: 0.1 * index }}
-                      className="relative group"
+                      whileHover={{ scale: 1.05 }}
+                      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-2 border-gray-200 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all ${colors.text}`}
                     >
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-2 border-gray-200 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all ${colors.text}`}
-                      >
-                        <stage.icon className="w-5 h-5 sm:w-6 sm:h-6 mb-1" />
-                        <span className="text-[10px] sm:text-xs text-watt-navy/60 font-medium">{stage.title}</span>
-                      </motion.div>
-                      
-                      {/* Step number */}
-                      <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${colors.iconBg} ${colors.text} text-xs font-bold flex items-center justify-center border border-white`}>
-                        {stage.step}
-                      </div>
+                      <StageIcon className="w-5 h-5 sm:w-6 sm:h-6 mb-1" />
+                      <span className="text-[10px] sm:text-xs text-watt-navy/60 font-medium">{stage.title}</span>
                     </motion.div>
                     
-                    {/* Connector line */}
-                    {index < learningPath.length - 1 && (
-                      <motion.div
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 0.8, delay: 0.2 + 0.1 * index }}
-                        className="hidden sm:block w-8 md:w-12 h-0.5 bg-gray-200 origin-left"
-                      />
-                    )}
-                  </React.Fragment>
-                );
+                    {/* Step number */}
+                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${colors.iconBg} ${colors.text} text-xs font-bold flex items-center justify-center border border-white`}>
+                      {stage.step}
+                    </div>
+                  </motion.div>,
+                  
+                  index < learningPath.length - 1 && (
+                    <motion.div
+                      key={`connector-${stage.step}`}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 0.8, delay: 0.2 + 0.1 * index }}
+                      className="hidden sm:block w-8 md:w-12 h-0.5 bg-gray-200 origin-left"
+                    />
+                  )
+                ];
               })}
             </div>
           </div>
