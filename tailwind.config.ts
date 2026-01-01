@@ -107,6 +107,9 @@ export default {
 				},
 				// Legacy brand colors (backward compatibility)
 				'watt-bitcoin': 'hsl(36 94% 53%)',
+				'watt-coinbase': 'hsl(217 91% 55%)',
+				'watt-navy': 'hsl(220 50% 15%)',
+				'watt-trust': 'hsl(195 85% 41%)',
 				'watt-success': 'hsl(var(--data-positive))',
 				'watt-warning': 'hsl(var(--data-warning))',
 				'watt-primary': 'hsl(var(--primary))',
