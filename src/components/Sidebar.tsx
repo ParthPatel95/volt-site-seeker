@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,31 +5,15 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { 
   Home, 
   Zap, 
-  Building2, 
   Factory, 
-  Database, 
   Brain,
   Bitcoin,
   ChevronLeft,
   ChevronRight,
-  Menu,
-  Settings,
-  Search,
-  BarChart3,
   MapPin,
-  Cpu,
-  Target,
-  TrendingUp,
   LogOut,
   X,
-  Activity,
-  Bell,
-  FileText,
   Users,
-  Mic,
-  ShieldCheck,
-  ArrowRightLeft,
-  Gavel,
   Lock,
   LayoutDashboard
 } from 'lucide-react';
@@ -54,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsOpen
 }) => {
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
   const { hasPermission } = usePermissions();
 
   const navigationItems = [
@@ -62,7 +45,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/app/aeso-dashboards', icon: LayoutDashboard, label: 'Energy Dashboards', permission: 'feature.energy-dashboards' },
     { path: '/app/aeso-market-hub', icon: MapPin, label: 'AESO Market Hub', permission: 'feature.aeso-market-hub' },
     { path: '/app/ercot-market-hub', icon: Zap, label: 'ERCOT Market Hub', permission: 'feature.ercot-market-hub' },
-    
     { path: '/app/intelligence-hub', icon: Brain, label: 'Intelligence Hub', permission: 'feature.intelligence-hub' },
     { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
     { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'Profitability Calculator', permission: 'feature.btc-roi-lab' },
@@ -89,117 +71,113 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-background text-foreground border-r border-border">
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       {/* Header */}
-      <div className={`p-3 sm:p-4 border-b border-border ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
-        {/* Mobile Close Button */}
+      <div className={`p-4 border-b border-sidebar-border ${isCollapsed && !isMobile ? 'px-3' : ''}`}>
         {isMobile && (
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-watt-gradient rounded-lg flex items-center justify-center flex-shrink-0">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary-foreground" />
               </div>
-              <h1 className="text-lg sm:text-xl font-bold truncate">VoltScout</h1>
+              <span className="text-lg font-semibold">VoltScout</span>
             </div>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon-sm"
               onClick={() => setIsOpen(false)}
-              className="p-1.5 sm:p-2 h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted flex-shrink-0"
+              className="text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
         )}
 
-        {/* Desktop Header */}
         {!isMobile && (
           <>
-            {(!isCollapsed || isMobile) && (
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-watt-gradient rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-5 h-5 text-white" />
+            {!isCollapsed ? (
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <h1 className="text-xl font-bold">VoltScout</h1>
+                <span className="text-lg font-semibold">VoltScout</span>
               </div>
-            )}
-            
-            {isCollapsed && !isMobile && (
+            ) : (
               <div className="flex justify-center">
-                <div className="w-8 h-8 bg-watt-gradient rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-primary-foreground" />
                 </div>
               </div>
             )}
             
-            {/* Collapse button for desktop */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon-sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute -right-3 top-4 bg-muted hover:bg-muted/80 border border-border text-foreground p-1 h-6 w-6 z-50"
+              className="absolute -right-3 top-5 bg-background border border-border text-muted-foreground hover:text-foreground p-1 h-6 w-6 z-50 shadow-subtle"
             >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
             </Button>
           </>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 p-1 sm:p-2 space-y-0.5 sm:space-y-1 overflow-y-auto min-w-0 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          const hasAccess = hasPermission(item.permission);
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={(e) => handleNavClick(e, item)}
-              className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg transition-colors group ${
-                isActive 
-                  ? 'bg-accent text-accent-foreground ring-1 ring-primary/20' 
-                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-              } ${!hasAccess ? 'opacity-60' : ''} ${isCollapsed && !isMobile ? 'justify-center px-2' : ''} ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
-              title={isCollapsed && !isMobile ? item.label : ''}
-            >
-              <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              {(!isCollapsed || isMobile) && (
-                <>
-                  <span className="font-medium text-xs sm:text-sm truncate flex-1">{item.label}</span>
-                  {!hasAccess && <Lock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-muted-foreground" />}
-                </>
-              )}
-            </Link>
-          );
-        })}
+      <nav className={`flex-1 py-2 overflow-y-auto scrollbar-hide ${isCollapsed && !isMobile ? 'px-2' : 'px-3'}`}>
+        <div className="space-y-0.5">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            const hasAccess = hasPermission(item.permission);
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={(e) => handleNavClick(e, item)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-100 ${
+                  isActive 
+                    ? 'bg-sidebar-accent text-sidebar-foreground' 
+                    : 'text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
+                } ${!hasAccess ? 'opacity-50' : ''} ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}
+                title={isCollapsed && !isMobile ? item.label : ''}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                {(!isCollapsed || isMobile) && (
+                  <>
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {!hasAccess && <Lock className="w-3 h-3 flex-shrink-0" />}
+                  </>
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Footer */}
-      <div className={`p-1 sm:p-2 border-t border-border space-y-0.5 sm:space-y-1 ${isCollapsed && !isMobile ? 'px-1' : 'px-2 sm:px-4'}`}>
+      <div className={`p-3 border-t border-sidebar-border ${isCollapsed && !isMobile ? 'px-2' : ''}`}>
         <Button
           variant="ghost"
           onClick={handleSignOut}
-          className={`w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted p-2 sm:p-3 h-auto ${
-            isCollapsed && !isMobile ? 'px-2' : ''
-          } ${isMobile ? 'min-h-[44px]' : ''} touch-target`}
+          className={`w-full justify-start text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/50 h-9 ${
+            isCollapsed && !isMobile ? 'px-2 justify-center' : 'px-3'
+          }`}
           title={isCollapsed && !isMobile ? 'Sign Out' : ''}
         >
-          <LogOut className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-          {(!isCollapsed || isMobile) && <span className="ml-2 sm:ml-3 text-xs sm:text-sm">Sign Out</span>}
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          {(!isCollapsed || isMobile) && <span className="ml-3 text-sm font-medium">Sign Out</span>}
         </Button>
       </div>
     </div>
   );
 
-  // Mobile sidebar
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent 
           side="left" 
-          className="p-0 w-72 sm:w-80 max-w-[85vw] z-50"
+          className="p-0 w-72 max-w-[85vw] z-50 border-r-0"
           onInteractOutside={() => setIsOpen(false)}
         >
           <SidebarContent />
@@ -208,11 +186,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   }
 
-  // Desktop sidebar
   return (
     <div 
-      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64 sm:w-72'
+      className={`fixed left-0 top-0 h-full z-40 transition-all duration-200 ${
+        isCollapsed ? 'w-16' : 'w-64'
       }`}
     >
       <SidebarContent />
