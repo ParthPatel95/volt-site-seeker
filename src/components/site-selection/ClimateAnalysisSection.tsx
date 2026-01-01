@@ -82,17 +82,17 @@ const ClimateAnalysisSection = () => {
   const climateData = climateProfiles[selectedClimate as keyof typeof climateProfiles];
 
   return (
-    <section id="climate" className="py-20 bg-white">
+    <section id="climate" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
-            <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
+            <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
               Climate Analysis
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Climate Impact on Mining Economics
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Ambient temperature directly impacts cooling costs, PUE, and hardware longevity. 
               A 10°C difference can mean 15-20% variation in operating costs.
             </p>
@@ -125,8 +125,8 @@ const ClimateAnalysisSection = () => {
                 onClick={() => setSelectedClimate(key)}
                 className={`px-6 py-3 rounded-xl font-medium transition-all ${
                   selectedClimate === key
-                    ? 'bg-watt-purple text-white shadow-lg'
-                    : 'bg-gray-100 text-watt-navy hover:bg-watt-purple/10'
+                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    : 'bg-muted text-foreground hover:bg-primary/10'
                 }`}
               >
                 {profile.name}
@@ -138,57 +138,57 @@ const ClimateAnalysisSection = () => {
         {/* Climate Profile Card */}
         <ScrollReveal delay={200}>
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-gradient-to-br from-watt-purple/10 to-watt-bitcoin/10 rounded-2xl p-8">
+            <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-watt-purple/20 rounded-xl flex items-center justify-center">
-                  <Thermometer className="w-6 h-6 text-watt-purple" />
+                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <Thermometer className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-watt-navy">{climateData.name}</h3>
-                  <p className="text-sm text-watt-navy/60">{climateData.examples}</p>
+                  <h3 className="text-xl font-bold text-foreground">{climateData.name}</h3>
+                  <p className="text-sm text-muted-foreground">{climateData.examples}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white/60 rounded-xl p-4">
-                  <div className="text-sm text-watt-navy/60 mb-1">Avg Temperature</div>
-                  <div className="text-lg font-bold text-watt-navy">{climateData.avgTemp}</div>
+                <div className="bg-card/60 rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground mb-1">Avg Temperature</div>
+                  <div className="text-lg font-bold text-foreground">{climateData.avgTemp}</div>
                 </div>
-                <div className="bg-white/60 rounded-xl p-4">
-                  <div className="text-sm text-watt-navy/60 mb-1">Typical PUE</div>
-                  <div className="text-lg font-bold text-watt-success">{climateData.pueRange}</div>
+                <div className="bg-card/60 rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground mb-1">Typical PUE</div>
+                  <div className="text-lg font-bold text-market-positive">{climateData.pueRange}</div>
                 </div>
               </div>
 
-              <div className="bg-white/60 rounded-xl p-4">
-                <div className="text-sm text-watt-navy/60 mb-1">Recommended Cooling</div>
-                <div className="font-medium text-watt-navy">{climateData.coolingStrategy}</div>
+              <div className="bg-card/60 rounded-xl p-4">
+                <div className="text-sm text-muted-foreground mb-1">Recommended Cooling</div>
+                <div className="font-medium text-foreground">{climateData.coolingStrategy}</div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="bg-watt-success/10 border border-watt-success/20 rounded-xl p-6">
-                <h4 className="font-semibold text-watt-success mb-3 flex items-center gap-2">
+              <div className="bg-market-positive/10 border border-market-positive/20 rounded-xl p-6">
+                <h4 className="font-semibold text-market-positive mb-3 flex items-center gap-2">
                   <Sun className="w-5 h-5" /> Advantages
                 </h4>
                 <ul className="space-y-2">
                   {climateData.advantages.map((adv, idx) => (
-                    <li key={idx} className="text-sm text-watt-navy/70 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-watt-success rounded-full" />
+                    <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-market-positive rounded-full" />
                       {adv}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-red-50 border border-red-100 rounded-xl p-6">
-                <h4 className="font-semibold text-red-500 mb-3 flex items-center gap-2">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6">
+                <h4 className="font-semibold text-destructive mb-3 flex items-center gap-2">
                   <Wind className="w-5 h-5" /> Challenges
                 </h4>
                 <ul className="space-y-2">
                   {climateData.challenges.map((ch, idx) => (
-                    <li key={idx} className="text-sm text-watt-navy/70 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                    <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-destructive rounded-full" />
                       {ch}
                     </li>
                   ))}
@@ -200,9 +200,9 @@ const ClimateAnalysisSection = () => {
 
         {/* PUE Calculator */}
         <ScrollReveal delay={300}>
-          <div className="bg-watt-navy rounded-2xl p-8 text-white">
+          <div className="bg-card-dark rounded-2xl p-8 text-white">
             <h3 className="text-xl font-bold mb-6 text-center flex items-center justify-center gap-2">
-              <Calculator className="w-5 h-5 text-watt-bitcoin" />
+              <Calculator className="w-5 h-5 text-secondary" />
               PUE Impact Calculator
             </h3>
             
@@ -219,18 +219,18 @@ const ClimateAnalysisSection = () => {
                 />
                 <div className="flex justify-between text-sm text-white/50 mt-1">
                   <span>-10°C</span>
-                  <span className="text-watt-bitcoin font-bold">{ambientTemp}°C ({(ambientTemp * 9/5 + 32).toFixed(0)}°F)</span>
+                  <span className="text-secondary font-bold">{ambientTemp}°C ({(ambientTemp * 9/5 + 32).toFixed(0)}°F)</span>
                   <span>45°C</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/10 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-watt-success">{estimatedPUE.toFixed(2)}</div>
+                  <div className="text-3xl font-bold text-market-positive">{estimatedPUE.toFixed(2)}</div>
                   <div className="text-sm text-white/60">Estimated PUE</div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-watt-bitcoin">{coolingOverhead}%</div>
+                  <div className="text-3xl font-bold text-secondary">{coolingOverhead}%</div>
                   <div className="text-sm text-white/60">Cooling Overhead</div>
                 </div>
               </div>
@@ -238,8 +238,8 @@ const ClimateAnalysisSection = () => {
 
             <div className="mt-6 p-4 bg-white/5 rounded-xl">
               <p className="text-sm text-white/70 text-center">
-                <strong className="text-watt-bitcoin">Impact:</strong> For a 100 MW facility at $0.04/kWh, 
-                every 0.1 PUE improvement saves approximately <span className="text-watt-success font-bold">$350,000/year</span>
+                <strong className="text-secondary">Impact:</strong> For a 100 MW facility at $0.04/kWh, 
+                every 0.1 PUE improvement saves approximately <span className="text-market-positive font-bold">$350,000/year</span>
               </p>
             </div>
           </div>
@@ -248,50 +248,50 @@ const ClimateAnalysisSection = () => {
         {/* Water & Humidity */}
         <ScrollReveal delay={400}>
           <div className="mt-12 grid md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h4 className="font-bold text-watt-navy mb-4 flex items-center gap-2">
+            <div className="bg-muted rounded-2xl p-6">
+              <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
                 <Droplets className="w-5 h-5 text-blue-500" />
                 Water Availability
               </h4>
-              <p className="text-sm text-watt-navy/70 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Evaporative cooling (most efficient in hot climates) requires significant water:
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-watt-navy">Air-cooled only</span>
-                  <span className="font-bold text-watt-success">0 gallons/MW/day</span>
+                <div className="flex justify-between items-center p-3 bg-card rounded-lg">
+                  <span className="text-foreground">Air-cooled only</span>
+                  <span className="font-bold text-market-positive">0 gallons/MW/day</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-watt-navy">Evaporative cooling</span>
+                <div className="flex justify-between items-center p-3 bg-card rounded-lg">
+                  <span className="text-foreground">Evaporative cooling</span>
                   <span className="font-bold text-blue-500">2,000-5,000 gal/MW/day</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-watt-navy">Wet cooling towers</span>
-                  <span className="font-bold text-watt-bitcoin">5,000-10,000 gal/MW/day</span>
+                <div className="flex justify-between items-center p-3 bg-card rounded-lg">
+                  <span className="text-foreground">Wet cooling towers</span>
+                  <span className="font-bold text-secondary">5,000-10,000 gal/MW/day</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl p-6">
-              <h4 className="font-bold text-watt-navy mb-4 flex items-center gap-2">
-                <Wind className="w-5 h-5 text-watt-purple" />
+            <div className="bg-muted rounded-2xl p-6">
+              <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                <Wind className="w-5 h-5 text-primary" />
                 Humidity Considerations
               </h4>
-              <p className="text-sm text-watt-navy/70 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Relative humidity affects cooling efficiency and hardware corrosion:
               </p>
               <div className="space-y-3">
-                <div className="p-3 bg-watt-success/10 border border-watt-success/20 rounded-lg">
-                  <div className="font-medium text-watt-success">Ideal: 30-50% RH</div>
-                  <div className="text-xs text-watt-navy/60">Optimal for evaporative cooling and hardware</div>
+                <div className="p-3 bg-market-positive/10 border border-market-positive/20 rounded-lg">
+                  <div className="font-medium text-market-positive">Ideal: 30-50% RH</div>
+                  <div className="text-xs text-muted-foreground">Optimal for evaporative cooling and hardware</div>
                 </div>
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="font-medium text-yellow-600">Caution: &gt;70% RH</div>
-                  <div className="text-xs text-watt-navy/60">Reduced evaporative efficiency, condensation risk</div>
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <div className="font-medium text-yellow-600 dark:text-yellow-400">Caution: &gt;70% RH</div>
+                  <div className="text-xs text-muted-foreground">Reduced evaporative efficiency, condensation risk</div>
                 </div>
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="font-medium text-red-500">Avoid: &lt;20% RH</div>
-                  <div className="text-xs text-watt-navy/60">Static discharge risk, dust management issues</div>
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <div className="font-medium text-destructive">Avoid: &lt;20% RH</div>
+                  <div className="text-xs text-muted-foreground">Static discharge risk, dust management issues</div>
                 </div>
               </div>
             </div>

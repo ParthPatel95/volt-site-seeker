@@ -88,8 +88,8 @@ const SiteReadinessChecker = () => {
       return {
         approach: 'Greenfield Development',
         description: 'You have the capacity, budget, timeline, and risk tolerance for greenfield site development. Focus on finding optimal power and regulatory conditions.',
-        color: 'text-watt-success',
-        bgColor: 'bg-watt-success/20'
+        color: 'text-market-positive',
+        bgColor: 'bg-market-positive/20'
       };
     }
     if (score >= 60) {
@@ -104,15 +104,15 @@ const SiteReadinessChecker = () => {
       return {
         approach: 'Container + Land Lease',
         description: 'A modular approach using containers on leased land with existing power infrastructure offers good balance of speed and cost.',
-        color: 'text-watt-bitcoin',
-        bgColor: 'bg-watt-bitcoin/20'
+        color: 'text-secondary',
+        bgColor: 'bg-secondary/20'
       };
     }
     return {
       approach: 'Colocation / Hosting',
       description: 'Given your parameters, colocation or hosting services provide the fastest, lowest-risk path to operation. Build capital for future expansion.',
-      color: 'text-watt-purple',
-      bgColor: 'bg-watt-purple/20'
+      color: 'text-primary',
+      bgColor: 'bg-primary/20'
     };
   };
 
@@ -127,9 +127,9 @@ const SiteReadinessChecker = () => {
 
   if (showResults) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
-          <Target className="w-5 h-5 text-watt-purple" />
+      <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+        <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+          <Target className="w-5 h-5 text-primary" />
           Your Site Readiness Assessment
         </h3>
 
@@ -140,7 +140,7 @@ const SiteReadinessChecker = () => {
           <h4 className={`text-2xl font-bold ${recommendation.color} mb-2`}>
             {recommendation.approach}
           </h4>
-          <p className="text-watt-navy/70 max-w-lg mx-auto">
+          <p className="text-muted-foreground max-w-lg mx-auto">
             {recommendation.description}
           </p>
         </div>
@@ -149,14 +149,14 @@ const SiteReadinessChecker = () => {
           {questions.map((q) => {
             const selectedAnswer = q.answers.find(a => a.score === answers[q.id]);
             return (
-              <div key={q.id} className="p-4 bg-gray-50 rounded-xl">
+              <div key={q.id} className="p-4 bg-muted rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <q.icon className="w-4 h-4 text-watt-purple" />
-                  <span className="text-sm font-medium text-watt-navy">{q.question}</span>
+                  <q.icon className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">{q.question}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-watt-navy/70">{selectedAnswer?.text}</span>
-                  <CheckCircle2 className="w-4 h-4 text-watt-success" />
+                  <span className="text-sm text-muted-foreground">{selectedAnswer?.text}</span>
+                  <CheckCircle2 className="w-4 h-4 text-market-positive" />
                 </div>
               </div>
             );
@@ -166,13 +166,13 @@ const SiteReadinessChecker = () => {
         <div className="flex justify-center gap-4">
           <button
             onClick={resetChecker}
-            className="px-6 py-3 bg-gray-100 text-watt-navy rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            className="px-6 py-3 bg-muted text-foreground rounded-xl font-medium hover:bg-muted/80 transition-colors"
           >
             Start Over
           </button>
           <a
             href="#power-infrastructure"
-            className="px-6 py-3 bg-watt-purple text-white rounded-xl font-medium hover:bg-watt-purple/90 transition-colors flex items-center gap-2"
+            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
           >
             Continue Learning <ArrowRight className="w-4 h-4" />
           </a>
@@ -184,12 +184,12 @@ const SiteReadinessChecker = () => {
   const currentQuestion = questions[currentStep];
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-      <h3 className="text-xl font-bold text-watt-navy mb-2 flex items-center gap-2">
-        <Target className="w-5 h-5 text-watt-purple" />
+    <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+      <h3 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2">
+        <Target className="w-5 h-5 text-primary" />
         Site Readiness Checker
       </h3>
-      <p className="text-sm text-watt-navy/70 mb-6">
+      <p className="text-sm text-muted-foreground mb-6">
         Answer a few questions to get personalized site acquisition recommendations.
       </p>
 
@@ -199,9 +199,9 @@ const SiteReadinessChecker = () => {
           <div
             key={idx}
             className={`flex-1 h-2 rounded-full transition-colors ${
-              idx < currentStep ? 'bg-watt-success' :
-              idx === currentStep ? 'bg-watt-purple' :
-              'bg-gray-200'
+              idx < currentStep ? 'bg-market-positive' :
+              idx === currentStep ? 'bg-primary' :
+              'bg-muted'
             }`}
           />
         ))}
@@ -210,12 +210,12 @@ const SiteReadinessChecker = () => {
       {/* Question */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-watt-purple/20 rounded-xl flex items-center justify-center">
-            <currentQuestion.icon className="w-5 h-5 text-watt-purple" />
+          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+            <currentQuestion.icon className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <span className="text-xs text-watt-purple font-medium">Question {currentStep + 1} of {questions.length}</span>
-            <h4 className="text-lg font-semibold text-watt-navy">{currentQuestion.question}</h4>
+            <span className="text-xs text-primary font-medium">Question {currentStep + 1} of {questions.length}</span>
+            <h4 className="text-lg font-semibold text-foreground">{currentQuestion.question}</h4>
           </div>
         </div>
 
@@ -224,12 +224,12 @@ const SiteReadinessChecker = () => {
             <button
               key={idx}
               onClick={() => handleAnswer(currentQuestion.id, answer.score)}
-              className="p-4 border-2 border-gray-200 rounded-xl hover:border-watt-purple hover:bg-watt-purple/5 transition-all text-left group"
+              className="p-4 border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left group"
             >
-              <div className="font-medium text-watt-navy group-hover:text-watt-purple">
+              <div className="font-medium text-foreground group-hover:text-primary">
                 {answer.text}
               </div>
-              <div className="text-xs text-watt-navy/50 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 {answer.recommendation}
               </div>
             </button>
