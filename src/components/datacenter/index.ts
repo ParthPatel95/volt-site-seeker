@@ -7,3 +7,8 @@ export { RealTimeAnalytics } from './RealTimeAnalytics';
 export { ShutdownTimeline } from './ShutdownTimeline';
 export { WhatIfAnalysis } from './WhatIfAnalysis';
 export { NotificationSettings } from './NotificationSettings';
+export { MinerFleetManager } from './MinerFleetManager';
+export { MinerCard } from './MinerCard';
+export { MinerRegistrationDialog } from './MinerRegistrationDialog';
+export { MinerDetailSheet } from './MinerDetailSheet';
+export { FleetStatsHeader } from './FleetStatsHeader';

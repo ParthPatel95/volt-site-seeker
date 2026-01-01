@@ -12,12 +12,13 @@ import {
   Settings,
   BarChart3,
   RefreshCw,
-  Server,
-  Gauge
+  Cpu,
+  Gauge,
+  Thermometer
 } from 'lucide-react';
-import { usePDUController } from '@/hooks/usePDUController';
+import { useMinerController } from '@/hooks/useMinerController';
 import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
-import { PDUDeviceManager } from './PDUDeviceManager';
+import { MinerFleetManager } from './MinerFleetManager';
 import { ShutdownRulesPanel } from './ShutdownRulesPanel';
 import { AutomationStatusPanel } from './AutomationStatusPanel';
 import { RealTimeAnalytics } from './RealTimeAnalytics';
@@ -35,13 +36,13 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
   const [activeTab, setActiveTab] = useState('status');
   
   const { 
-    pdus, 
-    loading: pduLoading, 
+    miners, 
+    loading: minerLoading, 
     stats, 
-    fetchPDUs,
-    shutdownPDUs,
-    powerOnPDUs
-  } = usePDUController();
+    fetchMiners,
+    sleepMiners,
+    wakeupMiners
+  } = useMinerController();
 
   const {
     rules,
@@ -56,14 +57,14 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
   } = useDatacenterAutomation();
 
   useEffect(() => {
-    fetchPDUs();
+    fetchMiners();
     fetchRules();
     fetchAnalytics();
     evaluateAutomation();
   }, []);
 
   const handleRefreshAll = () => {
-    fetchPDUs();
+    fetchMiners();
     fetchRules();
     fetchAnalytics();
     evaluateAutomation();
@@ -78,7 +79,7 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
   const getSystemStatus = () => {
     if (isCeilingBreached) return { label: 'CEILING BREACH', color: 'bg-destructive text-destructive-foreground', icon: AlertTriangle };
     if (isNearCeiling) return { label: 'WARNING', color: 'bg-yellow-500 text-white', icon: AlertTriangle };
-    if (stats.offline > 0) return { label: 'CURTAILED', color: 'bg-orange-500 text-white', icon: Power };
+    if (stats.sleeping > 0) return { label: 'CURTAILED', color: 'bg-blue-500 text-white', icon: Power };
     return { label: 'OPERATIONAL', color: 'bg-green-500 text-white', icon: Shield };
   };
 
@@ -94,21 +95,26 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
     }
   };
 
+  // Calculate efficiency
+  const avgEfficiency = stats.totalHashrateTH > 0 
+    ? ((stats.totalPowerKW * 1000) / stats.totalHashrateTH).toFixed(1)
+    : '--';
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg">
-            <Server className="w-6 h-6 text-white" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg">
+            <Cpu className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold">Datacenter Control Center</h2>
-            <p className="text-sm text-muted-foreground">PDU Management & Automated Price Response</p>
+            <p className="text-sm text-muted-foreground">Miner Fleet Management & Automated Price Response</p>
           </div>
         </div>
-        <Button onClick={handleRefreshAll} disabled={pduLoading || automationLoading}>
-          <RefreshCw className={cn("w-4 h-4 mr-2", (pduLoading || automationLoading) && "animate-spin")} />
+        <Button onClick={handleRefreshAll} disabled={minerLoading || automationLoading}>
+          <RefreshCw className={cn("w-4 h-4 mr-2", (minerLoading || automationLoading) && "animate-spin")} />
           Refresh
         </Button>
       </div>
@@ -162,46 +168,48 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
           </CardContent>
         </Card>
 
-        {/* PDU Status */}
+        {/* Miner Fleet Status */}
         <Card className="border-2">
           <CardContent className="p-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">PDU Fleet</p>
+              <p className="text-sm font-medium text-muted-foreground">Miner Fleet</p>
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-500">{stats.online}</p>
-                  <p className="text-xs text-muted-foreground">Online</p>
+                  <p className="text-2xl font-bold text-green-500">{stats.mining}</p>
+                  <p className="text-xs text-muted-foreground">Mining</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-500">{stats.sleeping}</p>
+                  <p className="text-xs text-muted-foreground">Sleeping</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-muted-foreground">{stats.offline}</p>
                   <p className="text-xs text-muted-foreground">Offline</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-500">{stats.shuttingDown + stats.startingUp}</p>
-                  <p className="text-xs text-muted-foreground">Transitioning</p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Current Load */}
+        {/* Hashrate & Power */}
         <Card className="border-2">
           <CardContent className="p-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Active Load</p>
+              <p className="text-sm font-medium text-muted-foreground">Active Hashrate</p>
               <div className="flex items-end gap-2">
-                <span className="text-2xl font-bold">{stats.totalLoadKw.toFixed(1)}</span>
-                <span className="text-sm text-muted-foreground mb-1">kW</span>
+                <span className="text-2xl font-bold font-mono">{stats.totalHashrateTH.toFixed(1)}</span>
+                <span className="text-sm text-muted-foreground mb-1">TH/s</span>
               </div>
-              {stats.totalCapacityKw > 0 && (
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (stats.totalLoadKw / stats.totalCapacityKw) * 100)}%` }}
-                  />
-                </div>
-              )}
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Power className="w-3 h-3" />
+                  {stats.totalPowerKW.toFixed(1)} kW
+                </span>
+                <span className="flex items-center gap-1">
+                  <Gauge className="w-3 h-3" />
+                  {avgEfficiency} J/TH
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -236,7 +244,9 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
                   latestDecision.decision === 'prepare_shutdown' && "text-yellow-500",
                   latestDecision.decision === 'resume' && "text-green-500"
                 )}>
-                  {latestDecision.decision.replace('_', ' ')}
+                  {latestDecision.decision === 'shutdown' ? 'Sleep Miners' : 
+                   latestDecision.decision === 'resume' ? 'Wake Miners' :
+                   latestDecision.decision.replace('_', ' ')}
                 </p>
               </div>
               <div>
@@ -262,7 +272,7 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
                   variant={latestDecision.decision === 'shutdown' ? 'destructive' : 'default'}
                   onClick={() => executeDecision(latestDecision)}
                 >
-                  Execute {latestDecision.decision === 'shutdown' ? 'Shutdown' : 'Resume'}
+                  Execute {latestDecision.decision === 'shutdown' ? 'Sleep' : 'Wake'}
                 </Button>
                 <Button variant="outline">
                   Override
@@ -280,9 +290,9 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
             <Activity className="w-4 h-4" />
             <span className="hidden sm:inline">Status</span>
           </TabsTrigger>
-          <TabsTrigger value="pdus" className="flex items-center gap-2">
-            <Server className="w-4 h-4" />
-            <span className="hidden sm:inline">PDUs</span>
+          <TabsTrigger value="miners" className="flex items-center gap-2">
+            <Cpu className="w-4 h-4" />
+            <span className="hidden sm:inline">Miners</span>
           </TabsTrigger>
           <TabsTrigger value="rules" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -306,14 +316,14 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
           />
           <WhatIfAnalysis 
             currentPrice={currentPrice}
-            pdus={pdus.map(p => ({
-              id: p.id,
-              name: p.name,
-              location: p.location,
-              priority_group: p.priority_group,
-              max_capacity_kw: p.max_capacity_kw,
-              current_load_kw: p.current_load_kw,
-              current_status: p.current_status
+            pdus={miners.map(m => ({
+              id: m.id,
+              name: m.name,
+              location: m.location || '',
+              priority_group: m.priority_group === 'curtailable' ? 'low' : m.priority_group,
+              max_capacity_kw: (m.target_hashrate_th || 0) * 0.015,
+              current_load_kw: (m.power_consumption_w || 0) / 1000,
+              current_status: m.current_status === 'mining' ? 'online' : m.current_status === 'sleeping' ? 'offline' : m.current_status
             }))}
             rules={rules.map(r => ({
               id: r.id,
@@ -327,8 +337,8 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
           />
         </TabsContent>
 
-        <TabsContent value="pdus" className="mt-6">
-          <PDUDeviceManager />
+        <TabsContent value="miners" className="mt-6">
+          <MinerFleetManager />
         </TabsContent>
 
         <TabsContent value="rules" className="mt-6">

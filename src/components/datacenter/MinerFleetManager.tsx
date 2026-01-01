@@ -16,9 +16,10 @@ import {
   LayoutGrid,
   List
 } from 'lucide-react';
-import { useMinerController } from '@/hooks/useMinerController';
+import { useMinerController, HydroMiner } from '@/hooks/useMinerController';
 import { MinerCard } from './MinerCard';
 import { MinerRegistrationDialog, MinerFormData } from './MinerRegistrationDialog';
+import { MinerDetailSheet } from './MinerDetailSheet';
 import { FleetStatsHeader } from './FleetStatsHeader';
 import { cn } from '@/lib/utils';
 import {
@@ -60,6 +61,7 @@ export function MinerFleetManager() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [detailMiner, setDetailMiner] = useState<HydroMiner | null>(null);
 
   useEffect(() => {
     fetchMiners();
@@ -327,6 +329,7 @@ export function MinerFleetManager() {
             onSleep={(id) => sleepMiners([id], 'Manual sleep')}
             onWake={(id) => wakeupMiners([id], 'Manual wake')}
             onReboot={(id) => rebootMiners([id])}
+            onViewDetails={(m) => setDetailMiner(m)}
             disabled={actionLoading}
           />
         ))}
@@ -403,6 +406,36 @@ export function MinerFleetManager() {
         onOpenChange={setIsAddDialogOpen}
         onSubmit={handleAddMiner}
         loading={actionLoading}
+      />
+
+      {/* Miner Detail Sheet */}
+      <MinerDetailSheet
+        miner={detailMiner ? {
+          id: detailMiner.id,
+          name: detailMiner.name,
+          ip_address: detailMiner.ip_address,
+          mac_address: detailMiner.mac_address || undefined,
+          model: detailMiner.model,
+          firmware_type: detailMiner.firmware_type,
+          api_port: detailMiner.api_port,
+          http_port: detailMiner.http_port,
+          priority_group: detailMiner.priority_group,
+          location: detailMiner.location || undefined,
+          target_hashrate_th: detailMiner.target_hashrate_th || undefined,
+          current_hashrate_th: detailMiner.current_hashrate_th || undefined,
+          current_power_watts: detailMiner.power_consumption_w || undefined,
+          inlet_temp_c: detailMiner.inlet_temp_c || undefined,
+          outlet_temp_c: detailMiner.outlet_temp_c || undefined,
+          status: detailMiner.current_status,
+          last_seen: detailMiner.last_seen || undefined,
+        } : null}
+        open={!!detailMiner}
+        onOpenChange={(open) => !open && setDetailMiner(null)}
+        onSleep={(ids) => sleepMiners(ids, 'Manual sleep')}
+        onWake={(ids) => wakeupMiners(ids, 'Manual wake')}
+        onReboot={(ids) => rebootMiners(ids)}
+        onDelete={deleteMiner}
+        isLoading={actionLoading}
       />
     </div>
   );
