@@ -539,30 +539,85 @@ Deno.serve(async (req) => {
         
         if (error) throw error;
         
-        if (miners.length === 0) {
+        if (!miners || miners.length === 0) {
           return new Response(JSON.stringify({ 
             results: [], 
             success: true, 
-            message: 'No miners to sleep' 
+            message: 'No miners to sleep in specified priority groups' 
           }), { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           });
         }
         
-        // Recursively call sleep action
+        // Execute batch sleep directly instead of recursive serve call
         const minerIds = miners.map((m: HydroMiner) => m.id);
-        const sleepRequest = new Request(req.url, {
-          method: 'POST',
-          headers: req.headers,
-          body: JSON.stringify({ 
-            action: 'sleep', 
-            miner_ids: minerIds, 
-            reason,
-            triggered_by: 'automation' 
-          }),
-        });
         
-        return Deno.serve(async () => sleepRequest);
+        // Create batch control log entry
+        const { data: logEntry, error: logError } = await supabase
+          .from('miner_control_log')
+          .insert({
+            miner_ids: minerIds,
+            action: 'batch_sleep',
+            triggered_by: 'automation',
+            trigger_reason: reason || 'Price ceiling automation',
+            execution_status: 'in_progress',
+          })
+          .select()
+          .single();
+        
+        if (logError) {
+          console.error('Failed to create batch log entry:', logError);
+        }
+        
+        // Execute sleep on all miners in parallel
+        const results = await Promise.all(
+          miners.map(async (miner: HydroMiner) => {
+            try {
+              const result = await sleepMiner(miner);
+              if (result.success) {
+                await supabase
+                  .from('hydro_miners')
+                  .update({ 
+                    current_status: 'sleeping',
+                    last_status_change: new Date().toISOString()
+                  })
+                  .eq('id', miner.id);
+              }
+              return { id: miner.id, name: miner.name, ...result };
+            } catch (err) {
+              console.error(`Batch sleep failed for miner ${miner.name}:`, err);
+              return { 
+                id: miner.id, 
+                name: miner.name, 
+                success: false, 
+                error: err instanceof Error ? err.message : 'Unknown error' 
+              };
+            }
+          })
+        );
+        
+        const allSuccess = results.every(r => r.success);
+        
+        // Update log entry with results
+        if (logEntry) {
+          await supabase
+            .from('miner_control_log')
+            .update({
+              execution_status: allSuccess ? 'success' : 'partial_failure',
+              response_data: results,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', logEntry.id);
+        }
+        
+        return new Response(JSON.stringify({ 
+          results, 
+          success: allSuccess,
+          miners_affected: miners.length,
+          priority_groups
+        }), { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
       }
 
       case 'update': {
