@@ -171,14 +171,14 @@ export function AdvancedAnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground">Market Value</p>
-                <p className="text-lg sm:text-2xl font-bold">{formatCurrency(analytics.marketOverview.totalMarketValue)}</p>
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{formatCurrency(analytics.marketOverview.totalMarketValue)}</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3 text-green-600" />
-                  <span className="text-xs text-green-600">+{analytics.marketOverview.marketGrowth}%</span>
+                  <TrendingUp className="w-3 h-3 text-market-positive" />
+                  <span className="text-xs text-market-positive">+{analytics.marketOverview.marketGrowth}%</span>
                 </div>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+              <div className="p-2 bg-market-positive/10 rounded-lg">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-market-positive" />
               </div>
             </div>
           </CardContent>
@@ -189,14 +189,14 @@ export function AdvancedAnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Capacity</p>
-                <p className="text-lg sm:text-2xl font-bold">{formatNumber(analytics.marketOverview.totalCapacity)}W</p>
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{formatNumber(analytics.marketOverview.totalCapacity)}W</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3 text-blue-600" />
-                  <span className="text-xs text-blue-600">+8.2%</span>
+                  <TrendingUp className="w-3 h-3 text-primary" />
+                  <span className="text-xs text-primary">+8.2%</span>
                 </div>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -207,14 +207,14 @@ export function AdvancedAnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Listings</p>
-                <p className="text-lg sm:text-2xl font-bold">{formatNumber(analytics.marketOverview.activeListings)}</p>
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{formatNumber(analytics.marketOverview.activeListings)}</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3 text-purple-600" />
-                  <span className="text-xs text-purple-600">+15.3%</span>
+                  <TrendingUp className="w-3 h-3 text-accent" />
+                  <span className="text-xs text-accent">+15.3%</span>
                 </div>
               </div>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
               </div>
             </div>
           </CardContent>
@@ -225,14 +225,14 @@ export function AdvancedAnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-muted-foreground">Avg Price/MW</p>
-                <p className="text-lg sm:text-2xl font-bold">${analytics.marketOverview.avgPricePerMW}M</p>
+                <p className="text-lg sm:text-2xl font-bold text-foreground">${analytics.marketOverview.avgPricePerMW}M</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <TrendingDown className="w-3 h-3 text-red-600" />
-                  <span className="text-xs text-red-600">-2.1%</span>
+                  <TrendingDown className="w-3 h-3 text-market-negative" />
+                  <span className="text-xs text-market-negative">-2.1%</span>
                 </div>
               </div>
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <BarChart className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+              <div className="p-2 bg-market-warning/10 rounded-lg">
+                <BarChart className="w-4 h-4 sm:w-5 sm:h-5 text-market-warning" />
               </div>
             </div>
           </CardContent>

@@ -166,10 +166,10 @@ export const BTCROICalculatorV2: React.FC = () => {
   // Loading state
   if (networkLoading && !networkData) {
     return (
-      <div className="min-h-screen bg-watt-light flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-watt-bitcoin animate-spin mx-auto" />
-          <p className="text-watt-navy/60">Loading network data...</p>
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading network data...</p>
         </div>
       </div>
     );
@@ -178,13 +178,13 @@ export const BTCROICalculatorV2: React.FC = () => {
   // Error state
   if (!networkData && !networkLoading) {
     return (
-      <div className="min-h-screen bg-watt-light flex items-center justify-center p-4">
-        <Card className="bg-white border-gray-200 shadow-institutional max-w-md w-full">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="bg-card border-border max-w-md w-full">
           <CardContent className="p-6 text-center space-y-4">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-            <h2 className="text-xl font-semibold text-watt-navy">Failed to Load Data</h2>
-            <p className="text-watt-navy/60 text-sm">Unable to fetch network data. Please try again.</p>
-            <Button onClick={handleRefresh} className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-semibold text-foreground">Failed to Load Data</h2>
+            <p className="text-muted-foreground text-sm">Unable to fetch network data. Please try again.</p>
+            <Button onClick={handleRefresh} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -273,7 +273,7 @@ export const BTCROICalculatorV2: React.FC = () => {
           {/* Left Panel - Configuration */}
           <div className="lg:col-span-4 space-y-4">
             {/* Mode Selector */}
-            <Card className="bg-white border-gray-200 shadow-institutional">
+            <Card className="bg-card border-border">
               <CardContent className="p-4">
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -281,8 +281,8 @@ export const BTCROICalculatorV2: React.FC = () => {
                     className={cn(
                       "h-auto py-3 flex flex-col items-center gap-1",
                       mode === 'self' 
-                        ? "bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white border-0" 
-                        : "bg-white border-gray-200 text-watt-navy hover:bg-gray-50"
+                        ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
+                        : "bg-card border-border text-foreground hover:bg-muted"
                     )}
                     onClick={() => setMode('self')}
                   >
@@ -294,8 +294,8 @@ export const BTCROICalculatorV2: React.FC = () => {
                     className={cn(
                       "h-auto py-3 flex flex-col items-center gap-1",
                       mode === 'hosting' 
-                        ? "bg-watt-trust hover:bg-watt-trust/90 text-white border-0" 
-                        : "bg-white border-gray-200 text-watt-navy hover:bg-gray-50"
+                        ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground border-0" 
+                        : "bg-card border-border text-foreground hover:bg-muted"
                     )}
                     onClick={() => setMode('hosting')}
                   >
@@ -307,7 +307,7 @@ export const BTCROICalculatorV2: React.FC = () => {
             </Card>
 
             {/* ASIC Selector */}
-            <Card className="bg-white border-gray-200 shadow-institutional">
+            <Card className="bg-card border-border">
               <CardContent className="p-4">
                 <ASICSelector
                   selectedASIC={selectedASIC}
@@ -317,17 +317,17 @@ export const BTCROICalculatorV2: React.FC = () => {
             </Card>
 
             {/* Configuration Form */}
-            <Card className="bg-white border-gray-200 shadow-institutional">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-watt-navy flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-watt-trust" />
+                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-primary" />
                   Configuration
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-watt-navy/60">Hashrate (TH/s)</Label>
+                    <Label className="text-xs text-muted-foreground">Hashrate (TH/s)</Label>
                     <Input
                       type="number"
                       value={hashrate}
@@ -335,11 +335,11 @@ export const BTCROICalculatorV2: React.FC = () => {
                         setHashrate(Number(e.target.value));
                         setSelectedASIC(null);
                       }}
-                      className="bg-white border-gray-200 text-watt-navy h-9"
+                      className="bg-background border-border text-foreground h-9"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-watt-navy/60">Power (W)</Label>
+                    <Label className="text-xs text-muted-foreground">Power (W)</Label>
                     <Input
                       type="number"
                       value={powerDraw}
@@ -347,24 +347,24 @@ export const BTCROICalculatorV2: React.FC = () => {
                         setPowerDraw(Number(e.target.value));
                         setSelectedASIC(null);
                       }}
-                      className="bg-white border-gray-200 text-watt-navy h-9"
+                      className="bg-background border-border text-foreground h-9"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-watt-navy/60">Units</Label>
+                    <Label className="text-xs text-muted-foreground">Units</Label>
                     <Input
                       type="number"
                       value={units}
                       onChange={(e) => setUnits(Math.max(1, Number(e.target.value)))}
                       min={1}
-                      className="bg-white border-gray-200 text-watt-navy h-9"
+                      className="bg-background border-border text-foreground h-9"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-watt-navy/60">
+                    <Label className="text-xs text-muted-foreground">
                       {mode === 'hosting' ? 'Hosting Rate ($/kWh)' : 'Electric Rate ($/kWh)'}
                     </Label>
                     <Input
@@ -375,14 +375,14 @@ export const BTCROICalculatorV2: React.FC = () => {
                         ? setHostingRate(Number(e.target.value))
                         : setElectricityRate(Number(e.target.value))
                       }
-                      className="bg-white border-gray-200 text-watt-navy h-9"
+                      className="bg-background border-border text-foreground h-9"
                     />
                   </div>
                 </div>
 
                 <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full text-watt-navy/60 hover:text-watt-navy hover:bg-gray-50 h-8">
+                    <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground hover:bg-muted h-8">
                       {showAdvanced ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />}
                       Advanced Options
                     </Button>
@@ -390,22 +390,22 @@ export const BTCROICalculatorV2: React.FC = () => {
                   <CollapsibleContent className="space-y-3 pt-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-watt-navy/60">Hardware Cost ($)</Label>
+                        <Label className="text-xs text-muted-foreground">Hardware Cost ($)</Label>
                         <Input
                           type="number"
                           value={hardwareCost}
                           onChange={(e) => setHardwareCost(Number(e.target.value))}
-                          className="bg-white border-gray-200 text-watt-navy h-9"
+                          className="bg-background border-border text-foreground h-9"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-watt-navy/60">Pool Fee (%)</Label>
+                        <Label className="text-xs text-muted-foreground">Pool Fee (%)</Label>
                         <Input
                           type="number"
                           step="0.1"
                           value={poolFee}
                           onChange={(e) => setPoolFee(Number(e.target.value))}
-                          className="bg-white border-gray-200 text-watt-navy h-9"
+                          className="bg-background border-border text-foreground h-9"
                         />
                       </div>
                     </div>
@@ -416,7 +416,7 @@ export const BTCROICalculatorV2: React.FC = () => {
                 <Button
                   onClick={handleSave}
                   disabled={isSaving || !results}
-                  className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -537,9 +537,9 @@ export const BTCROICalculatorV2: React.FC = () => {
                         <div className="text-xs text-watt-navy/60 mb-1">Efficiency</div>
                         <div className="text-lg font-semibold text-watt-navy">{results ? `${results.efficiency.toFixed(1)} W/TH` : '—'}</div>
                       </div>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                        <div className="text-xs text-watt-navy/60 mb-1">Investment</div>
-                        <div className="text-lg font-semibold text-watt-navy">{results ? formatCurrency(results.totalInvestment) : '—'}</div>
+                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Investment</div>
+                        <div className="text-lg font-semibold text-foreground">{results ? formatCurrency(results.totalInvestment) : '—'}</div>
                       </div>
                     </div>
                   </TabsContent>
@@ -552,19 +552,19 @@ export const BTCROICalculatorV2: React.FC = () => {
                         const isPositive = totalReturn > 0;
                         
                         return (
-                          <div key={months} className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                          <div key={months} className="bg-muted border border-border rounded-lg p-4 flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-medium text-watt-navy">{months} Month{months > 1 ? 's' : ''}</div>
-                              <div className="text-xs text-watt-navy/60">Net Profit: {formatCurrency(profit)}</div>
+                              <div className="text-sm font-medium text-foreground">{months} Month{months > 1 ? 's' : ''}</div>
+                              <div className="text-xs text-muted-foreground">Net Profit: {formatCurrency(profit)}</div>
                             </div>
                             <div className="text-right">
                               <div className={cn(
                                 "text-lg font-bold",
-                                isPositive ? "text-watt-success" : "text-red-500"
+                                isPositive ? "text-market-positive" : "text-destructive"
                               )}>
                                 {formatCurrency(totalReturn)}
                               </div>
-                              <div className="text-xs text-watt-navy/60">
+                              <div className="text-xs text-muted-foreground">
                                 {results ? `${((totalReturn / results.totalInvestment) * 100).toFixed(0)}% ROI` : '—'}
                               </div>
                             </div>
@@ -575,7 +575,7 @@ export const BTCROICalculatorV2: React.FC = () => {
                   </TabsContent>
 
                   <TabsContent value="scenarios" className="space-y-4">
-                    <div className="text-sm text-watt-navy/60 mb-3">What if BTC price changes?</div>
+                    <div className="text-sm text-muted-foreground mb-3">What if BTC price changes?</div>
                     <div className="space-y-2">
                       {networkData && results && [0.5, 0.75, 1, 1.25, 1.5, 2].map((multiplier) => {
                         const scenarioPrice = networkData.price * multiplier;
@@ -584,22 +584,22 @@ export const BTCROICalculatorV2: React.FC = () => {
                         const scenarioDailyProfit = scenarioDailyRevenue - results.dailyPowerCost - scenarioPoolFees;
                         
                         return (
-                          <div key={multiplier} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                          <div key={multiplier} className="bg-muted border border-border rounded-lg p-3 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <Badge variant="outline" className={cn(
                                 "text-xs",
-                                multiplier < 1 ? "border-red-300 text-red-600 bg-red-50" : 
-                                multiplier > 1 ? "border-watt-success/30 text-watt-success bg-watt-success/5" : 
-                                "border-gray-300 text-watt-navy"
+                                multiplier < 1 ? "border-destructive/30 text-destructive bg-destructive/5" : 
+                                multiplier > 1 ? "border-market-positive/30 text-market-positive bg-market-positive/5" : 
+                                "border-border text-foreground"
                               )}>
                                 {multiplier < 1 ? `${((1-multiplier)*100).toFixed(0)}% Down` : 
                                  multiplier > 1 ? `${((multiplier-1)*100).toFixed(0)}% Up` : 'Current'}
                               </Badge>
-                              <span className="text-watt-navy font-medium">${scenarioPrice.toLocaleString()}</span>
+                              <span className="text-foreground font-medium">${scenarioPrice.toLocaleString()}</span>
                             </div>
                             <div className={cn(
                               "font-mono font-medium",
-                              scenarioDailyProfit > 0 ? "text-watt-success" : "text-red-500"
+                              scenarioDailyProfit > 0 ? "text-market-positive" : "text-destructive"
                             )}>
                               {formatCurrency(scenarioDailyProfit)}/day
                             </div>
@@ -615,7 +615,7 @@ export const BTCROICalculatorV2: React.FC = () => {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="text-center text-xs text-watt-navy/50 pt-4">
+        <div className="text-center text-xs text-muted-foreground pt-4">
           <p>Calculations are estimates based on current network conditions. Actual results may vary due to difficulty adjustments and market volatility.</p>
         </div>
       </div>
@@ -633,20 +633,20 @@ interface StatsCardProps {
 
 const StatsCard: React.FC<StatsCardProps> = ({ icon, label, value, color }) => {
   const colorClasses = {
-    bitcoin: 'text-watt-bitcoin bg-watt-bitcoin/10',
-    trust: 'text-watt-trust bg-watt-trust/10',
-    warning: 'text-watt-warning bg-watt-warning/10',
-    success: 'text-watt-success bg-watt-success/10',
-    navy: 'text-watt-navy bg-watt-navy/10',
+    bitcoin: 'text-primary bg-primary/10',
+    trust: 'text-secondary bg-secondary/10',
+    warning: 'text-market-warning bg-market-warning/10',
+    success: 'text-market-positive bg-market-positive/10',
+    navy: 'text-foreground bg-muted',
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-institutional">
+    <div className="bg-card border border-border rounded-lg p-3">
       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", colorClasses[color])}>
         {icon}
       </div>
-      <div className="text-lg sm:text-xl font-bold text-watt-navy truncate">{value}</div>
-      <div className="text-xs text-watt-navy/60">{label}</div>
+      <div className="text-lg sm:text-xl font-bold text-foreground truncate">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 };
@@ -663,17 +663,17 @@ const ResultCard: React.FC<ResultCardProps> = ({ label, value, subValue, positiv
   <div className={cn(
     "rounded-lg p-4 transition-all",
     highlight 
-      ? "bg-watt-bitcoin/5 border border-watt-bitcoin/20" 
-      : "bg-white border border-gray-200 shadow-institutional"
+      ? "bg-primary/5 border border-primary/20" 
+      : "bg-card border border-border"
   )}>
-    <div className="text-xs text-watt-navy/60 mb-1">{label}</div>
+    <div className="text-xs text-muted-foreground mb-1">{label}</div>
     <div className={cn(
       "text-xl sm:text-2xl font-bold",
-      positive ? "text-watt-success" : "text-red-500"
+      positive ? "text-market-positive" : "text-destructive"
     )}>
       {value}
     </div>
-    <div className="text-xs text-watt-navy/50 mt-1">{subValue}</div>
+    <div className="text-xs text-muted-foreground mt-1">{subValue}</div>
   </div>
 );
 
