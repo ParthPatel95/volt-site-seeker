@@ -109,7 +109,7 @@ const HydroNetworkSecuritySection = () => {
   const [activeTab, setActiveTab] = useState('network');
 
   return (
-    <section id="network-security" className="py-20 bg-white">
+    <section id="network-security" className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -141,21 +141,21 @@ const HydroNetworkSecuritySection = () => {
             <TabsList className="grid grid-cols-3 gap-4 h-auto bg-transparent mb-8">
               <TabsTrigger
                 value="network"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-indigo-500 data-[state=active]:bg-indigo-50 border-border bg-white hover:border-indigo-300"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-primary data-[state=active]:bg-primary/5 border-border bg-card hover:border-primary/50"
               >
                 <Network className="w-6 h-6 text-indigo-600" />
                 <span className="text-sm font-medium text-foreground">Network Architecture</span>
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-indigo-500 data-[state=active]:bg-indigo-50 border-border bg-white hover:border-indigo-300"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-primary data-[state=active]:bg-primary/5 border-border bg-card hover:border-primary/50"
               >
                 <Shield className="w-6 h-6 text-indigo-600" />
                 <span className="text-sm font-medium text-foreground">Physical Security</span>
               </TabsTrigger>
               <TabsTrigger
                 value="management"
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-indigo-500 data-[state=active]:bg-indigo-50 border-border bg-white hover:border-indigo-300"
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-primary data-[state=active]:bg-primary/5 border-border bg-card hover:border-primary/50"
               >
                 <Monitor className="w-6 h-6 text-indigo-600" />
                 <span className="text-sm font-medium text-foreground">Management Platform</span>
@@ -188,7 +188,7 @@ const HydroNetworkSecuritySection = () => {
 
                       {/* Core Layer */}
                       <div className="flex justify-center mb-4">
-                        <div className="w-1 h-6 bg-gray-400" />
+                        <div className="w-1 h-6 bg-muted-foreground/50" />
                       </div>
                       <div className="flex justify-center mb-4">
                         <div className="px-6 py-3 rounded-lg bg-gradient-to-r from-red-500 to-orange-500 text-white font-medium">
@@ -198,7 +198,7 @@ const HydroNetworkSecuritySection = () => {
 
                       {/* Aggregation Layer */}
                       <div className="flex justify-center mb-4">
-                        <div className="w-1 h-6 bg-gray-400" />
+                        <div className="w-1 h-6 bg-muted-foreground/50" />
                       </div>
                       <div className="flex justify-center gap-4 mb-4">
                         {['Switch A', 'Switch B', 'Switch C', 'Switch D'].map((sw, i) => (
@@ -212,7 +212,7 @@ const HydroNetworkSecuritySection = () => {
                       <div className="flex justify-center mb-4">
                         <div className="flex gap-8">
                           {[...Array(4)].map((_, i) => (
-                            <div key={i} className="w-1 h-4 bg-gray-300" />
+                            <div key={i} className="w-1 h-4 bg-muted-foreground/30" />
                           ))}
                         </div>
                       </div>

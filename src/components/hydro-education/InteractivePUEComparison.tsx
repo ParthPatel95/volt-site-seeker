@@ -104,7 +104,7 @@ const InteractivePUEComparison = () => {
                   <span className="text-muted-foreground">Total Facility Power</span>
                   <span className="font-mono text-foreground">{calculations.airCooledTotal.toFixed(1)} MW</span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
                     style={{ width: `${(powerCapacity / calculations.airCooledTotal) * 100}%` }}
@@ -142,7 +142,7 @@ const InteractivePUEComparison = () => {
                   <span className="text-muted-foreground">Total Facility Power</span>
                   <span className="font-mono text-foreground">{calculations.hydroCooledTotal.toFixed(1)} MW</span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
                     style={{ width: `${(powerCapacity / calculations.hydroCooledTotal) * 100}%` }}

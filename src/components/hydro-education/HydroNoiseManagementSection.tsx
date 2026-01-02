@@ -189,7 +189,7 @@ const HydroNoiseManagementSection = () => {
   };
 
   return (
-    <section id="noise-management" className="py-16 md:py-24 bg-gradient-to-b from-white to-watt-light">
+    <section id="noise-management" className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
@@ -371,8 +371,8 @@ const HydroNoiseManagementSection = () => {
                             onClick={() => toggleTechnique(tech.id)}
                             className={`p-2 rounded-lg border-2 text-left transition-all text-xs ${
                               selectedTechniques.includes(tech.id)
-                                ? 'border-watt-trust bg-watt-trust/10'
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-muted-foreground'
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -395,10 +395,10 @@ const HydroNoiseManagementSection = () => {
                     <h4 className="font-semibold text-foreground">Calculation Results</h4>
                     
                     {/* Air-Cooled Results */}
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                    <div className="p-4 rounded-xl bg-muted border border-border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-medium text-foreground">Air-Cooled</span>
-                        <Wind className="w-5 h-5 text-gray-500" />
+                        <Wind className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -444,12 +444,12 @@ const HydroNoiseManagementSection = () => {
                     </div>
 
                     {/* Mitigation summary */}
-                    <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                       <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium text-blue-800">Mitigation Applied</span>
+                        <CheckCircle className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-primary">Mitigation Applied</span>
                       </div>
-                      <div className="text-sm text-blue-700">
+                      <div className="text-sm text-primary/80">
                         <strong>{selectedTechniques.length}</strong> techniques selected = 
                         <strong> -{totalReduction.toFixed(1)} dB</strong> reduction
                       </div>
