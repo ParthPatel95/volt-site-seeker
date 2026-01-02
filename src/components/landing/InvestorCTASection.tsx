@@ -17,10 +17,10 @@ export const InvestorCTASection = () => {
       <Dialog open={showInquiryForm} onOpenChange={setShowInquiryForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-watt-navy">
+            <DialogTitle className="text-2xl font-bold text-foreground">
               Start Your Investment Journey
             </DialogTitle>
-            <DialogDescription className="text-watt-navy/70">
+            <DialogDescription className="text-muted-foreground">
               Fill out the form below and our investment team will contact you to discuss opportunities in WattFund.
             </DialogDescription>
           </DialogHeader>

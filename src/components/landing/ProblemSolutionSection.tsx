@@ -40,7 +40,7 @@ export const ProblemSolutionSection = () => {
   ];
 
   return (
-    <section className="relative z-10 px-4 sm:px-6 py-10 md:py-12 bg-white">
+    <section className="relative z-10 px-4 sm:px-6 py-10 md:py-12 bg-card">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <ScrollReveal direction="fade" className="text-center mb-6 md:mb-8">
@@ -48,11 +48,11 @@ export const ProblemSolutionSection = () => {
             <Zap className="w-4 h-4 text-watt-trust" />
             <span className="text-sm font-medium text-watt-trust">Market Intelligence</span>
           </div>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-watt-navy mb-4">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Turning Power Constraints Into
             <span className="text-watt-bitcoin"> Profit Opportunities</span>
           </h2>
-          <p className="text-base md:text-lg text-watt-navy/70 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
             Power constraints are the <span className="text-watt-bitcoin font-semibold">#1 limiting factor</span> for AI infrastructure growth.
             <br className="hidden sm:block" />
             WattByte transforms these bottlenecks into <span className="text-watt-success font-semibold">investable assets</span>.
@@ -64,10 +64,10 @@ export const ProblemSolutionSection = () => {
           {/* Problems Column */}
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center shadow-institutional">
-                <AlertTriangle className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-destructive rounded-lg flex items-center justify-center shadow-institutional">
+                <AlertTriangle className="w-5 h-5 text-destructive-foreground" />
               </div>
-              <h3 className="text-2xl font-bold text-watt-navy">Industry Pain Points</h3>
+              <h3 className="text-2xl font-bold text-foreground">Industry Pain Points</h3>
             </div>
             
             {problems.map((problem, index) => (
@@ -77,14 +77,14 @@ export const ProblemSolutionSection = () => {
                 delay={index * 0.1}
               >
                 <div className="group">
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-watt-trust/30 hover:shadow-institutional transition-all duration-200">
+                  <div className="bg-card rounded-xl p-6 border border-border hover:border-watt-trust/30 hover:shadow-institutional transition-all duration-200">
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <problem.icon className="w-6 h-6 text-red-600" />
+                      <div className="w-12 h-12 bg-destructive/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <problem.icon className="w-6 h-6 text-destructive" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-semibold text-watt-navy mb-2">{problem.title}</h4>
-                        <p className="text-watt-navy/60 text-sm leading-relaxed">{problem.description}</p>
+                        <h4 className="text-lg font-semibold text-foreground mb-2">{problem.title}</h4>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{problem.description}</p>
                       </div>
                     </div>
                   </div>
@@ -96,14 +96,14 @@ export const ProblemSolutionSection = () => {
           {/* Center Bridge */}
           <ScrollReveal direction="fade" delay={0.2} className="hidden lg:flex flex-col items-center justify-center">
             <div className="relative">
-              <div className="bg-watt-light rounded-2xl p-8 border border-gray-200 shadow-institutional">
+              <div className="bg-muted rounded-2xl p-8 border border-border shadow-institutional">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-3 border border-gray-200 shadow-institutional">
+                  <div className="w-16 h-16 bg-card rounded-2xl flex items-center justify-center p-3 border border-border shadow-institutional">
                     <EnhancedLogo className="w-full h-full object-contain" />
                   </div>
                   <ArrowRight className="w-8 h-8 text-watt-trust" />
                   <div className="text-center">
-                    <div className="text-sm font-bold text-watt-navy mb-1">WattByte</div>
+                    <div className="text-sm font-bold text-foreground mb-1">WattByte</div>
                     <div className="text-xs text-watt-trust font-medium">AI-Powered</div>
                     <div className="text-xs text-watt-success font-medium">Site Intelligence</div>
                   </div>
@@ -115,10 +115,10 @@ export const ProblemSolutionSection = () => {
 
           {/* Mobile Bridge */}
           <div className="lg:hidden flex justify-center py-4">
-            <div className="flex items-center gap-3 px-6 py-4 bg-watt-light rounded-xl border border-gray-200 shadow-institutional">
+            <div className="flex items-center gap-3 px-6 py-4 bg-muted rounded-xl border border-border shadow-institutional">
               <Zap className="w-6 h-6 text-watt-trust" />
               <div className="text-center">
-                <div className="text-sm font-bold text-watt-navy">WattByte Intelligence</div>
+                <div className="text-sm font-bold text-foreground">WattByte Intelligence</div>
                 <div className="text-xs text-watt-success">AI-Powered Solutions</div>
               </div>
               <ArrowRight className="w-6 h-6 text-watt-success" />
@@ -131,7 +131,7 @@ export const ProblemSolutionSection = () => {
               <div className="w-10 h-10 bg-watt-success rounded-lg flex items-center justify-center shadow-institutional">
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-watt-navy">Our Solution</h3>
+              <h3 className="text-2xl font-bold text-foreground">Our Solution</h3>
             </div>
             
             {solutions.map((solution, index) => (
@@ -141,14 +141,14 @@ export const ProblemSolutionSection = () => {
                 delay={index * 0.1}
               >
                 <div className="group">
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-watt-success/30 hover:shadow-institutional transition-all duration-200">
+                  <div className="bg-card rounded-xl p-6 border border-border hover:border-watt-success/30 hover:shadow-institutional transition-all duration-200">
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-watt-success/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <solution.icon className="w-6 h-6 text-watt-success" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-semibold text-watt-navy mb-2">{solution.title}</h4>
-                        <p className="text-watt-navy/60 text-sm leading-relaxed">{solution.description}</p>
+                        <h4 className="text-lg font-semibold text-foreground mb-2">{solution.title}</h4>
+                        <p className="text-muted-foreground text-sm leading-relaxed">{solution.description}</p>
                       </div>
                     </div>
                   </div>

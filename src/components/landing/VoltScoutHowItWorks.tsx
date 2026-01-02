@@ -41,10 +41,10 @@ export const VoltScoutHowItWorks = () => {
           return (
             <div key={index} className="relative">
               {/* Step Card */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 h-full hover:border-watt-trust/50 hover:shadow-lg transition-all duration-300 group">
+              <div className="bg-card rounded-xl border border-border p-6 h-full hover:border-watt-trust/50 hover:shadow-lg transition-all duration-300 group">
                 {/* Step Number */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-4xl font-bold text-gray-200 group-hover:text-watt-trust/20 transition-colors duration-300">
+                  <span className="text-4xl font-bold text-muted-foreground/30 group-hover:text-watt-trust/20 transition-colors duration-300">
                     {step.number}
                   </span>
                   <div className={`p-3 rounded-lg bg-${step.color}/10 group-hover:bg-${step.color}/20 transition-colors duration-300`}>
@@ -53,10 +53,10 @@ export const VoltScoutHowItWorks = () => {
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-bold text-watt-navy mb-2 group-hover:text-watt-trust transition-colors duration-300">
+                <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-watt-trust transition-colors duration-300">
                   {step.title}
                 </h3>
-                <p className="text-sm text-watt-navy/70 leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -64,7 +64,7 @@ export const VoltScoutHowItWorks = () => {
               {/* Connecting Arrow (hidden on last item and mobile) */}
               {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-gray-300">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-muted-foreground/30">
                     <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -81,10 +81,10 @@ export const VoltScoutHowItWorks = () => {
             <CheckCircle className="w-5 h-5 text-watt-trust" />
           </div>
           <div>
-            <h4 className="text-lg font-bold text-watt-navy mb-2">
+            <h4 className="text-lg font-bold text-foreground mb-2">
               End-to-End Intelligence Platform
             </h4>
-            <p className="text-sm text-watt-navy/70">
+            <p className="text-sm text-muted-foreground">
               From initial discovery to deal execution, VoltScout streamlines the entire energy opportunity identification process. 
               Our AI-powered platform provides the insights you need to make informed decisions quickly and confidently.
             </p>
