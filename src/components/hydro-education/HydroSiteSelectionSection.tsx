@@ -92,7 +92,7 @@ const HydroSiteSelectionSection = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>('policies');
 
   return (
-    <section id="site-selection" className="py-20 bg-gradient-to-b from-white to-slate-50">
+    <section id="site-selection" className="py-20 bg-gradient-to-b from-background to-muted/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -122,30 +122,30 @@ const HydroSiteSelectionSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
           {siteCategories.map((category, index) => (
             <ScrollReveal key={category.id} delay={index * 100}>
-              <Card className="border-watt-navy/10 h-full">
+              <Card className="border-border h-full">
                 <Collapsible
                   open={expandedCategory === category.id}
                   onOpenChange={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
                 >
                   <CollapsibleTrigger className="w-full">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 cursor-pointer hover:bg-slate-50 transition-colors rounded-t-lg">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center`}>
                           <category.icon className="w-6 h-6 text-white" />
                         </div>
                         <div className="text-left">
-                          <CardTitle className="text-lg font-semibold text-watt-navy">
+                          <CardTitle className="text-lg font-semibold text-foreground">
                             {category.title}
                           </CardTitle>
-                          <p className="text-sm text-watt-navy/60">
+                          <p className="text-sm text-muted-foreground">
                             {category.items.filter(i => i.critical).length} critical requirements
                           </p>
                         </div>
                       </div>
                       {expandedCategory === category.id ? (
-                        <ChevronUp className="w-5 h-5 text-watt-navy/50" />
+                        <ChevronUp className="w-5 h-5 text-muted-foreground" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-watt-navy/50" />
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
                       )}
                     </CardHeader>
                   </CollapsibleTrigger>
@@ -180,17 +180,17 @@ const HydroSiteSelectionSection = () => {
 
         {/* Water Quality Requirements Table */}
         <ScrollReveal>
-          <Card className="border-watt-navy/10">
+          <Card className="border-border">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
                   <Droplets className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-bold text-watt-navy">
+                  <CardTitle className="text-xl font-bold text-foreground">
                     Water Quality Requirements
                   </CardTitle>
-                  <p className="text-sm text-watt-navy/60">
+                  <p className="text-sm text-muted-foreground">
                     Essential water quality parameters for hydro-cooling systems
                   </p>
                 </div>
@@ -200,25 +200,25 @@ const HydroSiteSelectionSection = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-watt-navy/10">
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Parameter</th>
-                      <th className="text-left py-3 px-4 font-semibold text-watt-navy">Requirement</th>
-                      <th className="text-center py-3 px-4 font-semibold text-watt-navy">Priority</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Parameter</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Requirement</th>
+                      <th className="text-center py-3 px-4 font-semibold text-foreground">Priority</th>
                     </tr>
                   </thead>
                   <tbody>
                     {waterQualityRequirements.map((req, index) => (
-                      <tr key={index} className="border-b border-watt-navy/5 last:border-0 hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-4 text-sm text-watt-navy font-medium">{req.parameter}</td>
-                        <td className="py-3 px-4 text-sm text-watt-navy/70 font-mono">{req.requirement}</td>
+                      <tr key={index} className="border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors">
+                        <td className="py-3 px-4 text-sm text-foreground font-medium">{req.parameter}</td>
+                        <td className="py-3 px-4 text-sm text-muted-foreground font-mono">{req.requirement}</td>
                         <td className="py-3 px-4 text-center">
                           {req.critical ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-medium">
                               <Shield className="w-3 h-3" />
                               Critical
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
                               Recommended
                             </span>
                           )}

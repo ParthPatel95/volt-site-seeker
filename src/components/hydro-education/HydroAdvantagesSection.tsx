@@ -86,7 +86,7 @@ const caseStudies = [
 
 const HydroAdvantagesSection = () => {
   return (
-    <section id="advantages" className="py-20 bg-gradient-to-b from-background to-blue-50/50">
+    <section id="advantages" className="py-20 bg-gradient-to-b from-background to-muted/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">

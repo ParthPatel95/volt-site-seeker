@@ -224,7 +224,7 @@ const HydroConstructionSection = () => {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(0);
 
   return (
-    <section id="construction" className="py-20 bg-gradient-to-b from-white to-amber-50/50">
+    <section id="construction" className="py-20 bg-gradient-to-b from-background to-muted/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
