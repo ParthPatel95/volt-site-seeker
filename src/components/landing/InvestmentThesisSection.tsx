@@ -50,11 +50,11 @@ export const InvestmentThesisSection = () => {
   ];
 
   return (
-    <section id="thesis" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 bg-gradient-to-b from-watt-navy via-[#0a1628] to-watt-navy overflow-hidden">
+    <section id="thesis" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 bg-[hsl(220_50%_8%)] overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-watt-trust/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-watt-bitcoin/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[hsl(195_85%_41%/0.1)] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[hsl(36_94%_53%/0.1)] rounded-full blur-[120px]" />
       </div>
 
       <div className="max-w-7xl mx-auto relative">
@@ -67,17 +67,17 @@ export const InvestmentThesisSection = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-trust/10 border border-watt-trust/30 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(195_85%_41%/0.1)] border border-[hsl(195_85%_41%/0.3)] mb-6"
             whileHover={{ scale: 1.05 }}
           >
-            <Sparkles className="w-4 h-4 text-watt-trust" />
-            <span className="text-sm font-medium text-watt-trust">Investment Strategy</span>
+            <Sparkles className="w-4 h-4 text-[hsl(195_85%_41%)]" />
+            <span className="text-sm font-medium text-[hsl(195_85%_41%)]">Investment Strategy</span>
           </motion.div>
           
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Our <span className="bg-gradient-to-r from-watt-trust to-watt-bitcoin bg-clip-text text-transparent">Thesis</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[hsl(210_40%_98%)]">
+            Our <span className="bg-gradient-to-r from-[hsl(195_85%_41%)] to-[hsl(36_94%_53%)] bg-clip-text text-transparent">Thesis</span>
           </h2>
-          <p className="text-lg md:text-xl text-watt-bitcoin font-bold">
+          <p className="text-lg md:text-xl text-[hsl(36_94%_53%)] font-bold">
             Stranded Power → Bitcoin Mining → AI/HPC Premium
           </p>
         </motion.div>
@@ -97,19 +97,19 @@ export const InvestmentThesisSection = () => {
               {/* Card glow */}
               <div className={`absolute -inset-1 rounded-2xl bg-gradient-to-r ${stage.bgGradient} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
               
-              <div className={`relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border ${stage.borderColor} border-opacity-50 h-full`}>
+              <div className={`relative bg-[hsl(210_40%_98%/0.05)] backdrop-blur-sm rounded-2xl p-6 border ${stage.borderColor} border-opacity-50 h-full`}>
                 {/* Icon */}
                 <motion.div 
                   className={`w-16 h-16 bg-gradient-to-br ${stage.bgGradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg`}
                   whileHover={{ rotate: [0, -5, 5, 0], scale: 1.1 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <stage.icon className="w-8 h-8 text-white" />
+                  <stage.icon className="w-8 h-8 text-[hsl(210_40%_98%)]" />
                 </motion.div>
                 
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="text-xs font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold text-[hsl(210_40%_98%/0.6)] bg-[hsl(210_40%_98%/0.1)] px-3 py-1 rounded-full">
                     STAGE {stage.stage}
                   </span>
                   {stage.badge && (
@@ -118,22 +118,22 @@ export const InvestmentThesisSection = () => {
                     </span>
                   )}
                   {stage.savingsBadge && (
-                    <span className="text-xs font-bold text-white bg-watt-success px-3 py-1 rounded-full shadow">
+                    <span className="text-xs font-bold text-[hsl(210_40%_98%)] bg-[hsl(142_76%_36%)] px-3 py-1 rounded-full shadow">
                       {stage.savingsBadge}
                     </span>
                   )}
                 </div>
                 
                 {/* Title */}
-                <h3 className="text-xl font-bold mb-3 text-white">{stage.title}</h3>
+                <h3 className="text-xl font-bold mb-3 text-[hsl(210_40%_98%)]">{stage.title}</h3>
                 
                 {/* Key Point */}
-                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
-                  <div className="text-sm font-semibold text-white/80">{stage.keyPoint}</div>
+                <div className="mb-4 p-3 bg-[hsl(210_40%_98%/0.05)] rounded-lg border border-[hsl(210_40%_98%/0.1)]">
+                  <div className="text-sm font-semibold text-[hsl(210_40%_98%/0.8)]">{stage.keyPoint}</div>
                 </div>
                 
                 {/* Description */}
-                <p className="text-white/60 text-sm leading-relaxed">
+                <p className="text-[hsl(210_40%_98%/0.6)] text-sm leading-relaxed">
                   {stage.description}
                 </p>
               </div>
@@ -146,7 +146,7 @@ export const InvestmentThesisSection = () => {
                     animate={{ x: [0, 5, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
-                    <ArrowRight className="w-4 h-4 text-white" />
+                    <ArrowRight className="w-4 h-4 text-[hsl(210_40%_98%)]" />
                   </motion.div>
                 </div>
               )}
@@ -162,19 +162,19 @@ export const InvestmentThesisSection = () => {
           transition={{ duration: 0.6 }}
           className="relative"
         >
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-watt-trust/20 via-watt-bitcoin/10 to-watt-success/20 blur-xl" />
+          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[hsl(195_85%_41%/0.2)] via-[hsl(36_94%_53%/0.1)] to-[hsl(142_76%_36%/0.2)] blur-xl" />
           
-          <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-white/10">
+          <div className="relative bg-[hsl(210_40%_98%/0.05)] backdrop-blur-md rounded-3xl p-8 md:p-12 border border-[hsl(210_40%_98%/0.1)]">
             {/* Header */}
             <div className="text-center mb-10">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <Sparkles className="w-6 h-6 text-watt-trust" />
-                <h3 className="text-2xl md:text-3xl font-bold text-white">
+                <Sparkles className="w-6 h-6 text-[hsl(195_85%_41%)]" />
+                <h3 className="text-2xl md:text-3xl font-bold text-[hsl(210_40%_98%)]">
                   Our Proprietary Edge
                 </h3>
               </div>
-              <p className="text-xl font-semibold text-white/90 mb-2">Modular AI Infrastructure</p>
-              <p className="text-base text-watt-trust font-medium">Deploy enterprise-grade AI compute in weeks, not years</p>
+              <p className="text-xl font-semibold text-[hsl(210_40%_98%/0.9)] mb-2">Modular AI Infrastructure</p>
+              <p className="text-base text-[hsl(195_85%_41%)] font-medium">Deploy enterprise-grade AI compute in weeks, not years</p>
             </div>
             
             {/* Feature Cards */}
@@ -187,29 +187,29 @@ export const InvestmentThesisSection = () => {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-white/20 transition-all group"
+                  className="bg-[hsl(210_40%_98%/0.05)] rounded-xl p-5 border border-[hsl(210_40%_98%/0.1)] hover:border-[hsl(210_40%_98%/0.2)] transition-all group"
                 >
                   <motion.div 
-                    className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
+                    className="w-12 h-12 bg-[hsl(210_40%_98%/0.05)] rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
                     whileHover={{ rotate: 10 }}
                   >
                     <feature.icon className={`w-6 h-6 ${feature.color}`} />
                   </motion.div>
-                  <h4 className="text-sm font-bold text-white mb-1.5">{feature.title}</h4>
-                  <p className="text-xs text-white/60 leading-relaxed">{feature.desc}</p>
+                  <h4 className="text-sm font-bold text-[hsl(210_40%_98%)] mb-1.5">{feature.title}</h4>
+                  <p className="text-xs text-[hsl(210_40%_98%/0.6)] leading-relaxed">{feature.desc}</p>
                 </motion.div>
               ))}
             </div>
             
             {/* Cost Comparison */}
             <div className="max-w-4xl mx-auto mb-8">
-              <h4 className="text-center text-lg font-bold text-white mb-6">Infrastructure Cost Comparison</h4>
+              <h4 className="text-center text-lg font-bold text-[hsl(210_40%_98%)] mb-6">Infrastructure Cost Comparison</h4>
               <div className="space-y-6">
                 {/* Traditional */}
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-2">
-                    <span className="text-sm font-semibold text-white/60 w-28">Traditional</span>
-                    <div className="flex-1 h-14 bg-white/5 rounded-xl overflow-hidden relative">
+                    <span className="text-sm font-semibold text-[hsl(210_40%_98%/0.6)] w-28">Traditional</span>
+                    <div className="flex-1 h-14 bg-[hsl(210_40%_98%/0.05)] rounded-xl overflow-hidden relative">
                       <motion.div 
                         className="absolute inset-0 bg-gradient-to-r from-gray-500 to-gray-600"
                         initial={{ width: 0 }}
@@ -218,13 +218,13 @@ export const InvestmentThesisSection = () => {
                         transition={{ duration: 1, delay: 0.3 }}
                       />
                       <div className="absolute inset-0 flex items-center justify-end pr-4">
-                        <span className="text-white font-bold text-xl">
+                        <span className="text-[hsl(210_40%_98%)] font-bold text-xl">
                           $<AnimatedCounter end={12.5} duration={2000} />M/MW
                         </span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-white/40 ml-32 flex items-center gap-1">
+                  <p className="text-xs text-[hsl(210_40%_98%/0.4)] ml-32 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     Site prep, construction, equipment • 24-36 months
                   </p>
@@ -233,8 +233,8 @@ export const InvestmentThesisSection = () => {
                 {/* WattByte */}
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-2">
-                    <span className="text-sm font-semibold text-watt-trust w-28">WattByte</span>
-                    <div className="flex-1 h-14 bg-white/5 rounded-xl overflow-hidden relative">
+                    <span className="text-sm font-semibold text-[hsl(195_85%_41%)] w-28">WattByte</span>
+                    <div className="flex-1 h-14 bg-[hsl(210_40%_98%/0.05)] rounded-xl overflow-hidden relative">
                       <motion.div 
                         className="absolute inset-0 bg-gradient-to-r from-watt-trust to-blue-600 rounded-xl"
                         initial={{ width: 0 }}
@@ -243,13 +243,13 @@ export const InvestmentThesisSection = () => {
                         transition={{ duration: 1.2, delay: 0.5 }}
                       />
                       <div className="absolute inset-0 flex items-center justify-end pr-4">
-                        <span className="text-white font-bold text-xl">
+                        <span className="text-[hsl(210_40%_98%)] font-bold text-xl">
                           $<AnimatedCounter end={6.5} duration={2000} />M/MW
                         </span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-watt-trust/80 ml-32 flex items-center gap-1 font-medium">
+                  <p className="text-xs text-[hsl(195_85%_41%/0.8)] ml-32 flex items-center gap-1 font-medium">
                     <CheckCircle2 className="w-3 h-3" />
                     Factory-built modular units • 12-16 weeks
                   </p>
@@ -260,34 +260,34 @@ export const InvestmentThesisSection = () => {
             {/* Stats */}
             <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
               <motion.div 
-                className="bg-watt-success/10 rounded-xl p-5 border border-watt-success/30 text-center"
+                className="bg-[hsl(142_76%_36%/0.1)] rounded-xl p-5 border border-[hsl(142_76%_36%/0.3)] text-center"
                 whileHover={{ scale: 1.05 }}
               >
-                <div className="text-3xl font-bold text-watt-success mb-1">
+                <div className="text-3xl font-bold text-[hsl(142_76%_36%)] mb-1">
                   $<AnimatedCounter end={6} duration={2000} />M/MW
                 </div>
-                <div className="text-xs font-semibold text-white/60">Cost Savings</div>
+                <div className="text-xs font-semibold text-[hsl(210_40%_98%/0.6)]">Cost Savings</div>
               </motion.div>
               
               <motion.div 
-                className="bg-watt-trust/10 rounded-xl p-5 border border-watt-trust/30 text-center"
+                className="bg-[hsl(195_85%_41%/0.1)] rounded-xl p-5 border border-[hsl(195_85%_41%/0.3)] text-center"
                 whileHover={{ scale: 1.05 }}
               >
-                <div className="text-3xl font-bold text-watt-trust mb-1">
+                <div className="text-3xl font-bold text-[hsl(195_85%_41%)] mb-1">
                   <AnimatedCounter end={80} duration={2000} />% Faster
                 </div>
-                <div className="text-xs font-semibold text-white/60">Time to Deploy</div>
+                <div className="text-xs font-semibold text-[hsl(210_40%_98%/0.6)]">Time to Deploy</div>
               </motion.div>
               
               <motion.div 
-                className="bg-blue-500/10 rounded-xl p-5 border border-blue-500/30 text-center"
+                className="bg-[hsl(217_91%_60%/0.1)] rounded-xl p-5 border border-[hsl(217_91%_60%/0.3)] text-center"
                 whileHover={{ scale: 1.05 }}
               >
-                <div className="text-2xl font-bold text-blue-400 mb-1 flex items-center justify-center gap-2">
+                <div className="text-2xl font-bold text-[hsl(217_91%_60%)] mb-1 flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-6 h-6" />
                   Tier 3
                 </div>
-                <div className="text-xs font-semibold text-white/60">Same Performance</div>
+                <div className="text-xs font-semibold text-[hsl(210_40%_98%/0.6)]">Same Performance</div>
               </motion.div>
             </div>
           </div>
