@@ -46,11 +46,11 @@ export const WhyInvestSection = () => {
   ];
 
   return (
-    <section id="why-invest" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 bg-gradient-to-b from-[#0a1628] to-watt-navy overflow-hidden">
+    <section id="why-invest" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 bg-[hsl(220_50%_8%)] overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-watt-success/5 rounded-full blur-[150px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-watt-trust/5 rounded-full blur-[150px]" />
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[hsl(142_76%_36%/0.05)] rounded-full blur-[150px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[hsl(195_85%_41%/0.05)] rounded-full blur-[150px]" />
       </div>
 
       <div className="max-w-7xl mx-auto relative">
@@ -63,17 +63,17 @@ export const WhyInvestSection = () => {
           transition={{ duration: 0.6 }}
         >
           <motion.div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-success/10 border border-watt-success/30 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(142_76%_36%/0.1)] border border-[hsl(142_76%_36%/0.3)] mb-6"
             whileHover={{ scale: 1.05 }}
           >
-            <Sparkles className="w-4 h-4 text-watt-success" />
-            <span className="text-sm font-medium text-watt-success">Competitive Advantages</span>
+            <Sparkles className="w-4 h-4 text-[hsl(142_76%_36%)]" />
+            <span className="text-sm font-medium text-[hsl(142_76%_36%)]">Competitive Advantages</span>
           </motion.div>
           
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Why Invest With <span className="bg-gradient-to-r from-watt-success to-watt-trust bg-clip-text text-transparent">WattFund</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[hsl(210_40%_98%)]">
+            Why Invest With <span className="bg-gradient-to-r from-[hsl(142_76%_36%)] to-[hsl(195_85%_41%)] bg-clip-text text-transparent">WattFund</span>
           </h2>
-          <p className="text-lg text-white/60 max-w-3xl mx-auto">
+          <p className="text-lg text-[hsl(210_40%_98%/0.6)] max-w-3xl mx-auto">
             Proven expertise, proprietary technology, and strategic positioning in high-growth markets
           </p>
         </motion.div>
@@ -93,7 +93,7 @@ export const WhyInvestSection = () => {
               {/* Glow effect */}
               <div className={`absolute -inset-1 rounded-2xl bg-${advantage.color}/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500`} />
               
-              <div className="relative bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all h-full">
+              <div className="relative bg-[hsl(210_40%_98%/0.05)] backdrop-blur-md rounded-2xl p-6 border border-[hsl(210_40%_98%/0.1)] hover:border-[hsl(210_40%_98%/0.2)] transition-all h-full">
                 {/* Icon and stat */}
                 <div className="flex items-start justify-between mb-4">
                   <motion.div 
@@ -106,14 +106,14 @@ export const WhyInvestSection = () => {
                   
                   <div className="text-right">
                     <p className={`text-2xl font-bold text-${advantage.color}`}>{advantage.stat}</p>
-                    <p className="text-xs text-white/40">{advantage.statLabel}</p>
+                    <p className="text-xs text-[hsl(210_40%_98%/0.4)]">{advantage.statLabel}</p>
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[hsl(210_40%_98%)] mb-3">
                   {advantage.title}
                 </h3>
-                <p className="text-white/60 text-sm leading-relaxed">
+                <p className="text-[hsl(210_40%_98%/0.6)] text-sm leading-relaxed">
                   {advantage.description}
                 </p>
 
@@ -139,7 +139,7 @@ export const WhyInvestSection = () => {
               {/* Glow effect */}
               <div className={`absolute -inset-1 rounded-2xl bg-${advantage.color}/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500`} />
               
-              <div className="relative bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all h-full">
+              <div className="relative bg-[hsl(210_40%_98%/0.05)] backdrop-blur-md rounded-2xl p-6 border border-[hsl(210_40%_98%/0.1)] hover:border-[hsl(210_40%_98%/0.2)] transition-all h-full">
                 {/* Icon and stat */}
                 <div className="flex items-start justify-between mb-4">
                   <motion.div 
@@ -152,14 +152,14 @@ export const WhyInvestSection = () => {
                   
                   <div className="text-right">
                     <p className={`text-2xl font-bold text-${advantage.color}`}>{advantage.stat}</p>
-                    <p className="text-xs text-white/40">{advantage.statLabel}</p>
+                    <p className="text-xs text-[hsl(210_40%_98%/0.4)]">{advantage.statLabel}</p>
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[hsl(210_40%_98%)] mb-3">
                   {advantage.title}
                 </h3>
-                <p className="text-white/60 text-sm leading-relaxed">
+                <p className="text-[hsl(210_40%_98%/0.6)] text-sm leading-relaxed">
                   {advantage.description}
                 </p>
 
