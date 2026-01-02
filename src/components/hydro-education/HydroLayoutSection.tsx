@@ -188,9 +188,9 @@ const HydroLayoutSection = () => {
                         <div className="w-3 h-3 rounded-full bg-blue-600 animate-pulse" />
                         <span className="text-sm font-medium text-blue-800">Cooling Tower Area</span>
                       </div>
-                      <div className="px-6 py-3 bg-gray-300 rounded-lg flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-gray-600" />
-                        <span className="text-sm font-medium text-gray-800">Control Building</span>
+                      <div className="px-6 py-3 bg-muted rounded-lg flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">Control Building</span>
                       </div>
                     </div>
                   </div>

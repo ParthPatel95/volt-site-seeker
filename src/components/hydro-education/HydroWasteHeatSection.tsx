@@ -92,7 +92,7 @@ const HydroWasteHeatSection = () => {
   const gasReplaced = (naturalGasROI.gasReplacement * facilitySize).toLocaleString();
 
   return (
-    <section id="waste-heat" className="py-20 bg-gradient-to-b from-white to-orange-50/50">
+    <section id="waste-heat" className="py-20 bg-gradient-to-b from-background to-accent/10">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -332,7 +332,7 @@ const HydroWasteHeatSection = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {environmentalBenefits.map((benefit, index) => (
-                  <div key={index} className="bg-white rounded-xl p-6 shadow-sm">
+                  <div key={index} className="bg-card rounded-xl p-6 shadow-sm">
                     <div className="flex items-end gap-2 mb-2">
                       <span className="text-4xl font-bold text-green-600">{benefit.value}</span>
                       <span className="text-sm text-muted-foreground pb-1">{benefit.unit}</span>
