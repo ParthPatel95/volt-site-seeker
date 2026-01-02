@@ -64,14 +64,14 @@ const pipeline = [
 
 export const InfrastructureHighlights = () => {
   return (
-    <section className="relative py-12 md:py-16 bg-white">
+    <section className="relative py-12 md:py-16 bg-background">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
-            <span className="text-watt-navy">Development </span>
+            <span className="text-foreground">Development </span>
             <span className="text-watt-trust">Pipeline</span>
           </h2>
-          <p className="text-base md:text-lg text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Strategic power infrastructure investments across global markets totaling <span className="text-watt-bitcoin font-bold">1,429 MW</span>
           </p>
         </div>
@@ -80,7 +80,7 @@ export const InfrastructureHighlights = () => {
           {pipeline.map((project, index) => (
             <div 
               key={index}
-              className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-institutional hover:shadow-lg transition-all duration-300"
+              className="relative bg-card rounded-2xl overflow-hidden border border-border shadow-lg hover:shadow-xl transition-all duration-300"
             >
               
               <div className="relative h-48 overflow-hidden">
@@ -93,8 +93,8 @@ export const InfrastructureHighlights = () => {
               </div>
               
               <div className="relative p-6">
-                <h3 className="text-xl font-bold text-watt-navy mb-2 flex items-center">
-                  <span className="inline-flex items-center justify-center w-7 h-5 mr-2 rounded-sm overflow-hidden ring-1 ring-gray-300 bg-white">
+                <h3 className="text-xl font-bold text-foreground mb-2 flex items-center">
+                  <span className="inline-flex items-center justify-center w-7 h-5 mr-2 rounded-sm overflow-hidden ring-1 ring-border bg-background">
                     <img
                       src={project.flag}
                       alt={`${project.location} flag`}
@@ -114,7 +114,7 @@ export const InfrastructureHighlights = () => {
                   </div>
                 </div>
                 
-                <p className="text-watt-navy/70 text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {project.description}
                 </p>
               </div>

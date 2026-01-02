@@ -60,17 +60,17 @@ const colorConfig = {
     hoverBorder: 'hover:border-watt-bitcoin/30'
   },
   navy: {
-    border: 'border-l-watt-navy',
-    iconBg: 'bg-gradient-to-br from-watt-navy/20 to-watt-navy/5',
-    iconColor: 'text-watt-navy',
-    badgeBg: 'bg-watt-navy/10',
-    badgeText: 'text-watt-navy',
-    hoverBorder: 'hover:border-watt-navy/30'
+    border: 'border-l-foreground',
+    iconBg: 'bg-gradient-to-br from-foreground/20 to-foreground/5',
+    iconColor: 'text-foreground',
+    badgeBg: 'bg-muted',
+    badgeText: 'text-foreground',
+    hoverBorder: 'hover:border-foreground/30'
   }
 };
 export const VoltScoutIntelligenceHub = () => {
   const [activeTab, setActiveTab] = useState('features');
-  return <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-gradient-to-b from-white to-watt-light">
+  return <section className="relative z-10 py-12 md:py-16 px-3 sm:px-4 md:px-6 bg-gradient-to-b from-background to-muted">
       <div className="max-w-7xl mx-auto">
         
         {/* Hero Banner */}
@@ -81,10 +81,10 @@ export const VoltScoutIntelligenceHub = () => {
               <span className="text-sm font-medium text-watt-trust">AI-Powered • Real-Time • North America</span>
             </div>
             
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-3 sm:mb-4 leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4 leading-tight">
               VoltScout Intelligence Hub
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-watt-navy/70 max-w-3xl mx-auto leading-relaxed px-2 mb-6">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-2 mb-6">
               AI-powered energy discovery platform with live market intelligence
             </p>
             
@@ -95,7 +95,7 @@ export const VoltScoutIntelligenceHub = () => {
         {/* Tabbed Interface - Now 2 tabs */}
         <ScrollReveal delay={0.2}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-white border border-gray-200 p-1 rounded-lg h-auto max-w-md mx-auto">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-card border border-border p-1 rounded-lg h-auto max-w-md mx-auto">
               <TabsTrigger value="features" className="data-[state=active]:bg-watt-trust data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 py-3 text-sm sm:text-base">
                 Platform Features
               </TabsTrigger>
@@ -170,7 +170,7 @@ export const VoltScoutIntelligenceHub = () => {
                 {platformFeatures.map((feature, index) => {
                 const Icon = feature.icon;
                 const colors = colorConfig[feature.color as keyof typeof colorConfig];
-                return <div key={index} className={`group relative bg-white rounded-xl border-l-4 ${colors.border} border-t border-r border-b border-gray-200 ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden`} style={{
+                return <div key={index} className={`group relative bg-card rounded-xl border-l-4 ${colors.border} border-t border-r border-b border-border ${colors.hoverBorder} transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden`} style={{
                   animationDelay: `${(index + 1) * 100}ms`
                 }}>
                       <div className="p-6">
@@ -183,10 +183,10 @@ export const VoltScoutIntelligenceHub = () => {
                             </span>}
                         </div>
                         
-                        <h3 className="text-lg font-bold text-watt-navy mb-2 group-hover:text-watt-trust transition-colors duration-300">
+                        <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-watt-trust transition-colors duration-300">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-watt-navy/70 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                           {feature.description}
                         </p>
                       </div>
@@ -212,7 +212,7 @@ export const VoltScoutIntelligenceHub = () => {
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </Link>
-            <p className="text-sm text-watt-navy/60 mt-4">
+            <p className="text-sm text-muted-foreground mt-4">
               Platform access limited to qualified investors and partners
             </p>
           </div>

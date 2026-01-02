@@ -63,17 +63,17 @@ const PowerInfrastructureSection = () => {
   ];
 
   return (
-    <section id="power-infrastructure" className="py-20 bg-watt-light">
+    <section id="power-infrastructure" className="py-20 bg-muted">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Power Infrastructure
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Evaluating Electrical Infrastructure
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Understanding transmission systems, substation capacity, and interconnection 
               requirements is fundamental to site selection.
             </p>
@@ -99,34 +99,34 @@ const PowerInfrastructureSection = () => {
 
         {/* Voltage Classes */}
         <ScrollReveal delay={100}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <Zap className="w-5 h-5 text-watt-purple" />
               Transmission Voltage Classes
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Voltage</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Classification</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Typical Capacity</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold hidden md:table-cell">Typical Use</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Mining Suitability</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Voltage</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Classification</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Typical Capacity</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold hidden md:table-cell">Typical Use</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Mining Suitability</th>
                   </tr>
                 </thead>
                 <tbody>
                   {voltageClasses.map((vc, idx) => (
                     <tr 
                       key={idx}
-                      className={`border-b border-gray-100 cursor-pointer transition-colors ${selectedVoltage === vc.voltage ? 'bg-watt-purple/5' : 'hover:bg-gray-50'}`}
+                      className={`border-b border-border/50 cursor-pointer transition-colors ${selectedVoltage === vc.voltage ? 'bg-watt-purple/5' : 'hover:bg-muted'}`}
                       onClick={() => setSelectedVoltage(vc.voltage)}
                     >
                       <td className={`py-3 px-4 font-bold ${vc.color}`}>{vc.voltage}</td>
-                      <td className="py-3 px-4 text-watt-navy">{vc.type}</td>
-                      <td className="py-3 px-4 text-watt-navy">{vc.capacity}</td>
-                      <td className="py-3 px-4 text-watt-navy/70 hidden md:table-cell">{vc.typical}</td>
-                      <td className="py-3 px-4 text-watt-navy/70">{vc.suitability}</td>
+                      <td className="py-3 px-4 text-foreground">{vc.type}</td>
+                      <td className="py-3 px-4 text-foreground">{vc.capacity}</td>
+                      <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{vc.typical}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{vc.suitability}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -134,7 +134,7 @@ const PowerInfrastructureSection = () => {
             </div>
             <div className="mt-4 p-4 bg-watt-success/10 rounded-lg flex items-start gap-3">
               <Info className="w-5 h-5 text-watt-success flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-watt-navy/70">
+              <p className="text-sm text-muted-foreground">
                 <strong className="text-watt-success">Sweet Spot:</strong> 69kV-138kV substations offer the best 
                 balance of capacity, interconnection cost, and availability for most Bitcoin mining operations.
               </p>
@@ -144,8 +144,8 @@ const PowerInfrastructureSection = () => {
 
         {/* Substation Evaluation Checklist */}
         <ScrollReveal delay={200}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <Activity className="w-5 h-5 text-watt-purple" />
               Substation Evaluation Checklist
             </h3>
@@ -153,7 +153,7 @@ const PowerInfrastructureSection = () => {
               {substationChecklist.map((item, idx) => (
                 <div 
                   key={idx}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                 >
                   {item.critical ? (
                     <AlertTriangle className="w-5 h-5 text-watt-bitcoin flex-shrink-0 mt-0.5" />
@@ -161,7 +161,7 @@ const PowerInfrastructureSection = () => {
                     <CheckCircle2 className="w-5 h-5 text-watt-success flex-shrink-0 mt-0.5" />
                   )}
                   <div>
-                    <div className="font-medium text-watt-navy flex items-center gap-2">
+                    <div className="font-medium text-foreground flex items-center gap-2">
                       {item.item}
                       {item.critical && (
                         <span className="text-xs bg-watt-bitcoin/20 text-watt-bitcoin px-2 py-0.5 rounded">
@@ -169,7 +169,7 @@ const PowerInfrastructureSection = () => {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-watt-navy/60">{item.notes}</div>
+                    <div className="text-sm text-muted-foreground">{item.notes}</div>
                   </div>
                 </div>
               ))}
@@ -185,7 +185,7 @@ const PowerInfrastructureSection = () => {
         {/* Timeline */}
         <ScrollReveal delay={300}>
           <div className="bg-gradient-to-r from-watt-purple/10 to-watt-bitcoin/10 rounded-2xl p-8 mt-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 text-center">
+            <h3 className="text-xl font-bold text-foreground mb-6 text-center">
               Typical Interconnection Timeline
             </h3>
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -198,16 +198,16 @@ const PowerInfrastructureSection = () => {
               ].map((phase, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center flex-1">
                   <div className="text-2xl font-bold text-watt-purple mb-1">{phase.duration}</div>
-                  <div className="font-medium text-watt-navy">{phase.phase}</div>
-                  <div className="text-xs text-watt-navy/60 max-w-[140px]">{phase.desc}</div>
+                  <div className="font-medium text-foreground">{phase.phase}</div>
+                  <div className="text-xs text-muted-foreground max-w-[140px]">{phase.desc}</div>
                   {idx < 4 && (
                     <div className="hidden md:block absolute right-0 top-1/2 w-4 h-0.5 bg-watt-purple/30" />
                   )}
                 </div>
               ))}
             </div>
-            <div className="text-center mt-6 text-watt-navy/70 text-sm">
-              Total: <span className="font-bold text-watt-navy">13-32 months</span> from application to energization
+            <div className="text-center mt-6 text-muted-foreground text-sm">
+              Total: <span className="font-bold text-foreground">13-32 months</span> from application to energization
             </div>
           </div>
         </ScrollReveal>

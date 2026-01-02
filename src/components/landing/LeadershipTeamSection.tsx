@@ -180,13 +180,13 @@ const getAccentClasses = (accentColor: TeamMember['accentColor']) => {
       iconBg: 'bg-watt-trust/20',
     },
     navy: {
-      text: 'text-watt-navy',
-      bg: 'bg-watt-navy/10',
-      bgHover: 'hover:bg-watt-navy/15',
-      border: 'border-watt-navy/30',
-      bgLight: 'bg-watt-navy/5',
-      borderLight: 'border-watt-navy/20',
-      iconBg: 'bg-watt-navy/20',
+      text: 'text-foreground',
+      bg: 'bg-muted',
+      bgHover: 'hover:bg-muted/80',
+      border: 'border-border',
+      bgLight: 'bg-muted/50',
+      borderLight: 'border-border/50',
+      iconBg: 'bg-muted',
     },
   };
   return colorMap[accentColor];

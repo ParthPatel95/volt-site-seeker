@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export const LiveMarketSkeleton = () => {
   return (
-    <Card className="bg-white border border-gray-200 shadow-institutional animate-pulse">
+    <Card className="bg-card border border-border shadow-lg animate-pulse">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -19,7 +19,7 @@ export const LiveMarketSkeleton = () => {
       <CardContent className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-watt-light rounded-lg p-4 border border-gray-200">
+            <div key={i} className="bg-muted rounded-lg p-4 border border-border">
               <div className="flex items-center space-x-2 mb-2">
                 <div className="w-4 h-4 bg-gray-200 rounded"></div>
                 <div className="h-3 w-20 bg-gray-200 rounded"></div>

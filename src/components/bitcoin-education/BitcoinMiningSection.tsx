@@ -22,7 +22,7 @@ const BitcoinMiningSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-12 md:py-16 px-4 sm:px-6 bg-gradient-to-br from-watt-navy via-watt-navy/95 to-watt-bitcoin/20">
+    <section className="py-12 md:py-16 px-4 sm:px-6 bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-bitcoin)/0.2)]">
       <div className="max-w-6xl mx-auto">
         <LearningObjectives
           title="In this section, you'll learn:"
