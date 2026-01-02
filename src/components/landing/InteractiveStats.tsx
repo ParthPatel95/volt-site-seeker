@@ -108,7 +108,7 @@ const HeroStatCard: React.FC<{
 
   return (
     <Card 
-      className={`p-8 bg-white border-2 border-gray-200 shadow-institutional hover:shadow-xl transition-all duration-500 cursor-pointer ${colors.hover} ${isExpanded ? 'scale-105' : 'hover:scale-105'}`}
+      className={`p-8 bg-card border-2 border-border shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer ${colors.hover} ${isExpanded ? 'scale-105' : 'hover:scale-105'}`}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
@@ -117,16 +117,16 @@ const HeroStatCard: React.FC<{
           {icon}
         </div>
         
-        <div className="text-5xl font-bold text-watt-navy mb-2">
+        <div className="text-5xl font-bold text-foreground mb-2">
           <AnimatedCounter end={value} suffix={suffix} />
         </div>
 
-        <h3 className="text-xl font-bold text-watt-navy mb-4">{label}</h3>
+        <h3 className="text-xl font-bold text-foreground mb-4">{label}</h3>
         
         <div 
           className={`overflow-hidden transition-all duration-500 ${isExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
         >
-          <p className="text-sm text-watt-navy/70 mt-2 leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
             {description}
           </p>
         </div>
@@ -161,15 +161,15 @@ const FlipStatCard: React.FC<{
       onMouseLeave={() => setIsFlipped(false)}
     >
       <div className={`absolute inset-0 transition-all duration-500 transform-gpu ${isFlipped ? 'rotate-y-180 opacity-0' : 'rotate-y-0 opacity-100'}`}>
-        <Card className="h-full p-6 bg-white border-gray-200 shadow-institutional flex flex-col items-center justify-center text-center">
+        <Card className="h-full p-6 bg-card border-border shadow-lg flex flex-col items-center justify-center text-center">
           <div className={`p-3 ${colors.bg} rounded-xl mb-4 ${colors.text}`}>
             {icon}
           </div>
-          <div className="text-4xl font-bold text-watt-navy mb-2">
+          <div className="text-4xl font-bold text-foreground mb-2">
             <AnimatedCounter end={value} suffix={suffix} />
           </div>
-          <div className="text-sm text-watt-navy/70">{label}</div>
-          <Badge className="mt-4 bg-gray-100 text-watt-navy border-none text-xs">
+          <div className="text-sm text-muted-foreground">{label}</div>
+          <Badge className="mt-4 bg-muted text-foreground border-none text-xs">
             Hover for details
           </Badge>
         </Card>
@@ -227,10 +227,10 @@ const ProgressBar: React.FC<{ label: string; percentage: number; color: string }
   return (
     <div ref={barRef} className="space-y-2">
       <div className="flex justify-between items-center text-sm">
-        <span className="font-semibold text-watt-navy">{label}</span>
-        <span className="text-watt-navy/70">{percentage}%</span>
+        <span className="font-semibold text-foreground">{label}</span>
+        <span className="text-muted-foreground">{percentage}%</span>
       </div>
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-3 bg-muted rounded-full overflow-hidden">
         <div 
           className={`h-full ${colorClasses[color]} transition-all duration-2000 ease-out rounded-full`}
           style={{ width: `${animatedWidth}%` }}
@@ -265,10 +265,10 @@ const GrowthTimeline: React.FC = () => {
           return (
             <div key={index} className="relative">
               <div className={`w-4 h-4 ${colors.bg} ${colors.border} border-4 rounded-full mx-auto mb-4 animate-pulse`}></div>
-              <Card className={`p-4 bg-white border-gray-200 shadow-institutional hover:shadow-lg transition-all duration-300 ${colors.border} border-t-4`}>
+              <Card className={`p-4 bg-card border-border shadow-lg hover:shadow-lg transition-all duration-300 ${colors.border} border-t-4`}>
                 <div className={`text-lg font-bold ${colors.text} mb-1`}>{milestone.year}</div>
-                <h4 className="text-sm font-bold text-watt-navy mb-1">{milestone.title}</h4>
-                <p className="text-xs text-watt-navy/70">{milestone.description}</p>
+                <h4 className="text-sm font-bold text-foreground mb-1">{milestone.title}</h4>
+                <p className="text-xs text-muted-foreground">{milestone.description}</p>
               </Card>
             </div>
           );
@@ -284,7 +284,7 @@ export const InteractiveStats: React.FC = () => {
     <div className="space-y-16">
       {/* Hero Stats */}
       <div>
-        <h3 className="text-2xl font-bold text-watt-navy mb-8 text-center">Key Metrics</h3>
+        <h3 className="text-2xl font-bold text-foreground mb-8 text-center">Key Metrics</h3>
         <div className="grid md:grid-cols-3 gap-8">
           <HeroStatCard
             icon={<Zap className="w-10 h-10" />}
@@ -315,7 +315,7 @@ export const InteractiveStats: React.FC = () => {
 
       {/* Secondary Stats with Flip Cards */}
       <div>
-        <h3 className="text-2xl font-bold text-watt-navy mb-8 text-center">Track Record</h3>
+        <h3 className="text-2xl font-bold text-foreground mb-8 text-center">Track Record</h3>
         <div className="grid md:grid-cols-3 gap-8">
           <FlipStatCard
             icon={<TrendingUp className="w-8 h-8" />}
@@ -358,7 +358,7 @@ export const InteractiveStats: React.FC = () => {
 
       {/* Growth Timeline */}
       <div>
-        <h3 className="text-2xl font-bold text-watt-navy mb-8 text-center">Growth Journey</h3>
+        <h3 className="text-2xl font-bold text-foreground mb-8 text-center">Growth Journey</h3>
         <GrowthTimeline />
       </div>
     </div>

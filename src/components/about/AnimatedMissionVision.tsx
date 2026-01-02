@@ -56,7 +56,7 @@ const MissionVisionCard: React.FC<MissionVisionCardProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
     >
-      <Card className={`p-8 bg-white border-gray-200 shadow-institutional hover:shadow-xl transition-all duration-300 relative overflow-hidden group ${isHovered ? 'shadow-lg' : ''}`}>
+      <Card className={`p-8 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group ${isHovered ? 'shadow-lg' : ''}`}>
         {/* Background glow effect */}
         <div className={`absolute -top-20 -right-20 w-40 h-40 ${colors.bg} rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
         
@@ -64,10 +64,10 @@ const MissionVisionCard: React.FC<MissionVisionCardProps> = ({
           <div className={`p-3 ${colors.bg} rounded-lg ${colors.text}`}>
             {icon}
           </div>
-          <h2 className="text-2xl font-bold text-watt-navy">{title}</h2>
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         </div>
         
-        <p className="text-watt-navy/70 text-lg leading-relaxed relative z-10">
+        <p className="text-muted-foreground text-lg leading-relaxed relative z-10">
           {description}
         </p>
 
@@ -80,7 +80,7 @@ const MissionVisionCard: React.FC<MissionVisionCardProps> = ({
 
 export const AnimatedMissionVision: React.FC = () => {
   return (
-    <section className="relative py-16 md:py-20 px-6 bg-white">
+    <section className="relative py-16 md:py-20 px-6 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-2 gap-8">
           <MissionVisionCard
