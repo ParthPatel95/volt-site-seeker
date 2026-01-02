@@ -166,7 +166,7 @@ export const AlbertaVideoShowcase: React.FC = () => {
                 className="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-110"
                 aria-label="Play video"
               >
-                <Play className="w-8 h-8 md:w-10 md:h-10 text-watt-navy ml-1" fill="currentColor" />
+                <Play className="w-8 h-8 md:w-10 md:h-10 text-foreground ml-1" fill="currentColor" />
               </button>
             </div>
           </div>
@@ -198,7 +198,7 @@ export const AlbertaVideoShowcase: React.FC = () => {
       {(error || videoError) && hasStarted && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-watt-navy/90">
           <div className="flex flex-col items-center gap-4 text-center px-4">
-            <AlertCircle className="w-12 h-12 text-red-400" />
+            <AlertCircle className="w-12 h-12 text-destructive" />
             <p className="text-white/80 text-sm max-w-xs">{error || videoError}</p>
             <button
               onClick={(e) => { e.stopPropagation(); handleRetry(); }}

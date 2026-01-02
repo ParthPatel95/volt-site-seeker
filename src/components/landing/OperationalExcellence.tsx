@@ -78,13 +78,13 @@ export const OperationalExcellence = () => {
   });
 
   return (
-    <section className="relative py-16 sm:py-20 md:py-24 bg-watt-light">
+    <section className="relative py-16 sm:py-20 md:py-24 bg-muted">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Operational <span className="text-watt-success">Excellence</span>
           </h2>
-          <p className="text-lg sm:text-xl text-watt-navy/70 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Real-time performance metrics from our <span className="text-watt-trust font-semibold">Alberta facility</span>
           </p>
         </div>
@@ -94,7 +94,7 @@ export const OperationalExcellence = () => {
           {liveMetrics.map((metric, index) => (
             <div 
               key={index}
-              className="group relative bg-white backdrop-blur-sm rounded-2xl p-6 border border-gray-200 hover:border-watt-trust/50 transition-all duration-300 hover:scale-105 shadow-institutional hover:shadow-institutional-lg"
+              className="group relative bg-card backdrop-blur-sm rounded-2xl p-6 border border-border hover:border-watt-trust/50 transition-all duration-300 hover:scale-105 shadow-institutional hover:shadow-institutional-lg"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-watt-trust/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
               
@@ -106,11 +106,11 @@ export const OperationalExcellence = () => {
                   </Badge>
                 </div>
                 
-                <div className="text-3xl font-bold text-watt-navy mb-2">
+                <div className="text-3xl font-bold text-foreground mb-2">
                   {metric.value}
                 </div>
                 
-                <div className="text-sm text-watt-navy/70 mb-3">
+                <div className="text-sm text-muted-foreground mb-3">
                   {metric.label}
                 </div>
                 
@@ -128,15 +128,15 @@ export const OperationalExcellence = () => {
           {achievements.map((achievement, index) => (
             <div 
               key={index}
-              className="bg-white backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:border-watt-success/30 transition-all shadow-institutional hover:shadow-institutional-lg"
+              className="bg-card backdrop-blur-sm rounded-xl p-6 border border-border hover:border-watt-success/30 transition-all shadow-institutional hover:shadow-institutional-lg"
             >
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="p-3 bg-watt-success/10 rounded-lg">
                   <achievement.icon className="w-6 h-6 text-watt-success" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-watt-navy mb-2">{achievement.title}</h4>
-                  <p className="text-sm text-watt-navy/70">{achievement.description}</p>
+                  <h4 className="font-bold text-foreground mb-2">{achievement.title}</h4>
+                  <p className="text-sm text-muted-foreground">{achievement.description}</p>
                 </div>
               </div>
             </div>
