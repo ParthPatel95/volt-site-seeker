@@ -15,7 +15,7 @@ const eiaSteps = [
 
 export const EnvironmentalImpactSection = () => {
   return (
-    <section id="environmental" className="py-16 md:py-24 bg-watt-light">
+    <section id="environmental" className="py-16 md:py-24 bg-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <LearningObjectives
@@ -36,10 +36,10 @@ export const EnvironmentalImpactSection = () => {
               <FileSearch className="h-4 w-4 text-watt-success" />
               <span className="text-sm font-medium text-watt-success">Environmental Assessment</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Environmental Impact Assessment
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               A noise impact assessment (NIA) is typically required for new mining facilities. 
               Understanding the process helps ensure smooth regulatory approval.
             </p>
@@ -48,9 +48,9 @@ export const EnvironmentalImpactSection = () => {
 
         {/* EIA Process Steps */}
         <ScrollReveal delay={100}>
-          <Card className="bg-white border-none shadow-institutional mb-12">
+          <Card className="bg-card border-border shadow-lg mb-12">
             <CardContent className="p-6 md:p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-6">Noise Impact Assessment Process</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">Noise Impact Assessment Process</h3>
               
               <div className="relative">
                 {/* Timeline */}
@@ -71,8 +71,8 @@ export const EnvironmentalImpactSection = () => {
                                 Step {item.step}
                               </span>
                             </div>
-                            <h4 className="font-semibold text-watt-navy">{item.title}</h4>
-                            <p className="text-sm text-watt-navy/60 mt-1">{item.description}</p>
+                            <h4 className="font-semibold text-foreground">{item.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                           </div>
                         </div>
                       </div>

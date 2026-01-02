@@ -71,17 +71,17 @@ const EnergyMarketsSection = () => {
   ];
 
   return (
-    <section id="energy-markets" className="py-20 bg-white">
+    <section id="energy-markets" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Energy Markets
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Global Energy Market Analysis
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Compare energy costs, market structures, and regulatory environments 
               across top Bitcoin mining jurisdictions worldwide.
             </p>
@@ -107,7 +107,7 @@ const EnergyMarketsSection = () => {
 
         {/* Region Selector & Table */}
         <ScrollReveal delay={100}>
-          <div className="bg-gray-50 rounded-2xl p-6 mb-8">
+          <div className="bg-muted rounded-2xl p-6 mb-8">
             <div className="flex items-center gap-4 mb-6">
               <Globe className="w-5 h-5 text-watt-purple" />
               <div className="flex gap-2">
@@ -118,7 +118,7 @@ const EnergyMarketsSection = () => {
                     className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       selectedRegion === key
                         ? 'bg-watt-purple text-white'
-                        : 'bg-white text-watt-navy hover:bg-watt-purple/10'
+                        : 'bg-card text-foreground hover:bg-watt-purple/10'
                     }`}
                   >
                     {region.name}
@@ -130,21 +130,21 @@ const EnergyMarketsSection = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Location</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Energy Rate</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Market Type</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Trend</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold hidden md:table-cell">Notes</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Location</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Energy Rate</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Market Type</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Trend</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold hidden md:table-cell">Notes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {regions[selectedRegion as keyof typeof regions].markets.map((market, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 hover:bg-white transition-colors">
+                    <tr key={idx} className="border-b border-border/50 hover:bg-card transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-watt-purple" />
-                          <span className="font-medium text-watt-navy">{market.location}</span>
+                          <span className="font-medium text-foreground">{market.location}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -162,9 +162,9 @@ const EnergyMarketsSection = () => {
                           <span className="font-bold text-watt-success">{market.rate}/kWh</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-watt-navy">{market.type}</td>
+                      <td className="py-3 px-4 text-foreground">{market.type}</td>
                       <td className="py-3 px-4">{getTrendIcon(market.trend)}</td>
-                      <td className="py-3 px-4 text-watt-navy/60 hidden md:table-cell">{market.notes}</td>
+                      <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{market.notes}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -180,15 +180,15 @@ const EnergyMarketsSection = () => {
 
         {/* Market Structures Comparison */}
         <ScrollReveal delay={200}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6 text-center mt-8">
+          <h3 className="text-2xl font-bold text-foreground mb-6 text-center mt-8">
             Market Structure Comparison
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             {marketStructures.map((structure, idx) => (
-              <div key={idx} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+              <div key={idx} className="bg-card rounded-2xl shadow-lg border border-border p-6">
                 <div className="text-center mb-4">
-                  <h4 className="text-lg font-bold text-watt-navy">{structure.type}</h4>
-                  <p className="text-sm text-watt-navy/60">{structure.examples}</p>
+                  <h4 className="text-lg font-bold text-foreground">{structure.type}</h4>
+                  <p className="text-sm text-muted-foreground">{structure.examples}</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -196,7 +196,7 @@ const EnergyMarketsSection = () => {
                     <h5 className="text-sm font-semibold text-watt-success mb-2">Advantages</h5>
                     <ul className="space-y-1">
                       {structure.pros.map((pro, i) => (
-                        <li key={i} className="text-sm text-watt-navy/70 flex items-center gap-2">
+                        <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
                           <span className="w-1.5 h-1.5 bg-watt-success rounded-full" />
                           {pro}
                         </li>
@@ -208,7 +208,7 @@ const EnergyMarketsSection = () => {
                     <h5 className="text-sm font-semibold text-red-400 mb-2">Challenges</h5>
                     <ul className="space-y-1">
                       {structure.cons.map((con, i) => (
-                        <li key={i} className="text-sm text-watt-navy/70 flex items-center gap-2">
+                        <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
                           <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
                           {con}
                         </li>
@@ -217,8 +217,8 @@ const EnergyMarketsSection = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-watt-navy/60">
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
                     <strong className="text-watt-purple">Best for:</strong> {structure.bestFor}
                   </p>
                 </div>

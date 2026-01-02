@@ -72,10 +72,10 @@ export const CapitalRaisingSection = () => {
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Capital Raising Strategies
             </h2>
-            <p className="text-xl text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Understanding funding options and structuring capital for mining operations.
             </p>
           </div>
@@ -86,18 +86,18 @@ export const CapitalRaisingSection = () => {
             {fundingSources.map((source, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-watt-navy/10 hover:shadow-xl transition-all duration-300"
+                className="bg-card rounded-2xl p-6 shadow-lg border border-border hover:shadow-xl transition-all duration-300"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-watt-success/10 rounded-xl flex items-center justify-center">
                     <source.icon className="w-6 h-6 text-watt-success" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-watt-navy">{source.source}</h3>
-                    <p className="text-sm text-watt-navy/60">{source.terms} | {source.rate}</p>
+                    <h3 className="text-lg font-bold text-foreground">{source.source}</h3>
+                    <p className="text-sm text-muted-foreground">{source.terms} | {source.rate}</p>
                   </div>
                 </div>
-                <p className="text-watt-navy/70 text-sm mb-4">{source.description}</p>
+                <p className="text-muted-foreground text-sm mb-4">{source.description}</p>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-green-50 rounded-lg p-3">
@@ -130,8 +130,8 @@ export const CapitalRaisingSection = () => {
 
         <ScrollReveal delay={200}>
           <div className="grid lg:grid-cols-2 gap-8 mb-16">
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-watt-navy/10">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-watt-success" />
                 Typical Capital Stack
               </h3>
@@ -139,12 +139,12 @@ export const CapitalRaisingSection = () => {
                 {capitalStack.map((layer, index) => (
                   <div key={index}>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-watt-navy">{layer.type}</span>
-                      <span className="text-sm text-watt-navy/60">
+                      <span className="font-medium text-foreground">{layer.type}</span>
+                      <span className="text-sm text-muted-foreground">
                         {layer.percentage}% | {layer.cost} cost
                       </span>
                     </div>
-                    <div className="h-8 bg-watt-gray rounded-lg overflow-hidden">
+                    <div className="h-8 bg-muted rounded-lg overflow-hidden">
                       <div
                         className={`h-full ${layer.color} flex items-center justify-center text-white text-sm font-medium`}
                         style={{ width: `${layer.percentage * 2.5}%` }}
@@ -155,23 +155,23 @@ export const CapitalRaisingSection = () => {
                   </div>
                 ))}
               </div>
-              <p className="mt-6 text-sm text-watt-navy/60">
+              <p className="mt-6 text-sm text-muted-foreground">
                 * Optimal structure varies based on project stage, scale, and market conditions
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-watt-navy/10">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-watt-success" />
                 What Investors Look For
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {investorCriteria.map((criteria, index) => (
-                  <div key={index} className="bg-watt-gray/50 rounded-xl p-4">
-                    <h4 className="font-semibold text-watt-navy mb-3">{criteria.category}</h4>
+                  <div key={index} className="bg-muted rounded-xl p-4">
+                    <h4 className="font-semibold text-foreground mb-3">{criteria.category}</h4>
                     <ul className="space-y-2">
                       {criteria.items.map((item, i) => (
-                        <li key={i} className="text-sm text-watt-navy/70 flex items-center gap-2">
+                        <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
                           <CheckCircle className="w-3 h-3 text-watt-success" />
                           {item}
                         </li>

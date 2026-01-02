@@ -133,30 +133,30 @@ export const StrategicMarketAnalytics = () => {
     unit: string;
     subtitle?: string;
   }) => (
-    <Card className="border-gray-200 bg-white backdrop-blur-sm hover:border-watt-trust/40 transition-all hover:shadow-institutional-lg">
+    <Card className="border-border bg-card backdrop-blur-sm hover:border-watt-trust/40 transition-all hover:shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-watt-trust/10 rounded-lg">
             <Icon className="w-4 h-4 text-watt-trust" />
           </div>
-          <CardTitle className="text-xs sm:text-sm text-watt-navy/70 font-medium">{title}</CardTitle>
+          <CardTitle className="text-xs sm:text-sm text-muted-foreground font-medium">{title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         {analytics.loading ? (
-          <div className="h-8 bg-watt-light animate-pulse rounded" />
+          <div className="h-8 bg-muted animate-pulse rounded" />
         ) : analytics.error ? (
           <p className="text-xs sm:text-sm text-red-500">Error</p>
         ) : (
           <div className="space-y-1">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-semibold text-watt-navy">
+              <span className="text-2xl sm:text-3xl font-semibold text-foreground">
                 {value !== null ? value.toFixed(2) : '—'}
               </span>
-              <span className="text-xs sm:text-sm text-watt-navy/60">{unit}</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">{unit}</span>
             </div>
             {subtitle && (
-              <p className="text-[11px] sm:text-xs text-watt-navy/60">{subtitle}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">{subtitle}</p>
             )}
           </div>
         )}
@@ -189,7 +189,7 @@ export const StrategicMarketAnalytics = () => {
           </Badge>
         </div>
         
-        <p className="text-[11px] sm:text-xs text-watt-navy/70 text-center mb-6">
+        <p className="text-[11px] sm:text-xs text-muted-foreground text-center mb-6">
           Real-time data from Alberta Electric System Operator (AESO)
         </p>
 
@@ -237,14 +237,14 @@ export const StrategicMarketAnalytics = () => {
 
         <div className="relative bg-gradient-to-br from-watt-trust/5 to-watt-success/5 backdrop-blur-sm rounded-xl p-5 border border-watt-trust/20 hover:border-watt-trust/40 transition-all">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-white rounded-lg flex-shrink-0 shadow-sm">
+            <div className="p-3 bg-card rounded-lg flex-shrink-0 shadow-sm">
               <Activity className="w-5 h-5 text-watt-trust" />
             </div>
             <div className="space-y-2 flex-1">
-              <h4 className="text-base font-bold text-watt-navy">
+              <h4 className="text-base font-bold text-foreground">
                 Live Market Integration
               </h4>
-              <p className="text-xs sm:text-sm text-watt-navy/70 leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                 Leveraging Alberta's deregulated market for real-time optimization. The 95% uptime filter removes extreme price spikes, providing realistic operational baselines. Average price: <span className="text-watt-success font-semibold">${analytics.averagePrice?.toFixed(2) || '—'} CAD/MWh</span>
               </p>
             </div>

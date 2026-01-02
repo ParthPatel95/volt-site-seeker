@@ -81,7 +81,7 @@ const HydroSectionNavigation = () => {
   return (
     <>
       {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-watt-navy/10 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-foreground/10 z-50">
         <div 
           className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-150"
           style={{ width: `${scrollProgress}%` }}
@@ -101,7 +101,7 @@ const HydroSectionNavigation = () => {
               className={`group flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 ${
                 isActive 
                   ? 'bg-blue-500 text-white shadow-lg' 
-                  : 'bg-white/80 backdrop-blur-sm text-watt-navy/70 hover:bg-blue-500/10 hover:text-blue-600'
+                  : 'bg-card backdrop-blur-sm text-muted-foreground hover:bg-blue-500/10 hover:text-blue-600'
               }`}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
@@ -116,7 +116,7 @@ const HydroSectionNavigation = () => {
       </nav>
 
       {/* Mobile navigation - bottom */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-sm border-t border-watt-navy/10 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-card/95 backdrop-blur-sm border-t border-border safe-area-pb">
         <div className="flex overflow-x-auto scrollbar-hide px-2 py-2 gap-1">
           {sections.map((section) => {
             const Icon = section.icon;
@@ -129,7 +129,7 @@ const HydroSectionNavigation = () => {
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg min-w-[60px] transition-all ${
                   isActive 
                     ? 'bg-blue-500 text-white' 
-                    : 'text-watt-navy/70 hover:bg-blue-500/10'
+                    : 'text-muted-foreground hover:bg-blue-500/10'
                 }`}
               >
                 <Icon className="w-4 h-4" />

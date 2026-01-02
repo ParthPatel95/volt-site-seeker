@@ -64,7 +64,7 @@ const AnimatedStat = ({ value, label, delay = 0 }: StatProps) => {
       <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-watt-bitcoin mb-1">
         {hasAnimated ? formatValue(count) : value}
       </div>
-      <div className="text-xs sm:text-sm text-watt-navy/60 font-medium">
+      <div className="text-xs sm:text-sm text-muted-foreground font-medium">
         {label}
       </div>
     </div>
@@ -75,9 +75,9 @@ export const VoltScoutHeroStats = () => {
   return (
     <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 md:gap-12 mt-6 px-4">
       <AnimatedStat value="50k+" label="Substations Analyzed" delay={0.1} />
-      <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
+      <div className="hidden sm:block w-px h-12 bg-border"></div>
       <AnimatedStat value="97%" label="Predictive Accuracy" delay={0.2} />
-      <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
+      <div className="hidden sm:block w-px h-12 bg-border"></div>
       <AnimatedStat value="2" label="Live Markets" delay={0.3} />
     </div>
   );
