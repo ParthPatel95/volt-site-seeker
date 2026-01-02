@@ -231,9 +231,9 @@ const HydroNoiseManagementSection = () => {
               </div>
               <div className="p-6 space-y-6">
                 {/* Formula */}
-                <div className="bg-watt-light rounded-xl p-6">
+                <div className="bg-muted rounded-xl p-6">
                   <h4 className="font-semibold text-foreground mb-3">Logarithmic Sound Addition Formula</h4>
-                  <div className="bg-white rounded-lg p-4 font-mono text-center text-lg border border-border">
+                  <div className="bg-card rounded-lg p-4 font-mono text-center text-lg border border-border">
                     L<sub>total</sub> = 10 × log<sub>10</sub>(Σ 10<sup>(Li/10)</sup>)
                   </div>
                   <p className="text-sm text-muted-foreground mt-3">
@@ -246,21 +246,21 @@ const HydroNoiseManagementSection = () => {
                   <div className="space-y-4">
                     <h4 className="font-semibold text-foreground">Air-Cooled Calculation (45MW)</h4>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between p-2 bg-watt-light rounded">
+                      <div className="flex justify-between p-2 bg-muted rounded">
                         <span>Single container noise:</span>
                         <span className="font-mono font-semibold">95 dB</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-watt-light rounded">
+                      <div className="flex justify-between p-2 bg-muted rounded">
                         <span>Number of containers (45MW ÷ 2.5MW):</span>
                         <span className="font-mono font-semibold">18 units</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-watt-light rounded">
+                      <div className="flex justify-between p-2 bg-muted rounded">
                         <span>Additional noise (10 × log₁₀(18)):</span>
                         <span className="font-mono font-semibold">+12.6 dB</span>
                       </div>
-                      <div className="flex justify-between p-3 bg-red-50 rounded border border-red-200">
+                      <div className="flex justify-between p-3 bg-destructive/10 rounded border border-destructive/20">
                         <span className="font-semibold">Total at source:</span>
-                        <span className="font-mono font-bold text-red-600">107.6 dB</span>
+                        <span className="font-mono font-bold text-destructive">107.6 dB</span>
                       </div>
                     </div>
                   </div>
@@ -268,15 +268,15 @@ const HydroNoiseManagementSection = () => {
                   <div className="space-y-4">
                     <h4 className="font-semibold text-foreground">Hydro-Cooled Calculation (45MW)</h4>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between p-2 bg-watt-light rounded">
+                      <div className="flex justify-between p-2 bg-muted rounded">
                         <span>Single container noise:</span>
                         <span className="font-mono font-semibold">67 dB</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-watt-light rounded">
+                      <div className="flex justify-between p-2 bg-muted rounded">
                         <span>Number of containers (45MW ÷ 2.5MW):</span>
                         <span className="font-mono font-semibold">18 units</span>
                       </div>
-                      <div className="flex justify-between p-2 bg-watt-light rounded">
+                      <div className="flex justify-between p-2 bg-muted rounded">
                         <span>Additional noise (10 × log₁₀(18)):</span>
                         <span className="font-mono font-semibold">+12.6 dB</span>
                       </div>

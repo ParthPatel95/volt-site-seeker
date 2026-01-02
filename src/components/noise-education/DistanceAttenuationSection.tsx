@@ -29,7 +29,7 @@ export const DistanceAttenuationSection = () => {
   const totalResultDb = Math.max(0, resultDb - atmosphericLoss);
 
   return (
-    <section id="distance" className="py-16 md:py-24 bg-watt-light">
+    <section id="distance" className="py-16 md:py-24 bg-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal delay={50}>
           <LearningObjectives 
@@ -51,10 +51,10 @@ export const DistanceAttenuationSection = () => {
               <Ruler className="h-4 w-4 text-watt-coinbase" />
               <span className="text-sm font-medium text-watt-coinbase">Distance Effects</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Distance Attenuation
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Sound naturally decreases as it travels. Understanding this attenuation is crucial
               for predicting noise levels at receptor locations.
             </p>
@@ -64,16 +64,16 @@ export const DistanceAttenuationSection = () => {
         {/* Formula and Concepts */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           <ScrollReveal delay={100}>
-            <Card className="bg-white border-none shadow-institutional h-full">
+            <Card className="bg-card border-none shadow-institutional h-full">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-watt-navy mb-4">Spherical Spreading Loss</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">Spherical Spreading Loss</h3>
                 <div className="bg-watt-navy text-white rounded-xl p-6 font-mono mb-4">
                   <p className="text-lg">L<sub>d</sub> = L<sub>ref</sub> - 20 × log₁₀(d / d<sub>ref</sub>)</p>
                   <p className="text-sm text-white/70 mt-4">Rule of thumb: -6 dB per doubling of distance</p>
                 </div>
                 
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-watt-navy">Distance vs. Attenuation:</h4>
+                  <h4 className="font-semibold text-foreground">Distance vs. Attenuation:</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     {[
                       { dist: '10m', atten: '-20 dB' },
@@ -83,8 +83,8 @@ export const DistanceAttenuationSection = () => {
                       { dist: '1.7km', atten: '-65 dB' },
                       { dist: '5km', atten: '-74 dB' },
                     ].map((item, idx) => (
-                      <div key={idx} className="flex justify-between bg-watt-light rounded-lg px-3 py-2">
-                        <span className="text-watt-navy/70">{item.dist}</span>
+                      <div key={idx} className="flex justify-between bg-muted rounded-lg px-3 py-2">
+                        <span className="text-muted-foreground">{item.dist}</span>
                         <span className="font-mono font-bold text-watt-coinbase">{item.atten}</span>
                       </div>
                     ))}
@@ -95,41 +95,41 @@ export const DistanceAttenuationSection = () => {
           </ScrollReveal>
 
           <ScrollReveal delay={200}>
-            <Card className="bg-white border-none shadow-institutional h-full">
+            <Card className="bg-card border-none shadow-institutional h-full">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-watt-navy mb-4">Additional Factors</h3>
+                <h3 className="text-xl font-bold text-foreground mb-4">Additional Factors</h3>
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 bg-watt-light rounded-lg">
+                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                     <div className="w-10 h-10 bg-watt-coinbase/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Wind className="h-5 w-5 text-watt-coinbase" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-watt-navy">Atmospheric Absorption</h4>
-                      <p className="text-sm text-watt-navy/70">
+                      <h4 className="font-semibold text-foreground">Atmospheric Absorption</h4>
+                      <p className="text-sm text-muted-foreground">
                         Air absorbs sound energy, especially high frequencies. Adds ~0.5-2 dB per 100m.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-watt-light rounded-lg">
+                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                     <div className="w-10 h-10 bg-watt-success/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Mountain className="h-5 w-5 text-watt-success" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-watt-navy">Ground Effects</h4>
-                      <p className="text-sm text-watt-navy/70">
+                      <h4 className="font-semibold text-foreground">Ground Effects</h4>
+                      <p className="text-sm text-muted-foreground">
                         Soft ground (grass, crops) absorbs more than hard surfaces (concrete, water).
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-watt-light rounded-lg">
+                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                     <div className="w-10 h-10 bg-watt-bitcoin/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <TreePine className="h-5 w-5 text-watt-bitcoin" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-watt-navy">Barriers & Terrain</h4>
-                      <p className="text-sm text-watt-navy/70">
+                      <h4 className="font-semibold text-foreground">Barriers & Terrain</h4>
+                      <p className="text-sm text-muted-foreground">
                         Hills, buildings, and dense vegetation provide additional attenuation (3-20+ dB).
                       </p>
                     </div>
@@ -235,9 +235,9 @@ export const DistanceAttenuationSection = () => {
 
         {/* Visual Propagation Diagram */}
         <ScrollReveal delay={400}>
-          <Card className="bg-white border-none shadow-institutional">
+          <Card className="bg-card border-none shadow-institutional">
             <CardContent className="p-6 md:p-8">
-              <h3 className="text-xl font-bold text-watt-navy mb-6">Sound Propagation Visualization</h3>
+              <h3 className="text-xl font-bold text-foreground mb-6">Sound Propagation Visualization</h3>
               
               {/* Distance Visualization */}
               <div className="relative h-40 bg-gradient-to-r from-watt-bitcoin/20 via-watt-bitcoin/10 to-watt-success/5 rounded-xl overflow-hidden mb-6">
@@ -276,8 +276,8 @@ export const DistanceAttenuationSection = () => {
                     className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center"
                     style={{ left: marker.pos }}
                   >
-                    <div className="w-px h-8 bg-watt-navy/20" />
-                    <span className="text-xs text-watt-navy/60 mt-1">{marker.label}</span>
+                    <div className="w-px h-8 bg-foreground/20" />
+                    <span className="text-xs text-muted-foreground mt-1">{marker.label}</span>
                     <span className="text-xs font-bold text-watt-success">{marker.db}</span>
                   </div>
                 ))}
@@ -294,20 +294,20 @@ export const DistanceAttenuationSection = () => {
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-watt-bitcoin/10 rounded-lg">
                   <p className="text-2xl font-bold text-watt-bitcoin">81.8 dB</p>
-                  <p className="text-sm text-watt-navy/70">At Source (0m)</p>
+                  <p className="text-sm text-muted-foreground">At Source (0m)</p>
                 </div>
                 <div className="text-center p-4 bg-watt-coinbase/10 rounded-lg">
                   <p className="text-2xl font-bold text-watt-coinbase">-64.6 dB</p>
-                  <p className="text-sm text-watt-navy/70">Distance Loss (1.7km)</p>
+                  <p className="text-sm text-muted-foreground">Distance Loss (1.7km)</p>
                 </div>
                 <div className="text-center p-4 bg-watt-success/10 rounded-lg">
                   <p className="text-2xl font-bold text-watt-success">~17 dB</p>
-                  <p className="text-sm text-watt-navy/70">At Nearest Residence</p>
+                  <p className="text-sm text-muted-foreground">At Nearest Residence</p>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-watt-light rounded-lg">
-                <p className="text-sm text-watt-navy/70">
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
                   <strong className="text-watt-success">Result:</strong> At 1.7km, noise from our 45MW facility 
                   is approximately <strong>17 dB</strong> — below the threshold of perception in rural Alberta 
                   (typically 25-35 dB ambient) and essentially <strong>inaudible</strong>.

@@ -86,91 +86,91 @@ export const InvestmentInquiryForm = ({ onSuccess }: InvestmentInquiryFormProps)
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="fullName" className="text-watt-navy font-medium">
-          Full Name <span className="text-red-500">*</span>
+        <Label htmlFor="fullName" className="text-foreground font-medium">
+          Full Name <span className="text-destructive">*</span>
         </Label>
         <Input
           id="fullName"
           {...register('fullName')}
           placeholder="John Doe"
-          className="border-gray-300 focus:border-watt-trust focus:ring-watt-trust"
+          className="border-border focus:border-watt-trust focus:ring-watt-trust"
           disabled={isSubmitting}
         />
         {errors.fullName && (
-          <p className="text-sm text-red-500">{errors.fullName.message}</p>
+          <p className="text-sm text-destructive">{errors.fullName.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="companyName" className="text-watt-navy font-medium">
-          Company Name <span className="text-red-500">*</span>
+        <Label htmlFor="companyName" className="text-foreground font-medium">
+          Company Name <span className="text-destructive">*</span>
         </Label>
         <Input
           id="companyName"
           {...register('companyName')}
           placeholder="Acme Investments LLC"
-          className="border-gray-300 focus:border-watt-trust focus:ring-watt-trust"
+          className="border-border focus:border-watt-trust focus:ring-watt-trust"
           disabled={isSubmitting}
         />
         {errors.companyName && (
-          <p className="text-sm text-red-500">{errors.companyName.message}</p>
+          <p className="text-sm text-destructive">{errors.companyName.message}</p>
         )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-watt-navy font-medium">
-            Phone Number <span className="text-red-500">*</span>
+          <Label htmlFor="phone" className="text-foreground font-medium">
+            Phone Number <span className="text-destructive">*</span>
           </Label>
           <Input
             id="phone"
             type="tel"
             {...register('phone')}
             placeholder="+1 (555) 123-4567"
-            className="border-gray-300 focus:border-watt-trust focus:ring-watt-trust"
+            className="border-border focus:border-watt-trust focus:ring-watt-trust"
             disabled={isSubmitting}
           />
           {errors.phone && (
-            <p className="text-sm text-red-500">{errors.phone.message}</p>
+            <p className="text-sm text-destructive">{errors.phone.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-watt-navy font-medium">
-            Email Address <span className="text-red-500">*</span>
+          <Label htmlFor="email" className="text-foreground font-medium">
+            Email Address <span className="text-destructive">*</span>
           </Label>
           <Input
             id="email"
             type="email"
             {...register('email')}
             placeholder="john@example.com"
-            className="border-gray-300 focus:border-watt-trust focus:ring-watt-trust"
+            className="border-border focus:border-watt-trust focus:ring-watt-trust"
             disabled={isSubmitting}
           />
           {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
+            <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="investmentAmount" className="text-watt-navy font-medium">
-          Investment Amount <span className="text-red-500">*</span>
+        <Label htmlFor="investmentAmount" className="text-foreground font-medium">
+          Investment Amount <span className="text-destructive">*</span>
         </Label>
         <Input
           id="investmentAmount"
           {...register('investmentAmount')}
           placeholder="e.g., $500,000 - $1,000,000"
-          className="border-gray-300 focus:border-watt-trust focus:ring-watt-trust"
+          className="border-border focus:border-watt-trust focus:ring-watt-trust"
           disabled={isSubmitting}
         />
         {errors.investmentAmount && (
-          <p className="text-sm text-red-500">{errors.investmentAmount.message}</p>
+          <p className="text-sm text-destructive">{errors.investmentAmount.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="message" className="text-watt-navy font-medium">
+        <Label htmlFor="message" className="text-foreground font-medium">
           Additional Message (Optional)
         </Label>
         <Textarea
@@ -178,11 +178,11 @@ export const InvestmentInquiryForm = ({ onSuccess }: InvestmentInquiryFormProps)
           {...register('message')}
           placeholder="Tell us more about your investment interests..."
           rows={4}
-          className="border-gray-300 focus:border-watt-trust focus:ring-watt-trust resize-none"
+          className="border-border focus:border-watt-trust focus:ring-watt-trust resize-none"
           disabled={isSubmitting}
         />
         {errors.message && (
-          <p className="text-sm text-red-500">{errors.message.message}</p>
+          <p className="text-sm text-destructive">{errors.message.message}</p>
         )}
       </div>
 
@@ -202,7 +202,7 @@ export const InvestmentInquiryForm = ({ onSuccess }: InvestmentInquiryFormProps)
         )}
       </Button>
 
-      <p className="text-sm text-watt-navy/60 text-center">
+      <p className="text-sm text-muted-foreground text-center">
         By submitting this form, you agree to be contacted by WattByte regarding investment opportunities.
       </p>
     </form>

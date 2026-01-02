@@ -114,17 +114,17 @@ const RegulatoryEnvironmentSection = () => {
   };
 
   return (
-    <section id="regulatory" className="py-20 bg-watt-light">
+    <section id="regulatory" className="py-20 bg-muted">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Regulatory Environment
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Navigating Regulations & Permits
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Regulatory environment can make or break a project. Understanding 
               jurisdictional attitudes and permitting requirements is essential.
             </p>
@@ -150,26 +150,26 @@ const RegulatoryEnvironmentSection = () => {
 
         {/* Jurisdiction Scorecard */}
         <ScrollReveal delay={100}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <Scale className="w-5 h-5 text-watt-purple" />
               Jurisdiction Scorecard
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Region</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Crypto Stance</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Permitting</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Timeline</th>
-                    <th className="text-left py-3 px-4 text-watt-navy font-semibold">Score</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Region</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Crypto Stance</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Permitting</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Timeline</th>
+                    <th className="text-left py-3 px-4 text-foreground font-semibold">Score</th>
                   </tr>
                 </thead>
                 <tbody>
                   {jurisdictions.map((j, idx) => (
-                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-watt-navy">{j.region}</td>
+                    <tr key={idx} className="border-b border-border hover:bg-muted/50">
+                      <td className="py-3 px-4 font-medium text-foreground">{j.region}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           j.crypto === 'Very Friendly' ? 'bg-watt-success/20 text-watt-success' :
@@ -181,8 +181,8 @@ const RegulatoryEnvironmentSection = () => {
                           {j.crypto}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-watt-navy/70">{j.permits}</td>
-                      <td className="py-3 px-4 text-watt-navy/70">{j.timeline}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{j.permits}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{j.timeline}</td>
                       <td className="py-3 px-4">
                         <span className={`px-3 py-1 rounded-full text-sm font-bold ${getScoreColor(j.score)}`}>
                           {j.score}
@@ -200,9 +200,9 @@ const RegulatoryEnvironmentSection = () => {
         <ScrollReveal delay={200}>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {jurisdictions.slice(0, 3).map((j, idx) => (
-              <div key={idx} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+              <div key={idx} className="bg-card rounded-2xl shadow-lg border border-border p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-bold text-watt-navy">{j.region}</h4>
+                  <h4 className="text-lg font-bold text-foreground">{j.region}</h4>
                   <span className={`px-3 py-1 rounded-full text-sm font-bold ${getScoreColor(j.score)}`}>
                     {j.score}/100
                   </span>
@@ -215,18 +215,18 @@ const RegulatoryEnvironmentSection = () => {
                     </h5>
                     <ul className="space-y-1">
                       {j.highlights.map((h, i) => (
-                        <li key={i} className="text-sm text-watt-navy/70">• {h}</li>
+                        <li key={i} className="text-sm text-muted-foreground">• {h}</li>
                       ))}
                     </ul>
                   </div>
                   
                   <div>
-                    <h5 className="text-sm font-semibold text-red-400 mb-2 flex items-center gap-1">
+                    <h5 className="text-sm font-semibold text-destructive mb-2 flex items-center gap-1">
                       <AlertTriangle className="w-4 h-4" /> Risks
                     </h5>
                     <ul className="space-y-1">
                       {j.risks.map((r, i) => (
-                        <li key={i} className="text-sm text-watt-navy/70">• {r}</li>
+                        <li key={i} className="text-sm text-muted-foreground">• {r}</li>
                       ))}
                     </ul>
                   </div>
@@ -238,27 +238,27 @@ const RegulatoryEnvironmentSection = () => {
 
         {/* Permit Types */}
         <ScrollReveal delay={300}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <FileText className="w-5 h-5 text-watt-purple" />
               Common Permits & Approvals
             </h3>
             <div className="space-y-4">
               {permitTypes.map((permit, idx) => (
-                <div key={idx} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                <div key={idx} className="p-4 bg-muted rounded-xl hover:bg-muted/80 transition-colors">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                     <div>
-                      <h4 className="font-semibold text-watt-navy">{permit.permit}</h4>
-                      <p className="text-sm text-watt-navy/60">{permit.authority}</p>
+                      <h4 className="font-semibold text-foreground">{permit.permit}</h4>
+                      <p className="text-sm text-muted-foreground">{permit.authority}</p>
                     </div>
                     <span className="text-sm font-medium text-watt-purple bg-watt-purple/10 px-3 py-1 rounded-full w-fit">
                       {permit.timeline}
                     </span>
                   </div>
-                  <p className="text-sm text-watt-navy/70 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     <strong>Requirements:</strong> {permit.requirements}
                   </p>
-                  <p className="text-sm text-watt-success/90">
+                  <p className="text-sm text-watt-success">
                     <strong>💡 Tip:</strong> {permit.tips}
                   </p>
                 </div>
