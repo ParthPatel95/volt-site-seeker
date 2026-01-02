@@ -91,7 +91,7 @@ export const AnimatedAdvantages: React.FC = () => {
   const spiralOrder = [0, 1, 3, 4, 2];
 
   return (
-    <section className="relative py-16 md:py-20 px-6 bg-watt-light overflow-hidden">
+    <section className="relative py-16 md:py-20 px-6 bg-muted overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -102,10 +102,10 @@ export const AnimatedAdvantages: React.FC = () => {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-watt-navy">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
             Competitive Advantages
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Why WattByte wins in the digital infrastructure market
           </p>
         </div>
@@ -125,7 +125,7 @@ export const AnimatedAdvantages: React.FC = () => {
                 data-index={index}
                 className={`
                   relative overflow-hidden rounded-2xl
-                  bg-white/80 backdrop-blur-sm
+                  bg-card/80 backdrop-blur-sm
                   border ${colors.border}
                   shadow-institutional hover:shadow-xl
                   transition-all duration-700 ease-out
@@ -154,11 +154,11 @@ export const AnimatedAdvantages: React.FC = () => {
                     {advantage.icon}
                   </div>
 
-                  <h3 className={`font-bold text-watt-navy mb-2 ${isLarge ? 'text-xl' : 'text-lg'}`}>
+                  <h3 className={`font-bold text-foreground mb-2 ${isLarge ? 'text-xl' : 'text-lg'}`}>
                     {advantage.title}
                   </h3>
                   
-                  <p className={`text-watt-navy/70 leading-relaxed ${isLarge ? 'text-base' : 'text-sm'}`}>
+                  <p className={`text-muted-foreground leading-relaxed ${isLarge ? 'text-base' : 'text-sm'}`}>
                     {advantage.description}
                   </p>
 

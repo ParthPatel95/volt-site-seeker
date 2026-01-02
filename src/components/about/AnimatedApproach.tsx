@@ -68,13 +68,13 @@ export const AnimatedApproach: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative py-16 md:py-20 px-6 bg-watt-light overflow-hidden">
+    <section className="relative py-16 md:py-20 px-6 bg-muted overflow-hidden">
       <div className="max-w-7xl mx-auto" ref={containerRef}>
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-watt-navy">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
             Our Approach
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             A proven methodology for transforming stranded power into digital infrastructure
           </p>
         </div>
@@ -124,22 +124,22 @@ export const AnimatedApproach: React.FC = () => {
                 }`}
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
-                <Card className="p-6 bg-white border-gray-200 shadow-institutional hover:shadow-lg hover:-translate-y-2 transition-all duration-300 relative group h-full">
+                <Card className="p-6 bg-card border-border shadow-institutional hover:shadow-lg hover:-translate-y-2 transition-all duration-300 relative group h-full">
                   {/* Step number watermark */}
-                  <div className="absolute top-4 right-4 text-6xl font-bold text-watt-navy/5 group-hover:text-watt-trust/10 transition-colors">
+                  <div className="absolute top-4 right-4 text-6xl font-bold text-foreground/5 group-hover:text-secondary/10 transition-colors">
                     {step.step}
                   </div>
 
                   {/* Icon */}
-                  <div className="w-16 h-16 mb-4 relative z-10 bg-watt-trust/10 rounded-lg flex items-center justify-center text-watt-trust">
+                  <div className="w-16 h-16 mb-4 relative z-10 bg-secondary/10 rounded-lg flex items-center justify-center text-secondary">
                     {step.icon}
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-lg font-bold text-watt-navy mb-2 relative z-10">
+                  <h3 className="text-lg font-bold text-foreground mb-2 relative z-10">
                     {step.title}
                   </h3>
-                  <p className="text-watt-navy/70 text-sm leading-relaxed relative z-10">
+                  <p className="text-muted-foreground text-sm leading-relaxed relative z-10">
                     {step.description}
                   </p>
 

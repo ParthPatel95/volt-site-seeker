@@ -79,14 +79,14 @@ export const MultiSiteStrategySection = () => {
   ];
 
   return (
-    <section id="multi-site" className="py-20 bg-watt-gray/30">
+    <section id="multi-site" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Multi-Site Strategy
             </h2>
-            <p className="text-xl text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Building a geographically diversified mining portfolio for resilience and optimization.
             </p>
           </div>
@@ -97,17 +97,17 @@ export const MultiSiteStrategySection = () => {
             {diversificationBenefits.map((benefit, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl p-6 shadow-lg border border-watt-navy/10 hover:shadow-xl transition-all duration-300"
+                className="bg-card rounded-xl p-6 shadow-lg border border-border hover:shadow-xl transition-all duration-300"
               >
-                <div className="w-12 h-12 bg-watt-success/10 rounded-lg flex items-center justify-center mb-4">
-                  <benefit.icon className="w-6 h-6 text-watt-success" />
+                <div className="w-12 h-12 bg-market-positive/10 rounded-lg flex items-center justify-center mb-4">
+                  <benefit.icon className="w-6 h-6 text-market-positive" />
                 </div>
-                <h3 className="text-lg font-semibold text-watt-navy mb-2">{benefit.title}</h3>
-                <p className="text-watt-navy/70 text-sm mb-4">{benefit.description}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{benefit.title}</h3>
+                <p className="text-muted-foreground text-sm mb-4">{benefit.description}</p>
                 <div className="space-y-1">
                   {benefit.metrics.map((metric, i) => (
-                    <div key={i} className="text-xs text-watt-success font-medium flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-watt-success rounded-full"></div>
+                    <div key={i} className="text-xs text-market-positive font-medium flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-market-positive rounded-full"></div>
                       {metric}
                     </div>
                   ))}
@@ -118,25 +118,25 @@ export const MultiSiteStrategySection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6">Global Mining Regions</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-6">Global Mining Regions</h3>
           <div className="grid md:grid-cols-2 gap-6 mb-16">
             {siteProfiles.map((profile, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl p-6 shadow-md border border-watt-navy/10"
+                className="bg-card rounded-xl p-6 shadow-md border border-border"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-watt-bitcoin/10 rounded-full flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-watt-bitcoin" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-primary" />
                   </div>
-                  <h4 className="text-lg font-bold text-watt-navy">{profile.region}</h4>
+                  <h4 className="text-lg font-bold text-foreground">{profile.region}</h4>
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-4">
                   {profile.locations.map((location, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-watt-gray/50 rounded text-xs text-watt-navy"
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-muted/50 rounded text-xs text-foreground"
                     >
                       <MapPin className="w-3 h-3" />
                       {location}
@@ -144,16 +144,16 @@ export const MultiSiteStrategySection = () => {
                   ))}
                 </div>
 
-                <p className="text-sm text-watt-navy/70 mb-4">{profile.advantages}</p>
+                <p className="text-sm text-muted-foreground mb-4">{profile.advantages}</p>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-watt-success/10 rounded-lg p-3">
-                    <div className="text-sm font-semibold text-watt-navy">{profile.powerCost}</div>
-                    <div className="text-xs text-watt-navy/60">Power Cost</div>
+                  <div className="bg-market-positive/10 rounded-lg p-3">
+                    <div className="text-sm font-semibold text-foreground">{profile.powerCost}</div>
+                    <div className="text-xs text-muted-foreground">Power Cost</div>
                   </div>
-                  <div className="bg-watt-blue/10 rounded-lg p-3">
-                    <div className="text-sm font-semibold text-watt-navy">{profile.climate}</div>
-                    <div className="text-xs text-watt-navy/60">Climate</div>
+                  <div className="bg-blue-500/10 rounded-lg p-3">
+                    <div className="text-sm font-semibold text-foreground">{profile.climate}</div>
+                    <div className="text-xs text-muted-foreground">Climate</div>
                   </div>
                 </div>
               </div>
@@ -162,8 +162,8 @@ export const MultiSiteStrategySection = () => {
         </ScrollReveal>
 
         <ScrollReveal delay={300}>
-          <h3 className="text-2xl font-bold text-watt-navy mb-6">Multi-Site Management Model</h3>
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-watt-navy/10">
+          <h3 className="text-2xl font-bold text-foreground mb-6">Multi-Site Management Model</h3>
+          <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
             <div className="space-y-6">
               {managementModel.map((layer, index) => (
                 <div key={index} className="relative">
@@ -181,25 +181,25 @@ export const MultiSiteStrategySection = () => {
                     </div>
                   </div>
                   {index < managementModel.length - 1 && (
-                    <div className="absolute left-1/2 -translate-x-1/2 w-0.5 h-6 bg-watt-navy/20"></div>
+                    <div className="absolute left-1/2 -translate-x-1/2 w-0.5 h-6 bg-border"></div>
                   )}
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 p-6 bg-watt-success/10 rounded-xl">
-              <h4 className="font-semibold text-watt-navy mb-3">Key Success Factors</h4>
-              <div className="grid md:grid-cols-3 gap-4 text-sm text-watt-navy/70">
+            <div className="mt-8 p-6 bg-market-positive/10 rounded-xl">
+              <h4 className="font-semibold text-foreground mb-3">Key Success Factors</h4>
+              <div className="grid md:grid-cols-3 gap-4 text-sm text-muted-foreground">
                 <div>
-                  <strong className="text-watt-navy">Standardization</strong>
+                  <strong className="text-foreground">Standardization</strong>
                   <p>Consistent equipment, processes, and KPIs across all sites</p>
                 </div>
                 <div>
-                  <strong className="text-watt-navy">Communication</strong>
+                  <strong className="text-foreground">Communication</strong>
                   <p>Real-time dashboards and regular cross-site coordination</p>
                 </div>
                 <div>
-                  <strong className="text-watt-navy">Local Expertise</strong>
+                  <strong className="text-foreground">Local Expertise</strong>
                   <p>Regional teams with local market and regulatory knowledge</p>
                 </div>
               </div>

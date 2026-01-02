@@ -158,7 +158,7 @@ const HydroCoolingMethodsSection = () => {
   const activeMethod = coolingMethods.find(m => m.id === selectedMethod) || coolingMethods[0];
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
