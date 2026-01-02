@@ -140,11 +140,11 @@ const AnimatedStat: React.FC<{ value: number; suffix?: string; label: string }> 
   }, [value]);
   
   return (
-    <div className="text-center">
-      <div className="text-3xl md:text-4xl font-bold text-white">
-        {count}{suffix}
-      </div>
-      <div className="text-sm text-white/80 mt-1">{label}</div>
+      <div className="text-center">
+        <div className="text-3xl md:text-4xl font-bold text-[hsl(210_40%_98%)]">
+          {count}{suffix}
+        </div>
+        <div className="text-sm text-[hsl(210_40%_98%)/0.8] mt-1">{label}</div>
     </div>
   );
 };
@@ -224,10 +224,10 @@ export const LeadershipTeamSection = () => {
                   <Users className="w-3 h-3 mr-1" />
                   Executive Leadership
                 </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-[hsl(210_40%_98%)] mb-4">
                   Leadership Team
                 </h2>
-                <p className="text-lg text-white/80 max-w-2xl mx-auto">
+                <p className="text-lg text-[hsl(210_40%_98%)/0.8] max-w-2xl mx-auto">
                   Experienced operators with proven track records in power infrastructure and digital asset operations
                 </p>
               </div>
