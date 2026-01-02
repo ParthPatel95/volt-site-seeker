@@ -192,8 +192,8 @@ const PowerTransformersSection = () => {
                     </ul>
                   </div>
                   
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <h5 className="font-medium text-red-600 text-sm mb-1">Considerations:</h5>
+                  <div className="p-3 bg-destructive/10 rounded-lg">
+                    <h5 className="font-medium text-destructive text-sm mb-1">Considerations:</h5>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• Fire hazard - requires containment</li>
                       <li>• Oil spill/environmental risk</li>
@@ -240,8 +240,8 @@ const PowerTransformersSection = () => {
                     </ul>
                   </div>
                   
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <h5 className="font-medium text-red-600 text-sm mb-1">Considerations:</h5>
+                  <div className="p-3 bg-destructive/10 rounded-lg">
+                    <h5 className="font-medium text-destructive text-sm mb-1">Considerations:</h5>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• Limited to ~35 MVA typically</li>
                       <li>• Less overload capability</li>

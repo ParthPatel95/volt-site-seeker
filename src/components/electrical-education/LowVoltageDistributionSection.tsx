@@ -235,8 +235,8 @@ const LowVoltageDistributionSection = () => {
                     </ul>
                   </div>
 
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <h5 className="font-medium text-red-600 text-sm mb-1">Considerations:</h5>
+                  <div className="p-3 bg-destructive/10 rounded-lg">
+                    <h5 className="font-medium text-destructive text-sm mb-1">Considerations:</h5>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• Higher initial cost than cable</li>
                       <li>• Requires proper support structures</li>
@@ -284,8 +284,8 @@ const LowVoltageDistributionSection = () => {
                     </ul>
                   </div>
 
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <h5 className="font-medium text-red-600 text-sm mb-1">Considerations:</h5>
+                  <div className="p-3 bg-destructive/10 rounded-lg">
+                    <h5 className="font-medium text-destructive text-sm mb-1">Considerations:</h5>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• Higher voltage drop for large currents</li>
                       <li>• More labor-intensive installation</li>

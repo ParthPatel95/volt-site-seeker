@@ -78,9 +78,9 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-white border-gray-200 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-watt-navy text-center">
+          <DialogTitle className="text-2xl font-bold text-foreground text-center">
             Request Platform Access
           </DialogTitle>
         </DialogHeader>
@@ -88,26 +88,26 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-watt-navy">Full Name *</Label>
+              <Label htmlFor="fullName" className="text-foreground">Full Name *</Label>
               <Input
                 id="fullName"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 required
-                className="bg-watt-light border-gray-300 text-watt-navy"
+                className="bg-muted border-border text-foreground"
                 placeholder="John Doe"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-watt-navy">Email Address *</Label>
+              <Label htmlFor="email" className="text-foreground">Email Address *</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
-                className="bg-watt-light border-gray-300 text-watt-navy"
+                className="bg-muted border-border text-foreground"
                 placeholder="john@company.com"
               />
             </div>
@@ -115,26 +115,26 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-watt-navy">Phone Number *</Label>
+              <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
               <Input
                 id="phone"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
-                className="bg-watt-light border-gray-300 text-watt-navy"
+                className="bg-muted border-border text-foreground"
                 placeholder="+1 (555) 123-4567"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company" className="text-watt-navy">Company Name *</Label>
+              <Label htmlFor="company" className="text-foreground">Company Name *</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 required
-                className="bg-watt-light border-gray-300 text-watt-navy"
+                className="bg-muted border-border text-foreground"
                 placeholder="Investment Firm LLC"
               />
             </div>
@@ -142,21 +142,21 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="role" className="text-watt-navy">Your Role *</Label>
+              <Label htmlFor="role" className="text-foreground">Your Role *</Label>
               <Input
                 id="role"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 required
-                className="bg-watt-light border-gray-300 text-watt-navy"
+                className="bg-muted border-border text-foreground"
                 placeholder="Managing Partner, CTO, etc."
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="platformUse" className="text-watt-navy">Platform Use Case *</Label>
+              <Label htmlFor="platformUse" className="text-foreground">Platform Use Case *</Label>
               <Select value={formData.platformUse} onValueChange={(value) => setFormData({ ...formData, platformUse: value })}>
-                <SelectTrigger className="bg-watt-light border-gray-300 text-watt-navy">
+                <SelectTrigger className="bg-muted border-border text-foreground">
                   <SelectValue placeholder="Select your use case" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,12 +171,12 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="additionalInfo" className="text-watt-navy">Additional Information</Label>
+            <Label htmlFor="additionalInfo" className="text-foreground">Additional Information</Label>
             <Textarea
               id="additionalInfo"
               value={formData.additionalInfo}
               onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
-              className="bg-watt-light border-gray-300 text-watt-navy"
+              className="bg-muted border-border text-foreground"
               placeholder="Tell us about your investment goals, AUM, or specific platform needs..."
               rows={3}
             />
@@ -202,7 +202,7 @@ export const PlatformAccessModal = ({ children }: PlatformAccessModalProps) => {
             </Button>
           </div>
 
-          <p className="text-xs text-watt-navy/60 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             * Required fields. All information is confidential and used solely for platform access verification.
           </p>
         </form>

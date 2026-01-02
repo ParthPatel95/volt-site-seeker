@@ -224,9 +224,9 @@ const ElectricalFundamentalsSection = () => {
 
         {/* Power Formulas */}
         <ScrollReveal delay={300}>
-          <Card className="mb-12 border-watt-navy/10 shadow-institutional">
+          <Card className="mb-12 border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Activity className="w-5 h-5 text-watt-bitcoin" />
                 Power Formulas: Understanding Electrical Power
               </CardTitle>
@@ -234,50 +234,50 @@ const ElectricalFundamentalsSection = () => {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <p className="text-watt-navy/70">
-                    <strong>Electrical power</strong> is the rate at which electrical energy is transferred. 
+                  <p className="text-muted-foreground">
+                    <strong className="text-foreground">Electrical power</strong> is the rate at which electrical energy is transferred. 
                     In datacenters, understanding power calculations is critical for sizing infrastructure and estimating costs.
                   </p>
                   
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-watt-navy">The Three Power Equations:</h4>
+                    <h4 className="font-semibold text-foreground">The Three Power Equations:</h4>
                     <div className="space-y-2">
-                      <div className="p-3 bg-watt-light rounded-lg flex items-center justify-between">
+                      <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
                         <span className="font-mono text-lg font-bold text-watt-bitcoin">P = V × I</span>
-                        <span className="text-sm text-watt-navy/60">Power = Voltage × Current</span>
+                        <span className="text-sm text-muted-foreground">Power = Voltage × Current</span>
                       </div>
-                      <div className="p-3 bg-watt-light rounded-lg flex items-center justify-between">
+                      <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
                         <span className="font-mono text-lg font-bold text-watt-success">P = I² × R</span>
-                        <span className="text-sm text-watt-navy/60">Power = Current² × Resistance</span>
+                        <span className="text-sm text-muted-foreground">Power = Current² × Resistance</span>
                       </div>
-                      <div className="p-3 bg-watt-light rounded-lg flex items-center justify-between">
+                      <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
                         <span className="font-mono text-lg font-bold text-watt-coinbase">P = V² / R</span>
-                        <span className="text-sm text-watt-navy/60">Power = Voltage² / Resistance</span>
+                        <span className="text-sm text-muted-foreground">Power = Voltage² / Resistance</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-watt-navy">Why P = I²R Matters in Datacenters:</h4>
-                  <p className="text-sm text-watt-navy/70">
-                    The I²R formula explains <strong>power losses in cables</strong>. Since power loss is proportional to 
-                    the <strong>square of current</strong>, doubling current quadruples losses. This is why datacenters use 
+                  <h4 className="font-semibold text-foreground">Why P = I²R Matters in Datacenters:</h4>
+                  <p className="text-sm text-muted-foreground">
+                    The I²R formula explains <strong className="text-foreground">power losses in cables</strong>. Since power loss is proportional to 
+                    the <strong className="text-foreground">square of current</strong>, doubling current quadruples losses. This is why datacenters use 
                     higher voltages (240V, 480V, 600V) — higher voltage means lower current for the same power, dramatically 
                     reducing cable losses.
                   </p>
                   
                   <div className="p-4 bg-watt-bitcoin/5 rounded-lg border border-watt-bitcoin/20">
-                    <h5 className="font-semibold text-watt-navy mb-2">Real Example: 10kW Miner</h5>
+                    <h5 className="font-semibold text-foreground mb-2">Real Example: 10kW Miner</h5>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <div className="text-watt-navy/60">At 120V:</div>
-                        <div className="font-mono">I = 10,000W / 120V = <strong>83.3A</strong></div>
-                        <div className="text-red-600 text-xs">Requires 2 AWG cable!</div>
+                        <div className="text-muted-foreground">At 120V:</div>
+                        <div className="font-mono">I = 10,000W / 120V = <strong className="text-foreground">83.3A</strong></div>
+                        <div className="text-destructive text-xs">Requires 2 AWG cable!</div>
                       </div>
                       <div>
-                        <div className="text-watt-navy/60">At 240V:</div>
-                        <div className="font-mono">I = 10,000W / 240V = <strong>41.7A</strong></div>
+                        <div className="text-muted-foreground">At 240V:</div>
+                        <div className="font-mono">I = 10,000W / 240V = <strong className="text-foreground">41.7A</strong></div>
                         <div className="text-watt-success text-xs">Only needs 8 AWG cable</div>
                       </div>
                     </div>
@@ -290,9 +290,9 @@ const ElectricalFundamentalsSection = () => {
 
         {/* AC vs DC */}
         <ScrollReveal delay={400}>
-          <Card className="mb-12 border-watt-navy/10 shadow-institutional">
+          <Card className="mb-12 border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Gauge className="w-5 h-5 text-watt-bitcoin" />
                 AC vs DC Power: Why Datacenters Use Both
               </CardTitle>
@@ -301,46 +301,46 @@ const ElectricalFundamentalsSection = () => {
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="p-4 bg-watt-coinbase/5 rounded-lg border border-watt-coinbase/20">
-                    <h4 className="font-semibold text-watt-navy mb-2">AC (Alternating Current)</h4>
-                    <p className="text-sm text-watt-navy/70 mb-3">
+                    <h4 className="font-semibold text-foreground mb-2">AC (Alternating Current)</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
                       Current that periodically reverses direction. The grid delivers AC because it can be easily 
                       transformed to different voltages using transformers.
                     </p>
-                    <ul className="text-sm text-watt-navy/70 space-y-1">
-                      <li>• <strong>Frequency:</strong> 60 Hz (North America), 50 Hz (Europe/Asia)</li>
-                      <li>• <strong>Transmission:</strong> Efficient over long distances</li>
-                      <li>• <strong>In datacenter:</strong> Grid → Transformers → PDUs → Miners</li>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• <strong className="text-foreground">Frequency:</strong> 60 Hz (North America), 50 Hz (Europe/Asia)</li>
+                      <li>• <strong className="text-foreground">Transmission:</strong> Efficient over long distances</li>
+                      <li>• <strong className="text-foreground">In datacenter:</strong> Grid → Transformers → PDUs → Miners</li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="p-4 bg-watt-bitcoin/5 rounded-lg border border-watt-bitcoin/20">
-                    <h4 className="font-semibold text-watt-navy mb-2">DC (Direct Current)</h4>
-                    <p className="text-sm text-watt-navy/70 mb-3">
+                    <h4 className="font-semibold text-foreground mb-2">DC (Direct Current)</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
                       Current that flows in one direction. All electronics internally run on DC. 
                       ASIC chips require stable DC voltage (typically 12V) to operate.
                     </p>
-                    <ul className="text-sm text-watt-navy/70 space-y-1">
-                      <li>• <strong>Miners:</strong> Internal PSU converts AC → 12V DC</li>
-                      <li>• <strong>Hash boards:</strong> Operate on 12-15V DC</li>
-                      <li>• <strong>Control systems:</strong> Often use 24V DC for safety</li>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• <strong className="text-foreground">Miners:</strong> Internal PSU converts AC → 12V DC</li>
+                      <li>• <strong className="text-foreground">Hash boards:</strong> Operate on 12-15V DC</li>
+                      <li>• <strong className="text-foreground">Control systems:</strong> Often use 24V DC for safety</li>
                     </ul>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-watt-light rounded-lg">
-                <h4 className="font-semibold text-watt-navy mb-2">The Power Conversion Chain:</h4>
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold text-foreground mb-2">The Power Conversion Chain:</h4>
                 <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-                  <span className="px-3 py-1 bg-white rounded border border-watt-navy/20">Grid AC (138kV)</span>
-                  <span className="text-watt-navy/40">→</span>
-                  <span className="px-3 py-1 bg-white rounded border border-watt-navy/20">Substation (25kV)</span>
-                  <span className="text-watt-navy/40">→</span>
-                  <span className="px-3 py-1 bg-white rounded border border-watt-navy/20">Facility (600V/480V)</span>
-                  <span className="text-watt-navy/40">→</span>
-                  <span className="px-3 py-1 bg-white rounded border border-watt-navy/20">PDU (240V AC)</span>
-                  <span className="text-watt-navy/40">→</span>
+                  <span className="px-3 py-1 bg-card rounded border border-border">Grid AC (138kV)</span>
+                  <span className="text-muted-foreground/40">→</span>
+                  <span className="px-3 py-1 bg-card rounded border border-border">Substation (25kV)</span>
+                  <span className="text-muted-foreground/40">→</span>
+                  <span className="px-3 py-1 bg-card rounded border border-border">Facility (600V/480V)</span>
+                  <span className="text-muted-foreground/40">→</span>
+                  <span className="px-3 py-1 bg-card rounded border border-border">PDU (240V AC)</span>
+                  <span className="text-muted-foreground/40">→</span>
                   <span className="px-3 py-1 bg-watt-bitcoin/10 rounded border border-watt-bitcoin/30 font-medium">Miner PSU (12V DC)</span>
                 </div>
               </div>
@@ -350,9 +350,9 @@ const ElectricalFundamentalsSection = () => {
 
         {/* Three-Phase Power */}
         <ScrollReveal delay={500}>
-          <Card className="border-watt-navy/10 shadow-institutional">
+          <Card className="border-border shadow-institutional">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-watt-navy">
+              <CardTitle className="flex items-center gap-2 text-foreground">
                 <Activity className="w-5 h-5 text-watt-bitcoin" />
                 Three-Phase Power: The Industrial Standard
               </CardTitle>
@@ -360,40 +360,40 @@ const ElectricalFundamentalsSection = () => {
             <CardContent>
               <div className="grid lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <p className="text-watt-navy/70">
-                    <strong>Three-phase power</strong> is the backbone of industrial electrical systems. 
+                  <p className="text-muted-foreground">
+                    <strong className="text-foreground">Three-phase power</strong> is the backbone of industrial electrical systems. 
                     Instead of a single AC waveform, three separate waveforms are 120° apart, providing 
                     constant power flow and higher efficiency.
                   </p>
 
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-watt-navy">Why Three-Phase for Mining?</h4>
-                    <ul className="text-sm text-watt-navy/70 space-y-2">
+                    <h4 className="font-semibold text-foreground">Why Three-Phase for Mining?</h4>
+                    <ul className="text-sm text-muted-foreground space-y-2">
                       <li className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                        <span><strong>73% more power</strong> using same wire size vs single-phase</span>
+                        <span><strong className="text-foreground">73% more power</strong> using same wire size vs single-phase</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                        <span><strong>Constant power delivery</strong> — no pulsating load on generators</span>
+                        <span><strong className="text-foreground">Constant power delivery</strong> — no pulsating load on generators</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                        <span><strong>Balanced loads</strong> — reduces neutral current and losses</span>
+                        <span><strong className="text-foreground">Balanced loads</strong> — reduces neutral current and losses</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-watt-bitcoin mt-2 flex-shrink-0" />
-                        <span><strong>Motor efficiency</strong> — for cooling fans and pumps</span>
+                        <span><strong className="text-foreground">Motor efficiency</strong> — for cooling fans and pumps</span>
                       </li>
                     </ul>
                   </div>
 
-                  <div className="p-4 bg-watt-light rounded-lg">
-                    <h5 className="font-semibold text-watt-navy mb-2">Three-Phase Power Formula:</h5>
-                    <div className="font-mono text-lg text-center p-2 bg-white rounded border border-watt-navy/10">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h5 className="font-semibold text-foreground mb-2">Three-Phase Power Formula:</h5>
+                    <div className="font-mono text-lg text-center p-2 bg-card rounded border border-border">
                       P = √3 × V<sub>L</sub> × I<sub>L</sub> × cos(φ)
                     </div>
-                    <p className="text-xs text-watt-navy/60 mt-2 text-center">
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
                       Where V<sub>L</sub> is line voltage, I<sub>L</sub> is line current, and cos(φ) is power factor
                     </p>
                   </div>
@@ -451,40 +451,40 @@ const ElectricalFundamentalsSection = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-watt-light rounded-lg text-center">
+                    <div className="p-3 bg-muted rounded-lg text-center">
                       <div className="text-2xl font-bold text-watt-bitcoin">208V</div>
-                      <div className="text-xs text-watt-navy/60">Line-to-Line (US)</div>
+                      <div className="text-xs text-muted-foreground">Line-to-Line (US)</div>
                     </div>
-                    <div className="p-3 bg-watt-light rounded-lg text-center">
+                    <div className="p-3 bg-muted rounded-lg text-center">
                       <div className="text-2xl font-bold text-watt-success">600V</div>
-                      <div className="text-xs text-watt-navy/60">Line-to-Line (Canada)</div>
+                      <div className="text-xs text-muted-foreground">Line-to-Line (Canada)</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Power Factor */}
-              <div className="mt-8 p-6 bg-watt-light rounded-lg">
-                <h4 className="font-semibold text-watt-navy mb-4">Power Factor: Why It Matters</h4>
+              <div className="mt-8 p-6 bg-muted rounded-lg">
+                <h4 className="font-semibold text-foreground mb-4">Power Factor: Why It Matters</h4>
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                    <h5 className="font-medium text-watt-navy mb-2">What is Power Factor?</h5>
-                    <p className="text-sm text-watt-navy/70">
+                    <h5 className="font-medium text-foreground mb-2">What is Power Factor?</h5>
+                    <p className="text-sm text-muted-foreground">
                       Power factor (PF) measures how efficiently current is converted to useful work. 
                       A PF of 1.0 (unity) means all power is doing useful work. Mining PSUs typically achieve 0.95+ PF.
                     </p>
                   </div>
                   <div>
-                    <h5 className="font-medium text-watt-navy mb-2">Real vs Reactive Power</h5>
-                    <p className="text-sm text-watt-navy/70">
-                      <strong>Real Power (kW):</strong> Does actual work (mining)<br />
-                      <strong>Reactive Power (kVAR):</strong> Stored/released by inductors/capacitors<br />
-                      <strong>Apparent Power (kVA):</strong> Total power from utility
+                    <h5 className="font-medium text-foreground mb-2">Real vs Reactive Power</h5>
+                    <p className="text-sm text-muted-foreground">
+                      <strong className="text-foreground">Real Power (kW):</strong> Does actual work (mining)<br />
+                      <strong className="text-foreground">Reactive Power (kVAR):</strong> Stored/released by inductors/capacitors<br />
+                      <strong className="text-foreground">Apparent Power (kVA):</strong> Total power from utility
                     </p>
                   </div>
                   <div>
-                    <h5 className="font-medium text-watt-navy mb-2">Utility Penalties</h5>
-                    <p className="text-sm text-watt-navy/70">
+                    <h5 className="font-medium text-foreground mb-2">Utility Penalties</h5>
+                    <p className="text-sm text-muted-foreground">
                       Utilities charge penalties for low PF (typically &lt;0.9). At 100MW, a PF of 0.85 vs 0.95 
                       could mean $50,000+/year in penalties. Modern miners have built-in PFC circuits.
                     </p>
