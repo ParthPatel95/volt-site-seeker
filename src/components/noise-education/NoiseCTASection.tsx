@@ -8,14 +8,14 @@ export const NoiseCTASection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Ready to Learn More?
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Explore our other educational resources or get in touch to discuss 
               noise-optimized facility solutions for your project.
             </p>
@@ -29,8 +29,8 @@ export const NoiseCTASection = () => {
                 <div className="w-12 h-12 bg-watt-coinbase/20 rounded-xl flex items-center justify-center mb-4">
                   <Building2 className="h-6 w-6 text-watt-coinbase" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-2">Hydro Datacenters 101</h3>
-                <p className="text-watt-navy/70 text-sm mb-6 flex-1">
+                <h3 className="text-xl font-bold text-foreground mb-2">Hydro Datacenters 101</h3>
+                <p className="text-muted-foreground text-sm mb-6 flex-1">
                   Deep dive into hydro-cooled container technology, cooling systems, 
                   and facility design.
                 </p>
@@ -51,8 +51,8 @@ export const NoiseCTASection = () => {
                 <div className="w-12 h-12 bg-watt-bitcoin/20 rounded-xl flex items-center justify-center mb-4">
                   <FileText className="h-6 w-6 text-watt-bitcoin" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-2">WattByte Academy</h3>
-                <p className="text-watt-navy/70 text-sm mb-6 flex-1">
+                <h3 className="text-xl font-bold text-foreground mb-2">WattByte Academy</h3>
+                <p className="text-muted-foreground text-sm mb-6 flex-1">
                   Complete curriculum covering Bitcoin, datacenters, energy markets, 
                   and infrastructure.
                 </p>
@@ -73,8 +73,8 @@ export const NoiseCTASection = () => {
                 <div className="w-12 h-12 bg-watt-success/20 rounded-xl flex items-center justify-center mb-4">
                   <Phone className="h-6 w-6 text-watt-success" />
                 </div>
-                <h3 className="text-xl font-bold text-watt-navy mb-2">Mining Hosting</h3>
-                <p className="text-watt-navy/70 text-sm mb-6 flex-1">
+                <h3 className="text-xl font-bold text-foreground mb-2">Mining Hosting</h3>
+                <p className="text-muted-foreground text-sm mb-6 flex-1">
                   Host your mining equipment at our noise-optimized, hydro-cooled 
                   Alberta facility.
                 </p>

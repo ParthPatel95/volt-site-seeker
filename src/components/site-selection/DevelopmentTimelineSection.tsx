@@ -105,17 +105,17 @@ const DevelopmentTimelineSection = () => {
   ];
 
   return (
-    <section id="timeline" className="py-20 bg-white">
+    <section id="timeline" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
-            <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
+            <span className="inline-block px-3 py-1 bg-purple-500/10 text-purple-500 rounded-full text-sm font-medium mb-4">
               Development Timeline
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               From Site Selection to First Hash
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               A typical greenfield development takes 12-24 months. Understanding the 
               critical path helps you plan and identify acceleration opportunities.
             </p>
@@ -141,9 +141,9 @@ const DevelopmentTimelineSection = () => {
         {/* Visual Timeline */}
         <ScrollReveal delay={100}>
           <div className="relative mb-12">
-            <div className="bg-gray-50 rounded-2xl p-6">
+            <div className="bg-muted/50 rounded-2xl p-6">
               {/* Month markers */}
-              <div className="flex justify-between mb-4 text-xs text-watt-navy/50">
+              <div className="flex justify-between mb-4 text-xs text-muted-foreground">
                 {[0, 3, 6, 9, 12, 15, 18].map(month => (
                   <span key={month}>Month {month}</span>
                 ))}
@@ -183,28 +183,28 @@ const DevelopmentTimelineSection = () => {
         <ScrollReveal delay={200}>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {phases.map((phase, idx) => (
-              <div key={idx} className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-lg transition-shadow">
+              <div key={idx} className="bg-card rounded-xl border border-border p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-10 h-10 rounded-lg ${phase.color} flex items-center justify-center`}>
                     <span className="text-white font-bold">{idx + 1}</span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-watt-navy">{phase.phase}</h4>
-                    <p className="text-sm text-watt-purple">{phase.duration}</p>
+                    <h4 className="font-bold text-foreground">{phase.phase}</h4>
+                    <p className="text-sm text-purple-500">{phase.duration}</p>
                   </div>
                 </div>
                 
                 <ul className="space-y-2 mb-4">
                   {phase.tasks.map((task, i) => (
-                    <li key={i} className="text-sm text-watt-navy/70 flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-watt-navy/30 rounded-full mt-2 flex-shrink-0" />
+                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full mt-2 flex-shrink-0" />
                       {task}
                     </li>
                   ))}
                 </ul>
                 
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-2 text-sm text-watt-success">
+                <div className="pt-3 border-t border-border">
+                  <div className="flex items-center gap-2 text-sm text-market-positive">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{phase.milestone}</span>
                   </div>
@@ -248,21 +248,21 @@ const DevelopmentTimelineSection = () => {
 
           {/* Acceleration Tips */}
           <ScrollReveal delay={400}>
-            <div className="bg-gradient-to-br from-watt-success/10 to-watt-bitcoin/10 rounded-2xl p-6 h-full">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
-                <ArrowRight className="w-5 h-5 text-watt-success" />
+            <div className="bg-gradient-to-br from-market-positive/10 to-primary/10 rounded-2xl p-6 h-full">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                <ArrowRight className="w-5 h-5 text-market-positive" />
                 Timeline Acceleration Strategies
               </h3>
               <div className="space-y-4">
                 {accelerationTips.map((item, idx) => (
-                  <div key={idx} className="bg-white rounded-lg p-4">
-                    <h4 className="font-semibold text-watt-navy flex items-center gap-2">
-                      <span className="w-6 h-6 bg-watt-success/20 rounded-full flex items-center justify-center text-watt-success text-xs">
+                  <div key={idx} className="bg-card rounded-lg p-4">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <span className="w-6 h-6 bg-market-positive/20 rounded-full flex items-center justify-center text-market-positive text-xs">
                         {idx + 1}
                       </span>
                       {item.tip}
                     </h4>
-                    <p className="text-sm text-watt-navy/70 mt-1 ml-8">{item.description}</p>
+                    <p className="text-sm text-muted-foreground mt-1 ml-8">{item.description}</p>
                   </div>
                 ))}
               </div>
@@ -279,10 +279,10 @@ const DevelopmentTimelineSection = () => {
               { label: "Container Deploy", value: "3-6 months", sublabel: "With existing power" },
               { label: "Critical Lead", value: "6-18 months", sublabel: "Interconnection" }
             ].map((stat, idx) => (
-              <div key={idx} className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-                <div className="text-2xl font-bold text-watt-purple">{stat.value}</div>
-                <div className="text-sm font-medium text-watt-navy">{stat.label}</div>
-                <div className="text-xs text-watt-navy/50">{stat.sublabel}</div>
+              <div key={idx} className="bg-card rounded-xl border border-border p-4 text-center">
+                <div className="text-2xl font-bold text-purple-500">{stat.value}</div>
+                <div className="text-sm font-medium text-foreground">{stat.label}</div>
+                <div className="text-xs text-muted-foreground">{stat.sublabel}</div>
               </div>
             ))}
           </div>

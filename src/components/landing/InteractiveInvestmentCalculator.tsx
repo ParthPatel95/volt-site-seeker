@@ -38,20 +38,20 @@ export const InteractiveInvestmentCalculator = () => {
   }, [investmentAmount, timeHorizon, projectedReturns]);
 
   return (
-    <Card className="bg-white backdrop-blur-sm border border-gray-200 hover:border-watt-trust/30 transition-all duration-300 group shadow-institutional">
+    <Card className="bg-card backdrop-blur-sm border border-border hover:border-secondary/30 transition-all duration-300 group shadow-institutional">
       <CardHeader className="pb-4">
         <div className="flex items-center space-x-2 mb-2">
-          <Calculator className="w-6 h-6 text-watt-trust group-hover:scale-110 transition-transform duration-300" />
-          <CardTitle className="text-watt-navy text-xl">Investment Calculator</CardTitle>
-          <Badge className="bg-watt-trust/20 text-watt-trust text-xs border-watt-trust/30">Interactive</Badge>
+          <Calculator className="w-6 h-6 text-secondary group-hover:scale-110 transition-transform duration-300" />
+          <CardTitle className="text-foreground text-xl">Investment Calculator</CardTitle>
+          <Badge className="bg-secondary/20 text-secondary text-xs border-secondary/30">Interactive</Badge>
         </div>
-        <p className="text-watt-navy/70 text-sm">Calculate your potential returns with WattByte Fund I</p>
+        <p className="text-muted-foreground text-sm">Calculate your potential returns with WattByte Fund I</p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-watt-navy font-medium">Investment Amount</span>
-            <span className="text-watt-trust font-bold">${investmentAmount[0].toLocaleString()}</span>
+            <span className="text-foreground font-medium">Investment Amount</span>
+            <span className="text-secondary font-bold">${investmentAmount[0].toLocaleString()}</span>
           </div>
           <Slider
             value={investmentAmount}
@@ -59,9 +59,9 @@ export const InteractiveInvestmentCalculator = () => {
             max={5000000}
             min={50000}
             step={25000}
-            className="w-full [&_[role=slider]]:border-watt-trust [&_[role=slider]]:bg-white [&_.bg-primary]:bg-watt-trust"
+            className="w-full [&_[role=slider]]:border-secondary [&_[role=slider]]:bg-background [&_.bg-primary]:bg-secondary"
           />
-          <div className="flex justify-between text-xs text-watt-navy/60">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>$50K</span>
             <span>$5M</span>
           </div>
@@ -69,8 +69,8 @@ export const InteractiveInvestmentCalculator = () => {
 
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-watt-navy font-medium">Investment Period</span>
-            <span className="text-watt-bitcoin font-bold">{timeHorizon[0]} years</span>
+            <span className="text-foreground font-medium">Investment Period</span>
+            <span className="text-primary font-bold">{timeHorizon[0]} years</span>
           </div>
           <Slider
             value={timeHorizon}
@@ -78,43 +78,43 @@ export const InteractiveInvestmentCalculator = () => {
             max={10}
             min={3}
             step={1}
-            className="w-full [&_[role=slider]]:border-watt-bitcoin [&_[role=slider]]:bg-white [&_.bg-primary]:bg-watt-bitcoin"
+            className="w-full [&_[role=slider]]:border-primary [&_[role=slider]]:bg-background [&_.bg-primary]:bg-primary"
           />
-          <div className="flex justify-between text-xs text-watt-navy/60">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>3 years</span>
             <span>10 years</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-          <div className="bg-watt-light rounded-lg p-4 hover:bg-watt-light/70 transition-colors duration-200 border border-gray-200 hover:border-watt-success/30">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border">
+          <div className="bg-muted rounded-lg p-4 hover:bg-muted/70 transition-colors duration-200 border border-border hover:border-market-positive/30">
             <div className="flex items-center space-x-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-watt-success" />
-              <span className="text-watt-navy/70 text-sm">Projected Returns</span>
+              <TrendingUp className="w-4 h-4 text-market-positive" />
+              <span className="text-muted-foreground text-sm">Projected Returns</span>
             </div>
-            <div className="text-2xl font-bold text-watt-success">
+            <div className="text-2xl font-bold text-market-positive">
               ${Math.round(animatedReturns).toLocaleString()}
             </div>
-            <div className="text-xs text-watt-navy/60 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               +${Math.round(animatedReturns - investmentAmount[0]).toLocaleString()} profit
             </div>
           </div>
           
-          <div className="bg-watt-light rounded-lg p-4 hover:bg-watt-light/70 transition-colors duration-200 border border-gray-200 hover:border-watt-bitcoin/30">
+          <div className="bg-muted rounded-lg p-4 hover:bg-muted/70 transition-colors duration-200 border border-border hover:border-primary/30">
             <div className="flex items-center space-x-2 mb-2">
-              <DollarSign className="w-4 h-4 text-watt-bitcoin" />
-              <span className="text-watt-navy/70 text-sm">MOIC Multiple</span>
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span className="text-muted-foreground text-sm">MOIC Multiple</span>
             </div>
-            <div className="text-2xl font-bold text-watt-bitcoin">
+            <div className="text-2xl font-bold text-primary">
               {animatedMOIC.toFixed(2)}x
             </div>
-            <div className="text-xs text-watt-navy/60 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {(annualizedReturn * 100).toFixed(1)}% annual return
             </div>
           </div>
         </div>
 
-        <div className="text-xs text-watt-navy/60 pt-3 border-t border-gray-200">
+        <div className="text-xs text-muted-foreground pt-3 border-t border-border">
           * Projections based on 2.0-2.5x target MOIC. Past performance does not guarantee future results.
         </div>
       </CardContent>
