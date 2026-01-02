@@ -106,7 +106,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-watt-navy">Get in Touch</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground">Get in Touch</DialogTitle>
           <DialogDescription>
             Fill out the form below and we'll get back to you as soon as possible.
           </DialogDescription>
@@ -114,8 +114,8 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {/* Full Name */}
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-watt-navy font-medium">
-              Full Name <span className="text-red-500">*</span>
+            <Label htmlFor="fullName" className="text-foreground font-medium">
+              Full Name <span className="text-destructive">*</span>
             </Label>
             <Input
               id="fullName"
@@ -127,14 +127,14 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
               disabled={isSubmitting}
             />
             {errors.fullName && (
-              <p className="text-sm text-red-500">{errors.fullName}</p>
+              <p className="text-sm text-destructive">{errors.fullName}</p>
             )}
           </div>
 
           {/* Phone */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-watt-navy font-medium">
-              Phone Number <span className="text-red-500">*</span>
+            <Label htmlFor="phone" className="text-foreground font-medium">
+              Phone Number <span className="text-destructive">*</span>
             </Label>
             <Input
               id="phone"
@@ -146,14 +146,14 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
               disabled={isSubmitting}
             />
             {errors.phone && (
-              <p className="text-sm text-red-500">{errors.phone}</p>
+              <p className="text-sm text-destructive">{errors.phone}</p>
             )}
           </div>
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-watt-navy font-medium">
-              Email Address <span className="text-red-500">*</span>
+            <Label htmlFor="email" className="text-foreground font-medium">
+              Email Address <span className="text-destructive">*</span>
             </Label>
             <Input
               id="email"
@@ -165,14 +165,14 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
               disabled={isSubmitting}
             />
             {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
+              <p className="text-sm text-destructive">{errors.email}</p>
             )}
           </div>
 
           {/* Purpose */}
           <div className="space-y-2">
-            <Label htmlFor="purpose" className="text-watt-navy font-medium">
-              Purpose for Getting in Touch <span className="text-red-500">*</span>
+            <Label htmlFor="purpose" className="text-foreground font-medium">
+              Purpose for Getting in Touch <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="purpose"
@@ -184,7 +184,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
               disabled={isSubmitting}
             />
             {errors.purpose && (
-              <p className="text-sm text-red-500">{errors.purpose}</p>
+              <p className="text-sm text-destructive">{errors.purpose}</p>
             )}
           </div>
 
@@ -202,7 +202,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white"
+              className="flex-1 bg-[hsl(var(--watt-bitcoin))] hover:bg-[hsl(var(--watt-bitcoin)/0.9)] text-white"
             >
               {isSubmitting ? (
                 <>

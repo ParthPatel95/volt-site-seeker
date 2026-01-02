@@ -36,22 +36,22 @@ const timelineData: TimelineItem[] = [
 
 const colorClasses = {
   bitcoin: {
-    text: 'text-watt-bitcoin',
-    bg: 'bg-watt-bitcoin',
-    bgLight: 'bg-watt-bitcoin/10',
-    border: 'border-watt-bitcoin',
+    text: 'text-[hsl(var(--watt-bitcoin))]',
+    bg: 'bg-[hsl(var(--watt-bitcoin))]',
+    bgLight: 'bg-[hsl(var(--watt-bitcoin)/0.1)]',
+    border: 'border-[hsl(var(--watt-bitcoin))]',
   },
   trust: {
-    text: 'text-watt-trust',
-    bg: 'bg-watt-trust',
-    bgLight: 'bg-watt-trust/10',
-    border: 'border-watt-trust',
+    text: 'text-[hsl(var(--watt-trust))]',
+    bg: 'bg-[hsl(var(--watt-trust))]',
+    bgLight: 'bg-[hsl(var(--watt-trust)/0.1)]',
+    border: 'border-[hsl(var(--watt-trust))]',
   },
   success: {
-    text: 'text-watt-success',
-    bg: 'bg-watt-success',
-    bgLight: 'bg-watt-success/10',
-    border: 'border-watt-success',
+    text: 'text-[hsl(var(--watt-success))]',
+    bg: 'bg-[hsl(var(--watt-success))]',
+    bgLight: 'bg-[hsl(var(--watt-success)/0.1)]',
+    border: 'border-[hsl(var(--watt-success))]',
   },
 };
 
@@ -102,22 +102,22 @@ export const AnimatedTimeline: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative py-16 md:py-20 px-6 bg-watt-light">
+    <section className="relative py-16 md:py-20 px-6 bg-muted">
       <div className="max-w-7xl mx-auto" ref={timelineRef}>
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-watt-navy">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
             Our Story
           </h2>
-          <p className="text-lg text-watt-navy/70 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             From opportunity to global infrastructure company
           </p>
         </div>
 
         <div className="relative">
           {/* Vertical progress line - desktop */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-gray-200 -translate-x-1/2">
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1 bg-border -translate-x-1/2">
             <div
-              className="absolute top-0 left-0 w-full bg-gradient-to-b from-watt-bitcoin via-watt-trust to-watt-success transition-all duration-300"
+              className="absolute top-0 left-0 w-full bg-gradient-to-b from-[hsl(var(--watt-bitcoin))] via-[hsl(var(--watt-trust))] to-[hsl(var(--watt-success))] transition-all duration-300"
               style={{ height: `${progress * 100}%` }}
             />
           </div>
@@ -146,14 +146,14 @@ export const AnimatedTimeline: React.FC = () => {
                         : 'opacity-0 translate-x-12'
                     }`}
                   >
-                    <Card className={`p-8 bg-white border-l-4 ${colors.border} shadow-institutional hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
+                    <Card className={`p-8 bg-card border-l-4 ${colors.border} shadow-institutional hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
                       <div className={`${colors.text} text-4xl font-bold mb-4`}>
                         {item.date}
                       </div>
-                      <h3 className="text-xl font-bold text-watt-navy mb-3">
+                      <h3 className="text-xl font-bold text-foreground mb-3">
                         {item.title}
                       </h3>
-                      <p className="text-watt-navy/70">{item.description}</p>
+                      <p className="text-muted-foreground">{item.description}</p>
                     </Card>
                   </div>
 

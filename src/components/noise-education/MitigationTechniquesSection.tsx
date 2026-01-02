@@ -29,14 +29,14 @@ const techniques = [
       'No gaps or openings',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden">
-        <div className="absolute left-4 bottom-4 w-12 h-16 bg-watt-navy rounded" />
-        <div className="absolute left-20 bottom-4 w-4 h-20 bg-watt-bitcoin rounded" />
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden">
+        <div className="absolute left-4 bottom-4 w-12 h-16 bg-primary/80 rounded" />
+        <div className="absolute left-20 bottom-4 w-4 h-20 bg-[hsl(var(--watt-bitcoin))] rounded" />
         <div className="absolute right-4 bottom-4 text-2xl">🏠</div>
         {/* Sound wave blocked */}
         <svg className="absolute inset-0" viewBox="0 0 200 80">
-          <path d="M 30 40 Q 50 40 60 30" stroke="currentColor" className="text-red-400" strokeWidth="2" fill="none" strokeDasharray="4" />
-          <path d="M 60 30 L 65 20" stroke="currentColor" className="text-red-400" strokeWidth="2" fill="none" />
+          <path d="M 30 40 Q 50 40 60 30" stroke="currentColor" className="text-destructive" strokeWidth="2" fill="none" strokeDasharray="4" />
+          <path d="M 60 30 L 65 20" stroke="currentColor" className="text-destructive" strokeWidth="2" fill="none" />
         </svg>
       </div>
     ),
@@ -56,12 +56,12 @@ const techniques = [
       'Access panels for maintenance',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden flex items-center justify-center">
         <div className="relative">
-          <div className="w-20 h-16 border-4 border-watt-success rounded-lg border-dashed flex items-center justify-center">
-            <Fan className="h-8 w-8 text-watt-navy animate-spin" style={{ animationDuration: '3s' }} />
+          <div className="w-20 h-16 border-4 border-[hsl(var(--watt-success))] rounded-lg border-dashed flex items-center justify-center">
+            <Fan className="h-8 w-8 text-foreground animate-spin" style={{ animationDuration: '3s' }} />
           </div>
-          <div className="absolute -inset-2 border-2 border-watt-success/50 rounded-xl" />
+          <div className="absolute -inset-2 border-2 border-[hsl(var(--watt-success)/0.5)] rounded-xl" />
         </div>
       </div>
     ),
@@ -81,17 +81,17 @@ const techniques = [
       'Motor: Variable frequency drive',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden flex items-center justify-around">
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden flex items-center justify-around">
         <div className="text-center">
-          <Fan className="h-8 w-8 text-red-400 animate-spin" style={{ animationDuration: '0.5s' }} />
-          <p className="text-xs text-watt-navy/60 mt-2">High RPM</p>
-          <p className="text-xs font-bold text-red-400">Loud</p>
+          <Fan className="h-8 w-8 text-destructive animate-spin" style={{ animationDuration: '0.5s' }} />
+          <p className="text-xs text-muted-foreground mt-2">High RPM</p>
+          <p className="text-xs font-bold text-destructive">Loud</p>
         </div>
-        <div className="text-xl">→</div>
+        <div className="text-xl text-foreground">→</div>
         <div className="text-center">
-          <Fan className="h-12 w-12 text-watt-success animate-spin" style={{ animationDuration: '2s' }} />
-          <p className="text-xs text-watt-navy/60 mt-2">Low RPM</p>
-          <p className="text-xs font-bold text-watt-success">Quiet</p>
+          <Fan className="h-12 w-12 text-[hsl(var(--watt-success))] animate-spin" style={{ animationDuration: '2s' }} />
+          <p className="text-xs text-muted-foreground mt-2">Low RPM</p>
+          <p className="text-xs font-bold text-[hsl(var(--watt-success))]">Quiet</p>
         </div>
       </div>
     ),
@@ -111,17 +111,17 @@ const techniques = [
       'Pressure drop: <100 Pa',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden flex items-center justify-center">
         <div className="flex items-center">
-          <div className="w-16 h-8 bg-watt-navy/20 rounded-l" />
-          <div className="w-24 h-12 bg-watt-coinbase/20 border-2 border-watt-coinbase rounded flex items-center justify-center">
+          <div className="w-16 h-8 bg-primary/20 rounded-l" />
+          <div className="w-24 h-12 bg-blue-500/20 border-2 border-blue-500 rounded flex items-center justify-center">
             <div className="space-y-1">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="w-16 h-1 bg-watt-coinbase/50 rounded" />
+                <div key={i} className="w-16 h-1 bg-blue-500/50 rounded" />
               ))}
             </div>
           </div>
-          <div className="w-16 h-8 bg-watt-navy/20 rounded-r" />
+          <div className="w-16 h-8 bg-primary/20 rounded-r" />
         </div>
       </div>
     ),
@@ -141,17 +141,17 @@ const techniques = [
       'Inertia base for heavy equipment',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden flex items-center justify-center">
         <div className="relative">
-          <div className="w-20 h-10 bg-watt-navy rounded" />
+          <div className="w-20 h-10 bg-primary/80 rounded" />
           <div className="flex justify-around -mt-1">
             {[1, 2, 3].map((i) => (
               <svg key={i} width="20" height="24" viewBox="0 0 20 24">
-                <path d="M10 0 L10 4 L4 8 L16 12 L4 16 L16 20 L10 24" stroke="currentColor" className="text-watt-success" strokeWidth="2" fill="none" />
+                <path d="M10 0 L10 4 L4 8 L16 12 L4 16 L16 20 L10 24" stroke="currentColor" className="text-[hsl(var(--watt-success))]" strokeWidth="2" fill="none" />
               </svg>
             ))}
           </div>
-          <div className="w-24 h-3 bg-watt-navy/20 rounded" />
+          <div className="w-24 h-3 bg-primary/20 rounded" />
         </div>
       </div>
     ),
@@ -171,11 +171,11 @@ const techniques = [
       'Species: Dense evergreens',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-b from-sky-100 to-watt-light rounded-lg overflow-hidden">
-        <div className="absolute left-4 bottom-4 w-12 h-16 bg-watt-navy rounded" />
+      <div className="relative h-32 bg-gradient-to-b from-blue-100/50 to-muted/50 rounded-lg overflow-hidden">
+        <div className="absolute left-4 bottom-4 w-12 h-16 bg-primary/80 rounded" />
         <div className="absolute left-24 bottom-0">
           <svg width="60" height="50" viewBox="0 0 60 50">
-            <path d="M0 50 Q30 10 60 50" fill="#4ade80" />
+            <path d="M0 50 Q30 10 60 50" fill="hsl(var(--watt-success))" />
           </svg>
         </div>
         <div className="absolute left-32 bottom-12 text-2xl">🌲</div>
@@ -199,19 +199,19 @@ const techniques = [
       'Soft start capability',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden flex items-center justify-center">
         <div className="text-center">
           <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-watt-navy/20" />
+            <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
             <div 
-              className="absolute inset-0 rounded-full border-4 border-watt-success border-t-transparent"
+              className="absolute inset-0 rounded-full border-4 border-[hsl(var(--watt-success))] border-t-transparent"
               style={{ transform: 'rotate(45deg)' }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-lg font-bold text-watt-success">70%</span>
+              <span className="text-lg font-bold text-[hsl(var(--watt-success))]">70%</span>
             </div>
           </div>
-          <p className="text-xs text-watt-navy/60 mt-2">Speed Control</p>
+          <p className="text-xs text-muted-foreground mt-2">Speed Control</p>
         </div>
       </div>
     ),
@@ -231,16 +231,16 @@ const techniques = [
       'Buffer zones on perimeter',
     ],
     diagram: (
-      <div className="relative h-32 bg-gradient-to-r from-watt-light to-white rounded-lg overflow-hidden p-4">
+      <div className="relative h-32 bg-gradient-to-r from-muted/50 to-card rounded-lg overflow-hidden p-4">
         <div className="absolute top-2 right-2 text-xl">🏠</div>
         <div className="absolute bottom-2 right-2 text-xl">🏠</div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
-            <div className="w-16 h-10 bg-watt-navy rounded" />
-            <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-watt-bitcoin">
+            <div className="w-16 h-10 bg-primary/80 rounded" />
+            <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-[hsl(var(--watt-bitcoin))]">
               →→→
             </div>
-            <div className="absolute -left-8 top-0 text-xs text-watt-success font-bold">✓ Quiet</div>
+            <div className="absolute -left-8 top-0 text-xs text-[hsl(var(--watt-success))] font-bold">✓ Quiet</div>
           </div>
         </div>
       </div>
@@ -254,7 +254,7 @@ export const MitigationTechniquesSection = () => {
   const active = techniques.find(t => t.id === activeTechnique) || techniques[0];
 
   return (
-    <section id="mitigation" className="py-16 md:py-24 bg-white">
+    <section id="mitigation" className="py-16 md:py-24 bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal delay={50}>
           <LearningObjectives 
@@ -265,14 +265,14 @@ export const MitigationTechniquesSection = () => {
 
         <ScrollReveal>
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-watt-success/10 rounded-full mb-4">
-              <Shield className="h-4 w-4 text-watt-success" />
-              <span className="text-sm font-medium text-watt-success">Mitigation</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[hsl(var(--watt-success)/0.1)] rounded-full mb-4">
+              <Shield className="h-4 w-4 text-[hsl(var(--watt-success))]" />
+              <span className="text-sm font-medium text-[hsl(var(--watt-success))]">Mitigation</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               8 Mitigation Techniques
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Multiple strategies exist to reduce facility noise. The best approach combines several 
               techniques for maximum effectiveness.
             </p>
@@ -290,13 +290,13 @@ export const MitigationTechniquesSection = () => {
                   onClick={() => setActiveTechnique(tech.id)}
                   className={`p-4 rounded-xl text-left transition-all ${
                     activeTechnique === tech.id
-                      ? 'bg-watt-success text-white shadow-lg scale-105'
-                      : 'bg-watt-light text-watt-navy hover:bg-watt-success/10'
+                      ? 'bg-[hsl(var(--watt-success))] text-white shadow-lg scale-105'
+                      : 'bg-muted text-foreground hover:bg-[hsl(var(--watt-success)/0.1)]'
                   }`}
                 >
-                  <Icon className={`h-6 w-6 mb-2 ${activeTechnique === tech.id ? 'text-white' : 'text-watt-success'}`} />
+                  <Icon className={`h-6 w-6 mb-2 ${activeTechnique === tech.id ? 'text-white' : 'text-[hsl(var(--watt-success))]'}`} />
                   <p className="font-semibold text-sm">{tech.name}</p>
-                  <p className={`text-xs font-mono font-bold mt-1 ${activeTechnique === tech.id ? 'text-white/90' : 'text-watt-success'}`}>
+                  <p className={`text-xs font-mono font-bold mt-1 ${activeTechnique === tech.id ? 'text-white/90' : 'text-[hsl(var(--watt-success))]'}`}>
                     {tech.reduction}
                   </p>
                 </button>
@@ -307,37 +307,37 @@ export const MitigationTechniquesSection = () => {
 
         {/* Active Technique Detail */}
         <ScrollReveal delay={200}>
-          <Card className="bg-white border-2 border-watt-success/20 shadow-institutional">
+          <Card className="bg-card border-2 border-[hsl(var(--watt-success)/0.2)] shadow-institutional">
             <CardContent className="p-6 md:p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 bg-watt-success/10 rounded-xl flex items-center justify-center">
-                      <active.icon className="h-7 w-7 text-watt-success" />
+                    <div className="w-14 h-14 bg-[hsl(var(--watt-success)/0.1)] rounded-xl flex items-center justify-center">
+                      <active.icon className="h-7 w-7 text-[hsl(var(--watt-success))]" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-watt-navy">{active.name}</h3>
+                      <h3 className="text-2xl font-bold text-foreground">{active.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="border-watt-success text-watt-success font-bold">
+                        <Badge variant="outline" className="border-[hsl(var(--watt-success))] text-[hsl(var(--watt-success))] font-bold">
                           {active.reduction}
                         </Badge>
-                        <Badge variant="outline" className="text-watt-navy/60">
+                        <Badge variant="outline" className="text-muted-foreground">
                           Cost: {active.cost}
                         </Badge>
-                        <Badge variant="outline" className="text-watt-navy/60">
+                        <Badge variant="outline" className="text-muted-foreground">
                           {active.complexity}
                         </Badge>
                       </div>
                     </div>
                   </div>
                   
-                  <p className="text-watt-navy/70 mb-6">{active.description}</p>
+                  <p className="text-muted-foreground mb-6">{active.description}</p>
 
-                  <h4 className="font-semibold text-watt-navy mb-3">Specifications:</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Specifications:</h4>
                   <ul className="space-y-2">
                     {active.specs.map((spec, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-watt-navy/70">
-                        <span className="text-watt-success font-bold">•</span>
+                      <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <span className="text-[hsl(var(--watt-success))] font-bold">•</span>
                         {spec}
                       </li>
                     ))}
@@ -346,7 +346,7 @@ export const MitigationTechniquesSection = () => {
 
                 {/* Diagram */}
                 <div>
-                  <h4 className="font-semibold text-watt-navy mb-3">Visualization</h4>
+                  <h4 className="font-semibold text-foreground mb-3">Visualization</h4>
                   {active.diagram}
                 </div>
               </div>
@@ -356,7 +356,7 @@ export const MitigationTechniquesSection = () => {
 
         {/* Summary Table */}
         <ScrollReveal delay={300}>
-          <Card className="bg-watt-navy text-white border-none shadow-xl mt-8">
+          <Card className="bg-[hsl(var(--watt-navy))] text-white border-none shadow-xl mt-8">
             <CardContent className="p-6 md:p-8">
               <h3 className="text-xl font-bold mb-6">Mitigation Techniques Summary</h3>
               <div className="overflow-x-auto">
@@ -373,7 +373,7 @@ export const MitigationTechniquesSection = () => {
                     {techniques.map((tech, idx) => (
                       <tr key={idx} className="border-b border-white/5">
                         <td className="py-3 text-sm">{tech.name}</td>
-                        <td className="py-3 text-center font-mono font-bold text-watt-success">{tech.reduction}</td>
+                        <td className="py-3 text-center font-mono font-bold text-[hsl(var(--watt-success))]">{tech.reduction}</td>
                         <td className="py-3 text-center">{tech.cost}</td>
                         <td className="py-3 text-center hidden md:table-cell text-white/60">{tech.complexity}</td>
                       </tr>
@@ -381,10 +381,10 @@ export const MitigationTechniquesSection = () => {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-6 p-4 bg-watt-success/20 rounded-lg">
+              <div className="mt-6 p-4 bg-[hsl(var(--watt-success)/0.2)] rounded-lg">
                 <p className="text-sm">
                   <strong>Combined Potential:</strong> Strategic application of multiple techniques can achieve 
-                  <strong className="text-watt-success"> 25-40+ dB</strong> total reduction when needed.
+                  <strong className="text-[hsl(var(--watt-success))]"> 25-40+ dB</strong> total reduction when needed.
                 </p>
               </div>
             </CardContent>

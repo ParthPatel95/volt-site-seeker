@@ -461,63 +461,63 @@ export const BTCROICalculatorV2: React.FC = () => {
             </div>
 
             {/* Detailed Results */}
-            <Card className="bg-white border-gray-200 shadow-institutional">
+            <Card className="bg-card border-border shadow-institutional">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-watt-navy flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-watt-success" />
+                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-market-positive" />
                   Detailed Analysis
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="breakdown" className="space-y-4">
-                  <TabsList className="bg-gray-100 p-1 w-full sm:w-auto">
-                    <TabsTrigger value="breakdown" className="text-xs data-[state=active]:bg-white data-[state=active]:text-watt-navy flex-1 sm:flex-none">Breakdown</TabsTrigger>
-                    <TabsTrigger value="projections" className="text-xs data-[state=active]:bg-white data-[state=active]:text-watt-navy flex-1 sm:flex-none">Projections</TabsTrigger>
-                    <TabsTrigger value="scenarios" className="text-xs data-[state=active]:bg-white data-[state=active]:text-watt-navy flex-1 sm:flex-none">Scenarios</TabsTrigger>
+                  <TabsList className="bg-muted p-1 w-full sm:w-auto">
+                    <TabsTrigger value="breakdown" className="text-xs data-[state=active]:bg-card data-[state=active]:text-foreground flex-1 sm:flex-none">Breakdown</TabsTrigger>
+                    <TabsTrigger value="projections" className="text-xs data-[state=active]:bg-card data-[state=active]:text-foreground flex-1 sm:flex-none">Projections</TabsTrigger>
+                    <TabsTrigger value="scenarios" className="text-xs data-[state=active]:bg-card data-[state=active]:text-foreground flex-1 sm:flex-none">Scenarios</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="breakdown" className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Revenue */}
-                      <div className="bg-watt-success/5 border border-watt-success/20 rounded-lg p-4 space-y-3">
-                        <h4 className="text-sm font-medium text-watt-success flex items-center gap-2">
+                      <div className="bg-market-positive/5 border border-market-positive/20 rounded-lg p-4 space-y-3">
+                        <h4 className="text-sm font-medium text-market-positive flex items-center gap-2">
                           <TrendingUp className="w-4 h-4" />
                           Revenue
                         </h4>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-watt-navy/60">Daily BTC Mined</span>
-                            <span className="text-watt-navy font-mono">{results ? formatBTC(results.dailyBTC) : '—'}</span>
+                            <span className="text-muted-foreground">Daily BTC Mined</span>
+                            <span className="text-foreground font-mono">{results ? formatBTC(results.dailyBTC) : '—'}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-watt-navy/60">Daily Revenue</span>
-                            <span className="text-watt-success font-mono">{results ? formatCurrency(results.dailyRevenue) : '—'}</span>
+                            <span className="text-muted-foreground">Daily Revenue</span>
+                            <span className="text-market-positive font-mono">{results ? formatCurrency(results.dailyRevenue) : '—'}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-watt-navy/60">Monthly Revenue</span>
-                            <span className="text-watt-success font-mono">{results ? formatCurrency(results.dailyRevenue * 30) : '—'}</span>
+                            <span className="text-muted-foreground">Monthly Revenue</span>
+                            <span className="text-market-positive font-mono">{results ? formatCurrency(results.dailyRevenue * 30) : '—'}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Costs */}
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
-                        <h4 className="text-sm font-medium text-red-600 flex items-center gap-2">
+                      <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 space-y-3">
+                        <h4 className="text-sm font-medium text-destructive flex items-center gap-2">
                           <Zap className="w-4 h-4" />
                           Costs
                         </h4>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-watt-navy/60">Daily Power</span>
-                            <span className="text-red-600 font-mono">-{results ? formatCurrency(results.dailyPowerCost) : '—'}</span>
+                            <span className="text-muted-foreground">Daily Power</span>
+                            <span className="text-destructive font-mono">-{results ? formatCurrency(results.dailyPowerCost) : '—'}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-watt-navy/60">Daily Pool Fee</span>
-                            <span className="text-red-600 font-mono">-{results ? formatCurrency(results.dailyPoolFees) : '—'}</span>
+                            <span className="text-muted-foreground">Daily Pool Fee</span>
+                            <span className="text-destructive font-mono">-{results ? formatCurrency(results.dailyPoolFees) : '—'}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-watt-navy/60">Total Daily Cost</span>
-                            <span className="text-red-600 font-mono">-{results ? formatCurrency(results.dailyPowerCost + results.dailyPoolFees) : '—'}</span>
+                            <span className="text-muted-foreground">Total Daily Cost</span>
+                            <span className="text-destructive font-mono">-{results ? formatCurrency(results.dailyPowerCost + results.dailyPoolFees) : '—'}</span>
                           </div>
                         </div>
                       </div>
@@ -525,17 +525,17 @@ export const BTCROICalculatorV2: React.FC = () => {
 
                     {/* Summary Stats */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                        <div className="text-xs text-watt-navy/60 mb-1">Total Power</div>
-                        <div className="text-lg font-semibold text-watt-navy">{results ? `${results.totalPowerKW.toFixed(1)} kW` : '—'}</div>
+                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Total Power</div>
+                        <div className="text-lg font-semibold text-foreground">{results ? `${results.totalPowerKW.toFixed(1)} kW` : '—'}</div>
                       </div>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                        <div className="text-xs text-watt-navy/60 mb-1">Daily kWh</div>
-                        <div className="text-lg font-semibold text-watt-navy">{results ? `${results.dailyPowerKWh.toFixed(0)}` : '—'}</div>
+                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Daily kWh</div>
+                        <div className="text-lg font-semibold text-foreground">{results ? `${results.dailyPowerKWh.toFixed(0)}` : '—'}</div>
                       </div>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                        <div className="text-xs text-watt-navy/60 mb-1">Efficiency</div>
-                        <div className="text-lg font-semibold text-watt-navy">{results ? `${results.efficiency.toFixed(1)} W/TH` : '—'}</div>
+                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Efficiency</div>
+                        <div className="text-lg font-semibold text-foreground">{results ? `${results.efficiency.toFixed(1)} W/TH` : '—'}</div>
                       </div>
                       <div className="bg-muted border border-border rounded-lg p-3 text-center">
                         <div className="text-xs text-muted-foreground mb-1">Investment</div>

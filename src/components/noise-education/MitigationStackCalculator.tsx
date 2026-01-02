@@ -69,22 +69,22 @@ const MitigationStackCalculator = () => {
   }, [selectedTechniques, sourceDb]);
 
   const getCostLabel = () => {
-    if (calculation.costLevel <= 2) return { label: 'Low', color: 'text-watt-success' };
-    if (calculation.costLevel <= 5) return { label: 'Medium', color: 'text-watt-coinbase' };
+    if (calculation.costLevel <= 2) return { label: 'Low', color: 'text-[hsl(var(--watt-success))]' };
+    if (calculation.costLevel <= 5) return { label: 'Medium', color: 'text-blue-500' };
     if (calculation.costLevel <= 8) return { label: 'High', color: 'text-yellow-500' };
-    return { label: 'Very High', color: 'text-red-500' };
+    return { label: 'Very High', color: 'text-destructive' };
   };
 
   return (
-    <Card className="bg-gradient-to-br from-watt-success/5 to-watt-coinbase/5 border-2 border-watt-success/20">
+    <Card className="bg-gradient-to-br from-[hsl(var(--watt-success)/0.05)] to-blue-500/5 border-2 border-[hsl(var(--watt-success)/0.2)]">
       <CardContent className="p-6 md:p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-watt-success/10 rounded-lg flex items-center justify-center">
-            <Calculator className="h-5 w-5 text-watt-success" />
+          <div className="w-10 h-10 bg-[hsl(var(--watt-success)/0.1)] rounded-lg flex items-center justify-center">
+            <Calculator className="h-5 w-5 text-[hsl(var(--watt-success))]" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-watt-navy">Mitigation Stack Calculator</h3>
-            <p className="text-sm text-watt-navy/60">Select techniques to see combined effect</p>
+            <h3 className="text-xl font-bold text-foreground">Mitigation Stack Calculator</h3>
+            <p className="text-sm text-muted-foreground">Select techniques to see combined effect</p>
           </div>
         </div>
 
@@ -100,25 +100,25 @@ const MitigationStackCalculator = () => {
                 onClick={() => toggleTechnique(tech.id)}
                 className={`relative p-4 rounded-xl text-left transition-all border-2 ${
                   isSelected 
-                    ? 'bg-watt-success/10 border-watt-success shadow-lg' 
-                    : 'bg-white border-watt-navy/10 hover:border-watt-success/50'
+                    ? 'bg-[hsl(var(--watt-success)/0.1)] border-[hsl(var(--watt-success))] shadow-lg' 
+                    : 'bg-card border-border hover:border-[hsl(var(--watt-success)/0.5)]'
                 }`}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-start gap-3">
                   <Checkbox 
                     checked={isSelected}
-                    className="mt-0.5 data-[state=checked]:bg-watt-success data-[state=checked]:border-watt-success"
+                    className="mt-0.5 data-[state=checked]:bg-[hsl(var(--watt-success))] data-[state=checked]:border-[hsl(var(--watt-success))]"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <Icon className={`h-4 w-4 ${isSelected ? 'text-watt-success' : 'text-watt-navy/50'}`} />
-                      <span className={`text-xs font-mono ${isSelected ? 'text-watt-success' : 'text-watt-navy/60'}`}>
+                      <Icon className={`h-4 w-4 ${isSelected ? 'text-[hsl(var(--watt-success))]' : 'text-muted-foreground'}`} />
+                      <span className={`text-xs font-mono ${isSelected ? 'text-[hsl(var(--watt-success))]' : 'text-muted-foreground'}`}>
                         {tech.cost}
                       </span>
                     </div>
-                    <p className="text-sm font-medium text-watt-navy truncate">{tech.name}</p>
-                    <p className="text-xs font-mono text-watt-coinbase">
+                    <p className="text-sm font-medium text-foreground truncate">{tech.name}</p>
+                    <p className="text-xs font-mono text-blue-500">
                       -{tech.reductionMin} to -{tech.reductionMax} dB
                     </p>
                   </div>
@@ -129,9 +129,9 @@ const MitigationStackCalculator = () => {
         </div>
 
         {/* Results Panel */}
-        <div className="bg-watt-navy rounded-xl p-6 text-white">
+        <div className="bg-[hsl(var(--watt-navy))] rounded-xl p-6 text-white">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingDown className="h-5 w-5 text-watt-success" />
+            <TrendingDown className="h-5 w-5 text-[hsl(var(--watt-success))]" />
             <h4 className="font-bold">Combined Effect</h4>
             <Badge className="ml-auto bg-white/10 text-white/70">
               {selectedTechniques.length} technique{selectedTechniques.length !== 1 ? 's' : ''} selected
@@ -141,7 +141,7 @@ const MitigationStackCalculator = () => {
           <div className="grid md:grid-cols-4 gap-4">
             <div className="bg-white/10 rounded-lg p-4 text-center">
               <p className="text-xs text-white/60 mb-1">Source Level</p>
-              <p className="text-2xl font-bold font-mono text-watt-bitcoin">{sourceDb} dB</p>
+              <p className="text-2xl font-bold font-mono text-[hsl(var(--watt-bitcoin))]">{sourceDb} dB</p>
             </div>
             
             <div className="bg-white/10 rounded-lg p-4 text-center">
@@ -152,7 +152,7 @@ const MitigationStackCalculator = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="text-2xl font-bold font-mono text-watt-success"
+                  className="text-2xl font-bold font-mono text-[hsl(var(--watt-success))]"
                 >
                   -{calculation.effectiveReduction.toFixed(1)} dB
                 </motion.p>
@@ -170,7 +170,7 @@ const MitigationStackCalculator = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="text-2xl font-bold font-mono text-watt-coinbase"
+                  className="text-2xl font-bold font-mono text-blue-400"
                 >
                   {calculation.resultDb.toFixed(1)} dB
                 </motion.p>
@@ -186,9 +186,9 @@ const MitigationStackCalculator = () => {
           </div>
 
           {selectedTechniques.length > 1 && (
-            <div className="mt-4 p-3 bg-watt-bitcoin/20 rounded-lg">
+            <div className="mt-4 p-3 bg-[hsl(var(--watt-bitcoin)/0.2)] rounded-lg">
               <p className="text-xs text-white/80">
-                <strong className="text-watt-bitcoin">Note:</strong> Combined reductions account for diminishing returns.
+                <strong className="text-[hsl(var(--watt-bitcoin))]">Note:</strong> Combined reductions account for diminishing returns.
                 Stacking more techniques provides less marginal benefit than their individual specs suggest.
               </p>
             </div>
