@@ -71,10 +71,10 @@ export const MarketOpportunitySection = () => {
             <span className="text-sm font-medium text-watt-bitcoin">Market Analysis</span>
           </motion.div>
           
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Explosive Market <span className="bg-gradient-to-r from-watt-bitcoin to-watt-success bg-clip-text text-transparent">Opportunity</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[hsl(210_40%_98%)]">
+            Explosive Market <span className="bg-gradient-to-r from-primary to-watt-success bg-clip-text text-transparent">Opportunity</span>
           </h2>
-          <p className="text-lg text-white/60 max-w-2xl mx-auto">
+          <p className="text-lg text-[hsl(210_40%_98%)/0.6] max-w-2xl mx-auto">
             AI revolution and Bitcoin adoption creating unprecedented demand for power infrastructure
           </p>
         </motion.div>
@@ -97,8 +97,8 @@ export const MarketOpportunitySection = () => {
                   <TrendingUp className="w-5 h-5 text-watt-trust" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Digital Infrastructure Power Demand</h3>
-                  <p className="text-white/50 text-sm">Exponential growth in AI and Bitcoin mining (GW)</p>
+                  <h3 className="text-lg font-bold text-[hsl(210_40%_98%)]">Digital Infrastructure Power Demand</h3>
+                  <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Exponential growth in AI and Bitcoin mining (GW)</p>
                 </div>
               </div>
               
@@ -139,8 +139,8 @@ export const MarketOpportunitySection = () => {
                   <Zap className="w-5 h-5 text-watt-bitcoin" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Power Cost Arbitrage</h3>
-                  <p className="text-white/50 text-sm">Massive cost differentials across markets (¢/kWh)</p>
+                  <h3 className="text-lg font-bold text-[hsl(210_40%_98%)]">Power Cost Arbitrage</h3>
+                  <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Massive cost differentials across markets (¢/kWh)</p>
                 </div>
               </div>
               
@@ -183,8 +183,8 @@ export const MarketOpportunitySection = () => {
                   <Bitcoin className="w-5 h-5 text-watt-bitcoin" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Bitcoin Mining Revenue</h3>
-                  <p className="text-white/50 text-sm">Monthly net profit by scale</p>
+                  <h3 className="text-lg font-bold text-[hsl(210_40%_98%)]">Bitcoin Mining Revenue</h3>
+                  <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Monthly net profit by scale</p>
                 </div>
               </div>
               
@@ -201,7 +201,7 @@ export const MarketOpportunitySection = () => {
               </ChartContainer>
               
               <div className="mt-4 text-center">
-                <span className="text-watt-bitcoin font-bold">
+                <span className="text-primary font-bold">
                   $<AnimatedCounter end={3.4} decimals={1} suffix="M+" /> monthly at 25 EH/s
                 </span>
               </div>
@@ -224,8 +224,8 @@ export const MarketOpportunitySection = () => {
                   <Cpu className="w-5 h-5 text-watt-trust" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">AI & HPC Workload Growth</h3>
-                  <p className="text-white/50 text-sm">Quarterly compute demand (PetaFLOPs)</p>
+                  <h3 className="text-lg font-bold text-[hsl(210_40%_98%)]">AI & HPC Workload Growth</h3>
+                  <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Quarterly compute demand (PetaFLOPs)</p>
                 </div>
               </div>
               
@@ -262,9 +262,9 @@ export const MarketOpportunitySection = () => {
         >
           {[
             { label: "Total Power Demand 2026", value: 125, suffix: "+ GW", color: "text-watt-trust" },
-            { label: "Annual Investment Required", value: 85, prefix: "$", suffix: "B+", color: "text-watt-bitcoin" },
+            { label: "Annual Investment Required", value: 85, prefix: "$", suffix: "B+", color: "text-primary" },
             { label: "GPU Shortage Backlog", value: 2, suffix: "+ Years", color: "text-watt-success" },
-            { label: "Data Center Growth Rate", value: 35, suffix: "% CAGR", color: "text-white" },
+            { label: "Data Center Growth Rate", value: 35, suffix: "% CAGR", color: "text-[hsl(210_40%_98%)]" },
           ].map((stat, index) => (
             <motion.div
               key={index}
@@ -274,7 +274,7 @@ export const MarketOpportunitySection = () => {
               <p className={`text-2xl md:text-3xl font-bold ${stat.color} mb-1`}>
                 <AnimatedCounter end={stat.value} prefix={stat.prefix || ''} suffix={stat.suffix} />
               </p>
-              <p className="text-white/50 text-xs">{stat.label}</p>
+              <p className="text-[hsl(210_40%_98%)/0.5] text-xs">{stat.label}</p>
             </motion.div>
           ))}
         </motion.div>

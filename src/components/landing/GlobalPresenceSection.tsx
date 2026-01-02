@@ -104,7 +104,7 @@ const GlobalPresenceSection: React.FC = () => {
                 <div>
                   <div className="text-4xl md:text-5xl font-bold text-foreground mb-2">
                     <AnimatedCounter end={totalCapacity} duration={2000} />
-                    <span className="text-watt-bitcoin ml-2">MW</span>
+                    <span className="text-primary ml-2">MW</span>
                   </div>
                   <p className="text-sm text-muted-foreground font-medium">Total Pipeline Capacity</p>
                 </div>
@@ -138,13 +138,13 @@ const GlobalPresenceSection: React.FC = () => {
                 onClick={() => setSelectedRegion(region.name)}
                 className={`p-4 rounded-lg border-2 transition-all duration-300 ${
                   selectedRegion === region.name
-                    ? 'border-watt-bitcoin bg-watt-bitcoin/5 shadow-lg'
-                    : 'border-border bg-card hover:border-watt-bitcoin/50 hover:shadow-md'
+                    ? 'border-primary bg-primary/5 shadow-lg'
+                    : 'border-border bg-card hover:border-primary/50 hover:shadow-md'
                 }`}
               >
                 <div className="text-center">
                   <Globe className={`w-6 h-6 mx-auto mb-2 ${
-                    selectedRegion === region.name ? 'text-watt-bitcoin' : 'text-muted-foreground'
+                    selectedRegion === region.name ? 'text-primary' : 'text-muted-foreground'
                   }`} />
                   <p className={`text-sm font-semibold mb-1 ${
                     selectedRegion === region.name ? 'text-foreground' : 'text-muted-foreground'
@@ -152,7 +152,7 @@ const GlobalPresenceSection: React.FC = () => {
                     {region.name}
                   </p>
                   <p className={`text-2xl font-bold ${
-                    selectedRegion === region.name ? 'text-watt-bitcoin' : 'text-foreground'
+                    selectedRegion === region.name ? 'text-primary' : 'text-foreground'
                   }`}>
                     {region.total}<span className="text-sm ml-1">MW</span>
                   </p>
@@ -166,7 +166,7 @@ const GlobalPresenceSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCountries.map((country, index) => (
             <ScrollReveal key={country.name} delay={0.1 * index}>
-              <div className="bg-card rounded-xl shadow-institutional p-6 border border-border hover:shadow-xl hover:scale-105 transition-all duration-300 hover:border-watt-bitcoin/30">
+              <div className="bg-card rounded-xl shadow-institutional p-6 border border-border hover:shadow-xl hover:scale-105 transition-all duration-300 hover:border-primary/30">
                 {/* Flag and Name */}
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-12 rounded-lg overflow-hidden border border-border shadow-sm flex-shrink-0">
@@ -192,7 +192,7 @@ const GlobalPresenceSection: React.FC = () => {
                       <AnimatedCounter end={country.capacity} duration={1500} />
                       <span className="text-lg ml-1">MW</span>
                     </span>
-                    <span className="text-sm font-semibold text-watt-bitcoin">
+                    <span className="text-sm font-semibold text-primary">
                       {((country.capacity / totalCapacity) * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -200,7 +200,7 @@ const GlobalPresenceSection: React.FC = () => {
                   {/* Progress Bar */}
                   <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-watt-bitcoin to-watt-bitcoin/80 rounded-full transition-all duration-1000 ease-out"
+                      className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-1000 ease-out"
                       style={{ width: `${(country.capacity / totalCapacity) * 100}%` }}
                     />
                   </div>

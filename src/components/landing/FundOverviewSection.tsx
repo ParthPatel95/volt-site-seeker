@@ -34,10 +34,10 @@ export const FundOverviewSection = () => {
             <span className="text-sm font-medium text-watt-bitcoin">Fund I Details</span>
           </motion.div>
           
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Fund <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">Overview</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-[hsl(210_40%_98%)]">
+            Fund <span className="bg-gradient-to-r from-primary to-watt-trust bg-clip-text text-transparent">Overview</span>
           </h2>
-          <p className="text-lg text-white/60 max-w-2xl mx-auto">
+          <p className="text-lg text-[hsl(210_40%_98%)/0.6] max-w-2xl mx-auto">
             Strategic infrastructure investments with institutional-grade returns
           </p>
         </motion.div>
@@ -55,7 +55,7 @@ export const FundOverviewSection = () => {
             <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-watt-trust/20 to-watt-bitcoin/20 blur-xl" />
             
             <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
-              <h3 className="text-xl font-bold text-white mb-8 text-center">Target Returns</h3>
+              <h3 className="text-xl font-bold text-[hsl(210_40%_98%)] mb-8 text-center">Target Returns</h3>
               
               <div className="flex flex-wrap justify-center gap-8">
                 <RadialProgress
@@ -84,20 +84,20 @@ export const FundOverviewSection = () => {
               <div className="mt-8 pt-6 border-t border-white/10">
                 <div className="flex items-center justify-between">
                   <div className="text-center flex-1">
-                    <div className="text-2xl font-bold text-watt-bitcoin mb-1">
+                    <div className="text-2xl font-bold text-primary mb-1">
                       <AnimatedCounter end={2} suffix=" Years" />
                     </div>
-                    <p className="text-white/50 text-sm">Hold Period</p>
+                    <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Hold Period</p>
                   </div>
                   <div className="w-px h-12 bg-white/10" />
                   <div className="text-center flex-1">
                     <div className="text-2xl font-bold text-watt-trust mb-1">$25M</div>
-                    <p className="text-white/50 text-sm">Fund Size</p>
+                    <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Fund Size</p>
                   </div>
                   <div className="w-px h-12 bg-white/10" />
                   <div className="text-center flex-1">
                     <div className="text-2xl font-bold text-watt-success mb-1">12-15</div>
-                    <p className="text-white/50 text-sm">Investments</p>
+                    <p className="text-[hsl(210_40%_98%)/0.5] text-sm">Investments</p>
                   </div>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export const FundOverviewSection = () => {
             <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-watt-bitcoin/20 to-watt-success/20 blur-xl" />
             
             <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10 h-full">
-              <h3 className="text-xl font-bold text-white mb-8 text-center">Current Pipeline</h3>
+              <h3 className="text-xl font-bold text-[hsl(210_40%_98%)] mb-8 text-center">Current Pipeline</h3>
               
               <div className="space-y-6">
                 {stats.map((stat, index) => (
@@ -135,7 +135,7 @@ export const FundOverviewSection = () => {
                       <stat.icon className={`w-7 h-7 ${stat.color}`} />
                     </motion.div>
                     <div className="flex-1">
-                      <p className="text-white/50 text-sm">{stat.label}</p>
+                      <p className="text-[hsl(210_40%_98%)/0.5] text-sm">{stat.label}</p>
                       <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                     </div>
                   </motion.div>
@@ -145,7 +145,7 @@ export const FundOverviewSection = () => {
               {/* Exit Strategy */}
               <div className="mt-6 p-4 bg-gradient-to-r from-watt-success/10 to-transparent rounded-xl border border-watt-success/20">
                 <h4 className="text-sm font-semibold text-watt-success mb-2">Exit Strategy</h4>
-                <p className="text-white/60 text-sm">
+                <p className="text-[hsl(210_40%_98%)/0.6] text-sm">
                   Structured exits to hyperscalers, data center operators, and strategic infrastructure buyers
                 </p>
               </div>
@@ -162,10 +162,10 @@ export const FundOverviewSection = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {[
-            { label: "Deployment Cost", value: "$250k/MW", color: "text-watt-bitcoin" },
+            { label: "Deployment Cost", value: "$250k/MW", color: "text-primary" },
             { label: "Operating Margin", value: "60%+", color: "text-watt-success" },
             { label: "Revenue Multiple", value: "3-5x", color: "text-watt-trust" },
-            { label: "Cash-on-Cash", value: "25%+", color: "text-white" },
+            { label: "Cash-on-Cash", value: "25%+", color: "text-[hsl(210_40%_98%)]" },
           ].map((item, index) => (
             <motion.div
               key={index}
@@ -173,7 +173,7 @@ export const FundOverviewSection = () => {
               className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center"
             >
               <p className={`text-2xl font-bold ${item.color} mb-1`}>{item.value}</p>
-              <p className="text-white/50 text-xs">{item.label}</p>
+              <p className="text-[hsl(210_40%_98%)/0.5] text-xs">{item.label}</p>
             </motion.div>
           ))}
         </motion.div>

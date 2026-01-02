@@ -91,15 +91,15 @@ export const InvestorCTASection = () => {
             </motion.div>
 
             {/* Headline */}
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white leading-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-[hsl(210_40%_98%)] leading-tight">
               Ready to Invest in{' '}
-              <span className="bg-gradient-to-r from-watt-bitcoin via-watt-trust to-watt-success bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-watt-trust to-watt-success bg-clip-text text-transparent">
                 Digital Infrastructure
               </span>
               ?
             </h2>
 
-            <p className="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-10 leading-relaxed">
+            <p className="text-xl md:text-2xl text-[hsl(210_40%_98%)/0.7] max-w-3xl mx-auto mb-10 leading-relaxed">
               Join institutional investors capitalizing on the power-to-data arbitrage opportunity. 
               Access exclusive investment materials and speak with our fund managers.
             </p>
@@ -119,8 +119,8 @@ export const InvestorCTASection = () => {
                   transition={{ delay: index * 0.1 + 0.3 }}
                   className="text-center"
                 >
-                  <p className="text-3xl md:text-4xl font-bold text-watt-bitcoin mb-1">{stat.value}</p>
-                  <p className="text-white/50 text-sm">{stat.label}</p>
+                  <p className="text-3xl md:text-4xl font-bold text-primary mb-1">{stat.value}</p>
+                  <p className="text-[hsl(210_40%_98%)/0.5] text-sm">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -165,7 +165,7 @@ export const InvestorCTASection = () => {
             </div>
 
             {/* Contact Options */}
-            <div className="flex flex-wrap justify-center gap-6 text-white/50 text-sm">
+            <div className="flex flex-wrap justify-center gap-6 text-[hsl(210_40%_98%)/0.5] text-sm">
               <motion.a
                 href="mailto:invest@wattbyte.com"
                 className="flex items-center gap-2 hover:text-watt-trust transition-colors"
