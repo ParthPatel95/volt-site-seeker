@@ -127,7 +127,7 @@ const HydroContainerProductsSection = () => {
   const [selectedContainer, setSelectedContainer] = useState(containerProducts[0]);
 
   return (
-    <section id="container-products" className="py-20 bg-gradient-to-b from-white to-blue-50/50">
+    <section id="container-products" className="py-20 bg-gradient-to-b from-background to-muted/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -337,7 +337,7 @@ const HydroContainerProductsSection = () => {
 
         {/* Scaling Guide */}
         <ScrollReveal delay={100}>
-          <Card className="border-border mt-8 bg-gradient-to-br from-blue-50 to-cyan-50">
+          <Card className="border-border mt-8 bg-gradient-to-br from-muted to-muted/50">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
@@ -349,19 +349,19 @@ const HydroContainerProductsSection = () => {
                     For a 100 MW facility using HK3 containers with plate heat exchangers:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-3 rounded-lg bg-white text-center">
+                    <div className="p-3 rounded-lg bg-card text-center">
                       <span className="text-2xl font-bold text-blue-600">40</span>
                       <span className="text-xs block text-muted-foreground">Basic Units</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-white text-center">
+                    <div className="p-3 rounded-lg bg-card text-center">
                       <span className="text-2xl font-bold text-blue-600">80</span>
                       <span className="text-xs block text-muted-foreground">Containers</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-white text-center">
+                    <div className="p-3 rounded-lg bg-card text-center">
                       <span className="text-2xl font-bold text-blue-600">40</span>
                       <span className="text-xs block text-muted-foreground">Transformers</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-white text-center">
+                    <div className="p-3 rounded-lg bg-card text-center">
                       <span className="text-2xl font-bold text-blue-600">16,800</span>
                       <span className="text-xs block text-muted-foreground">Total Miners</span>
                     </div>

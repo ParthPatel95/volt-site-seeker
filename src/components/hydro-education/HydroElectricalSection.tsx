@@ -124,7 +124,7 @@ const HydroElectricalSection = () => {
   const currentMethod = cableInstallationMethods.find(m => m.id === selectedMethod) || cableInstallationMethods[0];
 
   return (
-    <section id="electrical" className="py-20 bg-white">
+    <section id="electrical" className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">

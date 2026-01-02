@@ -101,7 +101,7 @@ const HydroWaterSystemsSection = () => {
   const currentSystem = waterSystems.find(s => s.id === activeSystem) || waterSystems[0];
 
   return (
-    <section id="water-systems" className="py-20 bg-gradient-to-b from-white to-cyan-50/50">
+    <section id="water-systems" className="py-20 bg-gradient-to-b from-background to-muted/50">
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-16">
@@ -134,7 +134,7 @@ const HydroWaterSystemsSection = () => {
                 <TabsTrigger
                   key={system.id}
                   value={system.id}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-cyan-500 data-[state=active]:bg-cyan-50 border-border bg-white hover:border-cyan-300"
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-cyan-500 data-[state=active]:bg-primary/5 border-border bg-card hover:border-cyan-300"
                 >
                   <Waves className="w-6 h-6 text-cyan-600" />
                   <span className="text-sm font-medium text-foreground">{system.name}</span>

@@ -185,7 +185,7 @@ const HydroCoolingMethodsSection = () => {
                   <TabsTrigger
                     key={method.id}
                     value={method.id}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 border-border bg-white hover:border-blue-300`}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all data-[state=active]:border-blue-500 data-[state=active]:bg-primary/5 border-border bg-card hover:border-blue-300`}
                   >
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${method.color} flex items-center justify-center`}>
                       <Icon className="w-5 h-5 text-white" />
