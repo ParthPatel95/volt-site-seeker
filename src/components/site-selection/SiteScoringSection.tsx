@@ -78,17 +78,17 @@ const SiteScoringSection = () => {
   ];
 
   return (
-    <section id="site-scoring" className="py-20 bg-watt-light">
+    <section id="site-scoring" className="py-20 bg-muted">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Site Scoring
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               VoltScore™ Site Evaluation
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Use our weighted scoring methodology to objectively compare sites 
               and make data-driven acquisition decisions.
             </p>
@@ -114,8 +114,8 @@ const SiteScoringSection = () => {
 
         {/* Interactive Scorer */}
         <ScrollReveal delay={100}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <Calculator className="w-5 h-5 text-watt-purple" />
               Interactive Site Scorer
             </h3>
@@ -125,7 +125,7 @@ const SiteScoringSection = () => {
                 {criteria.map((c) => (
                   <div key={c.key} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-watt-navy">
+                      <label className="text-sm font-medium text-foreground">
                         {c.label}
                         <span className="text-watt-purple ml-1">({c.weight}%)</span>
                       </label>
@@ -139,9 +139,9 @@ const SiteScoringSection = () => {
                       max="10"
                       value={scores[c.key as keyof typeof scores]}
                       onChange={(e) => setScores(prev => ({ ...prev, [c.key]: Number(e.target.value) }))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                     />
-                    <p className="text-xs text-watt-navy/50">{c.description}</p>
+                    <p className="text-xs text-muted-foreground">{c.description}</p>
                   </div>
                 ))}
               </div>
@@ -149,16 +149,16 @@ const SiteScoringSection = () => {
               <div className="flex flex-col items-center justify-center">
                 <div className="relative w-48 h-48">
                   <div className={`absolute inset-0 rounded-full ${gradeInfo.color} opacity-20`} />
-                  <div className="absolute inset-4 bg-white rounded-full shadow-lg flex flex-col items-center justify-center">
-                    <div className="text-6xl font-bold text-watt-navy">{gradeInfo.grade}</div>
-                    <div className="text-lg text-watt-navy/70">{weightedScore}/10</div>
+                  <div className="absolute inset-4 bg-card rounded-full shadow-lg flex flex-col items-center justify-center">
+                    <div className="text-6xl font-bold text-foreground">{gradeInfo.grade}</div>
+                    <div className="text-lg text-muted-foreground">{weightedScore}/10</div>
                   </div>
                 </div>
                 <div className="mt-4 text-center">
                   <div className={`text-xl font-bold ${gradeInfo.color === 'bg-watt-success' ? 'text-watt-success' : gradeInfo.color === 'bg-blue-500' ? 'text-blue-500' : gradeInfo.color === 'bg-watt-bitcoin' ? 'text-watt-bitcoin' : gradeInfo.color === 'bg-yellow-500' ? 'text-yellow-500' : 'text-red-500'}`}>
                     {gradeInfo.label} Site
                   </div>
-                  <p className="text-sm text-watt-navy/60 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {weightedScore >= 8 ? 'Proceed with full due diligence' :
                      weightedScore >= 6 ? 'Further investigation recommended' :
                      'Consider alternative sites'}
@@ -173,12 +173,12 @@ const SiteScoringSection = () => {
         <ScrollReveal delay={200}>
           <div className="grid md:grid-cols-4 gap-4 mb-8">
             {criteria.slice(0, 4).map((c, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-4 border border-gray-100">
+              <div key={idx} className="bg-card rounded-xl p-4 border border-border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-watt-navy">{c.label}</span>
+                  <span className="font-semibold text-foreground">{c.label}</span>
                   <span className="text-sm text-watt-purple font-bold">{c.weight}%</span>
                 </div>
-                <div className="space-y-1 text-xs text-watt-navy/60">
+                <div className="space-y-1 text-xs text-muted-foreground">
                   <div className="flex justify-between"><span>10:</span><span>Best in class</span></div>
                   <div className="flex justify-between"><span>7-9:</span><span>Above average</span></div>
                   <div className="flex justify-between"><span>4-6:</span><span>Average</span></div>
@@ -246,7 +246,7 @@ const SiteScoringSection = () => {
         {/* Decision Matrix */}
         <ScrollReveal delay={400}>
           <div className="mt-8 bg-gradient-to-r from-watt-success/10 to-watt-bitcoin/10 rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-watt-navy mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-watt-purple" />
               Decision Matrix
             </h3>
@@ -254,23 +254,23 @@ const SiteScoringSection = () => {
               <div className="bg-watt-success/20 rounded-xl p-4 text-center">
                 <Star className="w-6 h-6 text-watt-success mx-auto mb-2" />
                 <div className="font-bold text-watt-success">8.0+</div>
-                <div className="text-sm text-watt-navy">Proceed</div>
-                <div className="text-xs text-watt-navy/60">Full due diligence</div>
+                <div className="text-sm text-foreground">Proceed</div>
+                <div className="text-xs text-muted-foreground">Full due diligence</div>
               </div>
-              <div className="bg-blue-100 rounded-xl p-4 text-center">
+              <div className="bg-blue-500/20 rounded-xl p-4 text-center">
                 <div className="font-bold text-blue-600">6.5-7.9</div>
-                <div className="text-sm text-watt-navy">Investigate</div>
-                <div className="text-xs text-watt-navy/60">Identify improvements</div>
+                <div className="text-sm text-foreground">Investigate</div>
+                <div className="text-xs text-muted-foreground">Identify improvements</div>
               </div>
               <div className="bg-watt-bitcoin/20 rounded-xl p-4 text-center">
                 <div className="font-bold text-watt-bitcoin">5.0-6.4</div>
-                <div className="text-sm text-watt-navy">Negotiate</div>
-                <div className="text-xs text-watt-navy/60">Requires favorable terms</div>
+                <div className="text-sm text-foreground">Negotiate</div>
+                <div className="text-xs text-muted-foreground">Requires favorable terms</div>
               </div>
-              <div className="bg-red-100 rounded-xl p-4 text-center">
-                <div className="font-bold text-red-500">&lt;5.0</div>
-                <div className="text-sm text-watt-navy">Pass</div>
-                <div className="text-xs text-watt-navy/60">Seek alternatives</div>
+              <div className="bg-destructive/20 rounded-xl p-4 text-center">
+                <div className="font-bold text-destructive">&lt;5.0</div>
+                <div className="text-sm text-foreground">Pass</div>
+                <div className="text-xs text-muted-foreground">Seek alternatives</div>
               </div>
             </div>
           </div>

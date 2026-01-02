@@ -29,7 +29,7 @@ const LearningObjectives = ({
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h4 className="font-semibold text-foreground">{title}</h4>
             {estimatedTime && (
-              <span className="text-xs px-2 py-1 rounded-full bg-watt-navy/10 text-watt-navy/70">
+              <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
                 ⏱️ {estimatedTime}
               </span>
             )}

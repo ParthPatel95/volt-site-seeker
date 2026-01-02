@@ -74,17 +74,17 @@ const LandAcquisitionSection = () => {
   const monthlyLeaseEstimate = landSize * 5000 / 12;
 
   return (
-    <section id="land-acquisition" className="py-20 bg-watt-light">
+    <section id="land-acquisition" className="py-20 bg-muted">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 bg-watt-purple/10 text-watt-purple rounded-full text-sm font-medium mb-4">
               Land Acquisition
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Land & Property Strategies
             </h2>
-            <p className="text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Securing the right property with proper zoning is critical. 
               Understand purchase vs. lease tradeoffs and site sizing requirements.
             </p>
@@ -109,33 +109,33 @@ const LandAcquisitionSection = () => {
 
         {/* Zoning Guide */}
         <ScrollReveal delay={100}>
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-            <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 mb-8">
+            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-watt-purple" />
               Zoning Classification Guide
             </h3>
             <div className="space-y-4">
               {zoningTypes.map((zone, idx) => (
-                <div key={idx} className="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                <div key={idx} className="flex items-start gap-4 p-4 rounded-xl hover:bg-muted/50 transition-colors">
                   <div className={`w-3 h-3 rounded-full mt-1.5 ${zone.color}`} />
                   <div className="flex-1">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                       <div>
-                        <span className="font-semibold text-watt-navy">{zone.zone}</span>
+                        <span className="font-semibold text-foreground">{zone.zone}</span>
                         <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
                           zone.suitability === 'Excellent' ? 'bg-watt-success/20 text-watt-success' :
                           zone.suitability === 'Good' ? 'bg-blue-100 text-blue-600' :
                           zone.suitability === 'Possible' ? 'bg-watt-bitcoin/20 text-watt-bitcoin' :
                           zone.suitability === 'Unlikely' ? 'bg-red-100 text-red-600' :
-                          'bg-gray-100 text-gray-600'
+                          'bg-muted text-muted-foreground'
                         }`}>
                           {zone.suitability}
                         </span>
                       </div>
-                      <span className="text-sm text-watt-navy/60">{zone.requirements}</span>
+                      <span className="text-sm text-muted-foreground">{zone.requirements}</span>
                     </div>
-                    <p className="text-sm text-watt-navy/70 mt-1">{zone.description}</p>
-                    <p className="text-xs text-watt-navy/50 mt-1">Examples: {zone.examples}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{zone.description}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">Examples: {zone.examples}</p>
                   </div>
                 </div>
               ))}
@@ -146,26 +146,26 @@ const LandAcquisitionSection = () => {
         {/* Purchase vs Lease */}
         <ScrollReveal delay={200}>
           <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <Building className="w-5 h-5 text-watt-purple" />
                 Purchase vs. Lease Comparison
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 text-watt-navy font-semibold">Factor</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 text-foreground font-semibold">Factor</th>
                       <th className="text-left py-2 text-watt-success font-semibold">Purchase</th>
                       <th className="text-left py-2 text-watt-bitcoin font-semibold">Lease</th>
                     </tr>
                   </thead>
                   <tbody>
                     {purchaseVsLease.map((row, idx) => (
-                      <tr key={idx} className="border-b border-gray-100">
-                        <td className="py-2 text-watt-navy font-medium">{row.factor}</td>
-                        <td className="py-2 text-watt-navy/70">{row.purchase}</td>
-                        <td className="py-2 text-watt-navy/70">{row.lease}</td>
+                      <tr key={idx} className="border-b border-border">
+                        <td className="py-2 text-foreground font-medium">{row.factor}</td>
+                        <td className="py-2 text-muted-foreground">{row.purchase}</td>
+                        <td className="py-2 text-muted-foreground">{row.lease}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -174,34 +174,34 @@ const LandAcquisitionSection = () => {
             </div>
 
             {/* Site Sizing */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-watt-navy mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-watt-purple" />
                 Site Sizing Guide
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 text-watt-navy font-semibold">Capacity</th>
-                      <th className="text-left py-2 text-watt-navy font-semibold">Land</th>
-                      <th className="text-left py-2 text-watt-navy font-semibold">Containers</th>
-                      <th className="text-left py-2 text-watt-navy font-semibold">Building</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 text-foreground font-semibold">Capacity</th>
+                      <th className="text-left py-2 text-foreground font-semibold">Land</th>
+                      <th className="text-left py-2 text-foreground font-semibold">Containers</th>
+                      <th className="text-left py-2 text-foreground font-semibold">Building</th>
                     </tr>
                   </thead>
                   <tbody>
                     {siteSizingGuide.map((row, idx) => (
-                      <tr key={idx} className="border-b border-gray-100">
+                      <tr key={idx} className="border-b border-border">
                         <td className="py-2 font-bold text-watt-purple">{row.capacity}</td>
-                        <td className="py-2 text-watt-navy/70">{row.acres} acres</td>
-                        <td className="py-2 text-watt-navy/70">{row.containers}</td>
-                        <td className="py-2 text-watt-navy/70">{row.building}</td>
+                        <td className="py-2 text-muted-foreground">{row.acres} acres</td>
+                        <td className="py-2 text-muted-foreground">{row.containers}</td>
+                        <td className="py-2 text-muted-foreground">{row.building}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-watt-navy/50 mt-4">
+              <p className="text-xs text-muted-foreground mt-4">
                 * Includes setbacks, parking, switchyard, future expansion. Actual requirements vary by cooling type.
               </p>
             </div>

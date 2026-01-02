@@ -30,7 +30,7 @@ const soundLevels = [
 
 export const NoiseBasicsSection = () => {
   return (
-    <section id="fundamentals" className="py-16 md:py-24 bg-watt-light">
+    <section id="fundamentals" className="py-16 md:py-24 bg-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal delay={50}>
           <LearningObjectives 

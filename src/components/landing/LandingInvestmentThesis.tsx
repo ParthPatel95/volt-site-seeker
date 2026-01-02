@@ -139,7 +139,7 @@ const CostBar = ({ label, value, maxValue, color, delay, savings }: {
       <div className="flex justify-between items-center">
         <span className="text-sm font-medium text-slate-600">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-watt-navy">${value}M/MW</span>
+          <span className="text-sm font-bold text-foreground">${value}M/MW</span>
           {savings && (
             <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
               {savings}
@@ -249,7 +249,7 @@ export const LandingInvestmentThesis = () => {
             <TrendingUp className="w-4 h-4" />
             Investment Thesis
           </motion.span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-watt-navy mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
             Stranded Power → Bitcoin Mining →{' '}
             <span className="bg-gradient-to-r from-watt-accent to-violet-500 bg-clip-text text-transparent">
               AI/HPC Premium
@@ -307,7 +307,7 @@ export const LandingInvestmentThesis = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-watt-navy mb-1">{stage.title}</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-1">{stage.title}</h3>
                     <p className={`text-sm font-medium ${stage.color} mb-4`}>{stage.subtitle}</p>
 
                     {/* Points */}
@@ -352,7 +352,7 @@ export const LandingInvestmentThesis = () => {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <h3 className="text-xl md:text-2xl font-bold text-watt-navy text-center mb-8">
+          <h3 className="text-xl md:text-2xl font-bold text-foreground text-center mb-8">
             Our Proprietary Edge
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
@@ -368,7 +368,7 @@ export const LandingInvestmentThesis = () => {
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-watt-accent/10 to-violet-500/10 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-watt-accent" />
                 </div>
-                <h4 className="font-semibold text-watt-navy text-sm md:text-base mb-1">{feature.title}</h4>
+                <h4 className="font-semibold text-foreground text-sm md:text-base mb-1">{feature.title}</h4>
                 <p className="text-xs md:text-sm text-slate-500">{feature.description}</p>
               </motion.div>
             ))}
@@ -382,7 +382,7 @@ export const LandingInvestmentThesis = () => {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 1.2 }}
         >
-          <h3 className="text-lg font-bold text-watt-navy mb-6 text-center">
+          <h3 className="text-lg font-bold text-foreground mb-6 text-center">
             Cost Comparison: Traditional vs WattByte
           </h3>
           <div className="space-y-4">
@@ -412,7 +412,7 @@ export const LandingInvestmentThesis = () => {
               <div className="text-xs text-slate-500 mt-1">Savings per MW</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-watt-navy">
+              <div className="text-2xl md:text-3xl font-bold text-foreground">
                 <AnimatedCounter value={80} suffix="%" />
               </div>
               <div className="text-xs text-slate-500 mt-1">Faster Deploy</div>
