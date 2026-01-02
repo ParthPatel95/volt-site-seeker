@@ -82,15 +82,15 @@ const GlobalPresenceSection: React.FC = () => {
     : countries.filter(c => c.region === selectedRegion);
 
   return (
-    <section className="py-12 md:py-16 bg-watt-light">
+    <section className="py-12 md:py-16 bg-muted">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <ScrollReveal>
           <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-watt-navy mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Global Presence
             </h2>
-            <p className="text-lg text-watt-navy/70 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Strategic power infrastructure across three continents
             </p>
           </div>
@@ -98,31 +98,31 @@ const GlobalPresenceSection: React.FC = () => {
 
         {/* Hero Stats Banner */}
         <ScrollReveal delay={0.1}>
-          <div className="bg-white rounded-xl shadow-institutional p-6 md:p-8 mb-8 border border-watt-navy/5">
+          <div className="bg-card rounded-xl shadow-institutional p-6 md:p-8 mb-8 border border-border">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="md:col-span-2 flex items-center justify-center md:justify-start">
                 <div>
-                  <div className="text-4xl md:text-5xl font-bold text-watt-navy mb-2">
+                  <div className="text-4xl md:text-5xl font-bold text-foreground mb-2">
                     <AnimatedCounter end={totalCapacity} duration={2000} />
                     <span className="text-watt-bitcoin ml-2">MW</span>
                   </div>
-                  <p className="text-sm text-watt-navy/70 font-medium">Total Pipeline Capacity</p>
+                  <p className="text-sm text-muted-foreground font-medium">Total Pipeline Capacity</p>
                 </div>
               </div>
               <div className="flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-watt-navy mb-1">
+                  <div className="text-3xl font-bold text-foreground mb-1">
                     <AnimatedCounter end={6} duration={1500} />
                   </div>
-                  <p className="text-sm text-watt-navy/70">Countries</p>
+                  <p className="text-sm text-muted-foreground">Countries</p>
                 </div>
               </div>
               <div className="flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-watt-navy mb-1">
+                  <div className="text-3xl font-bold text-foreground mb-1">
                     <AnimatedCounter end={3} duration={1500} />
                   </div>
-                  <p className="text-sm text-watt-navy/70">Continents</p>
+                  <p className="text-sm text-muted-foreground">Continents</p>
                 </div>
               </div>
             </div>
@@ -139,20 +139,20 @@ const GlobalPresenceSection: React.FC = () => {
                 className={`p-4 rounded-lg border-2 transition-all duration-300 ${
                   selectedRegion === region.name
                     ? 'border-watt-bitcoin bg-watt-bitcoin/5 shadow-lg'
-                    : 'border-watt-navy/10 bg-white hover:border-watt-bitcoin/50 hover:shadow-md'
+                    : 'border-border bg-card hover:border-watt-bitcoin/50 hover:shadow-md'
                 }`}
               >
                 <div className="text-center">
                   <Globe className={`w-6 h-6 mx-auto mb-2 ${
-                    selectedRegion === region.name ? 'text-watt-bitcoin' : 'text-watt-navy/40'
+                    selectedRegion === region.name ? 'text-watt-bitcoin' : 'text-muted-foreground'
                   }`} />
                   <p className={`text-sm font-semibold mb-1 ${
-                    selectedRegion === region.name ? 'text-watt-navy' : 'text-watt-navy/70'
+                    selectedRegion === region.name ? 'text-foreground' : 'text-muted-foreground'
                   }`}>
                     {region.name}
                   </p>
                   <p className={`text-2xl font-bold ${
-                    selectedRegion === region.name ? 'text-watt-bitcoin' : 'text-watt-navy'
+                    selectedRegion === region.name ? 'text-watt-bitcoin' : 'text-foreground'
                   }`}>
                     {region.total}<span className="text-sm ml-1">MW</span>
                   </p>
@@ -166,10 +166,10 @@ const GlobalPresenceSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCountries.map((country, index) => (
             <ScrollReveal key={country.name} delay={0.1 * index}>
-              <div className="bg-white rounded-xl shadow-institutional p-6 border border-watt-navy/5 hover:shadow-xl hover:scale-105 transition-all duration-300 hover:border-watt-bitcoin/30">
+              <div className="bg-card rounded-xl shadow-institutional p-6 border border-border hover:shadow-xl hover:scale-105 transition-all duration-300 hover:border-watt-bitcoin/30">
                 {/* Flag and Name */}
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-12 rounded-lg overflow-hidden border border-watt-navy/10 shadow-sm flex-shrink-0">
+                  <div className="w-16 h-12 rounded-lg overflow-hidden border border-border shadow-sm flex-shrink-0">
                     <img 
                       src={country.flag} 
                       alt={`${country.name} flag`} 
@@ -177,8 +177,8 @@ const GlobalPresenceSection: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-watt-navy">{country.name}</h3>
-                    <div className="flex items-center gap-1 text-sm text-watt-navy/60">
+                    <h3 className="text-lg font-bold text-foreground">{country.name}</h3>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       {country.icon}
                       <span>{country.type}</span>
                     </div>
@@ -188,7 +188,7 @@ const GlobalPresenceSection: React.FC = () => {
                 {/* Capacity */}
                 <div className="mb-4">
                   <div className="flex items-baseline justify-between mb-2">
-                    <span className="text-3xl font-bold text-watt-navy">
+                    <span className="text-3xl font-bold text-foreground">
                       <AnimatedCounter end={country.capacity} duration={1500} />
                       <span className="text-lg ml-1">MW</span>
                     </span>
@@ -198,7 +198,7 @@ const GlobalPresenceSection: React.FC = () => {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-watt-navy/5 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-watt-bitcoin to-watt-bitcoin/80 rounded-full transition-all duration-1000 ease-out"
                       style={{ width: `${(country.capacity / totalCapacity) * 100}%` }}
@@ -207,8 +207,8 @@ const GlobalPresenceSection: React.FC = () => {
                 </div>
 
                 {/* Region Badge */}
-                <div className="inline-block px-3 py-1 bg-watt-navy/5 rounded-full">
-                  <span className="text-xs font-semibold text-watt-navy/70">{country.region}</span>
+                <div className="inline-block px-3 py-1 bg-muted rounded-full">
+                  <span className="text-xs font-semibold text-muted-foreground">{country.region}</span>
                 </div>
               </div>
             </ScrollReveal>

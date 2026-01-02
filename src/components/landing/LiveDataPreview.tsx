@@ -49,51 +49,51 @@ export const LiveDataPreview = () => {
   ];
 
   return (
-    <Card className="bg-watt-light border-gray-200 hover:border-watt-trust/40 transition-all duration-300 group shadow-institutional">
+    <Card className="bg-muted border-border hover:border-watt-trust/40 transition-all duration-300 group shadow-institutional">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Activity className="w-6 h-6 text-watt-success group-hover:scale-110 transition-transform duration-300" />
-            <CardTitle className="text-watt-navy text-xl">Live Market Data</CardTitle>
+            <CardTitle className="text-foreground text-xl">Live Market Data</CardTitle>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-watt-success rounded-full animate-pulse"></div>
             <Badge className="bg-watt-success/10 text-watt-success text-xs border-watt-success/30">Live</Badge>
           </div>
         </div>
-        <p className="text-watt-navy/70 text-sm">Real-time intelligence from VoltScout platform</p>
+        <p className="text-muted-foreground text-sm">Real-time intelligence from VoltScout platform</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Live Metrics Grid - 2x2 layout */}
         <div className="grid grid-cols-2 gap-4">
-          <div className={`bg-white rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-trust/40 ${isAnimating ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
+          <div className={`bg-card rounded-lg p-4 transition-all duration-500 border border-border hover:border-watt-trust/40 ${isAnimating ? 'scale-105 bg-watt-trust/5 border-watt-trust/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <Eye className="w-4 h-4 text-watt-trust flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Active Sites</span>
+              <span className="text-xs text-muted-foreground">Active Sites</span>
             </div>
             <div className="text-lg font-bold text-watt-trust break-words">{liveData.activeSites}</div>
           </div>
           
-          <div className={`bg-white rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-bitcoin/40 ${isAnimating ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
+          <div className={`bg-card rounded-lg p-4 transition-all duration-500 border border-border hover:border-watt-bitcoin/40 ${isAnimating ? 'scale-105 bg-watt-bitcoin/5 border-watt-bitcoin/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <Zap className="w-4 h-4 text-watt-bitcoin flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Total MW</span>
+              <span className="text-xs text-muted-foreground">Total MW</span>
             </div>
             <div className="text-lg font-bold text-watt-bitcoin break-words">{liveData.totalMW.toLocaleString()}</div>
           </div>
           
-          <div className={`bg-white rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-success/40 ${isAnimating ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
+          <div className={`bg-card rounded-lg p-4 transition-all duration-500 border border-border hover:border-watt-success/40 ${isAnimating ? 'scale-105 bg-watt-success/5 border-watt-success/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <TrendingUp className="w-4 h-4 text-watt-success flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">Avg VoltScore</span>
+              <span className="text-xs text-muted-foreground">Avg VoltScore</span>
             </div>
             <div className="text-lg font-bold text-watt-success break-words">{liveData.avgVoltScore}</div>
           </div>
           
-          <div className={`bg-white rounded-lg p-4 transition-all duration-500 border border-gray-200 hover:border-watt-warning/40 ${isAnimating ? 'scale-105 bg-watt-warning/5 border-watt-warning/50' : ''}`}>
+          <div className={`bg-card rounded-lg p-4 transition-all duration-500 border border-border hover:border-watt-warning/40 ${isAnimating ? 'scale-105 bg-watt-warning/5 border-watt-warning/50' : ''}`}>
             <div className="flex items-center space-x-2 mb-2">
               <MapPin className="w-4 h-4 text-watt-warning flex-shrink-0" />
-              <span className="text-xs text-watt-navy/60">$/MWh</span>
+              <span className="text-xs text-muted-foreground">$/MWh</span>
             </div>
             <div className="text-lg font-bold text-watt-warning break-words">${liveData.pricePerMWh.toFixed(2)}</div>
           </div>
@@ -102,18 +102,18 @@ export const LiveDataPreview = () => {
         {/* Recent Opportunities */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-watt-navy">Recent Opportunities</h4>
+            <h4 className="text-sm font-semibold text-foreground">Recent Opportunities</h4>
             <Badge className="bg-watt-trust/10 text-watt-trust text-xs border-watt-trust/30">+{liveData.recentOpportunities} this week</Badge>
           </div>
           
           <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
             {recentSites.map((site, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-watt-light rounded-lg hover:bg-watt-surface transition-colors duration-200 group/item border border-gray-200 hover:border-watt-trust/40">
+              <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-accent transition-colors duration-200 group/item border border-border hover:border-watt-trust/40">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-watt-navy group-hover/item:text-watt-trust transition-colors truncate">
+                  <div className="text-sm font-medium text-foreground group-hover/item:text-watt-trust transition-colors truncate">
                     {site.name}
                   </div>
-                  <div className="text-xs text-watt-navy/60">
+                  <div className="text-xs text-muted-foreground">
                     {site.mw}MW • VoltScore {site.score}
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export const LiveDataPreview = () => {
           </div>
         </div>
 
-        <div className="text-xs text-watt-navy/60 pt-3 border-t border-gray-200">
+        <div className="text-xs text-muted-foreground pt-3 border-t border-border">
           * Data refreshes every 8 seconds. Platform access required for detailed analytics.
         </div>
       </CardContent>

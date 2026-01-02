@@ -165,13 +165,13 @@ export const LandingAcademySection: React.FC = () => {
     : featuredModules.filter(m => m.category === activeCategory);
 
   return (
-    <section className="py-20 sm:py-28 md:py-32 bg-gradient-to-b from-white to-watt-light relative overflow-hidden">
+    <section className="py-20 sm:py-28 md:py-32 bg-gradient-to-b from-background to-muted relative overflow-hidden">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 pointer-events-none">
         <div 
           className="absolute inset-0 opacity-[0.02]"
           style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--watt-navy)) 1px, transparent 0)`,
+            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)`,
             backgroundSize: '40px 40px',
           }}
         />
@@ -189,12 +189,12 @@ export const LandingAcademySection: React.FC = () => {
             </div>
             
             {/* Title */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-watt-navy">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-foreground">
               WattByte{' '}
               <span className="text-watt-bitcoin">Academy</span>
             </h2>
             
-            <p className="text-base sm:text-lg text-watt-navy/70 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Master Bitcoin mining and energy infrastructure with{' '}
               <span className="text-watt-bitcoin font-semibold">10 comprehensive modules</span>. 
               Free forever, no signup required.
@@ -219,14 +219,14 @@ export const LandingAcademySection: React.FC = () => {
                   >
                     <motion.div
                       whileHover={{ scale: 1.05 }}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-2 border-gray-200 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all ${colors.text}`}
+                      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-card border-2 border-border flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all ${colors.text}`}
                     >
                       <StageIcon className="w-5 h-5 sm:w-6 sm:h-6 mb-1" />
-                      <span className="text-[10px] sm:text-xs text-watt-navy/60 font-medium">{stage.title}</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{stage.title}</span>
                     </motion.div>
                     
                     {/* Step number */}
-                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${colors.iconBg} ${colors.text} text-xs font-bold flex items-center justify-center border border-white`}>
+                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${colors.iconBg} ${colors.text} text-xs font-bold flex items-center justify-center border border-background`}>
                       {stage.step}
                     </div>
                   </motion.div>,
@@ -237,7 +237,7 @@ export const LandingAcademySection: React.FC = () => {
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ duration: 0.8, delay: 0.2 + 0.1 * index }}
-                      className="hidden sm:block w-8 md:w-12 h-0.5 bg-gray-200 origin-left"
+                      className="hidden sm:block w-8 md:w-12 h-0.5 bg-border origin-left"
                     />
                   )
                 ];
@@ -259,7 +259,7 @@ export const LandingAcademySection: React.FC = () => {
                 className={`px-4 sm:px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                   activeCategory === category.id
                     ? 'bg-watt-bitcoin text-white shadow-md'
-                    : 'bg-white text-watt-navy/70 hover:bg-gray-50 border border-gray-200'
+                    : 'bg-card text-muted-foreground hover:bg-muted border border-border'
                 }`}
               >
                 <category.icon className="w-4 h-4" />
@@ -267,7 +267,7 @@ export const LandingAcademySection: React.FC = () => {
                 <span className={`px-1.5 py-0.5 rounded-full text-xs ${
                   activeCategory === category.id 
                     ? 'bg-white/20' 
-                    : 'bg-gray-100'
+                    : 'bg-muted'
                 }`}>
                   {category.count}
                 </span>
@@ -296,23 +296,23 @@ export const LandingAcademySection: React.FC = () => {
                   transition={{ duration: 0.4, delay: 0.1 * index }}
                 >
                   <Link to={module.link} className="block h-full">
-                    <div className={`h-full bg-white rounded-xl border border-gray-200 border-l-4 ${colors.border} p-5 hover:shadow-lg transition-all duration-300 group`}>
+                    <div className={`h-full bg-card rounded-xl border border-border border-l-4 ${colors.border} p-5 hover:shadow-lg transition-all duration-300 group`}>
                       {/* Icon */}
                       <div className={`w-12 h-12 rounded-lg ${colors.iconBg} ${colors.text} flex items-center justify-center mb-4`}>
                         <module.icon className="w-6 h-6" />
                       </div>
                       
                       {/* Content */}
-                      <h3 className="text-lg font-semibold text-watt-navy mb-2 group-hover:text-watt-bitcoin transition-colors">
+                      <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-watt-bitcoin transition-colors">
                         {module.title}
                       </h3>
-                      <p className="text-sm text-watt-navy/60 mb-4 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                         {module.description}
                       </p>
                       
                       {/* Meta */}
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-medium text-watt-navy/50 flex items-center gap-1">
+                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                           <BookOpen className="w-3 h-3" />
                           {module.isTrack ? `${module.lessons} Tracks` : `${module.lessons} Lessons`}
                         </span>
@@ -343,7 +343,7 @@ export const LandingAcademySection: React.FC = () => {
 
         {/* Stats */}
         <ScrollReveal delay={0.2}>
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 mb-12 sm:mb-16 shadow-sm">
+          <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 mb-12 sm:mb-16 shadow-sm">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
               {stats.map((stat, index) => {
                 const colors = colorConfig[stat.colorKey];
@@ -360,11 +360,11 @@ export const LandingAcademySection: React.FC = () => {
                       <stat.icon className="w-6 h-6" />
                     </div>
                     
-                    <div className="text-3xl sm:text-4xl font-bold text-watt-navy mb-1">
+                    <div className="text-3xl sm:text-4xl font-bold text-foreground mb-1">
                       <AnimatedCounter value={stat.value} suffix={stat.suffix || ''} />
                     </div>
                     
-                    <div className="text-sm text-watt-navy/50 font-medium uppercase tracking-wider">
+                    <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
                       {stat.label}
                     </div>
                   </motion.div>
@@ -382,7 +382,7 @@ export const LandingAcademySection: React.FC = () => {
               {['No Signup Required', '100% Free', 'Self-Paced'].map((badge) => (
                 <div
                   key={badge}
-                  className="flex items-center gap-2 text-watt-navy/60 text-sm"
+                  className="flex items-center gap-2 text-muted-foreground text-sm"
                 >
                   <CheckCircle className="w-4 h-4 text-watt-success" />
                   {badge}
@@ -400,7 +400,7 @@ export const LandingAcademySection: React.FC = () => {
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" size="lg" className="border-gray-200 text-watt-navy hover:bg-gray-50 px-8">
+              <Button asChild variant="outline" size="lg" className="border-border text-foreground hover:bg-muted px-8">
                 <Link to="/bitcoin" className="flex items-center gap-2">
                   <Bitcoin className="w-5 h-5 text-watt-bitcoin" />
                   Start with Bitcoin 101
