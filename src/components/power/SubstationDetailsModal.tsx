@@ -54,7 +54,7 @@ export function SubstationDetailsModal({ substation, isOpen, onClose }: Substati
     } else if (voltage.includes('240kV') || voltage.includes('230kV')) {
       return 'text-blue-600 dark:text-blue-400';
     }
-    return 'text-gray-600 dark:text-gray-400';
+    return 'text-muted-foreground';
   };
 
   const formatDate = (dateString: string) => {

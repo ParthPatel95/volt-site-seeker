@@ -79,8 +79,8 @@ export const BTCROIProfitabilityHeatmap: React.FC<BTCROIProfitabilityHeatmapProp
         </CardHeader>
         <CardContent>
           <div className="text-center py-12">
-            <Info className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Loading network data for heatmap...</p>
+            <Info className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading network data for heatmap...</p>
           </div>
         </CardContent>
       </Card>
@@ -206,9 +206,9 @@ export const BTCROIProfitabilityHeatmap: React.FC<BTCROIProfitabilityHeatmapProp
           </div>
 
           {/* Insights */}
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-2">Heatmap Insights:</h4>
-            <ul className="text-sm space-y-1 text-gray-600">
+            <ul className="text-sm space-y-1 text-muted-foreground">
               <li>• Each cell shows annual ROI % and daily profit</li>
               <li>• Green zones indicate profitable scenarios</li>
               <li>• Red zones indicate potential losses</li>

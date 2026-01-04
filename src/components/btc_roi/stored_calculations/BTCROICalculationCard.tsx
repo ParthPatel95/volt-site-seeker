@@ -89,7 +89,7 @@ export const BTCROICalculationCard: React.FC<BTCROICalculationCardProps> = ({
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
                 {calculation.timestamp.toLocaleDateString()}
               </div>
@@ -117,7 +117,7 @@ export const BTCROICalculationCard: React.FC<BTCROICalculationCardProps> = ({
           {renderQuickStats()}
 
           {/* Additional Info */}
-          <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
               {calculation.formData.units} units

@@ -19,9 +19,9 @@ export function IndustryIntelAlerts({ alerts, onAlertsUpdate }: IndustryIntelAle
       </CardHeader>
       <CardContent>
         <div className="text-center py-8">
-          <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-600 mb-2">No active alerts</h3>
-          <p className="text-gray-500">Configure watchlists to receive real-time intelligence alerts</p>
+          <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No active alerts</h3>
+          <p className="text-muted-foreground">Configure watchlists to receive real-time intelligence alerts</p>
         </div>
       </CardContent>
     </Card>

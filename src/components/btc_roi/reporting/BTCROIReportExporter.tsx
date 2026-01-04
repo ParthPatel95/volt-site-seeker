@@ -134,7 +134,7 @@ export const BTCROIReportExporter: React.FC<ReportExporterProps> = ({
                 <SelectItem key={type.value} value={type.value}>
                   <div>
                     <div className="font-medium">{type.label}</div>
-                    <div className="text-sm text-gray-500">{type.description}</div>
+                    <div className="text-sm text-muted-foreground">{type.description}</div>
                   </div>
                 </SelectItem>
               ))}
@@ -267,9 +267,9 @@ export const BTCROIReportExporter: React.FC<ReportExporterProps> = ({
 
         {/* Report Preview */}
         {reportType && (
-          <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="p-4 bg-muted rounded-lg border-2 border-dashed border-border">
             <h3 className="font-medium mb-2">Report Preview</h3>
-            <div className="text-sm text-gray-600 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <p><strong>Type:</strong> {reportTypes.find(t => t.value === reportType)?.label}</p>
               <p><strong>Format:</strong> {formats.find(f => f.value === format)?.label}</p>
               <p><strong>Sections:</strong> {Object.entries(includeSections).filter(([_, included]) => included).length} of {Object.keys(includeSections).length}</p>

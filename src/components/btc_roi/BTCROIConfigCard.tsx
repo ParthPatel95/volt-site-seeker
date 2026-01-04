@@ -17,10 +17,10 @@ export const BTCROIConfigCard: React.FC<BTCROIConfigCardProps> = ({
   hasConfiguration
 }) => {
   return (
-    <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+    <Card className="shadow-lg border-0 bg-card/80 backdrop-blur-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm sm:text-base lg:text-lg flex items-center gap-2">
-          <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+          <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
           <span className="truncate">Configuration</span>
           {hasConfiguration && (
             <Badge variant="secondary" className="ml-auto">
@@ -31,21 +31,21 @@ export const BTCROIConfigCard: React.FC<BTCROIConfigCardProps> = ({
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             <div className={`p-2 rounded-lg ${
-              mode === 'hosting' ? 'bg-blue-500' : 'bg-green-500'
+              mode === 'hosting' ? 'bg-primary' : 'bg-data-positive'
             }`}>
               {mode === 'hosting' ? (
-                <Building2 className="w-4 h-4 text-white" />
+                <Building2 className="w-4 h-4 text-primary-foreground" />
               ) : (
-                <Home className="w-4 h-4 text-white" />
+                <Home className="w-4 h-4 text-data-positive-foreground" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-gray-900 truncate">
+              <h4 className="font-medium text-foreground truncate">
                 {mode === 'hosting' ? 'Hosting Business' : 'Self-Mining'}
               </h4>
-              <p className="text-xs text-gray-600 truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {mode === 'hosting' 
                   ? 'Configure facility parameters' 
                   : 'Set up mining hardware'
@@ -65,7 +65,7 @@ export const BTCROIConfigCard: React.FC<BTCROIConfigCardProps> = ({
           </Button>
 
           {!hasConfiguration && (
-            <p className="text-xs text-center text-gray-500">
+            <p className="text-xs text-center text-muted-foreground">
               Click to set up your {mode === 'hosting' ? 'hosting facility' : 'mining setup'} parameters
             </p>
           )}

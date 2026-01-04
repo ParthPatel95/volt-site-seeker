@@ -192,7 +192,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
           {isScanning && (
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">{currentPhase}</span>
+                <span className="text-muted-foreground">{currentPhase}</span>
                 <span className="font-medium">{scanProgress}%</span>
               </div>
               <Progress value={scanProgress} className="w-full" />
@@ -217,7 +217,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
                       <AlertTriangle className="w-4 h-4 text-red-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Distressed Sites</p>
+                      <p className="text-sm text-muted-foreground">Distressed Sites</p>
                       <p className="text-xl font-bold">{scanStats.distressedSites}</p>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
                       <Factory className="w-4 h-4 text-orange-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Idle Properties</p>
+                      <p className="text-sm text-muted-foreground">Idle Properties</p>
                       <p className="text-xl font-bold">{scanStats.idleProperties}</p>
                     </div>
                   </div>
@@ -245,7 +245,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
                       <Zap className="w-4 h-4 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Power Potential</p>
+                      <p className="text-sm text-muted-foreground">Power Potential</p>
                       <p className="text-xl font-bold">{scanStats.totalMW}MW</p>
                     </div>
                   </div>
@@ -259,7 +259,7 @@ export function IndustryIntelSearchEngine({ onOpportunitiesFound }: IndustryInte
                       <Database className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Data Sources</p>
+                      <p className="text-sm text-muted-foreground">Data Sources</p>
                       <p className="text-xl font-bold">{scanStats.sourcesUsed}</p>
                     </div>
                   </div>

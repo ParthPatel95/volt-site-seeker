@@ -18,9 +18,9 @@ export function IndustryIntelAnalytics({ opportunities }: IndustryIntelAnalytics
       </CardHeader>
       <CardContent>
         <div className="text-center py-8">
-          <BarChart className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-600 mb-2">Analytics Dashboard</h3>
-          <p className="text-gray-500">AI insights and predictive analytics based on scanned data</p>
+          <BarChart className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Analytics Dashboard</h3>
+          <p className="text-muted-foreground">AI insights and predictive analytics based on scanned data</p>
         </div>
       </CardContent>
     </Card>
