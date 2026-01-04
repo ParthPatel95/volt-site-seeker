@@ -53,16 +53,16 @@ export const VoltMarketHeader: React.FC = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-card shadow-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16 min-w-0">
           {/* Logo */}
           <div className="flex items-center flex-shrink-0 min-w-0">
             <Link to="/voltmarket" className="flex items-center space-x-2 min-w-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">GB</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/70 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground font-bold text-sm">GB</span>
               </div>
-              <span className="text-lg sm:text-xl font-bold text-gray-900 truncate">GridBazaar</span>
+              <span className="text-lg sm:text-xl font-bold text-foreground truncate">GridBazaar</span>
             </Link>
           </div>
 
@@ -70,7 +70,7 @@ export const VoltMarketHeader: React.FC = () => {
           <div className="hidden md:flex flex-1 max-w-md lg:max-w-lg mx-4 lg:mx-8">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   type="text"
                   placeholder="Search listings..."
@@ -91,7 +91,7 @@ export const VoltMarketHeader: React.FC = () => {
             {user ? (
               <>
               <Link to="/voltmarket/create-listing">
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
                   <Plus className="w-4 h-4 mr-1" />
                   List
                 </Button>
@@ -144,7 +144,7 @@ export const VoltMarketHeader: React.FC = () => {
                   <Button variant="ghost">Sign In</Button>
                 </Link>
                 <Link to="/voltmarket/auth">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Button size="sm" className="bg-primary hover:bg-primary/90">
                     Get Started
                   </Button>
                 </Link>
@@ -169,7 +169,7 @@ export const VoltMarketHeader: React.FC = () => {
             <div className="flex flex-col space-y-4">
               <form onSubmit={handleSearch} className="w-full">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     type="text"
                     placeholder="Search..."
@@ -187,7 +187,7 @@ export const VoltMarketHeader: React.FC = () => {
               {user ? (
                 <>
                   <Link to="/voltmarket/create-listing" onClick={() => setIsMenuOpen(false)}>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Button className="w-full bg-primary hover:bg-primary/90">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Listing
                     </Button>
@@ -214,7 +214,7 @@ export const VoltMarketHeader: React.FC = () => {
                 </>
               ) : (
                 <Link to="/voltmarket/auth" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">Get Started</Button>
+                  <Button className="w-full bg-primary hover:bg-primary/90">Get Started</Button>
                 </Link>
               )}
             </div>

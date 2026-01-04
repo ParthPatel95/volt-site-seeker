@@ -62,9 +62,9 @@ export function RealDataVerifiedSitesPanel() {
 
   const getConfidenceBadge = (score: number, level: string) => {
     const colors = {
-      'High': 'bg-green-100 text-green-800',
-      'Medium': 'bg-yellow-100 text-yellow-800',
-      'Low': 'bg-red-100 text-red-800'
+      'High': 'bg-data-positive/20 text-data-positive',
+      'Medium': 'bg-data-warning/20 text-data-warning',
+      'Low': 'bg-destructive/20 text-destructive'
     };
     return (
       <Badge className={colors[level as keyof typeof colors]}>
@@ -76,13 +76,13 @@ export function RealDataVerifiedSitesPanel() {
   const getVisualStatusIcon = (status: string) => {
     switch (status) {
       case 'Active':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-data-positive" />;
       case 'Idle':
-        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+        return <AlertTriangle className="w-4 h-4 text-data-warning" />;
       case 'Likely Abandoned':
-        return <XCircle className="w-4 h-4 text-red-600" />;
+        return <XCircle className="w-4 h-4 text-destructive" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-gray-600" />;
+        return <AlertTriangle className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -268,7 +268,7 @@ export function RealDataVerifiedSitesPanel() {
                             <TableCell className="font-medium sticky left-0 bg-background z-10">
                               <div>
                                 <div className="font-semibold truncate">{site.name}</div>
-                                <div className="text-xs text-gray-600">
+                              <div className="text-xs text-muted-foreground">
                                   {site.sources.length} sources
                                 </div>
                               </div>
@@ -286,11 +286,11 @@ export function RealDataVerifiedSitesPanel() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {site.validation.isVerified ? (
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-600" />
-                              )}
+                            {site.validation.isVerified ? (
+                              <CheckCircle className="w-4 h-4 text-data-positive" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-destructive" />
+                            )}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -326,8 +326,8 @@ export function RealDataVerifiedSitesPanel() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No verified sites found. Try adjusting your scan configuration.</p>
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No verified sites found. Try adjusting your scan configuration.</p>
                 </div>
               )}
             </TabsContent>
@@ -338,19 +338,19 @@ export function RealDataVerifiedSitesPanel() {
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-2xl font-bold">{scanStats.totalScanned}</div>
-                      <div className="text-sm text-gray-600">Total Sites Scanned</div>
+                      <div className="text-sm text-muted-foreground">Total Sites Scanned</div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-2xl font-bold">{scanStats.verifiedSites}</div>
-                      <div className="text-sm text-gray-600">Verified Sites</div>
+                      <div className="text-sm text-muted-foreground">Verified Sites</div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-2xl font-bold">{scanStats.averageConfidence}%</div>
-                      <div className="text-sm text-gray-600">Avg Confidence</div>
+                      <div className="text-sm text-muted-foreground">Avg Confidence</div>
                     </CardContent>
                   </Card>
                 </div>

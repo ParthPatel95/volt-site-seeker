@@ -144,12 +144,12 @@ export const VoltMarketLOICenter: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'countered': return 'bg-blue-100 text-blue-800';
-      case 'expired': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-data-warning/20 text-data-warning';
+      case 'accepted': return 'bg-data-positive/20 text-data-positive';
+      case 'rejected': return 'bg-destructive/20 text-destructive';
+      case 'countered': return 'bg-primary/20 text-primary';
+      case 'expired': return 'bg-muted text-muted-foreground';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -168,13 +168,13 @@ export const VoltMarketLOICenter: React.FC = () => {
   const sentLOIs = lois.filter(loi => loi.type === 'sent');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-2 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-muted to-primary/5 p-2 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate">LOI Center</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Manage Letters of Intent for your energy infrastructure deals</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground truncate">LOI Center</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage Letters of Intent for your energy infrastructure deals</p>
           </div>
           <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
             <DialogTrigger asChild>

@@ -117,9 +117,9 @@ export const VoltMarketListings: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Search</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Search</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     placeholder="Search listings..."
                     value={searchQuery}
@@ -130,7 +130,7 @@ export const VoltMarketListings: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Type</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Type</label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger>
                     <SelectValue />
@@ -146,7 +146,7 @@ export const VoltMarketListings: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Location</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Location</label>
                 <Select value={selectedLocation} onValueChange={setSelectedLocation}>
                   <SelectTrigger>
                     <SelectValue />
@@ -182,7 +182,7 @@ export const VoltMarketListings: React.FC = () => {
         {/* Results */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <span className="text-gray-600">
+            <span className="text-muted-foreground">
               {filteredListings.length} listings found
             </span>
             {(searchQuery || selectedType !== 'all' || selectedLocation !== 'all') && (
@@ -211,9 +211,9 @@ export const VoltMarketListings: React.FC = () => {
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
-                <Zap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No listings found</h3>
-                <p className="text-gray-600 mb-6">
+                <Zap className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No listings found</h3>
+                <p className="text-muted-foreground mb-6">
                   Try adjusting your search criteria or check back later for new listings.
                 </p>
                 <Button 

@@ -259,20 +259,20 @@ export const VoltMarketFeatureTest: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'passed': return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'failed': return <XCircle className="w-5 h-5 text-red-600" />;
-      case 'warning': return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
-      case 'running': return <Clock className="w-5 h-5 text-blue-600 animate-spin" />;
-      default: return <Clock className="w-5 h-5 text-gray-400" />;
+      case 'passed': return <CheckCircle className="w-5 h-5 text-data-positive" />;
+      case 'failed': return <XCircle className="w-5 h-5 text-destructive" />;
+      case 'warning': return <AlertTriangle className="w-5 h-5 text-data-warning" />;
+      case 'running': return <Clock className="w-5 h-5 text-primary animate-spin" />;
+      default: return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'passed': return <Badge className="bg-green-500">Passed</Badge>;
+      case 'passed': return <Badge className="bg-data-positive text-data-positive-foreground">Passed</Badge>;
       case 'failed': return <Badge variant="destructive">Failed</Badge>;
-      case 'warning': return <Badge className="bg-yellow-500">Warning</Badge>;
-      case 'running': return <Badge className="bg-blue-500">Running</Badge>;
+      case 'warning': return <Badge className="bg-data-warning text-data-warning-foreground">Warning</Badge>;
+      case 'running': return <Badge className="bg-primary">Running</Badge>;
       default: return <Badge variant="secondary">Pending</Badge>;
     }
   };
@@ -296,13 +296,13 @@ export const VoltMarketFeatureTest: React.FC = () => {
         <CardContent>
           <div className="mb-6">
             <div className="flex gap-4 text-sm">
-              <span className="text-green-600 font-medium">Passed: {passedTests}</span>
-              <span className="text-red-600 font-medium">Failed: {failedTests}</span>
-              <span className="text-gray-600 font-medium">Total: {totalTests}</span>
+              <span className="text-data-positive font-medium">Passed: {passedTests}</span>
+              <span className="text-destructive font-medium">Failed: {failedTests}</span>
+              <span className="text-muted-foreground font-medium">Total: {totalTests}</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div className="w-full bg-muted rounded-full h-2 mt-2">
               <div 
-                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                className="bg-data-positive h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(passedTests / totalTests) * 100}%` }}
               />
             </div>
@@ -313,7 +313,7 @@ export const VoltMarketFeatureTest: React.FC = () => {
               <div
                 key={test.name}
                 className={`flex items-center justify-between p-3 rounded-lg border ${
-                  currentTestIndex === index ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
+                  currentTestIndex === index ? 'bg-primary/5 border-primary/20' : 'bg-muted'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -321,10 +321,10 @@ export const VoltMarketFeatureTest: React.FC = () => {
                   <div>
                     <h4 className="font-medium">{test.name}</h4>
                     {test.error && (
-                      <p className="text-sm text-red-600 mt-1">{test.error}</p>
+                      <p className="text-sm text-destructive mt-1">{test.error}</p>
                     )}
                     {test.details && test.status === 'passed' && (
-                      <p className="text-sm text-gray-600 mt-1">{test.details}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{test.details}</p>
                     )}
                   </div>
                 </div>

@@ -25,9 +25,9 @@ export function CapacityAccuracyTips({
   hasPublicData 
 }: CapacityAccuracyTipsProps) {
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 90) return 'text-green-600';
-    if (confidence >= 70) return 'text-yellow-600';
-    return 'text-red-600';
+    if (confidence >= 90) return 'text-data-positive';
+    if (confidence >= 70) return 'text-data-warning';
+    return 'text-destructive';
   };
 
   const improvements = [
@@ -106,7 +106,7 @@ export function CapacityAccuracyTips({
                   {improvement.impact}
                 </Badge>
                 {improvement.implemented ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-data-positive" />
                 ) : (
                   <div className="w-4 h-4 border border-gray-300 rounded-full" />
                 )}

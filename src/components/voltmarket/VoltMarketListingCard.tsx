@@ -137,7 +137,7 @@ export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ li
           </>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <Building2 className="w-12 h-12 text-gray-400" />
+            <Building2 className="w-12 h-12 text-muted-foreground" />
           </div>
         )}
         <div className="absolute top-2 right-2">
@@ -153,7 +153,7 @@ export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ li
           </Badge>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center text-gray-600 min-w-0">
+          <div className="flex items-center text-muted-foreground min-w-0">
             <MapPin className="w-4 h-4 mr-1 shrink-0" />
             <span className="text-sm truncate">{listing.location}</span>
           </div>
@@ -181,7 +181,7 @@ export const VoltMarketListingCard: React.FC<VoltMarketListingCardProps> = ({ li
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center text-gray-500 text-sm min-w-0">
+          <div className="flex items-center text-muted-foreground text-sm min-w-0">
             <Calendar className="w-4 h-4 mr-1 shrink-0" />
             <span className="truncate">{new Date(listing.created_at).toLocaleDateString()}</span>
           </div>
