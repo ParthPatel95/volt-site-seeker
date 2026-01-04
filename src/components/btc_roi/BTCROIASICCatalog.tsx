@@ -111,7 +111,7 @@ export const BTCROIASICCatalog: React.FC<BTCROIASICCatalogProps> = ({ onSelectAS
         {/* Search and Sort Controls */}
         <div className="flex gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search ASICs..."
               value={searchTerm}
@@ -140,7 +140,7 @@ export const BTCROIASICCatalog: React.FC<BTCROIASICCatalogProps> = ({ onSelectAS
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-lg">{asic.model}</h3>
-                    <p className="text-sm text-gray-600">{asic.manufacturer}</p>
+                    <p className="text-sm text-muted-foreground">{asic.manufacturer}</p>
                   </div>
                   <Badge variant="outline" className="text-xs">
                     #{asic.profitabilityRank}

@@ -160,10 +160,10 @@ export const VoltMarketVerificationCenter: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-50 border-green-200';
-      case 'rejected': return 'text-red-600 bg-red-50 border-red-200';
-      case 'pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'approved': return 'text-green-600 bg-green-100 border-green-200';
+      case 'rejected': return 'text-red-600 bg-red-100 border-red-200';
+      case 'pending': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
+      default: return 'text-muted-foreground bg-muted border-border';
     }
   };
 
@@ -207,7 +207,7 @@ export const VoltMarketVerificationCenter: React.FC = () => {
         </CardHeader>
         
         <CardContent>
-          <p className="text-gray-600 mb-4">{verificationType.description}</p>
+          <p className="text-muted-foreground mb-4">{verificationType.description}</p>
           
           {status === 'not_submitted' && (
             <div
@@ -330,10 +330,10 @@ export const VoltMarketVerificationCenter: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-foreground">
                     Required Verifications Complete
                   </span>
-                  <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
+                  <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
               </div>
@@ -371,9 +371,9 @@ export const VoltMarketVerificationCenter: React.FC = () => {
             <CardTitle>Need Help?</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 text-sm text-gray-600">
+            <div className="space-y-4 text-sm text-muted-foreground">
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">Document Requirements:</h4>
+                <h4 className="font-medium text-foreground mb-1">Document Requirements:</h4>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Documents must be clear and legible</li>
                   <li>All information must be visible</li>
@@ -383,7 +383,7 @@ export const VoltMarketVerificationCenter: React.FC = () => {
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">Review Process:</h4>
+                <h4 className="font-medium text-foreground mb-1">Review Process:</h4>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Most documents are reviewed within 1-2 business days</li>
                   <li>You'll receive an email notification when review is complete</li>

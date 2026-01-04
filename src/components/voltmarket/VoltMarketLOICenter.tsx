@@ -267,25 +267,24 @@ export const VoltMarketLOICenter: React.FC = () => {
           </Dialog>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+          <Card className="bg-card/70 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">Total LOIs</p>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{lois.length}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">Total LOIs</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{lois.length}</p>
                 </div>
                 <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+          <Card className="bg-card/70 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">Pending</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">Pending</p>
                   <p className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-600">
                     {lois.filter(loi => loi.status === 'pending').length}
                   </p>
@@ -295,11 +294,11 @@ export const VoltMarketLOICenter: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+          <Card className="bg-card/70 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">Accepted</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">Accepted</p>
                   <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">
                     {lois.filter(loi => loi.status === 'accepted').length}
                   </p>
@@ -309,12 +308,12 @@ export const VoltMarketLOICenter: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+          <Card className="bg-card/70 backdrop-blur-sm border-border/50">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1 truncate">This Month</p>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 truncate">This Month</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                     {lois.filter(loi => new Date(loi.submitted_at).getMonth() === new Date().getMonth()).length}
                   </p>
                 </div>
@@ -326,7 +325,7 @@ export const VoltMarketLOICenter: React.FC = () => {
 
         {/* LOI Lists */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          <TabsList className="bg-white/70 backdrop-blur-sm border border-white/50 w-full sm:w-auto">
+          <TabsList className="bg-card/70 backdrop-blur-sm border border-border/50 w-full sm:w-auto">
             <TabsTrigger value="received" className="text-xs sm:text-sm px-2 sm:px-3">
               <span className="hidden sm:inline">Received LOIs </span>
               <span className="sm:hidden">Received </span>
@@ -340,7 +339,7 @@ export const VoltMarketLOICenter: React.FC = () => {
           </TabsList>
 
           <TabsContent value="received">
-            <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+            <Card className="bg-card/70 backdrop-blur-sm border-border/50">
               <CardHeader>
                 <CardTitle>Received Letters of Intent</CardTitle>
               </CardHeader>
@@ -352,17 +351,17 @@ export const VoltMarketLOICenter: React.FC = () => {
                   </div>
                 ) : receivedLOIs.length === 0 ? (
                   <div className="text-center py-12">
-                    <Scale className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No received LOIs</h3>
-                    <p className="text-gray-600">You haven't received any Letters of Intent yet</p>
+                    <Scale className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No received LOIs</h3>
+                    <p className="text-muted-foreground">You haven't received any Letters of Intent yet</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                      {receivedLOIs.map((loi) => (
-                       <div key={loi.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow gap-3 lg:gap-4">
+                       <div key={loi.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-3 sm:p-4 border border-border rounded-lg bg-card hover:shadow-md transition-shadow gap-3 lg:gap-4">
                          <div className="flex-1 min-w-0">
                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                             <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">LOI #{loi.id.slice(0, 8)}</h3>
+                             <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">LOI #{loi.id.slice(0, 8)}</h3>
                              <Badge className={`${getStatusColor(loi.status)} text-xs w-fit`}>
                                <div className="flex items-center gap-1">
                                  {getStatusIcon(loi.status)}
@@ -370,7 +369,7 @@ export const VoltMarketLOICenter: React.FC = () => {
                                </div>
                              </Badge>
                            </div>
-                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                              <div className="min-w-0">
                                <span className="font-medium">From:</span> 
                                <span className="ml-1 truncate inline-block max-w-full">{loi.buyer?.company_name || 'Unknown'}</span>
@@ -389,7 +388,7 @@ export const VoltMarketLOICenter: React.FC = () => {
                              </div>
                            </div>
                            {loi.conditions && (
-                             <p className="text-xs sm:text-sm text-gray-700 mt-2 line-clamp-2 break-words">{loi.conditions}</p>
+                             <p className="text-xs sm:text-sm text-foreground/80 mt-2 line-clamp-2 break-words">{loi.conditions}</p>
                            )}
                          </div>
                          <div className="flex items-center gap-2 lg:ml-4 flex-shrink-0">
@@ -427,7 +426,7 @@ export const VoltMarketLOICenter: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="sent">
-            <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+            <Card className="bg-card/70 backdrop-blur-sm border-border/50">
               <CardHeader>
                 <CardTitle>Sent Letters of Intent</CardTitle>
               </CardHeader>
@@ -439,9 +438,9 @@ export const VoltMarketLOICenter: React.FC = () => {
                   </div>
                 ) : sentLOIs.length === 0 ? (
                   <div className="text-center py-12">
-                    <Send className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No sent LOIs</h3>
-                    <p className="text-gray-600 mb-4">You haven't submitted any Letters of Intent yet</p>
+                    <Send className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No sent LOIs</h3>
+                    <p className="text-muted-foreground mb-4">You haven't submitted any Letters of Intent yet</p>
                     <Button onClick={() => setShowCreateForm(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Submit Your First LOI
