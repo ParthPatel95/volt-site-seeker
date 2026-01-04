@@ -250,10 +250,10 @@ export const VoltMarketListingDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-muted py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </div>
       </div>
@@ -262,11 +262,11 @@ export const VoltMarketListingDetail: React.FC = () => {
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-muted py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Listing not found</h2>
-            <p className="text-gray-600 mt-2">The listing you're looking for doesn't exist or has been removed.</p>
+            <h2 className="text-2xl font-bold text-foreground">Listing not found</h2>
+            <p className="text-muted-foreground mt-2">The listing you're looking for doesn't exist or has been removed.</p>
           </div>
         </div>
       </div>
@@ -274,14 +274,14 @@ export const VoltMarketListingDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">{listing.title}</h1>
-              <div className="flex flex-wrap items-center gap-2 md:gap-4 text-gray-600 mb-4">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2 break-words">{listing.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4 text-muted-foreground mb-4">
                 <div className="flex items-center gap-1 min-w-0">
                   <MapPin className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate">{listing.location}</span>

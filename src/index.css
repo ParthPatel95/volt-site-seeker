@@ -95,6 +95,17 @@
     /* Glass Effect */
     --glass-bg: 0 0% 100% / 0.8;
     --glass-border: 214 32% 91% / 0.6;
+
+    /* Watt Brand Colors (HSL values for hsl() function usage) */
+    --watt-bitcoin: 36 94% 53%;             /* Bitcoin orange #F7931A */
+    --watt-coinbase: 217 91% 55%;           /* Coinbase blue #3678f5 */
+    --watt-navy: 220 50% 15%;               /* Deep navy #13203d */
+    --watt-trust: 195 85% 41%;              /* Trust teal #10a5c7 */
+    --watt-purple: 263 70% 50%;             /* Purple accent */
+    --watt-success: 142 76% 36%;            /* Green success */
+    --watt-warning: 38 92% 50%;             /* Amber warning */
+    --watt-primary: 221 83% 53%;            /* Primary blue */
+    --watt-secondary: 210 40% 96%;          /* Secondary surface */
   }
 
   .dark {
@@ -173,6 +184,17 @@
     /* Glass Effect */
     --glass-bg: 222 47% 9% / 0.8;
     --glass-border: 222 47% 20% / 0.6;
+
+    /* Watt Brand Colors (HSL values for dark mode) */
+    --watt-bitcoin: 36 94% 58%;             /* Bitcoin orange - brighter */
+    --watt-coinbase: 217 91% 60%;           /* Coinbase blue - brighter */
+    --watt-navy: 220 50% 20%;               /* Deep navy - lighter for dark */
+    --watt-trust: 195 85% 50%;              /* Trust teal - brighter */
+    --watt-purple: 263 70% 60%;             /* Purple accent - brighter */
+    --watt-success: 142 76% 50%;            /* Green success - brighter */
+    --watt-warning: 38 92% 55%;             /* Amber warning - brighter */
+    --watt-primary: 217 91% 60%;            /* Primary blue - brighter */
+    --watt-secondary: 222 47% 14%;          /* Secondary surface - dark */
   }
 }
 

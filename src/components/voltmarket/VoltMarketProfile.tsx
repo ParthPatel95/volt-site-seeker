@@ -80,11 +80,11 @@ export const VoltMarketProfile: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-muted py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-            <p className="text-gray-600 mt-2">Please sign in to view your profile.</p>
+            <h2 className="text-2xl font-bold text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mt-2">Please sign in to view your profile.</p>
           </div>
         </div>
       </div>
@@ -92,11 +92,11 @@ export const VoltMarketProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
+    <div className="min-h-screen bg-muted py-4 md:py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-          <p className="text-gray-600 text-sm md:text-base">Manage your account information and preferences</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Profile Settings</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Manage your account information and preferences</p>
         </div>
 
         <form onSubmit={handleSubmit}>

@@ -101,14 +101,14 @@ export const VoltMarketAuth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-muted flex items-center justify-center py-8 md:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-6 md:space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <Zap className="w-12 h-12 text-blue-600" />
+            <Zap className="w-12 h-12 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">GridBazaar</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">GridBazaar</h1>
+          <p className="mt-2 text-muted-foreground">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>
         </div>
@@ -235,7 +235,7 @@ export const VoltMarketAuth: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
+                  className="text-primary hover:text-primary/80 text-sm"
                 >
                   {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                 </button>

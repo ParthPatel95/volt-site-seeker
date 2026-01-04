@@ -297,11 +297,11 @@ export const VoltMarketVerificationCenter: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-muted py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-            <p className="text-gray-600 mt-2">Please sign in to access verification center.</p>
+            <h2 className="text-2xl font-bold text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mt-2">Please sign in to access verification center.</p>
           </div>
         </div>
       </div>
@@ -311,11 +311,11 @@ export const VoltMarketVerificationCenter: React.FC = () => {
   const progress = calculateVerificationProgress();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Verification Center</h1>
-          <p className="text-gray-600">Complete your verification to build trust with other users</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Verification Center</h1>
+          <p className="text-muted-foreground">Complete your verification to build trust with other users</p>
         </div>
 
         {/* Progress Overview */}

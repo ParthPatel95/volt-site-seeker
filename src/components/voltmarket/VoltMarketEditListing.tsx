@@ -165,10 +165,10 @@ export const VoltMarketEditListing: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900">Loading listing...</h2>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-foreground">Loading listing...</h2>
         </div>
       </div>
     );
@@ -176,9 +176,9 @@ export const VoltMarketEditListing: React.FC = () => {
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Listing not found</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Listing not found</h2>
           <Button onClick={() => navigate('/voltmarket/dashboard')}>
             Back to Dashboard
           </Button>
@@ -188,7 +188,7 @@ export const VoltMarketEditListing: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Button
