@@ -41,7 +41,7 @@ export function PropertySearchForm({ onSearch, isSearching }: PropertySearchForm
         <div className="space-y-2">
           <Label htmlFor="location" className="text-sm font-medium">Location *</Label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="location"
               value={location}
@@ -72,7 +72,7 @@ export function PropertySearchForm({ onSearch, isSearching }: PropertySearchForm
         <div className="space-y-2">
           <Label htmlFor="budget-range" className="text-sm font-medium">Budget Range</Label>
           <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="budget-range"
               value={budgetRange}
@@ -87,7 +87,7 @@ export function PropertySearchForm({ onSearch, isSearching }: PropertySearchForm
         <div className="space-y-2">
           <Label htmlFor="power-requirements" className="text-sm font-medium">Power Requirements</Label>
           <div className="relative">
-            <Zap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Zap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Select value={powerRequirements} onValueChange={setPowerRequirements} disabled={isSearching}>
               <SelectTrigger className="pl-10">
                 <SelectValue placeholder="Any power capacity" />

@@ -193,12 +193,12 @@ export function AICompanyAnalyzer({ onAnalysisComplete }: AICompanyAnalyzerProps
               )}
             </Button>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-foreground">
             Press Enter to analyze or click the Analyze button
           </div>
         </div>
 
-        <div className="bg-white/70 rounded-lg p-4 border border-blue-200">
+        <div className="bg-card/70 rounded-lg p-4 border border-blue-200">
           <h4 className="font-medium text-blue-800 mb-2 flex items-center">
             <Zap className="w-4 h-4 mr-1" />
             AI Analysis Features

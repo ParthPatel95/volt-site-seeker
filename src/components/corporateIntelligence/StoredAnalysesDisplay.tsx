@@ -30,7 +30,7 @@ export function StoredAnalysesDisplay({ analyses }: StoredAnalysesDisplayProps) 
           <div key={index} className="border rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Building2 className="w-4 h-4 text-gray-600" />
+                <Building2 className="w-4 h-4 text-muted-foreground" />
                 <h4 className="font-semibold">{analysis.company_name}</h4>
                 {analysis.investment_recommendation && (
                   <Badge variant="outline">
@@ -44,7 +44,7 @@ export function StoredAnalysesDisplay({ analyses }: StoredAnalysesDisplayProps) 
               </div>
             </div>
             
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+            <div className="bg-muted rounded-lg p-3">
               <AIAnalysisDisplay analysis={analysis} />
             </div>
           </div>

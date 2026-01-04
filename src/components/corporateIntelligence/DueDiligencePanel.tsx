@@ -46,7 +46,7 @@ export function DueDiligencePanel() {
       case 'in-progress':
         return <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />;
       default:
-        return <XCircle className="w-4 h-4 text-gray-400" />;
+        return <XCircle className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -89,11 +89,11 @@ export function DueDiligencePanel() {
 
                   <div className="space-y-2">
                     {category.items.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-gray-50">
+                      <div key={i} className="flex items-center justify-between py-1 px-2 rounded bg-muted">
                         <span className="text-sm">{item.name}</span>
                         <div className="flex items-center gap-1">
                           {getStatusIcon(item.status)}
-                          <span className="text-xs text-gray-500 capitalize">
+                          <span className="text-xs text-muted-foreground capitalize">
                             {item.status.replace('-', ' ')}
                           </span>
                         </div>

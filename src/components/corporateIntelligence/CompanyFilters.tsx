@@ -34,7 +34,7 @@ export function CompanyFilters({
           <SelectTrigger className="w-full sm:w-48 text-sm">
             <SelectValue placeholder="Filter by industry" />
           </SelectTrigger>
-          <SelectContent className="z-50 bg-white dark:bg-slate-800">
+          <SelectContent className="z-50 bg-popover">
             <SelectItem value="all">All Industries</SelectItem>
             <SelectItem value="Technology">Technology</SelectItem>
             <SelectItem value="Manufacturing">Manufacturing</SelectItem>

@@ -25,7 +25,7 @@ export function QuickSearchSection({ quickSearchTerm, onQuickSearchChange }: Qui
             placeholder="Quick search companies, news, or insights..."
             value={quickSearchTerm}
             onChange={(e) => onQuickSearchChange(e.target.value)}
-            className="pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm"
+            className="pl-10 bg-card border-border text-sm"
           />
         </div>
       </div>
