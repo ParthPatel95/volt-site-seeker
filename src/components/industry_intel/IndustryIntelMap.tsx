@@ -13,20 +13,20 @@ export function IndustryIntelMap({ opportunities, watchlist }: IndustryIntelMapP
     <Card className="h-[600px]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-blue-600" />
+          <MapPin className="w-5 h-5 text-primary" />
           Intelligence Map
-          <span className="text-sm text-gray-500 ml-auto">
+          <span className="text-sm text-muted-foreground ml-auto">
             {opportunities.length} opportunities plotted
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="h-full">
-        <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+        <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
           <div className="text-center">
-            <Satellite className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-600 mb-2">Interactive Intelligence Map</h3>
-            <p className="text-gray-500">Real-time plotting of distressed facilities and idle properties</p>
-            <p className="text-sm text-gray-400 mt-2">
+            <Satellite className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Interactive Intelligence Map</h3>
+            <p className="text-muted-foreground">Real-time plotting of distressed facilities and idle properties</p>
+            <p className="text-sm text-muted-foreground mt-2">
               🔴 Distressed • 🟡 Idle • 🟢 High-potential
             </p>
           </div>

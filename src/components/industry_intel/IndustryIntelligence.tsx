@@ -22,11 +22,11 @@ export function IndustryIntelligence() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8">
           <div className="space-y-1 sm:space-y-2">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-              <TrendingDown className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
+              <TrendingDown className="w-6 h-6 sm:w-8 sm:h-8 text-destructive" />
               <span className="leading-tight">Industry Intelligence</span>
             </h1>
-            <p className="text-sm sm:text-base lg:text-lg text-gray-600">
+            <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
               Unified corporate distress & industrial facility intelligence platform
             </p>
           </div>

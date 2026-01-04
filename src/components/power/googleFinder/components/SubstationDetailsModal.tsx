@@ -61,10 +61,10 @@ export function SubstationDetailsModal({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'analyzing': return 'bg-blue-100 text-blue-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-data-positive/10 text-data-positive';
+      case 'analyzing': return 'bg-primary/10 text-primary';
+      case 'failed': return 'bg-destructive/10 text-destructive';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -79,21 +79,21 @@ export function SubstationDetailsModal({
   const renderMap = () => {
     if (configLoading) {
       return (
-        <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-          <div className="w-8 h-8 mx-auto mb-2 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm text-gray-600">Loading map...</p>
+        <div className="bg-muted border-2 border-dashed border-border rounded-lg p-8 text-center">
+          <div className="w-8 h-8 mx-auto mb-2 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm text-muted-foreground">Loading map...</p>
         </div>
       );
     }
 
     if (configError || !apiKey) {
       return (
-        <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-600 mb-2">
+        <div className="bg-muted border-2 border-dashed border-border rounded-lg p-8 text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground mb-2">
             Map requires Google Maps API key
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Click "View on Google Maps" above to see location
           </p>
         </div>
@@ -101,7 +101,7 @@ export function SubstationDetailsModal({
     }
 
     return (
-      <div className="bg-gray-100 border rounded-lg overflow-hidden">
+      <div className="bg-muted border rounded-lg overflow-hidden">
         <iframe
           width="100%"
           height="250"
@@ -137,19 +137,19 @@ export function SubstationDetailsModal({
               Location Information
             </div>
             
-            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+            <div className="bg-muted p-4 rounded-lg space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Address</p>
+                <p className="text-sm text-muted-foreground">Address</p>
                 <p className="font-medium">{substation.address}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-600">Latitude</p>
+                  <p className="text-sm text-muted-foreground">Latitude</p>
                   <p className="font-medium">{substation.latitude.toFixed(6)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Longitude</p>
+                  <p className="text-sm text-muted-foreground">Longitude</p>
                   <p className="font-medium">{substation.longitude.toFixed(6)}</p>
                 </div>
               </div>
@@ -197,12 +197,12 @@ export function SubstationDetailsModal({
             )}
 
             {substation.details && (
-              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <div className="bg-muted p-4 rounded-lg space-y-3">
                 <h4 className="font-semibold">Operational Details</h4>
                 
                 {substation.details.utility_owner && (
                   <div>
-                    <p className="text-sm text-gray-600">Utility Owner</p>
+                    <p className="text-sm text-muted-foreground">Utility Owner</p>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{substation.details.utility_owner}</p>
                       {substation.details.ownership_confidence && (
@@ -212,7 +212,7 @@ export function SubstationDetailsModal({
                       )}
                     </div>
                     {substation.details.ownership_source && (
-                      <p className="text-xs text-gray-500">Source: {substation.details.ownership_source}</p>
+                      <p className="text-xs text-muted-foreground">Source: {substation.details.ownership_source}</p>
                     )}
                   </div>
                 )}
@@ -220,28 +220,28 @@ export function SubstationDetailsModal({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {substation.details.voltage_level && (
                     <div>
-                      <p className="text-gray-600">Voltage Level</p>
+                      <p className="text-muted-foreground">Voltage Level</p>
                       <p className="font-medium">{substation.details.voltage_level}</p>
                     </div>
                   )}
                   
                   {substation.details.interconnection_type && (
                     <div>
-                      <p className="text-gray-600">Type</p>
+                      <p className="text-muted-foreground">Type</p>
                       <p className="font-medium capitalize">{substation.details.interconnection_type}</p>
                     </div>
                   )}
                   
                   {substation.details.load_factor && (
                     <div>
-                      <p className="text-gray-600">Load Factor</p>
+                      <p className="text-muted-foreground">Load Factor</p>
                       <p className="font-medium">{Math.round(substation.details.load_factor * 100)}%</p>
                     </div>
                   )}
                   
                   {substation.details.status && (
                     <div>
-                      <p className="text-gray-600">Status</p>
+                      <p className="text-muted-foreground">Status</p>
                       <p className="font-medium capitalize">{substation.details.status}</p>
                     </div>
                   )}
@@ -249,8 +249,8 @@ export function SubstationDetailsModal({
 
                 {substation.details.commissioning_date && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Commissioned:</span>
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Commissioned:</span>
                     <span className="font-medium">
                       {new Date(substation.details.commissioning_date).toLocaleDateString()}
                     </span>

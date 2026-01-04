@@ -28,9 +28,9 @@ export function IndustryIntelDashboard({
         <CardContent>
           {opportunities.length === 0 ? (
             <div className="text-center py-8">
-              <TrendingDown className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-gray-600 mb-2">No opportunities found</h3>
-              <p className="text-gray-500">Run an intelligence scan to discover opportunities</p>
+              <TrendingDown className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No opportunities found</h3>
+              <p className="text-muted-foreground">Run an intelligence scan to discover opportunities</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -47,8 +47,8 @@ export function IndustryIntelDashboard({
                           {opportunity.estimatedPowerMW}MW
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{opportunity.location}</p>
-                      <p className="text-sm text-gray-700">{opportunity.aiInsights}</p>
+                      <p className="text-sm text-muted-foreground mb-2">{opportunity.location}</p>
+                      <p className="text-sm text-foreground">{opportunity.aiInsights}</p>
                       <div className="flex gap-2 mt-2">
                         {opportunity.sources?.map((source: string, idx: number) => (
                           <Badge key={idx} variant="outline" className="text-xs">
