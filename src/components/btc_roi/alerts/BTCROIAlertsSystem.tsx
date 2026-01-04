@@ -223,24 +223,24 @@ export const BTCROIAlertsSystem: React.FC<BTCROIAlertsSystemProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Current Values Display */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
           <div className="text-center">
-            <div className="text-sm text-gray-600">BTC Price</div>
+            <div className="text-sm text-muted-foreground">BTC Price</div>
             <div className="text-lg font-semibold">${currentBTCPrice.toLocaleString()}</div>
           </div>
           <div className="text-center">
-            <div className="text-sm text-gray-600">Current Profitability</div>
+            <div className="text-sm text-muted-foreground">Current Profitability</div>
             <div className="text-lg font-semibold">{currentProfitability.toFixed(2)}%</div>
           </div>
           <div className="text-center">
-            <div className="text-sm text-gray-600">Network Difficulty</div>
+            <div className="text-sm text-muted-foreground">Network Difficulty</div>
             <div className="text-lg font-semibold">{(networkDifficulty / 1e12).toFixed(2)}T</div>
           </div>
         </div>
 
         {/* Create New Alert Form */}
         {isCreating && (
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Create New Alert</CardTitle>
             </CardHeader>
@@ -309,18 +309,18 @@ export const BTCROIAlertsSystem: React.FC<BTCROIAlertsSystemProps> = ({
         {/* Alerts List */}
         <div className="space-y-3">
           {alerts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No alerts configured yet</p>
               <p className="text-sm">Create your first alert to get notified of important changes</p>
             </div>
           ) : (
             alerts.map(alert => (
-              <Card key={alert.id} className={`${alert.triggered ? 'border-orange-300 bg-orange-50' : ''}`}>
+                <Card key={alert.id} className={`${alert.triggered ? 'border-orange-500/30 bg-orange-500/5' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${alert.isActive ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                      <div className={`p-2 rounded-full ${alert.isActive ? 'bg-primary/10' : 'bg-muted'}`}>
                         {getAlertIcon(alert.type)}
                       </div>
                       <div>
@@ -336,11 +336,11 @@ export const BTCROIAlertsSystem: React.FC<BTCROIAlertsSystemProps> = ({
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           {getAlertTypeLabel(alert.type)} {formatValue(alert.type, alert.value)}
                         </p>
                         {alert.lastTriggered && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             Last triggered: {alert.lastTriggered.toLocaleString()}
                           </p>
                         )}

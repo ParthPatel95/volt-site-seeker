@@ -140,7 +140,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
           onChange={(e) => handleInputChange('siteName', e.target.value)}
           placeholder="e.g., Wattbyte Campus 1, Texas Facility"
         />
-        <p className="text-xs text-gray-500">Leave blank for auto-generated name</p>
+        <p className="text-xs text-muted-foreground">Leave blank for auto-generated name</p>
       </div>
 
       {/* Facility Scale */}
@@ -153,7 +153,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
           onChange={(e) => handleInputChange('totalLoadKW', parseFloat(e.target.value) || 0)}
           placeholder="e.g., 300 kW (100 miners × 3kW each)"
         />
-        <p className="text-xs text-gray-500">Total power consumption of all hosted miners</p>
+        <p className="text-xs text-muted-foreground">Total power consumption of all hosted miners</p>
       </div>
 
       {/* Hosting Fee Rate */}
@@ -167,7 +167,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
           onChange={(e) => handleInputChange('hostingFeeRate', parseFloat(e.target.value) || 0)}
           placeholder="e.g., 0.08"
         />
-        <p className="text-xs text-gray-500">Rate charged to clients per kWh consumed (always USD)</p>
+        <p className="text-xs text-muted-foreground">Rate charged to clients per kWh consumed (always USD)</p>
       </div>
 
       {/* Region Selection */}
@@ -183,7 +183,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             <SelectItem value="Other">Other (Custom)</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           {formData.region !== 'Other' 
             ? 'Uses live wholesale electricity price data with regional tax rates'
             : 'Allows manual electricity cost input'
@@ -203,7 +203,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             onChange={(e) => handleInputChange('customElectricityCost', parseFloat(e.target.value) || 0)}
             placeholder="e.g., 0.05"
           />
-          <p className="text-xs text-gray-500">Wholesale electricity cost paid by your facility</p>
+          <p className="text-xs text-muted-foreground">Wholesale electricity cost paid by your facility</p>
         </div>
       )}
 
@@ -225,8 +225,8 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
 
       {/* Manual Energy Cost Inputs */}
       {showManualEnergy && (
-        <div className="space-y-4 pt-4 border-t bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-800">Manual Energy Rate Components ($/kWh USD)</h4>
+        <div className="space-y-4 pt-4 border-t bg-primary/5 p-4 rounded-lg">
+          <h4 className="font-medium text-primary">Manual Energy Rate Components ($/kWh USD)</h4>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -290,7 +290,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             </div>
           </div>
           
-          <div className="text-sm text-blue-700 bg-blue-100 p-3 rounded">
+          <div className="text-sm text-primary bg-primary/10 p-3 rounded">
             <strong>Total Manual Rate: ${((formData.manualEnergyRate || 0) + (formData.manualTransmissionRate || 0) + (formData.manualDistributionRate || 0) + (formData.manualAncillaryRate || 0) + (formData.manualRegulatoryRate || 0)).toFixed(4)}/kWh USD</strong>
           </div>
         </div>
@@ -306,7 +306,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
           onChange={(e) => handleInputChange('infrastructureCost', parseFloat(e.target.value) || 0)}
           placeholder="e.g., 200000"
         />
-        <p className="text-xs text-gray-500">Initial CapEx for facility build-out (set to 0 if existing facility)</p>
+        <p className="text-xs text-muted-foreground">Initial CapEx for facility build-out (set to 0 if existing facility)</p>
       </div>
 
       {/* Operational Overhead */}
@@ -320,7 +320,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             onChange={(e) => handleInputChange('monthlyOverhead', parseFloat(e.target.value) || 0)}
             placeholder="e.g., 5000"
           />
-          <p className="text-xs text-gray-500">Staff, maintenance, insurance, etc.</p>
+          <p className="text-xs text-muted-foreground">Staff, maintenance, insurance, etc.</p>
         </div>
         
         <div className="space-y-2">
@@ -333,7 +333,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             onChange={(e) => handleInputChange('powerOverheadPercent', parseFloat(e.target.value) || 0)}
             placeholder="e.g., 5"
           />
-          <p className="text-xs text-gray-500">Additional power for cooling, transformers</p>
+          <p className="text-xs text-muted-foreground">Additional power for cooling, transformers</p>
         </div>
       </div>
 
@@ -348,7 +348,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
           onChange={(e) => handleInputChange('expectedUptimePercent', parseFloat(e.target.value) || 0)}
           placeholder="e.g., 95"
         />
-        <p className="text-xs text-gray-500">For Other region only; ERCOT/AESO use smart curtailment</p>
+        <p className="text-xs text-muted-foreground">For Other region only; ERCOT/AESO use smart curtailment</p>
       </div>
     </>
   );
@@ -372,7 +372,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
               onChange={(e) => handleInputChange('siteName', e.target.value)}
               placeholder="e.g., Home Mining Setup, Garage Farm"
             />
-            <p className="text-xs text-gray-500">Leave blank for auto-generated name</p>
+            <p className="text-xs text-muted-foreground">Leave blank for auto-generated name</p>
           </div>
         )}
 
@@ -394,7 +394,7 @@ export const BTCROIInputForm: React.FC<BTCROIInputFormProps> = ({
             </div>
 
             {showAdvanced && (
-              <div className="space-y-4 pt-4 border-t bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-4 pt-4 border-t bg-muted p-4 rounded-lg">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="efficiencyOverride">Efficiency Override (%)</Label>
