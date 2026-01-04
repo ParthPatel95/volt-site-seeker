@@ -131,11 +131,11 @@ export function PortfolioOptimizerPanel() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <span className="text-sm text-gray-600">Diversification Score</span>
+                    <span className="text-sm text-muted-foreground">Diversification Score</span>
                     <div className="font-bold text-lg">{recommendation.diversification_score}/100</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600">Risk-Adjusted Return</span>
+                    <span className="text-sm text-muted-foreground">Risk-Adjusted Return</span>
                     <div className="font-bold text-lg flex items-center">
                       {recommendation.risk_adjusted_return}%
                       <TrendingUp className="w-4 h-4 ml-1 text-green-600" />
@@ -167,9 +167,9 @@ export function PortfolioOptimizerPanel() {
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded border">
+                <div className="bg-card p-3 rounded border">
                   <h4 className="font-medium mb-1">Investment Thesis</h4>
-                  <p className="text-sm text-gray-700">{recommendation.investment_thesis}</p>
+                  <p className="text-sm text-foreground">{recommendation.investment_thesis}</p>
                 </div>
               </CardContent>
             </Card>

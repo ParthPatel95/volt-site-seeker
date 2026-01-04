@@ -19,12 +19,12 @@ export function EducationalNotices() {
       </div>
 
       {/* Technical Features */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+      <div className="bg-muted border border-border rounded-lg p-3">
         <div className="flex items-center mb-2">
-          <Database className="w-4 h-4 text-gray-600 mr-2" />
-          <span className="font-medium text-gray-800">Technical Features</span>
+          <Database className="w-4 h-4 text-muted-foreground mr-2" />
+          <span className="font-medium text-foreground">Technical Features</span>
         </div>
-        <div className="text-xs text-gray-600 space-y-1">
+        <div className="text-xs text-muted-foreground space-y-1">
           <p>✓ Anti-bot detection circumvention</p>
           <p>✓ Dynamic content handling</p>
           <p>✓ Multiple parsing strategies</p>

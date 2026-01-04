@@ -48,7 +48,7 @@ export function MarketTimingPanel() {
                   <TrendingUp className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="text-2xl font-bold text-blue-700">Mid-Cycle</div>
-                <div className="text-xs text-gray-500">Optimal acquisition window</div>
+                <div className="text-xs text-muted-foreground">Optimal acquisition window</div>
               </CardContent>
             </Card>
 
@@ -64,7 +64,7 @@ export function MarketTimingPanel() {
                     Medium Risk
                   </Badge>
                 </div>
-                <div className="text-xs text-gray-500">6-month probability</div>
+                <div className="text-xs text-muted-foreground">6-month probability</div>
               </CardContent>
             </Card>
           </div>
@@ -78,7 +78,7 @@ export function MarketTimingPanel() {
                 </Badge>
                 <span className="font-medium">Recommended Action</span>
               </div>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-foreground">
                 Market conditions favor acquisition within the next 3-6 months. 
                 Current cycle positioning and institutional activity levels suggest 
                 favorable pricing opportunities.

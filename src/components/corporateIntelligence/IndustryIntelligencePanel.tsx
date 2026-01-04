@@ -115,7 +115,7 @@ export function IndustryIntelligencePanel() {
       case 'low':
         return 'bg-green-500';
       default:
-        return 'bg-gray-500';
+        return 'bg-muted-foreground';
     }
   };
 
@@ -130,7 +130,7 @@ export function IndustryIntelligencePanel() {
       case 'medium':
         return 'bg-blue-500';
       default:
-        return 'bg-gray-500';
+        return 'bg-muted-foreground';
     }
   };
 

@@ -14,7 +14,7 @@ export function DataSourcesInfo() {
     { name: 'Catylist', color: 'bg-yellow-500', status: 'active', coverage: 'National', type: 'Industrial Focus' },
     { name: 'OfficeSpace.com', color: 'bg-pink-500', status: 'integration', coverage: 'Major Cities', type: 'Office & Industrial' },
     { name: 'Squared Away', color: 'bg-teal-500', status: 'active', coverage: 'Southwest', type: 'Regional Specialist' },
-    { name: 'PropertyShark', color: 'bg-gray-500', status: 'development', coverage: 'Major Markets', type: 'Property Data' }
+    { name: 'PropertyShark', color: 'bg-muted-foreground', status: 'development', coverage: 'Major Markets', type: 'Property Data' }
   ];
 
   const getStatusIcon = (status: string) => {
@@ -31,7 +31,7 @@ export function DataSourcesInfo() {
   };
 
   return (
-    <div className="bg-white/70 rounded-lg p-4 border border-green-200">
+    <div className="bg-card/70 rounded-lg p-4 border border-green-200">
       <h4 className="font-medium text-green-800 mb-3 flex items-center">
         <Target className="w-4 h-4 mr-1" />
         Real Estate Data Sources - Top Commercial Property Platforms
@@ -45,7 +45,7 @@ export function DataSourcesInfo() {
               <span className="flex-1 font-medium">{source.name}</span>
               {getStatusIcon(source.status)}
             </div>
-            <div className="flex items-center space-x-2 text-gray-500">
+            <div className="flex items-center space-x-2 text-muted-foreground">
               <span className="text-xs">{source.type}</span>
               <span className="text-xs">•</span>
               <span className="text-xs">{source.coverage}</span>

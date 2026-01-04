@@ -223,13 +223,13 @@ export function FreeDataSources({ onPropertiesFound }: FreeDataSourcesProps) {
         </div>
 
         {selectedSource && (
-          <div className="p-3 bg-white/70 rounded-lg border">
+          <div className="p-3 bg-card/70 rounded-lg border">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium">
                   {dataSources.find(s => s.id === selectedSource)?.name}
                 </h4>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {dataSources.find(s => s.id === selectedSource)?.description}
                 </p>
               </div>
