@@ -124,11 +124,11 @@ export const VoltMarketNotificationCenter: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-muted py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-            <p className="text-gray-600 mt-2">Please sign in to view notifications.</p>
+            <h2 className="text-2xl font-bold text-foreground">Access Denied</h2>
+            <p className="text-muted-foreground mt-2">Please sign in to view notifications.</p>
           </div>
         </div>
       </div>
@@ -136,12 +136,12 @@ export const VoltMarketNotificationCenter: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Notification Center</h1>
-            <p className="text-gray-600">Stay updated with your GridBazaar activity</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Notification Center</h1>
+            <p className="text-muted-foreground">Stay updated with your GridBazaar activity</p>
           </div>
           
           <div className="flex items-center gap-4">

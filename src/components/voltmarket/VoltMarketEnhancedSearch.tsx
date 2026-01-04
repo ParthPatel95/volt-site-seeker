@@ -175,17 +175,17 @@ export const VoltMarketEnhancedSearch: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Enhanced Search</h1>
-              <p className="text-gray-600">AI-powered search with advanced filtering and market intelligence</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Enhanced Search</h1>
+              <p className="text-muted-foreground">AI-powered search with advanced filtering and market intelligence</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600" />
+                <Sparkles className="w-4 h-4 text-primary" />
                 <Label htmlFor="smart-search" className="text-sm font-medium">Smart Search</Label>
                 <Switch
                   id="smart-search"

@@ -268,11 +268,11 @@ export const VoltMarketCreateListing: React.FC = () => {
 
   if (!profile || profile.role !== 'seller') {
   return (
-    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
+    <div className="min-h-screen bg-muted py-4 md:py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Access Restricted</h2>
-            <p className="text-gray-600 mt-2">Only verified sellers can create listings.</p>
+            <h2 className="text-2xl font-bold text-foreground">Access Restricted</h2>
+            <p className="text-muted-foreground mt-2">Only verified sellers can create listings.</p>
           </div>
         </div>
       </div>
@@ -280,12 +280,12 @@ export const VoltMarketCreateListing: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Listing</h1>
-          <p className="text-gray-600">Follow the steps below to create your listing</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Create New Listing</h1>
+          <p className="text-muted-foreground">Follow the steps below to create your listing</p>
         </div>
 
         {/* Progress Steps */}

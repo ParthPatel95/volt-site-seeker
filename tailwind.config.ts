@@ -105,15 +105,21 @@ export default {
 					quaternary: 'hsl(var(--chart-quaternary))',
 					grid: 'hsl(var(--chart-grid))'
 				},
-				// Legacy brand colors (backward compatibility)
-				'watt-bitcoin': 'hsl(36 94% 53%)',
-				'watt-coinbase': 'hsl(217 91% 55%)',
-				'watt-navy': 'hsl(220 50% 15%)',
-				'watt-trust': 'hsl(195 85% 41%)',
-				'watt-success': 'hsl(var(--data-positive))',
-				'watt-warning': 'hsl(var(--data-warning))',
-				'watt-primary': 'hsl(var(--primary))',
-				'watt-secondary': 'hsl(var(--chart-secondary))'
+				// Legacy brand colors (now using CSS variables for theme support)
+				'watt-bitcoin': 'hsl(var(--watt-bitcoin))',
+				'watt-coinbase': 'hsl(var(--watt-coinbase))',
+				'watt-navy': 'hsl(var(--watt-navy))',
+				'watt-trust': 'hsl(var(--watt-trust))',
+				'watt-purple': 'hsl(var(--watt-purple))',
+				'watt-success': 'hsl(var(--watt-success))',
+				'watt-warning': 'hsl(var(--watt-warning))',
+				'watt-primary': 'hsl(var(--watt-primary))',
+				'watt-secondary': 'hsl(var(--watt-secondary))',
+				// Market colors (aliases for semantic usage)
+				'market-positive': 'hsl(var(--data-positive))',
+				'market-negative': 'hsl(var(--data-negative))',
+				'market-warning': 'hsl(var(--data-warning))',
+				'market-neutral': 'hsl(var(--data-neutral))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
