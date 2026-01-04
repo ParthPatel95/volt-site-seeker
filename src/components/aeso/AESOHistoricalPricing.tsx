@@ -2053,19 +2053,19 @@ export function AESOHistoricalPricing() {
                     <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-lg">
                       <h4 className="text-sm font-semibold mb-3 text-center">All-In Energy Cost Analysis (Including ${transmissionAdder}/MWh Transmission)</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
-                          <div className="text-lg font-bold text-gray-600">
+                        <div className="text-center p-3 bg-card dark:bg-card rounded">
+                          <div className="text-lg font-bold text-muted-foreground">
                             {formatCurrency(calculateAllInPrice(currentAnalysis.originalAverage || 0))}
                           </div>
-                          <div className="text-sm font-medium text-gray-500">
+                          <div className="text-sm font-medium text-muted-foreground">
                             {liveExchangeRate ? formatCurrencyUSD(convertCADtoUSD(calculateAllInPrice(currentAnalysis.originalAverage || 0)), 'USD') : 'Loading USD...'}
                           </div>
                           <p className="text-sm text-muted-foreground">Original All-In Price</p>
                           <p className="text-xs text-muted-foreground">CAD/MWh (energy + transmission)</p>
                         </div>
                         
-                        <div className="text-center p-3 bg-white dark:bg-gray-800 rounded">
-                          <div className="text-lg font-bold text-green-600">
+                        <div className="text-center p-3 bg-card dark:bg-card rounded">
+                          <div className="text-lg font-bold text-data-positive">
                             {formatCurrency(calculateAllInPrice(currentAnalysis.newAveragePrice || 0))}
                           </div>
                           <div className="text-sm font-medium text-green-500">
@@ -2240,7 +2240,7 @@ export function AESOHistoricalPricing() {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div className="w-full bg-muted rounded-full h-3">
                                   <div 
                                     className="bg-gradient-to-r from-green-500 to-red-500 h-3 rounded-full transition-all"
                                     style={{ width: `${range.percentage}%` }}
