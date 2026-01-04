@@ -249,7 +249,7 @@ export function DashboardShareDialog({
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{link.recipient_email}</span>
                           <span className={`text-xs px-2 py-1 rounded ${
-                            link.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                            link.status === 'active' ? 'bg-data-positive/10 text-data-positive' : 'bg-muted text-muted-foreground'
                           }`}>
                             {link.status}
                           </span>

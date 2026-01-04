@@ -181,7 +181,7 @@ export const ModelStatusDashboard = () => {
       case 'good': return 'bg-blue-500';
       case 'fair': return 'bg-yellow-500';
       case 'poor': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      default: return 'bg-muted-foreground';
     }
   };
 
