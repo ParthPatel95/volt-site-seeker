@@ -187,13 +187,13 @@ export const VoltMarketPortfolioManager: React.FC = () => {
   const selectedPortfolioData = portfolios.find(p => p.id === selectedPortfolio);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-muted to-primary/5 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Portfolio Manager</h1>
-            <p className="text-gray-600 mt-1">Track and analyze your energy infrastructure investments</p>
+            <h1 className="text-3xl font-bold text-foreground">Portfolio Manager</h1>
+            <p className="text-muted-foreground mt-1">Track and analyze your energy infrastructure investments</p>
           </div>
           <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
             <DialogTrigger asChild>
@@ -264,7 +264,7 @@ export const VoltMarketPortfolioManager: React.FC = () => {
         </div>
 
         {/* Portfolio Selection */}
-        <Card className="bg-white/70 backdrop-blur-sm border-white/50">
+        <Card className="bg-card/70 backdrop-blur-sm border-border/50">
           <CardHeader>
             <CardTitle>Your Portfolios ({portfolios.length})</CardTitle>
           </CardHeader>
@@ -275,13 +275,13 @@ export const VoltMarketPortfolioManager: React.FC = () => {
                   key={portfolio.id}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                     selectedPortfolio === portfolio.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-card hover:border-muted-foreground'
                   }`}
                   onClick={() => setSelectedPortfolio(portfolio.id)}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">{portfolio.name}</h3>
+                    <h3 className="font-semibold text-foreground">{portfolio.name}</h3>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -294,10 +294,10 @@ export const VoltMarketPortfolioManager: React.FC = () => {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{portfolio.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{portfolio.description}</p>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Total Value:</span>
+                      <span className="text-muted-foreground">Total Value:</span>
                       <span className="font-semibold text-green-600">
                         {formatCurrency(portfolio.total_value || 0)}
                       </span>
@@ -305,11 +305,11 @@ export const VoltMarketPortfolioManager: React.FC = () => {
                     {portfolio.metrics && (
                       <>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Items:</span>
+                          <span className="text-muted-foreground">Items:</span>
                           <span>{portfolio.metrics.totalItems}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Return:</span>
+                          <span className="text-muted-foreground">Return:</span>
                           <span className={portfolio.metrics.returnPercentage >= 0 ? 'text-green-600' : 'text-red-600'}>
                             {portfolio.metrics.returnPercentage.toFixed(1)}%
                           </span>

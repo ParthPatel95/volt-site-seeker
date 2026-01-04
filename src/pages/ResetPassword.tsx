@@ -107,7 +107,7 @@ export const ResetPassword: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-watt-primary mx-auto"></div>
-              <p className="mt-4 text-gray-600">Validating reset link...</p>
+              <p className="mt-4 text-muted-foreground">Validating reset link...</p>
             </div>
           </CardContent>
         </Card>
@@ -168,7 +168,7 @@ export const ResetPassword: React.FC = () => {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-watt-primary">GridBazaar</h1>
-            <p className="text-gray-600">Energy Infrastructure Marketplace</p>
+            <p className="text-muted-foreground">Energy Infrastructure Marketplace</p>
           </div>
 
           <Card className="shadow-2xl border-0">
@@ -178,7 +178,7 @@ export const ResetPassword: React.FC = () => {
                   <Lock className="w-6 h-6 text-watt-primary" />
                 </div>
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 Reset Password
               </CardTitle>
               <CardDescription>
@@ -196,7 +196,7 @@ export const ResetPassword: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="text-sm font-medium text-foreground">
                     New Password
                   </label>
                   <div className="relative">
@@ -225,7 +225,7 @@ export const ResetPassword: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                     Confirm New Password
                   </label>
                   <div className="relative">

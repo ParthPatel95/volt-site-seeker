@@ -181,7 +181,7 @@ export function AccessRequestsSettings() {
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading access requests...</p>
+          <p className="text-muted-foreground">Loading access requests...</p>
         </div>
       </div>
     );
@@ -203,43 +203,43 @@ export function AccessRequestsSettings() {
       <CardContent className="space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="flex items-center">
-            <Mail className="w-4 h-4 mr-2 text-gray-500" />
+            <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.email}</span>
           </div>
           <div className="flex items-center">
-            <Phone className="w-4 h-4 mr-2 text-gray-500" />
+            <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.phone}</span>
           </div>
           <div className="flex items-center">
-            <Building className="w-4 h-4 mr-2 text-gray-500" />
+            <Building className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.company}</span>
           </div>
           <div className="flex items-center">
-            <User className="w-4 h-4 mr-2 text-gray-500" />
+            <User className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.role}</span>
           </div>
         </div>
         
         <div>
           <div className="flex items-center mb-1">
-            <FileText className="w-4 h-4 mr-2 text-gray-500" />
+            <FileText className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm font-medium">Platform Use:</span>
           </div>
-          <p className="text-sm text-gray-700 ml-6">{request.platform_use}</p>
+          <p className="text-sm text-foreground ml-6">{request.platform_use}</p>
         </div>
 
         {request.additional_info && (
           <div>
             <div className="flex items-center mb-1">
-              <FileText className="w-4 h-4 mr-2 text-gray-500" />
+              <FileText className="w-4 h-4 mr-2 text-muted-foreground" />
               <span className="text-sm font-medium">Additional Info:</span>
             </div>
-            <p className="text-sm text-gray-700 ml-6">{request.additional_info}</p>
+            <p className="text-sm text-foreground ml-6">{request.additional_info}</p>
           </div>
         )}
 
         <div className="flex items-center justify-between pt-3 border-t">
-          <div className="flex items-center text-sm text-gray-500">
+          <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="w-4 h-4 mr-1" />
             {formatDate(request.created_at)}
           </div>
@@ -283,19 +283,19 @@ export function AccessRequestsSettings() {
       <CardContent className="space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="flex items-center">
-            <Mail className="w-4 h-4 mr-2 text-gray-500" />
+            <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.email}</span>
           </div>
           <div className="flex items-center">
-            <Phone className="w-4 h-4 mr-2 text-gray-500" />
+            <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.phone}</span>
           </div>
           <div className="flex items-center">
-            <Building className="w-4 h-4 mr-2 text-gray-500" />
+            <Building className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.company_name}</span>
           </div>
           <div className="flex items-center">
-            <MapPin className="w-4 h-4 mr-2 text-gray-500" />
+            <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-sm">{request.location}</span>
           </div>
         </div>

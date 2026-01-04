@@ -95,7 +95,7 @@ export const ForgotPassword: React.FC = () => {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-watt-primary">GridBazaar</h1>
-            <p className="text-gray-600">Energy Infrastructure Marketplace</p>
+            <p className="text-muted-foreground">Energy Infrastructure Marketplace</p>
           </div>
 
           <Card className="shadow-2xl border-0">
@@ -105,7 +105,7 @@ export const ForgotPassword: React.FC = () => {
                   <Mail className="w-6 h-6 text-watt-primary" />
                 </div>
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 Reset Your Password
               </CardTitle>
               <CardDescription>
@@ -131,7 +131,7 @@ export const ForgotPassword: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="text-sm font-medium text-foreground">
                     Email Address
                   </label>
                   <div className="relative">

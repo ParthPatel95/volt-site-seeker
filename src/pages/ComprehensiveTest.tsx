@@ -244,9 +244,9 @@ export default function ComprehensiveTest() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'passed': return 'text-green-600 bg-green-50';
-      case 'failed': return 'text-red-600 bg-red-50';
-      default: return 'text-yellow-600 bg-yellow-50';
+      case 'passed': return 'text-green-600 bg-green-100';
+      case 'failed': return 'text-red-600 bg-red-100';
+      default: return 'text-yellow-600 bg-yellow-100';
     }
   };
 
@@ -263,11 +263,11 @@ export default function ComprehensiveTest() {
   const failedTests = systemTests.filter(t => t.status === 'failed').length;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Comprehensive System Testing</h1>
-          <p className="text-gray-600">Complete testing suite for all platform features and infrastructure</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Comprehensive System Testing</h1>
+          <p className="text-muted-foreground">Complete testing suite for all platform features and infrastructure</p>
         </div>
 
         <Tabs defaultValue="system" className="space-y-6">
@@ -314,8 +314,8 @@ export default function ComprehensiveTest() {
                 {testing && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Test Progress</span>
-                      <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
+                      <span className="text-sm text-muted-foreground">Test Progress</span>
+                      <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
                     </div>
                     <Progress value={progress} className="h-2" />
                   </div>
@@ -330,8 +330,8 @@ export default function ComprehensiveTest() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Total Tests</p>
-                        <p className="text-2xl font-bold text-gray-900">{totalTests}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Total Tests</p>
+                        <p className="text-2xl font-bold text-foreground">{totalTests}</p>
                       </div>
                       <TestTube className="w-8 h-8 text-blue-600" />
                     </div>
@@ -342,7 +342,7 @@ export default function ComprehensiveTest() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Passed</p>
+                        <p className="text-sm font-medium text-muted-foreground">Passed</p>
                         <p className="text-2xl font-bold text-green-600">{passedTests}</p>
                       </div>
                       <CheckCircle className="w-8 h-8 text-green-600" />
@@ -354,7 +354,7 @@ export default function ComprehensiveTest() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Failed</p>
+                        <p className="text-sm font-medium text-muted-foreground">Failed</p>
                         <p className="text-2xl font-bold text-red-600">{failedTests}</p>
                       </div>
                       <XCircle className="w-8 h-8 text-red-600" />
@@ -385,8 +385,8 @@ export default function ComprehensiveTest() {
                             <div className="flex items-center gap-3">
                               {getStatusIcon(result.status)}
                               <div>
-                                <h4 className="font-medium text-gray-900">{result.name}</h4>
-                                <p className="text-sm text-gray-600">{result.message}</p>
+                                <h4 className="font-medium text-foreground">{result.name}</h4>
+                                <p className="text-sm text-muted-foreground">{result.message}</p>
                               </div>
                             </div>
                             <Badge className={getStatusColor(result.status)}>
