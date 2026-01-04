@@ -217,10 +217,10 @@ export function CompanyRealEstateMap({ company }: CompanyRealEstateMapProps) {
               const count = realEstateAssets.filter(asset => asset.property_type === type).length;
               const Icon = getPropertyIcon(type);
               return (
-                <div key={type} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-center">
+                <div key={type} className="bg-muted rounded-lg p-3 text-center">
                   <Icon className="w-6 h-6 mx-auto mb-1" style={{ color: getPropertyColor(type) }} />
                   <div className="text-2xl font-bold">{count}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{type}</div>
+                  <div className="text-xs text-muted-foreground">{type}</div>
                 </div>
               );
             })}
@@ -288,7 +288,7 @@ export function CompanyRealEstateMap({ company }: CompanyRealEstateMapProps) {
                   {asset.raw_text && (
                     <div>
                       <p className="text-sm font-medium">Filing Context</p>
-                      <p className="text-xs text-muted-foreground bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                      <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
                         {asset.raw_text}
                       </p>
                     </div>

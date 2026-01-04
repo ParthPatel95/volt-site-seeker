@@ -105,7 +105,7 @@ export function EnhancedCapacityEstimator() {
 
           {/* Advanced Inputs */}
           {showAdvanced && (
-            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="space-y-4 p-4 bg-muted rounded-lg">
               <h4 className="font-medium flex items-center space-x-2">
                 <AlertCircle className="w-4 h-4" />
                 <span>Additional Context (Improves Accuracy)</span>

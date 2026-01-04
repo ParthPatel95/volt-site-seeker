@@ -167,11 +167,11 @@ export function EnhancedMapboxMap({
   // Show configuration error
   if (configError) {
     return (
-      <div className={`w-full ${height} rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center`}>
+      <div className={`w-full ${height} rounded-lg bg-muted flex items-center justify-center`}>
         <div className="text-center p-4">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-500" />
           <p className="text-sm text-red-600 dark:text-red-400">Failed to load Mapbox configuration</p>
-          <p className="text-xs text-gray-500 mt-1">{configError}</p>
+          <p className="text-xs text-muted-foreground mt-1">{configError}</p>
         </div>
       </div>
     );
@@ -183,7 +183,7 @@ export function EnhancedMapboxMap({
       <div ref={mapContainer} className={`w-full ${height} rounded-lg overflow-hidden`} />
       
       {/* Map Style Controls */}
-      <div className="absolute top-4 left-4 z-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2">
+      <div className="absolute top-4 left-4 z-10 bg-card rounded-lg shadow-lg p-2">
         <div className="flex flex-col space-y-2">
           {mapStyles.map((style) => {
             const IconComponent = style.icon;
@@ -204,7 +204,7 @@ export function EnhancedMapboxMap({
       </div>
 
       {/* Custom Zoom Controls */}
-      <div className="absolute top-4 right-4 z-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-1">
+      <div className="absolute top-4 right-4 z-10 bg-card rounded-lg shadow-lg p-1">
         <div className="flex flex-col space-y-1">
           <Button size="sm" variant="outline" onClick={zoomIn}>
             <ZoomIn className="w-4 h-4" />
@@ -216,7 +216,7 @@ export function EnhancedMapboxMap({
       </div>
 
       {/* Map Legend */}
-      <div className="absolute bottom-4 left-4 z-10 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3">
+      <div className="absolute bottom-4 left-4 z-10 bg-card rounded-lg shadow-lg p-3">
         <h4 className="text-sm font-semibold mb-2">Infrastructure</h4>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
@@ -232,10 +232,10 @@ export function EnhancedMapboxMap({
 
       {/* Loading Indicator */}
       {(configLoading || !isLoaded) && (
-        <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+        <div className="absolute inset-0 bg-muted rounded-lg flex items-center justify-center">
           <div className="text-center">
             <Map className="w-8 h-8 mx-auto mb-2 animate-pulse" />
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {configLoading ? 'Loading configuration...' : 'Loading Mapbox...'}
             </p>
           </div>
