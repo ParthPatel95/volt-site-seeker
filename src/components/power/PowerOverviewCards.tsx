@@ -128,7 +128,7 @@ export function PowerOverviewCards({ powerData: externalPowerData }: PowerOvervi
     <div className="w-full">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {cards.map((card, index) => (
-          <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm bg-white dark:bg-slate-800 overflow-hidden">
+          <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm bg-card overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-xl ${card.lightBg} group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>

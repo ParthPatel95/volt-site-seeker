@@ -23,7 +23,7 @@ interface PowerCapacityDistributionProps {
 export function PowerCapacityDistribution({ properties, getStatusColor }: PowerCapacityDistributionProps) {
   if (properties.length === 0) {
     return (
-      <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
+      <Card className="bg-card border-0 shadow-sm">
         <CardHeader className="text-center pb-4">
           <CardTitle className="flex items-center justify-center gap-2 text-xl">
             <Zap className="w-6 h-6 text-yellow-500" />
@@ -60,7 +60,7 @@ export function PowerCapacityDistribution({ properties, getStatusColor }: PowerC
   }
 
   return (
-    <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
+    <Card className="bg-card border-0 shadow-sm">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
