@@ -138,7 +138,7 @@ export function NewsIntelligencePanel() {
                         )}
                       </div>
                       
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
                         {article.content}
                       </p>
 
@@ -150,7 +150,7 @@ export function NewsIntelligencePanel() {
                         ))}
                       </div>
 
-                      <div className="flex justify-between items-center text-xs text-gray-500">
+                      <div className="flex justify-between items-center text-xs text-muted-foreground">
                         <span className="font-medium">{article.source}</span>
                         <div className="flex items-center">
                           <Clock className="w-3 h-3 mr-1" />

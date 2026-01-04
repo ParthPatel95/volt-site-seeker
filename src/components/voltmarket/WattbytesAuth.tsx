@@ -202,7 +202,7 @@ export const WattbytesAuth: React.FC = () => {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-watt-primary">GridBazaar</h1>
-            <p className="text-gray-600">Energy Infrastructure Marketplace</p>
+            <p className="text-muted-foreground">Energy Infrastructure Marketplace</p>
           </div>
 
           <Card className="shadow-2xl border-0">
@@ -216,10 +216,10 @@ export const WattbytesAuth: React.FC = () => {
                   )}
                 </div>
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
+              <CardTitle className="text-2xl font-bold text-foreground">
                 {isLogin ? 'Welcome Back' : 'Create Account'}
               </CardTitle>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {isLogin 
                   ? 'Sign in to access your energy dashboard' 
                   : 'Join the future of energy management'}
@@ -247,18 +247,18 @@ export const WattbytesAuth: React.FC = () => {
                 {/* Full Name (Sign Up Only) */}
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="fullName" className="text-sm font-medium text-foreground">
                       Full Name
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         id="fullName"
                         name="fullName"
                         type="text"
                         value={formData.fullName}
                         onChange={handleInputChange}
-                        className="pl-10 h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary"
+                        className="pl-10 h-12 border-border focus:border-primary focus:ring-primary"
                         placeholder="Enter your full name"
                         required={!isLogin}
                       />
@@ -269,18 +269,18 @@ export const WattbytesAuth: React.FC = () => {
                 {/* Company (Sign Up Only) */}
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="company" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="company" className="text-sm font-medium text-foreground">
                       Company (Optional)
                     </Label>
                     <div className="relative">
-                      <Lightbulb className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Lightbulb className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         id="company"
                         name="company"
                         type="text"
                         value={formData.company}
                         onChange={handleInputChange}
-                        className="pl-10 h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary"
+                        className="pl-10 h-12 border-border focus:border-primary focus:ring-primary"
                         placeholder="Enter your company name"
                       />
                     </div>
@@ -290,11 +290,11 @@ export const WattbytesAuth: React.FC = () => {
                 {/* Role Selection (Sign Up Only) */}
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="role" className="text-sm font-medium text-foreground">
                       I am a *
                     </Label>
                     <Select value={role} onValueChange={(value: 'buyer' | 'seller') => setRole(value)}>
-                      <SelectTrigger className="h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary">
+                      <SelectTrigger className="h-12 border-border focus:border-primary focus:ring-primary">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -308,11 +308,11 @@ export const WattbytesAuth: React.FC = () => {
                 {/* Seller Type (Sign Up Only - Sellers) */}
                 {!isLogin && role === 'seller' && (
                   <div className="space-y-2">
-                    <Label htmlFor="sellerType" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="sellerType" className="text-sm font-medium text-foreground">
                       Seller Type *
                     </Label>
                     <Select value={sellerType} onValueChange={(value: 'site_owner' | 'broker' | 'realtor' | 'equipment_vendor') => setSellerType(value)}>
-                      <SelectTrigger className="h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary">
+                      <SelectTrigger className="h-12 border-border focus:border-primary focus:ring-primary">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -327,18 +327,18 @@ export const WattbytesAuth: React.FC = () => {
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="email" className="text-sm font-medium text-foreground">
                     Email Address
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
                       id="email"
                       name="email"
                       type="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="pl-10 h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary"
+                      className="pl-10 h-12 border-border focus:border-primary focus:ring-primary"
                       placeholder="Enter your email"
                       required
                     />
@@ -347,25 +347,25 @@ export const WattbytesAuth: React.FC = () => {
 
                 {/* Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
                     Password
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
                       id="password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="pl-10 pr-10 h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary"
+                      className="pl-10 pr-10 h-12 border-border focus:border-primary focus:ring-primary"
                       placeholder="Enter your password"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -375,18 +375,18 @@ export const WattbytesAuth: React.FC = () => {
                 {/* Confirm Password (Sign Up Only) */}
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                       Confirm Password
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
                         type="password"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="pl-10 h-12 border-gray-300 focus:border-watt-primary focus:ring-watt-primary"
+                        className="pl-10 h-12 border-border focus:border-primary focus:ring-primary"
                         placeholder="Confirm your password"
                         required={!isLogin}
                       />
@@ -427,8 +427,8 @@ export const WattbytesAuth: React.FC = () => {
               )}
 
               {/* Toggle Mode */}
-              <div className="text-center pt-4 border-t border-gray-200">
-                <p className="text-gray-600 mb-3">
+              <div className="text-center pt-4 border-t border-border">
+                <p className="text-muted-foreground mb-3">
                   {isLogin ? "Don't have an account?" : "Already have an account?"}
                 </p>
                 <Button
@@ -445,7 +445,7 @@ export const WattbytesAuth: React.FC = () => {
               <div className="text-center pt-2">
                 <Link 
                   to="/voltmarket" 
-                  className="text-sm text-gray-500 hover:text-watt-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   ← Back to Home
                 </Link>

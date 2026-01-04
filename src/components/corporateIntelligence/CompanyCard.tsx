@@ -17,10 +17,10 @@ interface CompanyCardProps {
 
 export function CompanyCard({ company, onSelect }: CompanyCardProps) {
   const getHealthColor = (score?: number) => {
-    if (!score) return 'bg-gray-500';
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (!score) return 'bg-muted-foreground';
+    if (score >= 80) return 'bg-data-positive';
+    if (score >= 60) return 'bg-data-warning';
+    return 'bg-destructive';
   };
 
   const formatCurrency = (value?: number) => {
@@ -126,7 +126,7 @@ export function CompanyCard({ company, onSelect }: CompanyCardProps) {
             </div>
             <div className="space-y-1">
               {company.distress_signals.slice(0, 2).map((signal, index) => (
-                <div key={index} className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                <div key={index} className="text-xs text-data-warning bg-data-warning/10 px-2 py-1 rounded">
                   {signal}
                 </div>
               ))}
@@ -144,7 +144,7 @@ export function CompanyCard({ company, onSelect }: CompanyCardProps) {
             <div className="text-sm font-medium">Recent News</div>
             <div className="space-y-1">
               {company.recent_news.slice(0, 2).map((news: any, index: number) => (
-                <div key={index} className="text-xs p-2 bg-gray-50 rounded">
+                <div key={index} className="text-xs p-2 bg-muted rounded">
                   <div className="font-medium line-clamp-1">{news.title}</div>
                   <div className="text-muted-foreground">{news.source}</div>
                 </div>

@@ -410,10 +410,10 @@ export const VoltMarketEnhancedSearch: React.FC = () => {
               {/* Results Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-foreground">
                     Search Results ({searchResults.length})
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {smartSearchEnabled && searchCriteria.keyword && 'AI-enhanced search results'}
                   </p>
                 </div>
@@ -436,7 +436,7 @@ export const VoltMarketEnhancedSearch: React.FC = () => {
               {/* Results Content */}
               {loading ? (
                 <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : (
                 <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'list' | 'map')}>
@@ -449,9 +449,9 @@ export const VoltMarketEnhancedSearch: React.FC = () => {
                       </div>
                     ) : (
                       <div className="text-center py-12">
-                        <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No listings found</h3>
-                        <p className="text-gray-600">Try adjusting your search criteria or enabling smart search</p>
+                        <Building2 className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground mb-2">No listings found</h3>
+                        <p className="text-muted-foreground">Try adjusting your search criteria or enabling smart search</p>
                       </div>
                     )}
                   </TabsContent>
