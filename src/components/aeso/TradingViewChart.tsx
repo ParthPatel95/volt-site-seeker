@@ -24,6 +24,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from '@/components/ui/dropdown-menu';
 import { 
   ComposedChart, 
   Line, 
@@ -1007,7 +1019,7 @@ export function TradingViewChart({
       ref={chartContainerRef}
       className={cn(
         "border-border overflow-hidden bg-card shadow-lg flex flex-col",
-        isFullscreen && "fixed inset-0 z-50 rounded-none h-screen w-screen"
+        isFullscreen && "fixed inset-0 z-50 rounded-none h-screen w-screen overflow-visible"
       )}
     >
       {/* ===== TOP TOOLBAR with OHLC Display ===== */}
@@ -1107,8 +1119,8 @@ export function TradingViewChart({
             </Button>
           </div>
 
-          {/* Chart Type Toggle */}
-          <div className="hidden md:flex items-center border border-border rounded overflow-hidden flex-shrink-0">
+          {/* Chart Type Toggle - Desktop */}
+          <div className="hidden lg:flex items-center border border-border rounded overflow-hidden flex-shrink-0">
             <Button 
               variant={chartType === 'line' ? 'secondary' : 'ghost'}
               size="sm" 
@@ -1128,11 +1140,12 @@ export function TradingViewChart({
             </Button>
           </div>
 
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop: Individual Indicator/Oscillator/Alert buttons */}
+          <div className="hidden xl:flex items-center gap-1 flex-shrink-0">
             {/* Indicators Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs min-w-max">
                   <BarChart3 className="w-3.5 h-3.5 mr-1" />
                   Indicators
                   {selectedIndicators.length > 0 && (
@@ -1143,7 +1156,10 @@ export function TradingViewChart({
                   <ChevronDown className="w-3 h-3 ml-1" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-56 p-3" align="start">
+              <PopoverContent 
+                className={cn("w-56 p-3", isFullscreen && "z-[100]")}
+                align="start"
+              >
                 <div className="space-y-3">
                   <p className="text-sm font-semibold">Technical Indicators</p>
                   <div className="space-y-2">
@@ -1181,7 +1197,7 @@ export function TradingViewChart({
             {/* Oscillator Panel Selector */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs min-w-max">
                   <Activity className="w-3.5 h-3.5 mr-1" />
                   Oscillators
                   {indicatorPanel !== 'none' && (
@@ -1192,7 +1208,10 @@ export function TradingViewChart({
                   <ChevronDown className="w-3 h-3 ml-1" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-48 p-3" align="start">
+              <PopoverContent 
+                className={cn("w-48 p-3", isFullscreen && "z-[100]")}
+                align="start"
+              >
                 <div className="space-y-2">
                   <p className="text-sm font-semibold">Oscillator Panels</p>
                   <div className="space-y-1">
@@ -1231,7 +1250,7 @@ export function TradingViewChart({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 px-2 text-xs"
+              className="h-7 px-2 text-xs min-w-max"
               onClick={() => setShowAlertDialog(true)}
             >
               <Bell className="w-3.5 h-3.5 mr-1" />
@@ -1243,9 +1262,150 @@ export function TradingViewChart({
               )}
             </Button>
           </div>
+
+          {/* Tablet/Mobile: Combined "More" dropdown for Chart Options */}
+          <div className="flex xl:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                  <BarChart3 className="w-3.5 h-3.5 mr-1" />
+                  <span className="hidden sm:inline">More</span>
+                  {(selectedIndicators.length > 0 || indicatorPanel !== 'none' || activeAlerts.length > 0) && (
+                    <Badge variant="secondary" className="ml-1 h-4 min-w-4 px-1 text-[10px]">
+                      {selectedIndicators.length + (indicatorPanel !== 'none' ? 1 : 0) + activeAlerts.length}
+                    </Badge>
+                  )}
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className={cn("w-64 bg-popover", isFullscreen && "z-[100]")}
+              >
+                {/* Chart Type Selection */}
+                <DropdownMenuLabel className="text-xs">Chart Type</DropdownMenuLabel>
+                <div className="flex items-center gap-1 px-2 pb-2">
+                  <Button 
+                    variant={chartType === 'line' ? 'secondary' : 'ghost'}
+                    size="sm" 
+                    className="h-7 px-2 text-xs flex-1"
+                    onClick={() => setChartType('line')}
+                  >
+                    <LineChart className="w-3.5 h-3.5 mr-1" />
+                    Line
+                  </Button>
+                  <Button 
+                    variant={chartType === 'candlestick' ? 'secondary' : 'ghost'}
+                    size="sm" 
+                    className="h-7 px-2 text-xs flex-1"
+                    onClick={() => setChartType('candlestick')}
+                  >
+                    <CandlestickIcon className="w-3.5 h-3.5 mr-1" />
+                    Candle
+                  </Button>
+                </div>
+                <DropdownMenuSeparator />
+                
+                {/* Indicators Sub-menu */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-xs">
+                    <BarChart3 className="w-3.5 h-3.5 mr-2" />
+                    Indicators
+                    {selectedIndicators.length > 0 && (
+                      <Badge variant="secondary" className="ml-auto h-4 min-w-4 px-1 text-[10px]">
+                        {selectedIndicators.length}
+                      </Badge>
+                    )}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-48 bg-popover">
+                    {AVAILABLE_INDICATORS.map(ind => (
+                      <DropdownMenuCheckboxItem
+                        key={ind.id}
+                        checked={selectedIndicators.includes(ind.id)}
+                        onCheckedChange={() => toggleIndicator(ind.id)}
+                        className="text-xs"
+                      >
+                        <div 
+                          className="w-3 h-0.5 rounded mr-2" 
+                          style={{ backgroundColor: ind.color }}
+                        />
+                        {ind.name}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                    {selectedIndicators.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-xs text-muted-foreground"
+                          onClick={() => setSelectedIndicators([])}
+                        >
+                          Clear All
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                
+                {/* Oscillators Sub-menu */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-xs">
+                    <Activity className="w-3.5 h-3.5 mr-2" />
+                    Oscillators
+                    {indicatorPanel !== 'none' && (
+                      <Badge variant="secondary" className="ml-auto h-4 min-w-4 px-1 text-[10px]">
+                        1
+                      </Badge>
+                    )}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-40 bg-popover">
+                    <DropdownMenuCheckboxItem
+                      checked={indicatorPanel === 'none'}
+                      onCheckedChange={() => setIndicatorPanel('none')}
+                      className="text-xs"
+                    >
+                      None
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={indicatorPanel === 'rsi'}
+                      onCheckedChange={() => setIndicatorPanel('rsi')}
+                      className="text-xs"
+                    >
+                      <div className="w-3 h-0.5 rounded bg-purple-500 mr-2" />
+                      RSI (14)
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={indicatorPanel === 'macd'}
+                      onCheckedChange={() => setIndicatorPanel('macd')}
+                      className="text-xs"
+                    >
+                      <div className="w-3 h-0.5 rounded bg-blue-500 mr-2" />
+                      MACD
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Alerts */}
+                <DropdownMenuItem 
+                  className="text-xs"
+                  onClick={() => setShowAlertDialog(true)}
+                >
+                  <Bell className="w-3.5 h-3.5 mr-2" />
+                  Alerts
+                  {activeAlerts.length > 0 && (
+                    <Badge variant="destructive" className="ml-auto h-4 min-w-4 px-1 text-[10px]">
+                      {activeAlerts.length}
+                    </Badge>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Right side action buttons - always visible */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           <Button 
             variant={showDebug ? 'secondary' : 'ghost'}
             size="icon" 
