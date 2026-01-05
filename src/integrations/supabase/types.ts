@@ -2024,6 +2024,113 @@ export type Database = {
         }
         Relationships: []
       }
+      bid_requests: {
+        Row: {
+          attachments: Json | null
+          created_at: string
+          due_date: string | null
+          id: string
+          invited_vendor_ids: string[] | null
+          phase_id: string | null
+          project_id: string
+          scope_of_work: string | null
+          status: string
+          task_id: string | null
+          title: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invited_vendor_ids?: string[] | null
+          phase_id?: string | null
+          project_id: string
+          scope_of_work?: string | null
+          status?: string
+          task_id?: string | null
+          title: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invited_vendor_ids?: string[] | null
+          phase_id?: string | null
+          project_id?: string
+          scope_of_work?: string | null
+          status?: string
+          task_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bids: {
+        Row: {
+          amount: number
+          assumptions: string | null
+          attachments: Json | null
+          bid_request_id: string
+          created_at: string
+          currency: string | null
+          exclusions: string | null
+          id: string
+          status: string
+          timeline_days: number | null
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          assumptions?: string | null
+          attachments?: Json | null
+          bid_request_id: string
+          created_at?: string
+          currency?: string | null
+          exclusions?: string | null
+          id?: string
+          status?: string
+          timeline_days?: number | null
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          assumptions?: string | null
+          attachments?: Json | null
+          bid_request_id?: string
+          created_at?: string
+          currency?: string | null
+          exclusions?: string | null
+          id?: string
+          status?: string
+          timeline_days?: number | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brokers: {
         Row: {
           company: string | null
@@ -2263,6 +2370,74 @@ export type Database = {
           },
         ]
       }
+      change_orders: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attachments: Json | null
+          change_order_number: string | null
+          cost_delta: number | null
+          created_at: string
+          description: string | null
+          id: string
+          implemented_at: string | null
+          phase_id: string | null
+          project_id: string
+          reason: string | null
+          requested_by: string | null
+          schedule_delta_days: number | null
+          status: string
+          task_id: string | null
+          title: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: Json | null
+          change_order_number?: string | null
+          cost_delta?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          implemented_at?: string | null
+          phase_id?: string | null
+          project_id: string
+          reason?: string | null
+          requested_by?: string | null
+          schedule_delta_days?: number | null
+          status?: string
+          task_id?: string | null
+          title: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: Json | null
+          change_order_number?: string | null
+          cost_delta?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          implemented_at?: string | null
+          phase_id?: string | null
+          project_id?: string
+          reason?: string | null
+          requested_by?: string | null
+          schedule_delta_days?: number | null
+          status?: string
+          task_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chart_annotations: {
         Row: {
           annotation_type: string
@@ -2355,6 +2530,88 @@ export type Database = {
           utility_companies?: Json | null
         }
         Relationships: []
+      }
+      commissioning_checklists: {
+        Row: {
+          checklist_name: string
+          checklist_type: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          items: Json | null
+          phase_id: string | null
+          project_id: string
+          status: string
+        }
+        Insert: {
+          checklist_name: string
+          checklist_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          items?: Json | null
+          phase_id?: string | null
+          project_id: string
+          status?: string
+        }
+        Update: {
+          checklist_name?: string
+          checklist_type?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          items?: Json | null
+          phase_id?: string | null
+          project_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissioning_checklists_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissioning_evidence: {
+        Row: {
+          checklist_id: string
+          evidence_url: string
+          id: string
+          item_index: number
+          notes: string | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          checklist_id: string
+          evidence_url: string
+          id?: string
+          item_index: number
+          notes?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          checklist_id?: string
+          evidence_url?: string
+          id?: string
+          item_index?: number
+          notes?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissioning_evidence_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "commissioning_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       companies: {
         Row: {
@@ -2498,6 +2755,67 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_awards: {
+        Row: {
+          awarded_amount: number
+          bid_request_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          project_id: string
+          start_date: string | null
+          terms_url: string | null
+          vendor_id: string
+        }
+        Insert: {
+          awarded_amount: number
+          bid_request_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          project_id: string
+          start_date?: string | null
+          terms_url?: string | null
+          vendor_id: string
+        }
+        Update: {
+          awarded_amount?: number
+          bid_request_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: string
+          start_date?: string | null
+          terms_url?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_awards_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_awards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_awards_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -3389,6 +3707,47 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: []
+      }
+      energization_gates: {
+        Row: {
+          created_at: string
+          gate_name: string
+          id: string
+          notes: string | null
+          project_id: string
+          required_checklists: string[] | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gate_name: string
+          id?: string
+          notes?: string | null
+          project_id: string
+          required_checklists?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gate_name?: string
+          id?: string
+          notes?: string | null
+          project_id?: string
+          required_checklists?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energization_gates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       energy_cost_calculations: {
         Row: {
@@ -4912,6 +5271,74 @@ export type Database = {
           },
         ]
       }
+      procurement_items: {
+        Row: {
+          actual_delivery_date: string | null
+          category: string
+          created_at: string
+          expected_delivery_date: string | null
+          id: string
+          item_name: string
+          linked_phase_id: string | null
+          linked_task_id: string | null
+          notes: string | null
+          order_date: string | null
+          project_id: string
+          promised_ship_date: string | null
+          qty: number | null
+          status: string
+          total_cost: number | null
+          unit_cost: number | null
+          vendor: string | null
+        }
+        Insert: {
+          actual_delivery_date?: string | null
+          category?: string
+          created_at?: string
+          expected_delivery_date?: string | null
+          id?: string
+          item_name: string
+          linked_phase_id?: string | null
+          linked_task_id?: string | null
+          notes?: string | null
+          order_date?: string | null
+          project_id: string
+          promised_ship_date?: string | null
+          qty?: number | null
+          status?: string
+          total_cost?: number | null
+          unit_cost?: number | null
+          vendor?: string | null
+        }
+        Update: {
+          actual_delivery_date?: string | null
+          category?: string
+          created_at?: string
+          expected_delivery_date?: string | null
+          id?: string
+          item_name?: string
+          linked_phase_id?: string | null
+          linked_task_id?: string | null
+          notes?: string | null
+          order_date?: string | null
+          project_id?: string
+          promised_ship_date?: string | null
+          qty?: number | null
+          status?: string
+          total_cost?: number | null
+          unit_cost?: number | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -4953,6 +5380,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_reports: {
+        Row: {
+          created_at: string
+          exported_pdf_url: string | null
+          generated_summary: string | null
+          id: string
+          kpis: Json | null
+          period_end: string
+          period_start: string
+          project_id: string
+          report_type: string
+          snapshot_data: Json | null
+        }
+        Insert: {
+          created_at?: string
+          exported_pdf_url?: string | null
+          generated_summary?: string | null
+          id?: string
+          kpis?: Json | null
+          period_end: string
+          period_start: string
+          project_id: string
+          report_type?: string
+          snapshot_data?: Json | null
+        }
+        Update: {
+          created_at?: string
+          exported_pdf_url?: string | null
+          generated_summary?: string | null
+          id?: string
+          kpis?: Json | null
+          period_end?: string
+          period_start?: string
+          project_id?: string
+          report_type?: string
+          snapshot_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -5105,6 +5579,53 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          id: string
+          notes: string | null
+          po_doc_url: string | null
+          po_number: string
+          project_id: string
+          status: string
+          vendor: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          po_doc_url?: string | null
+          po_number: string
+          project_id: string
+          status?: string
+          vendor: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          po_doc_url?: string | null
+          po_number?: string
+          project_id?: string
+          status?: string
+          vendor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -6441,6 +6962,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vendors: {
+        Row: {
+          certifications: string[] | null
+          company_name: string
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          insurance_docs_url: string | null
+          notes: string | null
+          phone: string | null
+          regions: string[] | null
+          trade: string
+          user_id: string
+        }
+        Insert: {
+          certifications?: string[] | null
+          company_name: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          insurance_docs_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          regions?: string[] | null
+          trade?: string
+          user_id: string
+        }
+        Update: {
+          certifications?: string[] | null
+          company_name?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          insurance_docs_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          regions?: string[] | null
+          trade?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       verified_heavy_power_sites: {
         Row: {
