@@ -48,11 +48,11 @@ export function VoltLeadTimeTab({ project }: VoltLeadTimeTabProps) {
     );
   }, [forecasts, inputs?.target_rfs_date, project.estimated_start_date]);
 
-  const handleSaveInputs = (values: Record<string, unknown>) => {
+  const handleSaveInputs = (values: Partial<typeof inputs>) => {
     upsertInputs({
       project_id: project.id,
       ...values,
-    });
+    } as Parameters<typeof upsertInputs>[0]);
   };
 
   const handleCalculate = () => {
