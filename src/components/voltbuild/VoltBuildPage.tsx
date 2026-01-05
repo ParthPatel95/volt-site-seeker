@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Loader2, LayoutDashboard, ListTodo, GanttChart, AlertTriangle, DollarSign, Clock, Brain } from 'lucide-react';
+import { Loader2, LayoutDashboard, ListTodo, GanttChart, AlertTriangle, DollarSign, Clock, Brain, Users, Package, FileEdit, ClipboardCheck, FileText } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -17,6 +17,11 @@ import { VoltBuildNewTask } from './VoltBuildNewTask';
 import { VoltCapExTab } from './capex/VoltCapExTab';
 import { VoltLeadTimeTab } from './leadtime/VoltLeadTimeTab';
 import { VoltAdvisorTab } from './advisor/VoltAdvisorTab';
+import { VoltBidsTab } from './bids/VoltBidsTab';
+import { VoltProcurementTab } from './procurement/VoltProcurementTab';
+import { VoltChangeOrdersTab } from './changeorders/VoltChangeOrdersTab';
+import { VoltQualityTab } from './quality/VoltQualityTab';
+import { VoltReportingTab } from './reporting/VoltReportingTab';
 
 import { useVoltBuildProjects } from './hooks/useVoltBuildProjects';
 import { useVoltBuildPhases } from './hooks/useVoltBuildPhases';
@@ -386,6 +391,26 @@ export function VoltBuildPage() {
               <Brain className="w-4 h-4" />
               <span className="hidden sm:inline">AI Advisor</span>
             </TabsTrigger>
+            <TabsTrigger value="bids" className="gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Bids & Vendors</span>
+            </TabsTrigger>
+            <TabsTrigger value="procurement" className="gap-2">
+              <Package className="w-4 h-4" />
+              <span className="hidden sm:inline">Procurement</span>
+            </TabsTrigger>
+            <TabsTrigger value="changeorders" className="gap-2">
+              <FileEdit className="w-4 h-4" />
+              <span className="hidden sm:inline">Change Orders</span>
+            </TabsTrigger>
+            <TabsTrigger value="quality" className="gap-2">
+              <ClipboardCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Quality</span>
+            </TabsTrigger>
+            <TabsTrigger value="reporting" className="gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Reporting</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -502,6 +527,31 @@ export function VoltBuildPage() {
           {/* AI Advisor Tab */}
           <TabsContent value="advisor">
             <VoltAdvisorTab project={selectedProject} phases={phases} tasks={allTasks} />
+          </TabsContent>
+
+          {/* Bids & Vendors Tab */}
+          <TabsContent value="bids">
+            <VoltBidsTab project={selectedProject} phases={phases} />
+          </TabsContent>
+
+          {/* Procurement Tab */}
+          <TabsContent value="procurement">
+            <VoltProcurementTab project={selectedProject} phases={phases} />
+          </TabsContent>
+
+          {/* Change Orders Tab */}
+          <TabsContent value="changeorders">
+            <VoltChangeOrdersTab project={selectedProject} phases={phases} />
+          </TabsContent>
+
+          {/* Quality & Commissioning Tab */}
+          <TabsContent value="quality">
+            <VoltQualityTab project={selectedProject} phases={phases} />
+          </TabsContent>
+
+          {/* Reporting Tab */}
+          <TabsContent value="reporting">
+            <VoltReportingTab project={selectedProject} tasks={allTasks} />
           </TabsContent>
         </Tabs>
       )}
