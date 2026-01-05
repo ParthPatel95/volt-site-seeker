@@ -58,14 +58,18 @@ export function VoltBuildPage() {
     }
   }, [projects, selectedProjectId]);
 
-  // Auto-expand first phase
+  // Auto-expand first phase (only once when phases first load)
+  const hasAutoExpanded = React.useRef(false);
   useEffect(() => {
-    if (phases.length > 0 && expandedPhases.length === 0) {
+    if (phases.length > 0 && !hasAutoExpanded.current) {
+      hasAutoExpanded.current = true;
       setExpandedPhases([phases[0].id]);
     }
   }, [phases]);
 
-  // Load tasks for all phases
+  // Load tasks for all phases - use stable phase IDs reference
+  const phaseIds = useMemo(() => phases.map(p => p.id).join(','), [phases]);
+  
   useEffect(() => {
     if (!selectedProjectId || phases.length === 0) {
       setTasksByPhase({});
@@ -75,11 +79,11 @@ export function VoltBuildPage() {
     const loadTasks = async () => {
       setTasksLoading(true);
       try {
-        const phaseIds = phases.map(p => p.id);
+        const ids = phases.map(p => p.id);
         const { data, error } = await supabase
           .from('voltbuild_tasks')
           .select('*')
-          .in('phase_id', phaseIds)
+          .in('phase_id', ids)
           .order('order_index', { ascending: true });
 
         if (error) throw error;
@@ -100,7 +104,7 @@ export function VoltBuildPage() {
     };
 
     loadTasks();
-  }, [selectedProjectId, phases]);
+  }, [selectedProjectId, phaseIds]);
 
   // Get all tasks flattened
   const allTasks = useMemo(() => {
