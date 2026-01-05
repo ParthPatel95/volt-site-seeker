@@ -2141,6 +2141,128 @@ export type Database = {
           },
         ]
       }
+      capex_catalog_items: {
+        Row: {
+          category: string
+          created_at: string
+          default_unit_cost: number
+          id: string
+          item_name: string
+          source_note: string | null
+          unit: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_unit_cost?: number
+          id?: string
+          item_name: string
+          source_note?: string | null
+          unit: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_unit_cost?: number
+          id?: string
+          item_name?: string
+          source_note?: string | null
+          unit?: string
+        }
+        Relationships: []
+      }
+      capex_phase_lines: {
+        Row: {
+          catalog_item_id: string | null
+          created_at: string
+          id: string
+          item_name: string
+          notes: string | null
+          phase_id: string
+          project_id: string
+          quantity: number
+          subtotal: number | null
+          task_id: string | null
+          unit: string
+          unit_cost: number
+        }
+        Insert: {
+          catalog_item_id?: string | null
+          created_at?: string
+          id?: string
+          item_name: string
+          notes?: string | null
+          phase_id: string
+          project_id: string
+          quantity?: number
+          subtotal?: number | null
+          task_id?: string | null
+          unit?: string
+          unit_cost?: number
+        }
+        Update: {
+          catalog_item_id?: string | null
+          created_at?: string
+          id?: string
+          item_name?: string
+          notes?: string | null
+          phase_id?: string
+          project_id?: string
+          quantity?: number
+          subtotal?: number | null
+          task_id?: string | null
+          unit?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capex_phase_lines_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "capex_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capex_phase_lines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capex_project_summary: {
+        Row: {
+          contingency_pct: number
+          currency: string
+          project_id: string
+          tax_pct: number
+          updated_at: string
+        }
+        Insert: {
+          contingency_pct?: number
+          currency?: string
+          project_id: string
+          tax_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          contingency_pct?: number
+          currency?: string
+          project_id?: string
+          tax_pct?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capex_project_summary_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chart_annotations: {
         Row: {
           annotation_type: string
@@ -3943,6 +4065,139 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leadtime_baselines: {
+        Row: {
+          baseline_max_days: number
+          baseline_min_days: number
+          id: string
+          jurisdiction: string
+          milestone: string
+          notes: string | null
+          updated_at: string
+          utility: string | null
+        }
+        Insert: {
+          baseline_max_days: number
+          baseline_min_days: number
+          id?: string
+          jurisdiction: string
+          milestone: string
+          notes?: string | null
+          updated_at?: string
+          utility?: string | null
+        }
+        Update: {
+          baseline_max_days?: number
+          baseline_min_days?: number
+          id?: string
+          jurisdiction?: string
+          milestone?: string
+          notes?: string | null
+          updated_at?: string
+          utility?: string | null
+        }
+        Relationships: []
+      }
+      leadtime_project_forecasts: {
+        Row: {
+          confidence_pct: number
+          id: string
+          key_risk_factors: string[] | null
+          milestone: string
+          mitigation_actions: string[] | null
+          predicted_max_days: number
+          predicted_min_days: number
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          confidence_pct?: number
+          id?: string
+          key_risk_factors?: string[] | null
+          milestone: string
+          mitigation_actions?: string[] | null
+          predicted_max_days: number
+          predicted_min_days: number
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          confidence_pct?: number
+          id?: string
+          key_risk_factors?: string[] | null
+          milestone?: string
+          mitigation_actions?: string[] | null
+          predicted_max_days?: number
+          predicted_min_days?: number
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leadtime_project_forecasts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leadtime_project_inputs: {
+        Row: {
+          created_at: string
+          id: string
+          interconnection_type: string | null
+          jurisdiction: string | null
+          permitting_complexity: string | null
+          project_id: string
+          requested_mw: number | null
+          site_type: string | null
+          substation_upgrade_required: boolean | null
+          target_rfs_date: string | null
+          transformer_required: boolean | null
+          utility: string | null
+          voltage_level: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interconnection_type?: string | null
+          jurisdiction?: string | null
+          permitting_complexity?: string | null
+          project_id: string
+          requested_mw?: number | null
+          site_type?: string | null
+          substation_upgrade_required?: boolean | null
+          target_rfs_date?: string | null
+          transformer_required?: boolean | null
+          utility?: string | null
+          voltage_level?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interconnection_type?: string | null
+          jurisdiction?: string | null
+          permitting_complexity?: string | null
+          project_id?: string
+          requested_mw?: number | null
+          site_type?: string | null
+          substation_upgrade_required?: boolean | null
+          target_rfs_date?: string | null
+          transformer_required?: boolean | null
+          utility?: string | null
+          voltage_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leadtime_project_inputs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "voltbuild_projects"
             referencedColumns: ["id"]
           },
         ]
