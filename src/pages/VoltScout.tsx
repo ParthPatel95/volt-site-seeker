@@ -36,6 +36,7 @@ import AESODashboard from './AESODashboard';
 import SharedDashboardView from './SharedDashboardView';
 import { DashboardBuilder } from '@/components/aeso/DashboardBuilder';
 import ShareDashboard from './ShareDashboard';
+import VoltBuild from './VoltBuild';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -118,6 +119,7 @@ const VoltScout = () => {
                <Route path="voice-search" element={<VoiceSearch />} />
                <Route path="risk-management" element={<RiskManagement />} />
                <Route path="advanced-features" element={<AdvancedFeatures />} />
+               <Route path="build" element={<VoltBuild />} />
                <Route path="aeso-dashboards" element={<AESODashboards />} />
                <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
                <Route path="aeso-dashboard-builder/:id" element={<DashboardBuilder />} />
