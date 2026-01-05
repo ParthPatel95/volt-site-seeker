@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Loader2, LayoutDashboard, ListTodo, GanttChart, AlertTriangle } from 'lucide-react';
+import { Loader2, LayoutDashboard, ListTodo, GanttChart, AlertTriangle, DollarSign, Clock, Brain } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,6 +14,9 @@ import { VoltBuildTimeline } from './VoltBuildTimeline';
 import { VoltBuildRisks } from './VoltBuildRisks';
 import { VoltBuildNewProject } from './VoltBuildNewProject';
 import { VoltBuildNewTask } from './VoltBuildNewTask';
+import { VoltCapExTab } from './capex/VoltCapExTab';
+import { VoltLeadTimeTab } from './leadtime/VoltLeadTimeTab';
+import { VoltAdvisorTab } from './advisor/VoltAdvisorTab';
 
 import { useVoltBuildProjects } from './hooks/useVoltBuildProjects';
 import { useVoltBuildPhases } from './hooks/useVoltBuildPhases';
@@ -354,7 +357,7 @@ export function VoltBuildPage() {
         </Card>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex-wrap">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -370,6 +373,18 @@ export function VoltBuildPage() {
             <TabsTrigger value="risks" className="gap-2">
               <AlertTriangle className="w-4 h-4" />
               <span className="hidden sm:inline">Risks</span>
+            </TabsTrigger>
+            <TabsTrigger value="capex" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">CAPEX</span>
+            </TabsTrigger>
+            <TabsTrigger value="leadtimes" className="gap-2">
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Lead Times</span>
+            </TabsTrigger>
+            <TabsTrigger value="advisor" className="gap-2">
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Advisor</span>
             </TabsTrigger>
           </TabsList>
 
@@ -472,6 +487,21 @@ export function VoltBuildPage() {
               onUpdateRisk={(id, updates) => updateRisk({ id, ...updates })}
               onDeleteRisk={deleteRisk}
             />
+          </TabsContent>
+
+          {/* CAPEX Tab */}
+          <TabsContent value="capex">
+            <VoltCapExTab project={selectedProject} phases={phases} />
+          </TabsContent>
+
+          {/* Lead Times Tab */}
+          <TabsContent value="leadtimes">
+            <VoltLeadTimeTab project={selectedProject} />
+          </TabsContent>
+
+          {/* AI Advisor Tab */}
+          <TabsContent value="advisor">
+            <VoltAdvisorTab project={selectedProject} phases={phases} tasks={allTasks} />
           </TabsContent>
         </Tabs>
       )}
