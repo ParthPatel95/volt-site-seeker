@@ -19,7 +19,8 @@ import {
   LayoutDashboard,
   BarChart3,
   Settings,
-  HelpCircle
+  HelpCircle,
+  HardHat
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -67,6 +68,12 @@ const navSections: NavSection[] = [
       { path: '/app/intelligence-hub', icon: Brain, label: 'Intelligence Hub', permission: 'feature.intelligence-hub' },
       { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
       { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'Profitability Lab', permission: 'feature.btc-roi-lab' },
+    ]
+  },
+  {
+    title: 'Operations',
+    items: [
+      { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
     ]
   },
   {

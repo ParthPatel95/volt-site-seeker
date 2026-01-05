@@ -6492,6 +6492,348 @@ export type Database = {
           },
         ]
       }
+      voltbuild_documents: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          phase_id: string | null
+          project_id: string
+          task_id: string | null
+          uploaded_by: string | null
+          version: number | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          phase_id?: string | null
+          project_id: string
+          task_id?: string | null
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          phase_id?: string | null
+          project_id?: string
+          task_id?: string | null
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_documents_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_documents_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_phases: {
+        Row: {
+          actual_end_date: string | null
+          actual_start_date: string | null
+          created_at: string
+          description: string | null
+          estimated_end_date: string | null
+          estimated_start_date: string | null
+          id: string
+          name: string
+          order_index: number
+          progress: number | null
+          project_id: string
+          status: Database["public"]["Enums"]["voltbuild_phase_status"]
+          updated_at: string
+        }
+        Insert: {
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
+          id?: string
+          name: string
+          order_index?: number
+          progress?: number | null
+          project_id: string
+          status?: Database["public"]["Enums"]["voltbuild_phase_status"]
+          updated_at?: string
+        }
+        Update: {
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+          progress?: number | null
+          project_id?: string
+          status?: Database["public"]["Enums"]["voltbuild_phase_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_projects: {
+        Row: {
+          actual_end_date: string | null
+          actual_start_date: string | null
+          cooling_type: string | null
+          created_at: string
+          description: string | null
+          estimated_end_date: string | null
+          estimated_start_date: string | null
+          id: string
+          linked_site_id: string | null
+          location: string | null
+          name: string
+          overall_progress: number | null
+          status: Database["public"]["Enums"]["voltbuild_project_status"]
+          target_mw: number | null
+          updated_at: string
+          user_id: string | null
+          utility_iso: string | null
+        }
+        Insert: {
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          cooling_type?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
+          id?: string
+          linked_site_id?: string | null
+          location?: string | null
+          name: string
+          overall_progress?: number | null
+          status?: Database["public"]["Enums"]["voltbuild_project_status"]
+          target_mw?: number | null
+          updated_at?: string
+          user_id?: string | null
+          utility_iso?: string | null
+        }
+        Update: {
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          cooling_type?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
+          id?: string
+          linked_site_id?: string | null
+          location?: string | null
+          name?: string
+          overall_progress?: number | null
+          status?: Database["public"]["Enums"]["voltbuild_project_status"]
+          target_mw?: number | null
+          updated_at?: string
+          user_id?: string | null
+          utility_iso?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_projects_linked_site_id_fkey"
+            columns: ["linked_site_id"]
+            isOneToOne: false
+            referencedRelation: "verified_heavy_power_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_risks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          mitigation_plan: string | null
+          owner: string | null
+          phase_id: string | null
+          project_id: string
+          severity: Database["public"]["Enums"]["voltbuild_risk_severity"]
+          status: Database["public"]["Enums"]["voltbuild_risk_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          mitigation_plan?: string | null
+          owner?: string | null
+          phase_id?: string | null
+          project_id: string
+          severity?: Database["public"]["Enums"]["voltbuild_risk_severity"]
+          status?: Database["public"]["Enums"]["voltbuild_risk_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          mitigation_plan?: string | null
+          owner?: string | null
+          phase_id?: string | null
+          project_id?: string
+          severity?: Database["public"]["Enums"]["voltbuild_risk_severity"]
+          status?: Database["public"]["Enums"]["voltbuild_risk_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_risks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_risks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_tasks: {
+        Row: {
+          actual_end_date: string | null
+          actual_start_date: string | null
+          assigned_role:
+            | Database["public"]["Enums"]["voltbuild_assigned_role"]
+            | null
+          created_at: string
+          depends_on: string[] | null
+          description: string | null
+          estimated_duration_days: number | null
+          id: string
+          is_critical_path: boolean | null
+          name: string
+          order_index: number
+          phase_id: string
+          status: Database["public"]["Enums"]["voltbuild_task_status"]
+          updated_at: string
+        }
+        Insert: {
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          assigned_role?:
+            | Database["public"]["Enums"]["voltbuild_assigned_role"]
+            | null
+          created_at?: string
+          depends_on?: string[] | null
+          description?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          is_critical_path?: boolean | null
+          name: string
+          order_index?: number
+          phase_id: string
+          status?: Database["public"]["Enums"]["voltbuild_task_status"]
+          updated_at?: string
+        }
+        Update: {
+          actual_end_date?: string | null
+          actual_start_date?: string | null
+          assigned_role?:
+            | Database["public"]["Enums"]["voltbuild_assigned_role"]
+            | null
+          created_at?: string
+          depends_on?: string[] | null
+          description?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          is_critical_path?: boolean | null
+          name?: string
+          order_index?: number
+          phase_id?: string
+          status?: Database["public"]["Enums"]["voltbuild_task_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltmarket_access_requests: {
         Row: {
           company_name: string | null
@@ -8266,6 +8608,24 @@ export type Database = {
         | "flex_space"
         | "other"
       user_role: "admin" | "analyst" | "viewer"
+      voltbuild_assigned_role: "owner" | "engineer" | "contractor" | "utility"
+      voltbuild_phase_status:
+        | "not_started"
+        | "in_progress"
+        | "blocked"
+        | "complete"
+      voltbuild_project_status:
+        | "planning"
+        | "in_progress"
+        | "delayed"
+        | "complete"
+      voltbuild_risk_severity: "low" | "medium" | "high"
+      voltbuild_risk_status: "open" | "mitigated" | "closed"
+      voltbuild_task_status:
+        | "not_started"
+        | "in_progress"
+        | "blocked"
+        | "complete"
       voltmarket_equipment_condition: "new" | "used" | "refurbished"
       voltmarket_equipment_type:
         | "asic"
@@ -8469,6 +8829,27 @@ export const Constants = {
         "other",
       ],
       user_role: ["admin", "analyst", "viewer"],
+      voltbuild_assigned_role: ["owner", "engineer", "contractor", "utility"],
+      voltbuild_phase_status: [
+        "not_started",
+        "in_progress",
+        "blocked",
+        "complete",
+      ],
+      voltbuild_project_status: [
+        "planning",
+        "in_progress",
+        "delayed",
+        "complete",
+      ],
+      voltbuild_risk_severity: ["low", "medium", "high"],
+      voltbuild_risk_status: ["open", "mitigated", "closed"],
+      voltbuild_task_status: [
+        "not_started",
+        "in_progress",
+        "blocked",
+        "complete",
+      ],
       voltmarket_equipment_condition: ["new", "used", "refurbished"],
       voltmarket_equipment_type: [
         "asic",
