@@ -14,7 +14,7 @@ import { VoltBuildTaskDetail } from './VoltBuildTaskDetail';
 import { VoltBuildProgress, VoltBuildPhaseProgress } from './VoltBuildProgress';
 import { VoltBuildTimeline } from './VoltBuildTimeline';
 import { EnhancedTimeline } from './timeline/EnhancedTimeline';
-import { VoltBuildRisks } from './VoltBuildRisks';
+import { EnhancedRisksTab } from './risks/EnhancedRisksTab';
 import { VoltBuildNewProject } from './VoltBuildNewProject';
 import { VoltBuildNewTask } from './VoltBuildNewTask';
 import { VoltCapExTab } from './capex/VoltCapExTab';
@@ -480,14 +480,10 @@ export function VoltBuildPage() {
       case 'risks':
         return (
           <div className="p-4 sm:p-6">
-            <h1 className="text-2xl font-bold text-foreground mb-6">Risk Management</h1>
-            <VoltBuildRisks
-              risks={risks}
-              phases={phases}
+            <EnhancedRisksTab
               projectId={selectedProjectId!}
-              onCreateRisk={createRisk}
-              onUpdateRisk={(id, updates) => updateRisk({ id, ...updates })}
-              onDeleteRisk={deleteRisk}
+              phases={phases.map(p => ({ id: p.id, name: p.name }))}
+              tasks={allTasks.map(t => ({ id: t.id, name: t.name }))}
             />
           </div>
         );
