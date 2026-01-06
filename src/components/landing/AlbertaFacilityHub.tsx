@@ -174,7 +174,7 @@ export const AlbertaFacilityHub = () => {
             {/* Power Capacity - Featured */}
             <div className="md:col-span-1 bg-gradient-to-br from-watt-trust/10 to-watt-trust/5 rounded-2xl p-6 border border-watt-trust/30 hover:border-watt-trust/60 transition-all hover:shadow-institutional-lg">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-white rounded-xl">
+                <div className="p-3 bg-card rounded-xl">
                   <Zap className="w-6 h-6 text-watt-trust" />
                 </div>
                 <div>

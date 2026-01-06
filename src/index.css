@@ -106,6 +106,7 @@
     --watt-warning: 38 92% 50%;             /* Amber warning */
     --watt-primary: 221 83% 53%;            /* Primary blue */
     --watt-secondary: 210 40% 96%;          /* Secondary surface */
+    --watt-accent: 195 85% 41%;             /* Accent teal (same as watt-trust) */
   }
 
   .dark {
@@ -195,6 +196,7 @@
     --watt-warning: 38 92% 55%;             /* Amber warning - brighter */
     --watt-primary: 217 91% 60%;            /* Primary blue - brighter */
     --watt-secondary: 222 47% 14%;          /* Secondary surface - dark */
+    --watt-accent: 195 85% 50%;             /* Accent teal - brighter for dark mode */
   }
 }
 

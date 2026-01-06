@@ -62,7 +62,7 @@ const TiltCard = ({ children, className = '', glowColor = 'rgba(0, 194, 203, 0.1
         />
         
         {/* Card content */}
-        <div className="relative z-10 bg-white border border-slate-200 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="relative z-10 bg-card border border-border rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
           {children}
         </div>
 
@@ -137,17 +137,17 @@ const CostBar = ({ label, value, maxValue, color, delay, savings }: {
   return (
     <div ref={ref} className="space-y-2">
       <div className="flex justify-between items-center">
-        <span className="text-sm font-medium text-slate-600">{label}</span>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground">${value}M/MW</span>
           {savings && (
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-data-positive bg-data-positive/10 px-2 py-0.5 rounded-full">
               {savings}
             </span>
           )}
         </div>
       </div>
-      <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-3 bg-muted rounded-full overflow-hidden">
         <motion.div
           className={`h-full rounded-full ${color}`}
           initial={{ width: 0 }}
@@ -255,7 +255,7 @@ export const LandingInvestmentThesis = () => {
               AI/HPC Premium
             </span>
           </h2>
-          <p className="text-lg text-slate-600 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Our proven three-stage approach transforms undervalued power assets into high-margin data center infrastructure.
           </p>
         </motion.div>
@@ -294,7 +294,7 @@ export const LandingInvestmentThesis = () => {
                   <div className="p-6 md:p-8">
                     {/* Stage number & icon */}
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-bold text-slate-400 tracking-wider">
+                      <span className="text-xs font-bold text-muted-foreground tracking-wider">
                         STAGE {stage.stage}
                       </span>
                       <motion.div
@@ -315,7 +315,7 @@ export const LandingInvestmentThesis = () => {
                       {stage.points.map((point, i) => (
                         <motion.li
                           key={i}
-                          className="flex items-start gap-2 text-sm text-slate-600"
+                          className="flex items-start gap-2 text-sm text-muted-foreground"
                           initial={{ opacity: 0, x: -10 }}
                           animate={isInView ? { opacity: 1, x: 0 } : {}}
                           transition={{ duration: 0.4, delay: 0.4 + index * 0.15 + i * 0.1 }}
@@ -332,11 +332,11 @@ export const LandingInvestmentThesis = () => {
                 {index < stages.length - 1 && (
                   <div className="lg:hidden flex justify-center py-4">
                     <motion.div
-                      className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
                       animate={{ y: [0, 4, 0] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      <ArrowRight className="w-4 h-4 text-slate-400 rotate-90" />
+                      <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90" />
                     </motion.div>
                   </div>
                 )}
@@ -359,7 +359,7 @@ export const LandingInvestmentThesis = () => {
             {edgeFeatures.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                className="bg-white border border-slate-200 rounded-xl p-4 md:p-5 text-center hover:shadow-lg hover:border-watt-accent/30 transition-all duration-300 group"
+                className="bg-card border border-border rounded-xl p-4 md:p-5 text-center hover:shadow-lg hover:border-watt-accent/30 transition-all duration-300 group"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={isInView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ duration: 0.4, delay: 0.9 + index * 0.1 }}
@@ -369,7 +369,7 @@ export const LandingInvestmentThesis = () => {
                   <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-watt-accent" />
                 </div>
                 <h4 className="font-semibold text-foreground text-sm md:text-base mb-1">{feature.title}</h4>
-                <p className="text-xs md:text-sm text-slate-500">{feature.description}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -377,7 +377,7 @@ export const LandingInvestmentThesis = () => {
 
         {/* Cost Comparison */}
         <motion.div
-          className="max-w-2xl mx-auto bg-slate-50 rounded-2xl p-6 md:p-8 border border-slate-200"
+          className="max-w-2xl mx-auto bg-muted rounded-2xl p-6 md:p-8 border border-border"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 1.2 }}
@@ -390,7 +390,7 @@ export const LandingInvestmentThesis = () => {
               label="Traditional Data Center"
               value={12.5}
               maxValue={12.5}
-              color="bg-slate-400"
+              color="bg-muted-foreground"
               delay={1.3}
             />
             <CostBar
@@ -404,24 +404,24 @@ export const LandingInvestmentThesis = () => {
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-200">
+          <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-border">
             <div className="text-center">
               <div className="text-2xl md:text-3xl font-bold text-watt-accent">
                 <AnimatedCounter value={6} prefix="$" suffix="M" />
               </div>
-              <div className="text-xs text-slate-500 mt-1">Savings per MW</div>
+              <div className="text-xs text-muted-foreground mt-1">Savings per MW</div>
             </div>
             <div className="text-center">
               <div className="text-2xl md:text-3xl font-bold text-foreground">
                 <AnimatedCounter value={80} suffix="%" />
               </div>
-              <div className="text-xs text-slate-500 mt-1">Faster Deploy</div>
+              <div className="text-xs text-muted-foreground mt-1">Faster Deploy</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-violet-500">
+              <div className="text-2xl md:text-3xl font-bold text-watt-purple">
                 Tier 3+
               </div>
-              <div className="text-xs text-slate-500 mt-1">Performance</div>
+              <div className="text-xs text-muted-foreground mt-1">Performance</div>
             </div>
           </div>
         </motion.div>
