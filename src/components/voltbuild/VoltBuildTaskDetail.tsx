@@ -29,10 +29,10 @@ import {
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useVoltBuildTaskComments } from './hooks/useVoltBuildTaskComments';
-import { useVoltBuildTaskDocuments } from './hooks/useVoltBuildTaskDocuments';
+import { useVoltBuildTaskDocuments, TaskDocumentWithSecure } from './hooks/useVoltBuildTaskDocuments';
 import { usePlatformUsers } from './hooks/usePlatformUsers';
 import { VoltBuildDocumentPicker } from './VoltBuildDocumentPicker';
-import { supabase } from '@/integrations/supabase/client';
+import { DocumentViewerDialog } from '@/components/secure-share/DocumentViewerDialog';
 
 interface VoltBuildTaskDetailProps {
   task: VoltBuildTask;
@@ -53,6 +53,12 @@ export function VoltBuildTaskDetail({
   const [editedTask, setEditedTask] = useState(task);
   const [newComment, setNewComment] = useState('');
   const [isDocPickerOpen, setIsDocPickerOpen] = useState(false);
+  const [viewerDocument, setViewerDocument] = useState<{
+    id: string;
+    name: string;
+    storage_path: string;
+    file_type: string;
+  } | null>(null);
 
   const { comments, createComment, deleteComment, isCreating: isCreatingComment } = useVoltBuildTaskComments(task.id);
   const { documents, attachDocument, detachDocument, isAttaching } = useVoltBuildTaskDocuments(task.id);
@@ -95,22 +101,17 @@ export function VoltBuildTaskDetail({
     });
   };
 
-  const handleViewDocument = async (fileUrl: string) => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank');
+  const handleViewDocument = (doc: TaskDocumentWithSecure) => {
+    if (doc.secure_document?.storage_path) {
+      setViewerDocument({
+        id: doc.secure_document.id,
+        name: doc.file_name,
+        storage_path: doc.secure_document.storage_path,
+        file_type: doc.secure_document.file_type || 'application/pdf',
+      });
     }
   };
 
-  const handleDownloadDocument = async (fileUrl: string, fileName: string) => {
-    if (fileUrl) {
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
 
   const getInitials = (name: string | null) => {
     if (!name) return '?';
@@ -421,27 +422,16 @@ export function VoltBuildTaskDetail({
                       {doc.file_name}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {doc.secure_document?.file_url && (
-                        <>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-7 w-7"
-                            onClick={() => handleViewDocument(doc.secure_document!.file_url)}
-                            title="View"
-                          >
-                            <Eye className="w-3 h-3" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-7 w-7"
-                            onClick={() => handleDownloadDocument(doc.secure_document!.file_url, doc.file_name)}
-                            title="Download"
-                          >
-                            <Download className="w-3 h-3" />
-                          </Button>
-                        </>
+                    {doc.secure_document?.storage_path && (
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-7 w-7"
+                          onClick={() => handleViewDocument(doc)}
+                          title="View"
+                        >
+                          <Eye className="w-3 h-3" />
+                        </Button>
                       )}
                       <Button 
                         size="icon" 
@@ -540,6 +530,13 @@ export function VoltBuildTaskDetail({
         onOpenChange={setIsDocPickerOpen}
         onSelect={handleAttachDocuments}
         excludeIds={documents.filter(d => d.secure_document?.id).map(d => d.secure_document!.id)}
+      />
+
+      <DocumentViewerDialog
+        open={!!viewerDocument}
+        onOpenChange={(open) => !open && setViewerDocument(null)}
+        document={viewerDocument}
+        accessLevel="download"
       />
     </Card>
   );
