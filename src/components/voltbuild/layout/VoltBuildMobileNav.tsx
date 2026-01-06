@@ -15,7 +15,13 @@ import {
   ClipboardCheck,
   FileText,
   MoreHorizontal,
-  ArrowLeft
+  ArrowLeft,
+  CalendarDays,
+  UserCheck,
+  CheckSquare,
+  TrendingUp,
+  Plug,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildView } from './VoltBuildLayout';
@@ -39,6 +45,12 @@ const allNavItems = [
   { id: 'leadtime' as VoltBuildView, label: 'Lead Times', icon: Clock, group: 'Execution' },
   { id: 'changeorders' as VoltBuildView, label: 'Change Orders', icon: FileEdit, group: 'Execution' },
   { id: 'quality' as VoltBuildView, label: 'Quality', icon: ClipboardCheck, group: 'Execution' },
+  { id: 'dailylogs' as VoltBuildView, label: 'Daily Logs', icon: CalendarDays, group: 'Field Ops' },
+  { id: 'fieldcheckins' as VoltBuildView, label: 'Check-Ins', icon: UserCheck, group: 'Field Ops' },
+  { id: 'verification' as VoltBuildView, label: 'Verification', icon: CheckSquare, group: 'Field Ops' },
+  { id: 'forecasting' as VoltBuildView, label: 'Forecasting', icon: TrendingUp, group: 'Strategic' },
+  { id: 'utilitymonitor' as VoltBuildView, label: 'Utility Monitor', icon: Plug, group: 'Strategic' },
+  { id: 'safety' as VoltBuildView, label: 'Safety', icon: ShieldCheck, group: 'Strategic' },
   { id: 'advisor' as VoltBuildView, label: 'AI Advisor', icon: Brain, group: 'Intelligence' },
   { id: 'reporting' as VoltBuildView, label: 'Reporting', icon: FileText, group: 'Intelligence' },
 ];
@@ -134,7 +146,7 @@ export function VoltBuildMobileNav({ currentView, onViewChange }: VoltBuildMobil
           </Link>
           
           <div className="space-y-6 overflow-y-auto pb-8">
-            {['Core', 'Financial', 'Execution', 'Intelligence'].map((group) => (
+            {['Core', 'Financial', 'Execution', 'Field Ops', 'Strategic', 'Intelligence'].map((group) => (
               <div key={group}>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   {group}

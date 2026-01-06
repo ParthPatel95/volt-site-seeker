@@ -19,7 +19,13 @@ import {
   Zap,
   ArrowLeft,
   Plus,
-  ChevronDown
+  ChevronDown,
+  CalendarDays,
+  UserCheck,
+  CheckSquare,
+  TrendingUp,
+  Plug,
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from './VoltBuildNavItem';
@@ -45,7 +51,13 @@ export type VoltBuildView =
   | 'procurement'
   | 'changeorders'
   | 'quality'
-  | 'reporting';
+  | 'reporting'
+  | 'dailylogs'
+  | 'fieldcheckins'
+  | 'verification'
+  | 'forecasting'
+  | 'utilitymonitor'
+  | 'safety';
 
 interface NavGroup {
   label: string;
@@ -81,6 +93,22 @@ const navGroups: NavGroup[] = [
       { id: 'leadtime', label: 'Lead Times', icon: Clock },
       { id: 'changeorders', label: 'Change Orders', icon: FileEdit },
       { id: 'quality', label: 'Quality', icon: ClipboardCheck },
+    ]
+  },
+  {
+    label: 'Field Ops',
+    items: [
+      { id: 'dailylogs', label: 'Daily Logs', icon: CalendarDays },
+      { id: 'fieldcheckins', label: 'Check-Ins', icon: UserCheck },
+      { id: 'verification', label: 'Verification', icon: CheckSquare },
+    ]
+  },
+  {
+    label: 'Strategic',
+    items: [
+      { id: 'forecasting', label: 'Forecasting', icon: TrendingUp },
+      { id: 'utilitymonitor', label: 'Utility Monitor', icon: Plug },
+      { id: 'safety', label: 'Safety', icon: ShieldCheck },
     ]
   },
   {
