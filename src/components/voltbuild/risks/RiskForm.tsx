@@ -252,14 +252,14 @@ export function RiskForm({
               <div>
                 <Label>Linked Phase</Label>
                 <Select 
-                  value={formData.phase_id || ''} 
-                  onValueChange={(v) => updateField('phase_id', v || undefined)}
+                  value={formData.phase_id || '__none__'} 
+                  onValueChange={(v) => updateField('phase_id', v === '__none__' ? undefined : v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select phase" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="__none__">None</SelectItem>
                     {phases.map(p => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
