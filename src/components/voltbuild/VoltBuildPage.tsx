@@ -45,7 +45,7 @@ export function VoltBuildPage() {
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
 
   // Data hooks
-  const { projects, isLoading: projectsLoading, createProject, isCreating } = useVoltBuildProjects();
+  const { projects, isLoading: projectsLoading, createProject, updateProject, isCreating } = useVoltBuildProjects();
   const { phases, isLoading: phasesLoading, recalculateProjectProgress } = useVoltBuildPhases(selectedProjectId);
   const { risks, createRisk, updateRisk, deleteRisk } = useVoltBuildRisks(selectedProjectId);
 
@@ -379,6 +379,7 @@ export function VoltBuildPage() {
             onNavigate={setCurrentView}
             onAddTask={handleAddTaskFromOverview}
             onAddRisk={handleAddRiskFromOverview}
+            onUpdateProject={(updates) => updateProject({ id: selectedProject.id, ...updates })}
           />
         );
 

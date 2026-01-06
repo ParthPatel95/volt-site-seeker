@@ -1,12 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   ListTodo, 
   Calendar, 
-  Target
+  Target,
+  Pencil,
+  Check,
+  X
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { KPICard } from './KPICard';
 import { PhaseProgressGrid } from './PhaseProgressGrid';
 import { ProjectHealthScore } from './ProjectHealthScore';
@@ -22,6 +27,7 @@ interface VoltBuildOverviewRedesignProps {
   onNavigate: (view: VoltBuildView) => void;
   onAddTask: () => void;
   onAddRisk: () => void;
+  onUpdateProject?: (updates: Partial<VoltBuildProject>) => void;
 }
 
 export function VoltBuildOverviewRedesign({
@@ -30,8 +36,31 @@ export function VoltBuildOverviewRedesign({
   tasks,
   onNavigate,
   onAddTask,
-  onAddRisk
+  onAddRisk,
+  onUpdateProject
 }: VoltBuildOverviewRedesignProps) {
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(project.name);
+
+  const handleSaveName = () => {
+    if (editedName.trim() && editedName !== project.name && onUpdateProject) {
+      onUpdateProject({ name: editedName.trim() });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedName(project.name);
+    setIsEditingName(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveName();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
   // Calculate metrics
   const metrics = useMemo(() => {
     const totalTasks = tasks.length;
@@ -120,7 +149,49 @@ export function VoltBuildOverviewRedesign({
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{project.name}</h1>
+        <div className="flex items-center gap-2 group">
+          {isEditingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="text-2xl sm:text-3xl font-bold h-auto py-1 px-2 max-w-md"
+                autoFocus
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSaveName}
+                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleCancelEdit}
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{project.name}</h1>
+              {onUpdateProject && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setIsEditingName(true)}
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
         <p className="text-muted-foreground mt-1">
           {project.location || 'No location'} • {project.target_mw || '--'}MW {project.cooling_type || 'Standard'}
         </p>
