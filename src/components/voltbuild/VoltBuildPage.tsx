@@ -13,6 +13,7 @@ import { VoltBuildPhaseList } from './VoltBuildPhaseList';
 import { VoltBuildTaskDetail } from './VoltBuildTaskDetail';
 import { VoltBuildProgress, VoltBuildPhaseProgress } from './VoltBuildProgress';
 import { VoltBuildTimeline } from './VoltBuildTimeline';
+import { EnhancedTimeline } from './timeline/EnhancedTimeline';
 import { VoltBuildRisks } from './VoltBuildRisks';
 import { VoltBuildNewProject } from './VoltBuildNewProject';
 import { VoltBuildNewTask } from './VoltBuildNewTask';
@@ -472,13 +473,7 @@ export function VoltBuildPage() {
       case 'timeline':
         return (
           <div className="p-4 sm:p-6">
-            <h1 className="text-2xl font-bold text-foreground mb-6">Timeline</h1>
-            <VoltBuildTimeline
-              phases={phases}
-              tasks={tasksByPhase}
-              projectStartDate={selectedProject.estimated_start_date}
-              projectEndDate={selectedProject.estimated_end_date}
-            />
+            <EnhancedTimeline project={selectedProject} />
           </div>
         );
 
