@@ -17,11 +17,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  Plus,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from './VoltBuildNavItem';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export type VoltBuildView =
   | 'overview' 
@@ -82,6 +92,11 @@ const navGroups: NavGroup[] = [
   }
 ];
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 interface VoltBuildSidebarProps {
   currentView: VoltBuildView;
   onViewChange: (view: VoltBuildView) => void;
@@ -89,6 +104,10 @@ interface VoltBuildSidebarProps {
   onToggleCollapse: () => void;
   riskCount?: number;
   taskCount?: number;
+  projects?: Project[];
+  selectedProjectId?: string;
+  onProjectSelect?: (projectId: string) => void;
+  onNewProject?: () => void;
 }
 
 export function VoltBuildSidebar({
@@ -97,7 +116,11 @@ export function VoltBuildSidebar({
   isCollapsed,
   onToggleCollapse,
   riskCount = 0,
-  taskCount = 0
+  taskCount = 0,
+  projects = [],
+  selectedProjectId,
+  onProjectSelect,
+  onNewProject
 }: VoltBuildSidebarProps) {
   const getBadge = (id: VoltBuildView) => {
     if (id === 'risks') return riskCount;
@@ -158,6 +181,47 @@ export function VoltBuildSidebar({
             </motion.span>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Project Selector */}
+      <div className={cn(
+        "p-3 border-b border-border",
+        isCollapsed && "px-2"
+      )}>
+        {!isCollapsed ? (
+          <div className="space-y-2">
+            <Select value={selectedProjectId} onValueChange={onProjectSelect}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="Select project" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                {projects.map(project => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              size="sm" 
+              className="w-full" 
+              onClick={onNewProject}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Project
+            </Button>
+          </div>
+        ) : (
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            onClick={onNewProject} 
+            title="New Project"
+            className="w-full"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* Navigation */}

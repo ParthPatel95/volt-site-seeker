@@ -552,6 +552,10 @@ export function VoltBuildPage() {
         onViewChange={setCurrentView}
         riskCount={openRisksCount}
         taskCount={pendingTasksCount}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onProjectSelect={setSelectedProjectId}
+        onNewProject={() => setIsNewProjectOpen(true)}
       >
         {renderContent()}
       </VoltBuildLayout>

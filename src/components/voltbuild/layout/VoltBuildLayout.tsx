@@ -4,12 +4,21 @@ import { cn } from '@/lib/utils';
 import { VoltBuildSidebar, VoltBuildView } from './VoltBuildSidebar';
 import { VoltBuildMobileNav } from './VoltBuildMobileNav';
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 interface VoltBuildLayoutProps {
   children: ReactNode;
   currentView: VoltBuildView;
   onViewChange: (view: VoltBuildView) => void;
   riskCount?: number;
   taskCount?: number;
+  projects?: Project[];
+  selectedProjectId?: string;
+  onProjectSelect?: (projectId: string) => void;
+  onNewProject?: () => void;
 }
 
 export function VoltBuildLayout({
@@ -17,7 +26,11 @@ export function VoltBuildLayout({
   currentView,
   onViewChange,
   riskCount = 0,
-  taskCount = 0
+  taskCount = 0,
+  projects = [],
+  selectedProjectId,
+  onProjectSelect,
+  onNewProject
 }: VoltBuildLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -31,6 +44,10 @@ export function VoltBuildLayout({
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         riskCount={riskCount}
         taskCount={taskCount}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onProjectSelect={onProjectSelect}
+        onNewProject={onNewProject}
       />
 
       {/* Main Content */}
