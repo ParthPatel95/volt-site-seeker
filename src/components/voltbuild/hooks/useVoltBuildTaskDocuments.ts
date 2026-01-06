@@ -134,7 +134,7 @@ export function useSecureDocuments() {
         .from('secure_documents')
         .select('id, file_name, file_url, file_type, file_size, created_at')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(1000);
 
       if (error) throw error;
       return data || [];
