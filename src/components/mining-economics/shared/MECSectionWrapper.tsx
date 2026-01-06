@@ -15,10 +15,10 @@ export const MECSectionWrapper: React.FC<MECSectionWrapperProps> = ({
   className,
 }) => {
   const themeClasses = {
-    light: 'bg-background',
-    dark: 'bg-[hsl(var(--watt-navy))]',
-    gradient: 'bg-gradient-to-b from-muted/50 via-background to-muted/30',
-    accent: 'bg-gradient-to-br from-[hsl(var(--watt-success)/0.05)] via-background to-[hsl(var(--watt-bitcoin)/0.05)]',
+    light: 'bg-background text-foreground',
+    dark: 'bg-[hsl(var(--watt-navy))] text-white',
+    gradient: 'bg-gradient-to-b from-muted/50 via-background to-muted/30 text-foreground',
+    accent: 'bg-gradient-to-br from-[hsl(var(--watt-success)/0.05)] via-background to-[hsl(var(--watt-bitcoin)/0.05)] text-foreground',
   };
 
   return (
