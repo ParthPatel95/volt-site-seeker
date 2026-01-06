@@ -7599,6 +7599,57 @@ export type Database = {
           },
         ]
       }
+      voltbuild_milestones: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          phase_id: string | null
+          project_id: string
+          status: string | null
+          target_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          phase_id?: string | null
+          project_id: string
+          status?: string | null
+          target_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          phase_id?: string | null
+          project_id?: string
+          status?: string | null
+          target_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_milestones_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltbuild_permit_logs: {
         Row: {
           approved_date: string | null
@@ -8090,6 +8141,8 @@ export type Database = {
           depends_on: string[] | null
           description: string | null
           estimated_duration_days: number | null
+          estimated_end_date: string | null
+          estimated_start_date: string | null
           id: string
           is_critical_path: boolean | null
           name: string
@@ -8109,6 +8162,8 @@ export type Database = {
           depends_on?: string[] | null
           description?: string | null
           estimated_duration_days?: number | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
           id?: string
           is_critical_path?: boolean | null
           name: string
@@ -8128,6 +8183,8 @@ export type Database = {
           depends_on?: string[] | null
           description?: string | null
           estimated_duration_days?: number | null
+          estimated_end_date?: string | null
+          estimated_start_date?: string | null
           id?: string
           is_critical_path?: boolean | null
           name?: string
