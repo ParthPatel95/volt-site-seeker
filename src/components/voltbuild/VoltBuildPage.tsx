@@ -25,6 +25,14 @@ import { VoltChangeOrdersTab } from './changeorders/VoltChangeOrdersTab';
 import { VoltQualityTab } from './quality/VoltQualityTab';
 import { VoltReportingTab } from './reporting/VoltReportingTab';
 
+// Phase 3 Tabs
+import { VoltDailyLogsTab } from './dailylogs/VoltDailyLogsTab';
+import { VoltFieldCheckInsTab } from './fieldcheckins/VoltFieldCheckInsTab';
+import { VoltVerificationTab } from './verification/VoltVerificationTab';
+import { VoltForecastingTab } from './forecasting/VoltForecastingTab';
+import { VoltUtilityMonitorTab } from './utilitymonitor/VoltUtilityMonitorTab';
+import { VoltSafetyTab } from './safety/VoltSafetyTab';
+
 import { useVoltBuildProjects } from './hooks/useVoltBuildProjects';
 import { useVoltBuildPhases } from './hooks/useVoltBuildPhases';
 import { useVoltBuildRisks } from './hooks/useVoltBuildRisks';
@@ -550,6 +558,55 @@ export function VoltBuildPage() {
           <div className="p-4 sm:p-6">
             <h1 className="text-2xl font-bold text-foreground mb-6">Reports</h1>
             <VoltReportingTab project={selectedProject} tasks={allTasks} />
+          </div>
+        );
+
+      // Phase 3 Views
+      case 'dailylogs':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Daily Logs</h1>
+            <VoltDailyLogsTab project={selectedProject} />
+          </div>
+        );
+
+      case 'fieldcheckins':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Field Check-Ins</h1>
+            <VoltFieldCheckInsTab project={selectedProject} />
+          </div>
+        );
+
+      case 'verification':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Progress Verification</h1>
+            <VoltVerificationTab project={selectedProject} phases={phases} tasks={allTasks} />
+          </div>
+        );
+
+      case 'forecasting':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Forecasting</h1>
+            <VoltForecastingTab project={selectedProject} phases={phases} tasks={allTasks} />
+          </div>
+        );
+
+      case 'utilitymonitor':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Utility Monitor</h1>
+            <VoltUtilityMonitorTab project={selectedProject} />
+          </div>
+        );
+
+      case 'safety':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Compliance & Safety</h1>
+            <VoltSafetyTab project={selectedProject} />
           </div>
         );
 
