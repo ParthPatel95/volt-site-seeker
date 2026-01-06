@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 
 interface KPICardProps {
   title: string;
@@ -132,10 +131,14 @@ export function KPICard({
           {/* Progress Bar */}
           {progress !== undefined && (
             <div className="mt-4">
-              <Progress 
-                value={progress} 
-                className="h-1.5 bg-muted/50"
-              />
+              <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(progress, 100)}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className={cn("h-full rounded-full", styles.progressColor)}
+                />
+              </div>
             </div>
           )}
         </div>
