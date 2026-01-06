@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, userId, email, password, full_name, phone, department, role, permissions } = body;
+    const { action, userId, email, password, full_name, phone, department, role, permissions, voltbuild_access } = body;
 
     console.log(`User management action: ${action}`);
 
@@ -138,6 +138,21 @@ Deno.serve(async (req) => {
           if (approvalError) {
             console.error('Approval insert error:', approvalError);
             throw approvalError;
+          }
+
+          // Add user to VoltBuild approved users if voltbuild_access is true
+          if (voltbuild_access) {
+            const { error: voltbuildError } = await supabaseAdmin
+              .from('voltbuild_approved_users')
+              .insert({
+                user_id: authData.user.id,
+                approved_by: user.id
+              });
+
+            if (voltbuildError) {
+              console.error('VoltBuild approval insert error:', voltbuildError);
+              // Don't throw - this is not critical
+            }
           }
 
           console.log(`Successfully created user: ${email}`);

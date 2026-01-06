@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useVoltBuildAccess } from '@/hooks/useVoltBuildAccess';
 
 import { VoltBuildLayout, VoltBuildView } from './layout/VoltBuildLayout';
 import { VoltBuildOverviewRedesign } from './overview/VoltBuildOverviewRedesign';
@@ -32,6 +33,7 @@ import { toast } from 'sonner';
 
 export function VoltBuildPage() {
   const queryClient = useQueryClient();
+  const { isApproved, isLoading: accessLoading } = useVoltBuildAccess();
   
   // State
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -339,10 +341,31 @@ export function VoltBuildPage() {
   };
 
   // Loading state
-  if (projectsLoading) {
+  if (accessLoading || projectsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Access denied
+  if (!isApproved) {
+    return (
+      <div className="flex items-center justify-center h-screen p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Access Denied
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              You don't have permission to access Build Management. Please contact an administrator to request access.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

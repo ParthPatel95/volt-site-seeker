@@ -7313,6 +7313,30 @@ export type Database = {
           },
         ]
       }
+      voltbuild_approved_users: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       voltbuild_documents: {
         Row: {
           created_at: string
@@ -9401,6 +9425,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_voltbuild_approved: { Args: { user_id: string }; Returns: boolean }
       is_voltscout_approved: { Args: { user_id: string }; Returns: boolean }
       restore_verified_site: { Args: { site_id: string }; Returns: boolean }
       soft_delete_verified_site: { Args: { site_id: string }; Returns: boolean }
