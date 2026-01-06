@@ -415,9 +415,10 @@ export function VoltBuildPage() {
 
               {/* Task Detail Panel (Desktop) */}
               <div className="hidden lg:block lg:col-span-2">
-                {selectedTask ? (
+                {selectedTask && selectedProjectId ? (
                   <VoltBuildTaskDetail
                     task={selectedTask}
+                    projectId={selectedProjectId}
                     onUpdate={handleTaskUpdate}
                     onDelete={handleTaskDelete}
                     onClose={() => setSelectedTaskId(null)}
@@ -585,10 +586,11 @@ export function VoltBuildPage() {
           <SheetHeader>
             <SheetTitle>Task Details</SheetTitle>
           </SheetHeader>
-          {selectedTask && (
+          {selectedTask && selectedProjectId && (
             <div className="mt-4">
               <VoltBuildTaskDetail
                 task={selectedTask}
+                projectId={selectedProjectId}
                 onUpdate={handleTaskUpdate}
                 onDelete={handleTaskDelete}
                 onClose={() => {

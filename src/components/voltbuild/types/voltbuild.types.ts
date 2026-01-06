@@ -60,6 +60,7 @@ export interface VoltBuildTask {
   description: string | null;
   status: TaskStatus;
   assigned_role: AssignedRole;
+  assigned_user_id: string | null;
   estimated_duration_days: number | null;
   actual_start_date: string | null;
   actual_end_date: string | null;
@@ -70,6 +71,11 @@ export interface VoltBuildTask {
   updated_at: string;
   // Joined data
   comments?: VoltBuildTaskComment[];
+  assigned_user?: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+  } | null;
 }
 
 export interface VoltBuildTaskComment {
