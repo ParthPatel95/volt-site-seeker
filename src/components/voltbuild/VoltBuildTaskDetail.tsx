@@ -13,7 +13,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Clock, Flag, MessageSquare, Trash2, Save, X } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  Calendar, Clock, Flag, MessageSquare, Trash2, Save, X, 
+  User, Paperclip, Download, Eye, FileText, Loader2, Plus
+} from 'lucide-react';
 import {
   VoltBuildTask,
   TaskStatus,
@@ -22,10 +27,16 @@ import {
   ROLE_CONFIG,
 } from './types/voltbuild.types';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import { useVoltBuildTaskComments } from './hooks/useVoltBuildTaskComments';
+import { useVoltBuildTaskDocuments } from './hooks/useVoltBuildTaskDocuments';
+import { usePlatformUsers } from './hooks/usePlatformUsers';
+import { VoltBuildDocumentPicker } from './VoltBuildDocumentPicker';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VoltBuildTaskDetailProps {
   task: VoltBuildTask;
+  projectId: string;
   onUpdate: (updates: Partial<VoltBuildTask>) => void;
   onDelete: () => void;
   onClose: () => void;
@@ -33,6 +44,7 @@ interface VoltBuildTaskDetailProps {
 
 export function VoltBuildTaskDetail({
   task,
+  projectId,
   onUpdate,
   onDelete,
   onClose,
@@ -40,6 +52,11 @@ export function VoltBuildTaskDetail({
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
   const [newComment, setNewComment] = useState('');
+  const [isDocPickerOpen, setIsDocPickerOpen] = useState(false);
+
+  const { comments, createComment, deleteComment, isCreating: isCreatingComment } = useVoltBuildTaskComments(task.id);
+  const { documents, attachDocument, detachDocument, isAttaching } = useVoltBuildTaskDocuments(task.id);
+  const { data: platformUsers = [] } = usePlatformUsers();
 
   const statusConfig = TASK_STATUS_CONFIG[task.status];
   const roleConfig = ROLE_CONFIG[task.assigned_role];
@@ -49,6 +66,7 @@ export function VoltBuildTaskDetail({
       name: editedTask.name,
       description: editedTask.description,
       assigned_role: editedTask.assigned_role,
+      assigned_user_id: editedTask.assigned_user_id,
       estimated_duration_days: editedTask.estimated_duration_days,
       is_critical_path: editedTask.is_critical_path,
     });
@@ -60,9 +78,50 @@ export function VoltBuildTaskDetail({
     setIsEditing(false);
   };
 
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    createComment({ task_id: task.id, content: newComment });
+    setNewComment('');
+  };
+
+  const handleAttachDocuments = (selectedDocs: Array<{ id: string; file_name: string }>) => {
+    selectedDocs.forEach(doc => {
+      attachDocument({
+        task_id: task.id,
+        project_id: projectId,
+        secure_document_id: doc.id,
+        file_name: doc.file_name,
+      });
+    });
+  };
+
+  const handleViewDocument = async (fileUrl: string) => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  const handleDownloadDocument = async (fileUrl: string, fileName: string) => {
+    if (fileUrl) {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const assignedUser = platformUsers.find(u => u.id === task.assigned_user_id);
+
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             {isEditing ? (
@@ -118,205 +177,370 @@ export function VoltBuildTaskDetail({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Status & Role */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Status</Label>
-            <Select
-              value={task.status}
-              onValueChange={(value) => onUpdate({ status: value as TaskStatus })}
-            >
-              <SelectTrigger className={cn(statusConfig.bgColor, statusConfig.color)}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="not_started">Not Started</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
-                <SelectItem value="complete">Complete</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Assigned Role</Label>
-            {isEditing ? (
+      <ScrollArea className="flex-1">
+        <CardContent className="space-y-4">
+          {/* Status & Role */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Status</Label>
               <Select
-                value={editedTask.assigned_role}
-                onValueChange={(value) =>
-                  setEditedTask({ ...editedTask, assigned_role: value as AssignedRole })
-                }
+                value={task.status}
+                onValueChange={(value) => onUpdate({ status: value as TaskStatus })}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(statusConfig.bgColor, statusConfig.color)}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="owner">Owner</SelectItem>
-                  <SelectItem value="engineer">Engineer</SelectItem>
-                  <SelectItem value="contractor">Contractor</SelectItem>
-                  <SelectItem value="utility">Utility</SelectItem>
+                  <SelectItem value="not_started">Not Started</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="complete">Complete</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Assigned Role</Label>
+              {isEditing ? (
+                <Select
+                  value={editedTask.assigned_role}
+                  onValueChange={(value) =>
+                    setEditedTask({ ...editedTask, assigned_role: value as AssignedRole })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="owner">Owner</SelectItem>
+                    <SelectItem value="engineer">Engineer</SelectItem>
+                    <SelectItem value="contractor">Contractor</SelectItem>
+                    <SelectItem value="utility">Utility</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge variant="outline" className={cn('w-full justify-center py-2', roleConfig.color)}>
+                  {roleConfig.label}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Assigned User */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1 text-muted-foreground">
+              <User className="w-3 h-3" />
+              Assigned To
+            </Label>
+            {isEditing ? (
+              <Select
+                value={editedTask.assigned_user_id || 'none'}
+                onValueChange={(value) =>
+                  setEditedTask({ 
+                    ...editedTask, 
+                    assigned_user_id: value === 'none' ? null : value 
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {platformUsers.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-5 h-5">
+                          <AvatarFallback className="text-xs">
+                            {getInitials(user.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{user.full_name || user.email || 'Unknown'}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             ) : (
-              <Badge variant="outline" className={cn('w-full justify-center py-2', roleConfig.color)}>
-                {roleConfig.label}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {assignedUser ? (
+                  <>
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback className="text-xs">
+                        {getInitials(assignedUser.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">
+                      {assignedUser.full_name || assignedUser.email}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Unassigned</span>
+                )}
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Description */}
-        <div className="space-y-2">
-          <Label className="text-muted-foreground">Description</Label>
-          {isEditing ? (
-            <Textarea
-              value={editedTask.description || ''}
-              onChange={(e) =>
-                setEditedTask({ ...editedTask, description: e.target.value })
-              }
-              rows={3}
-            />
-          ) : (
-            <p className="text-sm text-foreground">
-              {task.description || 'No description provided'}
-            </p>
-          )}
-        </div>
-
-        {/* Duration & Critical Path */}
-        <div className="grid grid-cols-2 gap-4">
+          {/* Description */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              Est. Duration
-            </Label>
+            <Label className="text-muted-foreground">Description</Label>
             {isEditing ? (
-              <Input
-                type="number"
-                value={editedTask.estimated_duration_days || ''}
+              <Textarea
+                value={editedTask.description || ''}
                 onChange={(e) =>
-                  setEditedTask({
-                    ...editedTask,
-                    estimated_duration_days: parseInt(e.target.value) || null,
-                  })
+                  setEditedTask({ ...editedTask, description: e.target.value })
                 }
-                placeholder="Days"
+                rows={3}
               />
             ) : (
-              <p className="text-sm font-medium">
-                {task.estimated_duration_days
-                  ? `${task.estimated_duration_days} days`
-                  : 'Not set'}
+              <p className="text-sm text-foreground">
+                {task.description || 'No description provided'}
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1 text-muted-foreground">
-              <Flag className="w-3 h-3" />
-              Critical Path
-            </Label>
-            {isEditing ? (
-              <Select
-                value={editedTask.is_critical_path ? 'yes' : 'no'}
-                onValueChange={(value) =>
-                  setEditedTask({ ...editedTask, is_critical_path: value === 'yes' })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge
-                variant={task.is_critical_path ? 'destructive' : 'secondary'}
-                className="font-normal"
-              >
-                {task.is_critical_path ? 'Critical' : 'Non-Critical'}
-              </Badge>
-            )}
-          </div>
-        </div>
+          {/* Duration & Critical Path */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                Est. Duration
+              </Label>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  value={editedTask.estimated_duration_days || ''}
+                  onChange={(e) =>
+                    setEditedTask({
+                      ...editedTask,
+                      estimated_duration_days: parseInt(e.target.value) || null,
+                    })
+                  }
+                  placeholder="Days"
+                />
+              ) : (
+                <p className="text-sm font-medium">
+                  {task.estimated_duration_days
+                    ? `${task.estimated_duration_days} days`
+                    : 'Not set'}
+                </p>
+              )}
+            </div>
 
-        {/* Dates */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1 text-muted-foreground">
-              <Calendar className="w-3 h-3" />
-              Start Date
-            </Label>
-            <p className="text-sm font-medium">
-              {task.actual_start_date
-                ? format(new Date(task.actual_start_date), 'MMM d, yyyy')
-                : 'Not started'}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1 text-muted-foreground">
-              <Calendar className="w-3 h-3" />
-              End Date
-            </Label>
-            <p className="text-sm font-medium">
-              {task.actual_end_date
-                ? format(new Date(task.actual_end_date), 'MMM d, yyyy')
-                : 'Not completed'}
-            </p>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Comments Section */}
-        <div className="space-y-3">
-          <Label className="flex items-center gap-1 text-muted-foreground">
-            <MessageSquare className="w-3 h-3" />
-            Comments
-          </Label>
-
-          <div className="space-y-2">
-            {task.comments && task.comments.length > 0 ? (
-              task.comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="p-2 text-sm rounded-lg bg-muted"
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Flag className="w-3 h-3" />
+                Critical Path
+              </Label>
+              {isEditing ? (
+                <Select
+                  value={editedTask.is_critical_path ? 'yes' : 'no'}
+                  onValueChange={(value) =>
+                    setEditedTask({ ...editedTask, is_critical_path: value === 'yes' })
+                  }
                 >
-                  <p>{comment.content}</p>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(comment.created_at), 'MMM d, h:mm a')}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No comments yet</p>
-            )}
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge
+                  variant={task.is_critical_path ? 'destructive' : 'secondary'}
+                  className="font-normal"
+                >
+                  {task.is_critical_path ? 'Critical' : 'Non-Critical'}
+                </Badge>
+              )}
+            </div>
           </div>
 
-          <div className="flex gap-2">
-            <Input
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1"
-            />
-            <Button
-              size="sm"
-              disabled={!newComment.trim()}
-              onClick={() => {
-                // TODO: Implement comment creation
-                setNewComment('');
-              }}
-            >
-              Add
-            </Button>
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className="w-3 h-3" />
+                Start Date
+              </Label>
+              <p className="text-sm font-medium">
+                {task.actual_start_date
+                  ? format(new Date(task.actual_start_date), 'MMM d, yyyy')
+                  : 'Not started'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className="w-3 h-3" />
+                End Date
+              </Label>
+              <p className="text-sm font-medium">
+                {task.actual_end_date
+                  ? format(new Date(task.actual_end_date), 'MMM d, yyyy')
+                  : 'Not completed'}
+              </p>
+            </div>
           </div>
-        </div>
-      </CardContent>
+
+          <Separator />
+
+          {/* Documents Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Paperclip className="w-3 h-3" />
+                Documents
+              </Label>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setIsDocPickerOpen(true)}
+                disabled={isAttaching}
+              >
+                {isAttaching ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-1" />
+                )}
+                Attach
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {documents.length > 0 ? (
+                documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 group"
+                  >
+                    <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm flex-1 truncate">
+                      {doc.file_name}
+                    </span>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {doc.secure_document?.file_url && (
+                        <>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-7 w-7"
+                            onClick={() => handleViewDocument(doc.secure_document!.file_url)}
+                            title="View"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-7 w-7"
+                            onClick={() => handleDownloadDocument(doc.secure_document!.file_url, doc.file_name)}
+                            title="Download"
+                          >
+                            <Download className="w-3 h-3" />
+                          </Button>
+                        </>
+                      )}
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => detachDocument(doc.id)}
+                        title="Remove"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No documents attached</p>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Comments Section */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-1 text-muted-foreground">
+              <MessageSquare className="w-3 h-3" />
+              Comments ({comments.length})
+            </Label>
+
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="p-2 text-sm rounded-lg bg-muted group relative"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Avatar className="w-5 h-5">
+                        <AvatarFallback className="text-xs">
+                          {getInitials(comment.user?.full_name || null)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-xs">
+                        {comment.user?.full_name || comment.user?.email || 'Anonymous'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p className="pl-7">{comment.content}</p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                      onClick={() => deleteComment(comment.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No comments yet</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Input
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                disabled={!newComment.trim() || isCreatingComment}
+                onClick={handleAddComment}
+              >
+                {isCreatingComment ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Add'
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </ScrollArea>
+
+      <VoltBuildDocumentPicker
+        open={isDocPickerOpen}
+        onOpenChange={setIsDocPickerOpen}
+        onSelect={handleAttachDocuments}
+        excludeIds={documents.filter(d => d.secure_document?.id).map(d => d.secure_document!.id)}
+      />
     </Card>
   );
 }

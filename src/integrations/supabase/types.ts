@@ -7323,6 +7323,7 @@ export type Database = {
           id: string
           phase_id: string | null
           project_id: string
+          secure_document_id: string | null
           task_id: string | null
           uploaded_by: string | null
           version: number | null
@@ -7336,6 +7337,7 @@ export type Database = {
           id?: string
           phase_id?: string | null
           project_id: string
+          secure_document_id?: string | null
           task_id?: string | null
           uploaded_by?: string | null
           version?: number | null
@@ -7349,6 +7351,7 @@ export type Database = {
           id?: string
           phase_id?: string | null
           project_id?: string
+          secure_document_id?: string | null
           task_id?: string | null
           uploaded_by?: string | null
           version?: number | null
@@ -7366,6 +7369,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_documents_secure_document_id_fkey"
+            columns: ["secure_document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_documents"
             referencedColumns: ["id"]
           },
           {
@@ -7597,6 +7607,7 @@ export type Database = {
           assigned_role:
             | Database["public"]["Enums"]["voltbuild_assigned_role"]
             | null
+          assigned_user_id: string | null
           created_at: string
           depends_on: string[] | null
           description: string | null
@@ -7615,6 +7626,7 @@ export type Database = {
           assigned_role?:
             | Database["public"]["Enums"]["voltbuild_assigned_role"]
             | null
+          assigned_user_id?: string | null
           created_at?: string
           depends_on?: string[] | null
           description?: string | null
@@ -7633,6 +7645,7 @@ export type Database = {
           assigned_role?:
             | Database["public"]["Enums"]["voltbuild_assigned_role"]
             | null
+          assigned_user_id?: string | null
           created_at?: string
           depends_on?: string[] | null
           description?: string | null
@@ -7646,6 +7659,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "voltbuild_tasks_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "voltbuild_tasks_phase_id_fkey"
             columns: ["phase_id"]
