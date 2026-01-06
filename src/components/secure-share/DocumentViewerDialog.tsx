@@ -210,6 +210,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
         if (data?.signedUrl) {
           console.log('[DocumentDialog] Got signed URL');
           setDocumentUrl(data.signedUrl);
+          setLoading(false);
           return; // Success!
         } else {
           throw new Error('No signed URL returned');
