@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Loader2, LayoutDashboard, ListTodo, GanttChart, AlertTriangle, DollarSign, Clock, Brain, Users, Package, FileEdit, ClipboardCheck, FileText } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+import { VoltBuildLayout, VoltBuildView } from './layout/VoltBuildLayout';
+import { VoltBuildOverviewRedesign } from './overview/VoltBuildOverviewRedesign';
 import { VoltBuildHeader } from './VoltBuildHeader';
 import { VoltBuildPhaseList } from './VoltBuildPhaseList';
 import { VoltBuildTaskDetail } from './VoltBuildTaskDetail';
@@ -38,9 +39,10 @@ export function VoltBuildPage() {
   const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [newTaskPhase, setNewTaskPhase] = useState<{ id: string; name: string } | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [currentView, setCurrentView] = useState<VoltBuildView>('overview');
   const [isMobile, setIsMobile] = useState(false);
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
+  const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
 
   // Data hooks
   const { projects, isLoading: projectsLoading, createProject, isCreating } = useVoltBuildProjects();
@@ -53,7 +55,7 @@ export function VoltBuildPage() {
 
   // Check for mobile
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -130,11 +132,9 @@ export function VoltBuildPage() {
     return allTasks.find(t => t.id === selectedTaskId) || null;
   }, [allTasks, selectedTaskId]);
 
-  // Get phase for selected task
-  const selectedTaskPhase = useMemo(() => {
-    if (!selectedTask) return null;
-    return phases.find(p => p.id === selectedTask.phase_id) || null;
-  }, [selectedTask, phases]);
+  // Count for badges
+  const openRisksCount = risks.filter(r => r.status === 'open').length;
+  const pendingTasksCount = allTasks.filter(t => t.status === 'not_started' || t.status === 'in_progress').length;
 
   // Handle project creation
   const handleCreateProject = (data: Parameters<typeof createProject>[0]) => {
@@ -325,124 +325,67 @@ export function VoltBuildPage() {
     }
   };
 
+  // Handle add task from overview
+  const handleAddTaskFromOverview = () => {
+    if (phases.length > 0) {
+      setNewTaskPhase({ id: phases[0].id, name: phases[0].name });
+    }
+    setCurrentView('tasks');
+  };
+
+  // Handle add risk from overview
+  const handleAddRiskFromOverview = () => {
+    setCurrentView('risks');
+  };
+
   // Loading state
   if (projectsLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <VoltBuildHeader
-        projects={projects}
-        selectedProjectId={selectedProjectId}
-        onProjectSelect={setSelectedProjectId}
-        onNewProject={() => setIsNewProjectOpen(true)}
-        selectedProject={selectedProject}
-      />
+  // Render content based on current view
+  const renderContent = () => {
+    if (!selectedProject) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+          <Card className="max-w-md w-full">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <p className="mb-4 text-lg text-muted-foreground text-center">
+                No projects yet. Create your first build project to get started.
+              </p>
+              <button
+                onClick={() => setIsNewProjectOpen(true)}
+                className="text-primary hover:underline font-medium"
+              >
+                Create New Project
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
-      {/* Main Content */}
-      {!selectedProject ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="mb-4 text-lg text-muted-foreground">
-              No projects yet. Create your first build project to get started.
-            </p>
-            <button
-              onClick={() => setIsNewProjectOpen(true)}
-              className="text-primary hover:underline"
-            >
-              Create New Project
-            </button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4 flex-wrap">
-            <TabsTrigger value="overview" className="gap-2">
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="gap-2">
-              <ListTodo className="w-4 h-4" />
-              <span className="hidden sm:inline">Tasks</span>
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="gap-2">
-              <GanttChart className="w-4 h-4" />
-              <span className="hidden sm:inline">Timeline</span>
-            </TabsTrigger>
-            <TabsTrigger value="risks" className="gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline">Risks</span>
-            </TabsTrigger>
-            <TabsTrigger value="capex" className="gap-2">
-              <DollarSign className="w-4 h-4" />
-              <span className="hidden sm:inline">CAPEX</span>
-            </TabsTrigger>
-            <TabsTrigger value="leadtimes" className="gap-2">
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Lead Times</span>
-            </TabsTrigger>
-            <TabsTrigger value="advisor" className="gap-2">
-              <Brain className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Advisor</span>
-            </TabsTrigger>
-            <TabsTrigger value="bids" className="gap-2">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Bids & Vendors</span>
-            </TabsTrigger>
-            <TabsTrigger value="procurement" className="gap-2">
-              <Package className="w-4 h-4" />
-              <span className="hidden sm:inline">Procurement</span>
-            </TabsTrigger>
-            <TabsTrigger value="changeorders" className="gap-2">
-              <FileEdit className="w-4 h-4" />
-              <span className="hidden sm:inline">Change Orders</span>
-            </TabsTrigger>
-            <TabsTrigger value="quality" className="gap-2">
-              <ClipboardCheck className="w-4 h-4" />
-              <span className="hidden sm:inline">Quality</span>
-            </TabsTrigger>
-            <TabsTrigger value="reporting" className="gap-2">
-              <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Reporting</span>
-            </TabsTrigger>
-          </TabsList>
+    switch (currentView) {
+      case 'overview':
+        return (
+          <VoltBuildOverviewRedesign
+            project={selectedProject}
+            phases={phases}
+            tasks={allTasks}
+            onNavigate={setCurrentView}
+            onAddTask={handleAddTaskFromOverview}
+            onAddRisk={handleAddRiskFromOverview}
+          />
+        );
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <VoltBuildProgress
-              project={selectedProject}
-              phases={phases}
-              allTasks={allTasks}
-            />
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <VoltBuildPhaseProgress phases={phases} />
-              <VoltBuildRisks
-                risks={risks}
-                phases={phases}
-                projectId={selectedProjectId!}
-                onCreateRisk={createRisk}
-                onUpdateRisk={(id, updates) => updateRisk({ id, ...updates })}
-                onDeleteRisk={deleteRisk}
-              />
-            </div>
-
-            <VoltBuildTimeline
-              phases={phases}
-              tasks={tasksByPhase}
-              projectStartDate={selectedProject.estimated_start_date}
-              projectEndDate={selectedProject.estimated_end_date}
-            />
-          </TabsContent>
-
-          {/* Tasks Tab */}
-          <TabsContent value="tasks">
+      case 'tasks':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Tasks</h1>
             <div className="grid gap-6 lg:grid-cols-5">
               {/* Phase & Task List */}
               <div className="lg:col-span-3">
@@ -490,20 +433,26 @@ export function VoltBuildPage() {
                 )}
               </div>
             </div>
-          </TabsContent>
+          </div>
+        );
 
-          {/* Timeline Tab */}
-          <TabsContent value="timeline">
+      case 'timeline':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Timeline</h1>
             <VoltBuildTimeline
               phases={phases}
               tasks={tasksByPhase}
               projectStartDate={selectedProject.estimated_start_date}
               projectEndDate={selectedProject.estimated_end_date}
             />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Risks Tab */}
-          <TabsContent value="risks">
+      case 'risks':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Risk Management</h1>
             <VoltBuildRisks
               risks={risks}
               phases={phases}
@@ -512,49 +461,100 @@ export function VoltBuildPage() {
               onUpdateRisk={(id, updates) => updateRisk({ id, ...updates })}
               onDeleteRisk={deleteRisk}
             />
-          </TabsContent>
+          </div>
+        );
 
-          {/* CAPEX Tab */}
-          <TabsContent value="capex">
+      case 'capex':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">CAPEX Management</h1>
             <VoltCapExTab project={selectedProject} phases={phases} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Lead Times Tab */}
-          <TabsContent value="leadtimes">
+      case 'leadtime':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Lead Times</h1>
             <VoltLeadTimeTab project={selectedProject} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* AI Advisor Tab */}
-          <TabsContent value="advisor">
+      case 'advisor':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">AI Project Advisor</h1>
             <VoltAdvisorTab project={selectedProject} phases={phases} tasks={allTasks} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Bids & Vendors Tab */}
-          <TabsContent value="bids">
+      case 'bids':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Bids & Vendors</h1>
             <VoltBidsTab project={selectedProject} phases={phases} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Procurement Tab */}
-          <TabsContent value="procurement">
+      case 'procurement':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Procurement</h1>
             <VoltProcurementTab project={selectedProject} phases={phases} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Change Orders Tab */}
-          <TabsContent value="changeorders">
+      case 'changeorders':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Change Orders</h1>
             <VoltChangeOrdersTab project={selectedProject} phases={phases} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Quality & Commissioning Tab */}
-          <TabsContent value="quality">
+      case 'quality':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Quality & Commissioning</h1>
             <VoltQualityTab project={selectedProject} phases={phases} />
-          </TabsContent>
+          </div>
+        );
 
-          {/* Reporting Tab */}
-          <TabsContent value="reporting">
+      case 'reporting':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Reports</h1>
             <VoltReportingTab project={selectedProject} tasks={allTasks} />
-          </TabsContent>
-        </Tabs>
-      )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      {/* Project Header - Only on mobile or when needed */}
+      <div className="lg:hidden border-b border-border bg-card">
+        <VoltBuildHeader
+          projects={projects}
+          selectedProjectId={selectedProjectId}
+          onProjectSelect={setSelectedProjectId}
+          onNewProject={() => setIsNewProjectOpen(true)}
+          selectedProject={selectedProject}
+        />
+      </div>
+
+      {/* Main Layout with Sidebar */}
+      <VoltBuildLayout
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        riskCount={openRisksCount}
+        taskCount={pendingTasksCount}
+      >
+        {renderContent()}
+      </VoltBuildLayout>
 
       {/* New Project Dialog */}
       <VoltBuildNewProject
@@ -596,6 +596,6 @@ export function VoltBuildPage() {
           )}
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
