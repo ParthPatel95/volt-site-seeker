@@ -81,13 +81,18 @@ export function PhaseProgressGrid({ phases, onPhaseClick }: PhaseProgressGridPro
     <Card className="p-4 sm:p-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">Phase Progress</h3>
       
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-3"
-      >
-        {phases.map((phase) => {
+      {phases.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          <p className="text-sm">No phases defined yet</p>
+        </div>
+      ) : (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-3"
+        >
+          {phases.map((phase) => {
           const taskCount = phase.tasks?.length || 0;
           
           return (
@@ -125,9 +130,10 @@ export function PhaseProgressGrid({ phases, onPhaseClick }: PhaseProgressGridPro
                 {phase.status.replace('_', ' ')}
               </div>
             </motion.div>
-          );
-        })}
-      </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
     </Card>
   );
 }

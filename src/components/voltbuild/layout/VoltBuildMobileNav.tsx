@@ -17,7 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { VoltBuildView } from './VoltBuildSidebar';
+import { VoltBuildView } from './VoltBuildLayout';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const quickNavItems = [
