@@ -10,6 +10,7 @@ export interface TaskDocumentWithSecure extends VoltBuildDocument {
     file_url: string;
     file_type: string | null;
     file_size: number | null;
+    storage_path: string | null;
   } | null;
 }
 
@@ -34,11 +35,11 @@ export function useVoltBuildTaskDocuments(taskId: string | null) {
       // Get secure document IDs
       const secureDocIds = docs.filter(d => d.secure_document_id).map(d => d.secure_document_id);
       
-      let secureDocMap: Record<string, { id: string; file_name: string; file_url: string; file_type: string | null; file_size: number | null }> = {};
+  let secureDocMap: Record<string, { id: string; file_name: string; file_url: string; file_type: string | null; file_size: number | null; storage_path: string | null }> = {};
       if (secureDocIds.length > 0) {
         const { data: secureDocs } = await supabase
           .from('secure_documents')
-          .select('id, file_name, file_url, file_type, file_size')
+          .select('id, file_name, file_url, file_type, file_size, storage_path')
           .in('id', secureDocIds);
         
         if (secureDocs) {
