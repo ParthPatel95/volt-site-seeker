@@ -22,7 +22,7 @@ export function VoltBuildLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-full w-full min-h-screen bg-background">
+    <div className="flex h-screen w-full bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <VoltBuildSidebar
         currentView={currentView}

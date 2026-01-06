@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -15,13 +16,14 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from './VoltBuildNavItem';
 import { Separator } from '@/components/ui/separator';
 
-export type VoltBuildView = 
+export type VoltBuildView =
   | 'overview' 
   | 'tasks' 
   | 'timeline' 
@@ -113,6 +115,29 @@ export function VoltBuildSidebar({
         "relative flex-shrink-0"
       )}
     >
+      {/* Back to VoltScout Link */}
+      <Link
+        to="/app"
+        className={cn(
+          "flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 border-b border-border transition-colors",
+          isCollapsed && "justify-center px-2"
+        )}
+      >
+        <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              className="overflow-hidden whitespace-nowrap"
+            >
+              Back to VoltScout
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </Link>
+
       {/* Logo Section */}
       <div className={cn(
         "flex items-center gap-2 p-4 border-b border-border",
