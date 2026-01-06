@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
@@ -230,6 +230,27 @@ const curriculum: Module[] = [
       { title: "Project Execution", anchor: "track-3" },
       { title: "Scaling Operations", anchor: "track-4" },
       { title: "Capital & Growth", anchor: "track-5" },
+    ],
+  },
+  {
+    id: "taxes-insurance",
+    title: "Taxes & Insurance Masterclass",
+    description: "Master tax optimization and insurance strategies for Bitcoin mining and traditional data centers. Featuring our Alberta 45MW facility case study.",
+    icon: Receipt,
+    route: "/taxes-insurance",
+    category: "masterclass",
+    difficulty: "Advanced",
+    lessons: [
+      { title: "Introduction", anchor: "intro" },
+      { title: "Tax Jurisdictions", anchor: "jurisdictions" },
+      { title: "Corporate Structure", anchor: "corporate-structure" },
+      { title: "Capital Expenses (CCA)", anchor: "capex" },
+      { title: "Operating Expenses", anchor: "opex" },
+      { title: "Crypto Tax Treatment", anchor: "crypto-tax" },
+      { title: "Incentives & Credits", anchor: "incentives" },
+      { title: "Property Insurance", anchor: "property-insurance" },
+      { title: "Liability Insurance", anchor: "liability-insurance" },
+      { title: "45MW Case Study", anchor: "case-study" },
     ],
   },
 ];
