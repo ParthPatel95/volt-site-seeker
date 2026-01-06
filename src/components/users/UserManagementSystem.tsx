@@ -117,7 +117,8 @@ export function UserManagementSystem() {
     role: 'user' as string,
     department: '',
     permissions: [] as string[],
-    password: ''
+    password: '',
+    voltbuild_access: false
   });
   const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
@@ -201,7 +202,8 @@ export function UserManagementSystem() {
           phone: userForm.phone,
           department: userForm.department,
           role: userForm.role,
-          permissions: userForm.permissions
+          permissions: userForm.permissions,
+          voltbuild_access: userForm.voltbuild_access
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
@@ -227,7 +229,8 @@ export function UserManagementSystem() {
         role: 'user',
         department: '',
         permissions: [],
-        password: ''
+        password: '',
+        voltbuild_access: false
       });
       
       await fetchUsers();
@@ -858,6 +861,26 @@ export function UserManagementSystem() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* VoltBuild Access */}
+                <div className="space-y-2 border-t pt-4">
+                  <Label className="font-medium">Feature Access</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="voltbuild_access"
+                      checked={userForm.voltbuild_access}
+                      onCheckedChange={(checked) => {
+                        setUserForm(prev => ({ ...prev, voltbuild_access: checked }));
+                      }}
+                    />
+                    <Label htmlFor="voltbuild_access" className="text-sm">
+                      Build Management Access
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Grant access to the Build Management feature
+                  </p>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
