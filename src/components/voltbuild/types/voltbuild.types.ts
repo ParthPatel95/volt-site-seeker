@@ -98,6 +98,7 @@ export interface VoltBuildDocument {
   version: number;
   uploaded_by: string | null;
   created_at: string;
+  secure_document_id: string | null;
 }
 
 export interface VoltBuildRisk {
