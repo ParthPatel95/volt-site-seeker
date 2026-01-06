@@ -99,10 +99,11 @@ export default {
 				},
 				// Chart colors
 				chart: {
-					primary: 'hsl(var(--chart-primary))',
-					secondary: 'hsl(var(--chart-secondary))',
-					tertiary: 'hsl(var(--chart-tertiary))',
-					quaternary: 'hsl(var(--chart-quaternary))',
+					1: 'hsl(var(--chart-1))',
+					2: 'hsl(var(--chart-2))',
+					3: 'hsl(var(--chart-3))',
+					4: 'hsl(var(--chart-4))',
+					5: 'hsl(var(--chart-5))',
 					grid: 'hsl(var(--chart-grid))'
 				},
 				// Legacy brand colors (now using CSS variables for theme support)
@@ -116,6 +117,8 @@ export default {
 				'watt-primary': 'hsl(var(--watt-primary))',
 				'watt-secondary': 'hsl(var(--watt-secondary))',
 				'watt-accent': 'hsl(var(--watt-accent))',
+				'watt-blue': 'hsl(var(--watt-blue))',
+				'watt-orange': 'hsl(var(--watt-orange))',
 				// Market colors (aliases for semantic usage)
 				'market-positive': 'hsl(var(--data-positive))',
 				'market-negative': 'hsl(var(--data-negative))',
@@ -174,7 +177,10 @@ export default {
 				'subtle': '0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05)',
 				'card': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 2px 6px 0 rgb(0 0 0 / 0.03)',
 				'elevated': '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
-				'glow': '0 0 20px -8px hsl(var(--primary) / 0.3)'
+				'glow': '0 0 20px -8px hsl(var(--primary) / 0.3)',
+				'watt-glow': '0 0 20px -5px hsl(var(--watt-bitcoin) / 0.4)',
+				'watt-trust-glow': '0 0 20px -5px hsl(var(--watt-trust) / 0.4)',
+				'watt-accent-glow': '0 0 20px -5px hsl(var(--watt-accent) / 0.4)'
 			}
 		}
 	},

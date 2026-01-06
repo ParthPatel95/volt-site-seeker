@@ -107,6 +107,8 @@
     --watt-primary: 221 83% 53%;            /* Primary blue */
     --watt-secondary: 210 40% 96%;          /* Secondary surface */
     --watt-accent: 195 85% 41%;             /* Accent teal (same as watt-trust) */
+    --watt-blue: 217 91% 55%;               /* Professional blue */
+    --watt-orange: 24 95% 53%;              /* Vibrant orange */
   }
 
   .dark {
@@ -197,6 +199,8 @@
     --watt-primary: 217 91% 60%;            /* Primary blue - brighter */
     --watt-secondary: 222 47% 14%;          /* Secondary surface - dark */
     --watt-accent: 195 85% 50%;             /* Accent teal - brighter for dark mode */
+    --watt-blue: 217 91% 65%;               /* Professional blue - brighter */
+    --watt-orange: 24 95% 60%;              /* Vibrant orange - brighter */
   }
 }
 
@@ -610,23 +614,28 @@
 }
 
 /* ============================================================================
-   LEGACY BRAND COLORS (compatibility)
+   WATT BRAND UTILITIES
+   Theme-safe brand gradients and effects
    ============================================================================ */
 
 @layer utilities {
-  .text-watt-success { color: hsl(var(--data-positive)); }
-  .bg-watt-success { background-color: hsl(var(--data-positive)); }
-  .text-watt-warning { color: hsl(var(--data-warning)); }
-  .bg-watt-warning { background-color: hsl(var(--data-warning)); }
-  .text-watt-primary { color: hsl(var(--primary)); }
-  .bg-watt-primary { background-color: hsl(var(--primary)); }
-  .border-watt-primary { border-color: hsl(var(--primary)); }
-  .text-watt-secondary { color: hsl(var(--market-aeso)); }
-  .bg-watt-secondary { background-color: hsl(var(--market-aeso)); }
-  .border-watt-secondary { border-color: hsl(var(--market-aeso)); }
-  .text-watt-accent { color: hsl(var(--market-miso)); }
-  .bg-watt-accent { background-color: hsl(var(--market-miso)); }
-  .border-watt-accent { border-color: hsl(var(--market-miso)); }
+  /* Brand Gradient */
+  .bg-watt-gradient {
+    background: linear-gradient(135deg, hsl(var(--watt-bitcoin)) 0%, hsl(var(--watt-trust)) 100%);
+  }
+  
+  /* Brand Glow Effects */
+  .shadow-watt-brand {
+    box-shadow: 0 0 25px -5px hsl(var(--watt-bitcoin) / 0.35);
+  }
+  
+  /* Theme-safe text gradient base */
+  .text-gradient-watt {
+    background: linear-gradient(135deg, hsl(var(--watt-bitcoin)) 0%, hsl(var(--watt-trust)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 /* ============================================================================

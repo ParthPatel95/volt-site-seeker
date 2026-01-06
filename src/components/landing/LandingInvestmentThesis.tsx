@@ -166,8 +166,8 @@ const stages = [
     title: "Acquire",
     subtitle: "Stranded Power Assets",
     icon: Zap,
-    color: "text-amber-500",
-    bgColor: "bg-amber-50",
+    color: "text-watt-warning",
+    bgColor: "bg-watt-warning/10",
     glowColor: "rgba(245, 158, 11, 0.2)",
     points: [
       "Identify underutilized grid capacity",
@@ -181,7 +181,7 @@ const stages = [
     subtitle: "Bitcoin Mining Operations",
     icon: Server,
     color: "text-watt-accent",
-    bgColor: "bg-cyan-50",
+    bgColor: "bg-watt-accent/10",
     glowColor: "rgba(0, 194, 203, 0.2)",
     points: [
       "Deploy mining infrastructure",
@@ -194,8 +194,8 @@ const stages = [
     title: "Transform",
     subtitle: "AI/HPC Premium Exit",
     icon: Cpu,
-    color: "text-violet-500",
-    bgColor: "bg-violet-50",
+    color: "text-watt-purple",
+    bgColor: "bg-watt-purple/10",
     glowColor: "rgba(139, 92, 246, 0.2)",
     points: [
       "Upgrade to Tier 3+ standards",

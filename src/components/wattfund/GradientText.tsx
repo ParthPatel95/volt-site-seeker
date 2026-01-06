@@ -10,7 +10,7 @@ interface GradientTextProps {
 export const GradientText = ({ children, className = '', delay = 0 }: GradientTextProps) => {
   return (
     <motion.span
-      className={`bg-gradient-to-r from-white via-watt-trust to-watt-bitcoin bg-clip-text text-transparent bg-[length:200%_auto] ${className}`}
+      className={`bg-gradient-to-r from-foreground via-watt-trust to-watt-bitcoin bg-clip-text text-transparent bg-[length:200%_auto] ${className}`}
       initial={{ opacity: 0, backgroundPosition: '200% center' }}
       animate={{ 
         opacity: 1, 
