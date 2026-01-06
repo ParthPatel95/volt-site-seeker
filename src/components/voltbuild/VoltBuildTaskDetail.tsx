@@ -107,7 +107,7 @@ export function VoltBuildTaskDetail({
         id: doc.secure_document.id,
         name: doc.file_name,
         storage_path: doc.secure_document.storage_path,
-        file_type: doc.secure_document.file_type || 'application/pdf',
+        file_type: doc.secure_document.file_type || '',
       });
     }
   };

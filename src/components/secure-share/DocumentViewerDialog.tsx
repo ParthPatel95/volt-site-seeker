@@ -1,38 +1,31 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Download, ZoomIn, ZoomOut, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { VideoPlayer } from './viewer/VideoPlayer';
+import { PdfErrorBoundary } from './viewer/PdfErrorBoundary';
+import { OfficeDocumentViewer } from './viewer/OfficeDocumentViewer';
 
-// Configure PDF.js worker with multiple fallbacks for pdfjs-dist 5.x compatibility
-const workerUrls = [
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
-  `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`,
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`,
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`,
-  // Legacy fallbacks for older environments
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
-];
-
-// Try each worker URL with proper async error handling
-let workerInitialized = false;
-for (const url of workerUrls) {
+// Configure PDF.js worker - use import.meta.url for Vite bundling (most reliable)
+const initializePdfWorker = () => {
   try {
-    pdfjs.GlobalWorkerOptions.workerSrc = url;
-    workerInitialized = true;
-    console.log(`[PDF.js Dialog] Worker initialized: ${url}`);
-    break;
-  } catch (error) {
-    console.warn(`[PDF.js Dialog] Failed: ${url}`, error);
+    // Primary: Use import.meta.url for Vite bundling - this bundles the worker locally
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.mjs',
+      import.meta.url
+    ).toString();
+    console.log('[PDF.js Dialog] Worker initialized via import.meta.url');
+  } catch (e) {
+    // Fallback: CDN for environments where import.meta.url doesn't work
+    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    console.log('[PDF.js Dialog] Worker initialized via CDN fallback');
   }
-}
+};
 
-if (!workerInitialized) {
-  console.error('[PDF.js Dialog] All PDF.js worker CDNs failed');
-}
+initializePdfWorker();
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -53,17 +46,24 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [useNativePdfViewer, setUseNativePdfViewer] = useState(false);
-  const [pdfDocumentProxy, setPdfDocumentProxy] = useState<any>(null);
-  const [pageLoadTimeout, setPageLoadTimeout] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(false);
-  const [pageLoadFailed, setPageLoadFailed] = useState(false);
-  const pageLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const initialLoadRef = useRef(true);
+  const [documentLoaded, setDocumentLoaded] = useState(false);
+  const safetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadErrorCountRef = useRef(0);
   const { toast } = useToast();
   
   // Detect iOS for native PDF viewer
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Memoize Document options to prevent re-renders - CRITICAL: withCredentials false for CORS
+  const documentOptions = useMemo(() => ({
+    disableRange: false,
+    disableStream: false,
+    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    cMapPacked: true,
+    withCredentials: false,  // Critical for CORS with Supabase signed URLs
+    isEvalSupported: false,  // Security - disable eval in PDF.js
+  }), []);
 
   // Add annotation layer styles for clickable links (based on official PDF.js styles)
   useEffect(() => {
@@ -115,68 +115,70 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
     };
   }, []);
 
-  const isImage = document?.file_type?.startsWith('image/');
-  const isPdf = document?.file_type === 'application/pdf';
-  const isVideo = document?.file_type?.startsWith('video/');
-  const isAudio = document?.file_type?.startsWith('audio/');
-  const isText = document?.file_type?.startsWith('text/');
+  // File type detection - handle empty/missing file_type gracefully
+  const fileType = document?.file_type || '';
+  const isImage = fileType.startsWith('image/');
+  const isPdf = fileType === 'application/pdf' || document?.name?.toLowerCase().endsWith('.pdf');
+  const isVideo = fileType.startsWith('video/');
+  const isAudio = fileType.startsWith('audio/');
+  const isText = fileType.startsWith('text/');
+  const isOfficeDoc = fileType.includes('word') || fileType.includes('document') || /\.docx?$/i.test(document?.name || '');
+  const isOfficeSheet = fileType.includes('sheet') || /\.xlsx?$/i.test(document?.name || '');
+  const isOfficePresentation = fileType.includes('presentation') || /\.pptx?$/i.test(document?.name || '');
+  const isOffice = isOfficeDoc || isOfficeSheet || isOfficePresentation;
   const canDownload = accessLevel === 'download';
 
-  // Pre-fetch PDF page count for iOS navigation
-  useEffect(() => {
-    if (open && document && isPdf && documentUrl) {
-      const loadPdfMetadata = async () => {
-        try {
-          const pdfjsLib = await import('pdfjs-dist');
-          
-          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
-          }
-          
-          const loadingTask = pdfjsLib.getDocument({
-            url: documentUrl,
-            withCredentials: false,
-            isEvalSupported: false,
-            disableRange: false,
-            disableStream: false,
-          });
-          
-          const proxy = await loadingTask.promise;
-          setNumPages(proxy.numPages);
-          console.log('[DocumentDialog] PDF metadata loaded', { numPages: proxy.numPages });
-        } catch (error) {
-          console.error('[DocumentDialog] Failed to load PDF metadata:', error);
-          // On pre-load failure, fallback to native viewer
-          if (!isIOS) {
-            console.warn('[DocumentDialog] Pre-load failed - switching to native viewer');
-            setUseNativePdfViewer(true);
-          }
-        }
-      };
-      
-      loadPdfMetadata();
-    }
-  }, [open, document, isPdf, documentUrl]);
-
-  // Width locking mechanism refs
-  const widthLocked = useRef(false);
-  const lockedPageWidth = useRef<number | null>(null);
-
+  // Reset state when dialog opens/closes or document changes
   useEffect(() => {
     if (open && document) {
-      // Reset width lock when document changes
-      widthLocked.current = false;
-      lockedPageWidth.current = null;
+      // Reset all state for new document
+      setDocumentUrl(null);
+      setNumPages(0);
+      setPageNumber(1);
+      setUseNativePdfViewer(false);
+      setDocumentLoaded(false);
+      loadErrorCountRef.current = 0;
       loadDocument();
     } else {
       setDocumentUrl(null);
       setNumPages(0);
       setPageNumber(1);
-      // Reset state when dialog closes
-      widthLocked.current = false;
-      lockedPageWidth.current = null;
+      setDocumentLoaded(false);
     }
   }, [open, document]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Safety timeout: Falls back to native viewer if PDF doesn't load
+  useEffect(() => {
+    if (open && isPdf && !useNativePdfViewer && !documentLoaded && documentUrl) {
+      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const timeoutDuration = isMobileDevice ? 20000 : 12000; // 20s mobile, 12s desktop
+      
+      safetyTimeoutRef.current = setTimeout(() => {
+        console.warn('[DocumentDialog] Safety timeout - falling back to native viewer');
+        setUseNativePdfViewer(true);
+        toast({
+          title: 'Loading Timeout',
+          description: 'Switched to browser PDF viewer for better performance.',
+        });
+      }, timeoutDuration);
+      
+      return () => {
+        if (safetyTimeoutRef.current) {
+          clearTimeout(safetyTimeoutRef.current);
+          safetyTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [open, isPdf, useNativePdfViewer, documentLoaded, documentUrl, toast]);
 
   const loadDocument = async () => {
     if (!document) return;
@@ -275,70 +277,32 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   };
 
   const onDocumentLoadSuccess = (pdf: any) => {
-    // Prevent race condition - only set if not already set by pre-load effect
-    if (numPages === 0) {
-      setNumPages(pdf.numPages);
-    }
-    if (pageNumber === 0 || pageNumber === 1) {
-      setPageNumber(1);
-    }
-    if (!pdfDocumentProxy) {
-      setPdfDocumentProxy(pdf);
+    console.log('[DocumentDialog] PDF loaded successfully, pages:', pdf.numPages);
+    setNumPages(pdf.numPages);
+    setDocumentLoaded(true);
+    loadErrorCountRef.current = 0; // Reset error count on success
+    
+    // Clear safety timeout since document loaded
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current);
+      safetyTimeoutRef.current = null;
     }
   };
-  
-  // Loading timeout fallback - only on initial load (not page changes)
-  useEffect(() => {
-    if (open && isPdf && !useNativePdfViewer && !isIOS && numPages === 0) {
-      const timeout = setTimeout(() => {
-        console.warn('[DocumentDialog] Initial load timeout - falling back to native viewer');
-        setPageLoadTimeout(true);
-        setUseNativePdfViewer(true);
-        toast({
-          title: 'Loading Timeout',
-          description: 'Switched to browser PDF viewer for better performance.',
-        });
-      }, 15000);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [open, isPdf, useNativePdfViewer, isIOS, numPages, toast]);
-  
-  // Safety timeout: Only on initial document load
-  useEffect(() => {
-    if (isPageLoading && initialLoadRef.current) {
-      pageLoadingTimeoutRef.current = setTimeout(() => {
-        console.log('[DocumentViewerDialog] Safety timeout triggered');
-        setIsPageLoading(false);
-        initialLoadRef.current = false;
-        setUseNativePdfViewer(true);
-        toast({
-          title: 'Loading Taking Too Long',
-          description: 'Switched to browser PDF viewer for better performance.',
-        });
-      }, 8000);
-    } else if (!isPageLoading) {
-      if (pageLoadingTimeoutRef.current) {
-        clearTimeout(pageLoadingTimeoutRef.current);
-      }
-    }
 
-    return () => {
-      if (pageLoadingTimeoutRef.current) {
-        clearTimeout(pageLoadingTimeoutRef.current);
-      }
-    };
-  }, [isPageLoading, toast]);
-
-  // Cleanup resources when page changes
-  useEffect(() => {
-    setPageLoadFailed(false);
-    setIsPageLoading(true);
+  const onDocumentLoadError = (error: Error) => {
+    console.error('[DocumentDialog] PDF load error:', error);
+    loadErrorCountRef.current += 1;
     
-    return () => {
-      setIsPageLoading(false);
-    };
-  }, [pageNumber]);
+    if (loadErrorCountRef.current >= 3) {
+      console.log('[DocumentDialog] Too many errors, falling back to native viewer');
+      setUseNativePdfViewer(true);
+    }
+  };
+
+  const handlePdfErrorBoundaryError = () => {
+    console.log('[DocumentDialog] PdfErrorBoundary triggered native fallback');
+    setUseNativePdfViewer(true);
+  };
 
   const changePage = (offset: number) => {
     setPageNumber(prevPageNumber => {
@@ -351,6 +315,35 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const nextPage = () => changePage(1);
   const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3));
   const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
+
+  // Render PDF content (used in error boundary)
+  const renderPdfContent = () => (
+    <Document
+      file={documentUrl}
+      onLoadSuccess={onDocumentLoadSuccess}
+      onLoadError={onDocumentLoadError}
+      loading={
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      }
+      options={documentOptions}
+    >
+      <Page
+        key={`page_${pageNumber}`}
+        pageNumber={pageNumber}
+        scale={scale}
+        renderTextLayer={true}
+        renderAnnotationLayer={true}
+        className="shadow-lg mx-auto"
+        loading={
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        }
+      />
+    </Document>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -379,9 +372,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
             <>
               {isPdf ? (
                 isIOS || useNativePdfViewer ? (
-                  // Native iOS PDF viewer with navigation info
+                  // Native PDF viewer with navigation info
                   <div className="w-full h-full relative">
-                    {/* iOS Navigation Info Bar */}
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-background/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border flex items-center gap-3">
                       <span className="text-sm font-medium">
                         {numPages > 0 ? `${numPages} pages` : 'Loading...'}
@@ -396,7 +388,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                       className="w-full h-full border-0"
                       title={document?.name}
                       onError={(e) => {
-                        console.error('iOS PDF iframe error:', e);
+                        console.error('PDF iframe error:', e);
                         toast({
                           title: 'PDF Loading Error',
                           description: 'Unable to display PDF. Please try downloading the file.',
@@ -407,7 +399,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-2 sm:px-4 py-3 bg-muted/20 border-b gap-2 flex-wrap">
+                    <div className="flex items-center justify-between px-2 sm:px-4 py-3 bg-muted/20 border-b gap-2 flex-wrap">
                       <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
                         <Button
                           variant="outline"
@@ -467,70 +459,32 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                         }
                       }}
                     >
-                      <Document
-                        file={documentUrl}
-                        options={{
-                          // Enable progressive loading for faster first page render
-                          disableRange: false,
-                          disableStream: false,
-                          cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-                          cMapPacked: true,
-                        }}
-                        onLoadSuccess={onDocumentLoadSuccess}
-                        onLoadError={(error) => {
-                          console.error('[DocumentDialog] PDF load error:', error);
-                          // Fallback to native/browser PDF viewer on ANY error
-                          setUseNativePdfViewer(true);
-                          toast({
-                            title: 'PDF Loading Issue',
-                            description: 'Switching to browser PDF viewer for better compatibility.',
-                          });
-                        }}
-                        loading={
-                          <div className="w-full max-w-[800px] mx-auto p-4 animate-pulse">
-                            <div className="bg-muted rounded-lg aspect-[8.5/11] w-full flex items-center justify-center">
-                              <div className="text-center">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">Loading document...</p>
-                              </div>
-                            </div>
-                          </div>
-                        }
+                      <PdfErrorBoundary 
+                        onError={handlePdfErrorBoundaryError}
+                        maxRetries={3}
+                        resetKey={documentUrl}
                       >
-                        <Page
-                          pageNumber={pageNumber}
-                          scale={scale}
-                          renderTextLayer={false}
-                          renderAnnotationLayer={true}
-                          onContextMenu={(e) => !canDownload && e.preventDefault()}
-                          error={
-                            <div className="text-center p-8 bg-destructive/10 rounded-lg">
-                              <p className="text-destructive mb-4">Failed to load page {pageNumber}</p>
-                              <Button 
-                                onClick={() => setUseNativePdfViewer(true)} 
-                                size="sm"
-                                variant="outline"
-                              >
-                                Switch to Browser Viewer
-                              </Button>
-                            </div>
-                          }
-                        />
-                      </Document>
+                        {renderPdfContent()}
+                      </PdfErrorBoundary>
                     </div>
                   </div>
                 )
+              ) : isOffice ? (
+                // Office document preview
+                <OfficeDocumentViewer
+                  documentUrl={documentUrl}
+                  documentType={fileType}
+                  canDownload={canDownload}
+                  onDownload={handleDownload}
+                />
               ) : isImage ? (
-                <div 
-                  className="flex items-center justify-center h-full p-4 bg-black/5"
-                  onContextMenu={(e) => !canDownload && e.preventDefault()}
-                >
+                <div className="flex items-center justify-center h-full p-4 overflow-auto">
                   <img
                     src={documentUrl}
                     alt={document?.name}
                     className="max-w-full max-h-full object-contain"
-                    style={{ transform: `scale(${scale})` }}
-                    onContextMenu={(e) => !canDownload && e.preventDefault()}
+                    style={{ userSelect: 'none' }}
+                    draggable={false}
                   />
                 </div>
               ) : isVideo ? (
@@ -539,57 +493,45 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
                     src={documentUrl}
                     canDownload={canDownload}
                     className="max-w-full max-h-full"
-                    onError={(error) => {
-                      console.error('[DocumentDialog] Video error:', error);
-                      toast({
-                        title: 'Video Error',
-                        description: 'Failed to load video. Please try again or download the file.',
-                        variant: 'destructive'
-                      });
-                    }}
+                    fileName={document?.name}
                   />
                 </div>
               ) : isAudio ? (
-                <div className="flex items-center justify-center h-full p-8">
-                  <div className="w-full max-w-2xl">
-                    <audio
-                      src={documentUrl}
-                      controls
-                      controlsList={!canDownload ? 'nodownload' : undefined}
-                      onContextMenu={(e) => !canDownload && e.preventDefault()}
-                      className="w-full"
-                    >
-                      Your browser does not support audio playback.
-                    </audio>
-                  </div>
+                <div className="flex items-center justify-center h-full p-4">
+                  <audio 
+                    src={documentUrl} 
+                    controls 
+                    className="w-full max-w-md"
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
                 </div>
               ) : isText ? (
-                <div className="h-full w-full p-4">
-                  <iframe
-                    src={documentUrl}
-                    sandbox="allow-same-origin"
-                    className="w-full h-full bg-card rounded-lg border border-border"
-                    title="Text document preview"
-                  />
-                </div>
+                <iframe
+                  src={documentUrl}
+                  className="w-full h-full border-0"
+                  title={document?.name}
+                />
               ) : (
+                // Unknown file type - show download option
                 <div className="flex flex-col items-center justify-center h-full gap-4">
-                  <p className="text-muted-foreground">Preview not available for this file type</p>
+                  <AlertCircle className="w-16 h-16 text-muted-foreground" />
+                  <p className="text-lg font-medium">Preview not available</p>
+                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                    This file type cannot be previewed. {canDownload ? 'Please download to view.' : ''}
+                  </p>
                   {canDownload && (
-                    <button
-                      onClick={handleDownload}
-                      className="text-primary hover:underline inline-flex items-center gap-2"
-                    >
-                      Download to view
-                      <Download className="w-4 h-4" />
-                    </button>
+                    <Button onClick={handleDownload}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download File
+                    </Button>
                   )}
                 </div>
               )}
             </>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">No preview available</p>
+              <p className="text-muted-foreground">No document to display</p>
             </div>
           )}
         </div>
