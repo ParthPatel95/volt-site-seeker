@@ -333,7 +333,7 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
         key={`page_${pageNumber}`}
         pageNumber={pageNumber}
         scale={scale}
-        renderTextLayer={true}
+        renderTextLayer={false}
         renderAnnotationLayer={true}
         className="shadow-lg mx-auto"
         loading={
