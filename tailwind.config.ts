@@ -115,6 +115,7 @@ export default {
 				'watt-warning': 'hsl(var(--watt-warning))',
 				'watt-primary': 'hsl(var(--watt-primary))',
 				'watt-secondary': 'hsl(var(--watt-secondary))',
+				'watt-accent': 'hsl(var(--watt-accent))',
 				// Market colors (aliases for semantic usage)
 				'market-positive': 'hsl(var(--data-positive))',
 				'market-negative': 'hsl(var(--data-negative))',
