@@ -11,9 +11,9 @@ interface BitcoinSectionWrapperProps {
 }
 
 const themeClasses: Record<SectionTheme, string> = {
-  light: 'bg-card',
-  dark: 'bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-bitcoin)/0.1)]',
-  gradient: 'bg-gradient-to-b from-background to-muted/30',
+  light: 'bg-card text-foreground',
+  dark: 'bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-bitcoin)/0.1)] text-white',
+  gradient: 'bg-gradient-to-b from-background to-muted/30 text-foreground',
 };
 
 export const BitcoinSectionWrapper: React.FC<BitcoinSectionWrapperProps> = ({
