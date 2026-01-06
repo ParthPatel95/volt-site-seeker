@@ -7874,47 +7874,175 @@ export type Database = {
           },
         ]
       }
+      voltbuild_risk_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          risk_id: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          risk_id: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          risk_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_risk_comments_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_risks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_risk_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          field_changed: string
+          id: string
+          new_value: string | null
+          notes: string | null
+          old_value: string | null
+          risk_id: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          field_changed: string
+          id?: string
+          new_value?: string | null
+          notes?: string | null
+          old_value?: string | null
+          risk_id: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          field_changed?: string
+          id?: string
+          new_value?: string | null
+          notes?: string | null
+          old_value?: string | null
+          risk_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_risk_history_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_risks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltbuild_risks: {
         Row: {
+          actual_resolution_date: string | null
+          category: string | null
+          cost_impact_range_max: number | null
+          cost_impact_range_min: number | null
           created_at: string
           description: string | null
+          estimated_cost_impact: number | null
+          estimated_days_delay: number | null
           id: string
+          identified_date: string | null
+          impact: string | null
+          last_review_date: string | null
+          linked_task_id: string | null
           mitigation_plan: string | null
           owner: string | null
           phase_id: string | null
+          probability: string | null
           project_id: string
+          response_type: string | null
+          review_notes: string | null
+          risk_score: number | null
           severity: Database["public"]["Enums"]["voltbuild_risk_severity"]
           status: Database["public"]["Enums"]["voltbuild_risk_status"]
+          target_resolution_date: string | null
           title: string
+          trigger_indicators: string | null
           updated_at: string
         }
         Insert: {
+          actual_resolution_date?: string | null
+          category?: string | null
+          cost_impact_range_max?: number | null
+          cost_impact_range_min?: number | null
           created_at?: string
           description?: string | null
+          estimated_cost_impact?: number | null
+          estimated_days_delay?: number | null
           id?: string
+          identified_date?: string | null
+          impact?: string | null
+          last_review_date?: string | null
+          linked_task_id?: string | null
           mitigation_plan?: string | null
           owner?: string | null
           phase_id?: string | null
+          probability?: string | null
           project_id: string
+          response_type?: string | null
+          review_notes?: string | null
+          risk_score?: number | null
           severity?: Database["public"]["Enums"]["voltbuild_risk_severity"]
           status?: Database["public"]["Enums"]["voltbuild_risk_status"]
+          target_resolution_date?: string | null
           title: string
+          trigger_indicators?: string | null
           updated_at?: string
         }
         Update: {
+          actual_resolution_date?: string | null
+          category?: string | null
+          cost_impact_range_max?: number | null
+          cost_impact_range_min?: number | null
           created_at?: string
           description?: string | null
+          estimated_cost_impact?: number | null
+          estimated_days_delay?: number | null
           id?: string
+          identified_date?: string | null
+          impact?: string | null
+          last_review_date?: string | null
+          linked_task_id?: string | null
           mitigation_plan?: string | null
           owner?: string | null
           phase_id?: string | null
+          probability?: string | null
           project_id?: string
+          response_type?: string | null
+          review_notes?: string | null
+          risk_score?: number | null
           severity?: Database["public"]["Enums"]["voltbuild_risk_severity"]
           status?: Database["public"]["Enums"]["voltbuild_risk_status"]
+          target_resolution_date?: string | null
           title?: string
+          trigger_indicators?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "voltbuild_risks_linked_task_id_fkey"
+            columns: ["linked_task_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "voltbuild_risks_phase_id_fkey"
             columns: ["phase_id"]
