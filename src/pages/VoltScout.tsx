@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { AuthWrapper } from '@/components/AuthWrapper';
 import { Sidebar } from '@/components/Sidebar';
@@ -42,6 +42,10 @@ const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  
+  // Check if we're in a full-screen module (VoltBuild)
+  const isFullScreenModule = location.pathname.startsWith('/app/build');
   
   // Initialize analytics tracking
   useAnalytics();
@@ -64,19 +68,24 @@ const VoltScout = () => {
   return (
     <AuthWrapper>
       <div className="flex h-screen bg-background overflow-hidden">
-        <Sidebar
-          isCollapsed={isCollapsed}
-          setIsCollapsed={setIsCollapsed}
-          isMobile={isMobile}
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-        />
+        {/* Only show main sidebar when NOT in full-screen module */}
+        {!isFullScreenModule && (
+          <Sidebar
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
+            isMobile={isMobile}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+          />
+        )}
         
         <div className={`flex-1 flex flex-col transition-all duration-300 ${
-          isMobile ? 'ml-0' : isCollapsed ? 'ml-16' : 'ml-64 xl:ml-72'
+          isFullScreenModule 
+            ? 'ml-0' 
+            : isMobile ? 'ml-0' : isCollapsed ? 'ml-16' : 'ml-64 xl:ml-72'
         } min-w-0 overflow-hidden`}>
-          {/* Mobile menu button with better touch target */}
-          {isMobile && (
+          {/* Mobile menu button - only show when NOT in full-screen module */}
+          {isMobile && !isFullScreenModule && (
             <div className="lg:hidden bg-background border-b border-border px-2 sm:px-3 py-2 safe-area-pt">
               <button
                 onClick={() => setIsOpen(true)}
@@ -88,8 +97,8 @@ const VoltScout = () => {
             </div>
           )}
           
-          <div className="flex-1 min-w-0 overflow-auto p-2 sm:p-4 lg:p-6 custom-scrollbar">
-            <div className="container-responsive">
+          <div className={`flex-1 min-w-0 overflow-auto ${isFullScreenModule ? '' : 'p-2 sm:p-4 lg:p-6'} custom-scrollbar`}>
+            <div className={isFullScreenModule ? 'h-full' : 'container-responsive'}>
               <Routes>
                <Route index element={<Dashboard />} />
                <Route path="aeso-market-hub" element={<AESOMarketComprehensive />} />

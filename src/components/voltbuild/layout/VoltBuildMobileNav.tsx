@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -14,7 +15,7 @@ import {
   ClipboardCheck,
   FileText,
   MoreHorizontal,
-  X
+  ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildView } from './VoltBuildLayout';
@@ -121,6 +122,16 @@ export function VoltBuildMobileNav({ currentView, onViewChange }: VoltBuildMobil
           <SheetHeader className="pb-4">
             <SheetTitle>All Modules</SheetTitle>
           </SheetHeader>
+          
+          {/* Back to VoltScout Link */}
+          <Link
+            to="/app"
+            onClick={() => setIsMoreOpen(false)}
+            className="flex items-center gap-3 p-4 mb-4 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back to VoltScout</span>
+          </Link>
           
           <div className="space-y-6 overflow-y-auto pb-8">
             {['Core', 'Financial', 'Execution', 'Intelligence'].map((group) => (
