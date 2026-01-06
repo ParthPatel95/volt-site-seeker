@@ -40,7 +40,11 @@ export function VoltBuildOverviewRedesign({
   onUpdateProject
 }: VoltBuildOverviewRedesignProps) {
   const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [editedName, setEditedName] = useState(project.name);
+  const [editedLocation, setEditedLocation] = useState(project.location || '');
+  const [editedMW, setEditedMW] = useState(project.target_mw?.toString() || '');
+  const [editedCooling, setEditedCooling] = useState(project.cooling_type || '');
 
   const handleSaveName = () => {
     if (editedName.trim() && editedName !== project.name && onUpdateProject) {
@@ -49,9 +53,29 @@ export function VoltBuildOverviewRedesign({
     setIsEditingName(false);
   };
 
+  const handleSaveDetails = () => {
+    if (onUpdateProject) {
+      const updates: Partial<VoltBuildProject> = {};
+      if (editedLocation !== (project.location || '')) updates.location = editedLocation || null;
+      if (editedMW !== (project.target_mw?.toString() || '')) updates.target_mw = editedMW ? Number(editedMW) : null;
+      if (editedCooling !== (project.cooling_type || '')) updates.cooling_type = editedCooling || null;
+      if (Object.keys(updates).length > 0) {
+        onUpdateProject(updates);
+      }
+    }
+    setIsEditingDetails(false);
+  };
+
   const handleCancelEdit = () => {
     setEditedName(project.name);
     setIsEditingName(false);
+  };
+
+  const handleCancelDetails = () => {
+    setEditedLocation(project.location || '');
+    setEditedMW(project.target_mw?.toString() || '');
+    setEditedCooling(project.cooling_type || '');
+    setIsEditingDetails(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -59,6 +83,14 @@ export function VoltBuildOverviewRedesign({
       handleSaveName();
     } else if (e.key === 'Escape') {
       handleCancelEdit();
+    }
+  };
+
+  const handleDetailsKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveDetails();
+    } else if (e.key === 'Escape') {
+      handleCancelDetails();
     }
   };
   // Calculate metrics
@@ -192,9 +224,70 @@ export function VoltBuildOverviewRedesign({
             </>
           )}
         </div>
-        <p className="text-muted-foreground mt-1">
-          {project.location || 'No location'} • {project.target_mw || '--'}MW {project.cooling_type || 'Standard'}
-        </p>
+        <div className="flex items-center gap-2 group mt-1">
+          {isEditingDetails ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Input
+                value={editedLocation}
+                onChange={(e) => setEditedLocation(e.target.value)}
+                onKeyDown={handleDetailsKeyDown}
+                placeholder="Location"
+                className="h-8 w-32 text-sm"
+              />
+              <span className="text-muted-foreground">•</span>
+              <div className="flex items-center gap-1">
+                <Input
+                  value={editedMW}
+                  onChange={(e) => setEditedMW(e.target.value)}
+                  onKeyDown={handleDetailsKeyDown}
+                  placeholder="MW"
+                  type="number"
+                  className="h-8 w-20 text-sm"
+                />
+                <span className="text-muted-foreground text-sm">MW</span>
+              </div>
+              <Input
+                value={editedCooling}
+                onChange={(e) => setEditedCooling(e.target.value)}
+                onKeyDown={handleDetailsKeyDown}
+                placeholder="Cooling type"
+                className="h-8 w-28 text-sm"
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSaveDetails}
+                className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleCancelDetails}
+                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-muted-foreground">
+                {project.location || 'No location'} • {project.target_mw || '--'}MW {project.cooling_type || 'Standard'}
+              </p>
+              {onUpdateProject && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setIsEditingDetails(true)}
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </motion.div>
 
       {/* KPI Cards Grid */}
