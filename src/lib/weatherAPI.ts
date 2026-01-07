@@ -41,6 +41,33 @@ export interface WeatherData {
   visibility?: number | null; // Hourly only
 }
 
+export interface WeatherStatistics {
+  temperature: {
+    average: number | null;
+    min: number | null;
+    minDate: string | null;
+    max: number | null;
+    maxDate: string | null;
+  };
+  precipitation: {
+    total: number;
+    average: number;
+    daysWithPrecip: number;
+  };
+  wind: {
+    average: number | null;
+    max: number | null;
+    maxDate: string | null;
+  };
+  heatingDegreeDays: number;
+  coolingDegreeDays: number;
+  dataPoints: number;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+}
+
 export interface ClimateNormals {
   stationId: string;
   stationName: string;
@@ -544,6 +571,148 @@ export function calculateWeatherStatistics(weatherData: WeatherData[]) {
     } : null,
     totalObservations: weatherData.length
   };
+}
+
+/**
+ * Calculate detailed weather statistics with energy-relevant metrics
+ * 
+ * @param weatherData Array of weather observations
+ * @param baseTemp Base temperature for HDD/CDD calculation (default 18°C)
+ * @returns WeatherStatistics object
+ */
+export function calculateDetailedWeatherStatistics(
+  weatherData: WeatherData[],
+  baseTemp: number = 18
+): WeatherStatistics | null {
+  if (weatherData.length === 0) {
+    return null;
+  }
+
+  // Temperature statistics
+  const tempsWithDate = weatherData
+    .filter(d => d.temperature !== null)
+    .map(d => ({ temp: d.temperature!, date: d.date }));
+  
+  let tempStats = {
+    average: null as number | null,
+    min: null as number | null,
+    minDate: null as string | null,
+    max: null as number | null,
+    maxDate: null as string | null,
+  };
+
+  if (tempsWithDate.length > 0) {
+    const temps = tempsWithDate.map(t => t.temp);
+    const minTemp = Math.min(...temps);
+    const maxTemp = Math.max(...temps);
+    
+    tempStats = {
+      average: temps.reduce((sum, t) => sum + t, 0) / temps.length,
+      min: minTemp,
+      minDate: tempsWithDate.find(t => t.temp === minTemp)?.date || null,
+      max: maxTemp,
+      maxDate: tempsWithDate.find(t => t.temp === maxTemp)?.date || null,
+    };
+  }
+
+  // Precipitation statistics
+  const validPrecip = weatherData
+    .map(d => d.precipitation)
+    .filter((p): p is number => p !== null);
+
+  const precipStats = {
+    total: validPrecip.reduce((sum, p) => sum + p, 0),
+    average: validPrecip.length > 0 
+      ? validPrecip.reduce((sum, p) => sum + p, 0) / validPrecip.length 
+      : 0,
+    daysWithPrecip: validPrecip.filter(p => p > 0).length,
+  };
+
+  // Wind statistics
+  const windsWithDate = weatherData
+    .filter(d => d.windSpeed !== null)
+    .map(d => ({ speed: d.windSpeed!, date: d.date }));
+
+  let windStats = {
+    average: null as number | null,
+    max: null as number | null,
+    maxDate: null as string | null,
+  };
+
+  if (windsWithDate.length > 0) {
+    const speeds = windsWithDate.map(w => w.speed);
+    const maxSpeed = Math.max(...speeds);
+    
+    windStats = {
+      average: speeds.reduce((sum, s) => sum + s, 0) / speeds.length,
+      max: maxSpeed,
+      maxDate: windsWithDate.find(w => w.speed === maxSpeed)?.date || null,
+    };
+  }
+
+  // Heating and Cooling Degree Days
+  const hdd = calculateHeatingDegreeDays(weatherData, baseTemp);
+  const cdd = calculateCoolingDegreeDays(weatherData, baseTemp);
+
+  // Date range
+  const dates = weatherData.map(d => d.date).sort();
+
+  return {
+    temperature: tempStats,
+    precipitation: precipStats,
+    wind: windStats,
+    heatingDegreeDays: hdd,
+    coolingDegreeDays: cdd,
+    dataPoints: weatherData.length,
+    dateRange: {
+      start: dates[0],
+      end: dates[dates.length - 1],
+    },
+  };
+}
+
+/**
+ * Calculate Heating Degree Days (HDD)
+ * HDD measures how cold a period was - used for estimating heating fuel demand
+ * 
+ * @param weatherData Array of weather observations
+ * @param baseTemp Base temperature in °C (default 18°C / 65°F)
+ * @returns Total heating degree days
+ */
+export function calculateHeatingDegreeDays(
+  weatherData: WeatherData[],
+  baseTemp: number = 18
+): number {
+  return weatherData.reduce((total, day) => {
+    const temp = day.temperature;
+    if (temp === null) return total;
+    
+    // HDD = base temp - actual temp (when actual < base)
+    const hdd = temp < baseTemp ? baseTemp - temp : 0;
+    return total + hdd;
+  }, 0);
+}
+
+/**
+ * Calculate Cooling Degree Days (CDD)
+ * CDD measures how warm a period was - used for estimating cooling energy demand
+ * 
+ * @param weatherData Array of weather observations
+ * @param baseTemp Base temperature in °C (default 18°C / 65°F)
+ * @returns Total cooling degree days
+ */
+export function calculateCoolingDegreeDays(
+  weatherData: WeatherData[],
+  baseTemp: number = 18
+): number {
+  return weatherData.reduce((total, day) => {
+    const temp = day.temperature;
+    if (temp === null) return total;
+    
+    // CDD = actual temp - base temp (when actual > base)
+    const cdd = temp > baseTemp ? temp - baseTemp : 0;
+    return total + cdd;
+  }, 0);
 }
 
 /**
