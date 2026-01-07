@@ -1456,9 +1456,9 @@ export function AESOHistoricalPricing() {
             <CreditSummaryCard summary={creditSummary} unit="mwh" />
           )}
 
-          {/* Negative Price Stats - Show when negative prices exist */}
-          {negativePriceStats && negativePriceStats.negativeHours > 0 && (
-            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} />
+          {/* Negative Price Stats - Always show */}
+          {negativePriceStats && (
+            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} totalHours={currentRawData.length} />
           )}
 
           {/* Statistics Cards - Dynamic based on period */}
@@ -1859,9 +1859,9 @@ export function AESOHistoricalPricing() {
             </Card>
           </div>
 
-          {/* Negative Price Stats - Show when negative prices exist */}
-          {negativePriceStats && negativePriceStats.negativeHours > 0 && (
-            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} />
+          {/* Negative Price Stats - Always show */}
+          {negativePriceStats && (
+            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} totalHours={currentRawData.length} />
           )}
 
           <Card>
