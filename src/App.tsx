@@ -27,6 +27,7 @@ import MiningEconomicsEducation from "./pages/MiningEconomicsEducation";
 import OperationsEducation from "./pages/OperationsEducation";
 import StrategicOperationsMasterclass from "./pages/StrategicOperationsMasterclass";
 import TaxesInsuranceEducation from "./pages/TaxesInsuranceEducation";
+import EngineeringPermittingEducation from "./pages/EngineeringPermittingEducation";
 import Academy from "./pages/Academy";
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/operations" element={<OperationsEducation />} />
             <Route path="/strategic-operations" element={<StrategicOperationsMasterclass />} />
             <Route path="/taxes-insurance" element={<TaxesInsuranceEducation />} />
+            <Route path="/engineering-permitting" element={<EngineeringPermittingEducation />} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}

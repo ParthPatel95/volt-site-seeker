@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
@@ -251,6 +251,27 @@ const curriculum: Module[] = [
       { title: "Property Insurance", anchor: "property-insurance" },
       { title: "Liability Insurance", anchor: "liability-insurance" },
       { title: "45MW Case Study", anchor: "case-study" },
+    ],
+  },
+  {
+    id: "engineering-permitting",
+    title: "Engineering & Permitting Masterclass",
+    description: "Navigate Alberta's regulatory framework for Bitcoin mining facilities. Using our real 45MW Lamont County site with actual permits and requirements.",
+    icon: HardHat,
+    route: "/engineering-permitting",
+    category: "masterclass",
+    difficulty: "Advanced",
+    lessons: [
+      { title: "Introduction", anchor: "intro" },
+      { title: "Regulatory Landscape", anchor: "regulatory" },
+      { title: "Municipal Permits", anchor: "municipal" },
+      { title: "Safety Codes", anchor: "safety-codes" },
+      { title: "AESO Connection", anchor: "aeso" },
+      { title: "AUC Approval", anchor: "auc" },
+      { title: "Electrical Engineering", anchor: "electrical" },
+      { title: "Environmental Compliance", anchor: "environmental" },
+      { title: "Site Engineering", anchor: "site" },
+      { title: "Timeline & Costs", anchor: "timeline" },
     ],
   },
 ];
