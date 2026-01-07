@@ -1859,6 +1859,11 @@ export function AESOHistoricalPricing() {
             </Card>
           </div>
 
+          {/* Negative Price Stats - Show when negative prices exist */}
+          {negativePriceStats && negativePriceStats.negativeHours > 0 && (
+            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} />
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
