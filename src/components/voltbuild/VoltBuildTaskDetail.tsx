@@ -121,7 +121,7 @@ export function VoltBuildTaskDetail({
   const assignedUser = platformUsers.find(u => u.id === task.assigned_user_id);
 
   return (
-    <Card className="flex flex-col max-h-full">
+    <Card className="w-full min-w-0 flex flex-col max-h-full">
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -294,7 +294,7 @@ export function VoltBuildTaskDetail({
                 rows={3}
               />
             ) : (
-              <p className="text-sm text-foreground">
+              <p className="text-sm text-foreground break-words">
                 {task.description || 'No description provided'}
               </p>
             )}
@@ -415,10 +415,10 @@ export function VoltBuildTaskDetail({
                 documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 group"
+                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 group min-w-0"
                   >
                     <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-sm flex-1 truncate">
+                    <span className="text-sm flex-1 min-w-0 truncate" title={doc.file_name}>
                       {doc.file_name}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -480,7 +480,7 @@ export function VoltBuildTaskDetail({
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="pl-7">{comment.content}</p>
+                    <p className="pl-7 break-words whitespace-pre-wrap">{comment.content}</p>
                     <Button
                       size="icon"
                       variant="ghost"
