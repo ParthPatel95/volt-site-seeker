@@ -57,8 +57,6 @@ import { TwelveCPAnalyticsTab } from './TwelveCPAnalyticsTab';
 import { useEnergyCredits, CreditSettings, defaultCreditSettings } from '@/hooks/useEnergyCredits';
 import { CreditSettingsPanel } from './CreditSettingsPanel';
 import { CreditSummaryCard } from './CreditSummaryCard';
-import { NegativePriceStats } from './NegativePriceStats';
-import { calculateNegativePriceStats } from '@/utils/aggregations';
 
 const OVERVIEW_CREDIT_SETTINGS_KEY = 'aeso-overview-credit-settings';
 
@@ -125,18 +123,6 @@ export function AESOHistoricalPricing() {
   // Apply energy credits to current data
   const { adjustedData, creditSummary } = useEnergyCredits(currentRawData, creditSettings);
 
-  // Calculate negative price statistics
-  const negativePriceStats = useMemo(() => {
-    if (!currentRawData || currentRawData.length === 0) return null;
-    // Transform to HourlyDataPoint format expected by the aggregation function
-    const hourlyData = currentRawData.map((d: any) => ({
-      ts: d.datetime || d.date,
-      price: d.price,
-      generation: d.generation || 0,
-      ail: d.ail || 0
-    }));
-    return calculateNegativePriceStats(hourlyData);
-  }, [currentRawData]);
 
   useEffect(() => {
     fetchDailyData();
@@ -1456,10 +1442,6 @@ export function AESOHistoricalPricing() {
             <CreditSummaryCard summary={creditSummary} unit="mwh" />
           )}
 
-          {/* Negative Price Stats - Always show */}
-          {negativePriceStats && (
-            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} totalHours={currentRawData.length} />
-          )}
 
           {/* Statistics Cards - Dynamic based on period */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1859,10 +1841,6 @@ export function AESOHistoricalPricing() {
             </Card>
           </div>
 
-          {/* Negative Price Stats - Always show */}
-          {negativePriceStats && (
-            <NegativePriceStats stats={negativePriceStats} formatCurrency={formatCurrency} totalHours={currentRawData.length} />
-          )}
 
           <Card>
             <CardHeader>
