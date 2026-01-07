@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { CloudRain, Thermometer, Wind, Snowflake, MapPin, Calendar, Download, FileText, Flame, Zap, TrendingUp, TrendingDown } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush, Area, AreaChart } from 'recharts';
+import { CloudRain, Thermometer, Wind, Snowflake, MapPin, Calendar, Download, FileText, Flame, Zap, TrendingUp, TrendingDown, Languages } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,9 +22,12 @@ import {
   type WeatherStation 
 } from '@/lib/weatherAPI';
 import { WeatherReportPDF } from './WeatherReportPDF';
+import { SupportedLanguage, languageNames } from '@/lib/weatherTranslations';
 import html2pdf from 'html2pdf.js';
 
 interface WeatherAnalysisProps {}
+
+type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly';
 
 export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const { toast } = useToast();
@@ -49,6 +52,8 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const [aggregatedData, setAggregatedData] = useState<any[]>([]);
   const [comparisonPeriod, setComparisonPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
   const [currentPage, setCurrentPage] = useState(1);
+  const [chartResolution, setChartResolution] = useState<ChartResolution>('auto');
+  const [pdfLanguage, setPdfLanguage] = useState<SupportedLanguage>('en');
   const pageSize = 50;
   
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -58,6 +63,97 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
     if (weatherData.length === 0) return null;
     return calculateDetailedWeatherStatistics(weatherData);
   }, [weatherData]);
+
+  // Smart chart data aggregation for readability
+  const chartData = useMemo(() => {
+    if (weatherData.length === 0) return [];
+    
+    const dataLength = weatherData.length;
+    let resolution = chartResolution;
+    
+    // Auto-select resolution based on data length
+    if (resolution === 'auto') {
+      if (dataLength > 365) resolution = 'monthly';
+      else if (dataLength > 90) resolution = 'weekly';
+      else resolution = 'daily';
+    }
+    
+    if (resolution === 'daily' || dataLength <= 60) {
+      return weatherData.map(d => ({
+        ...d,
+        displayDate: d.date,
+      }));
+    }
+    
+    // Aggregate data for better chart readability
+    const grouped = new Map<string, {
+      temps: number[];
+      maxTemps: number[];
+      minTemps: number[];
+      precips: number[];
+      winds: number[];
+      snows: number[];
+      dates: string[];
+    }>();
+    
+    weatherData.forEach(d => {
+      const date = new Date(d.date);
+      let key: string;
+      
+      if (resolution === 'monthly') {
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+      } else {
+        // Weekly
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - date.getDay());
+        key = startOfWeek.toISOString().split('T')[0];
+      }
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, { temps: [], maxTemps: [], minTemps: [], precips: [], winds: [], snows: [], dates: [] });
+      }
+      
+      const group = grouped.get(key)!;
+      if (d.temperature !== null) group.temps.push(d.temperature);
+      if (d.maxTemperature !== null) group.maxTemps.push(d.maxTemperature);
+      if (d.minTemperature !== null) group.minTemps.push(d.minTemperature);
+      if (d.precipitation !== null) group.precips.push(d.precipitation);
+      if (d.windSpeed !== null) group.winds.push(d.windSpeed);
+      if (d.snowOnGround !== null) group.snows.push(d.snowOnGround);
+      group.dates.push(d.date);
+    });
+    
+    return Array.from(grouped.entries()).map(([key, group]) => {
+      const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+      const sum = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) : null;
+      const max = (arr: number[]) => arr.length > 0 ? Math.max(...arr) : null;
+      const min = (arr: number[]) => arr.length > 0 ? Math.min(...arr) : null;
+      
+      return {
+        date: key,
+        displayDate: key,
+        temperature: avg(group.temps),
+        maxTemperature: max(group.maxTemps),
+        minTemperature: min(group.minTemps),
+        precipitation: sum(group.precips),
+        rain: null,
+        snow: null,
+        snowOnGround: avg(group.snows),
+        windSpeed: avg(group.winds),
+        windDirection: null,
+        dataPoints: group.dates.length,
+      };
+    }).sort((a, b) => a.date.localeCompare(b.date));
+  }, [weatherData, chartResolution]);
+
+  // Calculate optimal X-axis interval
+  const xAxisInterval = useMemo(() => {
+    const dataLength = chartData.length;
+    if (dataLength <= 10) return 0;
+    if (dataLength <= 30) return Math.floor(dataLength / 10);
+    if (dataLength <= 60) return Math.floor(dataLength / 12);
+    return Math.floor(dataLength / 8);
+  }, [chartData]);
 
   const handleCoordinateInput = (value: string) => {
     setLocationName(value);
@@ -138,18 +234,19 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
     setExportingPDF(true);
     try {
       const opt = {
-        margin: [10, 10],
-        filename: `weather-report-${locationName || 'analysis'}-${startDate}-${endDate}.pdf`,
+        margin: [5, 5],
+        filename: `weather-report-${locationName || 'analysis'}-${startDate}-${endDate}-${pdfLanguage}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
       
       await html2pdf().set(opt).from(pdfRef.current).save();
       
       toast({
         title: "PDF Exported",
-        description: "Weather report has been downloaded.",
+        description: `Weather report exported in ${languageNames[pdfLanguage]}.`,
       });
     } catch (error) {
       console.error('PDF export error:', error);
@@ -227,10 +324,21 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const totalPages = Math.ceil(weatherData.length / pageSize);
   const paginatedData = weatherData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Get current resolution label
+  const getResolutionLabel = () => {
+    if (chartResolution === 'auto') {
+      const dataLength = weatherData.length;
+      if (dataLength > 365) return 'Monthly (auto)';
+      if (dataLength > 90) return 'Weekly (auto)';
+      return 'Daily (auto)';
+    }
+    return chartResolution.charAt(0).toUpperCase() + chartResolution.slice(1);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <CloudRain className="w-5 h-5 text-blue-600" />
@@ -241,20 +349,33 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
           </p>
         </div>
         {weatherData.length > 0 && statistics && station && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <Button variant="outline" size="sm" onClick={exportToCSV}>
               <Download className="w-4 h-4 mr-2" />
               Export CSV
             </Button>
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={exportToPDF}
-              disabled={exportingPDF}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {exportingPDF ? 'Generating...' : 'Export PDF Report'}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Select value={pdfLanguage} onValueChange={(v: SupportedLanguage) => setPdfLanguage(v)}>
+                <SelectTrigger className="w-[120px] h-8">
+                  <Languages className="w-3 h-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(languageNames).map(([code, name]) => (
+                    <SelectItem key={code} value={code}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={exportToPDF}
+                disabled={exportingPDF}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                {exportingPDF ? 'Generating...' : 'Export PDF'}
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -562,6 +683,27 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
         </Card>
       )}
 
+      {/* Chart Resolution Control */}
+      {weatherData.length > 0 && (
+        <div className="flex items-center gap-4">
+          <Label className="text-sm font-medium">Chart Resolution:</Label>
+          <Select value={chartResolution} onValueChange={(v: ChartResolution) => setChartResolution(v)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select resolution" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto ({getResolutionLabel().replace(' (auto)', '')})</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly Average</SelectItem>
+              <SelectItem value="monthly">Monthly Average</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">
+            {chartData.length} data points shown
+          </span>
+        </div>
+      )}
+
       {/* Charts */}
       {weatherData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -574,34 +716,59 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={weatherData}>
-                  <CartesianGrid strokeDasharray="3 3" />
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    interval={xAxisInterval}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                   />
-                  <YAxis unit="°C" />
+                  <YAxis 
+                    unit="°C" 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    width={50}
+                  />
                   <Tooltip 
-                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                    formatter={(value: number) => [`${value?.toFixed(1)}°C`]}
+                    labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    formatter={(value: number, name: string) => [
+                      `${value?.toFixed(1)}°C`, 
+                      name === 'temperature' ? 'Avg Temp' : name === 'maxTemperature' ? 'Max' : 'Min'
+                    ]}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
                   />
-                  <Legend />
-                  <Line 
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                  <Area 
                     type="monotone" 
                     dataKey="temperature" 
                     stroke="hsl(var(--destructive))" 
-                    strokeWidth={2}
-                    name="Temperature"
-                    dot={false}
+                    strokeWidth={2.5}
+                    fill="url(#tempGradient)"
+                    name="Avg Temp"
+                    dot={chartData.length < 60}
+                    activeDot={{ r: 6, strokeWidth: 2 }}
                   />
-                  {granularity === 'daily' && weatherData[0]?.maxTemperature !== undefined && (
+                  {granularity === 'daily' && chartData[0]?.maxTemperature !== undefined && (
                     <>
                       <Line 
                         type="monotone" 
                         dataKey="maxTemperature" 
-                        stroke="#dc2626" 
-                        strokeWidth={1}
+                        stroke="#ef4444" 
+                        strokeWidth={1.5}
                         strokeDasharray="5 5"
                         name="Max"
                         dot={false}
@@ -609,15 +776,23 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
                       <Line 
                         type="monotone" 
                         dataKey="minTemperature" 
-                        stroke="#2563eb" 
-                        strokeWidth={1}
+                        stroke="#3b82f6" 
+                        strokeWidth={1.5}
                         strokeDasharray="5 5"
                         name="Min"
                         dot={false}
                       />
                     </>
                   )}
-                </LineChart>
+                  {chartData.length > 30 && (
+                    <Brush 
+                      dataKey="date" 
+                      height={25} 
+                      stroke="hsl(var(--primary))"
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short' })}
+                    />
+                  )}
+                </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -631,25 +806,41 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={weatherData}>
-                  <CartesianGrid strokeDasharray="3 3" />
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    interval={xAxisInterval}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                   />
-                  <YAxis unit="mm" />
+                  <YAxis 
+                    unit="mm" 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    width={50}
+                  />
                   <Tooltip 
-                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                    formatter={(value: number) => [`${value?.toFixed(1)}mm`]}
+                    labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    formatter={(value: number, name: string) => [`${value?.toFixed(1)}mm`, name === 'precipitation' ? 'Total' : name]}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
                   />
-                  <Legend />
-                  <Bar dataKey="precipitation" fill="#3b82f6" name="Total" />
-                  {granularity === 'daily' && (
-                    <>
-                      <Bar dataKey="rain" fill="#06b6d4" name="Rain" />
-                      <Bar dataKey="snow" fill="#94a3b8" name="Snow" />
-                    </>
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                  <Bar dataKey="precipitation" fill="#3b82f6" name="Total" radius={[2, 2, 0, 0]} />
+                  {chartData.length > 30 && (
+                    <Brush 
+                      dataKey="date" 
+                      height={25} 
+                      stroke="hsl(var(--primary))"
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short' })}
+                    />
                   )}
                 </BarChart>
               </ResponsiveContainer>
@@ -665,28 +856,58 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={weatherData}>
-                  <CartesianGrid strokeDasharray="3 3" />
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="windGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="date" 
                     tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    interval={xAxisInterval}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                   />
-                  <YAxis unit="km/h" />
+                  <YAxis 
+                    unit="km/h" 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    width={55}
+                  />
                   <Tooltip 
-                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                    formatter={(value: number) => [`${value?.toFixed(1)}km/h`]}
+                    labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    formatter={(value: number) => [`${value?.toFixed(1)}km/h`, 'Wind Speed']}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
                   />
-                  <Legend />
-                  <Line 
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                  <Area 
                     type="monotone" 
                     dataKey="windSpeed" 
                     stroke="#10b981" 
-                    strokeWidth={2}
+                    strokeWidth={2.5}
+                    fill="url(#windGradient)"
                     name="Wind Speed"
-                    dot={false}
+                    dot={chartData.length < 60}
+                    activeDot={{ r: 6, strokeWidth: 2 }}
                   />
-                </LineChart>
+                  {chartData.length > 30 && (
+                    <Brush 
+                      dataKey="date" 
+                      height={25} 
+                      stroke="hsl(var(--primary))"
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short' })}
+                    />
+                  )}
+                </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -701,20 +922,42 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={weatherData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="date" 
                       tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      interval={xAxisInterval}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                      tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                     />
-                    <YAxis unit="cm" />
+                    <YAxis 
+                      unit="cm" 
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      width={50}
+                    />
                     <Tooltip 
-                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                      formatter={(value: number) => [`${value}cm`]}
+                      labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      formatter={(value: number) => [`${value}cm`, 'Snow Depth']}
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
                     />
-                    <Legend />
-                    <Bar dataKey="snowOnGround" fill="#06b6d4" name="Snow Depth" />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Bar dataKey="snowOnGround" fill="#06b6d4" name="Snow Depth" radius={[2, 2, 0, 0]} />
+                    {chartData.length > 30 && (
+                      <Brush 
+                        dataKey="date" 
+                        height={25} 
+                        stroke="hsl(var(--primary))"
+                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short' })}
+                      />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -872,9 +1115,12 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
             startDate={startDate}
             endDate={endDate}
             locationName={locationName}
+            language={pdfLanguage}
           />
         </div>
       )}
     </div>
   );
 };
+
+export default WeatherAnalysis;
