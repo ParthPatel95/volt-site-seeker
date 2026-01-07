@@ -30,28 +30,9 @@ interface Webhook {
 
 export function DataAPIPanel() {
   const { toast } = useToast();
-  const [apiKeys, setApiKeys] = useState<APIKey[]>([
-    {
-      id: '1',
-      name: 'Production API',
-      key: 'aeso_live_' + Math.random().toString(36).substr(2, 24),
-      created: new Date(),
-      lastUsed: new Date(),
-      permissions: ['read'],
-      enabled: true
-    }
-  ]);
+  const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
 
-  const [webhooks, setWebhooks] = useState<Webhook[]>([
-    {
-      id: '1',
-      name: 'Price Alert Webhook',
-      url: 'https://api.example.com/webhooks/price-alert',
-      events: ['price.spike', 'price.drop'],
-      enabled: true,
-      lastTriggered: new Date()
-    }
-  ]);
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
 
   const [showKey, setShowKey] = useState<{ [key: string]: boolean }>({});
   const [newKeyName, setNewKeyName] = useState('');
@@ -179,77 +160,88 @@ export function DataAPIPanel() {
 
         {/* Existing Keys */}
         <div className="space-y-3">
-          {apiKeys.map((apiKey) => (
-            <Card key={apiKey.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {apiKey.name}
-                      <Badge variant={apiKey.enabled ? "default" : "secondary"}>
-                        {apiKey.enabled ? "Active" : "Disabled"}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Created {apiKey.created.toLocaleDateString()}
-                    </CardDescription>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => revokeKey(apiKey.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-xs">API Key</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={showKey[apiKey.id] ? apiKey.key : '••••••••••••••••••••••••'}
-                      readOnly
-                      className="font-mono text-sm"
-                    />
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => setShowKey({ ...showKey, [apiKey.id]: !showKey[apiKey.id] })}
-                    >
-                      {showKey[apiKey.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => copyToClipboard(apiKey.key)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Permissions:</span>
-                    <div className="flex gap-1 mt-1">
-                      {apiKey.permissions.map(perm => (
-                        <Badge key={perm} variant="outline" className="text-xs">
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  {apiKey.lastUsed && (
-                    <div>
-                      <span className="text-muted-foreground">Last Used:</span>
-                      <div className="mt-1">{apiKey.lastUsed.toLocaleDateString()}</div>
-                    </div>
-                  )}
-                </div>
+          {apiKeys.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <Key className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  No API keys created yet. Generate your first key to enable programmatic access.
+                </p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            apiKeys.map((apiKey) => (
+              <Card key={apiKey.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        {apiKey.name}
+                        <Badge variant={apiKey.enabled ? "default" : "secondary"}>
+                          {apiKey.enabled ? "Active" : "Disabled"}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Created {apiKey.created.toLocaleDateString()}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => revokeKey(apiKey.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">API Key</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={showKey[apiKey.id] ? apiKey.key : '••••••••••••••••••••••••'}
+                        readOnly
+                        className="font-mono text-sm"
+                      />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setShowKey({ ...showKey, [apiKey.id]: !showKey[apiKey.id] })}
+                      >
+                        {showKey[apiKey.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => copyToClipboard(apiKey.key)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Permissions:</span>
+                      <div className="flex gap-1 mt-1">
+                        {apiKey.permissions.map(perm => (
+                          <Badge key={perm} variant="outline" className="text-xs">
+                            {perm}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    {apiKey.lastUsed && (
+                      <div>
+                        <span className="text-muted-foreground">Last Used:</span>
+                        <div className="mt-1">{apiKey.lastUsed.toLocaleDateString()}</div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </TabsContent>
 
@@ -294,48 +286,59 @@ export function DataAPIPanel() {
 
         {/* Existing Webhooks */}
         <div className="space-y-3">
-          {webhooks.map((webhook) => (
-            <Card key={webhook.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {webhook.name}
-                      <Badge variant={webhook.enabled ? "default" : "secondary"}>
-                        {webhook.enabled ? "Active" : "Disabled"}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription className="text-xs font-mono">
-                      {webhook.url}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-1">
-                    <Switch defaultChecked={webhook.enabled} />
-                    <Button size="icon" variant="ghost">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label className="text-xs">Subscribed Events</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {['price.spike', 'price.drop', 'demand.high', 'demand.low'].map(event => (
-                      <Badge key={event} variant="outline" className="text-xs">
-                        {event}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                {webhook.lastTriggered && (
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Last triggered: {webhook.lastTriggered.toLocaleString()}
-                  </div>
-                )}
+          {webhooks.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <Webhook className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  No webhooks configured yet. Add a webhook to receive real-time notifications.
+                </p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            webhooks.map((webhook) => (
+              <Card key={webhook.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        {webhook.name}
+                        <Badge variant={webhook.enabled ? "default" : "secondary"}>
+                          {webhook.enabled ? "Active" : "Disabled"}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="text-xs font-mono">
+                        {webhook.url}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-1">
+                      <Switch defaultChecked={webhook.enabled} />
+                      <Button size="icon" variant="ghost">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Subscribed Events</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {['price.spike', 'price.drop', 'demand.high', 'demand.low'].map(event => (
+                        <Badge key={event} variant="outline" className="text-xs">
+                          {event}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  {webhook.lastTriggered && (
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      Last triggered: {webhook.lastTriggered.toLocaleString()}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </TabsContent>
 
