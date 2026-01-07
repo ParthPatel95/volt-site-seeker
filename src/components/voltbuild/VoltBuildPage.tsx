@@ -626,7 +626,7 @@ export function VoltBuildPage() {
           if (!open) setSelectedTaskId(null);
         }}
       >
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-0">
           {selectedTask && selectedProjectId && (
             <VoltBuildTaskDetail
               task={selectedTask}
