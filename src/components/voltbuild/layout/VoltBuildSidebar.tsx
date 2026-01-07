@@ -25,7 +25,11 @@ import {
   CheckSquare,
   TrendingUp,
   Plug,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare,
+  ListChecks,
+  HardHat,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from './VoltBuildNavItem';
@@ -57,7 +61,11 @@ export type VoltBuildView =
   | 'verification'
   | 'forecasting'
   | 'utilitymonitor'
-  | 'safety';
+  | 'safety'
+  | 'rfis'
+  | 'punchlist'
+  | 'subcontractors'
+  | 'labor';
 
 interface NavGroup {
   label: string;
@@ -92,7 +100,9 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'leadtime', label: 'Lead Times', icon: Clock },
       { id: 'changeorders', label: 'Change Orders', icon: FileEdit },
+      { id: 'rfis', label: 'RFIs', icon: MessageSquare },
       { id: 'quality', label: 'Quality', icon: ClipboardCheck },
+      { id: 'punchlist', label: 'Punch List', icon: ListChecks },
     ]
   },
   {
@@ -101,6 +111,8 @@ const navGroups: NavGroup[] = [
       { id: 'dailylogs', label: 'Daily Logs', icon: CalendarDays },
       { id: 'fieldcheckins', label: 'Check-Ins', icon: UserCheck },
       { id: 'verification', label: 'Verification', icon: CheckSquare },
+      { id: 'labor', label: 'Labor Tracking', icon: HardHat },
+      { id: 'subcontractors', label: 'Subcontractors', icon: Building2 },
     ]
   },
   {
