@@ -9,7 +9,7 @@ import { useVoltBuildAccess } from '@/hooks/useVoltBuildAccess';
 import { VoltBuildLayout, VoltBuildView } from './layout/VoltBuildLayout';
 import { VoltBuildOverviewRedesign } from './overview/VoltBuildOverviewRedesign';
 import { VoltBuildHeader } from './VoltBuildHeader';
-import { VoltBuildPhaseList } from './VoltBuildPhaseList';
+import { VoltBuildKanbanBoard } from './kanban/VoltBuildKanbanBoard';
 import { VoltBuildTaskDetail } from './VoltBuildTaskDetail';
 import { VoltBuildProgress, VoltBuildPhaseProgress } from './VoltBuildProgress';
 import { VoltBuildTimeline } from './VoltBuildTimeline';
@@ -420,17 +420,16 @@ export function VoltBuildPage() {
           <div className="p-4 sm:p-6">
             <h1 className="text-2xl font-bold text-foreground mb-6">Tasks</h1>
             <div className="grid gap-6 lg:grid-cols-5">
-              {/* Phase & Task List */}
+              {/* Kanban Board */}
               <div className="lg:col-span-3">
                 {phasesLoading || tasksLoading ? (
                   <div className="flex items-center justify-center h-64">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <VoltBuildPhaseList
+                  <VoltBuildKanbanBoard
+                    tasks={allTasks}
                     phases={phases}
-                    tasks={tasksByPhase}
-                    risks={risks}
                     selectedTaskId={selectedTaskId}
                     onTaskSelect={handleTaskSelect}
                     onTaskStatusChange={handleTaskStatusChange}
@@ -440,8 +439,6 @@ export function VoltBuildPage() {
                         setNewTaskPhase({ id: phaseId, name: phase.name });
                       }
                     }}
-                    expandedPhases={expandedPhases}
-                    onExpandedChange={setExpandedPhases}
                   />
                 )}
               </div>
