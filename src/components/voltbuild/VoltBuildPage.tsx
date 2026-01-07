@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Loader2, Lock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,7 +52,7 @@ export function VoltBuildPage() {
   const [newTaskPhase, setNewTaskPhase] = useState<{ id: string; name: string } | null>(null);
   const [currentView, setCurrentView] = useState<VoltBuildView>('overview');
   const [isMobile, setIsMobile] = useState(false);
-  const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
+  
   const [isNewRiskOpen, setIsNewRiskOpen] = useState(false);
 
   // Data hooks
@@ -274,7 +274,6 @@ export function VoltBuildPage() {
       updatedTasks[phaseId] = updatedTasks[phaseId]?.filter(t => t.id !== selectedTaskId) || [];
       setTasksByPhase(updatedTasks);
       setSelectedTaskId(null);
-      setIsTaskSheetOpen(false);
 
       await updatePhaseProgress(phaseId);
       toast.success('Task deleted');
@@ -331,9 +330,6 @@ export function VoltBuildPage() {
   // Handle task selection
   const handleTaskSelect = (taskId: string) => {
     setSelectedTaskId(taskId);
-    if (isMobile) {
-      setIsTaskSheetOpen(true);
-    }
   };
 
   // Handle add task from overview
@@ -419,51 +415,25 @@ export function VoltBuildPage() {
         return (
           <div className="p-4 sm:p-6">
             <h1 className="text-2xl font-bold text-foreground mb-6">Tasks</h1>
-            <div className="grid gap-6 lg:grid-cols-5">
-              {/* Kanban Board */}
-              <div className="lg:col-span-3">
-                {phasesLoading || tasksLoading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <VoltBuildKanbanBoard
-                    tasks={allTasks}
-                    phases={phases}
-                    selectedTaskId={selectedTaskId}
-                    onTaskSelect={handleTaskSelect}
-                    onTaskStatusChange={handleTaskStatusChange}
-                    onAddTask={(phaseId) => {
-                      const phase = phases.find(p => p.id === phaseId);
-                      if (phase) {
-                        setNewTaskPhase({ id: phaseId, name: phase.name });
-                      }
-                    }}
-                  />
-                )}
+            {phasesLoading || tasksLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-
-              {/* Task Detail Panel (Desktop) */}
-              <div className="hidden lg:block lg:col-span-2">
-                {selectedTask && selectedProjectId ? (
-                  <VoltBuildTaskDetail
-                    task={selectedTask}
-                    projectId={selectedProjectId}
-                    onUpdate={handleTaskUpdate}
-                    onDelete={handleTaskDelete}
-                    onClose={() => setSelectedTaskId(null)}
-                  />
-                ) : (
-                  <Card className="h-64">
-                    <CardContent className="flex items-center justify-center h-full">
-                      <p className="text-muted-foreground">
-                        Select a task to view details
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
+            ) : (
+              <VoltBuildKanbanBoard
+                tasks={allTasks}
+                phases={phases}
+                selectedTaskId={selectedTaskId}
+                onTaskSelect={handleTaskSelect}
+                onTaskStatusChange={handleTaskStatusChange}
+                onAddTask={(phaseId) => {
+                  const phase = phases.find(p => p.id === phaseId);
+                  if (phase) {
+                    setNewTaskPhase({ id: phaseId, name: phase.name });
+                  }
+                }}
+              />
+            )}
           </div>
         );
 
@@ -649,28 +619,25 @@ export function VoltBuildPage() {
         />
       )}
 
-      {/* Task Detail Sheet (Mobile) */}
-      <Sheet open={isTaskSheetOpen && isMobile} onOpenChange={setIsTaskSheetOpen}>
-        <SheetContent side="bottom" className="h-[80vh]">
-          <SheetHeader>
-            <SheetTitle>Task Details</SheetTitle>
-          </SheetHeader>
+      {/* Task Detail Dialog */}
+      <Dialog 
+        open={!!selectedTaskId && currentView === 'tasks'} 
+        onOpenChange={(open) => {
+          if (!open) setSelectedTaskId(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           {selectedTask && selectedProjectId && (
-            <div className="mt-4">
-              <VoltBuildTaskDetail
-                task={selectedTask}
-                projectId={selectedProjectId}
-                onUpdate={handleTaskUpdate}
-                onDelete={handleTaskDelete}
-                onClose={() => {
-                  setIsTaskSheetOpen(false);
-                  setSelectedTaskId(null);
-                }}
-              />
-            </div>
+            <VoltBuildTaskDetail
+              task={selectedTask}
+              projectId={selectedProjectId}
+              onUpdate={handleTaskUpdate}
+              onDelete={handleTaskDelete}
+              onClose={() => setSelectedTaskId(null)}
+            />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
