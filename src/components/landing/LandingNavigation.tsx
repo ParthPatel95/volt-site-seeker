@@ -67,7 +67,7 @@ export const LandingNavigation = () => {
           variant="outline" 
           size="sm"
           onClick={() => window.open('https://www.gridbazaar.com', '_blank')}
-          className="border-none hover:bg-secondary/90 bg-secondary text-secondary-foreground text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target font-semibold hidden sm:flex"
+          className="border border-border hover:bg-muted bg-card text-foreground text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 touch-target font-semibold hidden sm:flex"
         >
           GridBazaar
         </Button>
@@ -204,7 +204,7 @@ export const LandingNavigation = () => {
                 </Button>
                 <Button 
                   onClick={() => handleExternalLink('https://www.gridbazaar.com')}
-                  className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold"
+                  className="w-full border border-border bg-card hover:bg-muted text-foreground font-semibold"
                 >
                   GridBazaar
                 </Button>
