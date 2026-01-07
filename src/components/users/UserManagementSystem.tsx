@@ -82,11 +82,13 @@ const FEATURE_PERMISSIONS: Permission[] = [
   { id: 'feature.energy-dashboards', name: 'Energy Dashboards', description: 'Access to Energy Dashboards', category: 'Features' },
   { id: 'feature.ercot-market-hub', name: 'ERCOT Market Hub', description: 'Access to ERCOT Market Hub', category: 'Features' },
   { id: 'feature.energy-rates', name: 'Energy Rates', description: 'Access to Energy Rates', category: 'Features' },
+  { id: 'feature.intelligence-hub', name: 'Intelligence Hub', description: 'Access to Intelligence Hub', category: 'Features' },
   { id: 'feature.industry-intelligence', name: 'Industry Intelligence', description: 'Access to Industry Intelligence', category: 'Features' },
   { id: 'feature.corporate-intelligence', name: 'Corporate Intelligence', description: 'Access to Corporate Intelligence', category: 'Features' },
   { id: 'feature.idle-industry-scanner', name: 'Idle Industry Scanner', description: 'Access to Idle Industry Scanner', category: 'Features' },
   { id: 'feature.power-infrastructure', name: 'Power Infrastructure', description: 'Access to Power Infrastructure', category: 'Features' },
   { id: 'feature.btc-roi-lab', name: 'BTC Mining ROI Lab', description: 'Access to BTC Mining ROI Lab', category: 'Features' },
+  { id: 'feature.build-management', name: 'Build Management', description: 'Access to Build Management', category: 'Operations' },
   { id: 'feature.secure-share', name: 'Secure Share', description: 'Access to Secure Share', category: 'Features' },
   { id: 'feature.user-management', name: 'User Management', description: 'Access to User Management (Admin Only)', category: 'Features' }
 ];
