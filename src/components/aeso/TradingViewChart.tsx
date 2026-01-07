@@ -584,11 +584,11 @@ export function TradingViewChart({
     
     const forecastCandles = generateForecastCandles(futurePredictions, lastActualPrice, intervalHours);
     
-    // Add estimated volume to forecast candles (based on recent average)
-    const forecastWithVolume = forecastCandles.map(c => ({
+    // Add estimated volume to forecast candles (use last known volume for consistency)
+    const forecastWithVolume = forecastCandles.map((c, index) => ({
       ...c,
-      volume: Math.round(lastVolume * (0.95 + Math.random() * 0.1)), // Slight variation
-      ail_mw: Math.round(lastVolume * (0.95 + Math.random() * 0.1))
+      volume: lastVolume,
+      ail_mw: lastVolume
     }));
     
     // Combine actual + forecast candles
