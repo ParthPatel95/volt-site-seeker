@@ -44,8 +44,9 @@ const VoltScout = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   
-  // Check if we're in a full-screen module (VoltBuild)
-  const isFullScreenModule = location.pathname.startsWith('/app/build');
+  // Check if we're in a full-screen module (VoltBuild, SecureShare)
+  const isFullScreenModule = location.pathname.startsWith('/app/build') || 
+                             location.pathname.startsWith('/app/secure-share');
   
   // Initialize analytics tracking
   useAnalytics();
