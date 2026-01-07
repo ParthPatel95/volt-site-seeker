@@ -7337,6 +7337,81 @@ export type Database = {
         }
         Relationships: []
       }
+      voltbuild_commissioning_checklists: {
+        Row: {
+          attachments: Json | null
+          checklist_items: Json | null
+          checklist_template: string | null
+          completed_by: string | null
+          completed_date: string | null
+          created_at: string
+          equipment_name: string | null
+          equipment_tag: string | null
+          id: string
+          notes: string | null
+          phase_id: string | null
+          project_id: string
+          started_date: string | null
+          status: string
+          system_type: string
+          updated_at: string
+          witness: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          checklist_items?: Json | null
+          checklist_template?: string | null
+          completed_by?: string | null
+          completed_date?: string | null
+          created_at?: string
+          equipment_name?: string | null
+          equipment_tag?: string | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id: string
+          started_date?: string | null
+          status?: string
+          system_type: string
+          updated_at?: string
+          witness?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          checklist_items?: Json | null
+          checklist_template?: string | null
+          completed_by?: string | null
+          completed_date?: string | null
+          created_at?: string
+          equipment_name?: string | null
+          equipment_tag?: string | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string
+          started_date?: string | null
+          status?: string
+          system_type?: string
+          updated_at?: string
+          witness?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_commissioning_checklists_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_commissioning_checklists_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltbuild_daily_log_media: {
         Row: {
           caption: string | null
@@ -7505,6 +7580,53 @@ export type Database = {
           },
         ]
       }
+      voltbuild_equipment_usage: {
+        Row: {
+          created_at: string
+          date: string
+          equipment_id: string | null
+          equipment_type: string
+          hours_used: number | null
+          id: string
+          notes: string | null
+          operator: string | null
+          project_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          equipment_id?: string | null
+          equipment_type: string
+          hours_used?: number | null
+          id?: string
+          notes?: string | null
+          operator?: string | null
+          project_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          equipment_id?: string | null
+          equipment_type?: string
+          hours_used?: number | null
+          id?: string
+          notes?: string | null
+          operator?: string | null
+          project_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_equipment_usage_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltbuild_field_checkins: {
         Row: {
           checkin_time: string
@@ -7592,6 +7714,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "voltbuild_forecast_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_labor_entries: {
+        Row: {
+          contractor: string | null
+          created_at: string
+          date: string
+          headcount: number
+          hours_worked: number | null
+          id: string
+          notes: string | null
+          phase_id: string | null
+          project_id: string
+          shift: string | null
+          trade_type: string
+        }
+        Insert: {
+          contractor?: string | null
+          created_at?: string
+          date: string
+          headcount?: number
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id: string
+          shift?: string | null
+          trade_type: string
+        }
+        Update: {
+          contractor?: string | null
+          created_at?: string
+          date?: string
+          headcount?: number
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string
+          shift?: string | null
+          trade_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_labor_entries_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_labor_entries_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "voltbuild_projects"
@@ -7870,6 +8049,168 @@ export type Database = {
             columns: ["linked_site_id"]
             isOneToOne: false
             referencedRelation: "verified_heavy_power_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_punch_items: {
+        Row: {
+          completed_date: string | null
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          identified_date: string
+          item_number: string | null
+          location: string | null
+          notes: string | null
+          phase_id: string | null
+          photos: Json | null
+          priority: string
+          project_id: string
+          responsible_party: string | null
+          status: string
+          updated_at: string
+          verified_by: string | null
+          verified_date: string | null
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string
+          description: string
+          due_date?: string | null
+          id?: string
+          identified_date?: string
+          item_number?: string | null
+          location?: string | null
+          notes?: string | null
+          phase_id?: string | null
+          photos?: Json | null
+          priority?: string
+          project_id: string
+          responsible_party?: string | null
+          status?: string
+          updated_at?: string
+          verified_by?: string | null
+          verified_date?: string | null
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          identified_date?: string
+          item_number?: string | null
+          location?: string | null
+          notes?: string | null
+          phase_id?: string | null
+          photos?: Json | null
+          priority?: string
+          project_id?: string
+          responsible_party?: string | null
+          status?: string
+          updated_at?: string
+          verified_by?: string | null
+          verified_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_punch_items_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_rfis: {
+        Row: {
+          assigned_to: string | null
+          attachments: Json | null
+          cost_impact: number | null
+          created_at: string
+          discipline: string | null
+          due_date: string | null
+          id: string
+          phase_id: string | null
+          priority: string | null
+          project_id: string
+          question: string
+          response: string | null
+          response_date: string | null
+          rfi_number: string
+          schedule_impact_days: number | null
+          status: string
+          subject: string
+          submitted_by: string | null
+          submitted_date: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          cost_impact?: number | null
+          created_at?: string
+          discipline?: string | null
+          due_date?: string | null
+          id?: string
+          phase_id?: string | null
+          priority?: string | null
+          project_id: string
+          question: string
+          response?: string | null
+          response_date?: string | null
+          rfi_number: string
+          schedule_impact_days?: number | null
+          status?: string
+          subject: string
+          submitted_by?: string | null
+          submitted_date?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          cost_impact?: number | null
+          created_at?: string
+          discipline?: string | null
+          due_date?: string | null
+          id?: string
+          phase_id?: string | null
+          priority?: string | null
+          project_id?: string
+          question?: string
+          response?: string | null
+          response_date?: string | null
+          rfi_number?: string
+          schedule_impact_days?: number | null
+          status?: string
+          subject?: string
+          submitted_by?: string | null
+          submitted_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_rfis_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_rfis_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -8159,6 +8500,77 @@ export type Database = {
           },
         ]
       }
+      voltbuild_subcontractors: {
+        Row: {
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contract_date: string | null
+          contract_end_date: string | null
+          contract_value: number | null
+          created_at: string
+          id: string
+          insurance_expiry: string | null
+          notes: string | null
+          performance_rating: number | null
+          project_id: string
+          safety_rating: number | null
+          status: string | null
+          trade: string
+          updated_at: string
+          wcb_expiry: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_date?: string | null
+          contract_end_date?: string | null
+          contract_value?: number | null
+          created_at?: string
+          id?: string
+          insurance_expiry?: string | null
+          notes?: string | null
+          performance_rating?: number | null
+          project_id: string
+          safety_rating?: number | null
+          status?: string | null
+          trade: string
+          updated_at?: string
+          wcb_expiry?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_date?: string | null
+          contract_end_date?: string | null
+          contract_value?: number | null
+          created_at?: string
+          id?: string
+          insurance_expiry?: string | null
+          notes?: string | null
+          performance_rating?: number | null
+          project_id?: string
+          safety_rating?: number | null
+          status?: string | null
+          trade?: string
+          updated_at?: string
+          wcb_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_subcontractors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltbuild_task_comments: {
         Row: {
           content: string
@@ -8185,6 +8597,58 @@ export type Database = {
           {
             foreignKeyName: "voltbuild_task_comments_task_id_fkey"
             columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voltbuild_task_dependencies: {
+        Row: {
+          created_at: string
+          dependency_type: string
+          id: string
+          lag_days: number | null
+          predecessor_task_id: string
+          project_id: string
+          successor_task_id: string
+        }
+        Insert: {
+          created_at?: string
+          dependency_type?: string
+          id?: string
+          lag_days?: number | null
+          predecessor_task_id: string
+          project_id: string
+          successor_task_id: string
+        }
+        Update: {
+          created_at?: string
+          dependency_type?: string
+          id?: string
+          lag_days?: number | null
+          predecessor_task_id?: string
+          project_id?: string
+          successor_task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_task_dependencies_predecessor_task_id_fkey"
+            columns: ["predecessor_task_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_task_dependencies_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voltbuild_task_dependencies_successor_task_id_fkey"
+            columns: ["successor_task_id"]
             isOneToOne: false
             referencedRelation: "voltbuild_tasks"
             referencedColumns: ["id"]
