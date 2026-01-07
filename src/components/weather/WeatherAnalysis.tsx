@@ -238,26 +238,33 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
       ru: 'Noto Sans',
     };
     
-    // Wait for document fonts to be ready
+    const fontFamily = fontMap[language];
+    
+    // Explicitly load the font with document.fonts.load()
+    try {
+      await document.fonts.load(`400 12px "${fontFamily}"`);
+      await document.fonts.load(`600 12px "${fontFamily}"`);
+      await document.fonts.load(`700 12px "${fontFamily}"`);
+    } catch (e) {
+      console.warn('Font loading warning:', e);
+    }
+    
+    // Wait for all fonts to be ready
     await document.fonts.ready;
     
-    // Check if the required font is loaded
-    const fontFamily = fontMap[language];
-    const fontLoaded = document.fonts.check(`12px "${fontFamily}"`);
+    // Force render with a temporary element containing sample text
+    const tempEl = document.createElement('div');
+    tempEl.style.fontFamily = fontFamily;
+    tempEl.style.position = 'absolute';
+    tempEl.style.left = '-9999px';
+    tempEl.style.top = '0';
+    tempEl.style.visibility = 'hidden';
+    tempEl.innerHTML = '测试文本 天气数据 тест परीक्षण اختبار test 0123456789';
+    document.body.appendChild(tempEl);
     
-    if (!fontLoaded) {
-      // Force load the font by adding a temporary element with all language samples
-      const tempEl = document.createElement('span');
-      tempEl.style.fontFamily = fontFamily;
-      tempEl.style.visibility = 'hidden';
-      tempEl.style.position = 'absolute';
-      tempEl.textContent = '测试文本 тест परीक्षण اختبار test 天気データ';
-      document.body.appendChild(tempEl);
-      
-      // Wait for font to render
-      await new Promise(resolve => setTimeout(resolve, 150));
-      document.body.removeChild(tempEl);
-    }
+    // Wait for rendering
+    await new Promise(resolve => setTimeout(resolve, 100));
+    document.body.removeChild(tempEl);
   };
 
   const exportToPDF = async () => {
@@ -1147,9 +1154,19 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
         </Card>
       )}
 
-      {/* Hidden PDF Template */}
+      {/* Offscreen PDF Template - positioned off-screen but still rendered for html2canvas */}
       {station && statistics && (
-        <div className="hidden">
+        <div 
+          style={{ 
+            position: 'fixed', 
+            left: '-10000px', 
+            top: 0, 
+            width: '210mm',
+            opacity: 0, 
+            pointerEvents: 'none',
+            zIndex: -9999,
+          }}
+        >
           <WeatherReportPDF
             ref={pdfRef}
             station={station}
