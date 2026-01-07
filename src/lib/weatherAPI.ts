@@ -577,12 +577,14 @@ export function calculateWeatherStatistics(weatherData: WeatherData[]) {
  * Calculate detailed weather statistics with energy-relevant metrics
  * 
  * @param weatherData Array of weather observations
- * @param baseTemp Base temperature for HDD/CDD calculation (default 18°C)
+ * @param hddBaseTemp Base temperature for HDD calculation (default 18°C)
+ * @param cddBaseTemp Base temperature for CDD calculation (default 18°C)
  * @returns WeatherStatistics object
  */
 export function calculateDetailedWeatherStatistics(
   weatherData: WeatherData[],
-  baseTemp: number = 18
+  hddBaseTemp: number = 18,
+  cddBaseTemp: number = 18
 ): WeatherStatistics | null {
   if (weatherData.length === 0) {
     return null;
@@ -651,8 +653,8 @@ export function calculateDetailedWeatherStatistics(
   }
 
   // Heating and Cooling Degree Days
-  const hdd = calculateHeatingDegreeDays(weatherData, baseTemp);
-  const cdd = calculateCoolingDegreeDays(weatherData, baseTemp);
+  const hdd = calculateHeatingDegreeDays(weatherData, hddBaseTemp);
+  const cdd = calculateCoolingDegreeDays(weatherData, cddBaseTemp);
 
   // Date range
   const dates = weatherData.map(d => d.date).sort();
