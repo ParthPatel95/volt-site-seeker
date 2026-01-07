@@ -889,7 +889,7 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
                     labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     formatter={(value: number, name: string) => [
                       `${value?.toFixed(1)}°C`, 
-                      name === 'temperature' ? 'Avg Temp' : name === 'maxTemperature' ? 'Max' : 'Min'
+                      name
                     ]}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
