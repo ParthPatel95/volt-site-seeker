@@ -11,10 +11,10 @@ interface AESOSectionWrapperProps {
 }
 
 const themeStyles: Record<Theme, string> = {
-  light: 'bg-card',
-  dark: 'bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-navy)/0.9)]',
-  gradient: 'bg-gradient-to-b from-background to-muted/30',
-  accent: 'bg-gradient-to-br from-[hsl(var(--watt-bitcoin)/0.05)] to-[hsl(var(--watt-bitcoin)/0.02)]',
+  light: 'bg-card text-foreground',
+  dark: 'bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-navy)/0.9)] text-white',
+  gradient: 'bg-gradient-to-b from-background to-muted/30 text-foreground',
+  accent: 'bg-gradient-to-br from-[hsl(var(--watt-bitcoin)/0.05)] to-[hsl(var(--watt-bitcoin)/0.02)] text-foreground',
 };
 
 export function AESOSectionWrapper({ 
