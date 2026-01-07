@@ -54,6 +54,8 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [chartResolution, setChartResolution] = useState<ChartResolution>('auto');
   const [pdfLanguage, setPdfLanguage] = useState<SupportedLanguage>('en');
+  const [hddBaseTemp, setHddBaseTemp] = useState<number>(18);
+  const [cddBaseTemp, setCddBaseTemp] = useState<number>(18);
   const pageSize = 50;
   
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -61,8 +63,8 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
   // Calculate detailed statistics
   const statistics = useMemo(() => {
     if (weatherData.length === 0) return null;
-    return calculateDetailedWeatherStatistics(weatherData);
-  }, [weatherData]);
+    return calculateDetailedWeatherStatistics(weatherData, hddBaseTemp, cddBaseTemp);
+  }, [weatherData, hddBaseTemp, cddBaseTemp]);
 
   // Smart chart data aggregation for readability
   const chartData = useMemo(() => {
@@ -606,7 +608,7 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
             icon={<Flame className="w-5 h-5" />}
             accentColor="hsl(25, 95%, 53%)"
             trend={{
-              value: 18,
+              value: hddBaseTemp,
               direction: 'neutral',
               label: `base temp (°C)`
             }}
@@ -619,12 +621,106 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
             icon={<Zap className="w-5 h-5" />}
             accentColor="hsl(190, 95%, 39%)"
             trend={{
-              value: 18,
+              value: cddBaseTemp,
               direction: 'neutral',
               label: `base temp (°C)`
             }}
           />
         </div>
+      )}
+
+      {/* Base Temperature Controls */}
+      {weatherData.length > 0 && statistics && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Thermometer className="w-4 h-4" />
+              Degree Days Base Temperature
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Adjust the reference temperature for heating and cooling degree day calculations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* HDD Base Temp */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  Heating Degree Days (HDD)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={10}
+                    max={30}
+                    step={1}
+                    value={hddBaseTemp}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val >= 10 && val <= 30) {
+                        setHddBaseTemp(val);
+                      }
+                    }}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted-foreground">°C</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {[15, 18, 21].map((temp) => (
+                    <Button
+                      key={temp}
+                      variant={hddBaseTemp === temp ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setHddBaseTemp(temp)}
+                    >
+                      {temp}°C
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* CDD Base Temp */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-cyan-500" />
+                  Cooling Degree Days (CDD)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={10}
+                    max={30}
+                    step={1}
+                    value={cddBaseTemp}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val >= 10 && val <= 30) {
+                        setCddBaseTemp(val);
+                      }
+                    }}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted-foreground">°C</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {[18, 21, 24].map((temp) => (
+                    <Button
+                      key={temp}
+                      variant={cddBaseTemp === temp ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setCddBaseTemp(temp)}
+                    >
+                      {temp}°C
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Energy Impact Analysis */}
