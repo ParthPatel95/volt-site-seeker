@@ -215,20 +215,19 @@ export const LandingAcademySection: React.FC = () => {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.1 * index }}
-                    className="relative group"
+                    className="relative group flex flex-col items-center"
                   >
                     <motion.div
                       whileHover={{ scale: 1.05 }}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-card border-2 border-border flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all ${colors.text}`}
+                      className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-card border-2 border-border flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all ${colors.text}`}
                     >
-                      <StageIcon className="w-5 h-5 sm:w-6 sm:h-6 mb-1" />
-                      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">{stage.title}</span>
+                      <StageIcon className="w-6 h-6 sm:w-7 sm:h-7" />
+                      {/* Step number */}
+                      <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${colors.iconBg} ${colors.text} text-xs font-bold flex items-center justify-center border border-background`}>
+                        {stage.step}
+                      </div>
                     </motion.div>
-                    
-                    {/* Step number */}
-                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full ${colors.iconBg} ${colors.text} text-xs font-bold flex items-center justify-center border border-background`}>
-                      {stage.step}
-                    </div>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-1.5 whitespace-nowrap">{stage.title}</span>
                   </motion.div>,
                   
                   index < learningPath.length - 1 && (
