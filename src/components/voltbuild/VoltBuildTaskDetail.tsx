@@ -121,7 +121,7 @@ export function VoltBuildTaskDetail({
   const assignedUser = platformUsers.find(u => u.id === task.assigned_user_id);
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex flex-col max-h-full">
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -181,7 +181,7 @@ export function VoltBuildTaskDetail({
       <ScrollArea className="flex-1">
         <CardContent className="space-y-4">
           {/* Status & Role */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground">Status</Label>
               <Select
@@ -301,7 +301,7 @@ export function VoltBuildTaskDetail({
           </div>
 
           {/* Duration & Critical Path */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="w-3 h-3" />
@@ -360,7 +360,7 @@ export function VoltBuildTaskDetail({
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="w-3 h-3" />

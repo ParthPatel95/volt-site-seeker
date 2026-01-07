@@ -132,7 +132,7 @@ export function VoltBuildKanbanBoard({
       </div>
 
       {/* Kanban Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 h-[calc(100vh-220px)]">
         {STATUSES.map(status => (
           <div
             key={status}

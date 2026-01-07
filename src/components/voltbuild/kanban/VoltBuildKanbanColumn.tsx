@@ -56,7 +56,7 @@ export function VoltBuildKanbanColumn({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-lg border min-h-[500px] max-h-[calc(100vh-280px)]',
+        'flex flex-col rounded-lg border h-full min-h-[400px]',
         getColumnBgColor(status),
         isDragOver && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
       )}
