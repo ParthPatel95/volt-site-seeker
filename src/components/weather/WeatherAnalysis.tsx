@@ -228,16 +228,59 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
     }
   };
 
+  // Preload fonts for PDF generation to ensure proper Unicode rendering
+  const preloadFonts = async (language: SupportedLanguage): Promise<void> => {
+    const fontMap: Record<SupportedLanguage, string> = {
+      en: 'Noto Sans',
+      zh: 'Noto Sans SC',
+      hi: 'Noto Sans Devanagari',
+      ar: 'Noto Sans Arabic',
+      ru: 'Noto Sans',
+    };
+    
+    // Wait for document fonts to be ready
+    await document.fonts.ready;
+    
+    // Check if the required font is loaded
+    const fontFamily = fontMap[language];
+    const fontLoaded = document.fonts.check(`12px "${fontFamily}"`);
+    
+    if (!fontLoaded) {
+      // Force load the font by adding a temporary element with all language samples
+      const tempEl = document.createElement('span');
+      tempEl.style.fontFamily = fontFamily;
+      tempEl.style.visibility = 'hidden';
+      tempEl.style.position = 'absolute';
+      tempEl.textContent = '测试文本 тест परीक्षण اختبار test 天気データ';
+      document.body.appendChild(tempEl);
+      
+      // Wait for font to render
+      await new Promise(resolve => setTimeout(resolve, 150));
+      document.body.removeChild(tempEl);
+    }
+  };
+
   const exportToPDF = async () => {
     if (!pdfRef.current || !station || !statistics) return;
     
     setExportingPDF(true);
     try {
+      // Preload fonts for the selected language
+      await preloadFonts(pdfLanguage);
+      
+      // Small delay to ensure fonts are fully rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       const opt = {
         margin: [5, 5],
         filename: `weather-report-${locationName || 'analysis'}-${startDate}-${endDate}-${pdfLanguage}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          logging: false,
+          allowTaint: true,
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };

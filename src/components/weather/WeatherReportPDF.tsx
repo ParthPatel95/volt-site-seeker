@@ -20,6 +20,22 @@ interface WeatherReportPDFProps {
 
 const ROWS_PER_PAGE = 35;
 
+// Get language-specific font family for proper Unicode rendering
+const getFontFamily = (language: SupportedLanguage): string => {
+  switch (language) {
+    case 'zh':
+      return '"Noto Sans SC", "Microsoft YaHei", "SimHei", sans-serif';
+    case 'ar':
+      return '"Noto Sans Arabic", "Arial", sans-serif';
+    case 'hi':
+      return '"Noto Sans Devanagari", "Arial", sans-serif';
+    case 'ru':
+      return '"Noto Sans", "Arial", sans-serif';
+    default:
+      return '"Noto Sans", Arial, sans-serif';
+  }
+};
+
 export const WeatherReportPDF = forwardRef<HTMLDivElement, WeatherReportPDFProps>(
   ({ station, weatherData, statistics, startDate, endDate, locationName, language = 'en' }, ref) => {
     const t = getTranslations(language);
@@ -84,9 +100,10 @@ export const WeatherReportPDF = forwardRef<HTMLDivElement, WeatherReportPDFProps
         ref={ref} 
         className="bg-white text-black"
         style={{ 
-          fontFamily: 'Arial, sans-serif', 
+          fontFamily: getFontFamily(language), 
           fontSize: '10px',
           direction: isRTL ? 'rtl' : 'ltr',
+          unicodeBidi: isRTL ? 'bidi-override' : 'normal',
         }}
       >
         {/* PAGE 1: Executive Summary */}
