@@ -86,8 +86,9 @@ Deno.serve(async (req) => {
       const now = new Date();
       
       historicalData = rawData.filter(point => {
-        // Check if there's an actual pool price (not empty string, not null, not zero)
-        const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
+        // Check if there's an actual pool price (not empty string, not null)
+        // Allow negative prices - they represent real market data (credits for consumers during oversupply)
+        const hasActualPrice = point.price !== null && point.price !== undefined && point.price !== '';
         if (!hasActualPrice) return false;
         
         // Use UTC timestamp directly from API (point.datetime contains begin_datetime_utc)
@@ -115,7 +116,8 @@ Deno.serve(async (req) => {
         
         const fallbackData = await fetchAESOHistoricalData(fallbackStartDate, fallbackEndDate, apiKey);
         const fallbackFiltered = fallbackData.filter(point => {
-          const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
+          // Allow negative prices - they represent real market data (credits for consumers)
+          const hasActualPrice = point.price !== null && point.price !== undefined && point.price !== '';
           return hasActualPrice;
         });
         
@@ -139,8 +141,8 @@ Deno.serve(async (req) => {
       // Filter out future hours - only show actual historical data with pool prices
       const now = new Date();
       historicalData = rawData.filter(point => {
-        // Check if there's an actual pool price (not empty string, not null, not zero)
-        const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
+        // Allow negative prices - they represent real market data (credits for consumers during oversupply)
+        const hasActualPrice = point.price !== null && point.price !== undefined && point.price !== '';
         if (!hasActualPrice) return false;
         
         // Use UTC timestamp directly from API
@@ -161,8 +163,8 @@ Deno.serve(async (req) => {
       // Filter out future hours - only show actual historical data with pool prices
       const now = new Date();
       historicalData = rawData.filter(point => {
-        // Check if there's an actual pool price (not empty string, not null, not zero)
-        const hasActualPrice = point.price && parseFloat(point.price.toString()) > 0;
+        // Allow negative prices - they represent real market data (credits for consumers during oversupply)
+        const hasActualPrice = point.price !== null && point.price !== undefined && point.price !== '';
         if (!hasActualPrice) return false;
         
         // Use UTC timestamp directly from API
