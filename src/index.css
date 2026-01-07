@@ -229,26 +229,24 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Typography Scale - Responsive */
+  /* Typography Scale - Responsive - Colors inherit from parent containers */
   h1 {
-    @apply text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground;
+    @apply text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight;
   }
 
   h2 {
-    @apply text-xl sm:text-2xl font-semibold tracking-tight text-foreground;
+    @apply text-xl sm:text-2xl font-semibold tracking-tight;
   }
 
   h3 {
-    @apply text-lg font-semibold tracking-tight text-foreground;
+    @apply text-lg font-semibold tracking-tight;
   }
 
   h4 {
-    @apply text-base font-medium text-foreground;
+    @apply text-base font-medium;
   }
 
-  p {
-    @apply text-foreground;
-  }
+  /* p inherits color from parent - no override needed */
 
   /* Monospace for data */
   .font-mono, .tabular-nums, [data-numeric] {

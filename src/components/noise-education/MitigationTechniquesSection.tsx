@@ -356,9 +356,9 @@ export const MitigationTechniquesSection = () => {
 
         {/* Summary Table */}
         <ScrollReveal delay={300}>
-          <Card className="bg-[hsl(var(--watt-navy))] text-white border-none shadow-xl mt-8">
-            <CardContent className="p-6 md:p-8">
-              <h3 className="text-xl font-bold mb-6">Mitigation Techniques Summary</h3>
+          <Card className="bg-[hsl(var(--watt-navy))] border-none shadow-xl mt-8">
+            <CardContent className="p-6 md:p-8 text-white">
+              <h3 className="text-xl font-bold mb-6 text-white">Mitigation Techniques Summary</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
