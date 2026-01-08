@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const STORAGE_KEY = 'wattbyte_learning_progress';
 
@@ -122,17 +123,99 @@ export const useProgressTracking = (moduleId: string, totalSections: number) => 
 };
 
 // Utility hook to get progress for all modules (for dashboard)
+// Now uses Supabase when user is authenticated
 export const useAllModulesProgress = () => {
   const [allProgress, setAllProgress] = useState<AllProgress>(getStoredProgress);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Check for authenticated user and fetch from Supabase
   useEffect(() => {
+    const checkAuthAndFetch = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setUserId(session.user.id);
+          
+          // Fetch progress from Supabase
+          const { data: progressData } = await supabase
+            .from('academy_progress')
+            .select('module_id, section_id, completed_at')
+            .eq('user_id', session.user.id);
+
+          // Fetch module starts
+          const { data: startsData } = await supabase
+            .from('academy_module_starts')
+            .select('module_id, started_at, last_visited_at')
+            .eq('user_id', session.user.id);
+
+          // Build AllProgress object from Supabase data
+          const supabaseProgress: AllProgress = {};
+          
+          // Group completions by module
+          progressData?.forEach(p => {
+            if (!supabaseProgress[p.module_id]) {
+              supabaseProgress[p.module_id] = {
+                completedSections: [],
+                lastVisited: null,
+                startedAt: new Date().toISOString(),
+                completedAt: null,
+              };
+            }
+            supabaseProgress[p.module_id].completedSections.push(p.section_id);
+          });
+
+          // Add start dates and last visited
+          startsData?.forEach(s => {
+            if (!supabaseProgress[s.module_id]) {
+              supabaseProgress[s.module_id] = {
+                completedSections: [],
+                lastVisited: null,
+                startedAt: s.started_at,
+                completedAt: null,
+              };
+            } else {
+              supabaseProgress[s.module_id].startedAt = s.started_at;
+            }
+            // Extract section from last_visited_at - we track this differently now
+            // For compatibility, we'll use the most recent section completed
+          });
+
+          setAllProgress(supabaseProgress);
+        } else {
+          // Not authenticated, use localStorage
+          setAllProgress(getStoredProgress());
+        }
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+        setAllProgress(getStoredProgress());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthAndFetch();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAuthAndFetch();
+    });
+
+    // Listen for localStorage changes (for non-auth mode)
     const handleStorageChange = () => {
-      setAllProgress(getStoredProgress());
+      if (!userId) {
+        setAllProgress(getStoredProgress());
+      }
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [userId]);
 
   const getModuleProgress = useCallback((moduleId: string, totalSections: number) => {
     const moduleProgress = allProgress[moduleId];
@@ -145,10 +228,10 @@ export const useAllModulesProgress = () => {
     return {
       percentage,
       isStarted: moduleProgress.completedSections.length > 0,
-      isComplete: moduleProgress.completedAt !== null,
+      isComplete: percentage >= 100,
       lastVisited: moduleProgress.lastVisited,
     };
   }, [allProgress]);
 
-  return { allProgress, getModuleProgress };
+  return { allProgress, getModuleProgress, isLoading };
 };
