@@ -54,22 +54,22 @@ export const LandingFooter = () => {
             </ul>
           </div>
 
-          {/* Learn */}
+          {/* Learn - All courses require login */}
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3">Learn</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/bitcoin" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/academy/auth" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Bitcoin 101
                 </Link>
               </li>
               <li>
-                <Link to="/datacenters" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/academy/auth" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Datacenters 101
                 </Link>
               </li>
               <li>
-                <Link to="/mining-economics" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/academy/auth" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Mining Economics 101
                 </Link>
               </li>
