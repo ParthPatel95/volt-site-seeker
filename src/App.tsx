@@ -84,7 +84,7 @@ const App = () => (
                   </LazyErrorBoundary>
                 } />
                 <Route path="/hosting" element={<Hosting />} />
-                <Route path="/academy" element={<AcademyAuthProvider><Academy /></AcademyAuthProvider>} />
+                <Route path="/academy" element={<AcademyAuthProvider><AcademyAuthGuard><Academy /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/academy/auth" element={<AcademyAuthProvider><AcademyAuth /></AcademyAuthProvider>} />
                 <Route path="/academy/admin" element={<AcademyAuthProvider><AcademyAdmin /></AcademyAuthProvider>} />
                 <Route path="/bitcoin" element={<AcademyAuthProvider><AcademyAuthGuard><BitcoinEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
