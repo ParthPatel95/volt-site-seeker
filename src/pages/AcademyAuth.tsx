@@ -38,15 +38,17 @@ const AcademyAuth: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user, signIn, signUp, isLoading } = useAcademyAuth();
+  const { user, academyUser, signIn, signUp, isLoading } = useAcademyAuth();
 
   const returnUrl = new URLSearchParams(location.search).get('returnUrl') || '/academy';
 
+  // Only redirect if user has BOTH auth AND academy profile
+  // This ensures VoltScout users can't access Academy without Academy signup
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && academyUser && !isLoading) {
       navigate(returnUrl, { replace: true });
     }
-  }, [user, isLoading, navigate, returnUrl]);
+  }, [user, academyUser, isLoading, navigate, returnUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
