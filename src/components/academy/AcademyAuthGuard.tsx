@@ -8,7 +8,7 @@ interface AcademyAuthGuardProps {
 }
 
 export const AcademyAuthGuard: React.FC<AcademyAuthGuardProps> = ({ children }) => {
-  const { user, isLoading } = useAcademyAuth();
+  const { user, academyUser, isLoading } = useAcademyAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -22,8 +22,9 @@ export const AcademyAuthGuard: React.FC<AcademyAuthGuardProps> = ({ children }) 
     );
   }
 
-  if (!user) {
-    // Redirect to auth page with return URL
+  // Must have both Supabase auth AND an academy_users profile
+  // This prevents VoltScout users from accessing Academy without signing up for Academy
+  if (!user || !academyUser) {
     const returnUrl = encodeURIComponent(location.pathname);
     return <Navigate to={`/academy/auth?returnUrl=${returnUrl}`} replace />;
   }
