@@ -98,7 +98,7 @@ export const AcademyEmailVerificationSuccess: React.FC<AcademyEmailVerificationS
           variant="outline"
           onClick={handleResend}
           disabled={isResending}
-          className="flex-1 border-white/20 text-white hover:bg-white/10"
+          className="flex-1 bg-white text-slate-800 hover:bg-white/90 border-white/20"
         >
           {isResending ? (
             <>
