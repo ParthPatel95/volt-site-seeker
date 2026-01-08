@@ -9,6 +9,7 @@ import { VoltMarket } from "./pages/VoltMarket";
 import { VoltMarketAuthProvider } from "./contexts/VoltMarketAuthContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
+import { AcademyAuthProvider } from "./contexts/AcademyAuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LazyErrorBoundary, SectionLoader } from "./components/LazyErrorBoundary";
@@ -29,6 +30,9 @@ import StrategicOperationsMasterclass from "./pages/StrategicOperationsMastercla
 import TaxesInsuranceEducation from "./pages/TaxesInsuranceEducation";
 import EngineeringPermittingEducation from "./pages/EngineeringPermittingEducation";
 import Academy from "./pages/Academy";
+import AcademyAuth from "./pages/AcademyAuth";
+import AcademyAdmin from "./pages/AcademyAdmin";
+import { AcademyAuthGuard } from "./components/academy/AcademyAuthGuard";
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
@@ -80,19 +84,21 @@ const App = () => (
                   </LazyErrorBoundary>
                 } />
                 <Route path="/hosting" element={<Hosting />} />
-                <Route path="/academy" element={<Academy />} />
-                <Route path="/bitcoin" element={<BitcoinEducation />} />
-                <Route path="/datacenters" element={<DatacenterEducation />} />
-                <Route path="/aeso-101" element={<AESOEducation />} />
-                <Route path="/hydro-datacenters" element={<HydroDatacenterEducation />} />
-                <Route path="/electrical-infrastructure" element={<ElectricalInfrastructureEducation />} />
-                <Route path="/noise-management" element={<NoiseManagementEducation />} />
-            <Route path="/immersion-cooling" element={<ImmersionCoolingEducation />} />
-            <Route path="/mining-economics" element={<MiningEconomicsEducation />} />
-            <Route path="/operations" element={<OperationsEducation />} />
-            <Route path="/strategic-operations" element={<StrategicOperationsMasterclass />} />
-            <Route path="/taxes-insurance" element={<TaxesInsuranceEducation />} />
-            <Route path="/engineering-permitting" element={<EngineeringPermittingEducation />} />
+                <Route path="/academy" element={<AcademyAuthProvider><Academy /></AcademyAuthProvider>} />
+                <Route path="/academy/auth" element={<AcademyAuthProvider><AcademyAuth /></AcademyAuthProvider>} />
+                <Route path="/academy/admin" element={<AcademyAuthProvider><AcademyAdmin /></AcademyAuthProvider>} />
+                <Route path="/bitcoin" element={<AcademyAuthProvider><AcademyAuthGuard><BitcoinEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/datacenters" element={<AcademyAuthProvider><AcademyAuthGuard><DatacenterEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/aeso-101" element={<AcademyAuthProvider><AcademyAuthGuard><AESOEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/hydro-datacenters" element={<AcademyAuthProvider><AcademyAuthGuard><HydroDatacenterEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/electrical-infrastructure" element={<AcademyAuthProvider><AcademyAuthGuard><ElectricalInfrastructureEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/noise-management" element={<AcademyAuthProvider><AcademyAuthGuard><NoiseManagementEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/immersion-cooling" element={<AcademyAuthProvider><AcademyAuthGuard><ImmersionCoolingEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/mining-economics" element={<AcademyAuthProvider><AcademyAuthGuard><MiningEconomicsEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/operations" element={<AcademyAuthProvider><AcademyAuthGuard><OperationsEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/strategic-operations" element={<AcademyAuthProvider><AcademyAuthGuard><StrategicOperationsMasterclass /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/taxes-insurance" element={<AcademyAuthProvider><AcademyAuthGuard><TaxesInsuranceEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/engineering-permitting" element={<AcademyAuthProvider><AcademyAuthGuard><EngineeringPermittingEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}

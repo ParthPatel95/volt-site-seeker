@@ -14,6 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_module_starts: {
+        Row: {
+          id: string
+          last_visited_at: string | null
+          module_id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_visited_at?: string | null
+          module_id: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_visited_at?: string | null
+          module_id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_progress: {
+        Row: {
+          completed_at: string
+          id: string
+          module_id: string
+          section_id: string
+          time_spent_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          module_id: string
+          section_id: string
+          time_spent_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          module_id?: string
+          section_id?: string
+          time_spent_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_quiz_attempts: {
+        Row: {
+          attempted_at: string
+          correct_answers: number
+          id: string
+          module_id: string
+          score: number
+          section_id: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          correct_answers: number
+          id?: string
+          module_id: string
+          score: number
+          section_id: string
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          correct_answers?: number
+          id?: string
+          module_id?: string
+          score?: number
+          section_id?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_roles: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_users: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          job_title: string | null
+          last_activity_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_activity_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_activity_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       access_requests: {
         Row: {
           additional_info: string | null
@@ -10683,6 +10824,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_academy_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_voltbuild_approved: { Args: { user_id: string }; Returns: boolean }
       is_voltscout_approved: { Args: { user_id: string }; Returns: boolean }
       restore_verified_site: { Args: { site_id: string }; Returns: boolean }
