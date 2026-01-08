@@ -259,3 +259,6 @@ verify_jwt = false
 
 [functions.verify-academy-email]
 verify_jwt = false
+
+[functions.create-academy-profile]
+verify_jwt = false

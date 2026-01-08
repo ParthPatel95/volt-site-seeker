@@ -129,6 +129,7 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
 
       // Create academy user profile
       if (data.user) {
+        // Try direct insert first (in case session is already active)
         const { error: profileError } = await supabase
           .from('academy_users')
           .insert({
@@ -139,14 +140,33 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
             is_email_verified: false
           });
 
+        // If RLS blocks it, use edge function fallback with service role
         if (profileError) {
-          console.error('Error creating academy profile:', profileError);
+          console.log('Direct insert blocked by RLS, using edge function fallback');
+          const { error: edgeFnError } = await supabase.functions.invoke('create-academy-profile', {
+            body: { 
+              user_id: data.user.id, 
+              email, 
+              full_name: fullName, 
+              company 
+            }
+          });
+
+          if (edgeFnError) {
+            console.error('Edge function error creating profile:', edgeFnError);
+            return { error: new Error('Failed to create profile. Please try again.') };
+          }
         }
 
         // Send verification email
-        await supabase.functions.invoke('send-academy-verification-email', {
+        const { error: emailError } = await supabase.functions.invoke('send-academy-verification-email', {
           body: { email, user_id: data.user.id, full_name: fullName }
         });
+
+        if (emailError) {
+          console.error('Verification email error:', emailError);
+          // Don't fail signup if email fails - user can resend later
+        }
       }
 
       return { error: null };
