@@ -1,13 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, Mail, Lock, User, Building, ArrowLeft, Loader2 } from 'lucide-react';
+import { GraduationCap, Mail, Lock, User, Building, Loader2, Sparkles, BookOpen, Layers, Award, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
+
+// Floating Particle Component
+const FloatingParticle = ({ delay, size, left, duration }: { delay: number; size: number; left: string; duration: number }) => (
+  <motion.div
+    className="absolute rounded-full bg-watt-bitcoin/30"
+    style={{ width: size, height: size, left }}
+    initial={{ y: "100vh", opacity: 0 }}
+    animate={{ 
+      y: "-100vh", 
+      opacity: [0, 0.6, 0.6, 0],
+    }}
+    transition={{
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: "linear"
+    }}
+  />
+);
 
 const AcademyAuth: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -22,7 +40,6 @@ const AcademyAuth: React.FC = () => {
   const { toast } = useToast();
   const { user, signIn, signUp, isLoading } = useAcademyAuth();
 
-  // Get the return URL from query params or default to /academy
   const returnUrl = new URLSearchParams(location.search).get('returnUrl') || '/academy';
 
   useEffect(() => {
@@ -75,82 +92,202 @@ const AcademyAuth: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-watt-navy flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-watt-bitcoin" />
       </div>
     );
   }
 
+  const benefits = [
+    { icon: BookOpen, text: "Track progress across all modules" },
+    { icon: Layers, text: "Resume learning from any device" },
+    { icon: Award, text: "Earn completion certificates" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
-      {/* Header */}
-      <header className="p-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/academy')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Academy
-        </Button>
-      </header>
+    <section className="relative min-h-screen flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy overflow-hidden">
+      {/* Animated Background Layers */}
+      <div className="absolute inset-0">
+        {/* Radial gradient overlays */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-watt-bitcoin/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-watt-blue/15 via-transparent to-transparent" />
+        
+        {/* Subtle Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px'
+        }} />
+        
+        {/* Subtle Gradient Accents */}
+        <motion.div 
+          className="absolute top-20 left-1/4 w-64 h-64 bg-watt-bitcoin/5 rounded-full"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.05, 0.08, 0.05],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-40 right-1/3 w-48 h-48 bg-watt-blue/5 rounded-full"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.05, 0.08, 0.05],
+          }}
+          transition={{
+            duration: 10,
+            delay: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
+      {/* Floating Particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
+        <FloatingParticle delay={0} size={6} left="10%" duration={15} />
+        <FloatingParticle delay={2} size={4} left="20%" duration={18} />
+        <FloatingParticle delay={4} size={8} left="35%" duration={20} />
+        <FloatingParticle delay={1} size={5} left="50%" duration={16} />
+        <FloatingParticle delay={3} size={7} left="65%" duration={22} />
+        <FloatingParticle delay={5} size={4} left="80%" duration={17} />
+        <FloatingParticle delay={2.5} size={6} left="90%" duration={19} />
+      </div>
+
+      {/* Back to Home Link */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link 
+          to="/" 
+          className="text-white/60 hover:text-white text-sm transition-colors flex items-center gap-2"
         >
-          <Card className="border-2">
-            <CardHeader className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <GraduationCap className="h-8 w-8 text-primary" />
+          ← Back to Home
+        </Link>
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center max-w-6xl mx-auto">
+          {/* Left Content - Brand */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center lg:text-left"
+          >
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/10 border border-watt-bitcoin/30 mb-6">
+              <Sparkles className="w-4 h-4 text-watt-bitcoin" />
+              <span className="text-sm font-medium text-watt-bitcoin">Free Educational Platform</span>
+            </div>
+
+            {/* Title */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+              WattByte{" "}
+              <span className="bg-gradient-to-r from-watt-bitcoin via-watt-bitcoin to-amber-400 bg-clip-text text-transparent">
+                Academy
+              </span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl mx-auto lg:mx-0">
+              Sign in to track your progress, earn certificates, and master Bitcoin mining with industry-verified content.
+            </p>
+
+            {/* Benefits */}
+            <div className="space-y-4 hidden lg:block">
+              {benefits.map((benefit, index) => (
+                <motion.div
+                  key={benefit.text}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-watt-bitcoin/10 border border-watt-bitcoin/30 flex items-center justify-center">
+                    <benefit.icon className="w-5 h-5 text-watt-bitcoin" />
+                  </div>
+                  <span className="text-white/80">{benefit.text}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex justify-center lg:justify-start gap-8 mt-10"
+            >
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">10</div>
+                <div className="text-sm text-white/50">Modules</div>
               </div>
-              <div>
-                <CardTitle className="text-2xl">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">98</div>
+                <div className="text-sm text-white/50">Lessons</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-watt-bitcoin">Free</div>
+                <div className="text-sm text-white/50">Forever</div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Right Side - Auth Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="bg-slate-800/70 rounded-2xl border border-white/20 p-8 backdrop-blur-sm shadow-2xl">
+              {/* Form Header */}
+              <div className="text-center mb-8">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-watt-bitcoin to-watt-bitcoin/80 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-watt-bitcoin/30">
+                  <GraduationCap className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">
                   {isSignUp ? 'Create Your Account' : 'Welcome Back'}
-                </CardTitle>
-                <CardDescription className="mt-2">
+                </h2>
+                <p className="text-white/60 mt-2">
                   {isSignUp
-                    ? 'Sign up to track your learning progress and earn certificates'
-                    : 'Sign in to continue your learning journey'
+                    ? 'Start your learning journey today'
+                    : 'Continue your learning journey'
                   }
-                </CardDescription>
+                </p>
               </div>
-            </CardHeader>
 
-            <CardContent>
+              {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {isSignUp && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
+                      <Label htmlFor="fullName" className="text-white/80">Full Name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                         <Input
                           id="fullName"
                           type="text"
                           placeholder="John Doe"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="company">Company (Optional)</Label>
+                      <Label htmlFor="company" className="text-white/80">Company (Optional)</Label>
                       <div className="relative">
-                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                         <Input
                           id="company"
                           type="text"
                           placeholder="Your Company"
                           value={company}
                           onChange={(e) => setCompany(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
                         />
                       </div>
                     </div>
@@ -158,32 +295,32 @@ const AcademyAuth: React.FC = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-white/80">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-white/80">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                     <Input
                       id="password"
                       type="password"
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
                       required
                       minLength={6}
                     />
@@ -192,7 +329,7 @@ const AcademyAuth: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg shadow-watt-bitcoin/25 mt-6"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -206,11 +343,12 @@ const AcademyAuth: React.FC = () => {
                 </Button>
               </form>
 
+              {/* Toggle Sign In/Sign Up */}
               <div className="mt-6 text-center">
                 <button
                   type="button"
                   onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-watt-bitcoin hover:text-watt-bitcoin/80 transition-colors"
                 >
                   {isSignUp
                     ? 'Already have an account? Sign in'
@@ -218,27 +356,23 @@ const AcademyAuth: React.FC = () => {
                   }
                 </button>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Benefits */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 text-center text-sm text-muted-foreground"
-          >
-            <p className="font-medium mb-2">Why create an account?</p>
-            <ul className="space-y-1">
-              <li>✓ Track your progress across all modules</li>
-              <li>✓ Resume learning from any device</li>
-              <li>✓ Earn completion certificates</li>
-              <li>✓ Access exclusive content</li>
-            </ul>
+              {/* Mobile Benefits */}
+              <div className="mt-8 pt-6 border-t border-white/10 lg:hidden">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  {benefits.map((benefit) => (
+                    <div key={benefit.text} className="flex flex-col items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-watt-bitcoin" />
+                      <span className="text-xs text-white/60">{benefit.text.split(' ').slice(0, 2).join(' ')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </motion.div>
-        </motion.div>
-      </main>
-    </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
