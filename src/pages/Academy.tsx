@@ -22,6 +22,7 @@ const academyModules = [
   { id: "strategic-operations", title: "Strategic Operations Masterclass", route: "/strategic-operations", totalSections: 6 },
   { id: "taxes-insurance", title: "Taxes & Insurance Masterclass", route: "/taxes-insurance", totalSections: 10 },
   { id: "engineering-permitting", title: "Engineering & Permitting Masterclass", route: "/engineering-permitting", totalSections: 10 },
+  { id: "networking", title: "Networking Masterclass", route: "/networking", totalSections: 10 },
 ];
 
 const Academy = () => {
