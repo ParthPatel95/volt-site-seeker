@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
+import { AcademyEmailVerificationSuccess } from '@/components/academy/AcademyEmailVerificationSuccess';
 
 // Floating Particle Component
 const FloatingParticle = ({ delay, size, left, duration }: { delay: number; size: number; left: string; duration: number }) => (
@@ -34,6 +35,7 @@ const AcademyAuth: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerificationSuccess, setShowVerificationSuccess] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,10 +70,8 @@ const AcademyAuth: React.FC = () => {
             variant: 'destructive'
           });
         } else {
-          toast({
-            title: 'Account Created!',
-            description: 'Please check your email to verify your account.',
-          });
+          // Show verification success screen
+          setShowVerificationSuccess(true);
         }
       } else {
         const { error } = await signIn(email, password);
@@ -237,140 +237,144 @@ const AcademyAuth: React.FC = () => {
             </motion.div>
           </motion.div>
 
-          {/* Right Side - Auth Form */}
+          {/* Right Side - Auth Form or Verification Success */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="bg-slate-800/70 rounded-2xl border border-white/20 p-8 backdrop-blur-sm shadow-2xl">
-              {/* Form Header */}
-              <div className="text-center mb-8">
-                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-watt-bitcoin to-watt-bitcoin/80 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-watt-bitcoin/30">
-                  <GraduationCap className="h-8 w-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-white">
-                  {isSignUp ? 'Create Your Account' : 'Welcome Back'}
-                </h2>
-                <p className="text-white/60 mt-2">
-                  {isSignUp
-                    ? 'Start your learning journey today'
-                    : 'Continue your learning journey'
-                  }
-                </p>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {isSignUp && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName" className="text-white/80">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                        <Input
-                          id="fullName"
-                          type="text"
-                          placeholder="John Doe"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="company" className="text-white/80">Company (Optional)</Label>
-                      <div className="relative">
-                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                        <Input
-                          id="company"
-                          type="text"
-                          placeholder="Your Company"
-                          value={company}
-                          onChange={(e) => setCompany(e.target.value)}
-                          className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white/80">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
-                      required
-                    />
+            {showVerificationSuccess ? (
+              <AcademyEmailVerificationSuccess email={email} />
+            ) : (
+              <div className="bg-slate-800/70 rounded-2xl border border-white/20 p-8 backdrop-blur-sm shadow-2xl">
+                {/* Form Header */}
+                <div className="text-center mb-8">
+                  <div className="mx-auto w-16 h-16 bg-gradient-to-br from-watt-bitcoin to-watt-bitcoin/80 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-watt-bitcoin/30">
+                    <GraduationCap className="h-8 w-8 text-white" />
                   </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+                  </h2>
+                  <p className="text-white/60 mt-2">
+                    {isSignUp
+                      ? 'Start your learning journey today'
+                      : 'Continue your learning journey'
+                    }
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-white/80">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg shadow-watt-bitcoin/25 mt-6"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {isSignUp && (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isSignUp ? 'Creating Account...' : 'Signing In...'}
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName" className="text-white/80">Full Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                          <Input
+                            id="fullName"
+                            type="text"
+                            placeholder="John Doe"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="company" className="text-white/80">Company (Optional)</Label>
+                        <div className="relative">
+                          <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                          <Input
+                            id="company"
+                            type="text"
+                            placeholder="Your Company"
+                            value={company}
+                            onChange={(e) => setCompany(e.target.value)}
+                            className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
+                          />
+                        </div>
+                      </div>
                     </>
-                  ) : (
-                    isSignUp ? 'Create Account' : 'Sign In'
                   )}
-                </Button>
-              </form>
 
-              {/* Toggle Sign In/Sign Up */}
-              <div className="mt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-sm text-watt-bitcoin hover:text-watt-bitcoin/80 transition-colors"
-                >
-                  {isSignUp
-                    ? 'Already have an account? Sign in'
-                    : "Don't have an account? Sign up"
-                  }
-                </button>
-              </div>
-
-              {/* Mobile Benefits */}
-              <div className="mt-8 pt-6 border-t border-white/10 lg:hidden">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  {benefits.map((benefit) => (
-                    <div key={benefit.text} className="flex flex-col items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-watt-bitcoin" />
-                      <span className="text-xs text-white/60">{benefit.text.split(' ').slice(0, 2).join(' ')}</span>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-white/80">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
+                        required
+                      />
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-white/80">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10 bg-slate-900/50 border-white/20 text-white placeholder:text-white/40 focus:border-watt-bitcoin"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white shadow-lg shadow-watt-bitcoin/25 mt-6"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {isSignUp ? 'Creating Account...' : 'Signing In...'}
+                      </>
+                    ) : (
+                      isSignUp ? 'Create Account' : 'Sign In'
+                    )}
+                  </Button>
+                </form>
+
+                {/* Toggle Sign In/Sign Up */}
+                <div className="mt-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-sm text-watt-bitcoin hover:text-watt-bitcoin/80 transition-colors"
+                  >
+                    {isSignUp
+                      ? 'Already have an account? Sign in'
+                      : "Don't have an account? Sign up"
+                    }
+                  </button>
+                </div>
+
+                {/* Mobile Benefits */}
+                <div className="mt-8 pt-6 border-t border-white/10 lg:hidden">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    {benefits.map((benefit) => (
+                      <div key={benefit.text} className="flex flex-col items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-watt-bitcoin" />
+                        <span className="text-xs text-white/60">{benefit.text.split(' ').slice(0, 2).join(' ')}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       </div>
