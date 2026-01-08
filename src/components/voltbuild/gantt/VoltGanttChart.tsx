@@ -19,12 +19,17 @@ export interface GanttTask {
   id: string;
   phase_id: string;
   name: string;
-  status: 'not_started' | 'in_progress' | 'blocked' | 'complete';
+  status: string;
   is_critical_path: boolean;
   estimated_start_date: string | null;
   estimated_end_date: string | null;
-  actual_start_date: string | null;
-  actual_end_date: string | null;
+  actual_start_date?: string | null;
+  actual_end_date?: string | null;
+}
+
+interface GanttPhase {
+  id: string;
+  name: string;
 }
 
 interface TaskDependency {
@@ -36,13 +41,11 @@ interface TaskDependency {
 }
 
 interface VoltGanttChartProps {
-  phases: VoltBuildPhase[];
+  phases: GanttPhase[];
   tasks: GanttTask[];
   dependencies?: TaskDependency[];
-  startDate: Date;
-  endDate: Date;
   onTaskClick?: (task: GanttTask) => void;
-  onDependencyAdd?: (predecessorTaskId: string, successorTaskId: string) => void;
+  onDependencyCreate?: (predecessorTaskId: string, successorTaskId: string) => void;
 }
 
 const ZOOM_LEVELS = {
@@ -57,16 +60,38 @@ export function VoltGanttChart({
   phases,
   tasks,
   dependencies = [],
-  startDate,
-  endDate,
   onTaskClick,
-  onDependencyAdd,
+  onDependencyCreate,
 }: VoltGanttChartProps) {
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('week');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set(phases.map(p => p.id)));
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
   const [linkingFrom, setLinkingFrom] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Compute timeline bounds from tasks
+  const { startDate, endDate } = useMemo(() => {
+    const dates = tasks
+      .filter(t => t.estimated_start_date || t.estimated_end_date)
+      .flatMap(t => [
+        t.estimated_start_date ? parseISO(t.estimated_start_date) : null,
+        t.estimated_end_date ? parseISO(t.estimated_end_date) : null,
+      ])
+      .filter((d): d is Date => d !== null);
+
+    if (dates.length === 0) {
+      const today = new Date();
+      return { startDate: addDays(today, -7), endDate: addDays(today, 90) };
+    }
+
+    const minDate = dates.reduce((min, d) => d < min ? d : min, dates[0]);
+    const maxDate = dates.reduce((max, d) => d > max ? d : max, dates[0]);
+    
+    return {
+      startDate: addDays(minDate, -7),
+      endDate: addDays(maxDate, 14),
+    };
+  }, [tasks]);
   
   const config = ZOOM_LEVELS[zoomLevel];
 
@@ -134,12 +159,12 @@ export function VoltGanttChart({
 
   // Handle linking tasks
   const handleTaskLinkClick = (taskId: string) => {
-    if (!onDependencyAdd) return;
+    if (!onDependencyCreate) return;
     
     if (linkingFrom === null) {
       setLinkingFrom(taskId);
     } else if (linkingFrom !== taskId) {
-      onDependencyAdd(linkingFrom, taskId);
+      onDependencyCreate(linkingFrom, taskId);
       setLinkingFrom(null);
     } else {
       setLinkingFrom(null);
@@ -296,9 +321,20 @@ export function VoltGanttChart({
                 const phaseTasks = tasks.filter(t => t.phase_id === phase.id);
                 const isExpanded = expandedPhases.has(phase.id);
 
-                // Calculate phase bar dates
-                const phaseStart = phase.estimated_start_date ? parseISO(phase.estimated_start_date) : null;
-                const phaseEnd = phase.estimated_end_date ? parseISO(phase.estimated_end_date) : null;
+                // Calculate phase bar dates from phase tasks
+                const phaseTaskDates = phaseTasks
+                  .flatMap(t => [
+                    t.estimated_start_date ? parseISO(t.estimated_start_date) : null,
+                    t.estimated_end_date ? parseISO(t.estimated_end_date) : null,
+                  ])
+                  .filter((d): d is Date => d !== null);
+                
+                const phaseStart = phaseTaskDates.length > 0 
+                  ? phaseTaskDates.reduce((min, d) => d < min ? d : min, phaseTaskDates[0])
+                  : null;
+                const phaseEnd = phaseTaskDates.length > 0 
+                  ? phaseTaskDates.reduce((max, d) => d > max ? d : max, phaseTaskDates[0])
+                  : null;
 
                 return (
                   <div key={phase.id}>
@@ -362,7 +398,7 @@ export function VoltGanttChart({
                             >
                               {task.name}
                             </span>
-                            {onDependencyAdd && (
+                            {onDependencyCreate && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>

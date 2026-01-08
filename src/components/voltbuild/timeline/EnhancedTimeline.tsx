@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VoltBuildProject } from '../types/voltbuild.types';
 import { TimelineFilters, TimelineTask } from '../types/voltbuild-timeline.types';
 import { useTimelineData } from './hooks/useTimelineData';
@@ -14,9 +15,11 @@ import { TimelineGrid } from './TimelineGrid';
 import { TimelinePhaseRow } from './TimelinePhaseRow';
 import { TimelineMilestones } from './TimelineMilestones';
 import { TimelineMetricsPanel } from './TimelineMetricsPanel';
+import { VoltGanttChart } from '../gantt/VoltGanttChart';
+import { useTaskDependencies } from '../gantt/hooks/useTaskDependencies';
 import { parseISO, addDays, format } from 'date-fns';
 import { toast } from 'sonner';
-import { CheckCircle2, AlertTriangle, Zap, Calendar, Link } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Zap, Calendar, Link, GanttChart, LayoutList } from 'lucide-react';
 
 interface EnhancedTimelineProps {
   project: VoltBuildProject;
@@ -34,6 +37,23 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
   });
 
   const { phases, milestones, metrics, isLoading } = useTimelineData(project.id);
+  const { dependencies, createDependency } = useTaskDependencies(project.id);
+
+  // Flatten tasks for Gantt chart
+  const allTasks = useMemo(() => {
+    return phases.flatMap(phase => 
+      phase.tasks.map(task => ({
+        id: task.id,
+        name: task.title,
+        phase_id: phase.id,
+        phase_name: phase.name,
+        status: task.status,
+        estimated_start_date: task.estimated_start_date,
+        estimated_end_date: task.estimated_end_date,
+        is_critical_path: task.is_critical,
+      }))
+    );
+  }, [phases]);
 
   // Calculate timeline bounds
   const { startDate, endDate } = useMemo(() => {
@@ -80,6 +100,15 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
     );
   }
 
+  const handleDependencyCreate = (predecessorId: string, successorId: string) => {
+    createDependency({
+      predecessorTaskId: predecessorId,
+      successorTaskId: successorId,
+      dependencyType: 'finish_to_start',
+      lagDays: 0,
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* Metrics Panel */}
@@ -88,18 +117,33 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
       {/* Main Timeline Card */}
       <Card>
         <CardContent className="p-4">
-          {/* Header */}
-          <TimelineHeader
-            zoomLevel={zoomLevel}
-            onZoomChange={setZoomLevel}
-            filters={filters}
-            onFiltersChange={setFilters}
-            metrics={metrics}
-            onExport={handleExport}
-          />
+          <Tabs defaultValue="timeline" className="w-full">
+            <div className="flex items-center justify-between mb-4">
+              <TabsList>
+                <TabsTrigger value="timeline" className="flex items-center gap-2">
+                  <LayoutList className="w-4 h-4" />
+                  Timeline
+                </TabsTrigger>
+                <TabsTrigger value="gantt" className="flex items-center gap-2">
+                  <GanttChart className="w-4 h-4" />
+                  Gantt Chart
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          {/* Timeline Container */}
-          <div className="mt-4 border rounded-lg overflow-hidden">
+            <TabsContent value="timeline" className="mt-0">
+              {/* Header */}
+              <TimelineHeader
+                zoomLevel={zoomLevel}
+                onZoomChange={setZoomLevel}
+                filters={filters}
+                onFiltersChange={setFilters}
+                metrics={metrics}
+                onExport={handleExport}
+              />
+
+              {/* Timeline Container */}
+              <div className="mt-4 border rounded-lg overflow-hidden">
             <ScrollArea className="w-full" ref={scrollRef}>
               <div className="min-w-[800px]" style={{ width: Math.max(totalWidth + 256, 800) }}>
                 {/* Grid with Date Headers */}
@@ -159,33 +203,44 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
             </ScrollArea>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground flex-wrap">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-green-500" />
-              <span>Complete</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-blue-500" />
-              <span>In Progress</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-gray-400" />
-              <span>Not Started</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-red-500" />
-              <span>Blocked</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm bg-orange-500 ring-2 ring-orange-500 ring-offset-1" />
-              <span>Critical Path</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-0.5 h-4 bg-primary" />
-              <span>Today</span>
-            </div>
-          </div>
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground flex-wrap">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-sm bg-green-500" />
+                  <span>Complete</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-sm bg-blue-500" />
+                  <span>In Progress</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-sm bg-gray-400" />
+                  <span>Not Started</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-sm bg-red-500" />
+                  <span>Blocked</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-sm bg-orange-500 ring-2 ring-orange-500 ring-offset-1" />
+                  <span>Critical Path</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-0.5 h-4 bg-primary" />
+                  <span>Today</span>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="gantt" className="mt-0">
+              <VoltGanttChart
+                phases={phases.map(p => ({ id: p.id, name: p.name }))}
+                tasks={allTasks}
+                dependencies={dependencies}
+                onDependencyCreate={handleDependencyCreate}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
