@@ -264,8 +264,26 @@ export function VoltLaborTab({ project, phases }: VoltLaborTabProps) {
                   </SelectContent>
                 </Select>
               </div>
+              {phases.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Phase</Label>
+                  <Select 
+                    value={form.phase_id} 
+                    onValueChange={(v) => setForm(f => ({ ...f, phase_id: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select phase" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {phases.map(phase => (
+                        <SelectItem key={phase.id} value={phase.id}>{phase.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="col-span-2">
-                <Button 
+                <Button
                   className="w-full" 
                   onClick={handleCreate}
                   disabled={!form.headcount || isCreating}
