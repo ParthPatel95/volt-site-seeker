@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat, Lock } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat, Lock, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
@@ -274,6 +274,27 @@ const curriculum: Module[] = [
       { title: "Environmental Compliance", anchor: "environmental" },
       { title: "Site Engineering", anchor: "site" },
       { title: "Timeline & Costs", anchor: "timeline" },
+    ],
+  },
+  {
+    id: "networking",
+    title: "Networking Masterclass",
+    description: "Network infrastructure design for Bitcoin mining facilities. ISP selection, redundancy, VLAN design, and pool connectivity using our Alberta 45MW site.",
+    icon: Network,
+    route: "/networking",
+    category: "masterclass",
+    difficulty: "Advanced",
+    lessons: [
+      { title: "Introduction", anchor: "intro" },
+      { title: "ISP Options", anchor: "connectivity" },
+      { title: "Redundancy", anchor: "redundancy" },
+      { title: "Topology", anchor: "topology" },
+      { title: "IP Management", anchor: "ip-management" },
+      { title: "Pool Connectivity", anchor: "pool-connectivity" },
+      { title: "Security", anchor: "security" },
+      { title: "Monitoring", anchor: "monitoring" },
+      { title: "Hardware", anchor: "hardware" },
+      { title: "45MW Case Study", anchor: "case-study" },
     ],
   },
 ];

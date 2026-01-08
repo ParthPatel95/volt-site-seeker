@@ -29,6 +29,7 @@ import OperationsEducation from "./pages/OperationsEducation";
 import StrategicOperationsMasterclass from "./pages/StrategicOperationsMasterclass";
 import TaxesInsuranceEducation from "./pages/TaxesInsuranceEducation";
 import EngineeringPermittingEducation from "./pages/EngineeringPermittingEducation";
+import NetworkingEducation from "./pages/NetworkingEducation";
 import Academy from "./pages/Academy";
 import AcademyAuth from "./pages/AcademyAuth";
 import AcademyAdmin from "./pages/AcademyAdmin";
@@ -99,6 +100,7 @@ const App = () => (
                 <Route path="/strategic-operations" element={<AcademyAuthProvider><AcademyAuthGuard><StrategicOperationsMasterclass /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/taxes-insurance" element={<AcademyAuthProvider><AcademyAuthGuard><TaxesInsuranceEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/engineering-permitting" element={<AcademyAuthProvider><AcademyAuthGuard><EngineeringPermittingEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/networking" element={<AcademyAuthProvider><AcademyAuthGuard><NetworkingEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
                 {navItems.map(({ to, page }) => (
                   <Route key={to} path={to} element={page} />
                 ))}
