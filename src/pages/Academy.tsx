@@ -4,8 +4,6 @@ import { AcademyHeroSection } from "@/components/academy/AcademyHeroSection";
 import { CurriculumSection } from "@/components/academy/CurriculumSection";
 import { AcademyCTASection } from "@/components/academy/AcademyCTASection";
 import { ContinueLearningBar } from "@/components/academy/ContinueLearningBar";
-import { AcademyUserMenu } from "@/components/academy/AcademyUserMenu";
-import { useAcademyAuth } from "@/contexts/AcademyAuthContext";
 import { useEffect } from "react";
 
 // Module info for progress tracking
