@@ -64,6 +64,8 @@ serve(async (req) => {
     const recipientName = full_name || 'Learner';
 
     // Send verification email via Resend
+    // NOTE: Update 'from' address to verified custom domain for production
+    // e.g., "WattByte Academy <noreply@yourdomain.com>"
     const emailResponse = await resend.emails.send({
       from: "WattByte Academy <onboarding@resend.dev>",
       to: [email],
@@ -149,6 +151,23 @@ serve(async (req) => {
         </html>
       `,
     });
+
+    if (emailResponse.error) {
+      console.error("Resend error details:", {
+        error: emailResponse.error,
+        email,
+        user_id
+      });
+      
+      const errorMessage = emailResponse.error.message || "Unknown email error";
+      if (errorMessage.includes("API key")) {
+        throw new Error("Email service configuration error. Please contact support.");
+      }
+      if (errorMessage.includes("domain")) {
+        throw new Error("Email domain not verified. Please contact support.");
+      }
+      throw new Error(`Failed to send verification email: ${errorMessage}`);
+    }
 
     console.log('Verification email sent:', emailResponse);
 
