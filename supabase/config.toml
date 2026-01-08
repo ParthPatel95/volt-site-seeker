@@ -253,3 +253,9 @@ verify_jwt = false
 
 [functions.miner-controller]
 verify_jwt = false
+
+[functions.send-academy-verification-email]
+verify_jwt = false
+
+[functions.verify-academy-email]
+verify_jwt = false

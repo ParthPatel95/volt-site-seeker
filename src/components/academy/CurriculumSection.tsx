@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
+import { useAcademyAuth } from "@/contexts/AcademyAuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface Lesson {
   title: string;
@@ -293,14 +295,26 @@ const difficultyBadges = {
 const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { academyUser } = useAcademyAuth();
   const { getModuleProgress, allProgress } = useAllModulesProgress();
   
   const progress = getModuleProgress(module.id, module.lessons.length);
   const moduleProgress = allProgress[module.id];
   const completedSections = moduleProgress?.completedSections || [];
   const diffBadge = difficultyBadges[module.difficulty];
+  
+  const isEmailVerified = academyUser?.is_email_verified ?? false;
 
   const handleLessonClick = (lesson: Lesson) => {
+    if (!isEmailVerified) {
+      toast({
+        title: 'Email Verification Required',
+        description: 'Please verify your email to access course content.',
+        variant: 'destructive'
+      });
+      return;
+    }
     if (lesson.anchor) {
       navigate(`${module.route}#${lesson.anchor}`);
     } else {
@@ -310,6 +324,14 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
 
   const handleStartModule = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isEmailVerified) {
+      toast({
+        title: 'Email Verification Required',
+        description: 'Please verify your email to start courses.',
+        variant: 'destructive'
+      });
+      return;
+    }
     navigate(module.route);
   };
 
@@ -392,8 +414,17 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
           <Button
             size="sm"
             onClick={handleStartModule}
+            disabled={!isEmailVerified && !progress.isStarted}
+            className={!isEmailVerified ? "opacity-70" : ""}
           >
-            {progress.isComplete ? "Review" : progress.isStarted ? "Continue" : "Start"}
+            {!isEmailVerified ? (
+              <>
+                <Lock className="w-3 h-3 mr-1" />
+                Verify Email
+              </>
+            ) : (
+              progress.isComplete ? "Review" : progress.isStarted ? "Continue" : "Start"
+            )}
           </Button>
         </div>
       </div>

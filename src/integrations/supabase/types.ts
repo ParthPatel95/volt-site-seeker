@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_email_verification_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       academy_module_starts: {
         Row: {
           id: string
@@ -129,6 +159,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_email_verified: boolean
           job_title: string | null
           last_activity_at: string | null
           user_id: string
@@ -139,6 +170,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          is_email_verified?: boolean
           job_title?: string | null
           last_activity_at?: string | null
           user_id: string
@@ -149,6 +181,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_email_verified?: boolean
           job_title?: string | null
           last_activity_at?: string | null
           user_id?: string

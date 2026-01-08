@@ -11,6 +11,7 @@ interface AcademyUser {
   job_title: string | null;
   created_at: string;
   last_activity_at: string | null;
+  is_email_verified: boolean;
 }
 
 interface AcademyAuthContextType {
@@ -23,6 +24,8 @@ interface AcademyAuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Pick<AcademyUser, 'full_name' | 'company' | 'job_title'>>) => Promise<{ error: Error | null }>;
+  resendEmailVerification: () => Promise<{ error: Error | null }>;
+  refreshAcademyUser: () => Promise<void>;
 }
 
 const AcademyAuthContext = createContext<AcademyAuthContextType | undefined>(undefined);
@@ -132,12 +135,18 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
             user_id: data.user.id,
             email: email,
             full_name: fullName || null,
-            company: company || null
+            company: company || null,
+            is_email_verified: false
           });
 
         if (profileError) {
           console.error('Error creating academy profile:', profileError);
         }
+
+        // Send verification email
+        await supabase.functions.invoke('send-academy-verification-email', {
+          body: { email, user_id: data.user.id, full_name: fullName }
+        });
       }
 
       return { error: null };
@@ -186,6 +195,35 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   };
 
+  const resendEmailVerification = async () => {
+    if (!user || !academyUser) return { error: new Error('Not authenticated') };
+
+    try {
+      const response = await supabase.functions.invoke('send-academy-verification-email', {
+        body: {
+          email: academyUser.email,
+          user_id: user.id,
+          full_name: academyUser.full_name,
+        }
+      });
+
+      if (response.error) {
+        return { error: response.error };
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  const refreshAcademyUser = async () => {
+    if (user) {
+      const academyData = await fetchAcademyUser(user.id);
+      setAcademyUser(academyData);
+    }
+  };
+
   return (
     <AcademyAuthContext.Provider
       value={{
@@ -197,7 +235,9 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
         signUp,
         signIn,
         signOut,
-        updateProfile
+        updateProfile,
+        resendEmailVerification,
+        refreshAcademyUser
       }}
     >
       {children}
