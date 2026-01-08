@@ -34,6 +34,12 @@ import { VoltForecastingTab } from './forecasting/VoltForecastingTab';
 import { VoltUtilityMonitorTab } from './utilitymonitor/VoltUtilityMonitorTab';
 import { VoltSafetyTab } from './safety/VoltSafetyTab';
 
+// Phase 4 Tabs - Enhanced Construction Management
+import { VoltRFITab } from './rfi/VoltRFITab';
+import { VoltPunchListTab } from './punchlist/VoltPunchListTab';
+import { VoltSubcontractorsTab } from './subcontractors/VoltSubcontractorsTab';
+import { VoltLaborTab } from './labor/VoltLaborTab';
+
 import { useVoltBuildProjects } from './hooks/useVoltBuildProjects';
 import { useVoltBuildPhases } from './hooks/useVoltBuildPhases';
 import { useVoltBuildRisks } from './hooks/useVoltBuildRisks';
@@ -565,6 +571,39 @@ export function VoltBuildPage() {
           <div className="p-4 sm:p-6">
             <h1 className="text-2xl font-bold text-foreground mb-6">Compliance & Safety</h1>
             <VoltSafetyTab project={selectedProject} />
+          </div>
+        );
+
+      // Phase 4 Views - Enhanced Construction Management
+      case 'rfis':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">RFIs</h1>
+            <VoltRFITab project={selectedProject} phases={phases} />
+          </div>
+        );
+
+      case 'punchlist':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Punch List</h1>
+            <VoltPunchListTab project={selectedProject} phases={phases} />
+          </div>
+        );
+
+      case 'subcontractors':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Subcontractors</h1>
+            <VoltSubcontractorsTab project={selectedProject} />
+          </div>
+        );
+
+      case 'labor':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Labor Tracking</h1>
+            <VoltLaborTab project={selectedProject} phases={phases} />
           </div>
         );
 
