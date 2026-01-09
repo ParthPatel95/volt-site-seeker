@@ -28,6 +28,7 @@ import {
   BarChart3,
   Zap,
   AlertTriangle,
+  AlertOctagon,
   Calculator,
   CloudRain,
   PieChart,
@@ -57,6 +58,7 @@ import { TwelveCPAnalyticsTab } from './TwelveCPAnalyticsTab';
 import { useEnergyCredits, CreditSettings, defaultCreditSettings } from '@/hooks/useEnergyCredits';
 import { CreditSettingsPanel } from './CreditSettingsPanel';
 import { CreditSummaryCard } from './CreditSummaryCard';
+import { AESOCurtailmentAnalysis } from './AESOCurtailmentAnalysis';
 
 const OVERVIEW_CREDIT_SETTINGS_KEY = 'aeso-overview-credit-settings';
 
@@ -1357,7 +1359,7 @@ export function AESOHistoricalPricing() {
           </div>
 
           {/* 5 Primary Feature Tabs */}
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 h-auto p-1.5 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-1 h-auto p-1.5 bg-muted/50">
             <TabsTrigger 
               value="overview" 
               className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
@@ -1371,6 +1373,13 @@ export function AESOHistoricalPricing() {
             >
               <BarChart3 className="w-4 h-4 flex-shrink-0" />
               <span className="text-xs sm:text-sm font-medium">Uptime Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="curtailment" 
+              className="flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
+            >
+              <AlertOctagon className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Curtailment</span>
             </TabsTrigger>
             <TabsTrigger 
               value="12cp" 
@@ -2294,6 +2303,21 @@ export function AESOHistoricalPricing() {
                </div>
              </CardContent>
            </Card>
+         </TabsContent>
+
+         {/* Curtailment Analysis Tab */}
+         <TabsContent value="curtailment" className="space-y-4">
+           <AESOCurtailmentAnalysis 
+             rawHourlyData={currentRawData}
+             loading={selectedTimePeriod === 'daily' ? loadingDaily 
+                   : selectedTimePeriod === 'monthly' ? loadingMonthly 
+                   : selectedTimePeriod === 'yearly' ? loadingYearly 
+                   : loadingHistoricalTenYear}
+             timePeriodLabel={selectedTimePeriod === 'daily' ? '24 hours'
+                           : selectedTimePeriod === 'monthly' ? '30 days'
+                           : selectedTimePeriod === 'yearly' ? '12 months'
+                           : '8 years'}
+           />
          </TabsContent>
 
          {/* 12CP & Reserves Tab */}
