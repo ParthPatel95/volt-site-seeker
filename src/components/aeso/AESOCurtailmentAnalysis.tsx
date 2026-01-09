@@ -56,6 +56,7 @@ interface AESOCurtailmentAnalysisProps {
   rawHourlyData: RawHourlyData[];
   loading: boolean;
   timePeriodLabel: string;
+  isHistoricalView?: boolean;
 }
 
 const PRESET_THRESHOLDS = [50, 60, 75, 100, 150, 200];
@@ -63,8 +64,27 @@ const PRESET_THRESHOLDS = [50, 60, 75, 100, 150, 200];
 export function AESOCurtailmentAnalysis({ 
   rawHourlyData, 
   loading, 
-  timePeriodLabel 
+  timePeriodLabel,
+  isHistoricalView = false
 }: AESOCurtailmentAnalysisProps) {
+  
+  // Show message for historical view (no hourly data available)
+  if (isHistoricalView) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <AlertOctagon className="w-12 h-12 mx-auto mb-3 text-amber-500" />
+          <h3 className="font-semibold text-lg mb-2">Historical View Not Supported</h3>
+          <p className="text-muted-foreground mb-4">
+            Curtailment analysis requires hourly price data. The 8-year historical view only contains yearly summaries.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Switch to 30-day, 90-day, or 12-month view to analyze price curtailment events with hourly granularity.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
   const { formatCurrency } = useCurrencyConversion();
   const [priceThreshold, setPriceThreshold] = useState<number>(60);
   const [customThreshold, setCustomThreshold] = useState<string>('60');

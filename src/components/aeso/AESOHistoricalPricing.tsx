@@ -113,8 +113,8 @@ export function AESOHistoricalPricing() {
     localStorage.setItem(OVERVIEW_CREDIT_SETTINGS_KEY, JSON.stringify(creditSettings));
   }, [creditSettings]);
 
-  // Get current raw hourly data based on selected time period
-  const currentRawData = useMemo(() => {
+  // Get current raw hourly data based on selected time period (for energy credits - needs HourlyDataPoint format)
+  const currentRawDataForCredits = useMemo(() => {
     const data = selectedTimePeriod === 'daily' ? dailyData 
               : selectedTimePeriod === 'monthly' ? monthlyData 
               : selectedTimePeriod === 'yearly' ? yearlyData 
@@ -122,8 +122,30 @@ export function AESOHistoricalPricing() {
     return data?.rawHourlyData || [];
   }, [selectedTimePeriod, dailyData, monthlyData, yearlyData, historicalTenYearData]);
 
+  // Get raw hourly data for curtailment analysis (includes custom periods)
+  const currentRawDataForCurtailment = useMemo(() => {
+    // For custom periods (90+ days), use customPeriodData if available
+    const daysInPeriod = parseInt(timePeriod);
+    if (daysInPeriod > 30 && customPeriodData?.rawHourlyData && customPeriodData.rawHourlyData.length > 0) {
+      return customPeriodData.rawHourlyData;
+    }
+    
+    // For historical view, no hourly data available
+    if (selectedTimePeriod === 'historical') {
+      return [];
+    }
+    
+    // For standard views
+    const data = selectedTimePeriod === 'daily' ? dailyData 
+              : selectedTimePeriod === 'monthly' ? monthlyData 
+              : selectedTimePeriod === 'yearly' ? yearlyData 
+              : null;
+    
+    return data?.rawHourlyData || [];
+  }, [selectedTimePeriod, timePeriod, dailyData, monthlyData, yearlyData, customPeriodData]);
+
   // Apply energy credits to current data
-  const { adjustedData, creditSummary } = useEnergyCredits(currentRawData, creditSettings);
+  const { adjustedData, creditSummary } = useEnergyCredits(currentRawDataForCredits, creditSettings);
 
 
   useEffect(() => {
@@ -1447,7 +1469,7 @@ export function AESOHistoricalPricing() {
           />
 
           {/* Credit Summary Card - Show when credits enabled */}
-          {creditSettings.enabled && currentRawData.length > 0 && (
+          {creditSettings.enabled && currentRawDataForCredits.length > 0 && (
             <CreditSummaryCard summary={creditSummary} unit="mwh" />
           )}
 
@@ -2308,15 +2330,14 @@ export function AESOHistoricalPricing() {
          {/* Curtailment Analysis Tab */}
          <TabsContent value="curtailment" className="space-y-4">
            <AESOCurtailmentAnalysis 
-             rawHourlyData={currentRawData}
-             loading={selectedTimePeriod === 'daily' ? loadingDaily 
+             rawHourlyData={currentRawDataForCurtailment}
+             loading={parseInt(timePeriod) > 30 ? loadingCustomPeriod 
+                   : selectedTimePeriod === 'daily' ? loadingDaily 
                    : selectedTimePeriod === 'monthly' ? loadingMonthly 
                    : selectedTimePeriod === 'yearly' ? loadingYearly 
-                   : loadingHistoricalTenYear}
-             timePeriodLabel={selectedTimePeriod === 'daily' ? '24 hours'
-                           : selectedTimePeriod === 'monthly' ? '30 days'
-                           : selectedTimePeriod === 'yearly' ? '12 months'
-                           : '8 years'}
+                   : false}
+             timePeriodLabel={`${timePeriod} days`}
+             isHistoricalView={selectedTimePeriod === 'historical'}
            />
          </TabsContent>
 
