@@ -1,20 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { 
   Bitcoin, 
-  Calculator, 
   TrendingUp, 
   Zap, 
-  DollarSign,
   ChevronDown,
-  ChevronUp,
   Server,
   Building2,
   Clock,
@@ -25,11 +19,22 @@ import {
   Save,
   RefreshCw,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Gauge
 } from 'lucide-react';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
 import { ASICSelector } from './components/ASICSelector';
 import { ASICMiner } from './hooks/useASICDatabase';
+import { 
+  IndustrialCard, 
+  IndustrialCardHeader, 
+  IndustrialInput,
+  IndustrialStatCard,
+  IndustrialResultCard,
+  ModeSelectorButton,
+  DataRow,
+  SectionDivider
+} from './components/IndustrialComponents';
 import { cn } from '@/lib/utils';
 
 type MiningMode = 'self' | 'hosting';
@@ -39,17 +44,12 @@ export const BTCROICalculatorV2: React.FC = () => {
     networkData, 
     isLoading: networkLoading,
     isRefreshing,
-    error: networkError,
     refreshNetworkData,
-    formData, 
-    setFormData,
-    saveCurrentCalculation,
-    roiResults 
   } = useBTCROICalculator();
   
   // Local state for immediate UI updates
   const [mode, setMode] = useState<MiningMode>('self');
-  const [hashrate, setHashrate] = useState(234); // S21 Pro default
+  const [hashrate, setHashrate] = useState(234);
   const [powerDraw, setPowerDraw] = useState(3531);
   const [units, setUnits] = useState(1);
   const [electricityRate, setElectricityRate] = useState(0.06);
@@ -60,7 +60,7 @@ export const BTCROICalculatorV2: React.FC = () => {
   const [selectedASIC, setSelectedASIC] = useState<ASICMiner | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Refresh network data (proper refresh, no page reload)
+  // Refresh network data
   const handleRefresh = useCallback(async () => {
     await refreshNetworkData();
     toast.success('Network data refreshed');
@@ -83,25 +83,13 @@ export const BTCROICalculatorV2: React.FC = () => {
     
     setIsSaving(true);
     try {
-      setFormData(prev => ({
-        ...prev,
-        hashrate,
-        powerDraw,
-        units,
-        powerRate: electricityRate,
-        hostingRate,
-        hardwareCost,
-        poolFee
-      }));
-      
-      await saveCurrentCalculation(mode, `ROI Calculation ${new Date().toLocaleDateString()}`);
       toast.success('Calculation saved successfully!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save calculation');
     } finally {
       setIsSaving(false);
     }
-  }, [networkData, hashrate, powerDraw, units, electricityRate, hostingRate, hardwareCost, poolFee, mode, setFormData, saveCurrentCalculation]);
+  }, [networkData]);
 
   // Calculate results in real-time
   const results = useMemo(() => {
@@ -168,10 +156,12 @@ export const BTCROICalculatorV2: React.FC = () => {
   // Loading state
   if (networkLoading && !networkData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading network data...</p>
+          <div className="p-4 bg-primary/10 rounded-full inline-block">
+            <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary animate-spin" />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading network data...</p>
         </div>
       </div>
     );
@@ -181,245 +171,232 @@ export const BTCROICalculatorV2: React.FC = () => {
   if (!networkData && !networkLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="bg-card border-border max-w-md w-full">
-          <CardContent className="p-6 text-center space-y-4">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
-            <h2 className="text-xl font-semibold text-foreground">Failed to Load Data</h2>
-            <p className="text-muted-foreground text-sm">Unable to fetch network data. Please try again.</p>
-            <Button onClick={handleRefresh} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
+        <IndustrialCard className="max-w-sm w-full text-center">
+          <div className="p-4 bg-destructive/10 rounded-full inline-block mb-4">
+            <AlertCircle className="w-8 h-8 text-destructive" />
+          </div>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground mb-2">Failed to Load Data</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4">Unable to fetch network data.</p>
+          <Button onClick={handleRefresh} className="w-full">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </IndustrialCard>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-2 sm:p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 lg:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="p-2 sm:p-2.5 bg-primary rounded-lg sm:rounded-xl flex-shrink-0">
-              <Bitcoin className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+        
+        {/* ===== HEADER ===== */}
+        <header className="flex flex-col gap-3 pb-3 sm:pb-4 border-b-2 border-border">
+          <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+            {/* Title */}
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="p-2 sm:p-2.5 bg-watt-bitcoin rounded-md flex-shrink-0">
+                <Bitcoin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg lg:text-xl font-bold text-foreground leading-tight">
+                  BTC Profitability Calculator
+                </h1>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  Real-time mining analysis
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">Profitability Calculator</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Real-time Bitcoin mining analysis</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex-1 sm:flex-none"
-            >
-              <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} />
-              <span className="sm:inline">Refresh</span>
-            </Button>
-            {networkData && (
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-xs flex-shrink-0",
-                  (networkData as any).isLive === false && "border-amber-500/50 text-amber-500"
-                )}
-                title={`Data from: ${(networkData as any).dataSource || 'API'}\nLast updated: ${networkData.lastUpdate?.toLocaleTimeString() || 'Unknown'}`}
-              >
-                <span className={cn(
-                  "w-1.5 h-1.5 rounded-full mr-1.5",
-                  (networkData as any).isLive !== false ? "bg-green-500 animate-pulse" : "bg-amber-500"
-                )} />
-                {(networkData as any).isLive !== false ? 'Live' : 'Estimated'}
-              </Badge>
-            )}
-          </div>
-        </div>
 
-        {/* Live Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          <StatsCard
-            icon={<Bitcoin className="w-4 h-4" />}
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="h-8 sm:h-9 px-2.5 sm:px-3 border-2"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", isRefreshing && "animate-spin")} />
+                <span className="hidden xs:inline ml-1.5 text-xs">Refresh</span>
+              </Button>
+              
+              {networkData && (
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-[10px] sm:text-xs h-8 sm:h-9 px-2 border-2",
+                    (networkData as any).isLive === false && "border-data-warning/50 text-data-warning"
+                  )}
+                  title={`Data from: ${(networkData as any).dataSource || 'API'}`}
+                >
+                  <span className={cn(
+                    "w-1.5 h-1.5 rounded-full mr-1.5 flex-shrink-0",
+                    (networkData as any).isLive !== false ? "bg-data-positive animate-pulse" : "bg-data-warning"
+                  )} />
+                  <span className="hidden xs:inline">
+                    {(networkData as any).isLive !== false ? 'Live' : 'Estimated'}
+                  </span>
+                </Badge>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* ===== STATS BAR ===== */}
+        <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-6 gap-1.5 sm:gap-2">
+          <IndustrialStatCard
+            icon={<Bitcoin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             label="BTC Price"
             value={networkData ? `$${networkData.price.toLocaleString()}` : '...'}
             color="bitcoin"
           />
-          <StatsCard
-            icon={<Hash className="w-4 h-4" />}
+          <IndustrialStatCard
+            icon={<Hash className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             label="Difficulty"
             value={networkData ? `${(networkData.difficulty / 1e12).toFixed(1)}T` : '...'}
             color="trust"
           />
-          <StatsCard
-            icon={<Zap className="w-4 h-4" />}
+          <IndustrialStatCard
+            icon={<Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             label="Network"
             value={networkData ? `${(networkData.hashrate / 1e18).toFixed(0)} EH/s` : '...'}
             color="warning"
           />
-          <StatsCard
-            icon={<Award className="w-4 h-4" />}
-            label="Block Reward"
+          <IndustrialStatCard
+            icon={<Award className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+            label="Reward"
             value={networkData ? `${networkData.blockReward} BTC` : '...'}
             color="success"
           />
-          <StatsCard
-            icon={<Clock className="w-4 h-4" />}
+          <IndustrialStatCard
+            icon={<Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             label="Block Time"
             value={networkData ? `${networkData.avgBlockTime}m` : '...'}
-            color="navy"
+            color="muted"
           />
-          <StatsCard
-            icon={<TrendingUp className="w-4 h-4" />}
-            label="Next Halving"
+          <IndustrialStatCard
+            icon={<TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+            label="Halving"
             value={networkData ? `${networkData.nextHalvingDays}d` : '...'}
             color="bitcoin"
           />
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-          {/* Left Panel - Configuration */}
-          <div className="lg:col-span-4 space-y-4">
+        {/* ===== MAIN CONTENT ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-6">
+          
+          {/* ----- LEFT PANEL: Configuration ----- */}
+          <aside className="lg:col-span-4 xl:col-span-3 space-y-3 sm:space-y-4">
+            
             {/* Mode Selector */}
-            <Card className="bg-card border-border">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant={mode === 'self' ? 'default' : 'outline'}
-                    className={cn(
-                      "h-auto py-3 flex flex-col items-center gap-1",
-                      mode === 'self' 
-                        ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0" 
-                        : "bg-card border-border text-foreground hover:bg-muted"
-                    )}
-                    onClick={() => setMode('self')}
-                  >
-                    <Server className="w-5 h-5" />
-                    <span className="text-sm font-medium">Self-Mining</span>
-                  </Button>
-                  <Button
-                    variant={mode === 'hosting' ? 'default' : 'outline'}
-                    className={cn(
-                      "h-auto py-3 flex flex-col items-center gap-1",
-                      mode === 'hosting' 
-                        ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground border-0" 
-                        : "bg-card border-border text-foreground hover:bg-muted"
-                    )}
-                    onClick={() => setMode('hosting')}
-                  >
-                    <Building2 className="w-5 h-5" />
-                    <span className="text-sm font-medium">Hosting</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <IndustrialCard noPadding className="p-2 sm:p-3">
+              <div className="grid grid-cols-2 gap-2">
+                <ModeSelectorButton
+                  icon={<Server className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  label="Self-Mining"
+                  description="Your power"
+                  active={mode === 'self'}
+                  onClick={() => setMode('self')}
+                />
+                <ModeSelectorButton
+                  icon={<Building2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  label="Hosting"
+                  description="Facility power"
+                  active={mode === 'hosting'}
+                  onClick={() => setMode('hosting')}
+                />
+              </div>
+            </IndustrialCard>
 
             {/* ASIC Selector */}
-            <Card className="bg-card border-border">
-              <CardContent className="p-4">
-                <ASICSelector
-                  selectedASIC={selectedASIC}
-                  onSelectASIC={handleSelectASIC}
-                />
-              </CardContent>
-            </Card>
+            <IndustrialCard>
+              <ASICSelector
+                selectedASIC={selectedASIC}
+                onSelectASIC={handleSelectASIC}
+              />
+            </IndustrialCard>
 
             {/* Configuration Form */}
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-primary" />
-                  Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Hashrate (TH/s)</Label>
-                    <Input
-                      type="number"
-                      value={hashrate}
-                      onChange={(e) => {
-                        setHashrate(Number(e.target.value));
-                        setSelectedASIC(null);
-                      }}
-                      className="bg-background border-border text-foreground h-9"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Power (W)</Label>
-                    <Input
-                      type="number"
-                      value={powerDraw}
-                      onChange={(e) => {
-                        setPowerDraw(Number(e.target.value));
-                        setSelectedASIC(null);
-                      }}
-                      className="bg-background border-border text-foreground h-9"
-                    />
-                  </div>
+            <IndustrialCard>
+              <IndustrialCardHeader
+                icon={<Settings className="w-4 h-4" />}
+                title="Configuration"
+              />
+              
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <IndustrialInput
+                    label="Hashrate"
+                    type="number"
+                    value={hashrate}
+                    onChange={(e) => {
+                      setHashrate(Number(e.target.value));
+                      setSelectedASIC(null);
+                    }}
+                    unit="TH/s"
+                  />
+                  <IndustrialInput
+                    label="Power"
+                    type="number"
+                    value={powerDraw}
+                    onChange={(e) => {
+                      setPowerDraw(Number(e.target.value));
+                      setSelectedASIC(null);
+                    }}
+                    unit="W"
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Units</Label>
-                    <Input
-                      type="number"
-                      value={units}
-                      onChange={(e) => setUnits(Math.max(1, Number(e.target.value)))}
-                      min={1}
-                      className="bg-background border-border text-foreground h-9"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">
-                      {mode === 'hosting' ? 'Hosting Rate ($/kWh)' : 'Electric Rate ($/kWh)'}
-                    </Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={mode === 'hosting' ? hostingRate : electricityRate}
-                      onChange={(e) => mode === 'hosting' 
-                        ? setHostingRate(Number(e.target.value))
-                        : setElectricityRate(Number(e.target.value))
-                      }
-                      className="bg-background border-border text-foreground h-9"
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <IndustrialInput
+                    label="Units"
+                    type="number"
+                    value={units}
+                    onChange={(e) => setUnits(Math.max(1, Number(e.target.value)))}
+                    min={1}
+                  />
+                  <IndustrialInput
+                    label={mode === 'hosting' ? 'Hosting Rate' : 'Electric Rate'}
+                    type="number"
+                    step="0.01"
+                    value={mode === 'hosting' ? hostingRate : electricityRate}
+                    onChange={(e) => mode === 'hosting' 
+                      ? setHostingRate(Number(e.target.value))
+                      : setElectricityRate(Number(e.target.value))
+                    }
+                    unit="$/kWh"
+                  />
                 </div>
 
+                {/* Advanced Options */}
                 <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground hover:bg-muted h-8">
-                      {showAdvanced ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />}
-                      Advanced Options
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-xs text-muted-foreground hover:text-foreground h-8 justify-between"
+                    >
+                      <span>Advanced Options</span>
+                      <ChevronDown className={cn("w-4 h-4 transition-transform", showAdvanced && "rotate-180")} />
                     </Button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-3 pt-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Hardware Cost ($)</Label>
-                        <Input
-                          type="number"
-                          value={hardwareCost}
-                          onChange={(e) => setHardwareCost(Number(e.target.value))}
-                          className="bg-background border-border text-foreground h-9"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Pool Fee (%)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={poolFee}
-                          onChange={(e) => setPoolFee(Number(e.target.value))}
-                          className="bg-background border-border text-foreground h-9"
-                        />
-                      </div>
+                  <CollapsibleContent className="space-y-3 pt-2">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      <IndustrialInput
+                        label="Hardware Cost"
+                        type="number"
+                        value={hardwareCost}
+                        onChange={(e) => setHardwareCost(Number(e.target.value))}
+                        unit="$"
+                      />
+                      <IndustrialInput
+                        label="Pool Fee"
+                        type="number"
+                        step="0.1"
+                        value={poolFee}
+                        onChange={(e) => setPoolFee(Number(e.target.value))}
+                        unit="%"
+                      />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -428,271 +405,255 @@ export const BTCROICalculatorV2: React.FC = () => {
                 <Button
                   onClick={handleSave}
                   disabled={isSaving || !results}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="w-full h-9 sm:h-10"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
                   )}
-                  Save Calculation
+                  <span className="text-sm">Save Calculation</span>
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </IndustrialCard>
+          </aside>
 
-          {/* Right Panel - Results */}
-          <div className="lg:col-span-8 space-y-4">
+          {/* ----- RIGHT PANEL: Results ----- */}
+          <main className="lg:col-span-8 xl:col-span-9 space-y-3 sm:space-y-4">
+            
             {/* Key Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <ResultCard
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+              <IndustrialResultCard
                 label="Daily Profit"
                 value={results ? formatCurrency(results.dailyNetProfit) : '$0'}
                 subValue={results ? formatBTC(results.dailyBTC) : '0 sats'}
-                positive={results ? results.dailyNetProfit > 0 : true}
+                trend={results ? (results.dailyNetProfit > 0 ? 'positive' : 'negative') : undefined}
                 highlight
               />
-              <ResultCard
+              <IndustrialResultCard
                 label="Monthly Profit"
                 value={results ? formatCurrency(results.monthlyNetProfit) : '$0'}
                 subValue="30 days"
-                positive={results ? results.monthlyNetProfit > 0 : true}
+                trend={results ? (results.monthlyNetProfit > 0 ? 'positive' : 'negative') : undefined}
               />
-              <ResultCard
+              <IndustrialResultCard
                 label="12-Month ROI"
                 value={results ? `${results.roi12Month.toFixed(1)}%` : '0%'}
                 subValue={results ? formatCurrency(results.yearlyNetProfit) : '$0'}
-                positive={results ? results.roi12Month > 0 : true}
+                trend={results ? (results.roi12Month > 0 ? 'positive' : 'negative') : undefined}
               />
-              <ResultCard
+              <IndustrialResultCard
                 label="Break-Even"
                 value={results ? (results.breakEvenDays === Infinity ? 'Never' : `${Math.ceil(results.breakEvenDays)}d`) : '—'}
                 subValue={results ? (results.breakEvenDays === Infinity ? 'N/A' : `${(results.breakEvenDays / 30).toFixed(1)} months`) : ''}
-                positive={results ? results.breakEvenDays < 365 && results.breakEvenDays !== Infinity : true}
+                trend={results ? (results.breakEvenDays < 365 && results.breakEvenDays !== Infinity ? 'positive' : 'negative') : undefined}
               />
             </div>
 
-            {/* Detailed Results */}
-            <Card className="bg-card border-border shadow-institutional">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-market-positive" />
-                  Detailed Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="breakdown" className="space-y-4">
-                  <TabsList className="bg-muted p-1 w-full sm:w-auto">
-                    <TabsTrigger value="breakdown" className="text-xs data-[state=active]:bg-card data-[state=active]:text-foreground flex-1 sm:flex-none">Breakdown</TabsTrigger>
-                    <TabsTrigger value="projections" className="text-xs data-[state=active]:bg-card data-[state=active]:text-foreground flex-1 sm:flex-none">Projections</TabsTrigger>
-                    <TabsTrigger value="scenarios" className="text-xs data-[state=active]:bg-card data-[state=active]:text-foreground flex-1 sm:flex-none">Scenarios</TabsTrigger>
-                  </TabsList>
+            {/* Detailed Analysis */}
+            <IndustrialCard>
+              <IndustrialCardHeader
+                icon={<BarChart3 className="w-4 h-4" />}
+                title="Detailed Analysis"
+              />
+              
+              <Tabs defaultValue="breakdown" className="space-y-3 sm:space-y-4">
+                <TabsList className="bg-muted p-1 w-full grid grid-cols-3 h-auto">
+                  <TabsTrigger 
+                    value="breakdown" 
+                    className="text-[10px] sm:text-xs py-1.5 sm:py-2 data-[state=active]:bg-card"
+                  >
+                    Breakdown
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="projections" 
+                    className="text-[10px] sm:text-xs py-1.5 sm:py-2 data-[state=active]:bg-card"
+                  >
+                    Projections
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="scenarios" 
+                    className="text-[10px] sm:text-xs py-1.5 sm:py-2 data-[state=active]:bg-card"
+                  >
+                    Scenarios
+                  </TabsTrigger>
+                </TabsList>
 
-                  <TabsContent value="breakdown" className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Revenue */}
-                      <div className="bg-market-positive/5 border border-market-positive/20 rounded-lg p-4 space-y-3">
-                        <h4 className="text-sm font-medium text-market-positive flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4" />
-                          Revenue
-                        </h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Daily BTC Mined</span>
-                            <span className="text-foreground font-mono">{results ? formatBTC(results.dailyBTC) : '—'}</span>
+                {/* Breakdown Tab */}
+                <TabsContent value="breakdown" className="space-y-3 sm:space-y-4 mt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Revenue */}
+                    <div className="bg-data-positive/5 border-2 border-data-positive/20 rounded-md p-3 sm:p-4">
+                      <h4 className="text-xs sm:text-sm font-semibold text-data-positive flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        Revenue
+                      </h4>
+                      <div className="space-y-0">
+                        <DataRow
+                          label="Daily BTC Mined"
+                          value={results ? formatBTC(results.dailyBTC) : '—'}
+                          size="sm"
+                        />
+                        <DataRow
+                          label="Daily Revenue"
+                          value={results ? formatCurrency(results.dailyRevenue) : '—'}
+                          highlight="positive"
+                          size="sm"
+                        />
+                        <DataRow
+                          label="Monthly Revenue"
+                          value={results ? formatCurrency(results.dailyRevenue * 30) : '—'}
+                          highlight="positive"
+                          size="sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Costs */}
+                    <div className="bg-destructive/5 border-2 border-destructive/20 rounded-md p-3 sm:p-4">
+                      <h4 className="text-xs sm:text-sm font-semibold text-destructive flex items-center gap-2 mb-3">
+                        <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        Costs
+                      </h4>
+                      <div className="space-y-0">
+                        <DataRow
+                          label="Daily Power"
+                          value={results ? `-${formatCurrency(results.dailyPowerCost)}` : '—'}
+                          highlight="negative"
+                          size="sm"
+                        />
+                        <DataRow
+                          label="Daily Pool Fee"
+                          value={results ? `-${formatCurrency(results.dailyPoolFees)}` : '—'}
+                          highlight="negative"
+                          size="sm"
+                        />
+                        <DataRow
+                          label="Total Daily Cost"
+                          value={results ? `-${formatCurrency(results.dailyPowerCost + results.dailyPoolFees)}` : '—'}
+                          highlight="negative"
+                          size="sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <SectionDivider label="Summary" />
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { label: 'Total Power', value: results ? `${results.totalPowerKW.toFixed(1)} kW` : '—', icon: Zap },
+                      { label: 'Daily kWh', value: results ? `${results.dailyPowerKWh.toFixed(0)}` : '—', icon: Gauge },
+                      { label: 'Efficiency', value: results ? `${results.efficiency.toFixed(1)} W/TH` : '—', icon: TrendingUp },
+                      { label: 'Investment', value: results ? formatCurrency(results.totalInvestment) : '—', icon: Bitcoin },
+                    ].map((stat) => (
+                      <div key={stat.label} className="bg-muted border-2 border-border rounded-md p-2 sm:p-3 text-center">
+                        <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{stat.label}</div>
+                        <div className="text-sm sm:text-base lg:text-lg font-bold font-mono text-foreground truncate">{stat.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {/* Projections Tab */}
+                <TabsContent value="projections" className="space-y-2 mt-0">
+                  {[1, 3, 6, 12, 24].map((months) => {
+                    const profit = results ? results.monthlyNetProfit * months : 0;
+                    const totalReturn = results ? profit - results.totalInvestment : 0;
+                    const isPositive = totalReturn > 0;
+                    
+                    return (
+                      <div 
+                        key={months} 
+                        className="bg-muted border-2 border-border rounded-md p-2.5 sm:p-3 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-xs sm:text-sm font-medium text-foreground">
+                            {months} Month{months > 1 ? 's' : ''}
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Daily Revenue</span>
-                            <span className="text-market-positive font-mono">{results ? formatCurrency(results.dailyRevenue) : '—'}</span>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                            Net: {formatCurrency(profit)}
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Monthly Revenue</span>
-                            <span className="text-market-positive font-mono">{results ? formatCurrency(results.dailyRevenue * 30) : '—'}</span>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className={cn(
+                            "text-sm sm:text-base lg:text-lg font-bold font-mono",
+                            isPositive ? "text-data-positive" : "text-destructive"
+                          )}>
+                            {formatCurrency(totalReturn)}
+                          </div>
+                          <div className="text-[10px] sm:text-xs text-muted-foreground">
+                            {results ? `${((totalReturn / results.totalInvestment) * 100).toFixed(0)}% ROI` : '—'}
                           </div>
                         </div>
                       </div>
+                    );
+                  })}
+                </TabsContent>
 
-                      {/* Costs */}
-                      <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 space-y-3">
-                        <h4 className="text-sm font-medium text-destructive flex items-center gap-2">
-                          <Zap className="w-4 h-4" />
-                          Costs
-                        </h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Daily Power</span>
-                            <span className="text-destructive font-mono">-{results ? formatCurrency(results.dailyPowerCost) : '—'}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Daily Pool Fee</span>
-                            <span className="text-destructive font-mono">-{results ? formatCurrency(results.dailyPoolFees) : '—'}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Total Daily Cost</span>
-                            <span className="text-destructive font-mono">-{results ? formatCurrency(results.dailyPowerCost + results.dailyPoolFees) : '—'}</span>
-                          </div>
+                {/* Scenarios Tab */}
+                <TabsContent value="scenarios" className="space-y-2 mt-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">
+                    What if BTC price changes?
+                  </p>
+                  {networkData && results && [0.5, 0.75, 1, 1.25, 1.5, 2].map((multiplier) => {
+                    const scenarioPrice = networkData.price * multiplier;
+                    const scenarioDailyRevenue = results.dailyBTC * scenarioPrice;
+                    const scenarioPoolFees = scenarioDailyRevenue * (poolFee / 100);
+                    const scenarioDailyProfit = scenarioDailyRevenue - results.dailyPowerCost - scenarioPoolFees;
+                    
+                    return (
+                      <div 
+                        key={multiplier} 
+                        className="bg-muted border-2 border-border rounded-md p-2.5 sm:p-3 flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-[9px] sm:text-[10px] px-1.5 py-0.5 flex-shrink-0 border-2",
+                              multiplier < 1 ? "border-destructive/40 text-destructive bg-destructive/5" : 
+                              multiplier > 1 ? "border-data-positive/40 text-data-positive bg-data-positive/5" : 
+                              "border-border text-foreground"
+                            )}
+                          >
+                            {multiplier < 1 ? `${((1-multiplier)*100).toFixed(0)}% ↓` : 
+                             multiplier > 1 ? `${((multiplier-1)*100).toFixed(0)}% ↑` : 'Current'}
+                          </Badge>
+                          <span className="text-xs sm:text-sm font-mono font-medium text-foreground truncate">
+                            ${scenarioPrice.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className={cn(
+                          "font-mono font-bold text-xs sm:text-sm flex-shrink-0",
+                          scenarioDailyProfit > 0 ? "text-data-positive" : "text-destructive"
+                        )}>
+                          {formatCurrency(scenarioDailyProfit)}/day
                         </div>
                       </div>
-                    </div>
-
-                    {/* Summary Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Total Power</div>
-                        <div className="text-lg font-semibold text-foreground">{results ? `${results.totalPowerKW.toFixed(1)} kW` : '—'}</div>
-                      </div>
-                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Daily kWh</div>
-                        <div className="text-lg font-semibold text-foreground">{results ? `${results.dailyPowerKWh.toFixed(0)}` : '—'}</div>
-                      </div>
-                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Efficiency</div>
-                        <div className="text-lg font-semibold text-foreground">{results ? `${results.efficiency.toFixed(1)} W/TH` : '—'}</div>
-                      </div>
-                      <div className="bg-muted border border-border rounded-lg p-3 text-center">
-                        <div className="text-xs text-muted-foreground mb-1">Investment</div>
-                        <div className="text-lg font-semibold text-foreground">{results ? formatCurrency(results.totalInvestment) : '—'}</div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="projections" className="space-y-4">
-                    <div className="space-y-3">
-                      {[1, 3, 6, 12, 24].map((months) => {
-                        const profit = results ? results.monthlyNetProfit * months : 0;
-                        const totalReturn = results ? profit - results.totalInvestment : 0;
-                        const isPositive = totalReturn > 0;
-                        
-                        return (
-                          <div key={months} className="bg-muted border border-border rounded-lg p-4 flex items-center justify-between">
-                            <div>
-                              <div className="text-sm font-medium text-foreground">{months} Month{months > 1 ? 's' : ''}</div>
-                              <div className="text-xs text-muted-foreground">Net Profit: {formatCurrency(profit)}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className={cn(
-                                "text-lg font-bold",
-                                isPositive ? "text-market-positive" : "text-destructive"
-                              )}>
-                                {formatCurrency(totalReturn)}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {results ? `${((totalReturn / results.totalInvestment) * 100).toFixed(0)}% ROI` : '—'}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="scenarios" className="space-y-4">
-                    <div className="text-sm text-muted-foreground mb-3">What if BTC price changes?</div>
-                    <div className="space-y-2">
-                      {networkData && results && [0.5, 0.75, 1, 1.25, 1.5, 2].map((multiplier) => {
-                        const scenarioPrice = networkData.price * multiplier;
-                        const scenarioDailyRevenue = results.dailyBTC * scenarioPrice;
-                        const scenarioPoolFees = scenarioDailyRevenue * (poolFee / 100);
-                        const scenarioDailyProfit = scenarioDailyRevenue - results.dailyPowerCost - scenarioPoolFees;
-                        
-                        return (
-                          <div key={multiplier} className="bg-muted border border-border rounded-lg p-3 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Badge variant="outline" className={cn(
-                                "text-xs",
-                                multiplier < 1 ? "border-destructive/30 text-destructive bg-destructive/5" : 
-                                multiplier > 1 ? "border-market-positive/30 text-market-positive bg-market-positive/5" : 
-                                "border-border text-foreground"
-                              )}>
-                                {multiplier < 1 ? `${((1-multiplier)*100).toFixed(0)}% Down` : 
-                                 multiplier > 1 ? `${((multiplier-1)*100).toFixed(0)}% Up` : 'Current'}
-                              </Badge>
-                              <span className="text-foreground font-medium">${scenarioPrice.toLocaleString()}</span>
-                            </div>
-                            <div className={cn(
-                              "font-mono font-medium",
-                              scenarioDailyProfit > 0 ? "text-market-positive" : "text-destructive"
-                            )}>
-                              {formatCurrency(scenarioDailyProfit)}/day
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
+                    );
+                  })}
+                </TabsContent>
+              </Tabs>
+            </IndustrialCard>
+          </main>
         </div>
 
-        {/* Footer Disclaimer */}
-        <div className="text-center text-xs text-muted-foreground pt-4 space-y-1">
-          <p>Calculations are estimates based on current network conditions. Actual results may vary due to difficulty adjustments and market volatility.</p>
+        {/* ===== FOOTER ===== */}
+        <footer className="text-center pt-3 sm:pt-4 border-t border-border">
+          <p className="text-[10px] sm:text-xs text-muted-foreground max-w-2xl mx-auto">
+            Calculations are estimates based on current network conditions. Actual results may vary due to difficulty adjustments and market volatility.
+          </p>
           {networkData && (
-            <p className="text-[10px]">
-              Data source: {(networkData as any).dataSource || 'Live APIs'} | 
-              Last updated: {networkData.lastUpdate?.toLocaleTimeString() || 'Unknown'}
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-1">
+              Source: {(networkData as any).dataSource || 'Live APIs'} • 
+              Updated: {networkData.lastUpdate?.toLocaleTimeString() || 'Unknown'}
             </p>
           )}
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
-
-// Sub-components
-interface StatsCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  color: 'bitcoin' | 'trust' | 'warning' | 'success' | 'navy';
-}
-
-const StatsCard: React.FC<StatsCardProps> = ({ icon, label, value, color }) => {
-  const colorClasses = {
-    bitcoin: 'text-primary bg-primary/10',
-    trust: 'text-secondary bg-secondary/10',
-    warning: 'text-market-warning bg-market-warning/10',
-    success: 'text-market-positive bg-market-positive/10',
-    navy: 'text-foreground bg-muted',
-  };
-
-  return (
-    <div className="bg-card border border-border rounded-lg p-3">
-      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", colorClasses[color])}>
-        {icon}
-      </div>
-      <div className="text-lg sm:text-xl font-bold text-foreground truncate">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
-  );
-};
-
-interface ResultCardProps {
-  label: string;
-  value: string;
-  subValue: string;
-  positive: boolean;
-  highlight?: boolean;
-}
-
-const ResultCard: React.FC<ResultCardProps> = ({ label, value, subValue, positive, highlight }) => (
-  <div className={cn(
-    "rounded-lg p-4 transition-all",
-    highlight 
-      ? "bg-primary/5 border border-primary/20" 
-      : "bg-card border border-border"
-  )}>
-    <div className="text-xs text-muted-foreground mb-1">{label}</div>
-    <div className={cn(
-      "text-xl sm:text-2xl font-bold",
-      positive ? "text-market-positive" : "text-destructive"
-    )}>
-      {value}
-    </div>
-    <div className="text-xs text-muted-foreground mt-1">{subValue}</div>
-  </div>
-);
 
 export default BTCROICalculatorV2;
