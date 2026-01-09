@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { AcademyEmailVerificationBanner } from '@/components/academy/AcademyEmailVerificationBanner';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -112,10 +111,6 @@ const AcademyProgress = () => {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
-      
-      {academyUser && !academyUser.is_email_verified && (
-        <AcademyEmailVerificationBanner />
-      )}
       
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
