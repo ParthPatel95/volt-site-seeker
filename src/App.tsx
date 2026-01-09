@@ -30,6 +30,7 @@ import StrategicOperationsMasterclass from "./pages/StrategicOperationsMastercla
 import TaxesInsuranceEducation from "./pages/TaxesInsuranceEducation";
 import EngineeringPermittingEducation from "./pages/EngineeringPermittingEducation";
 import NetworkingEducation from "./pages/NetworkingEducation";
+import AcademyProgress from "./pages/AcademyProgress";
 import Academy from "./pages/Academy";
 import AcademyAuth from "./pages/AcademyAuth";
 import AcademyAdmin from "./pages/AcademyAdmin";
@@ -86,6 +87,7 @@ const App = () => (
                 } />
                 <Route path="/hosting" element={<Hosting />} />
                 <Route path="/academy" element={<AcademyAuthProvider><AcademyAuthGuard><Academy /></AcademyAuthGuard></AcademyAuthProvider>} />
+                <Route path="/academy/progress" element={<AcademyAuthProvider><AcademyAuthGuard><AcademyProgress /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/academy/auth" element={<AcademyAuthProvider><AcademyAuth /></AcademyAuthProvider>} />
                 <Route path="/academy/admin" element={<AcademyAuthProvider><AcademyAdmin /></AcademyAuthProvider>} />
                 <Route path="/bitcoin" element={<AcademyAuthProvider><AcademyAuthGuard><BitcoinEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
