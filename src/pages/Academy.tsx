@@ -4,8 +4,6 @@ import { AcademyHeroSection } from "@/components/academy/AcademyHeroSection";
 import { CurriculumSection } from "@/components/academy/CurriculumSection";
 import { AcademyCTASection } from "@/components/academy/AcademyCTASection";
 import { ContinueLearningBar } from "@/components/academy/ContinueLearningBar";
-import { AcademyEmailVerificationBanner } from "@/components/academy/AcademyEmailVerificationBanner";
-import { useAcademyAuth } from "@/contexts/AcademyAuthContext";
 import { useEffect } from "react";
 
 // Module info for progress tracking
@@ -26,8 +24,6 @@ const academyModules = [
 ];
 
 const Academy = () => {
-  const { academyUser } = useAcademyAuth();
-  
   useEffect(() => {
     document.title = "WattByte Academy | Bitcoin Mining & Energy Education";
   }, []);
@@ -35,13 +31,6 @@ const Academy = () => {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
-      
-      {/* Email verification banner for unverified users - positioned after fixed nav */}
-      {academyUser && !academyUser.is_email_verified && (
-        <div className="pt-16 md:pt-20">
-          <AcademyEmailVerificationBanner />
-        </div>
-      )}
       
       <main>
         <AcademyHeroSection />
