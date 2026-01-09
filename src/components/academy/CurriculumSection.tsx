@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat, Lock, Network } from "lucide-react";
+import { ChevronDown, BookOpen, Bitcoin, Server, Zap, Droplets, CircuitBoard, Volume2, Waves, MapPin, DollarSign, Settings, ShieldAlert, TrendingUp, CheckCircle2, Search, GraduationCap, Receipt, HardHat, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
@@ -324,8 +324,6 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   const moduleProgress = allProgress[module.id];
   const completedSections = moduleProgress?.completedSections || [];
   const diffBadge = difficultyBadges[module.difficulty];
-  
-  const isEmailVerified = true; // Email verification requirement removed
 
   const handleLessonClick = (lesson: Lesson) => {
     if (lesson.anchor) {
