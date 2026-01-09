@@ -177,12 +177,40 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      return { error };
+      if (error) {
+        return { error };
+      }
+
+      // Check if academy profile exists, create if not (for existing Supabase users)
+      if (data.user) {
+        const existingProfile = await fetchAcademyUser(data.user.id);
+        
+        if (!existingProfile) {
+          console.log('No academy profile found, creating one...');
+          const { error: profileError } = await supabase.functions.invoke('create-academy-profile', {
+            body: {
+              user_id: data.user.id,
+              email: email,
+              full_name: data.user.user_metadata?.full_name || null,
+              company: null
+            }
+          });
+
+          if (profileError) {
+            console.error('Failed to create academy profile:', profileError);
+          } else {
+            const newProfile = await fetchAcademyUser(data.user.id);
+            setAcademyUser(newProfile);
+          }
+        }
+      }
+
+      return { error: null };
     } catch (err) {
       return { error: err as Error };
     }
