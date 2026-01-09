@@ -1,40 +1,32 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { 
   Bitcoin, 
   TrendingUp, 
+  TrendingDown,
   Zap, 
-  ChevronDown,
   Server,
   Building2,
-  Clock,
-  Hash,
-  Award,
-  BarChart3,
-  Settings,
-  Save,
   RefreshCw,
   Loader2,
   AlertCircle,
+  Activity,
+  Cpu,
+  DollarSign,
+  Clock,
+  Target,
+  ChevronRight,
+  CircleDot,
+  Wallet,
+  BarChart2,
   Gauge
 } from 'lucide-react';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
 import { ASICSelector } from './components/ASICSelector';
 import { ASICMiner } from './hooks/useASICDatabase';
-import { 
-  IndustrialCard, 
-  IndustrialCardHeader, 
-  IndustrialInput,
-  IndustrialStatCard,
-  IndustrialResultCard,
-  ModeSelectorButton,
-  DataRow,
-  SectionDivider
-} from './components/IndustrialComponents';
 import { cn } from '@/lib/utils';
 
 type MiningMode = 'self' | 'hosting';
@@ -47,7 +39,6 @@ export const BTCROICalculatorV2: React.FC = () => {
     refreshNetworkData,
   } = useBTCROICalculator();
   
-  // Local state for immediate UI updates
   const [mode, setMode] = useState<MiningMode>('self');
   const [hashrate, setHashrate] = useState(234);
   const [powerDraw, setPowerDraw] = useState(3531);
@@ -56,17 +47,13 @@ export const BTCROICalculatorV2: React.FC = () => {
   const [hardwareCost, setHardwareCost] = useState(5000);
   const [poolFee, setPoolFee] = useState(1.5);
   const [hostingRate, setHostingRate] = useState(0.08);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedASIC, setSelectedASIC] = useState<ASICMiner | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // Refresh network data
   const handleRefresh = useCallback(async () => {
     await refreshNetworkData();
     toast.success('Network data refreshed');
   }, [refreshNetworkData]);
 
-  // Handle ASIC selection
   const handleSelectASIC = useCallback((asic: ASICMiner) => {
     setSelectedASIC(asic);
     setHashrate(asic.hashrate_th);
@@ -74,24 +61,6 @@ export const BTCROICalculatorV2: React.FC = () => {
     setHardwareCost(asic.market_price_usd || 3500);
   }, []);
 
-  // Save calculation
-  const handleSave = useCallback(async () => {
-    if (!networkData) {
-      toast.error('No network data available');
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      toast.success('Calculation saved successfully!');
-    } catch {
-      toast.error('Failed to save calculation');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [networkData]);
-
-  // Calculate results in real-time
   const results = useMemo(() => {
     if (!networkData) return null;
 
@@ -119,6 +88,7 @@ export const BTCROICalculatorV2: React.FC = () => {
     const roi12Month = totalInvestment > 0 ? (yearlyNetProfit / totalInvestment) * 100 : 0;
 
     const efficiency = powerDraw / hashrate;
+    const profitMargin = dailyRevenue > 0 ? (dailyNetProfit / dailyRevenue) * 100 : 0;
 
     return {
       dailyBTC,
@@ -133,35 +103,34 @@ export const BTCROICalculatorV2: React.FC = () => {
       roi12Month,
       efficiency,
       totalPowerKW,
-      dailyPowerKWh
+      dailyPowerKWh,
+      profitMargin
     };
   }, [networkData, hashrate, powerDraw, units, electricityRate, hostingRate, hardwareCost, poolFee, mode]);
 
-  const formatCurrency = (value: number) => {
-    if (Math.abs(value) >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
-    }
-    if (Math.abs(value) >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`;
-    }
+  const formatLargeNumber = (value: number) => {
+    if (Math.abs(value) >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
+    if (Math.abs(value) >= 1000) return `$${(value / 1000).toFixed(1)}K`;
     return `$${value.toFixed(2)}`;
   };
 
   const formatBTC = (value: number) => {
     if (value >= 1) return `${value.toFixed(4)} BTC`;
     if (value >= 0.001) return `${(value * 1000).toFixed(2)} mBTC`;
-    return `${(value * 100000000).toFixed(0)} sats`;
+    return `${Math.round(value * 100000000).toLocaleString()} sats`;
   };
 
   // Loading state
   if (networkLoading && !networkData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="p-4 bg-primary/10 rounded-full inline-block">
-            <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary animate-spin" />
+          <div className="relative">
+            <div className="w-16 h-16 border-2 border-watt-bitcoin/30 rounded-full" />
+            <div className="absolute inset-0 w-16 h-16 border-2 border-t-watt-bitcoin rounded-full animate-spin" />
+            <Bitcoin className="absolute inset-0 m-auto w-6 h-6 text-watt-bitcoin" />
           </div>
-          <p className="text-sm text-muted-foreground">Loading network data...</p>
+          <p className="text-sm text-muted-foreground font-mono">LOADING NETWORK DATA...</p>
         </div>
       </div>
     );
@@ -171,489 +140,562 @@ export const BTCROICalculatorV2: React.FC = () => {
   if (!networkData && !networkLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <IndustrialCard className="max-w-sm w-full text-center">
-          <div className="p-4 bg-destructive/10 rounded-full inline-block mb-4">
-            <AlertCircle className="w-8 h-8 text-destructive" />
-          </div>
-          <h2 className="text-base sm:text-lg font-semibold text-foreground mb-2">Failed to Load Data</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-4">Unable to fetch network data.</p>
-          <Button onClick={handleRefresh} className="w-full">
+        <div className="bg-card border border-destructive/50 rounded-lg p-6 max-w-sm w-full text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-foreground mb-2">CONNECTION FAILED</h2>
+          <p className="text-sm text-muted-foreground mb-4">Unable to fetch network data</p>
+          <Button onClick={handleRefresh} variant="outline" className="w-full">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Retry
+            RETRY CONNECTION
           </Button>
-        </IndustrialCard>
+        </div>
       </div>
     );
   }
 
+  const isProfitable = results && results.dailyNetProfit > 0;
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
-        
-        {/* ===== HEADER ===== */}
-        <header className="flex flex-col gap-3 pb-3 sm:pb-4 border-b-2 border-border">
-          <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
-            {/* Title */}
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="p-2 sm:p-2.5 bg-watt-bitcoin rounded-md flex-shrink-0">
-                <Bitcoin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+      {/* Top Bar - Network Status */}
+      <div className="border-b border-border bg-card/50">
+        <div className="max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-12 sm:h-14 gap-2 overflow-x-auto scrollbar-hide">
+            {/* Logo & Title */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br from-watt-bitcoin to-watt-bitcoin/70 flex items-center justify-center">
+                <Bitcoin className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-lg lg:text-xl font-bold text-foreground leading-tight">
-                  BTC Profitability Calculator
-                </h1>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  Real-time mining analysis
-                </p>
+              <div className="hidden xs:block">
+                <div className="text-sm sm:text-base font-bold text-foreground leading-none">BTC MINING</div>
+                <div className="text-[10px] text-muted-foreground font-mono">PROFITABILITY LAB</div>
               </div>
+            </div>
+
+            {/* Network Stats - Horizontal Ticker */}
+            <div className="flex items-center gap-3 sm:gap-4 lg:gap-6 text-xs sm:text-sm font-mono overflow-x-auto scrollbar-hide">
+              <NetworkStat 
+                label="BTC" 
+                value={networkData ? `$${networkData.price.toLocaleString()}` : '—'} 
+                icon={<Bitcoin className="w-3 h-3" />}
+                color="bitcoin"
+              />
+              <NetworkStat 
+                label="HASH" 
+                value={networkData ? `${(networkData.hashrate / 1e18).toFixed(0)} EH/s` : '—'} 
+                icon={<Activity className="w-3 h-3" />}
+                color="primary"
+              />
+              <NetworkStat 
+                label="DIFF" 
+                value={networkData ? `${(networkData.difficulty / 1e12).toFixed(1)}T` : '—'} 
+                icon={<Gauge className="w-3 h-3" />}
+                color="trust"
+                className="hidden sm:flex"
+              />
+              <NetworkStat 
+                label="REWARD" 
+                value={networkData ? `${networkData.blockReward} BTC` : '—'} 
+                icon={<Wallet className="w-3 h-3" />}
+                color="success"
+                className="hidden md:flex"
+              />
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="h-8 sm:h-9 px-2.5 sm:px-3 border-2"
+                className="h-8 w-8 p-0"
               >
-                <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", isRefreshing && "animate-spin")} />
-                <span className="hidden xs:inline ml-1.5 text-xs">Refresh</span>
+                <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
               </Button>
-              
-              {networkData && (
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "text-[10px] sm:text-xs h-8 sm:h-9 px-2 border-2",
-                    (networkData as any).isLive === false && "border-data-warning/50 text-data-warning"
-                  )}
-                  title={`Data from: ${(networkData as any).dataSource || 'API'}`}
-                >
-                  <span className={cn(
-                    "w-1.5 h-1.5 rounded-full mr-1.5 flex-shrink-0",
-                    (networkData as any).isLive !== false ? "bg-data-positive animate-pulse" : "bg-data-warning"
-                  )} />
-                  <span className="hidden xs:inline">
-                    {(networkData as any).isLive !== false ? 'Live' : 'Estimated'}
-                  </span>
-                </Badge>
-              )}
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-data-positive/10 border border-data-positive/20">
+                <CircleDot className="w-2.5 h-2.5 text-data-positive animate-pulse" />
+                <span className="text-[10px] sm:text-xs font-mono text-data-positive">LIVE</span>
+              </div>
             </div>
           </div>
-        </header>
+        </div>
+      </div>
 
-        {/* ===== STATS BAR ===== */}
-        <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-6 gap-1.5 sm:gap-2">
-          <IndustrialStatCard
-            icon={<Bitcoin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-            label="BTC Price"
-            value={networkData ? `$${networkData.price.toLocaleString()}` : '...'}
-            color="bitcoin"
-          />
-          <IndustrialStatCard
-            icon={<Hash className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-            label="Difficulty"
-            value={networkData ? `${(networkData.difficulty / 1e12).toFixed(1)}T` : '...'}
-            color="trust"
-          />
-          <IndustrialStatCard
-            icon={<Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-            label="Network"
-            value={networkData ? `${(networkData.hashrate / 1e18).toFixed(0)} EH/s` : '...'}
-            color="warning"
-          />
-          <IndustrialStatCard
-            icon={<Award className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-            label="Reward"
-            value={networkData ? `${networkData.blockReward} BTC` : '...'}
-            color="success"
-          />
-          <IndustrialStatCard
-            icon={<Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-            label="Block Time"
-            value={networkData ? `${networkData.avgBlockTime}m` : '...'}
-            color="muted"
-          />
-          <IndustrialStatCard
-            icon={<TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-            label="Halving"
-            value={networkData ? `${networkData.nextHalvingDays}d` : '...'}
-            color="bitcoin"
-          />
+      {/* Main Content */}
+      <div className="max-w-[1800px] mx-auto p-3 sm:p-4 lg:p-6">
+        
+        {/* Hero Results Panel */}
+        <div className="mb-4 sm:mb-6">
+          <div className={cn(
+            "relative overflow-hidden rounded-xl border-2 p-4 sm:p-6 lg:p-8",
+            isProfitable 
+              ? "bg-gradient-to-br from-data-positive/5 to-data-positive/10 border-data-positive/30" 
+              : "bg-gradient-to-br from-destructive/5 to-destructive/10 border-destructive/30"
+          )}>
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-grid-pattern opacity-30 pointer-events-none" />
+            
+            <div className="relative">
+              {/* Status Badge */}
+              <div className={cn(
+                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-4",
+                isProfitable 
+                  ? "bg-data-positive/20 text-data-positive" 
+                  : "bg-destructive/20 text-destructive"
+              )}>
+                {isProfitable ? (
+                  <>
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    PROFITABLE OPERATION
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="w-3.5 h-3.5" />
+                    UNPROFITABLE OPERATION
+                  </>
+                )}
+              </div>
+
+              {/* Main Stats Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                <HeroStat
+                  label="Daily Profit"
+                  value={results ? formatLargeNumber(results.dailyNetProfit) : '$0'}
+                  subValue={results ? formatBTC(results.dailyBTC) : '0 sats'}
+                  trend={isProfitable ? 'up' : 'down'}
+                  primary
+                />
+                <HeroStat
+                  label="Monthly Profit"
+                  value={results ? formatLargeNumber(results.monthlyNetProfit) : '$0'}
+                  subValue="30-day projection"
+                  trend={isProfitable ? 'up' : 'down'}
+                />
+                <HeroStat
+                  label="Annual ROI"
+                  value={results ? `${results.roi12Month.toFixed(0)}%` : '0%'}
+                  subValue={results ? formatLargeNumber(results.yearlyNetProfit) : '$0'}
+                  trend={results && results.roi12Month > 0 ? 'up' : 'down'}
+                />
+                <HeroStat
+                  label="Break-Even"
+                  value={results ? (results.breakEvenDays === Infinity ? '∞' : `${Math.ceil(results.breakEvenDays)}d`) : '—'}
+                  subValue={results && results.breakEvenDays !== Infinity ? `${(results.breakEvenDays / 30).toFixed(1)} months` : 'Never'}
+                  trend={results && results.breakEvenDays < 365 && results.breakEvenDays !== Infinity ? 'up' : 'down'}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* ===== MAIN CONTENT ===== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-6">
+        {/* Configuration Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           
-          {/* ----- LEFT PANEL: Configuration ----- */}
-          <aside className="lg:col-span-4 xl:col-span-3 space-y-3 sm:space-y-4">
-            
-            {/* Mode Selector */}
-            <IndustrialCard noPadding className="p-2 sm:p-3">
-              <div className="grid grid-cols-2 gap-2">
-                <ModeSelectorButton
-                  icon={<Server className="w-4 h-4 sm:w-5 sm:h-5" />}
+          {/* Column 1: Mining Mode & ASIC Selection */}
+          <div className="space-y-4">
+            {/* Mining Mode Toggle */}
+            <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
+              <SectionLabel icon={<Server className="w-3.5 h-3.5" />} label="MINING MODE" />
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <ModeButton
+                  icon={<Server className="w-4 h-4" />}
                   label="Self-Mining"
-                  description="Your power"
+                  sublabel="Own facility"
                   active={mode === 'self'}
                   onClick={() => setMode('self')}
                 />
-                <ModeSelectorButton
-                  icon={<Building2 className="w-4 h-4 sm:w-5 sm:h-5" />}
-                  label="Hosting"
-                  description="Facility power"
+                <ModeButton
+                  icon={<Building2 className="w-4 h-4" />}
+                  label="Hosted"
+                  sublabel="Co-location"
                   active={mode === 'hosting'}
                   onClick={() => setMode('hosting')}
                 />
               </div>
-            </IndustrialCard>
-
-            {/* ASIC Selector */}
-            <IndustrialCard>
-              <ASICSelector
-                selectedASIC={selectedASIC}
-                onSelectASIC={handleSelectASIC}
-              />
-            </IndustrialCard>
-
-            {/* Configuration Form */}
-            <IndustrialCard>
-              <IndustrialCardHeader
-                icon={<Settings className="w-4 h-4" />}
-                title="Configuration"
-              />
-              
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <IndustrialInput
-                    label="Hashrate"
-                    type="number"
-                    value={hashrate}
-                    onChange={(e) => {
-                      setHashrate(Number(e.target.value));
-                      setSelectedASIC(null);
-                    }}
-                    unit="TH/s"
-                  />
-                  <IndustrialInput
-                    label="Power"
-                    type="number"
-                    value={powerDraw}
-                    onChange={(e) => {
-                      setPowerDraw(Number(e.target.value));
-                      setSelectedASIC(null);
-                    }}
-                    unit="W"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <IndustrialInput
-                    label="Units"
-                    type="number"
-                    value={units}
-                    onChange={(e) => setUnits(Math.max(1, Number(e.target.value)))}
-                    min={1}
-                  />
-                  <IndustrialInput
-                    label={mode === 'hosting' ? 'Hosting Rate' : 'Electric Rate'}
-                    type="number"
-                    step="0.01"
-                    value={mode === 'hosting' ? hostingRate : electricityRate}
-                    onChange={(e) => mode === 'hosting' 
-                      ? setHostingRate(Number(e.target.value))
-                      : setElectricityRate(Number(e.target.value))
-                    }
-                    unit="$/kWh"
-                  />
-                </div>
-
-                {/* Advanced Options */}
-                <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full text-xs text-muted-foreground hover:text-foreground h-8 justify-between"
-                    >
-                      <span>Advanced Options</span>
-                      <ChevronDown className={cn("w-4 h-4 transition-transform", showAdvanced && "rotate-180")} />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-3 pt-2">
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                      <IndustrialInput
-                        label="Hardware Cost"
-                        type="number"
-                        value={hardwareCost}
-                        onChange={(e) => setHardwareCost(Number(e.target.value))}
-                        unit="$"
-                      />
-                      <IndustrialInput
-                        label="Pool Fee"
-                        type="number"
-                        step="0.1"
-                        value={poolFee}
-                        onChange={(e) => setPoolFee(Number(e.target.value))}
-                        unit="%"
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                {/* Save Button */}
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving || !results}
-                  className="w-full h-9 sm:h-10"
-                >
-                  {isSaving ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  <span className="text-sm">Save Calculation</span>
-                </Button>
-              </div>
-            </IndustrialCard>
-          </aside>
-
-          {/* ----- RIGHT PANEL: Results ----- */}
-          <main className="lg:col-span-8 xl:col-span-9 space-y-3 sm:space-y-4">
-            
-            {/* Key Metrics */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-              <IndustrialResultCard
-                label="Daily Profit"
-                value={results ? formatCurrency(results.dailyNetProfit) : '$0'}
-                subValue={results ? formatBTC(results.dailyBTC) : '0 sats'}
-                trend={results ? (results.dailyNetProfit > 0 ? 'positive' : 'negative') : undefined}
-                highlight
-              />
-              <IndustrialResultCard
-                label="Monthly Profit"
-                value={results ? formatCurrency(results.monthlyNetProfit) : '$0'}
-                subValue="30 days"
-                trend={results ? (results.monthlyNetProfit > 0 ? 'positive' : 'negative') : undefined}
-              />
-              <IndustrialResultCard
-                label="12-Month ROI"
-                value={results ? `${results.roi12Month.toFixed(1)}%` : '0%'}
-                subValue={results ? formatCurrency(results.yearlyNetProfit) : '$0'}
-                trend={results ? (results.roi12Month > 0 ? 'positive' : 'negative') : undefined}
-              />
-              <IndustrialResultCard
-                label="Break-Even"
-                value={results ? (results.breakEvenDays === Infinity ? 'Never' : `${Math.ceil(results.breakEvenDays)}d`) : '—'}
-                subValue={results ? (results.breakEvenDays === Infinity ? 'N/A' : `${(results.breakEvenDays / 30).toFixed(1)} months`) : ''}
-                trend={results ? (results.breakEvenDays < 365 && results.breakEvenDays !== Infinity ? 'positive' : 'negative') : undefined}
-              />
             </div>
 
-            {/* Detailed Analysis */}
-            <IndustrialCard>
-              <IndustrialCardHeader
-                icon={<BarChart3 className="w-4 h-4" />}
-                title="Detailed Analysis"
+            {/* ASIC Selector */}
+            <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
+              <SectionLabel icon={<Cpu className="w-3.5 h-3.5" />} label="SELECT HARDWARE" />
+              <div className="mt-3">
+                <ASICSelector
+                  selectedASIC={selectedASIC}
+                  onSelectASIC={handleSelectASIC}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Parameters */}
+          <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
+            <SectionLabel icon={<Zap className="w-3.5 h-3.5" />} label="PARAMETERS" />
+            
+            <div className="space-y-4 mt-4">
+              {/* Hashrate Slider */}
+              <ParameterSlider
+                label="Hashrate"
+                value={hashrate}
+                min={1}
+                max={500}
+                unit="TH/s"
+                onChange={(v) => { setHashrate(v); setSelectedASIC(null); }}
               />
+
+              {/* Power Draw Slider */}
+              <ParameterSlider
+                label="Power Draw"
+                value={powerDraw}
+                min={500}
+                max={10000}
+                step={100}
+                unit="W"
+                onChange={(v) => { setPowerDraw(v); setSelectedASIC(null); }}
+              />
+
+              {/* Units Input */}
+              <ParameterInput
+                label="Number of Units"
+                value={units}
+                min={1}
+                max={10000}
+                onChange={setUnits}
+              />
+
+              {/* Power Rate */}
+              <ParameterSlider
+                label={mode === 'hosting' ? 'Hosting Rate' : 'Electricity Rate'}
+                value={mode === 'hosting' ? hostingRate : electricityRate}
+                min={0.01}
+                max={0.20}
+                step={0.005}
+                unit="$/kWh"
+                decimals={3}
+                onChange={(v) => mode === 'hosting' ? setHostingRate(v) : setElectricityRate(v)}
+              />
+
+              {/* Hardware Cost */}
+              <ParameterInput
+                label="Hardware Cost per Unit"
+                value={hardwareCost}
+                min={0}
+                max={50000}
+                prefix="$"
+                onChange={setHardwareCost}
+              />
+
+              {/* Pool Fee */}
+              <ParameterSlider
+                label="Pool Fee"
+                value={poolFee}
+                min={0}
+                max={5}
+                step={0.1}
+                unit="%"
+                decimals={1}
+                onChange={setPoolFee}
+              />
+            </div>
+          </div>
+
+          {/* Column 3: Financial Breakdown */}
+          <div className="space-y-4">
+            {/* Revenue Breakdown */}
+            <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
+              <SectionLabel icon={<DollarSign className="w-3.5 h-3.5" />} label="DAILY BREAKDOWN" />
               
-              <Tabs defaultValue="breakdown" className="space-y-3 sm:space-y-4">
-                <TabsList className="bg-muted p-1 w-full grid grid-cols-3 h-auto">
-                  <TabsTrigger 
-                    value="breakdown" 
-                    className="text-[10px] sm:text-xs py-1.5 sm:py-2 data-[state=active]:bg-card"
-                  >
-                    Breakdown
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="projections" 
-                    className="text-[10px] sm:text-xs py-1.5 sm:py-2 data-[state=active]:bg-card"
-                  >
-                    Projections
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="scenarios" 
-                    className="text-[10px] sm:text-xs py-1.5 sm:py-2 data-[state=active]:bg-card"
-                  >
-                    Scenarios
-                  </TabsTrigger>
-                </TabsList>
+              <div className="space-y-2 mt-4">
+                <BreakdownRow 
+                  label="Gross Revenue" 
+                  value={results ? formatLargeNumber(results.dailyRevenue) : '$0'} 
+                  type="revenue"
+                />
+                <BreakdownRow 
+                  label="Power Cost" 
+                  value={results ? `-${formatLargeNumber(results.dailyPowerCost)}` : '$0'} 
+                  type="cost"
+                />
+                <BreakdownRow 
+                  label="Pool Fees" 
+                  value={results ? `-${formatLargeNumber(results.dailyPoolFees)}` : '$0'} 
+                  type="cost"
+                />
+                <div className="border-t border-border my-2" />
+                <BreakdownRow 
+                  label="Net Profit" 
+                  value={results ? formatLargeNumber(results.dailyNetProfit) : '$0'} 
+                  type={isProfitable ? 'profit' : 'loss'}
+                  bold
+                />
+              </div>
+            </div>
 
-                {/* Breakdown Tab */}
-                <TabsContent value="breakdown" className="space-y-3 sm:space-y-4 mt-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Revenue */}
-                    <div className="bg-data-positive/5 border-2 border-data-positive/20 rounded-md p-3 sm:p-4">
-                      <h4 className="text-xs sm:text-sm font-semibold text-data-positive flex items-center gap-2 mb-3">
-                        <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        Revenue
-                      </h4>
-                      <div className="space-y-0">
-                        <DataRow
-                          label="Daily BTC Mined"
-                          value={results ? formatBTC(results.dailyBTC) : '—'}
-                          size="sm"
-                        />
-                        <DataRow
-                          label="Daily Revenue"
-                          value={results ? formatCurrency(results.dailyRevenue) : '—'}
-                          highlight="positive"
-                          size="sm"
-                        />
-                        <DataRow
-                          label="Monthly Revenue"
-                          value={results ? formatCurrency(results.dailyRevenue * 30) : '—'}
-                          highlight="positive"
-                          size="sm"
-                        />
-                      </div>
-                    </div>
+            {/* Operation Metrics */}
+            <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
+              <SectionLabel icon={<BarChart2 className="w-3.5 h-3.5" />} label="OPERATION METRICS" />
+              
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <MetricBox
+                  label="Efficiency"
+                  value={results ? `${results.efficiency.toFixed(1)}` : '—'}
+                  unit="J/TH"
+                />
+                <MetricBox
+                  label="Power Load"
+                  value={results ? `${results.totalPowerKW.toFixed(1)}` : '—'}
+                  unit="kW"
+                />
+                <MetricBox
+                  label="Daily kWh"
+                  value={results ? `${results.dailyPowerKWh.toFixed(0)}` : '—'}
+                  unit="kWh"
+                />
+                <MetricBox
+                  label="Margin"
+                  value={results ? `${results.profitMargin.toFixed(0)}` : '—'}
+                  unit="%"
+                  highlight={results && results.profitMargin > 0}
+                />
+              </div>
+            </div>
 
-                    {/* Costs */}
-                    <div className="bg-destructive/5 border-2 border-destructive/20 rounded-md p-3 sm:p-4">
-                      <h4 className="text-xs sm:text-sm font-semibold text-destructive flex items-center gap-2 mb-3">
-                        <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        Costs
-                      </h4>
-                      <div className="space-y-0">
-                        <DataRow
-                          label="Daily Power"
-                          value={results ? `-${formatCurrency(results.dailyPowerCost)}` : '—'}
-                          highlight="negative"
-                          size="sm"
-                        />
-                        <DataRow
-                          label="Daily Pool Fee"
-                          value={results ? `-${formatCurrency(results.dailyPoolFees)}` : '—'}
-                          highlight="negative"
-                          size="sm"
-                        />
-                        <DataRow
-                          label="Total Daily Cost"
-                          value={results ? `-${formatCurrency(results.dailyPowerCost + results.dailyPoolFees)}` : '—'}
-                          highlight="negative"
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Summary Stats */}
-                  <SectionDivider label="Summary" />
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      { label: 'Total Power', value: results ? `${results.totalPowerKW.toFixed(1)} kW` : '—', icon: Zap },
-                      { label: 'Daily kWh', value: results ? `${results.dailyPowerKWh.toFixed(0)}` : '—', icon: Gauge },
-                      { label: 'Efficiency', value: results ? `${results.efficiency.toFixed(1)} W/TH` : '—', icon: TrendingUp },
-                      { label: 'Investment', value: results ? formatCurrency(results.totalInvestment) : '—', icon: Bitcoin },
-                    ].map((stat) => (
-                      <div key={stat.label} className="bg-muted border-2 border-border rounded-md p-2 sm:p-3 text-center">
-                        <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{stat.label}</div>
-                        <div className="text-sm sm:text-base lg:text-lg font-bold font-mono text-foreground truncate">{stat.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                {/* Projections Tab */}
-                <TabsContent value="projections" className="space-y-2 mt-0">
-                  {[1, 3, 6, 12, 24].map((months) => {
-                    const profit = results ? results.monthlyNetProfit * months : 0;
-                    const totalReturn = results ? profit - results.totalInvestment : 0;
-                    const isPositive = totalReturn > 0;
-                    
-                    return (
-                      <div 
-                        key={months} 
-                        className="bg-muted border-2 border-border rounded-md p-2.5 sm:p-3 flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-xs sm:text-sm font-medium text-foreground">
-                            {months} Month{months > 1 ? 's' : ''}
-                          </div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                            Net: {formatCurrency(profit)}
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className={cn(
-                            "text-sm sm:text-base lg:text-lg font-bold font-mono",
-                            isPositive ? "text-data-positive" : "text-destructive"
-                          )}>
-                            {formatCurrency(totalReturn)}
-                          </div>
-                          <div className="text-[10px] sm:text-xs text-muted-foreground">
-                            {results ? `${((totalReturn / results.totalInvestment) * 100).toFixed(0)}% ROI` : '—'}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </TabsContent>
-
-                {/* Scenarios Tab */}
-                <TabsContent value="scenarios" className="space-y-2 mt-0">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">
-                    What if BTC price changes?
-                  </p>
-                  {networkData && results && [0.5, 0.75, 1, 1.25, 1.5, 2].map((multiplier) => {
-                    const scenarioPrice = networkData.price * multiplier;
-                    const scenarioDailyRevenue = results.dailyBTC * scenarioPrice;
-                    const scenarioPoolFees = scenarioDailyRevenue * (poolFee / 100);
-                    const scenarioDailyProfit = scenarioDailyRevenue - results.dailyPowerCost - scenarioPoolFees;
-                    
-                    return (
-                      <div 
-                        key={multiplier} 
-                        className="bg-muted border-2 border-border rounded-md p-2.5 sm:p-3 flex items-center justify-between gap-2"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              "text-[9px] sm:text-[10px] px-1.5 py-0.5 flex-shrink-0 border-2",
-                              multiplier < 1 ? "border-destructive/40 text-destructive bg-destructive/5" : 
-                              multiplier > 1 ? "border-data-positive/40 text-data-positive bg-data-positive/5" : 
-                              "border-border text-foreground"
-                            )}
-                          >
-                            {multiplier < 1 ? `${((1-multiplier)*100).toFixed(0)}% ↓` : 
-                             multiplier > 1 ? `${((multiplier-1)*100).toFixed(0)}% ↑` : 'Current'}
-                          </Badge>
-                          <span className="text-xs sm:text-sm font-mono font-medium text-foreground truncate">
-                            ${scenarioPrice.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className={cn(
-                          "font-mono font-bold text-xs sm:text-sm flex-shrink-0",
-                          scenarioDailyProfit > 0 ? "text-data-positive" : "text-destructive"
-                        )}>
-                          {formatCurrency(scenarioDailyProfit)}/day
-                        </div>
-                      </div>
-                    );
-                  })}
-                </TabsContent>
-              </Tabs>
-            </IndustrialCard>
-          </main>
+            {/* Investment Summary */}
+            <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
+              <SectionLabel icon={<Target className="w-3.5 h-3.5" />} label="INVESTMENT" />
+              
+              <div className="space-y-2 mt-4">
+                <BreakdownRow 
+                  label="Total Hardware" 
+                  value={results ? formatLargeNumber(results.totalInvestment) : '$0'} 
+                  type="neutral"
+                />
+                <BreakdownRow 
+                  label="Monthly Return" 
+                  value={results ? formatLargeNumber(results.monthlyNetProfit) : '$0'} 
+                  type={isProfitable ? 'profit' : 'loss'}
+                />
+                <BreakdownRow 
+                  label="Annual Return" 
+                  value={results ? formatLargeNumber(results.yearlyNetProfit) : '$0'} 
+                  type={isProfitable ? 'profit' : 'loss'}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* ===== FOOTER ===== */}
-        <footer className="text-center pt-3 sm:pt-4 border-t border-border">
-          <p className="text-[10px] sm:text-xs text-muted-foreground max-w-2xl mx-auto">
-            Calculations are estimates based on current network conditions. Actual results may vary due to difficulty adjustments and market volatility.
-          </p>
-          {networkData && (
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 mt-1">
-              Source: {(networkData as any).dataSource || 'Live APIs'} • 
-              Updated: {networkData.lastUpdate?.toLocaleTimeString() || 'Unknown'}
-            </p>
-          )}
-        </footer>
       </div>
     </div>
   );
 };
+
+// Sub-components
+
+interface NetworkStatProps {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  color: 'bitcoin' | 'primary' | 'trust' | 'success';
+  className?: string;
+}
+
+const NetworkStat: React.FC<NetworkStatProps> = ({ label, value, icon, color, className }) => {
+  const colorClasses = {
+    bitcoin: 'text-watt-bitcoin',
+    primary: 'text-primary',
+    trust: 'text-watt-trust',
+    success: 'text-data-positive',
+  };
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <span className={cn("opacity-70", colorClasses[color])}>{icon}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn("font-bold", colorClasses[color])}>{value}</span>
+    </div>
+  );
+};
+
+interface HeroStatProps {
+  label: string;
+  value: string;
+  subValue: string;
+  trend: 'up' | 'down';
+  primary?: boolean;
+}
+
+const HeroStat: React.FC<HeroStatProps> = ({ label, value, subValue, trend, primary }) => (
+  <div className={cn(
+    "p-3 sm:p-4 rounded-lg border",
+    primary ? "bg-background/80 border-border" : "bg-background/50 border-border/50"
+  )}>
+    <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">{label}</div>
+    <div className={cn(
+      "font-mono font-bold mb-0.5",
+      primary ? "text-xl sm:text-2xl lg:text-3xl" : "text-lg sm:text-xl lg:text-2xl",
+      trend === 'up' ? "text-data-positive" : "text-destructive"
+    )}>
+      {value}
+    </div>
+    <div className="text-[10px] sm:text-xs text-muted-foreground font-mono">{subValue}</div>
+  </div>
+);
+
+interface SectionLabelProps {
+  icon: React.ReactNode;
+  label: string;
+}
+
+const SectionLabel: React.FC<SectionLabelProps> = ({ icon, label }) => (
+  <div className="flex items-center gap-2 text-muted-foreground">
+    {icon}
+    <span className="text-[10px] sm:text-xs font-bold tracking-wider">{label}</span>
+  </div>
+);
+
+interface ModeButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  sublabel: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const ModeButton: React.FC<ModeButtonProps> = ({ icon, label, sublabel, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "p-3 rounded-lg border-2 transition-all text-left",
+      active 
+        ? "bg-primary border-primary text-primary-foreground" 
+        : "bg-background border-border hover:border-muted-foreground text-foreground"
+    )}
+  >
+    <div className="mb-1.5">{icon}</div>
+    <div className="text-xs sm:text-sm font-bold">{label}</div>
+    <div className={cn(
+      "text-[10px]",
+      active ? "text-primary-foreground/70" : "text-muted-foreground"
+    )}>{sublabel}</div>
+  </button>
+);
+
+interface ParameterSliderProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  unit: string;
+  decimals?: number;
+  onChange: (value: number) => void;
+}
+
+const ParameterSlider: React.FC<ParameterSliderProps> = ({ 
+  label, value, min, max, step = 1, unit, decimals = 0, onChange 
+}) => (
+  <div className="space-y-2">
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-mono font-bold text-foreground">
+        {value.toFixed(decimals)} <span className="text-muted-foreground text-xs">{unit}</span>
+      </span>
+    </div>
+    <Slider
+      value={[value]}
+      min={min}
+      max={max}
+      step={step}
+      onValueChange={(v) => onChange(v[0])}
+      className="w-full"
+    />
+  </div>
+);
+
+interface ParameterInputProps {
+  label: string;
+  value: number;
+  min?: number;
+  max?: number;
+  prefix?: string;
+  onChange: (value: number) => void;
+}
+
+const ParameterInput: React.FC<ParameterInputProps> = ({ 
+  label, value, min, max, prefix, onChange 
+}) => (
+  <div className="space-y-2">
+    <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="relative">
+      {prefix && (
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{prefix}</span>
+      )}
+      <Input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className={cn(
+          "h-10 font-mono text-sm bg-background border-border",
+          prefix && "pl-7"
+        )}
+      />
+    </div>
+  </div>
+);
+
+interface BreakdownRowProps {
+  label: string;
+  value: string;
+  type: 'revenue' | 'cost' | 'profit' | 'loss' | 'neutral';
+  bold?: boolean;
+}
+
+const BreakdownRow: React.FC<BreakdownRowProps> = ({ label, value, type, bold }) => {
+  const valueColor = {
+    revenue: 'text-foreground',
+    cost: 'text-muted-foreground',
+    profit: 'text-data-positive',
+    loss: 'text-destructive',
+    neutral: 'text-foreground',
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <span className={cn("text-xs sm:text-sm", bold ? "font-medium text-foreground" : "text-muted-foreground")}>
+        {label}
+      </span>
+      <span className={cn(
+        "font-mono text-sm sm:text-base",
+        bold && "font-bold",
+        valueColor[type]
+      )}>
+        {value}
+      </span>
+    </div>
+  );
+};
+
+interface MetricBoxProps {
+  label: string;
+  value: string;
+  unit: string;
+  highlight?: boolean;
+}
+
+const MetricBox: React.FC<MetricBoxProps> = ({ label, value, unit, highlight }) => (
+  <div className="bg-background border border-border rounded-lg p-2.5 sm:p-3">
+    <div className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
+    <div className="flex items-baseline gap-1">
+      <span className={cn(
+        "font-mono font-bold text-sm sm:text-base",
+        highlight ? "text-data-positive" : "text-foreground"
+      )}>
+        {value}
+      </span>
+      <span className="text-[10px] text-muted-foreground">{unit}</span>
+    </div>
+  </div>
+);
 
 export default BTCROICalculatorV2;
