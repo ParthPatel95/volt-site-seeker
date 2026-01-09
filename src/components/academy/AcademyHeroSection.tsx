@@ -131,7 +131,7 @@ export const AcademyHeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-[100svh] flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy overflow-hidden pt-16">
+    <section className="relative min-h-[100svh] flex items-center bg-gradient-to-b from-watt-navy via-watt-navy to-watt-navy overflow-hidden pt-16 md:pt-20">
       {/* Animated Background Layers */}
       <div className="absolute inset-0">
         {/* Radial gradient overlays */}

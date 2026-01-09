@@ -38,12 +38,12 @@ const Academy = () => {
       
       {/* Email verification banner for unverified users - positioned after fixed nav */}
       {academyUser && !academyUser.is_email_verified && (
-        <div className="pt-16">
+        <div className="pt-16 md:pt-20">
           <AcademyEmailVerificationBanner />
         </div>
       )}
       
-      <main className={academyUser && !academyUser.is_email_verified ? '' : ''}>
+      <main>
         <AcademyHeroSection />
         
         {/* Simple continue learning bar for returning users */}
