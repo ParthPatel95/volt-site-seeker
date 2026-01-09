@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
-import { AcademyEmailVerificationSuccess } from '@/components/academy/AcademyEmailVerificationSuccess';
 
 // Floating Particle Component
 const FloatingParticle = ({ delay, size, left, duration }: { delay: number; size: number; left: string; duration: number }) => (
@@ -35,7 +34,6 @@ const AcademyAuth: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showVerificationSuccess, setShowVerificationSuccess] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,8 +68,12 @@ const AcademyAuth: React.FC = () => {
             variant: 'destructive'
           });
         } else {
-          // Show verification success screen
-          setShowVerificationSuccess(true);
+          toast({
+            title: 'Account Created!',
+            description: 'Welcome to WattByte Academy. Redirecting...',
+          });
+          // Navigate to academy after successful signup
+          navigate(returnUrl, { replace: true });
         }
       } else {
         const { error } = await signIn(email, password);
@@ -243,10 +245,7 @@ const AcademyAuth: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            {showVerificationSuccess ? (
-              <AcademyEmailVerificationSuccess email={email} />
-            ) : (
-              <div className="bg-slate-800/70 rounded-2xl border border-white/20 p-8 backdrop-blur-sm shadow-2xl">
+            <div className="bg-slate-800/70 rounded-2xl border border-white/20 p-8 backdrop-blur-sm shadow-2xl">
                 {/* Form Header */}
                 <div className="text-center mb-8">
                   <div className="mx-auto w-16 h-16 bg-gradient-to-br from-watt-bitcoin to-watt-bitcoin/80 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-watt-bitcoin/30">
@@ -372,9 +371,8 @@ const AcademyAuth: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                </div>
               </div>
-            )}
+            </div>
           </motion.div>
         </div>
       </div>

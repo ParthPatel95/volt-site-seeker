@@ -24,7 +24,6 @@ interface AcademyAuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Pick<AcademyUser, 'full_name' | 'company' | 'job_title'>>) => Promise<{ error: Error | null }>;
-  resendEmailVerification: () => Promise<{ error: Error | null }>;
   refreshAcademyUser: () => Promise<void>;
 }
 
@@ -158,15 +157,6 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
           }
         }
 
-        // Send verification email
-        const { error: emailError } = await supabase.functions.invoke('send-academy-verification-email', {
-          body: { email, user_id: data.user.id, full_name: fullName }
-        });
-
-        if (emailError) {
-          console.error('Verification email error:', emailError);
-          // Don't fail signup if email fails - user can resend later
-        }
       }
 
       return { error: null };
@@ -243,27 +233,6 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   };
 
-  const resendEmailVerification = async () => {
-    if (!user || !academyUser) return { error: new Error('Not authenticated') };
-
-    try {
-      const response = await supabase.functions.invoke('send-academy-verification-email', {
-        body: {
-          email: academyUser.email,
-          user_id: user.id,
-          full_name: academyUser.full_name,
-        }
-      });
-
-      if (response.error) {
-        return { error: response.error };
-      }
-
-      return { error: null };
-    } catch (err) {
-      return { error: err as Error };
-    }
-  };
 
   const refreshAcademyUser = async () => {
     if (user) {
@@ -284,7 +253,6 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
         signIn,
         signOut,
         updateProfile,
-        resendEmailVerification,
         refreshAcademyUser
       }}
     >
