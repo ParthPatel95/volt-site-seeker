@@ -1,43 +1,43 @@
 /**
  * Centralized Mining Data Constants
  * 
- * This file contains frequently-changing mining metrics that should be
- * updated periodically. Using centralized constants ensures consistency
- * across the platform and makes updates easier.
+ * IMPORTANT: These are FALLBACK values only!
+ * The application uses live data from mempool.space and other APIs.
+ * These values are only used when API calls fail.
  * 
- * LAST UPDATED: December 2024
+ * LAST UPDATED: January 2026
  * 
- * Data Sources:
- * - BTC Price: Real-time market data
- * - Network Hashrate: blockchain.com, mempool.space
- * - Difficulty: btc.com, blockchain.com
- * - Block Reward: Bitcoin protocol (halving schedule)
+ * Data Sources (Live):
+ * - BTC Price: Coinbase API, CoinGecko (fallback)
+ * - Network Hashrate: mempool.space, blockchain.info (fallback)
+ * - Difficulty: mempool.space, blockchain.info (fallback)
+ * - Block Reward: Calculated from block height
  */
 
 // =============================================================================
-// BITCOIN NETWORK DATA
+// BITCOIN NETWORK FALLBACK DATA
 // =============================================================================
 
 /**
- * Current Bitcoin price estimate for calculations
- * Note: This is for educational estimates only. Use real-time data for actual decisions.
+ * Fallback Bitcoin price estimate (only used when APIs fail)
+ * @deprecated Use live data from useBTCROICalculator hook
  */
-export const CURRENT_BTC_PRICE = 100000; // USD
+export const CURRENT_BTC_PRICE = 100000; // USD - January 2026 estimate
 
 /**
- * Network hashrate in EH/s (Exahashes per second)
- * As of December 2024, network hashrate is approximately 700-800 EH/s
+ * Fallback network hashrate in EH/s (Exahashes per second)
+ * @deprecated Use live data from mempool.space
  */
-export const NETWORK_HASHRATE_EH = 750; // EH/s
+export const NETWORK_HASHRATE_EH = 800; // EH/s - January 2026 estimate
 
 /**
- * Current mining difficulty
- * Difficulty adjusts every 2016 blocks (~2 weeks)
+ * Fallback mining difficulty
+ * @deprecated Use live data from mempool.space
  */
-export const CURRENT_DIFFICULTY_T = 109; // Trillion
+export const CURRENT_DIFFICULTY_T = 110; // Trillion - January 2026 estimate
 
 /**
- * Block reward after 2024 halving
+ * Block reward after 2024 halving (accurate - changes every 4 years)
  */
 export const BLOCK_REWARD_BTC = 3.125;
 
@@ -50,6 +50,15 @@ export const BLOCKS_PER_DAY = 144;
  * Total BTC mined per day
  */
 export const BTC_PER_DAY = BLOCKS_PER_DAY * BLOCK_REWARD_BTC; // 450 BTC
+
+/**
+ * Check if fallback data is being used (for warning display)
+ */
+export const isUsingFallbackData = (lastUpdate?: Date): boolean => {
+  if (!lastUpdate) return true;
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+  return lastUpdate < fifteenMinutesAgo;
+};
 
 // =============================================================================
 // PUE (Power Usage Effectiveness) STANDARDS
@@ -162,17 +171,19 @@ export const ASIC_SPECS = {
 // =============================================================================
 
 export const DATA_DISCLAIMER = {
-  short: 'Data as of December 2024. For real-time data, consult blockchain explorers.',
+  short: 'Live data from mempool.space & Coinbase. Fallback values used if APIs unavailable.',
   
-  full: `The data presented is for educational purposes only and represents estimates 
-as of December 2024. Bitcoin mining economics change frequently due to price volatility, 
-network difficulty adjustments, and hardware evolution. Always verify current data 
-from reliable sources before making investment decisions.`,
+  full: `The data presented uses live feeds from mempool.space and Coinbase APIs. 
+Bitcoin mining economics change frequently due to price volatility, 
+network difficulty adjustments (every ~2 weeks), and hardware evolution. 
+If live APIs are unavailable, fallback estimates are used. 
+Always verify current data from reliable sources before making investment decisions.`,
 
   sources: [
-    { name: 'Blockchain.com', url: 'https://blockchain.com/explorer' },
-    { name: 'Mempool.space', url: 'https://mempool.space' },
-    { name: 'BTC.com', url: 'https://btc.com/stats/diff' },
+    { name: 'mempool.space', url: 'https://mempool.space', description: 'Primary source for difficulty, hashrate, block data' },
+    { name: 'Coinbase', url: 'https://api.coinbase.com', description: 'Primary source for BTC price' },
+    { name: 'Blockchain.info', url: 'https://blockchain.info', description: 'Fallback for network data' },
+    { name: 'CoinGecko', url: 'https://coingecko.com', description: 'Fallback for price data' },
   ],
 };
 

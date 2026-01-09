@@ -262,3 +262,9 @@ verify_jwt = false
 
 [functions.create-academy-profile]
 verify_jwt = false
+
+[functions.fetch-btc-network-data]
+verify_jwt = false
+
+[functions.fetch-btc-data]
+verify_jwt = false

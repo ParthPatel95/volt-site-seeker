@@ -37,7 +37,10 @@ type MiningMode = 'self' | 'hosting';
 export const BTCROICalculatorV2: React.FC = () => {
   const { 
     networkData, 
-    isLoading: networkLoading, 
+    isLoading: networkLoading,
+    isRefreshing,
+    error: networkError,
+    refreshNetworkData,
     formData, 
     setFormData,
     saveCurrentCalculation,
@@ -46,23 +49,22 @@ export const BTCROICalculatorV2: React.FC = () => {
   
   // Local state for immediate UI updates
   const [mode, setMode] = useState<MiningMode>('self');
-  const [hashrate, setHashrate] = useState(200);
-  const [powerDraw, setPowerDraw] = useState(3500);
+  const [hashrate, setHashrate] = useState(234); // S21 Pro default
+  const [powerDraw, setPowerDraw] = useState(3531);
   const [units, setUnits] = useState(1);
   const [electricityRate, setElectricityRate] = useState(0.06);
-  const [hardwareCost, setHardwareCost] = useState(3500);
+  const [hardwareCost, setHardwareCost] = useState(5000);
   const [poolFee, setPoolFee] = useState(1.5);
   const [hostingRate, setHostingRate] = useState(0.08);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedASIC, setSelectedASIC] = useState<ASICMiner | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Refresh network data
+  // Refresh network data (proper refresh, no page reload)
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    window.location.reload();
-  }, []);
+    await refreshNetworkData();
+    toast.success('Network data refreshed');
+  }, [refreshNetworkData]);
 
   // Handle ASIC selection
   const handleSelectASIC = useCallback((asic: ASICMiner) => {
@@ -220,9 +222,19 @@ export const BTCROICalculatorV2: React.FC = () => {
               <span className="sm:inline">Refresh</span>
             </Button>
             {networkData && (
-              <Badge variant="outline" className="text-xs flex-shrink-0">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse" />
-                Live
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "text-xs flex-shrink-0",
+                  (networkData as any).isLive === false && "border-amber-500/50 text-amber-500"
+                )}
+                title={`Data from: ${(networkData as any).dataSource || 'API'}\nLast updated: ${networkData.lastUpdate?.toLocaleTimeString() || 'Unknown'}`}
+              >
+                <span className={cn(
+                  "w-1.5 h-1.5 rounded-full mr-1.5",
+                  (networkData as any).isLive !== false ? "bg-green-500 animate-pulse" : "bg-amber-500"
+                )} />
+                {(networkData as any).isLive !== false ? 'Live' : 'Estimated'}
               </Badge>
             )}
           </div>
@@ -615,8 +627,14 @@ export const BTCROICalculatorV2: React.FC = () => {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="text-center text-xs text-muted-foreground pt-4">
+        <div className="text-center text-xs text-muted-foreground pt-4 space-y-1">
           <p>Calculations are estimates based on current network conditions. Actual results may vary due to difficulty adjustments and market volatility.</p>
+          {networkData && (
+            <p className="text-[10px]">
+              Data source: {(networkData as any).dataSource || 'Live APIs'} | 
+              Last updated: {networkData.lastUpdate?.toLocaleTimeString() || 'Unknown'}
+            </p>
+          )}
         </div>
       </div>
     </div>
