@@ -325,17 +325,9 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
   const completedSections = moduleProgress?.completedSections || [];
   const diffBadge = difficultyBadges[module.difficulty];
   
-  const isEmailVerified = academyUser?.is_email_verified ?? false;
+  const isEmailVerified = true; // Email verification requirement removed
 
   const handleLessonClick = (lesson: Lesson) => {
-    if (!isEmailVerified) {
-      toast({
-        title: 'Email Verification Required',
-        description: 'Please verify your email to access course content.',
-        variant: 'destructive'
-      });
-      return;
-    }
     if (lesson.anchor) {
       navigate(`${module.route}#${lesson.anchor}`);
     } else {
@@ -345,14 +337,6 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
 
   const handleStartModule = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isEmailVerified) {
-      toast({
-        title: 'Email Verification Required',
-        description: 'Please verify your email to start courses.',
-        variant: 'destructive'
-      });
-      return;
-    }
     navigate(module.route);
   };
 
@@ -435,17 +419,8 @@ const ModuleCard = ({ module, index }: { module: Module; index: number }) => {
           <Button
             size="sm"
             onClick={handleStartModule}
-            disabled={!isEmailVerified && !progress.isStarted}
-            className={!isEmailVerified ? "opacity-70" : ""}
           >
-            {!isEmailVerified ? (
-              <>
-                <Lock className="w-3 h-3 mr-1" />
-                Verify Email
-              </>
-            ) : (
-              progress.isComplete ? "Review" : progress.isStarted ? "Continue" : "Start"
-            )}
+            {progress.isComplete ? "Review" : progress.isStarted ? "Continue" : "Start"}
           </Button>
         </div>
       </div>
