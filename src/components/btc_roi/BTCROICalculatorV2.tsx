@@ -10,6 +10,7 @@ import {
   BarChart2, Gauge, FileText, Download, PieChart, LineChart, Shield,
   Calculator, Plus, ChevronDown, ChevronUp
 } from 'lucide-react';
+import { BTCROIPDFGenerator } from './reporting/BTCROIPDFGenerator';
 import { useBTCROICalculator } from './hooks/useBTCROICalculator';
 import { ASICSelector } from './components/ASICSelector';
 import { ASICMiner } from './hooks/useASICDatabase';
@@ -42,6 +43,7 @@ export const BTCROICalculatorV2: React.FC = () => {
   const [plPeriod, setPLPeriod] = useState<PLPeriod>('monthly');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showPDFGenerator, setShowPDFGenerator] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     await refreshNetworkData();
@@ -301,7 +303,7 @@ export const BTCROICalculatorV2: React.FC = () => {
             <div className="bg-card border border-border rounded-lg p-3 sm:p-4">
               <SectionLabel icon={<FileText className="w-3.5 h-3.5" />} label="EXPORT" />
               <div className="grid grid-cols-2 gap-2 mt-3">
-                <Button variant="outline" size="sm" className="text-xs" onClick={() => toast.info('PDF export coming soon')}>
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowPDFGenerator(true)} disabled={!financialMetrics || !results}>
                   <Download className="w-3 h-3 mr-1" />PDF
                 </Button>
                 <Button variant="outline" size="sm" className="text-xs" onClick={() => toast.info('CSV export coming soon')}>
@@ -417,6 +419,29 @@ export const BTCROICalculatorV2: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* PDF Generator Modal */}
+      {networkData && financialMetrics && results && (
+        <BTCROIPDFGenerator
+          networkData={networkData}
+          financialMetrics={financialMetrics}
+          results={results}
+          parameters={{
+            hashrate,
+            powerDraw,
+            units,
+            electricityRate,
+            hardwareCost,
+            poolFee,
+            maintenancePercent,
+            mode,
+            hostingRate
+          }}
+          selectedASIC={selectedASIC}
+          isOpen={showPDFGenerator}
+          onClose={() => setShowPDFGenerator(false)}
+        />
+      )}
     </div>
   );
 };
