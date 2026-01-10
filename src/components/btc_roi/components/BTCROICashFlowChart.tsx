@@ -6,6 +6,7 @@ import {
 import { CashFlowMonth } from '../services/financialAnalysisService';
 import { cn } from '@/lib/utils';
 import { TrendingUp, DollarSign, Calendar } from 'lucide-react';
+import { calculatePaybackWithLabel } from '../services/btcRoiMath';
 
 interface BTCROICashFlowChartProps {
   projections: CashFlowMonth[];
@@ -31,14 +32,12 @@ export const BTCROICashFlowChart: React.FC<BTCROICashFlowChartProps> = ({
     }));
   }, [projections]);
 
-  const breakEvenMonth = useMemo(() => {
-    for (let i = 0; i < projections.length; i++) {
-      if (projections[i].cumulativeCashFlow >= 0) {
-        return i + 1;
-      }
-    }
-    return null;
+  // Use consistent payback calculation
+  const paybackResult = useMemo(() => {
+    return calculatePaybackWithLabel(projections, projections.length);
   }, [projections]);
+
+  const breakEvenMonth = paybackResult.isWithinHorizon ? Math.ceil(paybackResult.months) : null;
 
   const totalProfit = projections.length > 0 
     ? projections[projections.length - 1].cumulativeCashFlow 
@@ -118,8 +117,8 @@ export const BTCROICashFlowChart: React.FC<BTCROICashFlowChartProps> = ({
         <StatCard
           icon={<Calendar className="w-4 h-4" />}
           label="Break-Even"
-          value={breakEvenMonth ? `Month ${breakEvenMonth}` : 'Never'}
-          color={breakEvenMonth ? "positive" : "negative"}
+          value={paybackResult.label}
+          color={paybackResult.isWithinHorizon ? "positive" : "negative"}
         />
         <StatCard
           icon={<TrendingUp className="w-4 h-4" />}

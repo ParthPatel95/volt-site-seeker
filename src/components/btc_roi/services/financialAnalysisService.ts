@@ -558,7 +558,10 @@ export class FinancialAnalysisService {
     effectiveRate: number
   ): TornadoItem[] {
     const baseDailyResults = this.calculateDailyResults(formData, networkData, effectiveRate);
-    const baseAnnualProfit = baseDailyResults.dailyNetProfit * 365;
+    const totalInvestment = formData.hardwareCost * formData.units;
+    const annualMaintenance = totalInvestment * (formData.maintenancePercent / 100);
+    // Use net cash flow after maintenance for consistency
+    const baseAnnualProfit = (baseDailyResults.dailyNetProfit * 365) - annualMaintenance;
     
     // Test ±20% change in each variable
     const variables = [
@@ -566,34 +569,41 @@ export class FinancialAnalysisService {
         name: 'BTC Price', 
         test: (factor: number) => {
           const adjusted = { ...networkData, price: networkData.price * factor };
-          return this.calculateDailyResults(formData, adjusted, effectiveRate).dailyNetProfit * 365;
+          const results = this.calculateDailyResults(formData, adjusted, effectiveRate);
+          return (results.dailyNetProfit * 365) - annualMaintenance;
         }
       },
       { 
         name: 'Electricity Rate', 
         test: (factor: number) => {
-          return this.calculateDailyResults(formData, networkData, effectiveRate * factor).dailyNetProfit * 365;
+          const results = this.calculateDailyResults(formData, networkData, effectiveRate * factor);
+          return (results.dailyNetProfit * 365) - annualMaintenance;
         }
       },
       { 
         name: 'Network Difficulty', 
         test: (factor: number) => {
           const adjusted = { ...networkData, hashrate: networkData.hashrate * factor };
-          return this.calculateDailyResults(formData, adjusted, effectiveRate).dailyNetProfit * 365;
+          const results = this.calculateDailyResults(formData, adjusted, effectiveRate);
+          return (results.dailyNetProfit * 365) - annualMaintenance;
         }
       },
       { 
         name: 'Pool Fee', 
         test: (factor: number) => {
           const adjusted = { ...formData, poolFee: formData.poolFee * factor };
-          return this.calculateDailyResults(adjusted, networkData, effectiveRate).dailyNetProfit * 365;
+          const results = this.calculateDailyResults(adjusted, networkData, effectiveRate);
+          return (results.dailyNetProfit * 365) - annualMaintenance;
         }
       },
       { 
         name: 'Hardware Units', 
         test: (factor: number) => {
-          const adjusted = { ...formData, units: Math.round(formData.units * factor) };
-          return this.calculateDailyResults(adjusted, networkData, effectiveRate).dailyNetProfit * 365;
+          const adjustedUnits = Math.round(formData.units * factor);
+          const adjusted = { ...formData, units: adjustedUnits };
+          const results = this.calculateDailyResults(adjusted, networkData, effectiveRate);
+          const adjustedMaintenance = (formData.hardwareCost * adjustedUnits) * (formData.maintenancePercent / 100);
+          return (results.dailyNetProfit * 365) - adjustedMaintenance;
         }
       }
     ];
@@ -604,7 +614,8 @@ export class FinancialAnalysisService {
       const lowCase = variable.test(0.8);
       const highCase = variable.test(1.2);
       const impact = Math.abs(highCase - lowCase);
-      const sensitivity = (impact / baseAnnualProfit) * 100 / 40; // per 1% change
+      // Avoid division by zero
+      const sensitivity = baseAnnualProfit !== 0 ? (impact / Math.abs(baseAnnualProfit)) * 100 / 40 : 0;
       
       results.push({
         variable: variable.name,
@@ -671,7 +682,7 @@ export class FinancialAnalysisService {
     ];
     
     return scenarioConfigs.map(scenario => {
-      // Calculate profits for years 1, 2, 3
+      // Calculate profits for years 1, 2, 3 - including maintenance
       const calculateYearProfit = (year: number) => {
         const priceMultiplier = 1 + (scenario.btcPriceGrowth / 100) * (year / 3);
         const diffMultiplier = 1 + (scenario.difficultyGrowth / 100) * (year / 3);
@@ -689,7 +700,10 @@ export class FinancialAnalysisService {
         const dailyPowerCost = totalPowerKW * 24 * adjustedRate;
         const dailyPoolFees = dailyRevenue * (formData.poolFee / 100);
         
-        return (dailyRevenue - dailyPowerCost - dailyPoolFees) * 365;
+        // Include annual maintenance for consistent calculations
+        const annualMaintenance = totalInvestment * (formData.maintenancePercent / 100);
+        
+        return (dailyRevenue - dailyPowerCost - dailyPoolFees) * 365 - annualMaintenance;
       };
       
       const year1Profit = calculateYearProfit(1);
