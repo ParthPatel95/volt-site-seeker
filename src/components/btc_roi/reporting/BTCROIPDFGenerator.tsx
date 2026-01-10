@@ -486,10 +486,12 @@ export const BTCROIPDFGenerator: React.FC<PDFGeneratorProps> = ({
           <div class="subsection-title">Assumptions</div>
           <div style="font-size: 12px; color: #666;">
             <ul style="margin-left: 20px;">
-              <li>Monthly difficulty growth: 3% (industry average)</li>
-              <li>BTC price appreciation: 0.5% monthly (conservative)</li>
+              <li>Projection model: Static (current conditions held constant)</li>
+              <li>Network hashrate/difficulty: Held constant at current levels</li>
+              <li>BTC price: Held constant at current price</li>
               <li>Discount rate for NPV: 10% annual</li>
               <li>Reinvestment rate for MIRR: 8% annual</li>
+              <li>Depreciation: 3-year straight-line (non-cash, reference only)</li>
             </ul>
           </div>
         </div>
