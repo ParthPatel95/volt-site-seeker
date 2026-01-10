@@ -52,7 +52,8 @@ export const BTCROIProfitLossStatement: React.FC<BTCROIProfitLossStatementProps>
   const maintenance = data.monthlyMaintenance * (period === 'daily' ? 1/30 : period === 'monthly' ? 1 : period === 'quarterly' ? 3 : 12);
   const ebitda = grossProfit - maintenance;
   const depreciation = data.monthlyDepreciation * (period === 'daily' ? 1/30 : period === 'monthly' ? 1 : period === 'quarterly' ? 3 : 12);
-  const netIncome = ebitda - depreciation;
+  // Net Income = EBITDA (depreciation is non-cash, shown for reference only)
+  const netIncome = ebitda;
   
   const formatCurrency = (value: number) => {
     const absValue = Math.abs(value);
@@ -125,9 +126,12 @@ export const BTCROIProfitLossStatement: React.FC<BTCROIProfitLossStatementProps>
           />
         </div>
         
-        {/* Non-Cash Items */}
-        <PLSection title="Non-Cash Items">
+        {/* Non-Cash Items (Reference Only - Not Deducted) */}
+        <PLSection title="Non-Cash Items (Reference)">
           <PLRow label="Depreciation (3-yr SL)" value={formatCurrency(depreciation)} type="cost" />
+          <div className="text-[10px] text-muted-foreground mt-1 italic">
+            *For book value only; not deducted from cash profit
+          </div>
         </PLSection>
         
         {/* Net Income */}
