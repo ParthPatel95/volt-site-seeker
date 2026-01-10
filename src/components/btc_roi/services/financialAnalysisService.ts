@@ -226,9 +226,10 @@ export class FinancialAnalysisService {
     const projections: CashFlowMonth[] = [];
     let cumulativeCashFlow = -(formData.hardwareCost * formData.units);
     
-    // Difficulty growth assumptions: 3% monthly average
-    const monthlyDifficultyGrowth = 1.03;
-    // BTC price: assume slight upward trend with volatility
+    // REALISTIC difficulty growth: ~0.5% monthly = ~6% annually (historical avg is 4-8% annual)
+    // Previous 3% monthly was WAY too aggressive (42.6% annually)
+    const monthlyDifficultyGrowth = 1.005;
+    // BTC price: assume slight upward trend (conservative 0.5% monthly = 6% annual)
     const monthlyPriceGrowth = 1.005;
     
     let currentDifficulty = networkData.difficulty;
@@ -286,29 +287,55 @@ export class FinancialAnalysisService {
   }
   
   private static calculateIRR(cashFlows: number[], initialInvestment: number): number {
-    // Newton-Raphson method to find IRR
+    // Newton-Raphson method to find IRR with improved convergence
     const allFlows = [-initialInvestment, ...cashFlows];
-    let guess = 0.1 / 12; // Start with 10% annual, convert to monthly
     
-    for (let iteration = 0; iteration < 100; iteration++) {
+    // Check if total cash flows are positive (IRR exists)
+    const totalCashFlow = cashFlows.reduce((a, b) => a + b, 0);
+    if (totalCashFlow <= 0) {
+      // No positive IRR possible if total cash flows don't exceed investment
+      return -100; // Return -100% to indicate negative return
+    }
+    
+    // Better initial guess based on simple payback estimate
+    const avgMonthlyCashFlow = totalCashFlow / cashFlows.length;
+    const simplePaybackMonths = initialInvestment / avgMonthlyCashFlow;
+    let guess = simplePaybackMonths > 0 ? 1 / simplePaybackMonths : 0.05;
+    guess = Math.max(0.001, Math.min(guess, 0.5)); // Clamp initial guess
+    
+    for (let iteration = 0; iteration < 200; iteration++) {
       let npv = 0;
       let npvDerivative = 0;
       
       for (let i = 0; i < allFlows.length; i++) {
         const factor = Math.pow(1 + guess, i);
+        if (factor === 0 || !isFinite(factor)) continue;
         npv += allFlows[i] / factor;
         npvDerivative -= i * allFlows[i] / Math.pow(1 + guess, i + 1);
       }
       
-      if (Math.abs(npv) < 0.0001) break;
-      guess = guess - npv / npvDerivative;
+      if (Math.abs(npv) < 0.01) break; // Converged
+      if (Math.abs(npvDerivative) < 1e-10) break; // Derivative too small
       
-      // Prevent runaway values
-      if (guess > 10 || guess < -0.99) return 0;
+      const newGuess = guess - npv / npvDerivative;
+      
+      // Dampen updates to prevent oscillation
+      guess = guess + 0.5 * (newGuess - guess);
+      
+      // Clamp to reasonable range
+      if (guess > 2) guess = 2;
+      if (guess < -0.5) guess = -0.5;
     }
     
-    // Convert monthly to annual
-    return ((1 + guess) ** 12 - 1) * 100;
+    // Convert monthly to annual and return as percentage
+    const annualIRR = ((1 + guess) ** 12 - 1) * 100;
+    
+    // Sanity check
+    if (!isFinite(annualIRR) || annualIRR < -100 || annualIRR > 1000) {
+      return 0;
+    }
+    
+    return annualIRR;
   }
   
   private static calculateMIRR(
