@@ -226,38 +226,56 @@ export class FinancialAnalysisService {
     const projections: CashFlowMonth[] = [];
     let cumulativeCashFlow = -(formData.hardwareCost * formData.units);
     
-    // REALISTIC difficulty growth: ~0.5% monthly = ~6% annually (historical avg is 4-8% annual)
-    // Previous 3% monthly was WAY too aggressive (42.6% annually)
-    const monthlyDifficultyGrowth = 1.005;
-    // BTC price: assume slight upward trend (conservative 0.5% monthly = 6% annual)
-    const monthlyPriceGrowth = 1.005;
-    
-    let currentDifficulty = networkData.difficulty;
-    let currentPrice = networkData.price;
+    // USE SIMPLE PROJECTION: Assume current conditions persist
+    // This makes NPV/IRR/Payback consistent with the daily profit shown in UI
+    // If difficulty grows at same rate as price, they cancel out - so use constant values
+    const useSimpleProjection = true;
     
     const totalInvestment = formData.hardwareCost * formData.units;
     const monthlyMaintenance = totalInvestment * (formData.maintenancePercent / 100) / 12;
     const monthlyDepreciation = totalInvestment / 36; // 3-year straight line
     
+    // Calculate base monthly values using current network conditions
+    const totalHashrate = formData.hashrate * formData.units * 1e12;
+    const baseMonthlyBTC = (totalHashrate / networkData.hashrate) * 144 * 30 * networkData.blockReward;
+    const baseMonthlyRevenue = baseMonthlyBTC * networkData.price;
+    const totalPowerKW = (formData.powerDraw * formData.units) / 1000;
+    const basePowerCost = totalPowerKW * 24 * 30 * effectiveRate;
+    const basePoolFees = baseMonthlyRevenue * (formData.poolFee / 100);
+    const baseNetCashFlow = baseMonthlyRevenue - basePowerCost - basePoolFees - monthlyMaintenance;
+    
     for (let month = 1; month <= months; month++) {
-      // Adjust difficulty and price for this month
-      if (month > 1) {
-        currentDifficulty *= monthlyDifficultyGrowth;
-        currentPrice *= monthlyPriceGrowth;
+      let monthlyBTC: number;
+      let revenue: number;
+      let powerCost: number;
+      let poolFees: number;
+      let netCashFlow: number;
+      let currentPrice = networkData.price;
+      let currentDifficulty = networkData.difficulty;
+      
+      if (useSimpleProjection) {
+        // Simple projection: use constant values each month
+        monthlyBTC = baseMonthlyBTC;
+        revenue = baseMonthlyRevenue;
+        powerCost = basePowerCost;
+        poolFees = basePoolFees;
+        netCashFlow = baseNetCashFlow;
+      } else {
+        // Growth model (for future use)
+        const monthlyDifficultyGrowth = 1.005; // 0.5% monthly
+        const monthlyPriceGrowth = 1.005; // 0.5% monthly
+        
+        currentDifficulty = networkData.difficulty * Math.pow(monthlyDifficultyGrowth, month - 1);
+        currentPrice = networkData.price * Math.pow(monthlyPriceGrowth, month - 1);
+        
+        // With difficulty growth, our BTC mined decreases proportionally
+        monthlyBTC = baseMonthlyBTC * (networkData.difficulty / currentDifficulty);
+        revenue = monthlyBTC * currentPrice;
+        powerCost = basePowerCost; // Power cost stays constant
+        poolFees = revenue * (formData.poolFee / 100);
+        netCashFlow = revenue - powerCost - poolFees - monthlyMaintenance;
       }
       
-      // Calculate hashrate proportion with new difficulty
-      const totalHashrate = formData.hashrate * formData.units * 1e12;
-      // Difficulty affects our share of blocks
-      const difficultyAdjustment = networkData.difficulty / currentDifficulty;
-      const monthlyBTC = (totalHashrate / networkData.hashrate) * 144 * 30 * networkData.blockReward * difficultyAdjustment;
-      
-      const revenue = monthlyBTC * currentPrice;
-      const totalPowerKW = (formData.powerDraw * formData.units) / 1000;
-      const powerCost = totalPowerKW * 24 * 30 * effectiveRate;
-      const poolFees = revenue * (formData.poolFee / 100);
-      
-      const netCashFlow = revenue - powerCost - poolFees - monthlyMaintenance;
       cumulativeCashFlow += netCashFlow;
       
       projections.push({
