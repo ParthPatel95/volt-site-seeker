@@ -10,6 +10,7 @@ import html2pdf from 'html2pdf.js';
 import { BTCNetworkData } from '../types/btc_roi_types';
 import { FinancialMetrics, CashFlowMonth, TornadoItem, ScenarioResult } from '../services/financialAnalysisService';
 import { ASICMiner } from '../hooks/useASICDatabase';
+import { calculatePaybackWithLabel } from '../services/btcRoiMath';
 
 interface PDFGeneratorProps {
   networkData: BTCNetworkData;
@@ -266,8 +267,11 @@ export const BTCROIPDFGenerator: React.FC<PDFGeneratorProps> = ({
             </div>
             <div class="metric-box">
               <div class="metric-label">Payback Period</div>
-              <div class="metric-value">${results.breakEvenDays === Infinity ? 'Never' : Math.ceil(results.breakEvenDays) + ' days'}</div>
-              <div class="metric-subvalue">${results.breakEvenDays === Infinity ? '' : (results.breakEvenDays / 30).toFixed(1) + ' months'}</div>
+              <div class="metric-value">${(() => {
+                const paybackResult = calculatePaybackWithLabel(financialMetrics.cashFlowProjections, 36);
+                return paybackResult.label;
+              })()}</div>
+              <div class="metric-subvalue">${results.breakEvenDays !== Infinity && results.breakEvenDays <= 365 * 3 ? (results.breakEvenDays / 30).toFixed(1) + ' months' : ''}</div>
             </div>
             <div class="metric-box">
               <div class="metric-label">Total Investment</div>
@@ -392,10 +396,12 @@ export const BTCROIPDFGenerator: React.FC<PDFGeneratorProps> = ({
             <tr><td>Less: Pool Fees</td><td class="right negative">(${formatCurrency(results.dailyPoolFees)})</td><td class="right negative">(${formatCurrency(monthlyPoolFees)})</td><td class="right negative">(${formatCurrency(yearlyPoolFees)})</td></tr>
             <tr style="background: #f8f9fa;"><td class="bold">Gross Profit</td><td class="right bold">${formatCurrency(results.dailyRevenue - results.dailyPowerCost - results.dailyPoolFees)}</td><td class="right bold">${formatCurrency(monthlyRevenue - monthlyPowerCost - monthlyPoolFees)}</td><td class="right bold">${formatCurrency(yearlyRevenue - yearlyPowerCost - yearlyPoolFees)}</td></tr>
             <tr><td>Less: Maintenance</td><td class="right negative">—</td><td class="right negative">(${formatCurrency(results.monthlyMaintenance)})</td><td class="right negative">(${formatCurrency(yearlyMaintenance)})</td></tr>
-            <tr style="background: #f8f9fa;"><td class="bold">EBITDA</td><td class="right bold">—</td><td class="right bold">${formatCurrency(financialMetrics.ebitda / 12)}</td><td class="right bold">${formatCurrency(financialMetrics.ebitda)}</td></tr>
-            <tr><td>Less: Depreciation</td><td class="right">—</td><td class="right negative">(${formatCurrency(results.monthlyDepreciation)})</td><td class="right negative">(${formatCurrency(financialMetrics.annualDepreciation)})</td></tr>
-            <tr style="background: ${results.yearlyNetProfit >= 0 ? '#10b98120' : '#ef444420'};"><td class="bold">Net Income</td><td class="right bold ${results.dailyNetProfit >= 0 ? 'positive' : 'negative'}">${formatCurrency(results.dailyNetProfit)}</td><td class="right bold ${results.monthlyNetProfit >= 0 ? 'positive' : 'negative'}">${formatCurrency(results.monthlyNetProfit)}</td><td class="right bold ${results.yearlyNetProfit >= 0 ? 'positive' : 'negative'}">${formatCurrency(results.yearlyNetProfit)}</td></tr>
+            <tr style="background: ${financialMetrics.ebitda >= 0 ? '#10b98120' : '#ef444420'};"><td class="bold">Net Cash Profit (EBITDA)</td><td class="right bold">—</td><td class="right bold ${financialMetrics.ebitda >= 0 ? 'positive' : 'negative'}">${formatCurrency(financialMetrics.ebitda / 12)}</td><td class="right bold ${financialMetrics.ebitda >= 0 ? 'positive' : 'negative'}">${formatCurrency(financialMetrics.ebitda)}</td></tr>
+            <tr><td style="color: #888;">Depreciation (non-cash, reference only)</td><td class="right" style="color: #888;">—</td><td class="right" style="color: #888;">(${formatCurrency(results.monthlyDepreciation)})</td><td class="right" style="color: #888;">(${formatCurrency(financialMetrics.annualDepreciation)})</td></tr>
           </table>
+          <div style="font-size: 11px; color: #888; margin-top: 8px; font-style: italic;">
+            * Depreciation is shown for book value tracking only and is not deducted from cash profit.
+          </div>
 
           <div class="two-col" style="margin-top: 24px;">
             <div>
@@ -405,8 +411,8 @@ export const BTCROIPDFGenerator: React.FC<PDFGeneratorProps> = ({
                 <tr><td>Internal Rate of Return (IRR)</td><td class="right bold">${formatPercent(financialMetrics.irr)}</td></tr>
                 <tr><td>Modified IRR (MIRR)</td><td class="right">${formatPercent(financialMetrics.mirr)}</td></tr>
                 <tr><td>Profitability Index</td><td class="right">${financialMetrics.profitabilityIndex.toFixed(2)}x</td></tr>
-                <tr><td>Payback Period</td><td class="right">${financialMetrics.paybackPeriodMonths === Infinity ? 'Never' : financialMetrics.paybackPeriodMonths.toFixed(1) + ' months'}</td></tr>
-                <tr><td>Discounted Payback</td><td class="right">${financialMetrics.discountedPaybackMonths === Infinity ? 'Never' : financialMetrics.discountedPaybackMonths.toFixed(1) + ' months'}</td></tr>
+                <tr><td>Payback Period</td><td class="right">${calculatePaybackWithLabel(financialMetrics.cashFlowProjections, 36).label}</td></tr>
+                <tr><td>Discounted Payback</td><td class="right">${financialMetrics.discountedPaybackMonths === Infinity ? '> 36 mo' : financialMetrics.discountedPaybackMonths.toFixed(1) + ' months'}</td></tr>
               </table>
             </div>
             <div>

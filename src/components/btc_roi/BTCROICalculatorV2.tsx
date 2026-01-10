@@ -21,6 +21,16 @@ import { BTCROITornadoChart } from './components/BTCROITornadoChart';
 import { BTCROIASICComparison } from './components/BTCROIASICComparison';
 import { BTCROIBreakEvenAnalysis } from './components/BTCROIBreakEvenAnalysis';
 import { BTCROIScenarioAnalysis } from './components/BTCROIScenarioAnalysis';
+import { calculatePaybackWithLabel } from './services/btcRoiMath';
+
+// Helper to get payback label with proper handling of beyond-horizon cases
+const getPaybackLabel = (metrics: FinancialMetrics): string => {
+  if (!metrics.cashFlowProjections || metrics.cashFlowProjections.length === 0) {
+    return 'N/A';
+  }
+  const result = calculatePaybackWithLabel(metrics.cashFlowProjections, 36);
+  return result.label;
+};
 import { cn } from '@/lib/utils';
 
 type MiningMode = 'self' | 'hosting';
@@ -354,10 +364,14 @@ export const BTCROICalculatorV2: React.FC = () => {
                   {financialMetrics && (
                     <div className="bg-card border border-border rounded-lg p-4">
                       <SectionLabel icon={<Target className="w-3.5 h-3.5" />} label="FINANCIAL SUMMARY" />
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-                        <FinancialMetricCard label="NPV (10%)" value={formatLargeNumber(financialMetrics.npv)} positive={financialMetrics.npv > 0} />
-                        <FinancialMetricCard label="IRR" value={`${financialMetrics.irr.toFixed(1)}%`} positive={financialMetrics.irr > 10} />
-                        <FinancialMetricCard label="Payback" value={financialMetrics.paybackPeriodMonths === Infinity ? 'Never' : `${financialMetrics.paybackPeriodMonths.toFixed(1)} mo`} positive={financialMetrics.paybackPeriodMonths < 24} />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                        <FinancialMetricCard label="NPV (10%, 36mo)" value={formatLargeNumber(financialMetrics.npv)} positive={financialMetrics.npv > 0} />
+                        <FinancialMetricCard label="IRR (36mo)" value={`${financialMetrics.irr.toFixed(1)}%`} positive={financialMetrics.irr > 10} />
+                        <FinancialMetricCard 
+                          label="Payback" 
+                          value={getPaybackLabel(financialMetrics)} 
+                          positive={financialMetrics.paybackPeriodMonths < 24} 
+                        />
                         <FinancialMetricCard label="Profit Index" value={financialMetrics.profitabilityIndex.toFixed(2)} positive={financialMetrics.profitabilityIndex > 1} />
                       </div>
                     </div>
@@ -385,13 +399,19 @@ export const BTCROICalculatorV2: React.FC = () => {
 
                 <TabsContent value="sensitivity" className="mt-0">
                   {financialMetrics && results && (
-                    <BTCROITornadoChart data={financialMetrics.tornadoData} baseCase={results.yearlyNetProfit} />
+                    <BTCROITornadoChart 
+                      data={financialMetrics.tornadoData} 
+                      baseCase={results.yearlyNetProfit - (results.monthlyMaintenance * 12)} 
+                    />
                   )}
                 </TabsContent>
 
                 <TabsContent value="scenarios" className="mt-0">
                   {financialMetrics && results && (
-                    <BTCROIScenarioAnalysis scenarios={financialMetrics.scenarios} currentAnnualProfit={results.yearlyNetProfit} />
+                    <BTCROIScenarioAnalysis 
+                      scenarios={financialMetrics.scenarios} 
+                      currentAnnualProfit={results.yearlyNetProfit - (results.monthlyMaintenance * 12)} 
+                    />
                   )}
                 </TabsContent>
 
