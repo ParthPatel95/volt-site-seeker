@@ -21,7 +21,7 @@ import { BTCROITornadoChart } from './components/BTCROITornadoChart';
 import { BTCROIASICComparison } from './components/BTCROIASICComparison';
 import { BTCROIBreakEvenAnalysis } from './components/BTCROIBreakEvenAnalysis';
 import { BTCROIScenarioAnalysis } from './components/BTCROIScenarioAnalysis';
-import { calculatePaybackWithLabel } from './services/btcRoiMath';
+import { calculateDailyMetrics, calculatePaybackWithLabel } from './services/btcRoiMath';
 
 // Helper to get payback label with proper handling of beyond-horizon cases
 const getPaybackLabel = (metrics: FinancialMetrics): string => {
@@ -80,36 +80,62 @@ export const BTCROICalculatorV2: React.FC = () => {
 
   const effectiveRate = mode === 'hosting' ? hostingRate : electricityRate;
 
-  // Core calculations
-  const results = useMemo(() => {
+  // Core calculations using shared btcRoiMath for consistency
+  const dailyMetrics = useMemo(() => {
     if (!networkData) return null;
+    return calculateDailyMetrics(
+      hashrate, powerDraw, units, effectiveRate, poolFee,
+      hardwareCost, maintenancePercent, networkData
+    );
+  }, [networkData, hashrate, powerDraw, units, effectiveRate, poolFee, hardwareCost, maintenancePercent]);
 
-    const totalHashrate = hashrate * units * 1e12;
-    const blocksPerDay = 144;
-    const dailyBTC = (totalHashrate / networkData.hashrate) * blocksPerDay * networkData.blockReward;
-    const dailyRevenue = dailyBTC * networkData.price;
-    
+  const results = useMemo(() => {
+    if (!dailyMetrics) return null;
+
+    const totalInvestment = hardwareCost * units;
     const totalPowerKW = (powerDraw * units) / 1000;
     const dailyPowerKWh = totalPowerKW * 24;
-    const dailyPowerCost = dailyPowerKWh * effectiveRate;
-    const dailyPoolFees = dailyRevenue * (poolFee / 100);
-    const dailyNetProfit = dailyRevenue - dailyPowerCost - dailyPoolFees;
-    
-    const totalInvestment = hardwareCost * units;
-    const monthlyMaintenance = totalInvestment * (maintenancePercent / 100) / 12;
-    const monthlyDepreciation = totalInvestment / 36;
-    const breakEvenDays = dailyNetProfit > 0 ? totalInvestment / dailyNetProfit : Infinity;
-    const roi12Month = totalInvestment > 0 ? ((dailyNetProfit * 365) / totalInvestment) * 100 : 0;
     const efficiency = powerDraw / hashrate;
-    const profitMargin = dailyRevenue > 0 ? (dailyNetProfit / dailyRevenue) * 100 : 0;
+    
+    // Break-even and ROI now use dailyNetCashFlow (AFTER maintenance) for consistency with NPV/Payback
+    const breakEvenDays = dailyMetrics.dailyNetCashFlow > 0 
+      ? totalInvestment / dailyMetrics.dailyNetCashFlow 
+      : Infinity;
+    const roi12Month = totalInvestment > 0 
+      ? ((dailyMetrics.dailyNetCashFlow * 365) / totalInvestment) * 100 
+      : 0;
+    
+    const profitMargin = dailyMetrics.dailyRevenue > 0 
+      ? (dailyMetrics.dailyGrossProfit / dailyMetrics.dailyRevenue) * 100 
+      : 0;
 
     return {
-      dailyBTC, dailyRevenue, dailyPowerCost, dailyPoolFees, dailyNetProfit,
-      monthlyNetProfit: dailyNetProfit * 30, yearlyNetProfit: dailyNetProfit * 365,
-      totalInvestment, breakEvenDays, roi12Month, efficiency, totalPowerKW,
-      dailyPowerKWh, profitMargin, monthlyMaintenance, monthlyDepreciation
+      // From shared calculations
+      dailyBTC: dailyMetrics.dailyBTC,
+      dailyRevenue: dailyMetrics.dailyRevenue,
+      dailyPowerCost: dailyMetrics.dailyPowerCost,
+      dailyPoolFees: dailyMetrics.dailyPoolFees,
+      dailyGrossProfit: dailyMetrics.dailyGrossProfit, // Before maintenance
+      dailyMaintenance: dailyMetrics.dailyMaintenance,
+      dailyNetCashFlow: dailyMetrics.dailyNetCashFlow, // After maintenance
+      dailyNetProfit: dailyMetrics.dailyGrossProfit, // For backwards compatibility (gross profit display)
+      // Scaled values - using net cash flow (after maintenance) for consistency
+      monthlyNetProfit: dailyMetrics.dailyNetCashFlow * 30,
+      yearlyNetProfit: dailyMetrics.dailyNetCashFlow * 365,
+      // Investment metrics
+      totalInvestment,
+      breakEvenDays,
+      roi12Month,
+      // Operational
+      efficiency,
+      totalPowerKW,
+      dailyPowerKWh,
+      profitMargin,
+      // Reference values
+      monthlyMaintenance: dailyMetrics.dailyMaintenance * 30,
+      monthlyDepreciation: dailyMetrics.dailyDepreciation * 30
     };
-  }, [networkData, hashrate, powerDraw, units, effectiveRate, hardwareCost, poolFee, maintenancePercent]);
+  }, [dailyMetrics, hardwareCost, units, powerDraw, hashrate]);
 
   // Advanced financial analysis
   const financialMetrics = useMemo((): FinancialMetrics | null => {
@@ -254,8 +280,8 @@ export const BTCROICalculatorV2: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              <HeroStat label="Daily Profit" value={results ? formatLargeNumber(results.dailyNetProfit) : '$0'} subValue={results ? formatBTC(results.dailyBTC) : '0 sats'} trend={isProfitable ? 'up' : 'down'} />
-              <HeroStat label="Monthly" value={results ? formatLargeNumber(results.monthlyNetProfit) : '$0'} subValue="30-day" trend={isProfitable ? 'up' : 'down'} />
+              <HeroStat label="Daily Gross" value={results ? formatLargeNumber(results.dailyGrossProfit) : '$0'} subValue={results ? `${formatBTC(results.dailyBTC)} (pre-maint)` : '0 sats'} trend={isProfitable ? 'up' : 'down'} />
+              <HeroStat label="Monthly Net" value={results ? formatLargeNumber(results.monthlyNetProfit) : '$0'} subValue="after maint" trend={isProfitable ? 'up' : 'down'} />
               <HeroStat label="Annual ROI" value={results ? `${results.roi12Month.toFixed(0)}%` : '0%'} subValue={results ? formatLargeNumber(results.yearlyNetProfit) : '$0'} trend={results && results.roi12Month > 0 ? 'up' : 'down'} />
               <HeroStat label="Break-Even" value={results ? (results.breakEvenDays === Infinity ? '∞' : `${Math.ceil(results.breakEvenDays)}d`) : '—'} subValue={results && results.breakEvenDays !== Infinity ? `${(results.breakEvenDays / 30).toFixed(1)} mo` : 'Never'} trend={results && results.breakEvenDays < 365 ? 'up' : 'down'} />
               <HeroStat label="NPV (10%)" value={financialMetrics ? formatLargeNumber(financialMetrics.npv) : '$0'} subValue="36-month" trend={financialMetrics && financialMetrics.npv > 0 ? 'up' : 'down'} className="hidden sm:block" />
@@ -346,7 +372,10 @@ export const BTCROICalculatorV2: React.FC = () => {
                         <BreakdownRow label="Power Cost" value={results ? `-${formatLargeNumber(results.dailyPowerCost)}` : '$0'} type="cost" />
                         <BreakdownRow label="Pool Fees" value={results ? `-${formatLargeNumber(results.dailyPoolFees)}` : '$0'} type="cost" />
                         <div className="border-t border-border my-2" />
-                        <BreakdownRow label="Net Profit" value={results ? formatLargeNumber(results.dailyNetProfit) : '$0'} type={isProfitable ? 'profit' : 'loss'} bold />
+                        <BreakdownRow label="Gross Profit" value={results ? formatLargeNumber(results.dailyGrossProfit) : '$0'} type={results && results.dailyGrossProfit > 0 ? 'profit' : 'loss'} />
+                        <BreakdownRow label="Maintenance" value={results ? `-${formatLargeNumber(results.dailyMaintenance)}` : '$0'} type="cost" />
+                        <div className="border-t border-border my-2" />
+                        <BreakdownRow label="Net Cash Flow" value={results ? formatLargeNumber(results.dailyNetCashFlow) : '$0'} type={results && results.dailyNetCashFlow > 0 ? 'profit' : 'loss'} bold />
                       </div>
                     </div>
 
