@@ -132,7 +132,9 @@ export class FinancialAnalysisService {
     
     const grossProfit = annualRevenue - annualPowerCost - annualPoolFees;
     const ebitda = grossProfit - annualMaintenance;
-    const netProfit = ebitda - annualDepreciation;
+    // Net profit = EBITDA (depreciation is non-cash, excluded from cash flow calculations)
+    // Depreciation only affects book value for ROI calculations, not actual cash profit
+    const netProfit = ebitda;
     
     const grossMargin = (grossProfit / annualRevenue) * 100;
     const operatingMargin = (ebitda / annualRevenue) * 100;
