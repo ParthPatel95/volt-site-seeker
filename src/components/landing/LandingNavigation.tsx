@@ -1,44 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Bitcoin, GraduationCap, Menu, Home, Server, Zap, Droplets, Building2, Users, TrendingUp, CircuitBoard, Volume2, Waves } from 'lucide-react';
+import { Bitcoin, GraduationCap, Menu, Server, Zap, Droplets, Users, TrendingUp, CircuitBoard, Volume2, Waves } from 'lucide-react';
 import { EnhancedLogo } from '../EnhancedLogo';
-import { AcademyUserMenu } from '@/components/academy/AcademyUserMenu';
+import { GlobalUserMenu } from '@/components/GlobalUserMenu';
 import { supabase } from '@/integrations/supabase/client';
 
 export const LandingNavigation = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [isAcademyUser, setIsAcademyUser] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if user is authenticated for Academy pages
-  const isAcademyRoute = location.pathname.startsWith('/academy') || 
-    ['/bitcoin', '/aeso-101', '/datacenters', '/electrical-infrastructure', '/hydro-datacenters', 
-     '/immersion-cooling', '/noise-management', '/mining-economics', '/operations', 
-     '/strategic-operations', '/taxes-insurance', '/engineering-permitting'].includes(location.pathname);
-
+  // Check if user is authenticated - runs on ALL pages
   useEffect(() => {
-    const checkAcademyAuth = async () => {
-      if (!isAcademyRoute) {
-        setIsAcademyUser(false);
-        return;
-      }
+    const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setIsAcademyUser(!!session?.user);
+      setIsAuthenticated(!!session?.user);
     };
     
-    checkAcademyAuth();
+    checkAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (isAcademyRoute) {
-        setIsAcademyUser(!!session?.user);
-      }
+      setIsAuthenticated(!!session?.user);
     });
     
     return () => subscription.unsubscribe();
-  }, [isAcademyRoute]);
+  }, []);
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -103,10 +91,10 @@ export const LandingNavigation = () => {
           GridBazaar
         </Button>
 
-        {/* Academy User Menu - show when on academy routes and authenticated */}
-        {isAcademyRoute && isAcademyUser && (
+        {/* Global User Menu - show when authenticated on any page */}
+        {isAuthenticated && (
           <div className="hidden sm:block">
-            <AcademyUserMenu />
+            <GlobalUserMenu />
           </div>
         )}
 
