@@ -1,7 +1,8 @@
-import React, { useRef, useMemo, useCallback, useState } from 'react';
+import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Calendar, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { parseISO, differenceInDays, format } from 'date-fns';
 import { toast } from 'sonner';
 import { GanttProvider } from './context/GanttContext';
@@ -81,6 +82,44 @@ function FullGanttChartInner({
 }: Omit<FullGanttChartProps, 'milestones' | 'initialConfig' | 'className' | 'projectId'>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Fullscreen toggle handler
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await fullscreenContainerRef.current?.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('Fullscreen error:', error);
+    }
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Keyboard shortcut for fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          toggleFullscreen();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [toggleFullscreen]);
 
   // Calculate timeline bounds
   const { startDate, endDate } = useMemo(() => 
@@ -180,13 +219,30 @@ function FullGanttChartInner({
   }, []);
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="p-0">
-        <GanttToolbar onScrollToToday={scrollToToday} />
-      </CardHeader>
-      
-      <CardContent className="p-0">
-        <ScrollArea className="w-full h-[700px]" ref={scrollAreaRef}>
+    <div 
+      ref={fullscreenContainerRef}
+      className={cn(
+        "relative",
+        isFullscreen && "bg-background"
+      )}
+    >
+      <Card className="overflow-hidden h-full">
+        <CardHeader className="p-0">
+          <GanttToolbar 
+            onScrollToToday={scrollToToday} 
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
+          />
+        </CardHeader>
+        
+        <CardContent className="p-0">
+          <ScrollArea 
+            className={cn(
+              "w-full",
+              isFullscreen ? "h-[calc(100vh-120px)]" : "h-[700px]"
+            )} 
+            ref={scrollAreaRef}
+          >
           <div 
             ref={containerRef}
             className="relative"
@@ -326,14 +382,15 @@ function FullGanttChartInner({
         </ScrollArea>
       </CardContent>
 
-      {/* Context Menu */}
-      <GanttContextMenu
-        onEditTask={onTaskClick}
-        onDeleteTask={onTaskDelete}
-        onStatusChange={onTaskStatusChange}
-        onDuplicateTask={onTaskDuplicate}
-      />
-    </Card>
+        {/* Context Menu */}
+        <GanttContextMenu
+          onEditTask={onTaskClick}
+          onDeleteTask={onTaskDelete}
+          onStatusChange={onTaskStatusChange}
+          onDuplicateTask={onTaskDuplicate}
+        />
+      </Card>
+    </div>
   );
 }
 
