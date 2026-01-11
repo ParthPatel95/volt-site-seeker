@@ -411,6 +411,15 @@ export function UserManagementSystem() {
 
   const updateUserPermissions = async (userId: string, permissions: string[]) => {
     try {
+      // Get current permissions to detect changes
+      const { data: currentPerms } = await supabase
+        .from('user_permissions')
+        .select('permission')
+        .eq('user_id', userId);
+      
+      const hadBuildAccess = currentPerms?.some(p => p.permission === 'feature.build-management');
+      const willHaveBuildAccess = permissions.includes('feature.build-management');
+
       // Delete existing permissions
       await supabase
         .from('user_permissions')
@@ -429,6 +438,19 @@ export function UserManagementSystem() {
           .insert(permissionInserts);
 
         if (error) throw error;
+      }
+
+      // Sync VoltBuild approval status with permission
+      if (!hadBuildAccess && willHaveBuildAccess) {
+        // Grant VoltBuild access
+        await supabase.from('voltbuild_approved_users').upsert({
+          user_id: userId,
+          approved_by: currentUser?.id,
+          approved_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+      } else if (hadBuildAccess && !willHaveBuildAccess) {
+        // Revoke VoltBuild access
+        await supabase.from('voltbuild_approved_users').delete().eq('user_id', userId);
       }
 
       toast({
