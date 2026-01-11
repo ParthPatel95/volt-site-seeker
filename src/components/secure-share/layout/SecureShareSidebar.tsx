@@ -18,6 +18,8 @@ import {
 import { cn } from '@/lib/utils';
 import { SecureShareNavItem } from './SecureShareNavItem';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export type SecureShareView = 'documents' | 'links' | 'bundles' | 'analytics' | 'settings';
 
@@ -40,6 +42,9 @@ interface SecureShareSidebarProps {
   activeViewers?: number;
   onUploadDocument?: () => void;
   onCreateLink?: () => void;
+  isMobile?: boolean;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export function SecureShareSidebar({
@@ -52,7 +57,10 @@ export function SecureShareSidebar({
   bundleCount = 0,
   activeViewers = 0,
   onUploadDocument,
-  onCreateLink
+  onCreateLink,
+  isMobile = false,
+  isMobileOpen = false,
+  onMobileClose
 }: SecureShareSidebarProps) {
   const getBadge = (id: SecureShareView) => {
     if (id === 'documents') return documentCount;
@@ -61,76 +69,50 @@ export function SecureShareSidebar({
     return undefined;
   };
 
-  return (
-    <motion.aside
-      initial={false}
-      animate={{ width: isCollapsed ? 64 : 240 }}
-      transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className={cn(
-        "hidden lg:flex flex-col h-full bg-card border-r border-border",
-        "relative flex-shrink-0"
-      )}
-    >
+  const SidebarContent = ({ showCollapsed = false }: { showCollapsed?: boolean }) => (
+    <>
       {/* Back to VoltScout Link */}
       <Link
         to="/app"
         className={cn(
           "flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 border-b border-border transition-colors",
-          isCollapsed && "justify-center px-2"
+          showCollapsed && "justify-center px-2"
         )}
       >
         <ArrowLeft className="w-4 h-4 flex-shrink-0" />
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              className="overflow-hidden whitespace-nowrap"
-            >
-              Back to VoltScout
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {!showCollapsed && <span>Back to VoltScout</span>}
       </Link>
 
       {/* Logo Section */}
       <div className={cn(
         "flex items-center gap-2 p-4 border-b border-border",
-        isCollapsed && "justify-center"
+        showCollapsed && "justify-center"
       )}>
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
           <Shield className="w-5 h-5 text-primary-foreground" />
         </div>
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              className="overflow-hidden"
-            >
-              <span className="font-bold text-lg text-foreground whitespace-nowrap">
-                Secure Share
-              </span>
-              <p className="text-xs text-muted-foreground whitespace-nowrap">Document sharing</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!showCollapsed && (
+          <div>
+            <span className="font-bold text-lg text-foreground whitespace-nowrap">
+              Secure Share
+            </span>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">Document sharing</p>
+          </div>
+        )}
       </div>
 
       {/* Live Viewers Indicator */}
       {activeViewers > 0 && (
         <div className={cn(
           "mx-3 mt-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20",
-          isCollapsed && "mx-2 p-2"
+          showCollapsed && "mx-2 p-2"
         )}>
           <div className={cn(
             "flex items-center gap-2",
-            isCollapsed && "justify-center"
+            showCollapsed && "justify-center"
           )}>
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
-            {!isCollapsed && (
+            {!showCollapsed && (
               <span className="text-sm font-medium text-green-600">
                 {activeViewers} viewer{activeViewers !== 1 ? 's' : ''} online
               </span>
@@ -140,22 +122,24 @@ export function SecureShareSidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navItems.map((item) => (
-          <SecureShareNavItem
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            isActive={currentView === item.id}
-            isCollapsed={isCollapsed}
-            onClick={() => onViewChange(item.id)}
-            badge={getBadge(item.id)}
-          />
-        ))}
-      </nav>
+      <ScrollArea className="flex-1">
+        <nav className="py-4 px-2 space-y-1">
+          {navItems.map((item) => (
+            <SecureShareNavItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              isActive={currentView === item.id}
+              isCollapsed={showCollapsed}
+              onClick={() => onViewChange(item.id)}
+              badge={getBadge(item.id)}
+            />
+          ))}
+        </nav>
+      </ScrollArea>
 
       {/* Quick Actions */}
-      {!isCollapsed ? (
+      {!showCollapsed ? (
         <div className="p-3 border-t border-border space-y-2">
           <Button 
             className="w-full gap-2" 
@@ -198,28 +182,56 @@ export function SecureShareSidebar({
         </div>
       )}
 
-      {/* Collapse Toggle */}
-      <div className="p-2 border-t border-border">
-        <motion.button
-          onClick={onToggleCollapse}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg",
-            "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-            "transition-colors duration-200"
-          )}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-5 h-5" />
-          ) : (
-            <>
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm">Collapse</span>
-            </>
-          )}
-        </motion.button>
-      </div>
+      {/* Collapse Toggle - only on desktop */}
+      {!isMobile && (
+        <div className="p-2 border-t border-border">
+          <motion.button
+            onClick={onToggleCollapse}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg",
+              "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+              "transition-colors duration-200"
+            )}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {showCollapsed ? (
+              <ChevronRight className="w-5 h-5" />
+            ) : (
+              <>
+                <ChevronLeft className="w-5 h-5" />
+                <span className="text-sm">Collapse</span>
+              </>
+            )}
+          </motion.button>
+        </div>
+      )}
+    </>
+  );
+
+  // Mobile: Render as Sheet
+  if (isMobile) {
+    return (
+      <Sheet open={isMobileOpen} onOpenChange={onMobileClose}>
+        <SheetContent side="left" className="p-0 w-72 bg-card border-r border-border flex flex-col">
+          <SidebarContent showCollapsed={false} />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: Fixed sidebar
+  return (
+    <motion.aside
+      initial={false}
+      animate={{ width: isCollapsed ? 64 : 240 }}
+      transition={{ duration: 0.2, ease: 'easeInOut' }}
+      className={cn(
+        "hidden lg:flex flex-col h-full bg-card border-r border-border",
+        "relative flex-shrink-0"
+      )}
+    >
+      <SidebarContent showCollapsed={isCollapsed} />
     </motion.aside>
   );
 }
