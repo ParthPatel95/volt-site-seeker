@@ -1,9 +1,9 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SecureShareSidebar, SecureShareView } from './SecureShareSidebar';
-import { SecureShareMobileNav } from './SecureShareMobileNav';
-import { Shield, Activity } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface SecureShareLayoutProps {
@@ -30,13 +30,27 @@ export function SecureShareLayout({
   onCreateLink
 }: SecureShareLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleViewChange = (view: SecureShareView) => {
+    onViewChange(view);
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
+      {/* Sidebar - handles both desktop (fixed) and mobile (sheet) */}
       <SecureShareSidebar
         currentView={currentView}
-        onViewChange={onViewChange}
+        onViewChange={handleViewChange}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         documentCount={documentCount}
@@ -45,33 +59,44 @@ export function SecureShareLayout({
         activeViewers={activeViewers}
         onUploadDocument={onUploadDocument}
         onCreateLink={onCreateLink}
+        isMobile={isMobile}
+        isMobileOpen={isMobileMenuOpen}
+        onMobileClose={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden flex flex-col">
         {/* Mobile Header */}
-        <div className="lg:hidden sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
-                <Shield className="w-4 h-4 text-primary-foreground" />
+        {isMobile && (
+          <div className="lg:hidden sticky top-0 z-40 border-b border-border bg-card">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
+                  <Shield className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <div>
+                  <span className="font-semibold">Secure Share</span>
+                  <p className="text-xs text-muted-foreground capitalize">{currentView}</p>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Secure Share</span>
-                <p className="text-xs text-muted-foreground capitalize">{currentView}</p>
-              </div>
+              {activeViewers > 0 && (
+                <Badge className="gap-1 bg-green-500/20 text-green-600 animate-pulse border-0">
+                  <Activity className="w-3 h-3" />
+                  {activeViewers} live
+                </Badge>
+              )}
             </div>
-            {activeViewers > 0 && (
-              <Badge className="gap-1 bg-green-500/20 text-green-600 animate-pulse border-0">
-                <Activity className="w-3 h-3" />
-                {activeViewers} live
-              </Badge>
-            )}
           </div>
-        </div>
+        )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
@@ -86,12 +111,6 @@ export function SecureShareLayout({
           </AnimatePresence>
         </div>
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <SecureShareMobileNav
-        currentView={currentView}
-        onViewChange={onViewChange}
-      />
     </div>
   );
 }

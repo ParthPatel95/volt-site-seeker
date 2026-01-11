@@ -1,8 +1,8 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildSidebar, VoltBuildView } from './VoltBuildSidebar';
-import { VoltBuildMobileNav } from './VoltBuildMobileNav';
 
 interface Project {
   id: string;
@@ -33,13 +33,27 @@ export function VoltBuildLayout({
   onNewProject
 }: VoltBuildLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleViewChange = (view: VoltBuildView) => {
+    onViewChange(view);
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
+      {/* Sidebar - handles both desktop (fixed) and mobile (sheet) */}
       <VoltBuildSidebar
         currentView={currentView}
-        onViewChange={onViewChange}
+        onViewChange={handleViewChange}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         riskCount={riskCount}
@@ -48,29 +62,47 @@ export function VoltBuildLayout({
         selectedProjectId={selectedProjectId}
         onProjectSelect={onProjectSelect}
         onNewProject={onNewProject}
+        isMobile={isMobile}
+        isMobileOpen={isMobileMenuOpen}
+        onMobileClose={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentView}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="h-full overflow-y-auto pb-20 lg:pb-0"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+      <main className="flex-1 overflow-hidden flex flex-col">
+        {/* Mobile Header */}
+        {isMobile && (
+          <div className="lg:hidden sticky top-0 z-40 border-b border-border bg-card">
+            <div className="flex items-center gap-3 p-4">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div>
+                <span className="font-semibold">VoltBuild</span>
+                <p className="text-xs text-muted-foreground capitalize">{currentView.replace('-', ' ')}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Mobile Bottom Navigation */}
-      <VoltBuildMobileNav
-        currentView={currentView}
-        onViewChange={onViewChange}
-      />
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
     </div>
   );
 }
