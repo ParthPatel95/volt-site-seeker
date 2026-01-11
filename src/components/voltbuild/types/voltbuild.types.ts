@@ -62,6 +62,8 @@ export interface VoltBuildTask {
   assigned_role: AssignedRole;
   assigned_user_id: string | null;
   estimated_duration_days: number | null;
+  estimated_start_date: string | null;
+  estimated_end_date: string | null;
   actual_start_date: string | null;
   actual_end_date: string | null;
   depends_on: string[];

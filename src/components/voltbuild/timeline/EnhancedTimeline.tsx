@@ -17,6 +17,7 @@ import { TimelineMilestones } from './TimelineMilestones';
 import { TimelineMetricsPanel } from './TimelineMetricsPanel';
 import { EnhancedGanttChart, GanttTask, GanttPhase, GanttDependency } from '../gantt';
 import { useTaskDependencies } from '../gantt/hooks/useTaskDependencies';
+import { useQueryClient } from '@tanstack/react-query';
 import { parseISO, addDays, format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ interface EnhancedTimelineProps {
 
 export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<TimelineTask | null>(null);
   const [filters, setFilters] = useState<TimelineFilters>({
     status: [],
@@ -118,11 +120,16 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
         .eq('id', taskId);
 
       if (error) throw error;
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['timeline-phases', project.id] });
+      queryClient.invalidateQueries({ queryKey: ['voltbuild-tasks'] });
+      
       toast.success('Task status updated');
     } catch (error) {
       toast.error('Failed to update task status');
     }
-  }, []);
+  }, [project.id, queryClient]);
 
   return (
     <div className="space-y-4">
