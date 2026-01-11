@@ -160,6 +160,83 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
     }
   }, [invalidateAllQueries]);
 
+  // Handle task delete from Gantt context menu
+  const handleTaskDelete = useCallback(async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('voltbuild_tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      invalidateAllQueries();
+      toast.success('Task deleted');
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      toast.error('Failed to delete task');
+    }
+  }, [invalidateAllQueries]);
+
+  // Handle task duplicate from Gantt context menu
+  const handleTaskDuplicate = useCallback(async (task: GanttTask) => {
+    try {
+      // Get the max order_index for the phase
+      const { data: existingTasks } = await supabase
+        .from('voltbuild_tasks')
+        .select('order_index')
+        .eq('phase_id', task.phase_id)
+        .order('order_index', { ascending: false })
+        .limit(1);
+
+      const nextOrderIndex = existingTasks && existingTasks.length > 0 
+        ? (existingTasks[0].order_index || 0) + 1 
+        : 0;
+
+      const { error } = await supabase
+        .from('voltbuild_tasks')
+        .insert({
+          phase_id: task.phase_id,
+          name: `${task.name} (Copy)`,
+          status: 'not_started',
+          estimated_start_date: task.estimated_start_date,
+          estimated_end_date: task.estimated_end_date,
+          is_critical_path: task.is_critical_path,
+          order_index: nextOrderIndex,
+          depends_on: [],
+        });
+
+      if (error) throw error;
+      
+      invalidateAllQueries();
+      toast.success('Task duplicated');
+    } catch (error) {
+      console.error('Failed to duplicate task:', error);
+      toast.error('Failed to duplicate task');
+    }
+  }, [invalidateAllQueries]);
+
+  // Handle toggle critical path from Gantt context menu
+  const handleToggleCritical = useCallback(async (taskId: string) => {
+    try {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const { error } = await supabase
+        .from('voltbuild_tasks')
+        .update({ is_critical_path: !task.is_critical_path })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      invalidateAllQueries();
+      toast.success(task.is_critical_path ? 'Removed from critical path' : 'Added to critical path');
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      toast.error('Failed to update critical path');
+    }
+  }, [allTasks, invalidateAllQueries]);
+
   // Handle adding new task from Gantt chart
   const handleAddTask = useCallback(async (taskData: NewTaskData) => {
     try {
@@ -363,6 +440,9 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                   }
                 }}
                 onTaskStatusChange={handleTaskStatusChange}
+                onTaskDelete={handleTaskDelete}
+                onTaskDuplicate={handleTaskDuplicate}
+                onToggleCritical={handleToggleCritical}
               />
             </TabsContent>
           </Tabs>
@@ -424,15 +504,18 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                   </div>
                 )}
 
-                <div className="pt-4">
+                <div className="pt-4 space-y-2">
                   <Button 
                     className="w-full" 
-                    onClick={() => {
-                      setSelectedTask(null);
-                      toast.info('Edit task feature coming soon');
+                    variant="destructive"
+                    onClick={async () => {
+                      if (selectedTask) {
+                        await handleTaskDelete(selectedTask.id);
+                        setSelectedTask(null);
+                      }
                     }}
                   >
-                    Edit Task
+                    Delete Task
                   </Button>
                 </div>
               </div>
