@@ -209,7 +209,7 @@ function GanttChartInner({
         onEditTask={onTaskClick}
         onDeleteTask={onTaskDelete}
         onStatusChange={onTaskStatusChange}
-        onDuplicateTask={onTaskDuplicate}
+        onDuplicateTask={onTaskDuplicate ? onTaskDuplicate : undefined}
       />
     </Card>
   );

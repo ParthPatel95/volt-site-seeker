@@ -75,6 +75,8 @@ export function VoltBuildTaskDetail({
       assigned_user_id: editedTask.assigned_user_id,
       estimated_duration_days: editedTask.estimated_duration_days,
       is_critical_path: editedTask.is_critical_path,
+      estimated_start_date: editedTask.estimated_start_date || null,
+      estimated_end_date: editedTask.estimated_end_date || null,
     });
     setIsEditing(false);
   };
@@ -359,12 +361,59 @@ export function VoltBuildTaskDetail({
             </div>
           </div>
 
-          {/* Dates */}
+          {/* Estimated Dates (for Gantt chart) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="w-3 h-3" />
-                Start Date
+                Est. Start Date
+              </Label>
+              {isEditing ? (
+                <Input
+                  type="date"
+                  value={editedTask.estimated_start_date || ''}
+                  onChange={(e) =>
+                    setEditedTask({ ...editedTask, estimated_start_date: e.target.value })
+                  }
+                />
+              ) : (
+                <p className="text-sm font-medium">
+                  {task.estimated_start_date
+                    ? format(new Date(task.estimated_start_date), 'MMM d, yyyy')
+                    : 'Not set'}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className="w-3 h-3" />
+                Est. End Date
+              </Label>
+              {isEditing ? (
+                <Input
+                  type="date"
+                  value={editedTask.estimated_end_date || ''}
+                  onChange={(e) =>
+                    setEditedTask({ ...editedTask, estimated_end_date: e.target.value })
+                  }
+                />
+              ) : (
+                <p className="text-sm font-medium">
+                  {task.estimated_end_date
+                    ? format(new Date(task.estimated_end_date), 'MMM d, yyyy')
+                    : 'Not set'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Actual Dates */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className="w-3 h-3" />
+                Actual Start
               </Label>
               <p className="text-sm font-medium">
                 {task.actual_start_date
@@ -376,7 +425,7 @@ export function VoltBuildTaskDetail({
             <div className="space-y-2">
               <Label className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="w-3 h-3" />
-                End Date
+                Actual End
               </Label>
               <p className="text-sm font-medium">
                 {task.actual_end_date
