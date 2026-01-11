@@ -38,6 +38,7 @@ interface EnhancedGanttChartProps {
   onDependencyDelete?: (dependencyId: string) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskDuplicate?: (task: GanttTask) => void;
+  onToggleCritical?: (taskId: string) => void;
   onAddTask?: (task: NewTaskData) => Promise<void>;
   initialConfig?: Partial<GanttConfig>;
   className?: string;
@@ -54,6 +55,7 @@ function GanttChartInner({
   onDependencyDelete,
   onTaskDelete,
   onTaskDuplicate,
+  onToggleCritical,
   onAddTask,
 }: Omit<EnhancedGanttChartProps, 'milestones' | 'initialConfig' | 'className' | 'projectId'>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -282,6 +284,7 @@ function GanttChartInner({
           onEditTask={onTaskClick}
           onDeleteTask={onTaskDelete}
           onStatusChange={onTaskStatusChange}
+          onToggleCritical={onToggleCritical}
           onDuplicateTask={onTaskDuplicate ? onTaskDuplicate : undefined}
         />
       </Card>

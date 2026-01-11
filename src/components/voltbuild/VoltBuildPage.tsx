@@ -196,6 +196,10 @@ export function VoltBuildPage() {
         // Recalculate phase progress
         await updatePhaseProgress(task.phase_id);
       }
+
+      // Invalidate queries for cross-view sync
+      queryClient.invalidateQueries({ queryKey: ['timeline-phases', selectedProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['voltbuild-all-tasks', selectedProjectId] });
     } catch (error) {
       toast.error('Failed to update task status');
     }
@@ -255,6 +259,10 @@ export function VoltBuildPage() {
         }
       }
 
+      // Invalidate queries for cross-view sync
+      queryClient.invalidateQueries({ queryKey: ['timeline-phases', selectedProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['voltbuild-all-tasks', selectedProjectId] });
+
       toast.success('Task updated');
     } catch (error) {
       toast.error('Failed to update task');
@@ -282,6 +290,11 @@ export function VoltBuildPage() {
       setSelectedTaskId(null);
 
       await updatePhaseProgress(phaseId);
+
+      // Invalidate queries for cross-view sync
+      queryClient.invalidateQueries({ queryKey: ['timeline-phases', selectedProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['voltbuild-all-tasks', selectedProjectId] });
+
       toast.success('Task deleted');
     } catch (error) {
       toast.error('Failed to delete task');
@@ -326,6 +339,10 @@ export function VoltBuildPage() {
       updatedTasks[data.phase_id] = [...(updatedTasks[data.phase_id] || []), newTask as VoltBuildTask];
       setTasksByPhase(updatedTasks);
       setNewTaskPhase(null);
+
+      // Invalidate queries for cross-view sync
+      queryClient.invalidateQueries({ queryKey: ['timeline-phases', selectedProjectId] });
+      queryClient.invalidateQueries({ queryKey: ['voltbuild-all-tasks', selectedProjectId] });
 
       toast.success('Task created');
     } catch (error) {
