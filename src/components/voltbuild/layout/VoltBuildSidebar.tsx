@@ -48,6 +48,7 @@ import {
 export type VoltBuildView =
   | 'overview' 
   | 'tasks' 
+  | 'gantt'
   | 'timeline' 
   | 'risks' 
   | 'capex' 
@@ -85,7 +86,8 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'overview', label: 'Overview', icon: LayoutDashboard },
       { id: 'tasks', label: 'Tasks', icon: ListTodo },
-      { id: 'timeline', label: 'Timeline', icon: GanttChart },
+      { id: 'gantt', label: 'Gantt Chart', icon: GanttChart },
+      { id: 'timeline', label: 'Timeline', icon: CalendarDays },
       { id: 'risks', label: 'Risks', icon: AlertTriangle },
     ]
   },

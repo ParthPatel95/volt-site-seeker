@@ -2,6 +2,11 @@
 export { EnhancedGanttChart } from './EnhancedGanttChart';
 export { VoltGanttChart } from './VoltGanttChart';
 
+// Enhanced Components
+export { EnhancedGanttTaskList } from './components/EnhancedGanttTaskList';
+export { EnhancedGanttTimeHeader } from './components/EnhancedGanttTimeHeader';
+export { EnhancedGanttGrid } from './components/EnhancedGanttGrid';
+
 // Types
 export type { 
   GanttTask, 
@@ -22,3 +27,4 @@ export { GanttProvider, useGantt } from './context/GanttContext';
 // Utils
 export { calculateCriticalPath } from './utils/criticalPathAlgorithm';
 export { calculateTimelineBounds, getPositionForDate, getWidthForRange } from './utils/dateCalculations';
+export * from './utils/wbsCalculations';

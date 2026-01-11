@@ -8068,6 +8068,7 @@ export type Database = {
           project_id: string
           status: Database["public"]["Enums"]["voltbuild_phase_status"]
           updated_at: string
+          wbs_code: string | null
         }
         Insert: {
           actual_end_date?: string | null
@@ -8083,6 +8084,7 @@ export type Database = {
           project_id: string
           status?: Database["public"]["Enums"]["voltbuild_phase_status"]
           updated_at?: string
+          wbs_code?: string | null
         }
         Update: {
           actual_end_date?: string | null
@@ -8098,6 +8100,7 @@ export type Database = {
           project_id?: string
           status?: Database["public"]["Enums"]["voltbuild_phase_status"]
           updated_at?: string
+          wbs_code?: string | null
         }
         Relationships: [
           {
@@ -8745,6 +8748,50 @@ export type Database = {
           },
         ]
       }
+      voltbuild_target_milestones: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          milestone_type: string
+          name: string
+          project_id: string
+          target_date: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          milestone_type?: string
+          name: string
+          project_id: string
+          target_date: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          milestone_type?: string
+          name?: string
+          project_id?: string
+          target_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voltbuild_target_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voltbuild_task_comments: {
         Row: {
           content: string
@@ -8916,6 +8963,7 @@ export type Database = {
           phase_id: string
           status: Database["public"]["Enums"]["voltbuild_task_status"]
           updated_at: string
+          wbs_code: string | null
         }
         Insert: {
           actual_end_date?: string | null
@@ -8937,6 +8985,7 @@ export type Database = {
           phase_id: string
           status?: Database["public"]["Enums"]["voltbuild_task_status"]
           updated_at?: string
+          wbs_code?: string | null
         }
         Update: {
           actual_end_date?: string | null
@@ -8958,6 +9007,7 @@ export type Database = {
           phase_id?: string
           status?: Database["public"]["Enums"]["voltbuild_task_status"]
           updated_at?: string
+          wbs_code?: string | null
         }
         Relationships: [
           {
