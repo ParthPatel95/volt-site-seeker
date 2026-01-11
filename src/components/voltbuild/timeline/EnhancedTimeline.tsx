@@ -84,33 +84,22 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
     todayPosition,
   } = useTimelineZoom({ startDate, endDate });
 
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     toast.success('Export feature coming soon');
-  };
+  }, []);
 
-  const handleTaskClick = (task: TimelineTask) => {
+  const handleTaskClick = useCallback((task: TimelineTask) => {
     setSelectedTask(task);
-  };
+  }, []);
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-4">
-          <Skeleton className="h-8 w-48 mb-4" />
-          <Skeleton className="h-[400px] w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const handleDependencyCreate = (predecessorId: string, successorId: string) => {
+  const handleDependencyCreate = useCallback((predecessorId: string, successorId: string) => {
     createDependency({
       predecessorTaskId: predecessorId,
       successorTaskId: successorId,
       dependencyType: 'finish_to_start',
       lagDays: 0,
     });
-  };
+  }, [createDependency]);
 
   const handleTaskStatusChange = useCallback(async (taskId: string, status: GanttTask['status']) => {
     try {
@@ -130,6 +119,17 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
       toast.error('Failed to update task status');
     }
   }, [project.id, queryClient]);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <Skeleton className="h-8 w-48 mb-4" />
+          <Skeleton className="h-[400px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
