@@ -45,15 +45,10 @@ interface GanttAddTaskDialogProps {
 }
 
 const ROLES = [
-  'Project Manager',
-  'Developer',
-  'Designer',
-  'Engineer',
-  'Contractor',
-  'Electrician',
-  'Plumber',
-  'Inspector',
-  'Other',
+  { label: 'Contractor', value: 'contractor' },
+  { label: 'Engineer', value: 'engineer' },
+  { label: 'Owner', value: 'owner' },
+  { label: 'Utility', value: 'utility' },
 ];
 
 export function GanttAddTaskDialog({
@@ -250,8 +245,8 @@ export function GanttAddTaskDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {ROLES.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

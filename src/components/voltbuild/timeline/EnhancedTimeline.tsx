@@ -237,6 +237,25 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
     }
   }, [allTasks, invalidateAllQueries]);
 
+  // Handle remove dependencies from Gantt context menu
+  const handleRemoveDependencies = useCallback(async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('voltbuild_task_dependencies')
+        .delete()
+        .or(`predecessor_task_id.eq.${taskId},successor_task_id.eq.${taskId}`);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['task-dependencies', project.id] });
+      invalidateAllQueries();
+      toast.success('Dependencies removed');
+    } catch (error) {
+      console.error('Failed to remove dependencies:', error);
+      toast.error('Failed to remove dependencies');
+    }
+  }, [project.id, queryClient, invalidateAllQueries]);
+
   // Handle adding new task from Gantt chart
   const handleAddTask = useCallback(async (taskData: NewTaskData) => {
     try {
@@ -252,6 +271,12 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
         ? (existingTasks[0].order_index || 0) + 1 
         : 0;
 
+      // Map role to valid database value or null
+      const validRoles = ['contractor', 'engineer', 'owner', 'utility'];
+      const assignedRole = validRoles.includes(taskData.assignedRole?.toLowerCase() || '') 
+        ? taskData.assignedRole.toLowerCase() as 'contractor' | 'engineer' | 'owner' | 'utility'
+        : null;
+
       const { error } = await supabase
         .from('voltbuild_tasks')
         .insert({
@@ -261,7 +286,7 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
           status: 'not_started',
           estimated_start_date: taskData.estimatedStartDate,
           estimated_end_date: taskData.estimatedEndDate,
-          assigned_role: taskData.assignedRole as 'contractor' | 'engineer' | 'owner' | 'utility' | null,
+          assigned_role: assignedRole,
           is_critical_path: taskData.isCritical,
           order_index: nextOrderIndex,
           depends_on: [],
@@ -443,6 +468,7 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                 onTaskDelete={handleTaskDelete}
                 onTaskDuplicate={handleTaskDuplicate}
                 onToggleCritical={handleToggleCritical}
+                onRemoveDependencies={handleRemoveDependencies}
               />
             </TabsContent>
           </Tabs>
@@ -467,9 +493,6 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                   <Badge variant="outline" className="capitalize">
                     {selectedTask.status.replace('_', ' ')}
                   </Badge>
-                  <Badge variant="outline" className="capitalize">
-                    {selectedTask.priority}
-                  </Badge>
                   {selectedTask.is_critical && (
                     <Badge className="bg-orange-500">Critical</Badge>
                   )}
@@ -492,14 +515,14 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                   </div>
                 )}
 
-                {selectedTask.depends_on && (
+                {selectedTask.depends_on && selectedTask.depends_on.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-2">
                       <Link className="h-4 w-4" />
                       Dependencies
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      This task depends on another task
+                      This task depends on {selectedTask.depends_on.length} other task(s)
                     </p>
                   </div>
                 )}
