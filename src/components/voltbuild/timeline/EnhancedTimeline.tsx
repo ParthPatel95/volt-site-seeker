@@ -167,7 +167,7 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
       const { data: existingTasks } = await supabase
         .from('voltbuild_tasks')
         .select('order_index')
-        .eq('voltbuild_phase_id', taskData.phaseId)
+        .eq('phase_id', taskData.phaseId)
         .order('order_index', { ascending: false })
         .limit(1);
 
@@ -178,16 +178,16 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
       const { error } = await supabase
         .from('voltbuild_tasks')
         .insert({
-          voltbuild_phase_id: taskData.phaseId,
-          title: taskData.name,
+          phase_id: taskData.phaseId,
+          name: taskData.name,
           description: taskData.description || null,
           status: 'not_started',
-          priority: taskData.priority,
           estimated_start_date: taskData.estimatedStartDate,
           estimated_end_date: taskData.estimatedEndDate,
           assigned_role: taskData.assignedRole as 'contractor' | 'engineer' | 'owner' | 'utility' | null,
           is_critical_path: taskData.isCritical,
           order_index: nextOrderIndex,
+          depends_on: [],
         });
 
       if (error) throw error;
