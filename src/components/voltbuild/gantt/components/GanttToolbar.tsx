@@ -34,6 +34,8 @@ import {
   FileSpreadsheet,
   FileText,
   Upload,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGantt } from '../context/GanttContext';
@@ -45,9 +47,11 @@ interface GanttToolbarProps {
   onExportPDF?: () => void;
   onImport?: () => void;
   onScrollToToday?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
-export function GanttToolbar({ onExportPNG, onExportCSV, onExportPDF, onImport, onScrollToToday }: GanttToolbarProps) {
+export function GanttToolbar({ onExportPNG, onExportCSV, onExportPDF, onImport, onScrollToToday, isFullscreen, onToggleFullscreen }: GanttToolbarProps) {
   const { 
     state, 
     zoomConfig,
@@ -261,6 +265,20 @@ export function GanttToolbar({ onExportPNG, onExportCSV, onExportPDF, onImport, 
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* Fullscreen Button */}
+        {onToggleFullscreen && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggleFullscreen}
+            className="h-8 gap-1.5"
+            title={isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen (F)"}
+          >
+            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            {isFullscreen ? "Exit" : "Fullscreen"}
+          </Button>
+        )}
 
         {/* Import Button */}
         {onImport && (
