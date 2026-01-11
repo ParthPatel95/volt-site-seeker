@@ -1,6 +1,7 @@
 import React, { useRef, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Calendar } from 'lucide-react';
 import { GanttProvider } from './context/GanttContext';
 import { GanttToolbar } from './components/GanttToolbar';
 import { GanttTimeHeader } from './components/GanttTimeHeader';
@@ -231,6 +232,25 @@ export function EnhancedGanttChart({
     })),
     [tasks]
   );
+
+  // Filter to tasks with valid dates for rendering
+  const tasksWithDates = useMemo(() => 
+    tasksWithProgress.filter(t => t.estimated_start_date && t.estimated_end_date),
+    [tasksWithProgress]
+  );
+
+  // Show empty state if no tasks have dates
+  if (tasks.length > 0 && tasksWithDates.length === 0) {
+    return (
+      <Card className={`p-8 text-center ${className}`}>
+        <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+        <h3 className="font-medium text-lg">No Task Dates Set</h3>
+        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+          Add estimated start and end dates to your tasks to see them on the Gantt chart timeline.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <div className={className}>
