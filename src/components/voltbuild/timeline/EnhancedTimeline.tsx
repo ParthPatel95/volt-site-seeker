@@ -25,12 +25,14 @@ import { CheckCircle2, AlertTriangle, Zap, Calendar, Link, GanttChart as GanttCh
 
 interface EnhancedTimelineProps {
   project: VoltBuildProject;
+  defaultView?: 'timeline' | 'gantt';
 }
 
-export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
+export function EnhancedTimeline({ project, defaultView = 'timeline' }: EnhancedTimelineProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<TimelineTask | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(defaultView);
   const [filters, setFilters] = useState<TimelineFilters>({
     status: [],
     priority: [],
@@ -139,7 +141,7 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
       {/* Main Timeline Card */}
       <Card>
         <CardContent className="p-4">
-          <Tabs defaultValue="timeline" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex items-center justify-between mb-4">
               <TabsList>
                 <TabsTrigger value="timeline" className="flex items-center gap-2">

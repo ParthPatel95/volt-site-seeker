@@ -443,6 +443,14 @@ export function VoltBuildPage() {
           </div>
         );
 
+      case 'gantt':
+        return (
+          <div className="p-4 sm:p-6 h-full">
+            <h1 className="text-2xl font-bold text-foreground mb-4">Gantt Chart</h1>
+            <EnhancedTimeline project={selectedProject} defaultView="gantt" />
+          </div>
+        );
+
       case 'timeline':
         return (
           <div className="p-4 sm:p-6">
