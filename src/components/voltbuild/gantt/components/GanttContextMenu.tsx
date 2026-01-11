@@ -10,7 +10,7 @@ import {
   PlayCircle,
   Zap,
   Copy,
-  MoveVertical,
+  LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGantt } from '../context/GanttContext';
@@ -24,6 +24,20 @@ interface GanttContextMenuProps {
   onDuplicateTask?: (task: GanttTask) => void;
   onRemoveDependencies?: (taskId: string) => void;
 }
+
+interface ActionMenuItem {
+  kind: 'action';
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  className?: string;
+}
+
+interface SeparatorMenuItem {
+  kind: 'separator';
+}
+
+type MenuItem = ActionMenuItem | SeparatorMenuItem;
 
 export function GanttContextMenu({
   onEditTask,
@@ -74,106 +88,137 @@ export function GanttContextMenu({
 
   if (!contextMenuPosition || !task) return null;
 
-  type MenuItem = 
-    | { type: 'separator' }
-    | { type?: undefined; label: string; icon: React.ElementType; onClick: () => void; hidden?: boolean; className?: string };
+  // Build menu items dynamically
+  const menuItems: MenuItem[] = [];
 
-  const menuItems: MenuItem[] = [
-    {
-      label: 'Edit Task',
-      icon: Edit,
-      onClick: () => {
-        onEditTask?.(task);
-        closeContextMenu();
-      },
+  // Edit task
+  menuItems.push({
+    kind: 'action',
+    label: 'Edit Task',
+    icon: Edit,
+    onClick: () => {
+      onEditTask?.(task);
+      closeContextMenu();
     },
-    { type: 'separator' },
-    {
+  });
+
+  menuItems.push({ kind: 'separator' });
+
+  // Status changes
+  if (task.status !== 'not_started') {
+    menuItems.push({
+      kind: 'action',
       label: 'Mark as Not Started',
       icon: Circle,
       onClick: () => {
         onStatusChange?.(task.id, 'not_started');
         closeContextMenu();
       },
-      hidden: task.status === 'not_started',
-    },
-    {
+    });
+  }
+
+  if (task.status !== 'in_progress') {
+    menuItems.push({
+      kind: 'action',
       label: 'Mark as In Progress',
       icon: PlayCircle,
       onClick: () => {
         onStatusChange?.(task.id, 'in_progress');
         closeContextMenu();
       },
-      hidden: task.status === 'in_progress',
-    },
-    {
+    });
+  }
+
+  if (task.status !== 'complete') {
+    menuItems.push({
+      kind: 'action',
       label: 'Mark as Complete',
       icon: CheckCircle,
       onClick: () => {
         onStatusChange?.(task.id, 'complete');
         closeContextMenu();
       },
-      hidden: task.status === 'complete',
       className: 'text-green-600',
-    },
-    {
+    });
+  }
+
+  if (task.status !== 'blocked') {
+    menuItems.push({
+      kind: 'action',
       label: 'Mark as Blocked',
       icon: AlertCircle,
       onClick: () => {
         onStatusChange?.(task.id, 'blocked');
         closeContextMenu();
       },
-      hidden: task.status === 'blocked',
       className: 'text-destructive',
+    });
+  }
+
+  menuItems.push({ kind: 'separator' });
+
+  // Dependencies
+  menuItems.push({
+    kind: 'action',
+    label: 'Add Dependency',
+    icon: Link2,
+    onClick: () => {
+      startLinking(task.id);
+      closeContextMenu();
     },
-    { type: 'separator' },
-    {
-      label: 'Add Dependency',
-      icon: Link2,
-      onClick: () => {
-        startLinking(task.id);
-        closeContextMenu();
-      },
-    },
-    {
+  });
+
+  if (taskDependencies.length > 0) {
+    menuItems.push({
+      kind: 'action',
       label: 'Remove Dependencies',
       icon: Link2Off,
       onClick: () => {
         onRemoveDependencies?.(task.id);
         closeContextMenu();
       },
-      hidden: taskDependencies.length === 0,
       className: 'text-destructive',
+    });
+  }
+
+  menuItems.push({ kind: 'separator' });
+
+  // Critical path toggle
+  menuItems.push({
+    kind: 'action',
+    label: isCritical ? 'Remove from Critical Path' : 'Mark as Critical',
+    icon: Zap,
+    onClick: () => {
+      onToggleCritical?.(task.id);
+      closeContextMenu();
     },
-    { type: 'separator' },
-    {
-      label: isCritical ? 'Remove from Critical Path' : 'Mark as Critical',
-      icon: Zap,
-      onClick: () => {
-        onToggleCritical?.(task.id);
-        closeContextMenu();
-      },
-      className: isCritical ? '' : 'text-orange-600',
+    className: isCritical ? '' : 'text-orange-600',
+  });
+
+  // Duplicate
+  menuItems.push({
+    kind: 'action',
+    label: 'Duplicate Task',
+    icon: Copy,
+    onClick: () => {
+      onDuplicateTask?.(task);
+      closeContextMenu();
     },
-    {
-      label: 'Duplicate Task',
-      icon: Copy,
-      onClick: () => {
-        onDuplicateTask?.(task);
-        closeContextMenu();
-      },
+  });
+
+  menuItems.push({ kind: 'separator' });
+
+  // Delete
+  menuItems.push({
+    kind: 'action',
+    label: 'Delete Task',
+    icon: Trash2,
+    onClick: () => {
+      onDeleteTask?.(task.id);
+      closeContextMenu();
     },
-    { type: 'separator' },
-    {
-      label: 'Delete Task',
-      icon: Trash2,
-      onClick: () => {
-        onDeleteTask?.(task.id);
-        closeContextMenu();
-      },
-      className: 'text-destructive',
-    },
-  ].filter((item): item is MenuItem => !('hidden' in item) || !item.hidden);
+    className: 'text-destructive',
+  });
 
   // Adjust position to keep menu in viewport
   const adjustPosition = () => {
@@ -196,8 +241,8 @@ export function GanttContextMenu({
       style={position}
     >
       {menuItems.map((item, index) => {
-        if (item.type === 'separator') {
-          return <div key={index} className="my-1 h-px bg-border" />;
+        if (item.kind === 'separator') {
+          return <div key={`sep-${index}`} className="my-1 h-px bg-border" />;
         }
 
         const Icon = item.icon;
