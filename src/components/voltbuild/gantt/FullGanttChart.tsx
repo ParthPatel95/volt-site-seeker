@@ -1,8 +1,9 @@
-import React, { useRef, useMemo, useCallback } from 'react';
+import React, { useRef, useMemo, useCallback, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Calendar, AlertCircle } from 'lucide-react';
-import { parseISO, differenceInDays } from 'date-fns';
+import { parseISO, differenceInDays, format } from 'date-fns';
+import { toast } from 'sonner';
 import { GanttProvider } from './context/GanttContext';
 import { GanttToolbar } from './components/GanttToolbar';
 import { EnhancedGanttTimeHeader } from './components/EnhancedGanttTimeHeader';
@@ -13,6 +14,7 @@ import { GanttPhaseBar } from './components/GanttPhaseBar';
 import { GanttMilestoneMarker, MilestoneType, MilestoneStatus } from './components/GanttMilestoneMarker';
 import { GanttDependencyLayer } from './components/GanttDependencyLayer';
 import { GanttContextMenu } from './components/GanttContextMenu';
+import { GanttImportDialog } from './components/GanttImportDialog';
 import { 
   GanttTask, 
   GanttPhase, 
@@ -23,6 +25,13 @@ import {
 } from './types/gantt.types';
 import { calculateTimelineBounds, generateTimeColumns } from './utils/dateCalculations';
 import { generateTaskWbsCode } from './utils/wbsCalculations';
+import { 
+  exportToCSV, 
+  downloadCSV, 
+  exportToPNG, 
+  exportToPDF,
+  ParsedTaskData,
+} from './utils/exportUtils';
 
 interface TargetMilestone {
   id: string;
@@ -42,6 +51,7 @@ interface FullGanttChartProps {
   milestones?: GanttMilestone[];
   targetMilestones?: TargetMilestone[];
   projectId?: string;
+  projectName?: string;
   projectStartDate?: Date | null;
   onTaskClick?: (task: GanttTask) => void;
   onTaskDateChange?: (taskId: string, startDate: string, endDate: string) => void;
@@ -50,6 +60,7 @@ interface FullGanttChartProps {
   onDependencyDelete?: (dependencyId: string) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskDuplicate?: (task: GanttTask) => void;
+  onImport?: (data: ParsedTaskData[]) => Promise<void>;
   initialConfig?: Partial<GanttConfig>;
   className?: string;
 }

@@ -10,6 +10,7 @@ export { EnhancedGanttGrid } from './components/EnhancedGanttGrid';
 export { EnhancedGanttTaskBar } from './components/EnhancedGanttTaskBar';
 export { GanttPhaseBar } from './components/GanttPhaseBar';
 export { GanttMilestoneMarker } from './components/GanttMilestoneMarker';
+export { GanttImportDialog } from './components/GanttImportDialog';
 export type { MilestoneType, MilestoneStatus } from './components/GanttMilestoneMarker';
 
 // Types
@@ -33,3 +34,4 @@ export { GanttProvider, useGantt } from './context/GanttContext';
 export { calculateCriticalPath } from './utils/criticalPathAlgorithm';
 export { calculateTimelineBounds, getPositionForDate, getWidthForRange } from './utils/dateCalculations';
 export * from './utils/wbsCalculations';
+export * from './utils/exportUtils';

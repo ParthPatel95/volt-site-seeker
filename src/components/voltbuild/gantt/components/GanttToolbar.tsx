@@ -32,6 +32,8 @@ import {
   Flag,
   FileImage,
   FileSpreadsheet,
+  FileText,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGantt } from '../context/GanttContext';
@@ -40,10 +42,12 @@ import { ZoomLevel } from '../types/gantt.types';
 interface GanttToolbarProps {
   onExportPNG?: () => void;
   onExportCSV?: () => void;
+  onExportPDF?: () => void;
+  onImport?: () => void;
   onScrollToToday?: () => void;
 }
 
-export function GanttToolbar({ onExportPNG, onExportCSV, onScrollToToday }: GanttToolbarProps) {
+export function GanttToolbar({ onExportPNG, onExportCSV, onExportPDF, onImport, onScrollToToday }: GanttToolbarProps) {
   const { 
     state, 
     zoomConfig,
@@ -258,6 +262,14 @@ export function GanttToolbar({ onExportPNG, onExportCSV, onScrollToToday }: Gant
           </PopoverContent>
         </Popover>
 
+        {/* Import Button */}
+        {onImport && (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={onImport}>
+            <Upload className="h-3.5 w-3.5" />
+            Import
+          </Button>
+        )}
+
         {/* Export Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -269,13 +281,17 @@ export function GanttToolbar({ onExportPNG, onExportCSV, onScrollToToday }: Gant
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Export As</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onExportCSV} disabled={!onExportCSV}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              CSV Spreadsheet
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onExportPNG} disabled={!onExportPNG}>
               <FileImage className="h-4 w-4 mr-2" />
               PNG Image
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onExportCSV} disabled={!onExportCSV}>
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              CSV Spreadsheet
+            <DropdownMenuItem onClick={onExportPDF} disabled={!onExportPDF}>
+              <FileText className="h-4 w-4 mr-2" />
+              PDF Document
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
