@@ -11,6 +11,7 @@ import { GanttTaskList } from './components/GanttTaskList';
 import { GanttTaskBar } from './components/GanttTaskBar';
 import { GanttDependencyLayer } from './components/GanttDependencyLayer';
 import { GanttContextMenu } from './components/GanttContextMenu';
+import { GanttAddTaskDialog, NewTaskData } from './components/GanttAddTaskDialog';
 import { 
   GanttTask, 
   GanttPhase, 
@@ -37,6 +38,7 @@ interface EnhancedGanttChartProps {
   onDependencyDelete?: (dependencyId: string) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskDuplicate?: (task: GanttTask) => void;
+  onAddTask?: (task: NewTaskData) => Promise<void>;
   initialConfig?: Partial<GanttConfig>;
   className?: string;
 }
@@ -52,11 +54,13 @@ function GanttChartInner({
   onDependencyDelete,
   onTaskDelete,
   onTaskDuplicate,
+  onAddTask,
 }: Omit<EnhancedGanttChartProps, 'milestones' | 'initialConfig' | 'className' | 'projectId'>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Fullscreen toggle handler
   const toggleFullscreen = useCallback(async () => {
@@ -128,6 +132,18 @@ function GanttChartInner({
     // This would be handled by the context - linking mode completes here
   }, []);
 
+  // Handle add task button click
+  const handleAddTaskClick = useCallback(() => {
+    setIsAddDialogOpen(true);
+  }, []);
+
+  // Handle add task submission
+  const handleAddTaskSubmit = useCallback(async (taskData: NewTaskData) => {
+    if (onAddTask) {
+      await onAddTask(taskData);
+    }
+  }, [onAddTask]);
+
   // Build row index map
   const rowIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -155,6 +171,7 @@ function GanttChartInner({
         <CardHeader className="p-0">
           <GanttToolbar 
             onScrollToToday={scrollToToday}
+            onAddTask={onAddTask ? handleAddTaskClick : undefined}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
           />
@@ -268,6 +285,16 @@ function GanttChartInner({
           onDuplicateTask={onTaskDuplicate ? onTaskDuplicate : undefined}
         />
       </Card>
+
+      {/* Add Task Dialog */}
+      {onAddTask && (
+        <GanttAddTaskDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          phases={phases}
+          onAddTask={handleAddTaskSubmit}
+        />
+      )}
     </div>
   );
 }

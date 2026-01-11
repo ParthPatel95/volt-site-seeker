@@ -24,6 +24,8 @@ interface GanttTaskBarProps {
   onClick?: (task: GanttTask) => void;
 }
 
+const DRAG_THRESHOLD = 5; // Minimum pixels to consider it a drag
+
 export function GanttTaskBar({
   task,
   startDate,
@@ -39,6 +41,8 @@ export function GanttTaskBar({
   const [dragMode, setDragMode] = useState<TaskBarDragMode>(null);
   const [dragOffset, setDragOffset] = useState({ left: 0, width: 0 });
   const dragStartRef = useRef<{ x: number; originalLeft: number; originalWidth: number } | null>(null);
+  const dragOffsetRef = useRef({ left: 0, width: 0 });
+  const hasDraggedRef = useRef(false);
 
   const isSelected = selection.selectedTaskIds.has(task.id);
   const isHovered = selection.hoveredTaskId === task.id;
@@ -66,6 +70,8 @@ export function GanttTaskBar({
     e.stopPropagation();
     
     setDragMode(mode);
+    hasDraggedRef.current = false;
+    dragOffsetRef.current = { left: 0, width: 0 };
     dragStartRef.current = {
       x: e.clientX,
       originalLeft: baseLeft,
@@ -77,21 +83,33 @@ export function GanttTaskBar({
       
       const deltaX = moveEvent.clientX - dragStartRef.current.x;
       
-      if (mode === 'move') {
-        setDragOffset({ left: deltaX, width: 0 });
-      } else if (mode === 'resize-left') {
-        const newOffset = Math.min(deltaX, dragStartRef.current.originalWidth - config.minTaskWidth);
-        setDragOffset({ left: newOffset, width: -newOffset });
-      } else if (mode === 'resize-right') {
-        const newWidth = Math.max(config.minTaskWidth - dragStartRef.current.originalWidth, deltaX);
-        setDragOffset({ left: 0, width: newWidth });
+      // Check if we've exceeded the drag threshold
+      if (Math.abs(deltaX) > DRAG_THRESHOLD) {
+        hasDraggedRef.current = true;
       }
+      
+      let newOffset = { left: 0, width: 0 };
+      
+      if (mode === 'move') {
+        newOffset = { left: deltaX, width: 0 };
+      } else if (mode === 'resize-left') {
+        const boundedOffset = Math.min(deltaX, dragStartRef.current.originalWidth - config.minTaskWidth);
+        newOffset = { left: boundedOffset, width: -boundedOffset };
+      } else if (mode === 'resize-right') {
+        const boundedWidth = Math.max(config.minTaskWidth - dragStartRef.current.originalWidth, deltaX);
+        newOffset = { left: 0, width: boundedWidth };
+      }
+      
+      dragOffsetRef.current = newOffset;
+      setDragOffset(newOffset);
     };
 
     const handleMouseUp = () => {
-      if (dragStartRef.current && onDateChange) {
-        const finalLeft = baseLeft + dragOffset.left;
-        const finalWidth = baseWidth + dragOffset.width;
+      // Only save if we actually dragged and have a handler
+      if (hasDraggedRef.current && dragStartRef.current && onDateChange) {
+        const currentOffset = dragOffsetRef.current;
+        const finalLeft = dragStartRef.current.originalLeft + currentOffset.left;
+        const finalWidth = dragStartRef.current.originalWidth + currentOffset.width;
         
         const newStartDate = getDateForPosition(finalLeft, startDate, endDate, totalWidth);
         const newEndDate = getDateForPosition(finalLeft + finalWidth, startDate, endDate, totalWidth);
@@ -105,6 +123,7 @@ export function GanttTaskBar({
       
       setDragMode(null);
       setDragOffset({ left: 0, width: 0 });
+      dragOffsetRef.current = { left: 0, width: 0 };
       dragStartRef.current = null;
       
       document.removeEventListener('mousemove', handleMouseMove);
@@ -113,14 +132,18 @@ export function GanttTaskBar({
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [baseLeft, baseWidth, config.minTaskWidth, onDateChange, task.id, startDate, endDate, totalWidth, dragOffset]);
+  }, [baseLeft, baseWidth, config.minTaskWidth, onDateChange, task.id, startDate, endDate, totalWidth]);
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (!dragMode) {
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Only open popup if we didn't drag
+    if (!hasDraggedRef.current) {
       selectTask(task.id);
       onClick?.(task);
     }
-  };
+    // Reset the flag after click is processed
+    hasDraggedRef.current = false;
+  }, [selectTask, task, onClick]);
 
   // Milestone rendering (diamond shape)
   if (isMilestoneTask) {
@@ -192,11 +215,16 @@ export function GanttTaskBar({
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            onClick={handleClick}
             onMouseDown={(e) => handleMouseDown(e, 'move')}
             onMouseEnter={() => hoverTask(task.id)}
             onMouseLeave={() => hoverTask(null)}
           >
+            {/* Clickable overlay - only triggers click if no drag */}
+            <div 
+              className="absolute inset-0 z-10"
+              onClick={handleClick}
+            />
+
             {/* Progress fill */}
             {config.showProgress && task.progress > 0 && (
               <div 
@@ -207,19 +235,19 @@ export function GanttTaskBar({
 
             {/* Left resize handle */}
             <div 
-              className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-l transition-opacity"
+              className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-l transition-opacity z-20"
               onMouseDown={(e) => handleMouseDown(e, 'resize-left')}
             />
 
             {/* Right resize handle */}
             <div 
-              className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-r transition-opacity"
+              className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-r transition-opacity z-20"
               onMouseDown={(e) => handleMouseDown(e, 'resize-right')}
             />
 
             {/* Task label (shown if wide enough) */}
             {width > 60 && (
-              <div className="absolute inset-0 flex items-center justify-center px-2">
+              <div className="absolute inset-0 flex items-center justify-center px-2 pointer-events-none">
                 <span className="text-xs font-medium text-white truncate drop-shadow-sm">
                   {task.name}
                 </span>
