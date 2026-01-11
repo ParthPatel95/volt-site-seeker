@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -15,11 +15,12 @@ import { TimelineGrid } from './TimelineGrid';
 import { TimelinePhaseRow } from './TimelinePhaseRow';
 import { TimelineMilestones } from './TimelineMilestones';
 import { TimelineMetricsPanel } from './TimelineMetricsPanel';
-import { VoltGanttChart } from '../gantt/VoltGanttChart';
+import { EnhancedGanttChart, GanttTask, GanttPhase, GanttDependency } from '../gantt';
 import { useTaskDependencies } from '../gantt/hooks/useTaskDependencies';
 import { parseISO, addDays, format } from 'date-fns';
 import { toast } from 'sonner';
-import { CheckCircle2, AlertTriangle, Zap, Calendar, Link, GanttChart, LayoutList } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { CheckCircle2, AlertTriangle, Zap, Calendar, Link, GanttChart as GanttChartIcon, LayoutList } from 'lucide-react';
 
 interface EnhancedTimelineProps {
   project: VoltBuildProject;
@@ -39,18 +40,18 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
   const { phases, milestones, metrics, isLoading } = useTimelineData(project.id);
   const { dependencies, createDependency } = useTaskDependencies(project.id);
 
-  // Flatten tasks for Gantt chart
-  const allTasks = useMemo(() => {
+  // Flatten tasks for Gantt chart with proper typing
+  const allTasks = useMemo((): GanttTask[] => {
     return phases.flatMap(phase => 
       phase.tasks.map(task => ({
         id: task.id,
         name: task.title,
         phase_id: phase.id,
-        phase_name: phase.name,
-        status: task.status,
-        estimated_start_date: task.estimated_start_date,
-        estimated_end_date: task.estimated_end_date,
-        is_critical_path: task.is_critical,
+        status: task.status as GanttTask['status'],
+        estimated_start_date: task.estimated_start_date ?? null,
+        estimated_end_date: task.estimated_end_date ?? null,
+        is_critical_path: task.is_critical ?? false,
+        progress: task.status === 'complete' ? 100 : task.status === 'in_progress' ? 50 : 0,
       }))
     );
   }, [phases]);
@@ -109,6 +110,20 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
     });
   };
 
+  const handleTaskStatusChange = useCallback(async (taskId: string, status: GanttTask['status']) => {
+    try {
+      const { error } = await supabase
+        .from('voltbuild_tasks')
+        .update({ status })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      toast.success('Task status updated');
+    } catch (error) {
+      toast.error('Failed to update task status');
+    }
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Metrics Panel */}
@@ -125,7 +140,7 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
                   Timeline
                 </TabsTrigger>
                 <TabsTrigger value="gantt" className="flex items-center gap-2">
-                  <GanttChart className="w-4 h-4" />
+                  <GanttChartIcon className="w-4 h-4" />
                   Gantt Chart
                 </TabsTrigger>
               </TabsList>
@@ -233,11 +248,29 @@ export function EnhancedTimeline({ project }: EnhancedTimelineProps) {
             </TabsContent>
 
             <TabsContent value="gantt" className="mt-0">
-              <VoltGanttChart
+              <EnhancedGanttChart
                 phases={phases.map(p => ({ id: p.id, name: p.name }))}
                 tasks={allTasks}
-                dependencies={dependencies}
+                dependencies={dependencies.map(d => ({
+                  id: d.id,
+                  project_id: project.id,
+                  predecessor_task_id: d.predecessor_task_id,
+                  successor_task_id: d.successor_task_id,
+                  dependency_type: d.dependency_type as 'finish_to_start' | 'start_to_start' | 'finish_to_finish' | 'start_to_finish',
+                  lag_days: d.lag_days,
+                  created_at: d.created_at,
+                }))}
+                projectId={project.id}
                 onDependencyCreate={handleDependencyCreate}
+                onTaskClick={(task) => {
+                  const timelineTask = phases
+                    .flatMap(p => p.tasks)
+                    .find(t => t.id === task.id);
+                  if (timelineTask) {
+                    setSelectedTask(timelineTask);
+                  }
+                }}
+                onTaskStatusChange={handleTaskStatusChange}
               />
             </TabsContent>
           </Tabs>
