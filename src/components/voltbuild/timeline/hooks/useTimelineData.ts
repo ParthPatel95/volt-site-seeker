@@ -44,8 +44,8 @@ export function useTimelineData(projectId: string | null) {
               status: task.status,
               priority: 'medium', // Default priority since it's not in schema
               is_critical: task.is_critical_path,
-              estimated_start_date: task.actual_start_date,
-              estimated_end_date: task.actual_end_date,
+              estimated_start_date: task.estimated_start_date,
+              estimated_end_date: task.estimated_end_date,
               depends_on: task.depends_on?.length > 0 ? task.depends_on[0] : null,
               assigned_to: task.assigned_user_id,
               progress: task.status === 'complete' ? 100 : task.status === 'in_progress' ? 50 : 0,
