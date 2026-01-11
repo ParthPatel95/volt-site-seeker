@@ -16,6 +16,7 @@ import { TimelinePhaseRow } from './TimelinePhaseRow';
 import { TimelineMilestones } from './TimelineMilestones';
 import { TimelineMetricsPanel } from './TimelineMetricsPanel';
 import { EnhancedGanttChart, GanttTask, GanttPhase, GanttDependency } from '../gantt';
+import { NewTaskData } from '../gantt/components/GanttAddTaskDialog';
 import { useTaskDependencies } from '../gantt/hooks/useTaskDependencies';
 import { useQueryClient } from '@tanstack/react-query';
 import { parseISO, addDays, format } from 'date-fns';
@@ -43,6 +44,17 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
 
   const { phases, milestones, metrics, isLoading } = useTimelineData(project.id);
   const { dependencies, createDependency } = useTaskDependencies(project.id);
+
+  // Helper function to invalidate all relevant queries
+  const invalidateAllQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['timeline-phases', project.id] });
+    queryClient.invalidateQueries({ queryKey: ['voltbuild-tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['voltbuild-all-tasks', project.id] });
+    // Invalidate tasks for all phases
+    phases.forEach(phase => {
+      queryClient.invalidateQueries({ queryKey: ['voltbuild-tasks', phase.id] });
+    });
+  }, [project.id, queryClient, phases]);
 
   // Flatten tasks for Gantt chart with proper typing
   const allTasks = useMemo((): GanttTask[] => {
@@ -112,15 +124,84 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
 
       if (error) throw error;
       
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['timeline-phases', project.id] });
-      queryClient.invalidateQueries({ queryKey: ['voltbuild-tasks'] });
+      // Invalidate all relevant queries
+      invalidateAllQueries();
       
       toast.success('Task status updated');
     } catch (error) {
       toast.error('Failed to update task status');
     }
-  }, [project.id, queryClient]);
+  }, [invalidateAllQueries]);
+
+  // Handle task date changes from Gantt chart drag-and-drop
+  const handleTaskDateChange = useCallback(async (
+    taskId: string, 
+    startDate: string, 
+    endDate: string
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('voltbuild_tasks')
+        .update({ 
+          estimated_start_date: startDate, 
+          estimated_end_date: endDate 
+        })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      
+      // Invalidate all relevant queries
+      invalidateAllQueries();
+      
+      toast.success('Task dates updated');
+    } catch (error) {
+      console.error('Failed to update task dates:', error);
+      toast.error('Failed to update task dates');
+    }
+  }, [invalidateAllQueries]);
+
+  // Handle adding new task from Gantt chart
+  const handleAddTask = useCallback(async (taskData: NewTaskData) => {
+    try {
+      // Get the max order_index for the phase
+      const { data: existingTasks } = await supabase
+        .from('voltbuild_tasks')
+        .select('order_index')
+        .eq('voltbuild_phase_id', taskData.phaseId)
+        .order('order_index', { ascending: false })
+        .limit(1);
+
+      const nextOrderIndex = existingTasks && existingTasks.length > 0 
+        ? (existingTasks[0].order_index || 0) + 1 
+        : 0;
+
+      const { error } = await supabase
+        .from('voltbuild_tasks')
+        .insert({
+          voltbuild_phase_id: taskData.phaseId,
+          title: taskData.name,
+          description: taskData.description || null,
+          status: 'not_started',
+          priority: taskData.priority,
+          estimated_start_date: taskData.estimatedStartDate,
+          estimated_end_date: taskData.estimatedEndDate,
+          assigned_role: taskData.assignedRole as 'contractor' | 'engineer' | 'owner' | 'utility' | null,
+          is_critical_path: taskData.isCritical,
+          order_index: nextOrderIndex,
+        });
+
+      if (error) throw error;
+      
+      // Invalidate all relevant queries
+      invalidateAllQueries();
+      
+      toast.success('Task created successfully');
+    } catch (error) {
+      console.error('Failed to create task:', error);
+      toast.error('Failed to create task');
+      throw error; // Re-throw to let the dialog know it failed
+    }
+  }, [invalidateAllQueries]);
 
   if (isLoading) {
     return (
@@ -271,6 +352,8 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                 }))}
                 projectId={project.id}
                 onDependencyCreate={handleDependencyCreate}
+                onTaskDateChange={handleTaskDateChange}
+                onAddTask={handleAddTask}
                 onTaskClick={(task) => {
                   const timelineTask = phases
                     .flatMap(p => p.tasks)

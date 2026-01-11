@@ -36,6 +36,7 @@ import {
   Upload,
   Maximize2,
   Minimize2,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGantt } from '../context/GanttContext';
@@ -47,11 +48,21 @@ interface GanttToolbarProps {
   onExportPDF?: () => void;
   onImport?: () => void;
   onScrollToToday?: () => void;
+  onAddTask?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
 
-export function GanttToolbar({ onExportPNG, onExportCSV, onExportPDF, onImport, onScrollToToday, isFullscreen, onToggleFullscreen }: GanttToolbarProps) {
+export function GanttToolbar({ 
+  onExportPNG, 
+  onExportCSV, 
+  onExportPDF, 
+  onImport, 
+  onScrollToToday, 
+  onAddTask,
+  isFullscreen, 
+  onToggleFullscreen 
+}: GanttToolbarProps) {
   const { 
     state, 
     zoomConfig,
@@ -140,6 +151,19 @@ export function GanttToolbar({ onExportPNG, onExportCSV, onExportPDF, onImport, 
         </Button>
 
         <Separator orientation="vertical" className="h-6" />
+
+        {/* Add Task Button */}
+        {onAddTask && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onAddTask}
+            className="h-8 gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Task
+          </Button>
+        )}
 
         {/* Status indicators */}
         {selection.linkingFromId && (
