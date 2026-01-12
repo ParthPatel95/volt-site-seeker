@@ -43,6 +43,7 @@ interface EnhancedGanttChartProps {
   onAddTask?: (task: NewTaskData) => Promise<void>;
   initialConfig?: Partial<GanttConfig>;
   className?: string;
+  onFullscreenChange?: (isFullscreen: boolean, container: HTMLDivElement | null) => void;
 }
 
 function GanttChartInner({
@@ -59,6 +60,7 @@ function GanttChartInner({
   onToggleCritical,
   onRemoveDependencies,
   onAddTask,
+  onFullscreenChange,
 }: Omit<EnhancedGanttChartProps, 'milestones' | 'initialConfig' | 'className' | 'projectId'>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -82,11 +84,13 @@ function GanttChartInner({
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFs = !!document.fullscreenElement;
+      setIsFullscreen(isFs);
+      onFullscreenChange?.(isFs, isFs ? fullscreenContainerRef.current : null);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  }, [onFullscreenChange]);
 
   // Keyboard shortcut for fullscreen
   useEffect(() => {
@@ -355,6 +359,7 @@ export function EnhancedGanttChart({
           phases={phases}
           tasks={tasksWithProgress}
           dependencies={dependencies}
+          onFullscreenChange={props.onFullscreenChange}
           {...props}
         />
       </GanttProvider>

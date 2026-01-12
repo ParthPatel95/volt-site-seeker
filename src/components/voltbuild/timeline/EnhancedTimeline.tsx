@@ -34,6 +34,7 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<TimelineTask | null>(null);
   const [activeTab, setActiveTab] = useState<string>(defaultView);
+  const [fullscreenContainer, setFullscreenContainer] = useState<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<TimelineFilters>({
     status: [],
     priority: [],
@@ -469,6 +470,9 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
                 onTaskDuplicate={handleTaskDuplicate}
                 onToggleCritical={handleToggleCritical}
                 onRemoveDependencies={handleRemoveDependencies}
+                onFullscreenChange={(isFs, container) => {
+                  setFullscreenContainer(isFs ? container : null);
+                }}
               />
             </TabsContent>
           </Tabs>
@@ -477,7 +481,7 @@ export function EnhancedTimeline({ project, defaultView = 'timeline' }: Enhanced
 
       {/* Task Detail Sheet */}
       <Sheet open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
-        <SheetContent className="sm:max-w-md">
+        <SheetContent className="sm:max-w-md" container={fullscreenContainer}>
           {selectedTask && (
             <>
               <SheetHeader>
