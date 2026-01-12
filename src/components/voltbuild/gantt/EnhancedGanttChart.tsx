@@ -12,6 +12,7 @@ import { GanttTaskBar } from './components/GanttTaskBar';
 import { GanttDependencyLayer } from './components/GanttDependencyLayer';
 import { GanttContextMenu } from './components/GanttContextMenu';
 import { GanttAddTaskDialog, NewTaskData } from './components/GanttAddTaskDialog';
+import { useDragToScroll } from './hooks/useDragToScroll';
 import { 
   GanttTask, 
   GanttPhase, 
@@ -67,6 +68,9 @@ function GanttChartInner({
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
+  // Drag-to-scroll functionality
+  const { isDragging, dragProps } = useDragToScroll(scrollAreaRef);
 
   // Fullscreen toggle handler
   const toggleFullscreen = useCallback(async () => {
@@ -195,11 +199,16 @@ function GanttChartInner({
           >
           <div 
             ref={containerRef}
-            className="relative"
+            className={cn(
+              "relative",
+              isDragging && "select-none"
+            )}
             style={{ 
               width: config.taskListWidth + totalWidth,
               minHeight: totalHeight,
+              cursor: dragProps.style.cursor,
             }}
+            onMouseDown={dragProps.onMouseDown}
           >
             {/* Time Header */}
             <GanttTimeHeader
