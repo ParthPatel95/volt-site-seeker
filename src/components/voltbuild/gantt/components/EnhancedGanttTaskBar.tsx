@@ -267,12 +267,14 @@ export function EnhancedGanttTaskBar({
 
             {/* Left resize handle */}
             <div 
+              data-no-drag
               className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-l-md transition-opacity z-20"
               onMouseDown={(e) => handleMouseDown(e, 'resize-left')}
             />
 
             {/* Right resize handle */}
             <div 
+              data-no-drag
               className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-r-md transition-opacity z-20"
               onMouseDown={(e) => handleMouseDown(e, 'resize-right')}
             />

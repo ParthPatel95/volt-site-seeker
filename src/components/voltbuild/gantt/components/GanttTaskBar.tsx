@@ -152,6 +152,7 @@ export function GanttTaskBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <motion.div
+              data-no-drag
               className={cn(
                 "absolute cursor-pointer transition-all",
                 isSelected && "ring-2 ring-ring ring-offset-2",
@@ -198,6 +199,7 @@ export function GanttTaskBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.div
+            data-no-drag
             className={cn(
               "absolute rounded cursor-pointer transition-shadow group",
               statusColor.bg,
@@ -235,12 +237,14 @@ export function GanttTaskBar({
 
             {/* Left resize handle */}
             <div 
+              data-no-drag
               className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-l transition-opacity z-20"
               onMouseDown={(e) => handleMouseDown(e, 'resize-left')}
             />
 
             {/* Right resize handle */}
             <div 
+              data-no-drag
               className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-black/20 rounded-r transition-opacity z-20"
               onMouseDown={(e) => handleMouseDown(e, 'resize-right')}
             />
