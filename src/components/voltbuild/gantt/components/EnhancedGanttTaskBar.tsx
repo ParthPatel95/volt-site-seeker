@@ -173,6 +173,7 @@ export function EnhancedGanttTaskBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <motion.div
+              data-no-drag
               className={cn(
                 "absolute cursor-pointer transition-all",
                 isSelected && "ring-2 ring-ring ring-offset-2",
@@ -224,6 +225,7 @@ export function EnhancedGanttTaskBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.div
+            data-no-drag
             className={cn(
               "absolute rounded-md cursor-pointer transition-shadow group overflow-hidden",
               "border shadow-sm",
