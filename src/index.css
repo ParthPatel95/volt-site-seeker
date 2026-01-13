@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import './styles/print.css';
 
 @tailwind base;
@@ -9,12 +10,6 @@
    A modern, industrial-grade energy trading platform
    Inspired by Linear, Vercel, Bloomberg Terminal, Raycast
    ============================================================================ */
-
-/* ============================================================================
-   CUSTOM FONTS
-   ============================================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
