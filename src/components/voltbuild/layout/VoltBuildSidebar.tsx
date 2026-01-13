@@ -68,7 +68,8 @@ export type VoltBuildView =
   | 'rfis'
   | 'punchlist'
   | 'subcontractors'
-  | 'labor';
+  | 'labor'
+  | 'inventory';
 
 interface NavGroup {
   label: string;
@@ -117,6 +118,7 @@ const navGroups: NavGroup[] = [
       { id: 'verification', label: 'Verification', icon: CheckSquare },
       { id: 'labor', label: 'Labor Tracking', icon: HardHat },
       { id: 'subcontractors', label: 'Subcontractors', icon: Building2 },
+      { id: 'inventory', label: 'Inventory', icon: Package },
     ]
   },
   {

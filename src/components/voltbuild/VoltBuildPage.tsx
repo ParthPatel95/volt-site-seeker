@@ -39,6 +39,7 @@ import { VoltRFITab } from './rfi/VoltRFITab';
 import { VoltPunchListTab } from './punchlist/VoltPunchListTab';
 import { VoltSubcontractorsTab } from './subcontractors/VoltSubcontractorsTab';
 import { VoltLaborTab } from './labor/VoltLaborTab';
+import { VoltInventoryTab } from './inventory/VoltInventoryTab';
 
 import { useVoltBuildProjects } from './hooks/useVoltBuildProjects';
 import { useVoltBuildPhases } from './hooks/useVoltBuildPhases';
@@ -629,6 +630,14 @@ export function VoltBuildPage() {
           <div className="p-4 sm:p-6">
             <h1 className="text-2xl font-bold text-foreground mb-6">Labor Tracking</h1>
             <VoltLaborTab project={selectedProject} phases={phases} />
+          </div>
+        );
+
+      case 'inventory':
+        return (
+          <div className="p-4 sm:p-6">
+            <h1 className="text-2xl font-bold text-foreground mb-6">Inventory Management</h1>
+            <VoltInventoryTab project={selectedProject} />
           </div>
         );
 
