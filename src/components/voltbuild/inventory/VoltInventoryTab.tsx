@@ -20,8 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings, ChevronDown } from 'lucide-react';
+import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings } from 'lucide-react';
 import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
 import { useInventoryStats } from './hooks/useInventoryStats';
@@ -228,28 +227,28 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        {/* Header Section - Mobile Optimized */}
+        {/* Header Section */}
         <div className="flex flex-col gap-4">
           {/* Tab Navigation */}
           {isMobile ? (
-            // Mobile: Dropdown selector for tabs
-            <div className="flex items-center justify-between gap-3">
+            // Mobile: Full-width dropdown with better styling
+            <div className="flex items-center gap-3">
               <Select value={activeTab} onValueChange={setActiveTab}>
-                <SelectTrigger className="w-[180px] h-10">
+                <SelectTrigger className="flex-1 h-11 text-base font-medium bg-background border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {TAB_OPTIONS.map((tab) => (
-                    <SelectItem key={tab.value} value={tab.value}>
-                      <div className="flex items-center gap-2">
-                        {tab.label}
+                    <SelectItem key={tab.value} value={tab.value} className="py-3">
+                      <div className="flex items-center justify-between w-full">
+                        <span>{tab.label}</span>
                         {tab.value === 'items' && (
-                          <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                          <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                             {items.length}
                           </Badge>
                         )}
                         {tab.value === 'alerts' && totalAlerts > 0 && (
-                          <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+                          <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-xs">
                             {totalAlerts}
                           </Badge>
                         )}
@@ -259,49 +258,60 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
                 </SelectContent>
               </Select>
 
-              {/* Scanner Status & Settings */}
-              <div className="flex items-center gap-2">
+              {/* Compact action buttons */}
+              <div className="flex items-center gap-1.5">
                 {scannerSettings.enabled && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
-                  </div>
+                  <div className={cn(
+                    "w-2.5 h-2.5 rounded-full",
+                    isListening ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/50"
+                  )} />
                 )}
-                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setShowScannerSettings(true)}>
-                  <Settings className="w-4 h-4" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-11 w-11 rounded-lg" 
+                  onClick={() => setShowScannerSettings(true)}
+                >
+                  <Settings className="w-5 h-5" />
                 </Button>
               </div>
             </div>
           ) : (
-            // Desktop: Full TabsList
+            // Desktop: Full TabsList with actions
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <TabsList>
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="items">Items ({items.length})</TabsTrigger>
-                <TabsTrigger value="groups">Groups</TabsTrigger>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                <TabsTrigger value="alerts" className="relative">
+              <TabsList className="h-10">
+                <TabsTrigger value="dashboard" className="px-4">Dashboard</TabsTrigger>
+                <TabsTrigger value="items" className="px-4">
+                  Items
+                  <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                    {items.length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="groups" className="px-4">Groups</TabsTrigger>
+                <TabsTrigger value="transactions" className="px-4">Transactions</TabsTrigger>
+                <TabsTrigger value="alerts" className="px-4 relative">
                   Alerts
                   {totalAlerts > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="ml-1.5 h-5 min-w-5 px-1.5"
-                    >
+                    <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 px-1.5 text-xs">
                       {totalAlerts}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="categories">Categories</TabsTrigger>
+                <TabsTrigger value="categories" className="px-4">Categories</TabsTrigger>
               </TabsList>
 
               <div className="flex items-center gap-2">
-                {/* Scanner Status Indicator */}
+                {/* Scanner Status */}
                 {scannerSettings.enabled && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-2">
-                    <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
-                    <span className="hidden sm:inline">Scanner {isListening ? 'Active' : 'Ready'}</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-2 py-1 rounded-md bg-muted/50">
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      isListening ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"
+                    )} />
+                    <span>{isListening ? 'Scanner Active' : 'Scanner Ready'}</span>
                   </div>
                 )}
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowScannerSettings(true)}>
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setShowScannerSettings(true)}>
                   <Settings className="w-4 h-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
@@ -343,7 +353,10 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
                   placeholder="Search items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={cn("pl-9", isMobile ? "h-10" : "h-9")}
+                  className={cn(
+                    "pl-9 bg-background",
+                    isMobile ? "h-11" : "h-9"
+                  )}
                 />
               </div>
               
@@ -356,7 +369,7 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
                   locations={locations}
                 />
               ) : (
-                <div className="flex border rounded-lg">
+                <div className="flex border rounded-lg border-border">
                   <Button
                     variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                     size="icon"
@@ -389,7 +402,10 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           </div>
 
           {items.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                <LayoutGrid className="w-8 h-8 text-muted-foreground/50" />
+              </div>
               <p className="text-muted-foreground mb-4">
                 {searchQuery || Object.keys(filters).length > 1
                   ? 'No items match your filters'
@@ -468,69 +484,50 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
         <InventoryFAB
           onAdd={() => setShowAddDialog(true)}
           onScan={() => setShowScanner(true)}
-          onSmartScan={() => setShowAddDialog(true)}
         />
       )}
 
+      {/* Add Item Dialog */}
       <InventoryAddDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSubmit={handleAddItem}
-        categories={categories}
-        projectId={project.id}
         isLoading={isCreating}
+        projectId={project.id}
+        categories={categories}
         initialBarcode={initialBarcode}
       />
 
-      <InventoryEditDialog
-        item={selectedItem}
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        onSubmit={handleUpdateItem}
-        categories={categories}
-        isLoading={isUpdating}
-      />
-
-      <InventoryItemDetail
-        item={selectedItem}
-        open={showDetailSheet}
-        onOpenChange={setShowDetailSheet}
-        onEdit={() => {
-          setShowDetailSheet(false);
-          setShowEditDialog(true);
-        }}
-        onDelete={() => {
-          setShowDetailSheet(false);
-          setShowDeleteConfirm(true);
-        }}
-        onAdjust={handleAdjustQuantity}
-      />
-
-      <InventoryBarcodeScanner
-        open={showScanner}
-        onOpenChange={setShowScanner}
-        onScan={handleScan}
-      />
-
-      <InventoryExport
-        open={showExport}
-        onOpenChange={setShowExport}
-        items={items}
-        projectName={project.name}
-      />
-
-      {selectedItem && showAdjustDialog && (
-        <InventoryAdjustDialog
-          open={showAdjustDialog !== null}
-          onOpenChange={(open) => !open && setShowAdjustDialog(null)}
-          type={showAdjustDialog}
-          itemName={selectedItem.name}
-          currentQuantity={selectedItem.quantity}
-          unit={selectedItem.unit}
-          onSubmit={handleAdjustFromDialog}
+      {/* Edit Item Dialog */}
+      {selectedItem && (
+        <InventoryEditDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          item={selectedItem}
+          onSubmit={handleUpdateItem}
+          isLoading={isUpdating}
+          categories={categories}
         />
       )}
 
+      {/* Item Detail Sheet */}
+      {selectedItem && (
+        <InventoryItemDetail
+          item={selectedItem}
+          open={showDetailSheet}
+          onOpenChange={setShowDetailSheet}
+          onEdit={() => {
+            setShowDetailSheet(false);
+            setShowEditDialog(true);
+          }}
+          onDelete={() => {
+            setShowDeleteConfirm(true);
+          }}
+          onAdjust={handleAdjustQuantity}
+        />
+      )}
+
+      {/* Delete Confirmation */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -541,17 +538,46 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogAction 
               onClick={handleDeleteItem}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Delete
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Adjust Quantity Dialog */}
+      {showAdjustDialog && selectedItem && (
+        <InventoryAdjustDialog
+          open={!!showAdjustDialog}
+          onOpenChange={() => setShowAdjustDialog(null)}
+          type={showAdjustDialog}
+          itemName={selectedItem.name}
+          currentQuantity={selectedItem.quantity}
+          unit={selectedItem.unit || 'units'}
+          onSubmit={handleAdjustFromDialog}
+          isLoading={isAdjusting}
+        />
+      )}
+
+      {/* Barcode Scanner */}
+      <InventoryBarcodeScanner
+        open={showScanner}
+        onOpenChange={setShowScanner}
+        onScan={handleScan}
+      />
+
+      {/* Export Dialog */}
+      <InventoryExport
+        open={showExport}
+        onOpenChange={setShowExport}
+        items={items}
+        projectName={project.name}
+      />
+
+      {/* Scanner Settings */}
       <InventoryScannerSettings
         open={showScannerSettings}
         onOpenChange={setShowScannerSettings}

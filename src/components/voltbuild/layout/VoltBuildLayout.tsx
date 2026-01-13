@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu } from 'lucide-react';
+import { Menu, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildSidebar, VoltBuildView } from './VoltBuildSidebar';
 
@@ -21,6 +21,34 @@ interface VoltBuildLayoutProps {
   onNewProject?: () => void;
 }
 
+// View labels for display
+const VIEW_LABELS: Record<VoltBuildView, string> = {
+  overview: 'Overview',
+  tasks: 'Tasks',
+  gantt: 'Gantt Chart',
+  timeline: 'Timeline',
+  risks: 'Risks',
+  capex: 'CAPEX',
+  leadtime: 'Lead Times',
+  advisor: 'AI Advisor',
+  bids: 'Bids & Vendors',
+  procurement: 'Procurement',
+  changeorders: 'Change Orders',
+  quality: 'Quality',
+  reporting: 'Reports',
+  dailylogs: 'Daily Logs',
+  fieldcheckins: 'Check-Ins',
+  verification: 'Verification',
+  forecasting: 'Forecasting',
+  utilitymonitor: 'Utility Monitor',
+  safety: 'Safety',
+  rfis: 'RFIs',
+  punchlist: 'Punch List',
+  subcontractors: 'Subcontractors',
+  labor: 'Labor',
+  inventory: 'Inventory',
+};
+
 export function VoltBuildLayout({
   children,
   currentView,
@@ -35,6 +63,9 @@ export function VoltBuildLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Find selected project name
+  const selectedProject = projects.find(p => p.id === selectedProjectId);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -68,23 +99,34 @@ export function VoltBuildLayout({
       />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden flex flex-col">
-        {/* Mobile Header */}
+      <main className="flex-1 overflow-hidden flex flex-col min-w-0">
+        {/* Enhanced Mobile Header */}
         {isMobile && (
-          <div className="lg:hidden sticky top-0 z-40 border-b border-border bg-card">
-            <div className="flex items-center gap-3 p-4">
+          <header className="lg:hidden sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+            <div className="flex items-center gap-3 px-4 py-3">
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
+                className="p-2 -ml-2 hover:bg-accent rounded-lg transition-colors"
+                aria-label="Open menu"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 text-foreground" />
               </button>
-              <div>
-                <span className="font-semibold">VoltBuild</span>
-                <p className="text-xs text-muted-foreground capitalize">{currentView.replace('-', ' ')}</p>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-foreground truncate">
+                    {VIEW_LABELS[currentView]}
+                  </span>
+                </div>
+                {selectedProject && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="truncate max-w-[200px]">{selectedProject.name}</span>
+                    <ChevronRight className="w-3 h-3 flex-shrink-0" />
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          </header>
         )}
 
         {/* Content Area */}
@@ -92,10 +134,10 @@ export function VoltBuildLayout({
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
               className="h-full"
             >
               {children}
