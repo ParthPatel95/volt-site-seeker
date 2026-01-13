@@ -15,12 +15,13 @@ export function InstallPrompt() {
     isIOS, 
     promptInstall, 
     dismissPrompt, 
-    wasPromptDismissed 
+    wasPromptDismissed,
+    hasDeferredPrompt 
   } = usePwaInstall();
 
-  // Show prompt after a delay, only on mobile
+  // Show prompt after a delay, only on mobile when not installed
   useEffect(() => {
-    if (!isMobile || isInstalled || wasPromptDismissed || !isInstallable) {
+    if (!isMobile || isInstalled || wasPromptDismissed) {
       setIsVisible(false);
       return;
     }
@@ -30,16 +31,21 @@ export function InstallPrompt() {
     }, 3000); // 3 second delay
 
     return () => clearTimeout(timer);
-  }, [isMobile, isInstalled, wasPromptDismissed, isInstallable]);
+  }, [isMobile, isInstalled, wasPromptDismissed]);
 
   const handleInstall = async () => {
     if (isIOS) {
+      // iOS users need manual instructions
       setShowIOSInstructions(true);
-    } else {
+    } else if (hasDeferredPrompt) {
+      // Android/Chrome with native prompt available
       const installed = await promptInstall();
       if (installed) {
         setIsVisible(false);
       }
+    } else {
+      // Android without prompt (Firefox, Edge, etc.) - show manual instructions
+      setShowIOSInstructions(true);
     }
   };
 

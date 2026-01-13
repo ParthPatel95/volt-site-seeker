@@ -12,6 +12,7 @@ interface UsePwaInstallReturn {
   promptInstall: () => Promise<boolean>;
   dismissPrompt: () => void;
   wasPromptDismissed: boolean;
+  hasDeferredPrompt: boolean;
 }
 
 const DISMISS_KEY = 'pwa-install-dismissed';
@@ -104,11 +105,12 @@ export function usePwaInstall(): UsePwaInstallReturn {
   }, []);
 
   return {
-    isInstallable: !!deferredPrompt || (isIOS && !isInstalled),
+    isInstallable: !isInstalled,
     isInstalled,
     isIOS,
     promptInstall,
     dismissPrompt,
     wasPromptDismissed,
+    hasDeferredPrompt: !!deferredPrompt,
   };
 }
