@@ -13,6 +13,7 @@ import { AcademyAuthProvider } from "./contexts/AcademyAuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LazyErrorBoundary, SectionLoader } from "./components/LazyErrorBoundary";
+import { InstallPrompt } from "./components/pwa/InstallPrompt";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
@@ -134,6 +135,7 @@ const App = () => (
                   </ErrorBoundary>
                 } />
               </Routes>
+              <InstallPrompt />
             </BrowserRouter>
           </TooltipProvider>
         </PermissionsProvider>
