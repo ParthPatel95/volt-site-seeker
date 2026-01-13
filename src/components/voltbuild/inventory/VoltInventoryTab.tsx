@@ -434,6 +434,10 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           )}
         </TabsContent>
 
+        <TabsContent value="groups" className="mt-4 sm:mt-6">
+          <InventoryGroupManager projectId={project.id} />
+        </TabsContent>
+
         <TabsContent value="transactions" className="mt-4 sm:mt-6">
           <InventoryTransactionsTab
             projectId={project.id}

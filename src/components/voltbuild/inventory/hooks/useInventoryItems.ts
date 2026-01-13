@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { InventoryItem, InventoryFilters } from '../types/inventory.types';
+import { generateInventoryBarcode, generateItemQRData } from '@/utils/codeGenerator';
 
 export function useInventoryItems(projectId: string | null, filters?: InventoryFilters) {
   const queryClient = useQueryClient();
@@ -71,16 +72,45 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
     mutationFn: async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'category'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Auto-generate barcode if not provided
+      const barcode = item.barcode || generateInventoryBarcode();
+      
+      // Generate QR code data
+      const qrData = generateItemQRData({
+        id: '', // Will be replaced after insert
+        name: item.name,
+        sku: item.sku,
+        barcode: barcode,
+      });
+      
       const { data, error } = await supabase
         .from('inventory_items')
         .insert({
           ...item,
+          barcode,
+          qr_code: qrData,
           created_by: user?.id,
         })
         .select()
         .single();
 
       if (error) throw error;
+      
+      // Update QR code with actual ID
+      if (data) {
+        const updatedQrData = generateItemQRData({
+          id: data.id,
+          name: data.name,
+          sku: data.sku,
+          barcode: data.barcode,
+        });
+        
+        await supabase
+          .from('inventory_items')
+          .update({ qr_code: updatedQrData })
+          .eq('id', data.id);
+      }
+      
       return data;
     },
     onSuccess: () => {
