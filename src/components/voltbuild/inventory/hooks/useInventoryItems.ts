@@ -52,6 +52,15 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
         items = items.filter(item => item.quantity <= item.min_stock_level);
       }
       
+      // Apply client-side filter for expiring items (within 30 days)
+      if (filters?.expiringOnly) {
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+        items = items.filter(item => 
+          item.expiry_date && new Date(item.expiry_date) <= thirtyDaysFromNow
+        );
+      }
+      
       return items;
     },
     enabled: !!projectId,
@@ -145,7 +154,7 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
       // Get current item
       const { data: item, error: fetchError } = await supabase
         .from('inventory_items')
-        .select('quantity, project_id')
+        .select('quantity, project_id, min_stock_level')
         .eq('id', itemId)
         .single();
 
@@ -166,7 +175,7 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
         .update({ 
           quantity: quantityAfter,
           status: quantityAfter === 0 ? 'out_of_stock' : 
-                  quantityAfter <= (item as any).min_stock_level ? 'low_stock' : 'in_stock'
+                  quantityAfter <= item.min_stock_level ? 'low_stock' : 'in_stock'
         })
         .eq('id', itemId);
 

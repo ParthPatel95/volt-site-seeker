@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,15 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   const [initialBarcode, setInitialBarcode] = useState<string>('');
   const [filters, setFilters] = useState<InventoryFilters>({});
   const [showScannerSettings, setShowScannerSettings] = useState(false);
-  const [scannerSettings, setScannerSettings] = useState<ScannerSettings>(defaultScannerSettings);
+  const [scannerSettings, setScannerSettings] = useState<ScannerSettings>(() => {
+    const saved = localStorage.getItem('inventory-scanner-settings');
+    return saved ? JSON.parse(saved) : defaultScannerSettings;
+  });
+
+  // Persist scanner settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('inventory-scanner-settings', JSON.stringify(scannerSettings));
+  }, [scannerSettings]);
 
   const filtersWithSearch: InventoryFilters = {
     ...filters,
