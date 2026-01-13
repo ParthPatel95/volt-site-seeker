@@ -41,6 +41,7 @@ import { InventoryExport } from './components/InventoryExport';
 import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
 import { InventoryFAB } from './components/InventoryFAB';
+import { InventoryGroupManager } from './components/InventoryGroupManager';
 import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
@@ -53,6 +54,7 @@ interface VoltInventoryTabProps {
 const TAB_OPTIONS = [
   { value: 'dashboard', label: 'Dashboard' },
   { value: 'items', label: 'Items' },
+  { value: 'groups', label: 'Groups' },
   { value: 'transactions', label: 'Transactions' },
   { value: 'alerts', label: 'Alerts' },
   { value: 'categories', label: 'Categories' },
@@ -275,6 +277,7 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
               <TabsList>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="items">Items ({items.length})</TabsTrigger>
+                <TabsTrigger value="groups">Groups</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
                 <TabsTrigger value="alerts" className="relative">
                   Alerts

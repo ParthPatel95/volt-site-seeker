@@ -25,10 +25,14 @@ import {
   AlertTriangle,
   Barcode,
   Tag,
+  Printer,
+  FolderPlus,
 } from 'lucide-react';
 import { InventoryItem } from '../types/inventory.types';
 import { useInventoryTransactions } from '../hooks/useInventoryTransactions';
 import { InventoryAdjustDialog } from './InventoryAdjustDialog';
+import { InventoryPrintDialog } from './InventoryPrintDialog';
+import { AddToGroupDialog } from './AddToGroupDialog';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -87,6 +91,8 @@ export function InventoryItemDetail({
 }: InventoryItemDetailProps) {
   const isMobile = useIsMobile();
   const [showAdjustDialog, setShowAdjustDialog] = useState<'in' | 'out' | null>(null);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [showAddToGroup, setShowAddToGroup] = useState(false);
   const { transactions, isLoading: transactionsLoading } = useInventoryTransactions(item?.id || null);
 
   if (!item) return null;
@@ -376,6 +382,12 @@ export function InventoryItemDetail({
 
           {/* Footer Actions */}
           <div className="p-4 border-t flex gap-2">
+            <Button variant="outline" size="icon" onClick={() => setShowPrintDialog(true)} title="Print Label">
+              <Printer className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setShowAddToGroup(true)} title="Add to Group">
+              <FolderPlus className="w-4 h-4" />
+            </Button>
             <Button variant="outline" className="flex-1" onClick={onEdit}>
               <Edit className="w-4 h-4 mr-2" />
               Edit
@@ -395,6 +407,19 @@ export function InventoryItemDetail({
         currentQuantity={item.quantity}
         unit={item.unit}
         onSubmit={handleAdjust}
+      />
+
+      <InventoryPrintDialog
+        open={showPrintDialog}
+        onOpenChange={setShowPrintDialog}
+        item={item}
+      />
+
+      <AddToGroupDialog
+        open={showAddToGroup}
+        onOpenChange={setShowAddToGroup}
+        item={item}
+        projectId={item.project_id}
       />
     </>
   );
