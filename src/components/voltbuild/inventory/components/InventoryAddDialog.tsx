@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,6 +55,7 @@ export function InventoryAddDialog({
   isLoading = false,
   initialBarcode,
 }: InventoryAddDialogProps) {
+  const isMobile = useIsMobile();
   const [showCamera, setShowCamera] = useState(false);
   const { uploadImage, isUploading } = useImageUpload();
 
@@ -156,7 +158,7 @@ export function InventoryAddDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0">
+        <DialogContent className={isMobile ? "h-[100dvh] w-full max-w-full rounded-none border-0 p-0" : "sm:max-w-2xl max-h-[90vh] p-0"}>
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5" />

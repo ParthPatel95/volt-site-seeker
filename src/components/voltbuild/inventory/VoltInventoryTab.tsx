@@ -12,11 +12,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings } from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings, ChevronDown } from 'lucide-react';
 import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
 import { useInventoryStats } from './hooks/useInventoryStats';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { InventoryDashboard } from './components/InventoryDashboard';
 import { InventoryItemCard } from './components/InventoryItemCard';
 import { InventoryAddDialog } from './components/InventoryAddDialog';
@@ -25,20 +34,32 @@ import { InventoryItemDetail } from './components/InventoryItemDetail';
 import { InventoryBarcodeScanner } from './components/InventoryBarcodeScanner';
 import { InventoryCategoryManager } from './components/InventoryCategoryManager';
 import { InventoryFiltersComponent } from './components/InventoryFilters';
+import { InventoryMobileFilters } from './components/InventoryMobileFilters';
 import { InventoryTransactionsTab } from './components/InventoryTransactionsTab';
 import { InventoryAlertsTab } from './components/InventoryAlertsTab';
 import { InventoryExport } from './components/InventoryExport';
 import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
+import { InventoryFAB } from './components/InventoryFAB';
 import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface VoltInventoryTabProps {
   project: { id: string; name: string };
 }
 
+const TAB_OPTIONS = [
+  { value: 'dashboard', label: 'Dashboard' },
+  { value: 'items', label: 'Items' },
+  { value: 'transactions', label: 'Transactions' },
+  { value: 'alerts', label: 'Alerts' },
+  { value: 'categories', label: 'Categories' },
+];
+
 export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -203,54 +224,101 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <TabsList>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="items">Items ({items.length})</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="alerts" className="relative">
-              Alerts
-              {totalAlerts > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="ml-1.5 h-5 min-w-5 px-1.5"
-                >
-                  {totalAlerts}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-          </TabsList>
+        {/* Header Section - Mobile Optimized */}
+        <div className="flex flex-col gap-4">
+          {/* Tab Navigation */}
+          {isMobile ? (
+            // Mobile: Dropdown selector for tabs
+            <div className="flex items-center justify-between gap-3">
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-[180px] h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TAB_OPTIONS.map((tab) => (
+                    <SelectItem key={tab.value} value={tab.value}>
+                      <div className="flex items-center gap-2">
+                        {tab.label}
+                        {tab.value === 'items' && (
+                          <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                            {items.length}
+                          </Badge>
+                        )}
+                        {tab.value === 'alerts' && totalAlerts > 0 && (
+                          <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+                            {totalAlerts}
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <div className="flex items-center gap-2">
-            {/* Scanner Status Indicator */}
-            {scannerSettings.enabled && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-2">
-                <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
-                <span className="hidden sm:inline">Scanner {isListening ? 'Active' : 'Ready'}</span>
+              {/* Scanner Status & Settings */}
+              <div className="flex items-center gap-2">
+                {scannerSettings.enabled && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
+                  </div>
+                )}
+                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setShowScannerSettings(true)}>
+                  <Settings className="w-4 h-4" />
+                </Button>
               </div>
-            )}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowScannerSettings(true)}>
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowScanner(true)}>
-              <ScanBarcode className="w-4 h-4 mr-2" />
-              Scan
-            </Button>
-            <Button size="sm" onClick={() => setShowAddDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
+            </div>
+          ) : (
+            // Desktop: Full TabsList
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <TabsList>
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="items">Items ({items.length})</TabsTrigger>
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="alerts" className="relative">
+                  Alerts
+                  {totalAlerts > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-1.5 h-5 min-w-5 px-1.5"
+                    >
+                      {totalAlerts}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="categories">Categories</TabsTrigger>
+              </TabsList>
+
+              <div className="flex items-center gap-2">
+                {/* Scanner Status Indicator */}
+                {scannerSettings.enabled && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-2">
+                    <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
+                    <span className="hidden sm:inline">Scanner {isListening ? 'Active' : 'Ready'}</span>
+                  </div>
+                )}
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowScannerSettings(true)}>
+                  <Settings className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowScanner(true)}>
+                  <ScanBarcode className="w-4 h-4 mr-2" />
+                  Scan
+                </Button>
+                <Button size="sm" onClick={() => setShowAddDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <TabsContent value="dashboard" className="mt-6">
+        <TabsContent value="dashboard" className="mt-4 sm:mt-6">
           <InventoryDashboard
             stats={stats}
             lowStockItems={lowStockItems}
@@ -262,44 +330,59 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           />
         </TabsContent>
 
-        <TabsContent value="items" className="mt-6 space-y-4">
+        <TabsContent value="items" className="mt-4 sm:mt-6 space-y-4">
           <div className="flex flex-col gap-4">
+            {/* Search and View Toggle */}
             <div className="flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className={cn("pl-9", isMobile ? "h-10" : "h-9")}
                 />
               </div>
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="h-9 w-9 rounded-r-none"
-                  onClick={() => setViewMode('grid')}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="h-9 w-9 rounded-l-none"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </div>
+              
+              {/* Mobile: Filter Sheet, Desktop: View Toggle */}
+              {isMobile ? (
+                <InventoryMobileFilters
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  categories={categories}
+                  locations={locations}
+                />
+              ) : (
+                <div className="flex border rounded-lg">
+                  <Button
+                    variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                    size="icon"
+                    className="h-9 w-9 rounded-r-none"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                    size="icon"
+                    className="h-9 w-9 rounded-l-none"
+                    onClick={() => setViewMode('list')}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <InventoryFiltersComponent
-              filters={filters}
-              onFiltersChange={setFilters}
-              categories={categories}
-              locations={locations}
-            />
+            {/* Desktop Filters */}
+            {!isMobile && (
+              <InventoryFiltersComponent
+                filters={filters}
+                onFiltersChange={setFilters}
+                categories={categories}
+                locations={locations}
+              />
+            )}
           </div>
 
           {items.length === 0 ? (
@@ -317,7 +400,13 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
               )}
             </div>
           ) : (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-3'}>
+            <div className={cn(
+              isMobile 
+                ? 'space-y-3' 
+                : viewMode === 'grid' 
+                  ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' 
+                  : 'space-y-3'
+            )}>
               {items.map(item => (
                 <InventoryItemCard
                   key={item.id}
@@ -335,20 +424,21 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
                     setSelectedItem(item);
                     setShowDetailSheet(true);
                   }}
+                  isMobile={isMobile}
                 />
               ))}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="transactions" className="mt-6">
+        <TabsContent value="transactions" className="mt-4 sm:mt-6">
           <InventoryTransactionsTab
             projectId={project.id}
             onItemClick={handleItemClick}
           />
         </TabsContent>
 
-        <TabsContent value="alerts" className="mt-6">
+        <TabsContent value="alerts" className="mt-4 sm:mt-6">
           <InventoryAlertsTab
             lowStockItems={lowStockItems}
             outOfStockItems={outOfStockItems}
@@ -358,13 +448,21 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           />
         </TabsContent>
 
-        <TabsContent value="categories" className="mt-6">
+        <TabsContent value="categories" className="mt-4 sm:mt-6">
           <InventoryCategoryManager
             projectId={project.id}
             categories={categories}
           />
         </TabsContent>
       </Tabs>
+
+      {/* Mobile FAB */}
+      {isMobile && (
+        <InventoryFAB
+          onAdd={() => setShowAddDialog(true)}
+          onScan={() => setShowScanner(true)}
+        />
+      )}
 
       <InventoryAddDialog
         open={showAddDialog}
