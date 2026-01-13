@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -112,11 +113,22 @@ export function InventoryAddDialog({
     }
   };
 
+  const { toast } = useToast();
+
   // Handle AI analysis results - auto-fill form
   const handleAIResult = async (result: AIAnalysisResult, imageUrl: string) => {
     // Upload the captured image to storage
     const blob = await fetch(imageUrl).then(r => r.blob());
     const uploadResult = await uploadImage(blob, 'items');
+    
+    // Warn if upload failed
+    if (!uploadResult?.url) {
+      toast({
+        title: 'Image upload failed',
+        description: 'Item details were filled but the image could not be saved. You can try uploading again.',
+        variant: 'destructive',
+      });
+    }
     
     // Find matching category
     const matchingCategory = categories.find(
