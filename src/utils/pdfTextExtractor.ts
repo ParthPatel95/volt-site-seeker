@@ -1,27 +1,32 @@
-import * as pdfjsLib from 'pdfjs-dist';
+// Lazy-loaded pdfjs-dist for consistent dynamic imports
+let pdfjsLibInstance: typeof import('pdfjs-dist') | null = null;
 
-// Configure PDF.js worker with multiple fallback CDNs for pdfjs-dist 5.x compatibility
-const initializePdfWorker = () => {
-  if (pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    return; // Already initialized
+// Get or initialize the pdfjs-dist library with worker configuration
+async function getPdfjsLib(): Promise<typeof import('pdfjs-dist')> {
+  if (pdfjsLibInstance) {
+    return pdfjsLibInstance;
   }
   
-  // For pdfjs-dist 5.x, use .mjs extension
-  const workerUrls = [
-    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`,
-    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`,
-    // Legacy fallbacks for older environments
-    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`
-  ];
+  const pdfjsLib = await import('pdfjs-dist');
   
-  // Use first available CDN
-  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
-  console.log(`[pdfTextExtractor] Worker initialized with: ${workerUrls[0]}`);
-};
-
-initializePdfWorker();
+  // Configure PDF.js worker with multiple fallback CDNs for pdfjs-dist 5.x compatibility
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    const workerUrls = [
+      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
+      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`,
+      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`,
+      // Legacy fallbacks for older environments
+      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`
+    ];
+    
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
+    console.log(`[pdfTextExtractor] Worker initialized with: ${workerUrls[0]}`);
+  }
+  
+  pdfjsLibInstance = pdfjsLib;
+  return pdfjsLib;
+}
 
 export interface ExtractedPage {
   pageNumber: number;
@@ -46,8 +51,7 @@ export async function extractPdfText(
   console.log('[pdfTextExtractor] Starting extraction', { pdfUrl, specificPage });
   
   try {
-    // Ensure worker is initialized
-    initializePdfWorker();
+    const pdfjsLib = await getPdfjsLib();
     
     console.log('[pdfTextExtractor] Loading PDF document...');
     const loadingTask = pdfjsLib.getDocument({

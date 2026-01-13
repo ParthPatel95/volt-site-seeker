@@ -23,7 +23,6 @@ import {
 } from '@/lib/weatherAPI';
 import { WeatherReportPDF } from './WeatherReportPDF';
 import { SupportedLanguage, languageNames } from '@/lib/weatherTranslations';
-import html2pdf from 'html2pdf.js';
 
 interface WeatherAnalysisProps {}
 
@@ -294,6 +293,7 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
       
+      const html2pdf = (await import('html2pdf.js')).default;
       await html2pdf().set(opt).from(pdfRef.current).save();
       
       toast({

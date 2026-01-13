@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Download, FileText, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import html2pdf from 'html2pdf.js';
 import { BTCNetworkData } from '../types/btc_roi_types';
 import { FinancialMetrics, CashFlowMonth, TornadoItem, ScenarioResult } from '../services/financialAnalysisService';
 import { ASICMiner } from '../hooks/useASICDatabase';
@@ -129,6 +128,7 @@ export const BTCROIPDFGenerator: React.FC<PDFGeneratorProps> = ({
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
+      const html2pdf = (await import('html2pdf.js')).default;
       await html2pdf().set(opt).from(container).save();
       
       document.body.removeChild(container);
