@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download } from 'lucide-react';
 import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
 import { useInventoryStats } from './hooks/useInventoryStats';
@@ -22,6 +23,12 @@ import { InventoryAddDialog } from './components/InventoryAddDialog';
 import { InventoryEditDialog } from './components/InventoryEditDialog';
 import { InventoryItemDetail } from './components/InventoryItemDetail';
 import { InventoryBarcodeScanner } from './components/InventoryBarcodeScanner';
+import { InventoryCategoryManager } from './components/InventoryCategoryManager';
+import { InventoryFiltersComponent } from './components/InventoryFilters';
+import { InventoryTransactionsTab } from './components/InventoryTransactionsTab';
+import { InventoryAlertsTab } from './components/InventoryAlertsTab';
+import { InventoryExport } from './components/InventoryExport';
+import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
 
@@ -38,10 +45,14 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [showAdjustDialog, setShowAdjustDialog] = useState<'in' | 'out' | null>(null);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [initialBarcode, setInitialBarcode] = useState<string>('');
+  const [filters, setFilters] = useState<InventoryFilters>({});
 
-  const filters: InventoryFilters = {
+  const filtersWithSearch: InventoryFilters = {
+    ...filters,
     search: searchQuery || undefined,
   };
 
@@ -57,9 +68,21 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
     isUpdating,
     isDeleting,
     isAdjusting,
-  } = useInventoryItems(project.id, filters);
+  } = useInventoryItems(project.id, filtersWithSearch);
+  
   const { categories } = useInventoryCategories(project.id);
   const { stats, lowStockItems, expiringItems, outOfStockItems, isLoading: statsLoading } = useInventoryStats(project.id);
+
+  // Extract unique locations for filters
+  const locations = useMemo(() => {
+    const locs = items
+      .map((item) => item.location)
+      .filter((loc): loc is string => !!loc);
+    return [...new Set(locs)];
+  }, [items]);
+
+  // Calculate total alerts
+  const totalAlerts = lowStockItems.length + outOfStockItems.length + expiringItems.length;
 
   const handleScan = async (barcode: string) => {
     const existingItem = await findByBarcode(barcode);
@@ -110,9 +133,26 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
     }
   };
 
+  const handleAdjustFromDialog = (quantity: number, reason?: string) => {
+    if (selectedItem && showAdjustDialog) {
+      adjustQuantity({
+        itemId: selectedItem.id,
+        quantityChange: quantity,
+        type: showAdjustDialog,
+        reason,
+      });
+      setShowAdjustDialog(null);
+    }
+  };
+
   const handleItemClick = (item: InventoryItem) => {
     setSelectedItem(item);
     setShowDetailSheet(true);
+  };
+
+  const handleAddStockFromAlert = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowAdjustDialog('in');
   };
 
   if (isLoading || statsLoading) {
@@ -130,10 +170,26 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="items">Items ({items.length})</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="alerts" className="relative">
+              Alerts
+              {totalAlerts > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="ml-1.5 h-5 min-w-5 px-1.5"
+                >
+                  {totalAlerts}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
           </TabsList>
 
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowScanner(true)}>
               <ScanBarcode className="w-4 h-4 mr-2" />
               Scan
@@ -158,43 +214,58 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
         </TabsContent>
 
         <TabsContent value="items" className="mt-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex border rounded-lg">
+                <Button
+                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-9 w-9 rounded-r-none"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-9 w-9 rounded-l-none"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex border rounded-lg">
-              <Button
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-9 w-9 rounded-r-none"
-                onClick={() => setViewMode('grid')}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-9 w-9 rounded-l-none"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
+
+            <InventoryFiltersComponent
+              filters={filters}
+              onFiltersChange={setFilters}
+              categories={categories}
+              locations={locations}
+            />
           </div>
 
           {items.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No inventory items yet</p>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add First Item
-              </Button>
+              <p className="text-muted-foreground mb-4">
+                {searchQuery || Object.keys(filters).length > 1
+                  ? 'No items match your filters'
+                  : 'No inventory items yet'}
+              </p>
+              {!searchQuery && Object.keys(filters).length <= 1 && (
+                <Button onClick={() => setShowAddDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add First Item
+                </Button>
+              )}
             </div>
           ) : (
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-3'}>
@@ -221,10 +292,28 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           )}
         </TabsContent>
 
+        <TabsContent value="transactions" className="mt-6">
+          <InventoryTransactionsTab
+            projectId={project.id}
+            onItemClick={handleItemClick}
+          />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="mt-6">
+          <InventoryAlertsTab
+            lowStockItems={lowStockItems}
+            outOfStockItems={outOfStockItems}
+            expiringItems={expiringItems}
+            onItemClick={handleItemClick}
+            onAddStock={handleAddStockFromAlert}
+          />
+        </TabsContent>
+
         <TabsContent value="categories" className="mt-6">
-          <div className="text-center py-12 text-muted-foreground">
-            Category management coming soon
-          </div>
+          <InventoryCategoryManager
+            projectId={project.id}
+            categories={categories}
+          />
         </TabsContent>
       </Tabs>
 
@@ -267,6 +356,25 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
         onOpenChange={setShowScanner}
         onScan={handleScan}
       />
+
+      <InventoryExport
+        open={showExport}
+        onOpenChange={setShowExport}
+        items={items}
+        projectName={project.name}
+      />
+
+      {selectedItem && showAdjustDialog && (
+        <InventoryAdjustDialog
+          open={showAdjustDialog !== null}
+          onOpenChange={(open) => !open && setShowAdjustDialog(null)}
+          type={showAdjustDialog}
+          itemName={selectedItem.name}
+          currentQuantity={selectedItem.quantity}
+          unit={selectedItem.unit}
+          onSubmit={handleAdjustFromDialog}
+        />
+      )}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>

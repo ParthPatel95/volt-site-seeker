@@ -38,11 +38,11 @@ export function useInventoryTransactions(itemId: string | null, projectId?: stri
         .from('inventory_transactions')
         .select(`
           *,
-          item:inventory_items(id, name, sku)
+          item:inventory_items(id, name, sku, primary_image_url, unit)
         `)
         .eq('project_id', projectId)
         .order('performed_at', { ascending: false })
-        .limit(100);
+        .limit(200);
 
       if (error) throw error;
       return (data || []) as InventoryTransaction[];
