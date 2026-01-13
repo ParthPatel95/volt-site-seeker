@@ -2,6 +2,13 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface ExtractedText {
+  modelNumber?: string;
+  serialNumber?: string;
+  barcode?: string;
+  otherText?: string[];
+}
+
 export interface AIAnalysisResult {
   item: {
     name: string;
@@ -28,10 +35,12 @@ export interface AIAnalysisResult {
     notes?: string;
     isUsed: boolean;
   };
+  extractedText?: ExtractedText;
+  identificationConfidence: 'high' | 'medium' | 'low';
 }
 
 interface UseInventoryAIAnalysisResult {
-  analyzeImage: (imageBase64: string, existingCategories?: string[]) => Promise<AIAnalysisResult | null>;
+  analyzeImage: (images: string | string[], existingCategories?: string[]) => Promise<AIAnalysisResult | null>;
   isAnalyzing: boolean;
   analysisResult: AIAnalysisResult | null;
   error: string | null;
@@ -45,7 +54,7 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
   const { toast } = useToast();
 
   const analyzeImage = useCallback(async (
-    imageBase64: string, 
+    images: string | string[], 
     existingCategories?: string[]
   ): Promise<AIAnalysisResult | null> => {
     setIsAnalyzing(true);
@@ -53,11 +62,16 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
     setAnalysisResult(null);
 
     try {
+      // Normalize to array
+      const imageArray = Array.isArray(images) ? images : [images];
+      
+      // Use images array for multi-image support, or imageBase64 for backward compatibility
+      const body = imageArray.length === 1 
+        ? { imageBase64: imageArray[0], existingCategories }
+        : { images: imageArray, existingCategories };
+
       const { data, error: fnError } = await supabase.functions.invoke('inventory-ai-analyzer', {
-        body: { 
-          imageBase64,
-          existingCategories 
-        }
+        body
       });
 
       if (fnError) {
@@ -83,6 +97,12 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
       }
 
       const result = data.analysis as AIAnalysisResult;
+      
+      // Ensure identificationConfidence exists for backward compatibility
+      if (!result.identificationConfidence) {
+        result.identificationConfidence = result.quantity.confidence;
+      }
+      
       setAnalysisResult(result);
       return result;
 
