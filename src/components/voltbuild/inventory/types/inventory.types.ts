@@ -113,3 +113,32 @@ export interface InventoryFilters {
   lowStockOnly?: boolean;
   expiringOnly?: boolean;
 }
+
+// AI Analysis Types
+export interface AIAnalysisResult {
+  item: {
+    name: string;
+    description: string;
+    brand?: string;
+    model?: string;
+    suggestedSku?: string;
+  };
+  quantity: {
+    count: number;
+    unit: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
+  condition: 'new' | 'good' | 'fair' | 'poor';
+  category: {
+    suggested: string;
+    alternatives: string[];
+  };
+  marketValue: {
+    lowEstimate: number;
+    highEstimate: number;
+    currency: string;
+    confidence: 'high' | 'medium' | 'low';
+    notes?: string;
+    isUsed: boolean;
+  };
+}

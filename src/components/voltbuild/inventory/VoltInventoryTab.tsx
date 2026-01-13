@@ -461,6 +461,7 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
         <InventoryFAB
           onAdd={() => setShowAddDialog(true)}
           onScan={() => setShowScanner(true)}
+          onSmartScan={() => setShowAddDialog(true)}
         />
       )}
 

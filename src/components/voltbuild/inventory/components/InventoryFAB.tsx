@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Plus, ScanBarcode, X, Package } from 'lucide-react';
+import { Plus, ScanBarcode, X, Package, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface InventoryFABProps {
   onAdd: () => void;
   onScan: () => void;
+  onSmartScan?: () => void;
 }
 
-export function InventoryFAB({ onAdd, onScan }: InventoryFABProps) {
+export function InventoryFAB({ onAdd, onScan, onSmartScan }: InventoryFABProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOpen = () => setIsOpen(!isOpen);
@@ -95,6 +96,28 @@ export function InventoryFAB({ onAdd, onScan }: InventoryFABProps) {
                 <ScanBarcode className="h-5 w-5" />
               </Button>
             </motion.div>
+
+            {/* Smart Scan with AI */}
+            {onSmartScan && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.5, y: 20 }}
+                transition={{ delay: 0.15 }}
+                className="flex items-center gap-3"
+              >
+                <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-sm font-medium shadow-md border border-primary/20">
+                  ✨ Smart Scan
+                </span>
+                <Button
+                  size="lg"
+                  className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+                  onClick={() => handleAction(onSmartScan)}
+                >
+                  <Sparkles className="h-5 w-5" />
+                </Button>
+              </motion.div>
+            )}
           </>
         )}
       </AnimatePresence>

@@ -19,10 +19,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Camera, Plus, Upload, Loader2, X, Package } from 'lucide-react';
+import { Camera, Plus, Upload, Loader2, X, Package, Sparkles } from 'lucide-react';
 import { InventoryItem, InventoryCategory } from '../types/inventory.types';
 import { InventoryCameraCapture } from './InventoryCameraCapture';
+import { InventorySmartCapture } from './InventorySmartCapture';
 import { useImageUpload } from '../hooks/useImageUpload';
+import { AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 import { cn } from '@/lib/utils';
 
 interface InventoryAddDialogProps {
@@ -57,6 +59,7 @@ export function InventoryAddDialog({
 }: InventoryAddDialogProps) {
   const isMobile = useIsMobile();
   const [showCamera, setShowCamera] = useState(false);
+  const [showSmartCapture, setShowSmartCapture] = useState(false);
   const { uploadImage, isUploading } = useImageUpload();
 
   const [formData, setFormData] = useState({
@@ -107,6 +110,41 @@ export function InventoryAddDialog({
     if (result) {
       handleChange('primary_image_url', result.url);
     }
+  };
+
+  // Handle AI analysis results - auto-fill form
+  const handleAIResult = async (result: AIAnalysisResult, imageUrl: string) => {
+    // Upload the captured image to storage
+    const blob = await fetch(imageUrl).then(r => r.blob());
+    const uploadResult = await uploadImage(blob, 'items');
+    
+    // Find matching category
+    const matchingCategory = categories.find(
+      cat => cat.name.toLowerCase() === result.category.suggested.toLowerCase()
+    );
+
+    // Calculate mid-point of market value for unit cost
+    const midValue = (result.marketValue.lowEstimate + result.marketValue.highEstimate) / 2;
+
+    // Auto-fill form with AI results
+    setFormData(prev => ({
+      ...prev,
+      name: result.item.name,
+      description: result.item.description,
+      sku: result.item.suggestedSku || '',
+      category_id: matchingCategory?.id || '',
+      quantity: result.quantity.count,
+      unit: result.quantity.unit,
+      unit_cost: Math.round(midValue * 100) / 100,
+      condition: result.condition,
+      notes: [
+        result.item.brand ? `Brand: ${result.item.brand}` : '',
+        result.item.model ? `Model: ${result.item.model}` : '',
+        result.marketValue.notes || '',
+        `AI Confidence: Quantity ${result.quantity.confidence}, Value ${result.marketValue.confidence}`,
+      ].filter(Boolean).join('\n'),
+      primary_image_url: uploadResult?.url || '',
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -196,6 +234,18 @@ export function InventoryAddDialog({
                     </div>
                   )}
                   <div className="flex flex-col gap-2">
+                    {/* Smart Scan - Primary Action */}
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={() => setShowSmartCapture(true)}
+                      disabled={isUploading}
+                      className="gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Smart Scan
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -505,6 +555,13 @@ export function InventoryAddDialog({
         onOpenChange={setShowCamera}
         onCapture={handleImageCapture}
         folder="items"
+      />
+
+      <InventorySmartCapture
+        open={showSmartCapture}
+        onOpenChange={setShowSmartCapture}
+        onResult={handleAIResult}
+        existingCategories={categories.map(c => c.name)}
       />
     </>
   );
