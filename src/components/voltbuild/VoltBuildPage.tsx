@@ -636,7 +636,6 @@ export function VoltBuildPage() {
       case 'inventory':
         return (
           <div className="p-4 sm:p-6">
-            <h1 className="text-2xl font-bold text-foreground mb-6">Inventory Management</h1>
             <VoltInventoryTab project={selectedProject} />
           </div>
         );
@@ -648,18 +647,7 @@ export function VoltBuildPage() {
 
   return (
     <>
-      {/* Project Header - Only on mobile or when needed */}
-      <div className="lg:hidden border-b border-border bg-card">
-        <VoltBuildHeader
-          projects={projects}
-          selectedProjectId={selectedProjectId}
-          onProjectSelect={setSelectedProjectId}
-          onNewProject={() => setIsNewProjectOpen(true)}
-          selectedProject={selectedProject}
-        />
-      </div>
-
-      {/* Main Layout with Sidebar */}
+      {/* Main Layout with Sidebar - No duplicate header */}
       <VoltBuildLayout
         currentView={currentView}
         onViewChange={setCurrentView}
