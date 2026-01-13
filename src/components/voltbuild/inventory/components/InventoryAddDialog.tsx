@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -80,6 +80,13 @@ export function InventoryAddDialog({
     notes: '',
     primary_image_url: '',
   });
+
+  // Sync initialBarcode prop when it changes
+  useEffect(() => {
+    if (initialBarcode && open) {
+      setFormData(prev => ({ ...prev, barcode: initialBarcode }));
+    }
+  }, [initialBarcode, open]);
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));

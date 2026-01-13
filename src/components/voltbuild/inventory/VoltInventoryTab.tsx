@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download } from 'lucide-react';
+import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings } from 'lucide-react';
 import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
 import { useInventoryStats } from './hooks/useInventoryStats';
@@ -29,6 +29,8 @@ import { InventoryTransactionsTab } from './components/InventoryTransactionsTab'
 import { InventoryAlertsTab } from './components/InventoryAlertsTab';
 import { InventoryExport } from './components/InventoryExport';
 import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
+import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
+import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
 
@@ -50,6 +52,8 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [initialBarcode, setInitialBarcode] = useState<string>('');
   const [filters, setFilters] = useState<InventoryFilters>({});
+  const [showScannerSettings, setShowScannerSettings] = useState(false);
+  const [scannerSettings, setScannerSettings] = useState<ScannerSettings>(defaultScannerSettings);
 
   const filtersWithSearch: InventoryFilters = {
     ...filters,
@@ -72,6 +76,33 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   
   const { categories } = useInventoryCategories(project.id);
   const { stats, lowStockItems, expiringItems, outOfStockItems, isLoading: statsLoading } = useInventoryStats(project.id);
+
+  // Hardware barcode scanner handler
+  const handleHardwareScan = useCallback(async (barcode: string) => {
+    toast.info(`Scanned: ${barcode}`);
+    
+    const existingItem = await findByBarcode(barcode);
+    
+    if (existingItem) {
+      setSelectedItem(existingItem);
+      setShowDetailSheet(true);
+      toast.success(`Found: ${existingItem.name}`);
+    } else {
+      setInitialBarcode(barcode);
+      setShowAddDialog(true);
+      toast.info('Item not found. Create a new entry.');
+    }
+  }, [findByBarcode]);
+
+  // Hardware barcode scanner hook
+  const { isListening, lastScan } = useHardwareBarcodeScanner({
+    enabled: scannerSettings.enabled && !showScanner && !showAddDialog && !showEditDialog,
+    maxKeystrokeDelay: scannerSettings.maxKeystrokeDelay,
+    minBarcodeLength: scannerSettings.minBarcodeLength,
+    terminatorKey: scannerSettings.terminatorKey,
+    audioFeedback: scannerSettings.audioFeedback,
+    onScan: handleHardwareScan,
+  });
 
   // Extract unique locations for filters
   const locations = useMemo(() => {
@@ -186,6 +217,16 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           </TabsList>
 
           <div className="flex items-center gap-2">
+            {/* Scanner Status Indicator */}
+            {scannerSettings.enabled && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-2">
+                <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
+                <span className="hidden sm:inline">Scanner {isListening ? 'Active' : 'Ready'}</span>
+              </div>
+            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowScannerSettings(true)}>
+              <Settings className="w-4 h-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export
@@ -396,6 +437,15 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <InventoryScannerSettings
+        open={showScannerSettings}
+        onOpenChange={setShowScannerSettings}
+        settings={scannerSettings}
+        onSettingsChange={setScannerSettings}
+        isConnected={isListening}
+        lastScan={lastScan}
+      />
     </div>
   );
 }

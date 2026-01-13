@@ -35,10 +35,8 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
       if (filters?.location) {
         query = query.eq('location', filters.location);
       }
-      if (filters?.lowStockOnly) {
-        // Filter items where quantity is at or below min_stock_level
-        query = query.filter('quantity', 'lte', 'min_stock_level');
-      }
+      // Note: lowStockOnly filter is applied client-side after fetch
+      // because PostgREST doesn't support column-to-column comparisons
       if (filters?.search) {
         query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%,barcode.ilike.%${filters.search}%`);
       }
@@ -46,7 +44,15 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []) as InventoryItem[];
+      
+      let items = (data || []) as InventoryItem[];
+      
+      // Apply client-side filter for low stock
+      if (filters?.lowStockOnly) {
+        items = items.filter(item => item.quantity <= item.min_stock_level);
+      }
+      
+      return items;
     },
     enabled: !!projectId,
   });
