@@ -2,6 +2,16 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List } from 'lucide-react';
 import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
@@ -9,6 +19,8 @@ import { useInventoryStats } from './hooks/useInventoryStats';
 import { InventoryDashboard } from './components/InventoryDashboard';
 import { InventoryItemCard } from './components/InventoryItemCard';
 import { InventoryAddDialog } from './components/InventoryAddDialog';
+import { InventoryEditDialog } from './components/InventoryEditDialog';
+import { InventoryItemDetail } from './components/InventoryItemDetail';
 import { InventoryBarcodeScanner } from './components/InventoryBarcodeScanner';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
@@ -22,7 +34,10 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [initialBarcode, setInitialBarcode] = useState<string>('');
 
@@ -30,7 +45,19 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
     search: searchQuery || undefined,
   };
 
-  const { items, isLoading, createItem, deleteItem, findByBarcode, isCreating } = useInventoryItems(project.id, filters);
+  const { 
+    items, 
+    isLoading, 
+    createItem, 
+    updateItem,
+    deleteItem, 
+    adjustQuantity,
+    findByBarcode, 
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isAdjusting,
+  } = useInventoryItems(project.id, filters);
   const { categories } = useInventoryCategories(project.id);
   const { stats, lowStockItems, expiringItems, outOfStockItems, isLoading: statsLoading } = useInventoryStats(project.id);
 
@@ -40,6 +67,7 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
     if (existingItem) {
       setSelectedItem(existingItem);
       setShowScanner(false);
+      setShowDetailSheet(true);
       toast.success(`Found: ${existingItem.name}`);
     } else {
       setInitialBarcode(barcode);
@@ -53,6 +81,38 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
     createItem(item);
     setShowAddDialog(false);
     setInitialBarcode('');
+  };
+
+  const handleUpdateItem = (updates: Partial<InventoryItem>) => {
+    if (selectedItem) {
+      updateItem({ id: selectedItem.id, ...updates });
+      setShowEditDialog(false);
+    }
+  };
+
+  const handleDeleteItem = () => {
+    if (selectedItem) {
+      deleteItem(selectedItem.id);
+      setShowDeleteConfirm(false);
+      setShowDetailSheet(false);
+      setSelectedItem(null);
+    }
+  };
+
+  const handleAdjustQuantity = (type: 'in' | 'out', quantity: number, reason?: string) => {
+    if (selectedItem) {
+      adjustQuantity({
+        itemId: selectedItem.id,
+        quantityChange: quantity,
+        type: type === 'in' ? 'in' : 'out',
+        reason,
+      });
+    }
+  };
+
+  const handleItemClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowDetailSheet(true);
   };
 
   if (isLoading || statsLoading) {
@@ -93,7 +153,7 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
             outOfStockItems={outOfStockItems}
             onAddItem={() => setShowAddDialog(true)}
             onScan={() => setShowScanner(true)}
-            onItemClick={setSelectedItem}
+            onItemClick={handleItemClick}
           />
         </TabsContent>
 
@@ -142,8 +202,19 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
                 <InventoryItemCard
                   key={item.id}
                   item={item}
-                  onClick={() => setSelectedItem(item)}
-                  onDelete={() => deleteItem(item.id)}
+                  onClick={() => handleItemClick(item)}
+                  onEdit={() => {
+                    setSelectedItem(item);
+                    setShowEditDialog(true);
+                  }}
+                  onDelete={() => {
+                    setSelectedItem(item);
+                    setShowDeleteConfirm(true);
+                  }}
+                  onAdjust={(type) => {
+                    setSelectedItem(item);
+                    setShowDetailSheet(true);
+                  }}
                 />
               ))}
             </div>
@@ -167,11 +238,56 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
         initialBarcode={initialBarcode}
       />
 
+      <InventoryEditDialog
+        item={selectedItem}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSubmit={handleUpdateItem}
+        categories={categories}
+        isLoading={isUpdating}
+      />
+
+      <InventoryItemDetail
+        item={selectedItem}
+        open={showDetailSheet}
+        onOpenChange={setShowDetailSheet}
+        onEdit={() => {
+          setShowDetailSheet(false);
+          setShowEditDialog(true);
+        }}
+        onDelete={() => {
+          setShowDetailSheet(false);
+          setShowDeleteConfirm(true);
+        }}
+        onAdjust={handleAdjustQuantity}
+      />
+
       <InventoryBarcodeScanner
         open={showScanner}
         onOpenChange={setShowScanner}
         onScan={handleScan}
       />
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{selectedItem?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
