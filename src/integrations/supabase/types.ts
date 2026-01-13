@@ -4600,6 +4600,90 @@ export type Database = {
           },
         ]
       }
+      inventory_group_items: {
+        Row: {
+          added_at: string | null
+          group_id: string
+          id: string
+          item_id: string
+          quantity: number | null
+        }
+        Insert: {
+          added_at?: string | null
+          group_id: string
+          id?: string
+          item_id: string
+          quantity?: number | null
+        }
+        Update: {
+          added_at?: string | null
+          group_id?: string
+          id?: string
+          item_id?: string
+          quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_group_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_group_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_groups: {
+        Row: {
+          bin_number: string | null
+          container_type: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          group_code: string
+          id: string
+          location: string | null
+          name: string
+          project_id: string
+          storage_zone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bin_number?: string | null
+          container_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          group_code: string
+          id?: string
+          location?: string | null
+          name: string
+          project_id: string
+          storage_zone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bin_number?: string | null
+          container_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          group_code?: string
+          id?: string
+          location?: string | null
+          name?: string
+          project_id?: string
+          storage_zone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           additional_images: string[] | null
