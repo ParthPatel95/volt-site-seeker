@@ -5,6 +5,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -84,6 +85,7 @@ export function InventoryItemDetail({
   onDelete,
   onAdjust,
 }: InventoryItemDetailProps) {
+  const isMobile = useIsMobile();
   const [showAdjustDialog, setShowAdjustDialog] = useState<'in' | 'out' | null>(null);
   const { transactions, isLoading: transactionsLoading } = useInventoryTransactions(item?.id || null);
 
@@ -103,7 +105,7 @@ export function InventoryItemDetail({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
+        <SheetContent className={cn("w-full p-0 flex flex-col", isMobile ? "max-w-full" : "sm:max-w-lg")}>
           <SheetHeader className="p-6 pb-0">
             <div className="flex items-start gap-4">
               {/* Image */}
@@ -142,7 +144,7 @@ export function InventoryItemDetail({
                 {/* Quick Actions */}
                 <div className="flex gap-2">
                   <Button 
-                    size="sm" 
+                    size={isMobile ? "default" : "sm"}
                     variant="outline"
                     className="flex-1"
                     onClick={() => setShowAdjustDialog('in')}
@@ -151,7 +153,7 @@ export function InventoryItemDetail({
                     Add Stock
                   </Button>
                   <Button 
-                    size="sm" 
+                    size={isMobile ? "default" : "sm"}
                     variant="outline"
                     className="flex-1"
                     onClick={() => setShowAdjustDialog('out')}

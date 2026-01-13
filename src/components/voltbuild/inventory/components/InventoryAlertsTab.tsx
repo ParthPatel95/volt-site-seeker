@@ -10,11 +10,11 @@ import {
   Package,
   Plus,
   ArrowRight,
-  Calendar,
 } from 'lucide-react';
 import { InventoryItem } from '../types/inventory.types';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 interface InventoryAlertsTabProps {
   lowStockItems: InventoryItem[];
@@ -30,19 +30,23 @@ interface AlertItemCardProps {
   onClick: () => void;
   onAction?: () => void;
   actionLabel?: string;
+  isMobile?: boolean;
 }
 
-function AlertItemCard({ item, alertType, onClick, onAction, actionLabel }: AlertItemCardProps) {
+function AlertItemCard({ item, alertType, onClick, onAction, actionLabel, isMobile }: AlertItemCardProps) {
   const daysUntilExpiry = item.expiry_date
     ? differenceInDays(new Date(item.expiry_date), new Date())
     : null;
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-lg bg-card border hover:bg-muted/50 transition-colors cursor-pointer"
+      className="flex items-center gap-3 p-3 rounded-lg bg-card border hover:bg-muted/50 transition-colors cursor-pointer active:scale-[0.99]"
       onClick={onClick}
     >
-      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <div className={cn(
+        "rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden",
+        isMobile ? "w-10 h-10" : "w-12 h-12"
+      )}>
         {item.primary_image_url ? (
           <img
             src={item.primary_image_url}
@@ -50,24 +54,24 @@ function AlertItemCard({ item, alertType, onClick, onAction, actionLabel }: Aler
             className="w-full h-full object-cover"
           />
         ) : (
-          <Package className="w-5 h-5 text-muted-foreground" />
+          <Package className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{item.name}</p>
+        <p className={cn("font-medium truncate", isMobile && "text-sm")}>{item.name}</p>
         <div className="flex items-center gap-2 mt-1">
           {alertType === 'low' && (
-            <span className="text-sm text-amber-600">
+            <span className="text-xs sm:text-sm text-amber-600">
               {item.quantity} / {item.min_stock_level} {item.unit}
             </span>
           )}
           {alertType === 'out' && (
-            <span className="text-sm text-red-600">Out of stock</span>
+            <span className="text-xs sm:text-sm text-red-600">Out of stock</span>
           )}
           {alertType === 'expiring' && daysUntilExpiry !== null && (
             <span className={cn(
-              "text-sm",
+              "text-xs sm:text-sm",
               daysUntilExpiry < 0 ? "text-red-600" : "text-orange-600"
             )}>
               {daysUntilExpiry < 0
@@ -83,17 +87,18 @@ function AlertItemCard({ item, alertType, onClick, onAction, actionLabel }: Aler
       {onAction && actionLabel && (
         <Button
           variant="outline"
-          size="sm"
+          size={isMobile ? "sm" : "default"}
+          className={cn(isMobile && "h-9 px-3")}
           onClick={(e) => {
             e.stopPropagation();
             onAction();
           }}
         >
-          {actionLabel}
+          {isMobile ? <Plus className="w-4 h-4" /> : actionLabel}
         </Button>
       )}
       
-      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+      <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
     </div>
   );
 }
@@ -105,6 +110,7 @@ export function InventoryAlertsTab({
   onItemClick,
   onAddStock,
 }: InventoryAlertsTabProps) {
+  const isMobile = useIsMobile();
   const totalAlerts = lowStockItems.length + outOfStockItems.length + expiringItems.length;
 
   if (totalAlerts === 0) {
@@ -124,46 +130,46 @@ export function InventoryAlertsTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className={cn(outOfStockItems.length > 0 && "border-red-500/50")}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <PackageX className="w-5 h-5 text-red-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-red-500/10">
+                <PackageX className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{outOfStockItems.length}</p>
-                <p className="text-xs text-muted-foreground">Out of Stock</p>
+                <p className="text-xl sm:text-2xl font-bold">{outOfStockItems.length}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Out of Stock</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className={cn(lowStockItems.length > 0 && "border-amber-500/50")}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-amber-500/10">
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{lowStockItems.length}</p>
-                <p className="text-xs text-muted-foreground">Low Stock</p>
+                <p className="text-xl sm:text-2xl font-bold">{lowStockItems.length}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Low Stock</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className={cn(expiringItems.length > 0 && "border-orange-500/50")}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
-                <Clock className="w-5 h-5 text-orange-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-orange-500/10">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{expiringItems.length}</p>
-                <p className="text-xs text-muted-foreground">Expiring Soon</p>
+                <p className="text-xl sm:text-2xl font-bold">{expiringItems.length}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Expiring Soon</p>
               </div>
             </div>
           </CardContent>
@@ -173,9 +179,9 @@ export function InventoryAlertsTab({
       {/* Out of Stock */}
       {outOfStockItems.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <PackageX className="w-5 h-5 text-red-500" />
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+              <PackageX className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
               Out of Stock
               <Badge variant="destructive" className="ml-auto">
                 {outOfStockItems.length}
@@ -192,6 +198,7 @@ export function InventoryAlertsTab({
                   onClick={() => onItemClick(item)}
                   onAction={() => onAddStock(item)}
                   actionLabel="Restock"
+                  isMobile={isMobile}
                 />
               ))}
             </div>
@@ -202,9 +209,9 @@ export function InventoryAlertsTab({
       {/* Low Stock */}
       {lowStockItems.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
               Low Stock
               <Badge variant="secondary" className="ml-auto bg-amber-500/15 text-amber-600">
                 {lowStockItems.length}
@@ -221,6 +228,7 @@ export function InventoryAlertsTab({
                   onClick={() => onItemClick(item)}
                   onAction={() => onAddStock(item)}
                   actionLabel="Add Stock"
+                  isMobile={isMobile}
                 />
               ))}
             </div>
@@ -231,9 +239,9 @@ export function InventoryAlertsTab({
       {/* Expiring Soon */}
       {expiringItems.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-5 h-5 text-orange-500" />
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
               Expiring Soon
               <Badge variant="secondary" className="ml-auto bg-orange-500/15 text-orange-600">
                 {expiringItems.length}
@@ -248,6 +256,7 @@ export function InventoryAlertsTab({
                   item={item}
                   alertType="expiring"
                   onClick={() => onItemClick(item)}
+                  isMobile={isMobile}
                 />
               ))}
             </div>
