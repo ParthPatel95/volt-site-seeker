@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface ExtractedText {
+  modelNumber?: string;
+  serialNumber?: string;
+  barcode?: string;
+  otherText?: string[];
+}
+
 interface AnalysisResult {
   item: {
     name: string;
@@ -31,7 +38,56 @@ interface AnalysisResult {
     notes?: string;
     isUsed: boolean;
   };
+  extractedText?: ExtractedText;
+  identificationConfidence: 'high' | 'medium' | 'low';
 }
+
+// Enhanced system prompt with expert knowledge and methodology
+const SYSTEM_PROMPT = `You are an expert inventory analyst and product appraiser with 20+ years of experience in construction, electrical, plumbing, and industrial equipment.
+
+You have encyclopedic knowledge of:
+- Construction tools and equipment (DeWalt, Milwaukee, Makita, Bosch, Hilti, Ridgid, etc.)
+- Electrical supplies and components (wire, outlets, panels, breakers)
+- Plumbing materials and fittings (pipes, valves, fixtures)
+- Building materials (lumber, fasteners, adhesives)
+- Industrial equipment and machinery
+- PPE and safety equipment
+- General merchandise and consumer products
+
+ANALYSIS METHODOLOGY - Follow these steps carefully:
+1. SCAN the entire image systematically from left to right, top to bottom
+2. IDENTIFY each distinct item visible - distinguish items from shadows/reflections
+3. LOOK for text, labels, model numbers, barcodes, packaging, brand logos
+4. READ any visible text carefully for product identification
+5. ASSESS condition by examining for scratches, wear, rust, dents, damage
+6. COUNT items carefully - count only distinct physical items
+7. ESTIMATE value based on current retail prices and condition depreciation
+
+PRICING REFERENCE POINTS (% of retail price):
+- New/Sealed: 100% of retail
+- Like-new (minimal use, no visible wear): 70-85% of retail
+- Good (light wear, fully functional): 50-70% of retail
+- Fair (visible wear, cosmetic damage, still functional): 30-50% of retail
+- Poor (heavy wear, may need repair): 10-30% of retail
+
+COMMON PRODUCT REFERENCE PRICES (USD):
+- DeWalt 20V Max Drill/Driver Kit: $99-149 new
+- Milwaukee M18 FUEL Impact Driver: $129-179 new
+- Makita 18V LXT Drill: $99-159 new
+- Bosch 12V Max Drill: $79-119 new
+- Stanley FatMax Tape Measure 25ft: $20-30 new
+- Klein Tools Pliers Set: $40-80 new
+- Romex 12/2 Wire 250ft: $150-200 per box
+- Standard hard hat (3M, MSA): $15-35 new
+- Safety glasses: $10-25 new
+- Work gloves (pair): $10-30 new
+
+IMPORTANT GUIDELINES:
+- Be CONSERVATIVE with valuations - prefer underestimate over overestimate
+- If you cannot clearly identify an item, indicate this with low confidence
+- Look for wear patterns: scratched housings, worn rubber, faded labels
+- Consider packaging: boxed items are typically worth more than loose items
+- Factor in completeness: missing accessories/parts reduce value significantly`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,9 +95,12 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, existingCategories } = await req.json();
+    const { images, imageBase64, existingCategories } = await req.json();
 
-    if (!imageBase64) {
+    // Support both single image (imageBase64) and multiple images (images array)
+    const imageArray: string[] = images || (imageBase64 ? [imageBase64] : []);
+    
+    if (imageArray.length === 0) {
       return new Response(
         JSON.stringify({ error: "No image provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -57,6 +116,18 @@ serve(async (req) => {
       ? `The user has these existing categories: ${existingCategories.join(', ')}. Try to match to one of these if appropriate.`
       : '';
 
+    // Build image content array for multi-image support
+    const imageContent = imageArray.map((img: string, index: number) => ({
+      type: "image_url",
+      image_url: {
+        url: img.startsWith('data:') ? img : `data:image/jpeg;base64,${img}`
+      }
+    }));
+
+    const imageCountText = imageArray.length > 1 
+      ? `I'm providing ${imageArray.length} photos of the same item(s) from different angles for better accuracy.`
+      : '';
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -64,39 +135,36 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro", // Upgraded from flash for better accuracy
         messages: [
           {
             role: "system",
-            content: `You are an expert inventory analyst with deep knowledge of products, equipment, construction materials, tools, and market values. Your job is to analyze images of items and provide accurate identification, quantity counting, condition assessment, and market value estimation.
-
-Be precise and conservative with value estimates. If you're uncertain about something, indicate so with lower confidence levels. Focus on practical inventory management needs.`
+            content: SYSTEM_PROMPT
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze this image and extract inventory information. ${categoryContext}
+                text: `${imageCountText}
 
-Provide detailed analysis including:
-1. IDENTIFICATION: What is this item? Include brand and model if visible.
+Analyze this image and extract inventory information. ${categoryContext}
+
+Provide comprehensive analysis including:
+1. IDENTIFICATION: What is this item? Include brand and model if visible. Read any text/labels.
 2. QUANTITY: How many individual items are visible? What unit of measurement is appropriate?
-3. CONDITION: Assess the visible condition (new/good/fair/poor).
+3. CONDITION: Assess the visible condition (new/good/fair/poor) based on wear, scratches, damage.
 4. CATEGORY: What category does this belong to? (e.g., Power Tools, Hand Tools, Electrical, Plumbing, Materials, PPE, Equipment)
 5. MARKET VALUE: Estimate the current market value per unit.
-   - Provide low and high estimates
+   - Provide low and high estimates in USD
    - Consider if items appear new or used
    - Include your confidence level
+6. EXTRACTED TEXT: Note any visible model numbers, serial numbers, barcodes, or other text.
+7. IDENTIFICATION CONFIDENCE: Rate how confident you are in the item identification.
 
-Be conservative with estimates. If uncertain, say so.`
+Be thorough but conservative with estimates. If uncertain about anything, indicate so.`
               },
-              {
-                type: "image_url",
-                image_url: {
-                  url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
-                }
-              }
+              ...imageContent
             ]
           }
         ],
@@ -113,10 +181,10 @@ Be conservative with estimates. If uncertain, say so.`
                     type: "object",
                     properties: {
                       name: { type: "string", description: "Name of the item" },
-                      description: { type: "string", description: "Brief description of the item" },
+                      description: { type: "string", description: "Detailed description of the item including notable features" },
                       brand: { type: "string", description: "Brand name if identifiable" },
                       model: { type: "string", description: "Model number/name if identifiable" },
-                      suggestedSku: { type: "string", description: "Suggested SKU pattern" }
+                      suggestedSku: { type: "string", description: "Suggested SKU pattern based on brand/model" }
                     },
                     required: ["name", "description"]
                   },
@@ -125,14 +193,14 @@ Be conservative with estimates. If uncertain, say so.`
                     properties: {
                       count: { type: "number", description: "Number of items visible" },
                       unit: { type: "string", description: "Unit of measurement (units, pieces, boxes, kg, etc.)" },
-                      confidence: { type: "string", enum: ["high", "medium", "low"] }
+                      confidence: { type: "string", enum: ["high", "medium", "low"], description: "Confidence in the count accuracy" }
                     },
                     required: ["count", "unit", "confidence"]
                   },
                   condition: {
                     type: "string",
                     enum: ["new", "good", "fair", "poor"],
-                    description: "Condition of the item"
+                    description: "Condition assessment based on visible wear and damage"
                   },
                   category: {
                     type: "object",
@@ -152,14 +220,32 @@ Be conservative with estimates. If uncertain, say so.`
                       lowEstimate: { type: "number", description: "Low end of estimated value per unit in USD" },
                       highEstimate: { type: "number", description: "High end of estimated value per unit in USD" },
                       currency: { type: "string", default: "USD" },
-                      confidence: { type: "string", enum: ["high", "medium", "low"] },
-                      notes: { type: "string", description: "Additional notes about the valuation" },
-                      isUsed: { type: "boolean", description: "Whether the item appears used" }
+                      confidence: { type: "string", enum: ["high", "medium", "low"], description: "Confidence in the price estimate" },
+                      notes: { type: "string", description: "Additional notes about the valuation methodology" },
+                      isUsed: { type: "boolean", description: "Whether the item appears used vs new" }
                     },
                     required: ["lowEstimate", "highEstimate", "currency", "confidence", "isUsed"]
+                  },
+                  extractedText: {
+                    type: "object",
+                    properties: {
+                      modelNumber: { type: "string", description: "Model number if visible on the item" },
+                      serialNumber: { type: "string", description: "Serial number if visible" },
+                      barcode: { type: "string", description: "Barcode value if visible and readable" },
+                      otherText: { 
+                        type: "array", 
+                        items: { type: "string" },
+                        description: "Other relevant text visible on the item"
+                      }
+                    }
+                  },
+                  identificationConfidence: {
+                    type: "string",
+                    enum: ["high", "medium", "low"],
+                    description: "Overall confidence in item identification accuracy"
                   }
                 },
-                required: ["item", "quantity", "condition", "category", "marketValue"]
+                required: ["item", "quantity", "condition", "category", "marketValue", "identificationConfidence"]
               }
             }
           }
@@ -195,6 +281,11 @@ Be conservative with estimates. If uncertain, say so.`
     }
 
     const analysisResult: AnalysisResult = JSON.parse(toolCall.function.arguments);
+
+    // Ensure identificationConfidence exists (for backward compatibility)
+    if (!analysisResult.identificationConfidence) {
+      analysisResult.identificationConfidence = analysisResult.quantity.confidence;
+    }
 
     return new Response(
       JSON.stringify({ success: true, analysis: analysisResult }),

@@ -9,12 +9,17 @@ import {
   Loader2, 
   RotateCcw, 
   Sparkles,
-  ImageIcon
+  Plus,
+  Check,
+  AlertTriangle,
+  Sun,
+  Focus
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useInventoryAIAnalysis, AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 import { InventoryAIResults } from './InventoryAIResults';
 import { cn } from '@/lib/utils';
+import { getImageQuality, ImageQualityMetrics } from '@/utils/imageProcessing';
 
 interface InventorySmartCaptureProps {
   open: boolean;
@@ -23,7 +28,18 @@ interface InventorySmartCaptureProps {
   existingCategories?: string[];
 }
 
-type CaptureState = 'camera' | 'analyzing' | 'results';
+type CaptureState = 'camera' | 'preview' | 'analyzing' | 'results';
+type AnalysisStep = 'detecting' | 'identifying' | 'counting' | 'valuing' | 'complete';
+
+const ANALYSIS_STEPS: { key: AnalysisStep; label: string }[] = [
+  { key: 'detecting', label: 'Detecting items...' },
+  { key: 'identifying', label: 'Identifying brand & model...' },
+  { key: 'counting', label: 'Counting quantity...' },
+  { key: 'valuing', label: 'Estimating market value...' },
+  { key: 'complete', label: 'Analysis complete!' },
+];
+
+const MAX_PHOTOS = 4;
 
 export function InventorySmartCapture({
   open,
@@ -38,8 +54,10 @@ export function InventorySmartCapture({
   
   const [state, setState] = useState<CaptureState>('camera');
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [qualityWarning, setQualityWarning] = useState<ImageQualityMetrics | null>(null);
+  const [analysisStep, setAnalysisStep] = useState<AnalysisStep>('detecting');
   
   const { analyzeImage, isAnalyzing, analysisResult, reset } = useInventoryAIAnalysis();
 
@@ -53,14 +71,34 @@ export function InventorySmartCapture({
     };
   }, [open]);
 
+  // Simulate analysis progress
+  useEffect(() => {
+    if (state === 'analyzing') {
+      const steps: AnalysisStep[] = ['detecting', 'identifying', 'counting', 'valuing'];
+      let stepIndex = 0;
+      
+      const interval = setInterval(() => {
+        stepIndex++;
+        if (stepIndex < steps.length) {
+          setAnalysisStep(steps[stepIndex]);
+        }
+      }, 800);
+      
+      return () => clearInterval(interval);
+    }
+  }, [state]);
+
   const startCamera = async () => {
     try {
       setCameraError(null);
+      setQualityWarning(null);
+      
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 4096, min: 1920 },
+          height: { ideal: 3072, min: 1080 },
+          aspectRatio: { ideal: 4/3 }
         }
       });
       setStream(mediaStream);
@@ -93,50 +131,86 @@ export function InventorySmartCapture({
     if (!ctx) return;
     
     ctx.drawImage(video, 0, 0);
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
     
-    setCapturedImage(imageData);
-    stopCamera();
-    handleAnalyze(imageData);
+    // Check image quality
+    const quality = getImageQuality(canvas);
+    
+    if (quality.isBlurry || quality.isDark) {
+      setQualityWarning(quality);
+      // Still allow capture but show warning
+    } else {
+      setQualityWarning(null);
+    }
+    
+    const imageData = canvas.toDataURL('image/jpeg', 0.92); // Higher quality
+    
+    setCapturedImages(prev => [...prev, imageData]);
+    setState('preview');
   }, [stream]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageData = event.target?.result as string;
-      setCapturedImage(imageData);
-      stopCamera();
-      handleAnalyze(imageData);
-    };
-    reader.readAsDataURL(file);
+  const handleAddAnotherPhoto = () => {
+    setQualityWarning(null);
+    setState('camera');
   };
 
-  const handleAnalyze = async (imageData: string) => {
+  const handleRemovePhoto = (index: number) => {
+    setCapturedImages(prev => prev.filter((_, i) => i !== index));
+    if (capturedImages.length <= 1) {
+      setState('camera');
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newImages: string[] = [];
+    
+    for (const file of Array.from(files)) {
+      const imageData = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+      newImages.push(imageData);
+    }
+    
+    stopCamera();
+    setCapturedImages(prev => [...prev, ...newImages].slice(0, MAX_PHOTOS));
+    setState('preview');
+  };
+
+  const handleAnalyze = async () => {
+    if (capturedImages.length === 0) return;
+    
     setState('analyzing');
-    const result = await analyzeImage(imageData, existingCategories);
+    setAnalysisStep('detecting');
+    stopCamera();
+    
+    const result = await analyzeImage(capturedImages, existingCategories);
+    
     if (result) {
-      setState('results');
+      setAnalysisStep('complete');
+      setTimeout(() => setState('results'), 300);
     } else {
       // Analysis failed, go back to camera
       setState('camera');
-      setCapturedImage(null);
+      setCapturedImages([]);
       startCamera();
     }
   };
 
   const handleRetake = () => {
     reset();
-    setCapturedImage(null);
+    setCapturedImages([]);
+    setQualityWarning(null);
     setState('camera');
     startCamera();
   };
 
   const handleAccept = () => {
-    if (analysisResult && capturedImage) {
-      onResult(analysisResult, capturedImage);
+    if (analysisResult && capturedImages.length > 0) {
+      onResult(analysisResult, capturedImages[0]);
       handleClose();
     }
   };
@@ -144,9 +218,15 @@ export function InventorySmartCapture({
   const handleClose = () => {
     stopCamera();
     reset();
-    setCapturedImage(null);
+    setCapturedImages([]);
+    setQualityWarning(null);
     setState('camera');
+    setAnalysisStep('detecting');
     onOpenChange(false);
+  };
+
+  const getCurrentStepIndex = () => {
+    return ANALYSIS_STEPS.findIndex(s => s.key === analysisStep);
   };
 
   return (
@@ -165,11 +245,23 @@ export function InventorySmartCapture({
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <span className="font-semibold">Smart Scan</span>
+              {capturedImages.length > 0 && state !== 'analyzing' && state !== 'results' && (
+                <span className="text-sm text-muted-foreground">
+                  ({capturedImages.length}/{MAX_PHOTOS} photos)
+                </span>
+              )}
             </div>
             <Button variant="ghost" size="icon" onClick={handleClose}>
               <X className="w-5 h-5" />
             </Button>
           </div>
+
+          {/* Capture Tips */}
+          {state === 'camera' && !cameraError && (
+            <div className="absolute top-16 left-0 right-0 z-10 text-center text-white text-sm bg-black/50 py-2 px-4">
+              📸 Tips: Good lighting • Hold steady • Include labels/tags
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 relative overflow-hidden">
@@ -210,6 +302,43 @@ export function InventorySmartCapture({
                           <div className="absolute bottom-8 left-8 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-lg" />
                           <div className="absolute bottom-8 right-8 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-lg" />
                         </div>
+                        
+                        {/* Quality Warning Overlay */}
+                        {qualityWarning && (
+                          <div className="absolute bottom-24 left-4 right-4 z-20">
+                            <div className="bg-yellow-500/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
+                              {qualityWarning.isBlurry && (
+                                <>
+                                  <Focus className="w-4 h-4 flex-shrink-0" />
+                                  <span>Image may be blurry. Hold steady.</span>
+                                </>
+                              )}
+                              {qualityWarning.isDark && (
+                                <>
+                                  <Sun className="w-4 h-4 flex-shrink-0" />
+                                  <span>Low light detected. Move to brighter area.</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Photo Thumbnails */}
+                        {capturedImages.length > 0 && (
+                          <div className="absolute bottom-4 left-4 right-4 flex gap-2">
+                            {capturedImages.map((img, i) => (
+                              <div 
+                                key={i} 
+                                className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white relative"
+                              >
+                                <img src={img} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                  <Check className="w-4 h-4 text-white" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       
                       {/* Capture Controls */}
@@ -224,6 +353,7 @@ export function InventorySmartCapture({
                             ref={fileInputRef}
                             type="file"
                             accept="image/*"
+                            multiple
                             className="hidden"
                             onChange={handleFileUpload}
                           />
@@ -237,10 +367,79 @@ export function InventorySmartCapture({
                           <Camera className="w-6 h-6" />
                         </Button>
                         
-                        <div className="w-12" /> {/* Spacer for alignment */}
+                        {capturedImages.length > 0 ? (
+                          <Button 
+                            variant="default" 
+                            size="lg" 
+                            onClick={() => setState('preview')}
+                          >
+                            Done
+                          </Button>
+                        ) : (
+                          <div className="w-12" />
+                        )}
                       </div>
                     </>
                   )}
+                </motion.div>
+              )}
+
+              {/* Preview State - Review captured photos */}
+              {state === 'preview' && (
+                <motion.div
+                  key="preview"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 flex flex-col"
+                >
+                  <div className="flex-1 p-4 overflow-auto">
+                    <div className="grid grid-cols-2 gap-3">
+                      {capturedImages.map((img, i) => (
+                        <div key={i} className="relative aspect-square rounded-lg overflow-hidden border">
+                          <img src={img} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7"
+                            onClick={() => handleRemovePhoto(i)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                          <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                            Photo {i + 1}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {capturedImages.length < MAX_PHOTOS && (
+                        <button
+                          onClick={handleAddAnotherPhoto}
+                          className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                        >
+                          <Plus className="w-8 h-8" />
+                          <span className="text-sm">Add angle</span>
+                        </button>
+                      )}
+                    </div>
+                    
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                      {capturedImages.length === 1 
+                        ? "Add more photos from different angles for better accuracy"
+                        : `${capturedImages.length} photos ready for analysis`}
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 border-t flex gap-3">
+                    <Button variant="outline" onClick={handleRetake} className="flex-1">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Start Over
+                    </Button>
+                    <Button onClick={handleAnalyze} className="flex-1">
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Analyze
+                    </Button>
+                  </div>
                 </motion.div>
               )}
 
@@ -253,16 +452,55 @@ export function InventorySmartCapture({
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 flex flex-col items-center justify-center p-6"
                 >
-                  {capturedImage && (
-                    <div className="w-32 h-32 rounded-lg overflow-hidden mb-6 opacity-50">
-                      <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                  <p className="text-lg font-medium">Analyzing image...</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Detecting items, counting quantity, and estimating value
-                  </p>
+                  {/* Image thumbnails */}
+                  <div className="flex gap-2 mb-6">
+                    {capturedImages.slice(0, 3).map((img, i) => (
+                      <div 
+                        key={i} 
+                        className="w-16 h-16 rounded-lg overflow-hidden opacity-50"
+                      >
+                        <img src={img} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {capturedImages.length > 3 && (
+                      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center opacity-50">
+                        <span className="text-sm font-medium">+{capturedImages.length - 3}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Loader2 className="w-12 h-12 text-primary animate-spin mb-6" />
+                  
+                  {/* Analysis Steps Progress */}
+                  <div className="w-full max-w-xs space-y-3">
+                    {ANALYSIS_STEPS.slice(0, -1).map((step, index) => {
+                      const currentIndex = getCurrentStepIndex();
+                      const isComplete = index < currentIndex;
+                      const isCurrent = index === currentIndex;
+                      
+                      return (
+                        <div 
+                          key={step.key}
+                          className={cn(
+                            "flex items-center gap-3 transition-all",
+                            isComplete && "text-primary",
+                            isCurrent && "text-foreground font-medium",
+                            !isComplete && !isCurrent && "text-muted-foreground"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-5 h-5 rounded-full flex items-center justify-center text-xs",
+                            isComplete && "bg-primary text-primary-foreground",
+                            isCurrent && "bg-primary/20 text-primary",
+                            !isComplete && !isCurrent && "bg-muted"
+                          )}>
+                            {isComplete ? <Check className="w-3 h-3" /> : index + 1}
+                          </div>
+                          <span className="text-sm">{step.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </motion.div>
               )}
 
@@ -277,7 +515,8 @@ export function InventorySmartCapture({
                 >
                   <InventoryAIResults
                     result={analysisResult}
-                    imageUrl={capturedImage || undefined}
+                    imageUrl={capturedImages[0]}
+                    allImages={capturedImages}
                     onAccept={handleAccept}
                     onRetake={handleRetake}
                     existingCategories={existingCategories}
