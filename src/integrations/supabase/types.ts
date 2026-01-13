@@ -4546,6 +4546,250 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          project_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          project_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          project_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          additional_images: string[] | null
+          barcode: string | null
+          bin_number: string | null
+          category_id: string | null
+          condition: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expiry_date: string | null
+          id: string
+          last_counted_date: string | null
+          location: string | null
+          max_stock_level: number | null
+          min_stock_level: number | null
+          name: string
+          notes: string | null
+          primary_image_url: string | null
+          project_id: string | null
+          purchase_order_ref: string | null
+          qr_code: string | null
+          quantity: number
+          received_date: string | null
+          sku: string | null
+          status: string | null
+          storage_zone: string | null
+          supplier_contact: string | null
+          supplier_name: string | null
+          tags: string[] | null
+          unit: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          additional_images?: string[] | null
+          barcode?: string | null
+          bin_number?: string | null
+          category_id?: string | null
+          condition?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          last_counted_date?: string | null
+          location?: string | null
+          max_stock_level?: number | null
+          min_stock_level?: number | null
+          name: string
+          notes?: string | null
+          primary_image_url?: string | null
+          project_id?: string | null
+          purchase_order_ref?: string | null
+          qr_code?: string | null
+          quantity?: number
+          received_date?: string | null
+          sku?: string | null
+          status?: string | null
+          storage_zone?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          tags?: string[] | null
+          unit?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          additional_images?: string[] | null
+          barcode?: string | null
+          bin_number?: string | null
+          category_id?: string | null
+          condition?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          last_counted_date?: string | null
+          location?: string | null
+          max_stock_level?: number | null
+          min_stock_level?: number | null
+          name?: string
+          notes?: string | null
+          primary_image_url?: string | null
+          project_id?: string | null
+          purchase_order_ref?: string | null
+          qr_code?: string | null
+          quantity?: number
+          received_date?: string | null
+          sku?: string | null
+          status?: string | null
+          storage_zone?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          tags?: string[] | null
+          unit?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          destination_location: string | null
+          id: string
+          item_id: string | null
+          notes: string | null
+          performed_at: string
+          performed_by: string | null
+          project_id: string | null
+          quantity_after: number
+          quantity_before: number
+          quantity_change: number
+          reason: string | null
+          reference_number: string | null
+          related_task_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          destination_location?: string | null
+          id?: string
+          item_id?: string | null
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          project_id?: string | null
+          quantity_after: number
+          quantity_before: number
+          quantity_change: number
+          reason?: string | null
+          reference_number?: string | null
+          related_task_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          destination_location?: string | null
+          id?: string
+          item_id?: string | null
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          project_id?: string | null
+          quantity_after?: number
+          quantity_before?: number
+          quantity_change?: number
+          reason?: string | null
+          reference_number?: string | null
+          related_task_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "voltbuild_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investment_scores: {
         Row: {
           calculated_at: string
