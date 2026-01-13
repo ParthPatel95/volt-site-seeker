@@ -1,7 +1,17 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
-// Configure PDF.js worker with fallback CDNs
-const initializePdfWorker = () => {
+// Lazy-loaded pdfjs-dist for consistent dynamic imports
+let pdfjsLibInstance: typeof import('pdfjs-dist') | null = null;
+
+// Get or initialize the pdfjs-dist library with worker configuration
+async function getPdfjsLib(): Promise<typeof import('pdfjs-dist')> {
+  if (pdfjsLibInstance) {
+    return pdfjsLibInstance;
+  }
+  
+  const pdfjsLib = await import('pdfjs-dist');
+  
+  // Configure PDF.js worker with fallback CDNs
   if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
     const workerUrls = [
       `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
@@ -12,9 +22,13 @@ const initializePdfWorker = () => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
     console.log('[pdfToImage] PDF.js worker initialized:', workerUrls[0]);
   }
-};
+  
+  pdfjsLibInstance = pdfjsLib;
+  return pdfjsLib;
+}
 
-initializePdfWorker();
+// Export the getPdfjsLib function for use by other modules
+export { getPdfjsLib };
 
 export interface PdfToImageOptions {
   scale?: number; // Higher scale = better OCR quality but larger file
@@ -30,7 +44,7 @@ export interface PdfToImageOptions {
  * @returns Base64-encoded image data (without data: prefix)
  */
 export async function renderPdfPageToImage(
-  pdfDocument: pdfjsLib.PDFDocumentProxy,
+  pdfDocument: PDFDocumentProxy,
   pageNumber: number,
   options: PdfToImageOptions = {}
 ): Promise<string> {

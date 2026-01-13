@@ -24,7 +24,6 @@ import { InventoryItem } from '../types/inventory.types';
 import { InventoryGroupWithItems, LabelSize, LABEL_SIZES } from '../types/group.types';
 import { InventoryItemLabel } from './InventoryItemLabel';
 import { InventoryGroupLabel } from './InventoryGroupLabel';
-import html2pdf from 'html2pdf.js';
 
 interface InventoryPrintDialogProps {
   open: boolean;
@@ -112,6 +111,7 @@ export function InventoryPrintDialog({
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
       };
 
+      const html2pdf = (await import('html2pdf.js')).default;
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error('PDF generation error:', error);
