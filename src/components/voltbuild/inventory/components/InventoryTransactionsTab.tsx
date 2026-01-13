@@ -211,7 +211,7 @@ export function InventoryTransactionsTab({
                           )}
 
                           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>{tx.quantity_before} → {tx.quantity_after}</span>
+                            <span>{tx.quantity_before} → {tx.quantity_after} {tx.item?.unit || 'units'}</span>
                             {tx.reference_number && (
                               <span>Ref: {tx.reference_number}</span>
                             )}
