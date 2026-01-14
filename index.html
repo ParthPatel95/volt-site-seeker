@@ -107,6 +107,18 @@
     }
     </script>
 
+    <!-- PWA Install Prompt: Capture beforeinstallprompt BEFORE React loads -->
+    <script>
+      (function() {
+        window.deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          window.deferredInstallPrompt = e;
+          console.log('[PWA] beforeinstallprompt captured globally');
+        });
+      })();
+    </script>
+
     <!-- Critical inline CSS for loading state (prevents white screen) -->
     <style>
       #app-loader {
