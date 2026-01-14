@@ -30,17 +30,17 @@ export default function Certificate({
     if (!certificateRef.current) return;
 
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
+      const { exportToPDF } = await import('@/utils/pdfExport');
       
-      const opt = {
-        margin: 0,
+      await exportToPDF(certificateRef.current, {
         filename: `${userName.replace(/\s+/g, '_')}_${courseName.replace(/\s+/g, '_')}_Certificate.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
-      };
-
-      await html2pdf().set(opt).from(certificateRef.current).save();
+        margin: 0,
+        orientation: 'landscape',
+        format: 'letter',
+        imageQuality: 0.98,
+        scale: 2,
+        useCORS: true,
+      });
       toast.success('Certificate downloaded successfully');
     } catch (error) {
       toast.error('Failed to download certificate');

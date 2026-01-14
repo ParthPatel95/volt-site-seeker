@@ -311,36 +311,20 @@ export function AESOHistoricalPricing() {
         await new Promise(resolve => requestAnimationFrame(resolve));
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Dynamic import html2pdf
-        const html2pdf = (await import('html2pdf.js')).default;
+        // Dynamic import secure PDF utility
+        const { exportToPDF } = await import('@/utils/pdfExport');
         
-        // Generate PDF with settings optimized for CSS rendering
-        const opt = {
-          margin: 10,
+        await exportToPDF(container, {
           filename: `AESO_Analysis_${uptimePercentage}pct_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { 
-            scale: 2, 
-            useCORS: true,
-            logging: false,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            windowWidth: 1100,
-            width: 1100,
-            scrollX: 0,
-            scrollY: 0,
-            foreignObjectRendering: false
-          },
-          jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'landscape',
-            compress: true
-          },
-          pagebreak: { mode: 'avoid-all' }
-        };
-        
-        await html2pdf().set(opt).from(container).save();
+          margin: 10,
+          orientation: 'landscape',
+          format: 'a4',
+          imageQuality: 0.95,
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 1100,
+        });
 
         toast({
           title: "PDF Downloaded",
@@ -524,32 +508,20 @@ export function AESOHistoricalPricing() {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         try {
-          // Dynamic import html2pdf
-          const html2pdf = (await import('html2pdf.js')).default;
+          // Dynamic import secure PDF utility
+          const { exportToPDF } = await import('@/utils/pdfExport');
           
-          // Generate PDF with settings optimized for CSS rendering
-          const opt = {
-            margin: 10,
+          await exportToPDF(container, {
             filename: `AESO_Comprehensive_Analysis_${new Date().toISOString().split('T')[0]}.pdf`,
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { 
-              scale: 2, 
-              useCORS: true,
-              logging: false,
-              allowTaint: true,
-              backgroundColor: '#ffffff',
-              windowWidth: 1100
-            },
-            jsPDF: { 
-              unit: 'mm', 
-              format: 'a4', 
-              orientation: 'landscape',
-              compress: true
-            },
-            pagebreak: { mode: 'avoid-all' }
-          };
-          
-          await html2pdf().set(opt).from(container).save();
+            margin: 10,
+            orientation: 'landscape',
+            format: 'a4',
+            imageQuality: 0.95,
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            windowWidth: 1100,
+          });
 
           toast({
             title: "Comprehensive Report Downloaded",

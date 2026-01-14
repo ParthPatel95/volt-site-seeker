@@ -31,18 +31,16 @@ export const CompletionCertificate: React.FC<CompletionCertificateProps> = ({
     if (!certificateRef.current) return;
     
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      const element = certificateRef.current;
+      const { exportToPDF } = await import('@/utils/pdfExport');
       
-      const opt = {
-        margin: 0,
+      await exportToPDF(certificateRef.current, {
         filename: `WattByte-Certificate-${moduleName.replace(/\s+/g, '-')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
-      };
-      
-      html2pdf().set(opt).from(element).save();
+        margin: 0,
+        orientation: 'landscape',
+        format: 'letter',
+        imageQuality: 0.98,
+        scale: 2,
+      });
     } catch (error) {
       console.error('Failed to generate PDF:', error);
     }

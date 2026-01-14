@@ -279,22 +279,17 @@ export const WeatherAnalysis: React.FC<WeatherAnalysisProps> = () => {
       // Small delay to ensure fonts are fully rendered
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      const opt = {
-        margin: [5, 5],
-        filename: `weather-report-${locationName || 'analysis'}-${startDate}-${endDate}-${pdfLanguage}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          logging: false,
-          allowTaint: true,
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
+      const { exportToPDF } = await import('@/utils/pdfExport');
       
-      const html2pdf = (await import('html2pdf.js')).default;
-      await html2pdf().set(opt).from(pdfRef.current).save();
+      await exportToPDF(pdfRef.current, {
+        filename: `weather-report-${locationName || 'analysis'}-${startDate}-${endDate}-${pdfLanguage}.pdf`,
+        margin: 5,
+        orientation: 'portrait',
+        format: 'a4',
+        imageQuality: 0.98,
+        scale: 2,
+        useCORS: true,
+      });
       
       toast({
         title: "PDF Exported",
