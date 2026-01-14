@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Loader2, Video, AlertCircle, RotateCcw } from 'lucide-react';
 import { useVideoSignedUrl } from '@/hooks/useVideoSignedUrl';
-import facilityNight from '@/assets/alberta-facility-night.png';
+const facilityNight = '/images/alberta-facility-night.png';
 
 const VIDEO_STORAGE_PATH = '659d2108-b0be-45b4-b4ce-c0f1cf9bd428/2f56a4b2-2ae4-4933-9741-83f1a0631538.mp4';
 
