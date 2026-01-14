@@ -62,24 +62,41 @@ export function usePwaInstall(): UsePwaInstallReturn {
   }, []);
 
   // Listen for beforeinstallprompt event (Android/Chrome)
+  // Also check for globally captured event (captured before React mounted)
   useEffect(() => {
+    // Check if event was already captured globally before React loaded
+    const globalPrompt = (window as any).deferredInstallPrompt;
+    if (globalPrompt && !deferredPrompt) {
+      console.log('[PWA] Using globally captured beforeinstallprompt');
+      setDeferredPrompt(globalPrompt);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const promptEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(promptEvent);
+      // Also store globally for persistence
+      (window as any).deferredInstallPrompt = promptEvent;
+      console.log('[PWA] beforeinstallprompt captured in React');
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
     // Listen for successful install
-    window.addEventListener('appinstalled', () => {
+    const installHandler = () => {
+      console.log('[PWA] App installed successfully');
       setIsInstalled(true);
       setDeferredPrompt(null);
-    });
+      (window as any).deferredInstallPrompt = null;
+    };
+    
+    window.addEventListener('appinstalled', installHandler);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installHandler);
     };
-  }, []);
+  }, [deferredPrompt]);
 
   const promptInstall = useCallback(async (): Promise<boolean> => {
     if (!deferredPrompt) return false;
