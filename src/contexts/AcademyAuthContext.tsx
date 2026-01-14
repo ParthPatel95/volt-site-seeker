@@ -71,40 +71,55 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
   };
 
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    let isMounted = true;
+    let loadingTimeout: NodeJS.Timeout;
 
-      if (session?.user) {
-        // Defer Supabase calls with setTimeout to prevent deadlock
-        setTimeout(async () => {
-          const academyData = await fetchAcademyUser(session.user.id);
-          setAcademyUser(academyData);
-          const adminStatus = await checkAdminStatus(session.user.id);
-          setIsAdmin(adminStatus);
-          setIsLoading(false);
-        }, 0);
-      } else {
-        setAcademyUser(null);
-        setIsAdmin(false);
+    // Prevent infinite loading on mobile/slow networks
+    loadingTimeout = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.warn('Academy auth loading timeout - assuming unauthenticated');
         setIsLoading(false);
       }
-    });
+    }, 10000);
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
 
-      if (session?.user) {
-        fetchAcademyUser(session.user.id).then(setAcademyUser);
-        checkAdminStatus(session.user.id).then(setIsAdmin);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          try {
+            const [academyData, adminStatus] = await Promise.all([
+              fetchAcademyUser(session.user.id),
+              checkAdminStatus(session.user.id)
+            ]);
+            if (isMounted) {
+              setAcademyUser(academyData);
+              setIsAdmin(adminStatus);
+            }
+          } catch (error) {
+            console.error('Error fetching academy data:', error);
+          }
+        } else {
+          setAcademyUser(null);
+          setIsAdmin(false);
+        }
+
+        if (isMounted) {
+          setIsLoading(false);
+          clearTimeout(loadingTimeout);
+        }
       }
-      setIsLoading(false);
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(loadingTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string, company?: string) => {
