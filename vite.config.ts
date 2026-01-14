@@ -5,9 +5,9 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  // Reduce build verbosity in CI/production to prevent log overflow
-  logLevel: process.env.CI ? 'warn' : 'info',
+export default defineConfig(({ command, mode }) => ({
+  // Reduce build verbosity to prevent log overflow - always quiet for builds
+  logLevel: command === 'build' ? 'warn' : 'info',
   server: {
     host: "::",
     port: 8080,
@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    // Only run tagger during dev server, not builds
+    command === 'serve' && mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'lovable-uploads/*'],
