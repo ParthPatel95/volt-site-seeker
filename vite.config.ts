@@ -6,9 +6,17 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // Reduce build verbosity in CI/production to prevent log overflow
+  logLevel: process.env.CI ? 'warn' : 'info',
   server: {
     host: "::",
     port: 8080,
+  },
+  build: {
+    // Disable gzip size reporting to speed up builds and reduce log output
+    reportCompressedSize: false,
+    // Increase chunk size warning limit to reduce warning spam
+    chunkSizeWarningLimit: 2000,
   },
   plugins: [
     react(),
