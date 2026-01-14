@@ -13,23 +13,12 @@ import { extractPageText } from '@/utils/pdfTextExtractor';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
 import { PdfErrorBoundary } from './PdfErrorBoundary';
 
-// Configure PDF.js worker - use import.meta.url for Vite bundling (most reliable)
-const initializePdfWorker = () => {
-  try {
-    // Primary: Use import.meta.url for Vite bundling - this bundles the worker locally
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.mjs',
-      import.meta.url
-    ).toString();
-    console.log('[PDF.js] Worker initialized via import.meta.url');
-  } catch (e) {
-    // Fallback: CDN for environments where import.meta.url doesn't work
-    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-    console.log('[PDF.js] Worker initialized via CDN fallback');
-  }
-};
-
-initializePdfWorker();
+// Configure PDF.js worker - use CDN to avoid bundling 1.9MB worker file
+// This reduces build output size and speeds up deployment
+if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  console.log('[PDF.js] Worker initialized via CDN');
+}
 
 // Debounce utility
 function debounce<T extends (...args: any[]) => void>(
