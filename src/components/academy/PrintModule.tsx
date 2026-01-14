@@ -20,7 +20,7 @@ export const PrintModule: React.FC<PrintModuleProps> = ({
 
   const handleExportPDF = async () => {
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
+      const { exportToPDF } = await import('@/utils/pdfExport');
       
       // Get main content or use provided ref
       const element = contentRef?.current || document.querySelector('main');
@@ -44,24 +44,23 @@ export const PrintModule: React.FC<PrintModuleProps> = ({
         clone.querySelectorAll(selector).forEach(el => el.remove());
       });
 
-      const opt = {
-        margin: [0.5, 0.5],
-        filename: `WattByte-${moduleTitle.replace(/\s+/g, '-')}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'letter', 
-          orientation: 'portrait',
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-      };
+      // Temporarily add clone to DOM for rendering
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
 
-      html2pdf().set(opt).from(clone).save();
+      try {
+        await exportToPDF(clone, {
+          filename: `WattByte-${moduleTitle.replace(/\s+/g, '-')}.pdf`,
+          margin: 15,
+          orientation: 'portrait',
+          format: 'letter',
+          imageQuality: 0.95,
+          scale: 2,
+        });
+      } finally {
+        document.body.removeChild(clone);
+      }
     } catch (error) {
       console.error('Failed to export PDF:', error);
     }

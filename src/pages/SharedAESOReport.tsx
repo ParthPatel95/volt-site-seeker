@@ -310,51 +310,20 @@ export default function SharedAESOReport() {
       await new Promise(resolve => requestAnimationFrame(resolve));
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Dynamic import html2pdf with error handling
-      let html2pdf;
-      try {
-        const module = await import('html2pdf.js');
-        html2pdf = module.default;
-      } catch (importError) {
-        console.error('[SharedAESOReport] Failed to load html2pdf:', importError);
-        // Fallback: open HTML in new tab for manual printing
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        toast({
-          title: "Opening Report",
-          description: "Use your browser's Print > Save as PDF option.",
-        });
-        return;
-      }
+      // Dynamic import secure PDF utility
+      const { exportToPDF } = await import('@/utils/pdfExport');
       
-      // Generate PDF with settings optimized for CSS rendering
-      const opt = {
-        margin: 10,
+      await exportToPDF(container, {
         filename: `${report.title || 'AESO_Report'}_${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          windowWidth: 1100,
-          width: 1100,
-          scrollX: 0,
-          scrollY: 0,
-          foreignObjectRendering: false
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'landscape',
-          compress: true
-        },
-        pagebreak: { mode: 'avoid-all' }
-      };
-      
-      await html2pdf().set(opt).from(container).save();
+        margin: 10,
+        orientation: 'landscape',
+        format: 'a4',
+        imageQuality: 0.95,
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        windowWidth: 1100,
+      });
 
       toast({
         title: "PDF Downloaded",

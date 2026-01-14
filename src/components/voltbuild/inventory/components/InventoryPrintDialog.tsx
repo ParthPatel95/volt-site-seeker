@@ -98,21 +98,22 @@ export function InventoryPrintDialog({
     setIsPrinting(true);
 
     try {
-      const element = printRef.current;
-      const opt = {
-        margin: 0.5,
-        filename: isGroupLabel 
-          ? `group-label-${group?.group_code}.pdf` 
-          : item 
-            ? `item-label-${item.sku || item.id}.pdf`
-            : 'inventory-labels.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-      };
+      const { exportToPDF } = await import('@/utils/pdfExport');
+      
+      const filename = isGroupLabel 
+        ? `group-label-${group?.group_code}.pdf` 
+        : item 
+          ? `item-label-${item.sku || item.id}.pdf`
+          : 'inventory-labels.pdf';
 
-      const html2pdf = (await import('html2pdf.js')).default;
-      await html2pdf().set(opt).from(element).save();
+      await exportToPDF(printRef.current, {
+        filename,
+        margin: 15,
+        orientation: 'portrait',
+        format: 'letter',
+        imageQuality: 0.98,
+        scale: 2,
+      });
     } catch (error) {
       console.error('PDF generation error:', error);
     } finally {

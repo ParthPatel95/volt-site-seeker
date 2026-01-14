@@ -189,7 +189,7 @@ export async function exportToPNG(
   }
 }
 
-// PDF Export using html2pdf.js
+// PDF Export using jsPDF + html2canvas (secure replacement for html2pdf.js)
 export async function exportToPDF(
   element: HTMLElement,
   filename: string,
@@ -199,23 +199,19 @@ export async function exportToPDF(
   } = {}
 ): Promise<void> {
   try {
-    const html2pdf = (await import('html2pdf.js')).default;
+    const { exportToPDF: securePDFExport } = await import('@/utils/pdfExport');
     
     const { orientation = 'landscape', pageSize = 'a4' } = options;
     
-    const opt = {
-      margin: 10,
+    await securePDFExport(element, {
       filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { 
-        unit: 'mm', 
-        format: pageSize, 
-        orientation 
-      },
-    };
-
-    await html2pdf().set(opt).from(element).save();
+      margin: 10,
+      orientation,
+      format: pageSize,
+      imageQuality: 0.98,
+      scale: 2,
+      useCORS: true,
+    });
   } catch (error) {
     console.error('Failed to export PDF:', error);
     throw new Error('Failed to export PDF document');
