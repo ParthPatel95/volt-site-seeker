@@ -15,7 +15,8 @@ import {
   XCircle,
   Loader2,
   Send,
-  Settings
+  Settings,
+  ShieldAlert
 } from 'lucide-react';
 import { useTelegramAlerts, TelegramAlertSetting } from '@/hooks/useTelegramAlerts';
 import { TelegramAlertRules } from './TelegramAlertRules';
@@ -36,8 +37,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { usePermissionsContext } from '@/contexts/PermissionsContext';
 
 export function TelegramAlertSettings() {
+  const { hasPermission, loading: permissionsLoading } = usePermissionsContext();
   const {
     settings,
     settingsLoading,
@@ -75,11 +78,34 @@ export function TelegramAlertSettings() {
     updateSetting({ id: setting.id, is_active: !setting.is_active });
   };
 
-  if (settingsLoading) {
+  // Check permissions loading state
+  if (permissionsLoading || settingsLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Check if user has permission
+  if (!hasPermission('aeso.telegram-alerts')) {
+    return (
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" />
+            Access Denied
+          </CardTitle>
+          <CardDescription>
+            You don't have permission to access Telegram Alerts.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Contact your administrator to request access to the <strong>AESO Telegram Alerts</strong> feature.
+          </p>
         </CardContent>
       </Card>
     );
