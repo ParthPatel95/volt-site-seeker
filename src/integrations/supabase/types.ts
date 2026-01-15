@@ -7064,6 +7064,140 @@ export type Database = {
           },
         ]
       }
+      telegram_alert_history: {
+        Row: {
+          error_message: string | null
+          id: string
+          message: string
+          rule_id: string
+          sent_at: string
+          setting_id: string
+          success: boolean
+          trigger_data: Json | null
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          message: string
+          rule_id: string
+          sent_at?: string
+          setting_id: string
+          success?: boolean
+          trigger_data?: Json | null
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          message?: string
+          rule_id?: string
+          sent_at?: string
+          setting_id?: string
+          success?: boolean
+          trigger_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_alert_history_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_alert_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_alert_history_setting_id_fkey"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_alert_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_alert_rules: {
+        Row: {
+          alert_type: string
+          condition: string
+          cooldown_minutes: number
+          created_at: string
+          custom_metric: string | null
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          message_template: string | null
+          setting_id: string
+          threshold_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          condition?: string
+          cooldown_minutes?: number
+          created_at?: string
+          custom_metric?: string | null
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          message_template?: string | null
+          setting_id: string
+          threshold_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          condition?: string
+          cooldown_minutes?: number
+          created_at?: string
+          custom_metric?: string | null
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          message_template?: string | null
+          setting_id?: string
+          threshold_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_alert_rules_setting_id_fkey"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_alert_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_alert_settings: {
+        Row: {
+          bot_token: string
+          chat_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bot_token: string
+          chat_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bot_token?: string
+          chat_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trading_signals: {
         Row: {
           asset: string
