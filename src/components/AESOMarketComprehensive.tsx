@@ -211,12 +211,12 @@ export function AESOMarketComprehensive() {
   const navigationItems: NavigationItem[] = [
     { id: 'market', label: 'Market Data', icon: Zap, priority: 1 },
     { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 2 },
-    { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 3 },
-    { id: 'historical', label: 'Historical', icon: Calendar, priority: 4 },
-    { id: 'generation', label: 'Generation', icon: Activity, priority: 5 },
-    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 6 },
-    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 7 },
-    { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare, priority: 8 },
+    { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare, priority: 3 },
+    { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 4 },
+    { id: 'historical', label: 'Historical', icon: Calendar, priority: 5 },
+    { id: 'generation', label: 'Generation', icon: Activity, priority: 6 },
+    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 7 },
+    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 8 },
     { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 9 },
   ];
 
