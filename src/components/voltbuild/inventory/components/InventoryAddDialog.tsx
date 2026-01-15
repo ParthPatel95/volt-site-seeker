@@ -25,13 +25,14 @@ import { InventoryItem, InventoryCategory } from '../types/inventory.types';
 import { InventoryCameraCapture } from './InventoryCameraCapture';
 import { InventorySmartCapture } from './InventorySmartCapture';
 import { useImageUpload } from '../hooks/useImageUpload';
-import { AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
+import { AIAnalysisResult, MultiItemAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 import { cn } from '@/lib/utils';
 
 interface InventoryAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'category'>) => void;
+  onBatchSubmit?: (items: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'category'>[]) => void;
   categories: InventoryCategory[];
   projectId: string;
   isLoading?: boolean;
@@ -53,6 +54,7 @@ export function InventoryAddDialog({
   open,
   onOpenChange,
   onSubmit,
+  onBatchSubmit,
   categories,
   projectId,
   isLoading = false,
@@ -157,6 +159,71 @@ export function InventoryAddDialog({
       ].filter(Boolean).join('\n'),
       primary_image_url: uploadResult?.url || '',
     }));
+  };
+
+  // Handle multi-item AI analysis results - batch add
+  const handleMultipleAIResults = async (results: AIAnalysisResult[], imageUrl: string) => {
+    if (!onBatchSubmit) {
+      toast({
+        title: 'Batch add not supported',
+        description: 'Please add items one at a time.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Upload the captured image to storage
+    const blob = await fetch(imageUrl).then(r => r.blob());
+    const uploadResult = await uploadImage(blob, 'items');
+
+    // Convert all AI results to inventory items
+    const inventoryItems = results.map(result => {
+      // Find matching category
+      const matchingCategory = categories.find(
+        cat => cat.name.toLowerCase() === result.category.suggested.toLowerCase()
+      );
+
+      // Calculate mid-point of market value for unit cost
+      const midValue = (result.marketValue.lowEstimate + result.marketValue.highEstimate) / 2;
+
+      return {
+        project_id: projectId,
+        name: result.item.name,
+        description: result.item.description,
+        sku: result.item.suggestedSku || '',
+        barcode: '',
+        category_id: matchingCategory?.id || undefined,
+        quantity: result.quantity.count,
+        unit: result.quantity.unit,
+        min_stock_level: 0,
+        max_stock_level: undefined,
+        location: '',
+        storage_zone: '',
+        bin_number: '',
+        unit_cost: Math.round(midValue * 100) / 100,
+        supplier_name: '',
+        supplier_contact: '',
+        purchase_order_ref: '',
+        received_date: undefined,
+        expiry_date: undefined,
+        condition: result.condition as InventoryItem['condition'],
+        notes: [
+          result.item.brand ? `Brand: ${result.item.brand}` : '',
+          result.item.model ? `Model: ${result.item.model}` : '',
+          result.marketValue.notes || '',
+          `AI Confidence: Quantity ${result.quantity.confidence}, Value ${result.marketValue.confidence}`,
+        ].filter(Boolean).join('\n'),
+        primary_image_url: uploadResult?.url || '',
+        status: result.quantity.count === 0 ? 'out_of_stock' as const : 'in_stock' as const,
+        tags: [],
+        additional_images: [],
+      };
+    });
+
+    // Call batch submit
+    onBatchSubmit(inventoryItems);
+    setShowSmartCapture(false);
+    handleClose();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -573,6 +640,7 @@ export function InventoryAddDialog({
         open={showSmartCapture}
         onOpenChange={setShowSmartCapture}
         onResult={handleAIResult}
+        onMultipleResults={handleMultipleAIResults}
         existingCategories={categories.map(c => c.name)}
       />
     </>
