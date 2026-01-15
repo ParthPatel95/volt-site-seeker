@@ -28,7 +28,8 @@ import {
   Factory,
   Calendar,
   Settings,
-  Server
+  Server,
+  MessageSquare
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -59,6 +60,7 @@ import { LiveConnectionStatus } from './aeso/LiveConnectionStatus';
 import { MarketIntelligencePanel } from './aeso/MarketIntelligencePanel';
 import { QuickStatsBar } from './aeso/QuickStatsBar';
 import { DatacenterControlCenter } from './datacenter';
+import { TelegramAlertSettings } from './aeso/TelegramAlertSettings';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
@@ -214,7 +216,8 @@ export function AESOMarketComprehensive() {
     { id: 'generation', label: 'Generation', icon: Activity, priority: 5 },
     { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 6 },
     { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 7 },
-    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 8 },
+    { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare, priority: 8 },
+    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 9 },
   ];
 
   // Intelligence helper functions
@@ -746,6 +749,10 @@ export function AESOMarketComprehensive() {
                 loading={enhancedLoading}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="telegram-alerts" className="space-y-4 sm:space-y-6">
+            <TelegramAlertSettings />
           </TabsContent>
 
           <TabsContent value="custom-dashboards" className="space-y-4 sm:space-y-6">
