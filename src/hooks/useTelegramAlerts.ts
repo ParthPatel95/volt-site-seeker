@@ -17,7 +17,7 @@ export interface TelegramAlertSetting {
 export interface TelegramAlertRule {
   id: string;
   setting_id: string;
-  alert_type: 'price_low' | 'price_high' | 'grid_stress' | 'plant_outage' | 'eea' | 'price_spike' | 'custom';
+  alert_type: AlertType;
   condition: 'above' | 'below' | 'equals' | 'contains' | 'change_percent';
   threshold_value: number | null;
   custom_metric: string | null;
@@ -40,51 +40,192 @@ export interface TelegramAlertHistory {
   error_message: string | null;
 }
 
-export type AlertType = TelegramAlertRule['alert_type'];
+export type AlertType = 
+  // Price Alerts
+  | 'price_low' 
+  | 'price_high' 
+  | 'price_spike'
+  | 'price_negative'
+  // Grid Alerts
+  | 'grid_stress' 
+  | 'plant_outage' 
+  | 'eea'
+  | 'demand_peak'
+  | 'intertie_flow'
+  // Scheduled Reports
+  | 'hourly_summary'
+  | 'daily_morning_briefing'
+  | 'daily_evening_summary'
+  // Generation Mix
+  | 'generation_mix'
+  | 'renewable_percentage'
+  | 'wind_forecast'
+  | 'solar_production'
+  // Custom
+  | 'custom';
 
-export const ALERT_TYPE_INFO: Record<AlertType, { label: string; description: string; icon: string; defaultThreshold: number }> = {
+export interface AlertTypeInfo {
+  label: string;
+  description: string;
+  icon: string;
+  defaultThreshold: number;
+  category: 'price' | 'grid' | 'scheduled' | 'generation' | 'custom';
+  isScheduled?: boolean;
+  unit?: string;
+}
+
+export const ALERT_TYPE_INFO: Record<AlertType, AlertTypeInfo> = {
+  // Price Alerts
   price_low: {
     label: 'Low Price Alert',
     description: 'Notify when pool price drops below threshold',
     icon: '💰',
     defaultThreshold: 10,
+    category: 'price',
+    unit: '$/MWh',
   },
   price_high: {
     label: 'High Price Alert',
     description: 'Notify when pool price exceeds threshold',
     icon: '📈',
     defaultThreshold: 50,
-  },
-  grid_stress: {
-    label: 'Grid Stress Alert',
-    description: 'Notify when reserve margin falls below safe levels',
-    icon: '⚠️',
-    defaultThreshold: 10,
-  },
-  plant_outage: {
-    label: 'Plant Outage Alert',
-    description: 'Notify when significant generation capacity goes offline',
-    icon: '🏭',
-    defaultThreshold: 500,
-  },
-  eea: {
-    label: 'Energy Emergency Alert',
-    description: 'Notify when AESO declares an Energy Emergency Alert',
-    icon: '🚨',
-    defaultThreshold: 0,
+    category: 'price',
+    unit: '$/MWh',
   },
   price_spike: {
     label: 'Price Spike Alert',
     description: 'Notify on rapid price increases (% change in 1 hour)',
     icon: '🚀',
     defaultThreshold: 100,
+    category: 'price',
+    unit: '%',
   },
+  price_negative: {
+    label: 'Negative Price Alert',
+    description: 'Alert when electricity prices go negative - great for high-consumption',
+    icon: '💚',
+    defaultThreshold: 0,
+    category: 'price',
+    unit: '$/MWh',
+  },
+
+  // Grid Alerts
+  grid_stress: {
+    label: 'Grid Stress Alert',
+    description: 'Notify when reserve margin falls below safe levels',
+    icon: '⚠️',
+    defaultThreshold: 10,
+    category: 'grid',
+    unit: '%',
+  },
+  plant_outage: {
+    label: 'Plant Outage Alert',
+    description: 'Notify when significant generation capacity goes offline',
+    icon: '🏭',
+    defaultThreshold: 500,
+    category: 'grid',
+    unit: 'MW',
+  },
+  eea: {
+    label: 'Energy Emergency Alert',
+    description: 'Notify when AESO declares an Energy Emergency Alert',
+    icon: '🚨',
+    defaultThreshold: 0,
+    category: 'grid',
+  },
+  demand_peak: {
+    label: 'Peak Demand Alert',
+    description: 'Alert when system load approaches peak capacity',
+    icon: '📊',
+    defaultThreshold: 11000,
+    category: 'grid',
+    unit: 'MW',
+  },
+  intertie_flow: {
+    label: 'Intertie Flow Change',
+    description: 'Significant changes in BC/SK/Montana power flows',
+    icon: '🔄',
+    defaultThreshold: 200,
+    category: 'grid',
+    unit: 'MW',
+  },
+
+  // Scheduled Reports
+  hourly_summary: {
+    label: 'Hourly Price Summary',
+    description: 'Receive hourly price updates with current, average, and market conditions',
+    icon: '🕐',
+    defaultThreshold: 0,
+    category: 'scheduled',
+    isScheduled: true,
+  },
+  daily_morning_briefing: {
+    label: 'Morning Market Briefing',
+    description: 'Daily 7 AM summary with overnight prices, forecast, and market outlook',
+    icon: '🌅',
+    defaultThreshold: 0,
+    category: 'scheduled',
+    isScheduled: true,
+  },
+  daily_evening_summary: {
+    label: 'Evening Market Summary',
+    description: 'Daily 6 PM recap with full day analysis and next day preview',
+    icon: '🌆',
+    defaultThreshold: 0,
+    category: 'scheduled',
+    isScheduled: true,
+  },
+
+  // Generation Mix
+  generation_mix: {
+    label: 'Generation Mix Update',
+    description: 'Hourly breakdown of power generation by fuel type',
+    icon: '⚡',
+    defaultThreshold: 0,
+    category: 'generation',
+    isScheduled: true,
+  },
+  renewable_percentage: {
+    label: 'Renewable Energy Alert',
+    description: 'Alert when renewable generation exceeds threshold percentage',
+    icon: '🌱',
+    defaultThreshold: 30,
+    category: 'generation',
+    unit: '%',
+  },
+  wind_forecast: {
+    label: 'Wind Generation Alert',
+    description: 'Significant wind generation ramp up/down notifications',
+    icon: '💨',
+    defaultThreshold: 500,
+    category: 'generation',
+    unit: 'MW',
+  },
+  solar_production: {
+    label: 'Solar Peak Alert',
+    description: 'Solar generation peak and production milestones',
+    icon: '☀️',
+    defaultThreshold: 100,
+    category: 'generation',
+    unit: 'MW',
+  },
+
+  // Custom
   custom: {
     label: 'Custom Alert',
     description: 'Create your own custom alert conditions',
     icon: '⚙️',
     defaultThreshold: 0,
+    category: 'custom',
   },
+};
+
+export const ALERT_CATEGORIES = {
+  price: { label: 'Price Alerts', icon: '💰' },
+  grid: { label: 'Grid Alerts', icon: '⚡' },
+  scheduled: { label: 'Scheduled Reports', icon: '📅' },
+  generation: { label: 'Generation Mix', icon: '🔋' },
+  custom: { label: 'Custom', icon: '⚙️' },
 };
 
 export function useTelegramAlerts() {
