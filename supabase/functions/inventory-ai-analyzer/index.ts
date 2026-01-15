@@ -94,21 +94,35 @@ IMPORTANT GUIDELINES:
 - Consider packaging: boxed items are typically worth more than loose items
 - Factor in completeness: missing accessories/parts reduce value significantly`;
 
-// System prompt for multi-item detection
+// System prompt for multi-item detection - ENHANCED for better detection
 const MULTI_ITEM_SYSTEM_PROMPT = `${SYSTEM_PROMPT}
 
-MULTI-ITEM DETECTION MODE:
-When analyzing images with MULTIPLE DIFFERENT items:
-1. Identify and catalog EACH DISTINCT item type separately
-2. Group identical items together (e.g., 3 identical drills = 1 entry with quantity 3)
-3. List different item types as separate entries
-4. Be thorough - scan the entire image for all visible items
-5. For each item type, provide complete analysis including value estimation
+MULTI-ITEM DETECTION MODE - CRITICAL INSTRUCTIONS:
+You MUST identify and catalog EVERY DISTINCT item type visible in the image as SEPARATE entries.
 
-Example: If you see 2 DeWalt drills, 1 Milwaukee impact driver, and 5 boxes of screws:
+RULES:
+1. Each DIFFERENT item type MUST be its own entry in the items array
+2. Identical items get grouped (e.g., 3 identical DeWalt drills = 1 entry with quantity: 3)
+3. DIFFERENT items MUST be separate (e.g., 1 DeWalt drill + 1 Milwaukee impact = 2 entries)
+4. Scan the ENTIRE image - top to bottom, left to right
+5. Include items in the background, on shelves, and partially visible
+6. Even if you're uncertain about an item, include it with low confidence
+7. NEVER return just 1 item if multiple distinct items are visible
+8. Count EVERY different product type, brand, or model as a separate entry
+
+EXAMPLE OUTPUT:
+Image shows: 2 DeWalt drills, 1 Milwaukee impact driver, 5 boxes of screws, 1 tape measure
+Expected: 4 SEPARATE entries in the items array
 - Entry 1: DeWalt drill (quantity: 2)
 - Entry 2: Milwaukee impact driver (quantity: 1)
-- Entry 3: Screw boxes (quantity: 5)`;
+- Entry 3: Screw boxes (quantity: 5)
+- Entry 4: Tape measure (quantity: 1)
+
+FAILURE CASE TO AVOID:
+- DO NOT return only 1 entry if there are clearly multiple different items
+- If you see a toolbox with multiple tools, list EACH visible tool type separately
+
+REMEMBER: Return MULTIPLE entries for MULTIPLE item types! This is critical.`;
 
 // Single item analysis tool
 const SINGLE_ITEM_TOOL = {
@@ -409,6 +423,15 @@ Be thorough but conservative with estimates. If uncertain about anything, indica
     }
 
     const parsedResult = JSON.parse(toolCall.function.arguments);
+
+    // Debug logging for multi-item detection
+    console.log('AI Analysis Response:', JSON.stringify({
+      detectMultipleItems,
+      toolName,
+      itemCount: parsedResult.items?.length || 1,
+      totalDetected: parsedResult.totalItemsDetected,
+      hasItemsArray: !!parsedResult.items
+    }));
 
     if (detectMultipleItems) {
       // Multi-item response
