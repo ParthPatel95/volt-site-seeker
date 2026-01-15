@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Camera, 
   X, 
@@ -13,11 +15,13 @@ import {
   Check,
   AlertTriangle,
   Sun,
-  Focus
+  Focus,
+  Layers
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useInventoryAIAnalysis, AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
+import { useInventoryAIAnalysis, AIAnalysisResult, MultiItemAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 import { InventoryAIResults } from './InventoryAIResults';
+import { InventoryMultiItemResults } from './InventoryMultiItemResults';
 import { cn } from '@/lib/utils';
 import { getImageQuality, ImageQualityMetrics } from '@/utils/imageProcessing';
 
@@ -25,11 +29,12 @@ interface InventorySmartCaptureProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onResult: (result: AIAnalysisResult, imageUrl: string) => void;
+  onMultipleResults?: (results: AIAnalysisResult[], imageUrl: string) => void;
   existingCategories?: string[];
 }
 
-type CaptureState = 'camera' | 'preview' | 'analyzing' | 'results';
-type AnalysisStep = 'detecting' | 'identifying' | 'counting' | 'valuing' | 'complete';
+type CaptureState = 'camera' | 'preview' | 'analyzing' | 'results' | 'multi-results';
+type AnalysisStep = 'detecting' | 'identifying' | 'separating' | 'counting' | 'valuing' | 'complete';
 
 const ANALYSIS_STEPS: { key: AnalysisStep; label: string }[] = [
   { key: 'detecting', label: 'Detecting items...' },
@@ -39,12 +44,21 @@ const ANALYSIS_STEPS: { key: AnalysisStep; label: string }[] = [
   { key: 'complete', label: 'Analysis complete!' },
 ];
 
+const MULTI_ANALYSIS_STEPS: { key: AnalysisStep; label: string }[] = [
+  { key: 'detecting', label: 'Scanning image...' },
+  { key: 'separating', label: 'Separating items...' },
+  { key: 'identifying', label: 'Identifying each item...' },
+  { key: 'valuing', label: 'Estimating values...' },
+  { key: 'complete', label: 'Analysis complete!' },
+];
+
 const MAX_PHOTOS = 4;
 
 export function InventorySmartCapture({
   open,
   onOpenChange,
   onResult,
+  onMultipleResults,
   existingCategories = [],
 }: InventorySmartCaptureProps) {
   const isMobile = useIsMobile();
@@ -58,8 +72,9 @@ export function InventorySmartCapture({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [qualityWarning, setQualityWarning] = useState<ImageQualityMetrics | null>(null);
   const [analysisStep, setAnalysisStep] = useState<AnalysisStep>('detecting');
+  const [multiItemMode, setMultiItemMode] = useState(false);
   
-  const { analyzeImage, isAnalyzing, analysisResult, reset } = useInventoryAIAnalysis();
+  const { analyzeImage, analyzeMultipleItems, isAnalyzing, analysisResult, multiItemResults, reset } = useInventoryAIAnalysis();
 
   // Start camera when dialog opens
   useEffect(() => {
@@ -74,7 +89,9 @@ export function InventorySmartCapture({
   // Simulate analysis progress
   useEffect(() => {
     if (state === 'analyzing') {
-      const steps: AnalysisStep[] = ['detecting', 'identifying', 'counting', 'valuing'];
+      const steps = multiItemMode 
+        ? MULTI_ANALYSIS_STEPS.slice(0, -1).map(s => s.key)
+        : ANALYSIS_STEPS.slice(0, -1).map(s => s.key);
       let stepIndex = 0;
       
       const interval = setInterval(() => {
@@ -86,7 +103,7 @@ export function InventorySmartCapture({
       
       return () => clearInterval(interval);
     }
-  }, [state]);
+  }, [state, multiItemMode]);
 
   const startCamera = async () => {
     try {
@@ -187,16 +204,26 @@ export function InventorySmartCapture({
     setAnalysisStep('detecting');
     stopCamera();
     
-    const result = await analyzeImage(capturedImages, existingCategories);
-    
-    if (result) {
-      setAnalysisStep('complete');
-      setTimeout(() => setState('results'), 300);
+    if (multiItemMode) {
+      const result = await analyzeMultipleItems(capturedImages, existingCategories);
+      if (result) {
+        setAnalysisStep('complete');
+        setTimeout(() => setState('multi-results'), 300);
+      } else {
+        setState('camera');
+        setCapturedImages([]);
+        startCamera();
+      }
     } else {
-      // Analysis failed, go back to camera
-      setState('camera');
-      setCapturedImages([]);
-      startCamera();
+      const result = await analyzeImage(capturedImages, existingCategories);
+      if (result) {
+        setAnalysisStep('complete');
+        setTimeout(() => setState('results'), 300);
+      } else {
+        setState('camera');
+        setCapturedImages([]);
+        startCamera();
+      }
     }
   };
 
@@ -215,6 +242,19 @@ export function InventorySmartCapture({
     }
   };
 
+  const handleMultiItemsAdd = (items: AIAnalysisResult[], imageUrl: string) => {
+    if (onMultipleResults) {
+      onMultipleResults(items, imageUrl);
+    }
+    handleClose();
+  };
+
+  const handleEditItem = (item: AIAnalysisResult, index: number) => {
+    // For now, just accept the single item directly
+    onResult(item, capturedImages[0]);
+    handleClose();
+  };
+
   const handleClose = () => {
     stopCamera();
     reset();
@@ -222,12 +262,16 @@ export function InventorySmartCapture({
     setQualityWarning(null);
     setState('camera');
     setAnalysisStep('detecting');
+    setMultiItemMode(false);
     onOpenChange(false);
   };
 
   const getCurrentStepIndex = () => {
-    return ANALYSIS_STEPS.findIndex(s => s.key === analysisStep);
+    const steps = multiItemMode ? MULTI_ANALYSIS_STEPS : ANALYSIS_STEPS;
+    return steps.findIndex(s => s.key === analysisStep);
   };
+
+  const currentSteps = multiItemMode ? MULTI_ANALYSIS_STEPS : ANALYSIS_STEPS;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -245,15 +289,28 @@ export function InventorySmartCapture({
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <span className="font-semibold">Smart Scan</span>
-              {capturedImages.length > 0 && state !== 'analyzing' && state !== 'results' && (
+              {capturedImages.length > 0 && state !== 'analyzing' && state !== 'results' && state !== 'multi-results' && (
                 <span className="text-sm text-muted-foreground">
                   ({capturedImages.length}/{MAX_PHOTOS} photos)
                 </span>
               )}
             </div>
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-3">
+              {(state === 'camera' || state === 'preview') && (
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-muted-foreground" />
+                  <Label htmlFor="multi-mode" className="text-sm cursor-pointer">Multi</Label>
+                  <Switch
+                    id="multi-mode"
+                    checked={multiItemMode}
+                    onCheckedChange={setMultiItemMode}
+                  />
+                </div>
+              )}
+              <Button variant="ghost" size="icon" onClick={handleClose}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
           {/* Capture Tips */}
@@ -473,7 +530,7 @@ export function InventorySmartCapture({
                   
                   {/* Analysis Steps Progress */}
                   <div className="w-full max-w-xs space-y-3">
-                    {ANALYSIS_STEPS.slice(0, -1).map((step, index) => {
+                    {currentSteps.slice(0, -1).map((step, index) => {
                       const currentIndex = getCurrentStepIndex();
                       const isComplete = index < currentIndex;
                       const isCurrent = index === currentIndex;
@@ -520,6 +577,25 @@ export function InventorySmartCapture({
                     onAccept={handleAccept}
                     onRetake={handleRetake}
                     existingCategories={existingCategories}
+                  />
+                </motion.div>
+              )}
+
+              {/* Multi-Item Results State */}
+              {state === 'multi-results' && multiItemResults && (
+                <motion.div
+                  key="multi-results"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 overflow-auto"
+                >
+                  <InventoryMultiItemResults
+                    results={multiItemResults}
+                    imageUrl={capturedImages[0]}
+                    onAddSelected={handleMultiItemsAdd}
+                    onEditItem={handleEditItem}
+                    onRetake={handleRetake}
                   />
                 </motion.div>
               )}
