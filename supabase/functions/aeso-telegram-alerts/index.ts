@@ -409,6 +409,45 @@ async function sendTelegramAlert(
   }
 }
 
+// Helper to explain why a rule didn't trigger (for debugging)
+function getNoTriggerReason(rule: AlertRule, data: MarketData, lastTriggeredHour: number | null): string {
+  const { alert_type, threshold_value } = rule;
+  
+  switch (alert_type) {
+    case 'price_low':
+      return `Price $${data.poolPrice.toFixed(2)} >= threshold $${threshold_value || 10}`;
+    case 'price_high':
+      return `Price $${data.poolPrice.toFixed(2)} <= threshold $${threshold_value || 50}`;
+    case 'price_negative':
+      return `Price $${data.poolPrice.toFixed(2)} >= 0`;
+    case 'grid_stress':
+      return `Reserve margin ${data.reserveMargin}% >= threshold ${threshold_value || 10}%`;
+    case 'eea':
+      return `No active EEA alert (hasActiveGridAlert=${data.hasActiveGridAlert}, type=${data.gridAlertType})`;
+    case 'price_spike':
+      return `Price change ${Math.abs(data.priceChange1h).toFixed(1)}% <= threshold ${threshold_value || 100}%`;
+    case 'demand_peak':
+      return `Load ${data.totalLoad}MW <= threshold ${threshold_value || 11000}MW`;
+    case 'intertie_flow':
+      return `Net flow ${Math.abs(data.intertieFlows.net)}MW <= threshold ${threshold_value || 200}MW`;
+    case 'hourly_summary':
+    case 'generation_mix':
+      return `Current hour ${data.hour} = last triggered hour ${lastTriggeredHour}`;
+    case 'daily_morning_briefing':
+      return `Current hour ${data.hour} != 7 OR already triggered this hour (last=${lastTriggeredHour})`;
+    case 'daily_evening_summary':
+      return `Current hour ${data.hour} != 18 OR already triggered this hour (last=${lastTriggeredHour})`;
+    case 'renewable_percentage':
+      return `Renewables ${data.renewablePercentage}% <= threshold ${threshold_value || 30}%`;
+    case 'wind_forecast':
+      return `Wind ${data.generationMix.wind}MW <= threshold ${threshold_value || 500}MW`;
+    case 'solar_production':
+      return `Solar ${data.generationMix.solar}MW <= threshold ${threshold_value || 100}MW`;
+    default:
+      return `Unknown alert type or condition not met`;
+  }
+}
+
 // Determine market conditions text
 function getMarketConditions(price: number, avg: number, priceChange: number): string {
   if (price < 0) return '💚 Negative pricing';
@@ -603,31 +642,41 @@ serve(async (req) => {
     let alertsSent = 0;
     const alertResults: any[] = [];
 
+    console.log(`Found ${settings.length} active settings to process`);
+
     // Process each setting and its rules
     for (const setting of settings) {
       const rules = setting.telegram_alert_rules?.filter((r: AlertRule) => r.is_active) || [];
+      
+      console.log(`Processing setting "${setting.name}" with ${rules.length} active rules`);
       
       for (const rule of rules) {
         // If testing a specific rule, skip others
         if (testRuleId && rule.id !== testRuleId) continue;
 
         // Check cooldown (skip if forceCheck or testing)
-        if (!forceCheck && !testRuleId && isInCooldown(rule)) {
-          console.log(`Rule ${rule.id} (${rule.alert_type}) is in cooldown`);
+        const inCooldown = isInCooldown(rule);
+        if (!forceCheck && !testRuleId && inCooldown) {
+          const timeSinceTrigger = rule.last_triggered_at 
+            ? Math.round((Date.now() - new Date(rule.last_triggered_at).getTime()) / 60000)
+            : 0;
+          console.log(`⏳ Rule ${rule.id} (${rule.alert_type}) is in cooldown. Last triggered ${timeSinceTrigger}min ago, cooldown is ${rule.cooldown_minutes}min`);
           continue;
         }
 
         // Get last triggered hour for scheduled alerts
         const lastTriggeredHour = getLastTriggeredHour(rule);
 
-        // Check if rule should trigger
+        // Check if rule should trigger with detailed logging
         const triggered = shouldTrigger(rule, marketData, lastTriggeredHour);
         
-        if (!triggered && !testRuleId) {
-          continue;
+        // Log why the rule didn't trigger for debugging
+        if (!triggered) {
+          console.log(`❌ Rule ${rule.id} (${rule.alert_type}) did NOT trigger. Reason: ${getNoTriggerReason(rule, marketData, lastTriggeredHour)}`);
+          if (!testRuleId) continue;
+        } else {
+          console.log(`✅ Rule ${rule.id} (${rule.alert_type}) TRIGGERED!`);
         }
-
-        console.log(`Rule ${rule.id} (${rule.alert_type}) triggered!`);
 
         // Build message data
         const template = rule.message_template || DEFAULT_TEMPLATES[rule.alert_type] || DEFAULT_TEMPLATES.custom;

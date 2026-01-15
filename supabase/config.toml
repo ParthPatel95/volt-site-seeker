@@ -271,3 +271,9 @@ verify_jwt = false
 
 [functions.fetch-btc-data]
 verify_jwt = false
+
+[functions.telegram-notifier]
+verify_jwt = false
+
+[functions.aeso-telegram-alerts]
+verify_jwt = false
