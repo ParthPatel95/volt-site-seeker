@@ -153,7 +153,26 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
 
       handleApiError(fnError, data);
 
-      if (!data.multipleItems || !data.results) {
+      // Handle fallback if response format is unexpected but has valid data
+      if (!data.multipleItems && data.analysis) {
+        // Single item returned when multi-item was requested - wrap it
+        const singleResult = data.analysis as AIAnalysisResult;
+        const fallbackResult: MultiItemAnalysisResult = {
+          items: [{
+            ...singleResult,
+            identificationConfidence: singleResult.identificationConfidence || singleResult.quantity.confidence
+          }],
+          totalItemsDetected: singleResult.quantity.count
+        };
+        setMultiItemResults(fallbackResult);
+        toast({
+          title: 'Found 1 item type',
+          description: 'Only one item type was detected. Try a photo with more variety for multi-item mode.',
+        });
+        return fallbackResult;
+      }
+
+      if (!data.results) {
         throw new Error('Invalid multi-item response format');
       }
 

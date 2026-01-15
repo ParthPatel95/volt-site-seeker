@@ -316,7 +316,10 @@ export function InventorySmartCapture({
           {/* Capture Tips */}
           {state === 'camera' && !cameraError && (
             <div className="absolute top-16 left-0 right-0 z-10 text-center text-white text-sm bg-black/50 py-2 px-4">
-              📸 Tips: Good lighting • Hold steady • Include labels/tags
+              {multiItemMode 
+                ? '📦 Multi-item mode: Capture DIFFERENT item types for best results'
+                : '📸 Tips: Good lighting • Hold steady • Include labels/tags'
+              }
             </div>
           )}
 
