@@ -94,11 +94,13 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
     items, 
     isLoading, 
     createItem, 
+    createMultipleItems,
     updateItem,
     deleteItem, 
     adjustQuantity,
     findByBarcode, 
     isCreating,
+    isCreatingMultiple,
     isUpdating,
     isDeleting,
     isAdjusting,
@@ -163,6 +165,12 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
 
   const handleAddItem = (item: any) => {
     createItem(item);
+    setShowAddDialog(false);
+    setInitialBarcode('');
+  };
+
+  const handleBatchAddItems = (items: any[]) => {
+    createMultipleItems(items);
     setShowAddDialog(false);
     setInitialBarcode('');
   };
@@ -492,7 +500,8 @@ export function VoltInventoryTab({ project }: VoltInventoryTabProps) {
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSubmit={handleAddItem}
-        isLoading={isCreating}
+        onBatchSubmit={handleBatchAddItems}
+        isLoading={isCreating || isCreatingMultiple}
         projectId={project.id}
         categories={categories}
         initialBarcode={initialBarcode}
