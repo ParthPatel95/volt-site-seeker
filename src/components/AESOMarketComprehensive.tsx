@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResponsiveTabs } from '@/components/ui/responsive-tabs';
+import { ResponsiveNavigation } from '@/components/ResponsiveNavigation';
 import { NavigationItem } from '@/hooks/useResponsiveNavigation';
 import { 
   Zap, 
@@ -274,14 +274,12 @@ export function AESOMarketComprehensive() {
         {/* Modern Tabbed Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 shadow-sm">
-            <div className="max-w-7xl mx-auto">
-              <ResponsiveTabs
+            <div className="max-w-7xl mx-auto py-2">
+              <ResponsiveNavigation
                 items={navigationItems}
-                defaultValue="market"
-                onValueChange={setActiveTab}
-              >
-                <></>
-              </ResponsiveTabs>
+                activeItem={activeTab}
+                onItemClick={(item) => setActiveTab(item.id)}
+              />
             </div>
           </div>
 
