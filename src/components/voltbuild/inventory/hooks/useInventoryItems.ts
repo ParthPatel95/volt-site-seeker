@@ -123,6 +123,71 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
     },
   });
 
+  // Create multiple items mutation (batch insert)
+  const createMultipleItemsMutation = useMutation({
+    mutationFn: async (items: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'category'>[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Prepare all items with barcodes and QR codes
+      const preparedItems = items.map(item => {
+        const barcode = item.barcode || generateInventoryBarcode();
+        const qrData = generateItemQRData({
+          id: '',
+          name: item.name,
+          sku: item.sku,
+          barcode: barcode,
+        });
+        
+        return {
+          ...item,
+          barcode,
+          qr_code: qrData,
+          created_by: user?.id,
+        };
+      });
+      
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .insert(preparedItems)
+        .select();
+
+      if (error) throw error;
+      
+      // Update QR codes with actual IDs
+      if (data && data.length > 0) {
+        const updates = data.map(item => ({
+          id: item.id,
+          qr_code: generateItemQRData({
+            id: item.id,
+            name: item.name,
+            sku: item.sku,
+            barcode: item.barcode,
+          }),
+        }));
+        
+        // Update each item's QR code
+        await Promise.all(
+          updates.map(update =>
+            supabase
+              .from('inventory_items')
+              .update({ qr_code: update.qr_code })
+              .eq('id', update.id)
+          )
+        );
+      }
+      
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['inventory-items', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats', projectId] });
+      toast.success(`Added ${data?.length || 0} items to inventory`);
+    },
+    onError: (error) => {
+      toast.error(`Failed to add items: ${error.message}`);
+    },
+  });
+
   // Update item mutation
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<InventoryItem> & { id: string }) => {
@@ -265,11 +330,13 @@ export function useInventoryItems(projectId: string | null, filters?: InventoryF
     isLoading,
     error,
     createItem: createItemMutation.mutate,
+    createMultipleItems: createMultipleItemsMutation.mutate,
     updateItem: updateItemMutation.mutate,
     deleteItem: deleteItemMutation.mutate,
     adjustQuantity: adjustQuantityMutation.mutate,
     findByBarcode,
     isCreating: createItemMutation.isPending,
+    isCreatingMultiple: createMultipleItemsMutation.isPending,
     isUpdating: updateItemMutation.isPending,
     isDeleting: deleteItemMutation.isPending,
     isAdjusting: adjustQuantityMutation.isPending,
