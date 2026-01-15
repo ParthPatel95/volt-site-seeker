@@ -79,6 +79,7 @@ const FEATURE_PERMISSIONS: Permission[] = [
   { id: 'feature.dashboard', name: 'Home', description: 'Access to home dashboard', category: 'Features' },
   { id: 'feature.aeso-market-hub', name: 'AESO Market Hub', description: 'Access to AESO Market Hub', category: 'Features' },
   { id: 'aeso.training-management', name: 'AESO Model Training', description: 'Access to AESO ML Model Training & Management', category: 'AESO Market' },
+  { id: 'aeso.telegram-alerts', name: 'AESO Telegram Alerts', description: 'Access to AESO Telegram Alert configuration and notifications', category: 'AESO Market' },
   { id: 'feature.energy-dashboards', name: 'Energy Dashboards', description: 'Access to Energy Dashboards', category: 'Features' },
   { id: 'feature.ercot-market-hub', name: 'ERCOT Market Hub', description: 'Access to ERCOT Market Hub', category: 'Features' },
   { id: 'feature.energy-rates', name: 'Energy Rates', description: 'Access to Energy Rates', category: 'Features' },
