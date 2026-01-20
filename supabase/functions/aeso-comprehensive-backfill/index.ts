@@ -499,16 +499,42 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
     console.log(`Fetching demand for ${startDate} to ${endDate} (${monthGroups[month].ids.length} records)`);
 
     try {
-      // Use APIM Gateway (stable endpoint that works from edge environment)
+      // Use APIM Gateway with retry logic and timeout (matching energy-data-integration pattern)
       const url = `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad?startDate=${startDate}&endDate=${endDate}`;
       console.log(`Fetching from APIM: ${url}`);
       
-      const response = await fetch(url, {
-        headers: {
-          'API-KEY': aesoKey,  // Use API-KEY header (not Ocp-Apim-Subscription-Key) for APIM gateway
-          'Accept': 'application/json'
+      const headers = {
+        'API-KEY': aesoKey,
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'LovableEnergy/1.0'
+      };
+      
+      // Retry logic with timeout for DNS resolution issues
+      let response: Response | null = null;
+      let lastError: Error | null = null;
+      
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+          
+          response = await fetch(url, { headers, signal: controller.signal });
+          clearTimeout(timeout);
+          break; // Success, exit retry loop
+        } catch (fetchError: any) {
+          lastError = fetchError;
+          console.log(`Fetch attempt ${attempt}/3 failed: ${fetchError.message}`);
+          if (attempt < 3) {
+            await new Promise(r => setTimeout(r, 2000 * attempt)); // Exponential backoff
+          }
         }
-      });
+      }
+      
+      if (!response) {
+        errors.push(`AESO APIM AIL fetch failed for ${startDate} after 3 attempts: ${lastError?.message}`);
+        continue;
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -517,7 +543,15 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
         continue;
       }
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        errors.push(`JSON parse error for ${startDate}: ${text.slice(0, 100)}`);
+        continue;
+      }
+      
       console.log('AIL API response keys:', Object.keys(data));
       
       // AESO APIM response format: { "return": { "Actual Forecast Report": [...] } }
@@ -529,15 +563,25 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
         continue;
       }
 
-      // Build hour-indexed lookup
+      // Build hour-indexed lookup with normalized timestamps
       const demandByTimestamp: Record<string, number> = {};
       for (const load of loadData) {
-        const timestamp = load.begin_datetime_utc;
+        const rawTimestamp = load.begin_datetime_utc;
         const ailMw = parseFloat(load.alberta_internal_load);
-        if (timestamp && !isNaN(ailMw)) {
-          demandByTimestamp[timestamp] = ailMw;
+        if (rawTimestamp && !isNaN(ailMw)) {
+          // Normalize to ISO format without timezone: "2022-06-08T00:00:00"
+          try {
+            const normalized = new Date(rawTimestamp).toISOString().slice(0, 19);
+            demandByTimestamp[normalized] = ailMw;
+          } catch {
+            // Try direct assignment if date parsing fails
+            demandByTimestamp[rawTimestamp] = ailMw;
+          }
         }
       }
+      
+      console.log(`Built demand lookup with ${Object.keys(demandByTimestamp).length} entries`);
+      console.log(`Sample keys: ${Object.keys(demandByTimestamp).slice(0, 3).join(', ')}`);
 
       // Get records for this month and update them
       const { data: recordsForMonth } = await supabase
@@ -549,24 +593,40 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
         .limit(800);
 
       if (!recordsForMonth || recordsForMonth.length === 0) continue;
+      
+      console.log(`Sample DB timestamps: ${recordsForMonth.slice(0, 3).map(r => r.timestamp).join(', ')}`);
 
-      // Batch update
+      // Batch update with normalized timestamp matching
+      let batchMatched = 0;
       for (let i = 0; i < recordsForMonth.length; i += 50) {
         const batch = recordsForMonth.slice(i, i + 50);
         
         const updatePromises = batch.map(record => {
-          const ailMw = demandByTimestamp[record.timestamp];
-          if (ailMw === undefined) return Promise.resolve({ error: null });
+          // Normalize database timestamp for matching
+          let ailMw: number | undefined;
+          try {
+            const normalizedDbTimestamp = new Date(record.timestamp).toISOString().slice(0, 19);
+            ailMw = demandByTimestamp[normalizedDbTimestamp];
+          } catch {
+            ailMw = demandByTimestamp[record.timestamp];
+          }
+          
+          if (ailMw === undefined) return Promise.resolve({ error: null, matched: false });
           
           return supabase
             .from('aeso_training_data')
             .update({ ail_mw: ailMw })
-            .eq('id', record.id);
+            .eq('id', record.id)
+            .then(result => ({ ...result, matched: true }));
         });
         
         const results = await Promise.all(updatePromises);
+        const matched = results.filter((r: any) => r.matched).length;
+        batchMatched += matched;
         recordsUpdated += results.filter(r => !r.error).length;
       }
+      
+      console.log(`Matched ${batchMatched} of ${recordsForMonth.length} records for ${month}`);
 
       console.log(`Updated demand records for ${month}`);
       await new Promise(r => setTimeout(r, 200));
