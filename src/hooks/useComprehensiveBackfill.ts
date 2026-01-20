@@ -30,20 +30,21 @@ export interface BackfillProgress {
   errors: string[];
 }
 
-const TOTAL_MONTHS = (new Date().getFullYear() - 2018 + 1) * 12;
+const TOTAL_DAYS = (new Date().getFullYear() - 2018 + 1) * 365;
 
 export function useComprehensiveBackfill() {
   const [status, setStatus] = useState<BackfillStatus | null>(null);
   const [progress, setProgress] = useState<BackfillProgress>({
     isRunning: false,
     currentPhase: null,
-    totalMonths: TOTAL_MONTHS,
+    totalMonths: TOTAL_DAYS,
     completedMonths: 0,
     recordsProcessed: 0,
     estimatedTimeRemaining: '',
     errors: []
   });
   const [loading, setLoading] = useState(false);
+  const [nextStartDate, setNextStartDate] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchStatus = useCallback(async () => {
@@ -86,7 +87,7 @@ export function useComprehensiveBackfill() {
     setProgress({
       isRunning: true,
       currentPhase: phase,
-      totalMonths: TOTAL_MONTHS,
+      totalMonths: TOTAL_DAYS,
       completedMonths: 0,
       recordsProcessed: 0,
       estimatedTimeRemaining: 'Calculating...',
@@ -94,20 +95,20 @@ export function useComprehensiveBackfill() {
     });
 
     const startTime = Date.now();
-    let offsetMonths = 0;
     let totalRecordsProcessed = 0;
     const allErrors: string[] = [];
-    const batchMonths = 3; // Process 3 months at a time
+    let currentStartDate = nextStartDate || `${startYear}-01-01`;
+    let daysProcessed = 0;
+    let isComplete = false;
 
     try {
-      while (offsetMonths < TOTAL_MONTHS) {
+      while (!isComplete) {
         const { data, error } = await supabase.functions.invoke('aeso-comprehensive-backfill', {
           body: {
             phase,
             startYear,
             endYear,
-            batchMonths,
-            offsetMonths
+            startDate: currentStartDate
           }
         });
 
@@ -125,13 +126,16 @@ export function useComprehensiveBackfill() {
                             (data.weather?.recordsUpdated || 0) + 
                             (data.demand?.recordsUpdated || 0) + 
                             (data.generation?.recordsUpdated || 0);
-          offsetMonths = data.nextOffsetMonths || offsetMonths + batchMonths;
+          isComplete = data.prices?.isComplete && data.weather?.isComplete && 
+                       data.demand?.isComplete && data.generation?.isComplete;
         } else {
           recordsThisBatch = data.recordsInserted || data.recordsUpdated || 0;
-          offsetMonths = data.nextOffsetMonths || offsetMonths + batchMonths;
+          isComplete = data.isComplete || false;
+          currentStartDate = data.nextStartDate || currentStartDate;
         }
 
         totalRecordsProcessed += recordsThisBatch;
+        daysProcessed += 7; // Each batch is ~7 days
 
         // Collect errors
         if (data.errors) allErrors.push(...data.errors);
@@ -142,35 +146,34 @@ export function useComprehensiveBackfill() {
 
         // Calculate estimated time remaining
         const elapsed = Date.now() - startTime;
-        const avgTimePerMonth = elapsed / offsetMonths;
-        const remainingMonths = TOTAL_MONTHS - offsetMonths;
-        const estimatedMs = avgTimePerMonth * remainingMonths;
+        const avgTimePerDay = elapsed / Math.max(daysProcessed, 1);
+        const remainingDays = TOTAL_DAYS - daysProcessed;
+        const estimatedMs = avgTimePerDay * remainingDays;
         const estimatedMinutes = Math.ceil(estimatedMs / 60000);
 
         setProgress(prev => ({
           ...prev,
-          completedMonths: offsetMonths,
+          completedMonths: daysProcessed,
           recordsProcessed: totalRecordsProcessed,
           estimatedTimeRemaining: estimatedMinutes > 0 ? `~${estimatedMinutes} min remaining` : 'Almost done...',
-          errors: allErrors.slice(-10) // Keep last 10 errors
+          errors: allErrors.slice(-10)
         }));
 
-        // Check if complete
-        if (data.isComplete || offsetMonths >= TOTAL_MONTHS) {
-          break;
-        }
+        // Save checkpoint
+        setNextStartDate(currentStartDate);
 
         // Small delay between batches
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 300));
       }
 
       toast({
         title: 'Backfill Complete',
-        description: `Successfully processed ${totalRecordsProcessed.toLocaleString()} records across ${offsetMonths} months`,
+        description: `Successfully processed ${totalRecordsProcessed.toLocaleString()} records`,
       });
 
       // Refresh status
       await fetchStatus();
+      setNextStartDate(null);
 
     } catch (error: any) {
       console.error('Backfill error:', error);
@@ -188,7 +191,7 @@ export function useComprehensiveBackfill() {
         errors: allErrors
       }));
     }
-  }, [progress.isRunning, toast, fetchStatus]);
+  }, [progress.isRunning, toast, fetchStatus, nextStartDate]);
 
   const stopBackfill = useCallback(() => {
     // Note: This is a soft stop - it won't stop the current batch
@@ -212,6 +215,8 @@ export function useComprehensiveBackfill() {
     fetchStatus,
     startBackfill,
     stopBackfill,
-    percentComplete: Math.round((progress.completedMonths / progress.totalMonths) * 100)
+    percentComplete: Math.min(100, Math.round((progress.completedMonths / progress.totalMonths) * 100)),
+    daysProcessed: progress.completedMonths,
+    totalDays: TOTAL_DAYS
   };
 }
