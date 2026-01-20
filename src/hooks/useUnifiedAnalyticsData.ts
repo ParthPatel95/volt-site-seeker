@@ -69,6 +69,15 @@ export interface UnifiedDataPoint {
   total_interchange_flow: number | null;
 }
 
+export interface DataCompleteness {
+  weather: number;
+  demand: number;
+  generation: number;
+  reserves: number;
+  overall: number;
+  completeDataStartDate: string | null;
+}
+
 export interface UnifiedAnalyticsStats {
   totalRecords: number;
   dateRange: { start: string; end: string };
@@ -89,6 +98,7 @@ export interface UnifiedAnalyticsStats {
     demandVsPrice: number | null;
     windVsPrice: number | null;
   };
+  completeness: DataCompleteness;
 }
 
 const DEFAULT_FILTERS: UnifiedAnalyticsFilters = {
@@ -178,8 +188,19 @@ export function useUnifiedAnalyticsData() {
         return;
       }
 
+      // Deduplicate by hour (keeps first occurrence for each hour)
+      const seenHours = new Set<string>();
+      const deduplicatedRawData = rawData.filter(row => {
+        const hourKey = row.timestamp?.substring(0, 13); // YYYY-MM-DDTHH
+        if (seenHours.has(hourKey)) return false;
+        seenHours.add(hourKey);
+        return true;
+      });
+
+      console.log(`Analytics data: ${rawData.length} raw -> ${deduplicatedRawData.length} deduplicated`);
+
       // Transform data
-      const transformedData: UnifiedDataPoint[] = rawData.map((row) => ({
+      const transformedData: UnifiedDataPoint[] = deduplicatedRawData.map((row) => ({
         timestamp: row.timestamp,
         date: row.timestamp.split('T')[0],
         hour: row.hour_of_day ?? new Date(row.timestamp).getHours(),
@@ -236,6 +257,22 @@ export function useUnifiedAnalyticsData() {
         ? Math.sqrt(prices.reduce((sum, p) => sum + Math.pow(p - priceAvg, 2), 0) / prices.length)
         : 0;
 
+      // Calculate data completeness
+      const weatherComplete = transformedData.filter(d => d.temp_calgary !== null).length;
+      const demandComplete = transformedData.filter(d => d.ail_mw !== null).length;
+      const generationComplete = transformedData.filter(d => d.generation_gas !== null).length;
+      const reservesComplete = transformedData.filter(d => d.operating_reserve !== null).length;
+      const total = transformedData.length;
+
+      // Find first date with complete data (all categories present)
+      let completeDataStartDate: string | null = null;
+      for (const row of transformedData) {
+        if (row.temp_calgary !== null && row.ail_mw !== null && row.generation_gas !== null) {
+          completeDataStartDate = row.date;
+          break;
+        }
+      }
+
       const calculatedStats: UnifiedAnalyticsStats = {
         totalRecords: transformedData.length,
         dateRange: {
@@ -258,6 +295,14 @@ export function useUnifiedAnalyticsData() {
           tempVsPrice: calculateCorrelation(temps, prices.slice(0, temps.length)),
           demandVsPrice: calculateCorrelation(demands, prices.slice(0, demands.length)),
           windVsPrice: calculateCorrelation(winds, prices.slice(0, winds.length)),
+        },
+        completeness: {
+          weather: total > 0 ? Math.round((weatherComplete / total) * 100) : 0,
+          demand: total > 0 ? Math.round((demandComplete / total) * 100) : 0,
+          generation: total > 0 ? Math.round((generationComplete / total) * 100) : 0,
+          reserves: total > 0 ? Math.round((reservesComplete / total) * 100) : 0,
+          overall: total > 0 ? Math.round(((weatherComplete + demandComplete + generationComplete + reservesComplete) / (total * 4)) * 100) : 0,
+          completeDataStartDate,
         },
       };
 

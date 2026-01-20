@@ -26,6 +26,9 @@ import {
   ArrowLeftRight,
   RefreshCw,
   AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  Info,
   BarChart3,
   Calendar,
   Database,
@@ -278,9 +281,31 @@ export function UnifiedAnalyticsExport() {
         </CardContent>
       </Card>
 
+      {/* Data Quality Warning Banner */}
+      {stats && stats.completeness.overall < 80 && (
+        <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-medium text-amber-800 dark:text-amber-200">
+                  Sparse Data Detected in Selected Range
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Only {stats.completeness.overall}% of records have complete data. 
+                  {stats.completeness.completeDataStartDate && (
+                    <> For full weather, demand, and generation data, use dates from <strong>{stats.completeness.completeDataStartDate}</strong> onwards.</>
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistics Overview */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
           <StatCard
             title="Total Records"
             value={stats.totalRecords.toLocaleString()}
@@ -319,7 +344,39 @@ export function UnifiedAnalyticsExport() {
             subtitle={`${stats.dateRange.start} to ${stats.dateRange.end}`}
             icon={<Calendar className="w-4 h-4" />}
           />
+          <StatCard
+            title="Data Quality"
+            value={`${stats.completeness.overall}%`}
+            subtitle={stats.completeness.overall >= 80 ? 'Complete' : 'Partial'}
+            icon={stats.completeness.overall >= 80 ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Info className="w-4 h-4 text-amber-500" />}
+            highlight={stats.completeness.overall < 50}
+          />
         </div>
+      )}
+
+      {/* Data Completeness Breakdown */}
+      {stats && stats.completeness.overall < 100 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Info className="w-4 h-4" />
+              Data Completeness by Category
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <CompletenessBar label="Weather" value={stats.completeness.weather} />
+              <CompletenessBar label="Demand" value={stats.completeness.demand} />
+              <CompletenessBar label="Generation" value={stats.completeness.generation} />
+              <CompletenessBar label="Reserves" value={stats.completeness.reserves} />
+            </div>
+            {stats.completeness.completeDataStartDate && (
+              <p className="text-xs text-muted-foreground mt-3">
+                💡 Tip: Complete data available from {stats.completeness.completeDataStartDate}. Earlier records only contain pool price.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Correlation Analysis */}
@@ -600,5 +657,30 @@ function StatCard({
         <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
       </CardContent>
     </Card>
+  );
+}
+
+function CompletenessBar({ label, value }: { label: string; value: number }) {
+  const getColor = (v: number) => {
+    if (v >= 80) return 'bg-green-500';
+    if (v >= 50) return 'bg-amber-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span>{label}</span>
+        <span className={value >= 80 ? 'text-green-600' : value >= 50 ? 'text-amber-600' : 'text-red-600'}>
+          {value}%
+        </span>
+      </div>
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div 
+          className={`h-full ${getColor(value)} transition-all`} 
+          style={{ width: `${value}%` }} 
+        />
+      </div>
+    </div>
   );
 }
