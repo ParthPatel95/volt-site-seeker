@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
@@ -6,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,14 +15,22 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting weather data backfill...');
+    // Parse request body for batch control
+    let limit = 500; // Default batch size
+    try {
+      const body = await req.json();
+      if (body.limit) limit = Math.min(body.limit, 1000);
+    } catch { /* Use defaults */ }
 
-    // Fetch all records missing weather data
+    console.log(`Starting weather data backfill (batch size: ${limit})...`);
+
+    // Fetch records missing weather data - limited batch
     const { data: recordsToBackfill, error: fetchError } = await supabase
       .from('aeso_training_data')
       .select('id, timestamp')
       .or('temperature_calgary.is.null,temperature_edmonton.is.null,wind_speed.is.null,cloud_cover.is.null')
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(limit);
 
     if (fetchError) {
       throw new Error(`Failed to fetch records: ${fetchError.message}`);
@@ -33,20 +40,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         message: 'No records need weather backfill',
-        recordsUpdated: 0
+        recordsUpdated: 0,
+        isComplete: true
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log(`Found ${recordsToBackfill.length} records needing weather data`);
+    console.log(`Processing ${recordsToBackfill.length} records`);
 
     // Group records by date to minimize API calls
     const recordsByDate = new Map<string, typeof recordsToBackfill>();
     
     for (const record of recordsToBackfill) {
       const date = new Date(record.timestamp);
-      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const dateKey = date.toISOString().split('T')[0];
       
       if (!recordsByDate.has(dateKey)) {
         recordsByDate.set(dateKey, []);
@@ -63,74 +71,81 @@ serve(async (req) => {
 
     let totalUpdated = 0;
     let processedDates = 0;
+    const errors: string[] = [];
 
-    // Process in batches of dates to avoid timeouts
-    const dateEntries = Array.from(recordsByDate.entries());
-    const batchSize = 30; // Process 30 days at a time
-
-    for (let i = 0; i < dateEntries.length; i += batchSize) {
-      const batch = dateEntries.slice(i, i + batchSize);
-      
-      for (const [dateKey, records] of batch) {
-        try {
-          // Fetch weather for this date from both cities
-          const weatherData = await fetchHistoricalWeather(dateKey, cities);
-          
-          // Update all records for this date
-          for (const record of records) {
-            const recordTime = new Date(record.timestamp);
-            const hour = recordTime.getHours();
-            
-            // Get weather from both cities
-            const tempCalgary = weatherData.calgary.hourly.temperature_2m[hour];
-            const tempEdmonton = weatherData.edmonton.hourly.temperature_2m[hour];
-            const avgWind = (weatherData.calgary.hourly.windspeed_10m[hour] + 
-                           weatherData.edmonton.hourly.windspeed_10m[hour]) / 2;
-            const avgCloud = (weatherData.calgary.hourly.cloudcover[hour] + 
-                            weatherData.edmonton.hourly.cloudcover[hour]) / 2;
-            const solarIrradiance = calculateSolarIrradiance(avgCloud, hour);
-            
-            const { error: updateError } = await supabase
-              .from('aeso_training_data')
-              .update({
-                temperature_calgary: tempCalgary,
-                temperature_edmonton: tempEdmonton,
-                wind_speed: avgWind,
-                cloud_cover: avgCloud,
-                solar_irradiance: solarIrradiance
-              })
-              .eq('id', record.id);
-            
-            if (updateError) {
-              console.error(`Failed to update record ${record.id}:`, updateError);
-            } else {
-              totalUpdated++;
-            }
-          }
-          
-          processedDates++;
-          if (processedDates % 10 === 0) {
-            console.log(`Progress: ${processedDates}/${recordsByDate.size} dates processed`);
-          }
-          
-        } catch (error) {
-          console.error(`Failed to process date ${dateKey}:`, error);
+    for (const [dateKey, records] of recordsByDate.entries()) {
+      try {
+        const weatherData = await fetchHistoricalWeather(dateKey, cities);
+        
+        if (!weatherData.calgary?.hourly || !weatherData.edmonton?.hourly) {
+          console.error(`Invalid weather data for ${dateKey}`);
+          errors.push(`Invalid data for ${dateKey}`);
           continue;
         }
         
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Batch update all records for this date
+        for (const record of records) {
+          const recordTime = new Date(record.timestamp);
+          const hour = recordTime.getHours();
+          
+          const tempCalgary = weatherData.calgary.hourly.temperature_2m?.[hour];
+          const tempEdmonton = weatherData.edmonton.hourly.temperature_2m?.[hour];
+          const windCalg = weatherData.calgary.hourly.windspeed_10m?.[hour] ?? 0;
+          const windEdm = weatherData.edmonton.hourly.windspeed_10m?.[hour] ?? 0;
+          const cloudCalg = weatherData.calgary.hourly.cloudcover?.[hour] ?? 50;
+          const cloudEdm = weatherData.edmonton.hourly.cloudcover?.[hour] ?? 50;
+          
+          const avgWind = (windCalg + windEdm) / 2;
+          const avgCloud = (cloudCalg + cloudEdm) / 2;
+          const solarIrradiance = calculateSolarIrradiance(avgCloud, hour);
+          
+          const { error: updateError } = await supabase
+            .from('aeso_training_data')
+            .update({
+              temperature_calgary: tempCalgary,
+              temperature_edmonton: tempEdmonton,
+              wind_speed: avgWind,
+              cloud_cover: avgCloud,
+              solar_irradiance: solarIrradiance
+            })
+            .eq('id', record.id);
+          
+          if (updateError) {
+            console.error(`Failed to update record ${record.id}:`, updateError);
+          } else {
+            totalUpdated++;
+          }
+        }
+        
+        processedDates++;
+        if (processedDates % 5 === 0) {
+          console.log(`Progress: ${processedDates}/${recordsByDate.size} dates, ${totalUpdated} records updated`);
+        }
+        
+      } catch (error) {
+        console.error(`Failed to process date ${dateKey}:`, error);
+        errors.push(`${dateKey}: ${error.message}`);
+        continue;
       }
       
-      console.log(`Completed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(dateEntries.length / batchSize)}`);
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
+
+    // Check remaining
+    const { count: remaining } = await supabase
+      .from('aeso_training_data')
+      .select('id', { count: 'exact', head: true })
+      .or('temperature_calgary.is.null,temperature_edmonton.is.null,wind_speed.is.null,cloud_cover.is.null');
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Successfully backfilled weather data`,
+      message: `Backfilled weather for ${totalUpdated} records`,
       recordsUpdated: totalUpdated,
       datesProcessed: processedDates,
-      totalRecordsFound: recordsToBackfill.length
+      remainingRecords: remaining || 0,
+      isComplete: (remaining || 0) === 0,
+      errors: errors.length > 0 ? errors.slice(0, 5) : undefined
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -149,16 +164,34 @@ serve(async (req) => {
 
 async function fetchHistoricalWeather(date: string, cities: any[]) {
   const weatherData: any = {};
+  const dateObj = new Date(date);
+  const now = new Date();
+  const isHistorical = dateObj < new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   
   for (const city of cities) {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&hourly=temperature_2m,windspeed_10m,cloudcover&start_date=${date}&end_date=${date}&timezone=America/Edmonton`;
+    let url: string;
+    if (isHistorical) {
+      // Use archive API for historical data (older than 7 days)
+      url = `https://archive-api.open-meteo.com/v1/archive?latitude=${city.lat}&longitude=${city.lon}&hourly=temperature_2m,wind_speed_10m,cloud_cover&start_date=${date}&end_date=${date}&timezone=America/Edmonton`;
+    } else {
+      // Use forecast API for recent data
+      url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&hourly=temperature_2m,wind_speed_10m,cloud_cover&start_date=${date}&end_date=${date}&timezone=America/Edmonton`;
+    }
     
     const response = await fetch(url);
     if (!response.ok) {
+      console.error(`Weather API error for ${city.name} on ${date}: ${response.status}`);
       throw new Error(`Failed to fetch weather for ${city.name} on ${date}`);
     }
     
     const data = await response.json();
+    
+    // Normalize field names (archive uses underscores, forecast uses camelCase)
+    if (data.hourly) {
+      data.hourly.windspeed_10m = data.hourly.windspeed_10m || data.hourly.wind_speed_10m;
+      data.hourly.cloudcover = data.hourly.cloudcover || data.hourly.cloud_cover;
+    }
+    
     weatherData[city.name.toLowerCase()] = data;
   }
   
