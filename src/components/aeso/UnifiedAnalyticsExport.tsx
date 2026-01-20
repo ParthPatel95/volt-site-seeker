@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -35,6 +36,8 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  CloudDownload,
+  Loader2,
 } from 'lucide-react';
 import { useUnifiedAnalyticsData, UnifiedAnalyticsFilters } from '@/hooks/useUnifiedAnalyticsData';
 import { 
@@ -46,6 +49,8 @@ import {
   DailyPriceStats,
   HighPriceEvent
 } from '@/utils/unifiedExportUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const DATE_PRESETS = [
   { label: 'Last 30 Days', days: 30 },
@@ -64,6 +69,9 @@ export function UnifiedAnalyticsExport() {
   const [dailyStats, setDailyStats] = useState<DailyPriceStats[]>([]);
   const [highPriceEvents, setHighPriceEvents] = useState<HighPriceEvent[]>([]);
   const [priceThreshold, setPriceThreshold] = useState(100);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillProgress, setBackfillProgress] = useState<{ type: string; progress: number } | null>(null);
+  const { toast } = useToast();
 
   // Calculate derived data when main data changes
   useEffect(() => {
@@ -106,6 +114,67 @@ export function UnifiedAnalyticsExport() {
     if (highPriceEvents.length === 0) return;
     const filename = `aeso-high-price-events-${filters.startDate}-to-${filters.endDate}.csv`;
     generateHighPriceEventsCSV(highPriceEvents, filename);
+  };
+
+  // Backfill missing data using AESO APIs
+  const handleBackfillData = async (dataType: 'weather' | 'demand' | 'generation' | 'all') => {
+    setBackfillLoading(true);
+    setBackfillProgress({ type: dataType, progress: 0 });
+    
+    try {
+      let totalUpdated = 0;
+      let iterations = 0;
+      const maxIterations = 10; // Prevent infinite loops
+      
+      while (iterations < maxIterations) {
+        const { data: result, error } = await supabase.functions.invoke('aeso-analytics-backfill', {
+          body: { dataType, batchSize: 30 }
+        });
+
+        if (error) throw error;
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Backfill failed');
+        }
+
+        totalUpdated += result.recordsUpdated || 0;
+        const remaining = result.remainingRecords || 0;
+        
+        // Calculate progress
+        const total = totalUpdated + remaining;
+        const progress = total > 0 ? Math.round((totalUpdated / total) * 100) : 100;
+        setBackfillProgress({ type: dataType, progress });
+        
+        // If no more records to process, we're done
+        if (remaining === 0 || result.recordsUpdated === 0) {
+          break;
+        }
+        
+        iterations++;
+        
+        // Small delay between batches
+        await new Promise(r => setTimeout(r, 500));
+      }
+
+      toast({
+        title: "Backfill Complete",
+        description: `Successfully updated ${totalUpdated.toLocaleString()} records with ${dataType} data.`,
+      });
+
+      // Refresh the data
+      await fetchData();
+      
+    } catch (error: any) {
+      console.error('Backfill error:', error);
+      toast({
+        title: "Backfill Error",
+        description: error.message || 'Failed to backfill data',
+        variant: "destructive"
+      });
+    } finally {
+      setBackfillLoading(false);
+      setBackfillProgress(null);
+    }
   };
 
   // Pagination
@@ -287,7 +356,7 @@ export function UnifiedAnalyticsExport() {
           <CardContent className="py-4">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1">
                 <p className="font-medium text-amber-800 dark:text-amber-200">
                   Sparse Data Detected in Selected Range
                 </p>
@@ -297,6 +366,62 @@ export function UnifiedAnalyticsExport() {
                     <> For full weather, demand, and generation data, use dates from <strong>{stats.completeness.completeDataStartDate}</strong> onwards.</>
                   )}
                 </p>
+                
+                {/* Backfill Progress */}
+                {backfillProgress && (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span className="text-sm font-medium">
+                        Backfilling {backfillProgress.type} data...
+                      </span>
+                    </div>
+                    <Progress value={backfillProgress.progress} className="h-2" />
+                    <p className="text-xs mt-1">{backfillProgress.progress}% complete</p>
+                  </div>
+                )}
+
+                {/* Backfill Buttons */}
+                {!backfillLoading && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleBackfillData('all')}
+                      className="gap-1.5 bg-background"
+                    >
+                      <CloudDownload className="w-3.5 h-3.5" />
+                      Backfill All Missing Data
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => handleBackfillData('weather')}
+                      className="gap-1.5"
+                    >
+                      <Thermometer className="w-3.5 h-3.5" />
+                      Weather Only
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => handleBackfillData('demand')}
+                      className="gap-1.5"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      Demand Only
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => handleBackfillData('generation')}
+                      className="gap-1.5"
+                    >
+                      <Wind className="w-3.5 h-3.5" />
+                      Generation Only
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
