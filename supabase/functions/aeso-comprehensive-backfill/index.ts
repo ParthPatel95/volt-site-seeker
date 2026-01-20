@@ -499,24 +499,32 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
     console.log(`Fetching demand for ${startDate} to ${endDate} (${monthGroups[month].ids.length} records)`);
 
     try {
-      // Fetch from AESO API
-      const url = `https://api.aeso.ca/report/v1.1/load/albertaInternalLoad?startDate=${startDate}&endDate=${endDate}`;
+      // Use APIM Gateway (stable endpoint that works from edge environment)
+      const url = `https://apimgw.aeso.ca/public/actualforecast-api/v1/load/albertaInternalLoad?startDate=${startDate}&endDate=${endDate}`;
+      console.log(`Fetching from APIM: ${url}`);
+      
       const response = await fetch(url, {
         headers: {
-          'X-API-Key': aesoKey,
-          'Ocp-Apim-Subscription-Key': aesoKey
+          'API-KEY': aesoKey,  // Use API-KEY header (not Ocp-Apim-Subscription-Key) for APIM gateway
+          'Accept': 'application/json'
         }
       });
 
       if (!response.ok) {
-        errors.push(`AESO AIL API error for ${startDate}: ${response.status}`);
+        const errorText = await response.text();
+        errors.push(`AESO APIM AIL error for ${startDate}: ${response.status} - ${errorText.slice(0, 100)}`);
+        console.error(`AESO APIM error for ${startDate}: ${response.status}`, errorText.slice(0, 200));
         continue;
       }
 
       const data = await response.json();
-      const loadData = data?.return?.['Alberta Internal Load'] || [];
+      console.log('AIL API response keys:', Object.keys(data));
+      
+      // AESO APIM response format: { "return": { "Actual Forecast Report": [...] } }
+      const loadData = data?.return?.['Actual Forecast Report'] || data?.return?.['Alberta Internal Load'] || [];
+      console.log(`Received ${Array.isArray(loadData) ? loadData.length : 0} AIL records`);
 
-      if (loadData.length === 0) {
+      if (!Array.isArray(loadData) || loadData.length === 0) {
         console.log(`No AIL data for ${startDate}`);
         continue;
       }
