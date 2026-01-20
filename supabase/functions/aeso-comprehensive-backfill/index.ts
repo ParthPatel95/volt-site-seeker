@@ -289,14 +289,14 @@ async function backfillWeather(supabase: any, startYear: number, endYear: number
     console.log(`Fetching weather for ${startDate} to ${endDate}`);
 
     try {
-      // Get records needing weather data for this month
+      // Get records needing weather data for this month (batch of 500 max for efficiency)
       const { data: recordsToUpdate } = await supabase
         .from('aeso_training_data')
         .select('id, timestamp')
         .gte('timestamp', startDate)
         .lte('timestamp', `${endDate}T23:59:59`)
         .or('temperature_calgary.is.null,wind_speed.is.null')
-        .limit(1000);
+        .limit(500);
 
       if (!recordsToUpdate || recordsToUpdate.length === 0) {
         console.log(`No records need weather for ${startDate}`);
@@ -338,7 +338,8 @@ async function backfillWeather(supabase: any, startYear: number, endYear: number
         };
       }
 
-      // Update records
+      // Build batch updates
+      const batchUpdates: any[] = [];
       for (const record of recordsToUpdate) {
         const recordTime = new Date(record.timestamp);
         const hourKey = recordTime.toISOString().slice(0, 13) + ':00';
@@ -351,26 +352,36 @@ async function backfillWeather(supabase: any, startYear: number, endYear: number
         const solarIrradiance = calculateSolarIrradiance(weather.cloud_cover, hour);
         const avgTemp = (weather.temp_calgary + (weather.temp_edmonton || weather.temp_calgary)) / 2;
 
-        const { error } = await supabase
-          .from('aeso_training_data')
-          .update({
-            temperature_calgary: weather.temp_calgary,
-            temperature_edmonton: weather.temp_edmonton || weather.temp_calgary,
-            wind_speed: weather.wind_speed,
-            cloud_cover: weather.cloud_cover,
-            solar_irradiance: solarIrradiance,
-            heating_degree_days: avgTemp < 18 ? 18 - avgTemp : 0,
-            cooling_degree_days: avgTemp > 18 ? avgTemp - 18 : 0
-          })
-          .eq('id', record.id);
-
-        if (!error) recordsUpdated++;
+        batchUpdates.push({
+          id: record.id,
+          temperature_calgary: weather.temp_calgary,
+          temperature_edmonton: weather.temp_edmonton || weather.temp_calgary,
+          wind_speed: weather.wind_speed,
+          cloud_cover: weather.cloud_cover,
+          solar_irradiance: solarIrradiance,
+          heating_degree_days: avgTemp < 18 ? 18 - avgTemp : 0,
+          cooling_degree_days: avgTemp > 18 ? avgTemp - 18 : 0
+        });
       }
 
-      console.log(`Updated ${recordsToUpdate.length} weather records for ${startDate}`);
+      // Batch upsert all updates at once (100 at a time)
+      for (let i = 0; i < batchUpdates.length; i += 100) {
+        const batch = batchUpdates.slice(i, i + 100);
+        const { error: upsertError } = await supabase
+          .from('aeso_training_data')
+          .upsert(batch, { onConflict: 'id' });
+
+        if (!upsertError) {
+          recordsUpdated += batch.length;
+        } else {
+          errors.push(`Batch upsert error: ${upsertError.message}`);
+        }
+      }
+
+      console.log(`Updated ${batchUpdates.length} weather records for ${startDate}`);
       
       // Small delay to avoid rate limiting
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 50));
 
     } catch (error) {
       errors.push(`Error processing weather ${startDate}: ${error.message}`);
