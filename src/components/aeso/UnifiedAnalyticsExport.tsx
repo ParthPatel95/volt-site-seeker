@@ -52,7 +52,7 @@ import {
 } from '@/utils/unifiedExportUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ComprehensiveBackfillPanel } from './ComprehensiveBackfillPanel';
+
 
 const DATE_PRESETS = [
   { label: 'Last 30 Days', days: 30 },
@@ -352,8 +352,6 @@ export function UnifiedAnalyticsExport() {
         </CardContent>
       </Card>
 
-      {/* 8-Year Historical Data Collection Panel */}
-      <ComprehensiveBackfillPanel />
 
       {/* Data Quality Warning Banner */}
       {stats && stats.completeness.overall < 80 && (
