@@ -27,6 +27,7 @@ import {
   Brain,
   Factory,
   Calendar,
+  FileSpreadsheet,
   Settings,
   Server,
   MessageSquare
@@ -61,6 +62,7 @@ import { MarketIntelligencePanel } from './aeso/MarketIntelligencePanel';
 import { QuickStatsBar } from './aeso/QuickStatsBar';
 import { DatacenterControlCenter } from './datacenter';
 import { TelegramAlertSettings } from './aeso/TelegramAlertSettings';
+import { UnifiedAnalyticsExport } from './aeso/UnifiedAnalyticsExport';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
@@ -207,17 +209,17 @@ export function AESOMarketComprehensive() {
     return { label: 'Calculated', variant: 'outline' as const };
   };
 
-  // Navigation items for responsive tabs
   const navigationItems: NavigationItem[] = [
     { id: 'market', label: 'Market Data', icon: Zap, priority: 1 },
     { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 2 },
     { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare, priority: 3 },
     { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 4 },
     { id: 'historical', label: 'Historical', icon: Calendar, priority: 5 },
-    { id: 'generation', label: 'Generation', icon: Activity, priority: 6 },
-    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 7 },
-    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 8 },
-    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 9 },
+    { id: 'analytics-export', label: 'Analytics Export', icon: FileSpreadsheet, priority: 6 },
+    { id: 'generation', label: 'Generation', icon: Activity, priority: 7 },
+    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 8 },
+    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 9 },
+    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 10 },
   ];
 
   // Intelligence helper functions
@@ -755,6 +757,10 @@ export function AESOMarketComprehensive() {
 
           <TabsContent value="custom-dashboards" className="space-y-4 sm:space-y-6">
             <CustomDashboardsPanel />
+          </TabsContent>
+
+          <TabsContent value="analytics-export" className="space-y-4 sm:space-y-6">
+            <UnifiedAnalyticsExport />
           </TabsContent>
 
         </Tabs>
