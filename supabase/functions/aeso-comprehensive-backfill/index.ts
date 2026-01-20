@@ -483,10 +483,19 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
     monthGroups[month].timestamps.push(record.timestamp);
   }
 
-  const months = Object.keys(monthGroups).sort();
-  const monthsToProcess = months.slice(0, batchMonths);
+  // Filter out months with only a few missing records (likely timezone edge cases)
+  // Focus on months that have significant gaps (> 50 missing records)
+  const months = Object.keys(monthGroups)
+    .filter(month => monthGroups[month].ids.length > 50)
+    .sort();
   
-  console.log(`Processing demand for ${monthsToProcess.length} months: ${monthsToProcess.join(', ')}`);
+  // If no months with significant gaps, include all months
+  const monthsToProcess = months.length > 0 
+    ? months.slice(0, batchMonths)
+    : Object.keys(monthGroups).sort().slice(0, batchMonths);
+  
+  console.log(`Processing demand for ${monthsToProcess.length} months (skipping near-complete): ${monthsToProcess.join(', ')}`);
+  console.log(`Month breakdown: ${Object.entries(monthGroups).slice(0, 10).map(([m, g]) => `${m}:${g.ids.length}`).join(', ')}`);
 
   for (const month of monthsToProcess) {
     const [yearStr, monthStr] = month.split('-');
