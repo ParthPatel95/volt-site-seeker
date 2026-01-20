@@ -272,37 +272,49 @@ async function backfillWeather(supabase: any, startYear: number, endYear: number
     { name: 'Edmonton', lat: 53.5461, lon: -113.4938 }
   ];
 
-  const totalMonths = (endYear - startYear + 1) * 12;
-  const startMonth = offsetMonths;
-  const endMonth = Math.min(startMonth + batchMonths, totalMonths);
-  
   let recordsUpdated = 0;
   const errors: string[] = [];
 
-  for (let monthOffset = startMonth; monthOffset < endMonth; monthOffset++) {
-    const year = startYear + Math.floor(monthOffset / 12);
-    const month = (monthOffset % 12) + 1;
+  // Find records that actually need weather data (smarter approach)
+  const { data: missingRecords } = await supabase
+    .from('aeso_training_data')
+    .select('id, timestamp')
+    .or('temperature_calgary.is.null,wind_speed.is.null')
+    .order('timestamp', { ascending: true })
+    .limit(1000);
+
+  if (!missingRecords || missingRecords.length === 0) {
+    console.log('No records need weather data');
+    return { success: true, phase: 'weather', recordsUpdated: 0, isComplete: true };
+  }
+
+  // Group by month
+  const monthGroups: Record<string, { ids: string[], timestamps: string[] }> = {};
+  for (const record of missingRecords) {
+    const month = record.timestamp.slice(0, 7); // YYYY-MM
+    if (!monthGroups[month]) {
+      monthGroups[month] = { ids: [], timestamps: [] };
+    }
+    monthGroups[month].ids.push(record.id);
+    monthGroups[month].timestamps.push(record.timestamp);
+  }
+
+  const months = Object.keys(monthGroups).sort();
+  const monthsToProcess = months.slice(0, batchMonths); // Process only batchMonths at a time
+  
+  console.log(`Processing weather for ${monthsToProcess.length} months: ${monthsToProcess.join(', ')}`);
+
+  for (const month of monthsToProcess) {
+    const [yearStr, monthStr] = month.split('-');
+    const year = parseInt(yearStr);
+    const monthNum = parseInt(monthStr);
     
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+    const startDate = `${year}-${monthStr}-01`;
+    const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
     
-    console.log(`Fetching weather for ${startDate} to ${endDate}`);
+    console.log(`Fetching weather for ${startDate} to ${endDate} (${monthGroups[month].ids.length} records)`);
 
     try {
-      // Get records needing weather data for this month (batch of 500 max for efficiency)
-      const { data: recordsToUpdate } = await supabase
-        .from('aeso_training_data')
-        .select('id, timestamp')
-        .gte('timestamp', startDate)
-        .lte('timestamp', `${endDate}T23:59:59`)
-        .or('temperature_calgary.is.null,wind_speed.is.null')
-        .limit(500);
-
-      if (!recordsToUpdate || recordsToUpdate.length === 0) {
-        console.log(`No records need weather for ${startDate}`);
-        continue;
-      }
-
       // Fetch weather from Open-Meteo Archive API
       const weatherData: Record<string, any> = {};
       
@@ -338,14 +350,28 @@ async function backfillWeather(supabase: any, startYear: number, endYear: number
         };
       }
 
+      // Get the records for this month
+      const { data: recordsForMonth } = await supabase
+        .from('aeso_training_data')
+        .select('id, timestamp')
+        .gte('timestamp', startDate)
+        .lte('timestamp', `${endDate}T23:59:59`)
+        .or('temperature_calgary.is.null,wind_speed.is.null')
+        .limit(800);
+
+      if (!recordsForMonth || recordsForMonth.length === 0) {
+        console.log(`No records need weather for ${month}`);
+        continue;
+      }
+
       // Build batch updates
       const batchUpdates: any[] = [];
-      for (const record of recordsToUpdate) {
+      for (const record of recordsForMonth) {
         const recordTime = new Date(record.timestamp);
-        const hourKey = recordTime.toISOString().slice(0, 13) + ':00';
+        // Try multiple key formats
         const localHourKey = `${recordTime.getFullYear()}-${String(recordTime.getMonth() + 1).padStart(2, '0')}-${String(recordTime.getDate()).padStart(2, '0')}T${String(recordTime.getHours()).padStart(2, '0')}:00`;
         
-        const weather = weatherByHour[hourKey] || weatherByHour[localHourKey];
+        const weather = weatherByHour[localHourKey];
         if (!weather) continue;
 
         const hour = recordTime.getHours();
@@ -364,38 +390,63 @@ async function backfillWeather(supabase: any, startYear: number, endYear: number
         });
       }
 
-      // Batch upsert all updates at once (100 at a time)
-      for (let i = 0; i < batchUpdates.length; i += 100) {
-        const batch = batchUpdates.slice(i, i + 100);
-        const { error: upsertError } = await supabase
-          .from('aeso_training_data')
-          .upsert(batch, { onConflict: 'id' });
-
-        if (!upsertError) {
-          recordsUpdated += batch.length;
-        } else {
-          errors.push(`Batch upsert error: ${upsertError.message}`);
+      // Batch update using individual updates (more reliable for existing records)
+      for (let i = 0; i < batchUpdates.length; i += 50) {
+        const batch = batchUpdates.slice(i, i + 50);
+        
+        // Use Promise.all for parallel updates within each batch
+        const updatePromises = batch.map(update => 
+          supabase
+            .from('aeso_training_data')
+            .update({
+              temperature_calgary: update.temperature_calgary,
+              temperature_edmonton: update.temperature_edmonton,
+              wind_speed: update.wind_speed,
+              cloud_cover: update.cloud_cover,
+              solar_irradiance: update.solar_irradiance,
+              heating_degree_days: update.heating_degree_days,
+              cooling_degree_days: update.cooling_degree_days
+            })
+            .eq('id', update.id)
+        );
+        
+        const results = await Promise.all(updatePromises);
+        const successCount = results.filter(r => !r.error).length;
+        recordsUpdated += successCount;
+        
+        if (results.some(r => r.error)) {
+          const firstError = results.find(r => r.error)?.error;
+          errors.push(`Update error: ${firstError?.message}`);
         }
       }
 
-      console.log(`Updated ${batchUpdates.length} weather records for ${startDate}`);
+      console.log(`Updated ${batchUpdates.length} weather records for ${month}`);
       
       // Small delay to avoid rate limiting
-      await new Promise(r => setTimeout(r, 50));
+      await new Promise(r => setTimeout(r, 100));
 
-    } catch (error) {
-      errors.push(`Error processing weather ${startDate}: ${error.message}`);
-      console.error(`Weather error for ${startDate}:`, error);
+    } catch (error: any) {
+      errors.push(`Error processing weather ${month}: ${error.message}`);
+      console.error(`Weather error for ${month}:`, error);
     }
   }
+
+  // Check if more records still need weather
+  const { count: remainingCount } = await supabase
+    .from('aeso_training_data')
+    .select('*', { count: 'exact', head: true })
+    .or('temperature_calgary.is.null,wind_speed.is.null');
+
+  const isComplete = !remainingCount || remainingCount === 0;
 
   return {
     success: true,
     phase: 'weather',
     recordsUpdated,
-    monthsProcessed: endMonth - startMonth,
-    nextOffsetMonths: endMonth,
-    isComplete: endMonth >= totalMonths,
+    monthsProcessed: monthsToProcess.length,
+    nextOffsetMonths: offsetMonths + batchMonths,
+    isComplete,
+    remainingRecords: remainingCount || 0,
     errors: errors.length > 0 ? errors : undefined
   };
 }
