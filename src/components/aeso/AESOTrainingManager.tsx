@@ -26,6 +26,7 @@ import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
 import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
 import { BacktestingDashboard } from './BacktestingDashboard';
 import { GenerationDataUploader } from '@/components/admin/GenerationDataUploader';
+import { WeatherBackfillCard } from './WeatherBackfillCard';
 
 interface TrainingJob {
   id: string;
@@ -389,6 +390,8 @@ export function AESOTrainingManager() {
             <GenerationDataUploader />
           </CardContent>
         </Card>
+
+        <WeatherBackfillCard />
       </TabsContent>
 
       <TabsContent value="insights" className="space-y-6">
