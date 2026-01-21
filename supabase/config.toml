@@ -3,6 +3,9 @@ project_id = "ktgosplhknmnyagxrgbe"
 [functions.aeso-generation-estimator]
 verify_jwt = false
 
+[functions.aeso-generation-upload]
+verify_jwt = false
+
 [functions.inventory-ai-analyzer]
 verify_jwt = false
 
