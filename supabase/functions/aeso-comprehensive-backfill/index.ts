@@ -7,13 +7,11 @@ const corsHeaders = {
 };
 
 interface BackfillRequest {
-  phase: 'prices' | 'weather' | 'demand' | 'generation' | 'generation_weather' | 'all' | 'status' | 'interpolate';
+  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate';
   startYear?: number;
   endYear?: number;
   batchMonths?: number;
   offsetMonths?: number;
-  year?: number;
-  batchSize?: number;
 }
 
 interface BackfillProgress {
@@ -68,21 +66,14 @@ serve(async (req) => {
       case 'demand':
         result = await backfillDemand(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
         break;
-      case 'generation':
-        result = await backfillGeneration(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
-        break;
-      case 'generation_weather':
-        result = await backfillGenerationFromWeather(supabase, year, batchSize);
-        break;
       case 'interpolate':
         result = await interpolateMissingDemand(supabase);
         break;
       case 'all':
-        // Run all phases in sequence for this batch
+        // Run all phases in sequence for this batch (prices, weather, demand only - no fake generation)
         const priceResult = await backfillPrices(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
         const weatherResult = await backfillWeather(supabase, startYear, endYear, batchMonths, offsetMonths);
         const demandResult = await backfillDemand(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
-        const genResult = await backfillGeneration(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
         
         result = {
           success: true,
@@ -90,9 +81,8 @@ serve(async (req) => {
           prices: priceResult,
           weather: weatherResult,
           demand: demandResult,
-          generation: genResult,
           nextOffsetMonths: priceResult.nextOffsetMonths,
-          isComplete: priceResult.isComplete && weatherResult.isComplete && demandResult.isComplete && genResult.isComplete
+          isComplete: priceResult.isComplete && weatherResult.isComplete && demandResult.isComplete
         };
         break;
       default:
@@ -671,155 +661,10 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
   };
 }
 
-async function backfillGeneration(supabase: any, aesoKey: string | undefined, startYear: number, endYear: number, batchMonths: number, offsetMonths: number) {
-  if (!aesoKey) {
-    return { success: false, error: 'AESO API key not configured', recordsUpdated: 0, isComplete: true };
-  }
-
-  let recordsUpdated = 0;
-  const errors: string[] = [];
-
-  // Find records that actually need generation data (smarter approach)
-  const { data: missingRecords } = await supabase
-    .from('aeso_training_data')
-    .select('id, timestamp')
-    .is('generation_gas', null)
-    .order('timestamp', { ascending: true })
-    .limit(1000);
-
-  if (!missingRecords || missingRecords.length === 0) {
-    console.log('No records need generation data');
-    return { success: true, phase: 'generation', recordsUpdated: 0, isComplete: true, remainingRecords: 0 };
-  }
-
-  // Group by month
-  const monthGroups: Record<string, { ids: string[], timestamps: string[] }> = {};
-  for (const record of missingRecords) {
-    const month = record.timestamp.slice(0, 7);
-    if (!monthGroups[month]) {
-      monthGroups[month] = { ids: [], timestamps: [] };
-    }
-    monthGroups[month].ids.push(record.id);
-    monthGroups[month].timestamps.push(record.timestamp);
-  }
-
-  const months = Object.keys(monthGroups).sort();
-  const monthsToProcess = months.slice(0, batchMonths);
-  
-  console.log(`Processing generation for ${monthsToProcess.length} months: ${monthsToProcess.join(', ')}`);
-
-  for (const month of monthsToProcess) {
-    const [yearStr, monthStr] = month.split('-');
-    const year = parseInt(yearStr);
-    const monthNum = parseInt(monthStr);
-    
-    const startDate = `${year}-${monthStr}-01`;
-    const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
-    
-    console.log(`Fetching generation for ${startDate} to ${endDate} (${monthGroups[month].ids.length} records)`);
-
-    try {
-      // AESO doesn't have historical generation by hour, so we'll use the generation assets API
-      // which provides generation by fuel type for all assets
-      const url = `https://api.aeso.ca/report/v1.1/csd/generation/assets/current`;
-      const response = await fetch(url, {
-        headers: {
-          'X-API-Key': aesoKey,
-          'Ocp-Apim-Subscription-Key': aesoKey
-        }
-      });
-
-      // Parse generation by fuel type from current snapshot
-      // For historical, we estimate based on seasonal patterns
-      let generationByType: Record<string, number> = {
-        gas: 4000, coal: 0, hydro: 200, wind: 1500, solar: 500, other: 3000
-      };
-
-      if (response.ok) {
-        const data = await response.json();
-        const assets = data?.return || [];
-        
-        if (Array.isArray(assets)) {
-          generationByType = { gas: 0, coal: 0, hydro: 0, wind: 0, solar: 0, other: 0 };
-          
-          for (const asset of assets) {
-            const fuelType = (asset.fuel_type || '').toLowerCase();
-            const output = parseFloat(asset.tng) || 0;
-            
-            if (fuelType.includes('gas') || fuelType.includes('combined')) generationByType.gas += output;
-            else if (fuelType.includes('coal')) generationByType.coal += output;
-            else if (fuelType.includes('hydro')) generationByType.hydro += output;
-            else if (fuelType.includes('wind')) generationByType.wind += output;
-            else if (fuelType.includes('solar')) generationByType.solar += output;
-            else generationByType.other += output;
-          }
-        }
-      }
-
-      // Get records for this month
-      const { data: recordsForMonth } = await supabase
-        .from('aeso_training_data')
-        .select('id, timestamp, hour_of_day')
-        .gte('timestamp', startDate)
-        .lte('timestamp', `${endDate}T23:59:59`)
-        .is('generation_gas', null)
-        .limit(800);
-
-      if (!recordsForMonth || recordsForMonth.length === 0) continue;
-
-      // Apply time-of-day adjustments for solar
-      for (let i = 0; i < recordsForMonth.length; i += 50) {
-        const batch = recordsForMonth.slice(i, i + 50);
-        
-        const updatePromises = batch.map(record => {
-          const hour = record.hour_of_day || new Date(record.timestamp).getHours();
-          // Solar only during day hours (roughly)
-          const solarFactor = (hour >= 8 && hour <= 18) ? 1.0 : 0.0;
-          const peakFactor = (hour >= 7 && hour <= 22) ? 1.0 : 0.7;
-          
-          return supabase
-            .from('aeso_training_data')
-            .update({
-              generation_gas: Math.round(generationByType.gas * peakFactor),
-              generation_wind: Math.round(generationByType.wind * (0.5 + Math.random() * 0.5)), // Wind varies
-              generation_solar: Math.round(generationByType.solar * solarFactor),
-              generation_hydro: generationByType.hydro,
-              generation_coal: generationByType.coal,
-              generation_other: generationByType.other
-            })
-            .eq('id', record.id);
-        });
-        
-        const results = await Promise.all(updatePromises);
-        recordsUpdated += results.filter(r => !r.error).length;
-      }
-
-      console.log(`Updated generation for ${month}: ${recordsForMonth.length} records`);
-      await new Promise(r => setTimeout(r, 200));
-
-    } catch (error: any) {
-      errors.push(`Error processing generation ${month}: ${error.message}`);
-      console.error(`Generation error for ${month}:`, error);
-    }
-  }
-
-  // Check remaining
-  const { count: remainingCount } = await supabase
-    .from('aeso_training_data')
-    .select('*', { count: 'exact', head: true })
-    .is('generation_gas', null);
-
-  return {
-    success: true,
-    phase: 'generation',
-    recordsUpdated,
-    monthsProcessed: monthsToProcess.length,
-    nextOffsetMonths: offsetMonths + batchMonths,
-    isComplete: !remainingCount || remainingCount === 0,
-    remainingRecords: remainingCount || 0,
-    errors: errors.length > 0 ? errors : undefined
-  };
-}
+// NOTE: Historical generation by fuel type is NOT available via AESO API.
+// The CSD API only provides current-hour snapshots, not historical data.
+// Generation data is only collected in real-time starting Nov 2025.
+// We do NOT estimate or fake historical generation data - investor credibility requires real data only.
 
 function calculateSolarIrradiance(cloudCover: number, hour: number): number {
   const maxIrradiance = 1000;
@@ -979,217 +824,3 @@ async function interpolateMissingDemand(supabase: any): Promise<any> {
   };
 }
 
-// Alberta renewable cluster locations for weather-based generation estimation
-const WIND_CLUSTERS = [
-  { name: 'Pincher Creek', lat: 49.48, lon: -113.94, weight: 0.4 },
-  { name: 'Halkirk', lat: 52.28, lon: -112.13, weight: 0.3 },
-  { name: 'Forty Mile', lat: 49.45, lon: -111.45, weight: 0.3 },
-];
-
-// Alberta capacity timeline (MW installed)
-const CAPACITY_BY_YEAR: Record<number, { wind: number; solar: number; coal: number; hydro: number }> = {
-  2022: { wind: 2800, solar: 500, coal: 4000, hydro: 900 },
-  2023: { wind: 3200, solar: 800, coal: 2000, hydro: 900 },
-  2024: { wind: 4000, solar: 1200, coal: 500, hydro: 900 },
-  2025: { wind: 4500, solar: 1500, coal: 0, hydro: 900 },
-  2026: { wind: 5000, solar: 2000, coal: 0, hydro: 900 },
-};
-
-async function backfillGenerationFromWeather(supabase: any, year?: number, batchSize: number = 500): Promise<any> {
-  console.log(`🔋 Starting weather-based generation estimation (year=${year}, batch=${batchSize})`);
-
-  // Find records missing generation data
-  let query = supabase
-    .from('aeso_training_data')
-    .select('id, timestamp, ail_mw, hour_of_day')
-    .is('generation_gas', null)
-    .order('timestamp', { ascending: true })
-    .limit(batchSize);
-
-  if (year) {
-    query = query.gte('timestamp', `${year}-01-01`).lte('timestamp', `${year}-12-31T23:59:59`);
-  }
-
-  const { data: missingRecords, error: missingError } = await query;
-
-  if (missingError) {
-    return { success: false, error: missingError.message };
-  }
-
-  if (!missingRecords || missingRecords.length === 0) {
-    console.log('✅ No records need generation estimation');
-    return { success: true, phase: 'generation_weather', recordsUpdated: 0, isComplete: true };
-  }
-
-  console.log(`📊 Found ${missingRecords.length} records to estimate`);
-
-  // Group records by date for efficient weather API calls
-  const dateGroups: Record<string, typeof missingRecords> = {};
-  for (const record of missingRecords) {
-    const date = record.timestamp.split('T')[0];
-    if (!dateGroups[date]) dateGroups[date] = [];
-    dateGroups[date].push(record);
-  }
-
-  const uniqueDates = Object.keys(dateGroups).sort();
-  let recordsUpdated = 0;
-  const errors: string[] = [];
-  const DAYS_PER_BATCH = 7;
-
-  for (let i = 0; i < uniqueDates.length; i += DAYS_PER_BATCH) {
-    const dateBatch = uniqueDates.slice(i, i + DAYS_PER_BATCH);
-    const startDate = dateBatch[0];
-    const endDate = dateBatch[dateBatch.length - 1];
-
-    try {
-      // Fetch weather data for this batch
-      const avgLat = WIND_CLUSTERS.reduce((sum, c) => sum + c.lat * c.weight, 0);
-      const avgLon = WIND_CLUSTERS.reduce((sum, c) => sum + c.lon * c.weight, 0);
-      
-      const url = `https://archive-api.open-meteo.com/v1/archive?` +
-        `latitude=${avgLat}&longitude=${avgLon}` +
-        `&start_date=${startDate}&end_date=${endDate}` +
-        `&hourly=wind_speed_100m,shortwave_radiation,cloudcover` +
-        `&timezone=UTC`;
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        errors.push(`Weather API error for ${startDate}: ${response.status}`);
-        continue;
-      }
-
-      const weatherData = await response.json();
-      const hourly = weatherData.hourly || {};
-      
-      // Build hour index lookup
-      const hourIndexMap: Record<string, number> = {};
-      (hourly.time || []).forEach((t: string, idx: number) => {
-        hourIndexMap[t.slice(0, 13)] = idx;
-      });
-
-      // Process each record
-      const updates: any[] = [];
-      
-      for (const date of dateBatch) {
-        for (const record of dateGroups[date] || []) {
-          const ts = new Date(record.timestamp);
-          const recordYear = ts.getFullYear();
-          const hour = record.hour_of_day ?? ts.getUTCHours();
-          const month = ts.getMonth() + 1;
-          
-          const hourKey = record.timestamp.slice(0, 13);
-          const idx = hourIndexMap[hourKey] ?? 0;
-          
-          const windSpeed = hourly.wind_speed_100m?.[idx] ?? 8;
-          const solarRadiation = hourly.shortwave_radiation?.[idx] ?? 0;
-          const cloudCover = hourly.cloudcover?.[idx] ?? 50;
-          
-          // Calculate generation estimates
-          const generation = estimateGenerationFromWeather(
-            recordYear, hour, month, windSpeed, solarRadiation, cloudCover, record.ail_mw
-          );
-          
-          updates.push({ id: record.id, ...generation });
-        }
-      }
-
-      // Batch update
-      for (let j = 0; j < updates.length; j += 50) {
-        const batch = updates.slice(j, j + 50);
-        const updatePromises = batch.map(u =>
-          supabase
-            .from('aeso_training_data')
-            .update({
-              generation_gas: u.generation_gas,
-              generation_wind: u.generation_wind,
-              generation_solar: u.generation_solar,
-              generation_hydro: u.generation_hydro,
-              generation_coal: u.generation_coal,
-              generation_other: u.generation_other
-            })
-            .eq('id', u.id)
-        );
-        const results = await Promise.all(updatePromises);
-        recordsUpdated += results.filter(r => !r.error).length;
-      }
-
-      console.log(`✅ Updated ${updates.length} records for ${startDate} to ${endDate}`);
-      await new Promise(r => setTimeout(r, 100));
-
-    } catch (error: any) {
-      errors.push(`Error processing ${startDate}: ${error.message}`);
-      console.error(`❌ Error:`, error);
-    }
-  }
-
-  // Check remaining
-  const { count: remainingCount } = await supabase
-    .from('aeso_training_data')
-    .select('*', { count: 'exact', head: true })
-    .is('generation_gas', null);
-
-  return {
-    success: true,
-    phase: 'generation_weather',
-    recordsUpdated,
-    datesProcessed: uniqueDates.length,
-    remainingRecords: remainingCount || 0,
-    isComplete: !remainingCount || remainingCount === 0,
-    errors: errors.length > 0 ? errors.slice(0, 10) : undefined
-  };
-}
-
-function estimateGenerationFromWeather(
-  year: number,
-  hour: number,
-  month: number,
-  windSpeed: number,
-  solarRadiation: number,
-  cloudCover: number,
-  demand: number | null
-): Record<string, number> {
-  const capacity = CAPACITY_BY_YEAR[year] || CAPACITY_BY_YEAR[2025];
-  
-  // Wind power curve
-  let windCapacityFactor = 0;
-  if (windSpeed >= 3 && windSpeed < 12) {
-    windCapacityFactor = Math.pow((windSpeed - 3) / 9, 3);
-  } else if (windSpeed >= 12 && windSpeed < 25) {
-    windCapacityFactor = 1.0;
-  }
-  
-  const windVariability = 0.85 + Math.random() * 0.3;
-  const windGeneration = Math.round(capacity.wind * windCapacityFactor * windVariability);
-  
-  // Solar generation
-  let solarGeneration = 0;
-  if (hour >= 7 && hour <= 19) {
-    const solarCapacityFactor = Math.min(1, (solarRadiation / 1000) * (1 - cloudCover / 200));
-    const timeOfDayFactor = Math.sin(((hour - 7) / 12) * Math.PI);
-    solarGeneration = Math.round(capacity.solar * solarCapacityFactor * timeOfDayFactor * 0.9);
-  }
-  
-  // Hydro (seasonal variation)
-  const hydroSeasonalFactor = (month >= 4 && month <= 9) ? 1.1 : 0.9;
-  const hydroGeneration = Math.round(capacity.hydro * 0.4 * hydroSeasonalFactor);
-  
-  // Coal (when available)
-  const coalGeneration = capacity.coal > 0 ? Math.round(capacity.coal * 0.7) : 0;
-  
-  // Other generation
-  const otherGeneration = Math.round(300 + Math.random() * 200);
-  
-  // Gas fills remaining demand
-  const renewableTotal = windGeneration + solarGeneration + hydroGeneration;
-  const totalDemand = demand || 10500;
-  let gasGeneration = Math.max(1500, Math.min(8000, totalDemand - renewableTotal - coalGeneration - otherGeneration));
-  
-  return {
-    generation_gas: gasGeneration,
-    generation_wind: windGeneration,
-    generation_solar: solarGeneration,
-    generation_hydro: hydroGeneration,
-    generation_coal: coalGeneration,
-    generation_other: otherGeneration
-  };
-}
