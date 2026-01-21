@@ -7,11 +7,13 @@ const corsHeaders = {
 };
 
 interface BackfillRequest {
-  phase: 'prices' | 'weather' | 'demand' | 'generation' | 'all' | 'status' | 'interpolate';
+  phase: 'prices' | 'weather' | 'demand' | 'generation' | 'generation_weather' | 'all' | 'status' | 'interpolate';
   startYear?: number;
   endYear?: number;
   batchMonths?: number;
   offsetMonths?: number;
+  year?: number;
+  batchSize?: number;
 }
 
 interface BackfillProgress {
@@ -40,7 +42,9 @@ serve(async (req) => {
       startYear = 2018, 
       endYear = new Date().getFullYear(),
       batchMonths = 3,
-      offsetMonths = 0 
+      offsetMonths = 0,
+      year,
+      batchSize = 500
     } = body;
 
     console.log(`Comprehensive backfill: phase=${phase}, startYear=${startYear}, endYear=${endYear}, offset=${offsetMonths}`);
@@ -66,6 +70,9 @@ serve(async (req) => {
         break;
       case 'generation':
         result = await backfillGeneration(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
+        break;
+      case 'generation_weather':
+        result = await backfillGenerationFromWeather(supabase, year, batchSize);
         break;
       case 'interpolate':
         result = await interpolateMissingDemand(supabase);
@@ -969,5 +976,220 @@ async function interpolateMissingDemand(supabase: any): Promise<any> {
     remainingRecords: remainingCount || 0,
     errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
     message: `Interpolated ${totalUpdated} demand records using hourly averages`
+  };
+}
+
+// Alberta renewable cluster locations for weather-based generation estimation
+const WIND_CLUSTERS = [
+  { name: 'Pincher Creek', lat: 49.48, lon: -113.94, weight: 0.4 },
+  { name: 'Halkirk', lat: 52.28, lon: -112.13, weight: 0.3 },
+  { name: 'Forty Mile', lat: 49.45, lon: -111.45, weight: 0.3 },
+];
+
+// Alberta capacity timeline (MW installed)
+const CAPACITY_BY_YEAR: Record<number, { wind: number; solar: number; coal: number; hydro: number }> = {
+  2022: { wind: 2800, solar: 500, coal: 4000, hydro: 900 },
+  2023: { wind: 3200, solar: 800, coal: 2000, hydro: 900 },
+  2024: { wind: 4000, solar: 1200, coal: 500, hydro: 900 },
+  2025: { wind: 4500, solar: 1500, coal: 0, hydro: 900 },
+  2026: { wind: 5000, solar: 2000, coal: 0, hydro: 900 },
+};
+
+async function backfillGenerationFromWeather(supabase: any, year?: number, batchSize: number = 500): Promise<any> {
+  console.log(`🔋 Starting weather-based generation estimation (year=${year}, batch=${batchSize})`);
+
+  // Find records missing generation data
+  let query = supabase
+    .from('aeso_training_data')
+    .select('id, timestamp, ail_mw, hour_of_day')
+    .is('generation_gas', null)
+    .order('timestamp', { ascending: true })
+    .limit(batchSize);
+
+  if (year) {
+    query = query.gte('timestamp', `${year}-01-01`).lte('timestamp', `${year}-12-31T23:59:59`);
+  }
+
+  const { data: missingRecords, error: missingError } = await query;
+
+  if (missingError) {
+    return { success: false, error: missingError.message };
+  }
+
+  if (!missingRecords || missingRecords.length === 0) {
+    console.log('✅ No records need generation estimation');
+    return { success: true, phase: 'generation_weather', recordsUpdated: 0, isComplete: true };
+  }
+
+  console.log(`📊 Found ${missingRecords.length} records to estimate`);
+
+  // Group records by date for efficient weather API calls
+  const dateGroups: Record<string, typeof missingRecords> = {};
+  for (const record of missingRecords) {
+    const date = record.timestamp.split('T')[0];
+    if (!dateGroups[date]) dateGroups[date] = [];
+    dateGroups[date].push(record);
+  }
+
+  const uniqueDates = Object.keys(dateGroups).sort();
+  let recordsUpdated = 0;
+  const errors: string[] = [];
+  const DAYS_PER_BATCH = 7;
+
+  for (let i = 0; i < uniqueDates.length; i += DAYS_PER_BATCH) {
+    const dateBatch = uniqueDates.slice(i, i + DAYS_PER_BATCH);
+    const startDate = dateBatch[0];
+    const endDate = dateBatch[dateBatch.length - 1];
+
+    try {
+      // Fetch weather data for this batch
+      const avgLat = WIND_CLUSTERS.reduce((sum, c) => sum + c.lat * c.weight, 0);
+      const avgLon = WIND_CLUSTERS.reduce((sum, c) => sum + c.lon * c.weight, 0);
+      
+      const url = `https://archive-api.open-meteo.com/v1/archive?` +
+        `latitude=${avgLat}&longitude=${avgLon}` +
+        `&start_date=${startDate}&end_date=${endDate}` +
+        `&hourly=wind_speed_100m,shortwave_radiation,cloudcover` +
+        `&timezone=UTC`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        errors.push(`Weather API error for ${startDate}: ${response.status}`);
+        continue;
+      }
+
+      const weatherData = await response.json();
+      const hourly = weatherData.hourly || {};
+      
+      // Build hour index lookup
+      const hourIndexMap: Record<string, number> = {};
+      (hourly.time || []).forEach((t: string, idx: number) => {
+        hourIndexMap[t.slice(0, 13)] = idx;
+      });
+
+      // Process each record
+      const updates: any[] = [];
+      
+      for (const date of dateBatch) {
+        for (const record of dateGroups[date] || []) {
+          const ts = new Date(record.timestamp);
+          const recordYear = ts.getFullYear();
+          const hour = record.hour_of_day ?? ts.getUTCHours();
+          const month = ts.getMonth() + 1;
+          
+          const hourKey = record.timestamp.slice(0, 13);
+          const idx = hourIndexMap[hourKey] ?? 0;
+          
+          const windSpeed = hourly.wind_speed_100m?.[idx] ?? 8;
+          const solarRadiation = hourly.shortwave_radiation?.[idx] ?? 0;
+          const cloudCover = hourly.cloudcover?.[idx] ?? 50;
+          
+          // Calculate generation estimates
+          const generation = estimateGenerationFromWeather(
+            recordYear, hour, month, windSpeed, solarRadiation, cloudCover, record.ail_mw
+          );
+          
+          updates.push({ id: record.id, ...generation });
+        }
+      }
+
+      // Batch update
+      for (let j = 0; j < updates.length; j += 50) {
+        const batch = updates.slice(j, j + 50);
+        const updatePromises = batch.map(u =>
+          supabase
+            .from('aeso_training_data')
+            .update({
+              generation_gas: u.generation_gas,
+              generation_wind: u.generation_wind,
+              generation_solar: u.generation_solar,
+              generation_hydro: u.generation_hydro,
+              generation_coal: u.generation_coal,
+              generation_other: u.generation_other
+            })
+            .eq('id', u.id)
+        );
+        const results = await Promise.all(updatePromises);
+        recordsUpdated += results.filter(r => !r.error).length;
+      }
+
+      console.log(`✅ Updated ${updates.length} records for ${startDate} to ${endDate}`);
+      await new Promise(r => setTimeout(r, 100));
+
+    } catch (error: any) {
+      errors.push(`Error processing ${startDate}: ${error.message}`);
+      console.error(`❌ Error:`, error);
+    }
+  }
+
+  // Check remaining
+  const { count: remainingCount } = await supabase
+    .from('aeso_training_data')
+    .select('*', { count: 'exact', head: true })
+    .is('generation_gas', null);
+
+  return {
+    success: true,
+    phase: 'generation_weather',
+    recordsUpdated,
+    datesProcessed: uniqueDates.length,
+    remainingRecords: remainingCount || 0,
+    isComplete: !remainingCount || remainingCount === 0,
+    errors: errors.length > 0 ? errors.slice(0, 10) : undefined
+  };
+}
+
+function estimateGenerationFromWeather(
+  year: number,
+  hour: number,
+  month: number,
+  windSpeed: number,
+  solarRadiation: number,
+  cloudCover: number,
+  demand: number | null
+): Record<string, number> {
+  const capacity = CAPACITY_BY_YEAR[year] || CAPACITY_BY_YEAR[2025];
+  
+  // Wind power curve
+  let windCapacityFactor = 0;
+  if (windSpeed >= 3 && windSpeed < 12) {
+    windCapacityFactor = Math.pow((windSpeed - 3) / 9, 3);
+  } else if (windSpeed >= 12 && windSpeed < 25) {
+    windCapacityFactor = 1.0;
+  }
+  
+  const windVariability = 0.85 + Math.random() * 0.3;
+  const windGeneration = Math.round(capacity.wind * windCapacityFactor * windVariability);
+  
+  // Solar generation
+  let solarGeneration = 0;
+  if (hour >= 7 && hour <= 19) {
+    const solarCapacityFactor = Math.min(1, (solarRadiation / 1000) * (1 - cloudCover / 200));
+    const timeOfDayFactor = Math.sin(((hour - 7) / 12) * Math.PI);
+    solarGeneration = Math.round(capacity.solar * solarCapacityFactor * timeOfDayFactor * 0.9);
+  }
+  
+  // Hydro (seasonal variation)
+  const hydroSeasonalFactor = (month >= 4 && month <= 9) ? 1.1 : 0.9;
+  const hydroGeneration = Math.round(capacity.hydro * 0.4 * hydroSeasonalFactor);
+  
+  // Coal (when available)
+  const coalGeneration = capacity.coal > 0 ? Math.round(capacity.coal * 0.7) : 0;
+  
+  // Other generation
+  const otherGeneration = Math.round(300 + Math.random() * 200);
+  
+  // Gas fills remaining demand
+  const renewableTotal = windGeneration + solarGeneration + hydroGeneration;
+  const totalDemand = demand || 10500;
+  let gasGeneration = Math.max(1500, Math.min(8000, totalDemand - renewableTotal - coalGeneration - otherGeneration));
+  
+  return {
+    generation_gas: gasGeneration,
+    generation_wind: windGeneration,
+    generation_solar: solarGeneration,
+    generation_hydro: hydroGeneration,
+    generation_coal: coalGeneration,
+    generation_other: otherGeneration
   };
 }
