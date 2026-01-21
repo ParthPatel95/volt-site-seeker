@@ -495,6 +495,60 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_db_model_params: {
+        Row: {
+          dow_factors: Json | null
+          feature_weights: Json | null
+          global_mean: number | null
+          global_std: number | null
+          hourly_factors: Json | null
+          id: string
+          mae: number | null
+          model_version: string
+          monthly_factors: Json | null
+          r_squared: number | null
+          regime_params: Json | null
+          rmse: number | null
+          smape: number | null
+          trained_at: string
+          training_records: number | null
+        }
+        Insert: {
+          dow_factors?: Json | null
+          feature_weights?: Json | null
+          global_mean?: number | null
+          global_std?: number | null
+          hourly_factors?: Json | null
+          id?: string
+          mae?: number | null
+          model_version: string
+          monthly_factors?: Json | null
+          r_squared?: number | null
+          regime_params?: Json | null
+          rmse?: number | null
+          smape?: number | null
+          trained_at?: string
+          training_records?: number | null
+        }
+        Update: {
+          dow_factors?: Json | null
+          feature_weights?: Json | null
+          global_mean?: number | null
+          global_std?: number | null
+          hourly_factors?: Json | null
+          id?: string
+          mae?: number | null
+          model_version?: string
+          monthly_factors?: Json | null
+          r_squared?: number | null
+          regime_params?: Json | null
+          rmse?: number | null
+          smape?: number | null
+          trained_at?: string
+          training_records?: number | null
+        }
+        Relationships: []
+      }
       aeso_enhanced_features: {
         Row: {
           created_at: string
@@ -11372,8 +11426,20 @@ export type Database = {
       is_academy_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_voltbuild_approved: { Args: { user_id: string }; Returns: boolean }
       is_voltscout_approved: { Args: { user_id: string }; Returns: boolean }
+      predict_aeso_price: {
+        Args: {
+          p_day_of_week: number
+          p_demand?: number
+          p_hour: number
+          p_month: number
+          p_price_lag_1h?: number
+          p_price_lag_24h?: number
+        }
+        Returns: Json
+      }
       restore_verified_site: { Args: { site_id: string }; Returns: boolean }
       soft_delete_verified_site: { Args: { site_id: string }; Returns: boolean }
+      train_aeso_model: { Args: never; Returns: Json }
       update_prediction_actuals: {
         Args: never
         Returns: {
