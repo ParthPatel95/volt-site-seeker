@@ -12,7 +12,8 @@ import {
   XCircle, 
   Clock,
   RefreshCw,
-  Settings
+  Settings,
+  Upload
 } from 'lucide-react';
 import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
 import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
@@ -24,6 +25,7 @@ import { ModelStatusDashboard } from './ModelStatusDashboard';
 import { ModelPerformanceMetrics } from './ModelPerformanceMetrics';
 import { PredictionAccuracyTracker } from './PredictionAccuracyTracker';
 import { BacktestingDashboard } from './BacktestingDashboard';
+import { GenerationDataUploader } from '@/components/admin/GenerationDataUploader';
 
 interface TrainingJob {
   id: string;
@@ -183,14 +185,18 @@ export function AESOTrainingManager() {
 
   return (
     <Tabs defaultValue="training" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="training" className="flex items-center gap-2">
           <Settings className="w-4 h-4" />
-          Training Controls
+          Training
+        </TabsTrigger>
+        <TabsTrigger value="data-upload" className="flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          Data Upload
         </TabsTrigger>
         <TabsTrigger value="insights" className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4" />
-          Model Insights
+          Insights
         </TabsTrigger>
       </TabsList>
 
@@ -365,6 +371,24 @@ export function AESOTrainingManager() {
           </div>
         </CardContent>
       </Card>
+      </TabsContent>
+
+      <TabsContent value="data-upload" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Upload Historical Generation Data
+            </CardTitle>
+            <CardDescription>
+              Upload CSV files containing historical generation data by fuel type. 
+              Data will be matched by timestamp and merged with existing records to improve model accuracy.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GenerationDataUploader />
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="insights" className="space-y-6">
