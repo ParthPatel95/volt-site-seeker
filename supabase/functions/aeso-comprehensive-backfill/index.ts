@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface BackfillRequest {
-  phase: 'prices' | 'weather' | 'demand' | 'generation' | 'all' | 'status';
+  phase: 'prices' | 'weather' | 'demand' | 'generation' | 'all' | 'status' | 'interpolate';
   startYear?: number;
   endYear?: number;
   batchMonths?: number;
@@ -66,6 +66,9 @@ serve(async (req) => {
         break;
       case 'generation':
         result = await backfillGeneration(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
+        break;
+      case 'interpolate':
+        result = await interpolateMissingDemand(supabase);
         break;
       case 'all':
         // Run all phases in sequence for this batch
@@ -483,18 +486,11 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
     monthGroups[month].timestamps.push(record.timestamp);
   }
 
-  // Filter out months with only a few missing records (likely timezone edge cases)
-  // Focus on months that have significant gaps (> 50 missing records)
-  const months = Object.keys(monthGroups)
-    .filter(month => monthGroups[month].ids.length > 50)
-    .sort();
+  // Process ALL months with missing records (including edge cases)
+  const months = Object.keys(monthGroups).sort();
+  const monthsToProcess = months.slice(0, batchMonths);
   
-  // If no months with significant gaps, include all months
-  const monthsToProcess = months.length > 0 
-    ? months.slice(0, batchMonths)
-    : Object.keys(monthGroups).sort().slice(0, batchMonths);
-  
-  console.log(`Processing demand for ${monthsToProcess.length} months (skipping near-complete): ${monthsToProcess.join(', ')}`);
+  console.log(`Processing demand for ${monthsToProcess.length} months: ${monthsToProcess.join(', ')}`);
   console.log(`Month breakdown: ${Object.entries(monthGroups).slice(0, 10).map(([m, g]) => `${m}:${g.ids.length}`).join(', ')}`);
 
   for (const month of monthsToProcess) {
@@ -502,7 +498,11 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
     const year = parseInt(yearStr);
     const monthNum = parseInt(monthStr);
     
-    const startDate = `${year}-${monthStr}-01`;
+    // TIMEZONE FIX: Extend query to include previous month's last day
+    // This captures the first 7 hours of each month (00:00-06:00 UTC) which are 
+    // returned by AESO as part of the previous day in Mountain Time
+    const prevMonthLastDay = new Date(year, monthNum - 1, 0); // Last day of previous month
+    const startDate = prevMonthLastDay.toISOString().split('T')[0];
     const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
     
     console.log(`Fetching demand for ${startDate} to ${endDate} (${monthGroups[month].ids.length} records)`);
@@ -826,4 +826,148 @@ function calculateSolarIrradiance(cloudCover: number, hour: number): number {
   
   const cloudFactor = 1 - (cloudCover / 100) * 0.75;
   return maxIrradiance * timeFactor * cloudFactor;
+}
+
+// Fill remaining demand gaps with hour-based interpolation from same month
+async function interpolateMissingDemand(supabase: any): Promise<any> {
+  console.log('Starting demand interpolation for remaining gaps...');
+  
+  // Get all records missing demand
+  const { data: missingRecords, error: missingError } = await supabase
+    .from('aeso_training_data')
+    .select('id, timestamp')
+    .is('ail_mw', null)
+    .order('timestamp');
+    
+  if (missingError) {
+    console.error('Error fetching missing records:', missingError);
+    return { success: false, error: missingError.message };
+  }
+  
+  if (!missingRecords || missingRecords.length === 0) {
+    console.log('No missing demand records found');
+    return { success: true, recordsUpdated: 0, message: 'All records complete' };
+  }
+  
+  console.log(`Found ${missingRecords.length} records to interpolate`);
+  
+  // Group by month for efficient averaging
+  const monthGroups: Record<string, { ids: string[], hours: number[] }> = {};
+  
+  for (const record of missingRecords) {
+    const ts = new Date(record.timestamp);
+    const month = `${ts.getFullYear()}-${String(ts.getMonth() + 1).padStart(2, '0')}`;
+    const hour = ts.getUTCHours();
+    
+    if (!monthGroups[month]) {
+      monthGroups[month] = { ids: [], hours: [] };
+    }
+    monthGroups[month].ids.push(record.id);
+    monthGroups[month].hours.push(hour);
+  }
+  
+  let totalUpdated = 0;
+  const errors: string[] = [];
+  
+  for (const [month, group] of Object.entries(monthGroups)) {
+    const [yearStr, monthStr] = month.split('-');
+    const year = parseInt(yearStr);
+    const monthNum = parseInt(monthStr);
+    
+    // Calculate start and end of month for query
+    const startOfMonth = new Date(Date.UTC(year, monthNum - 1, 1));
+    const endOfMonth = new Date(Date.UTC(year, monthNum, 0, 23, 59, 59));
+    
+    // Get hourly averages for this month
+    const { data: monthData, error: monthError } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp, ail_mw')
+      .gte('timestamp', startOfMonth.toISOString())
+      .lte('timestamp', endOfMonth.toISOString())
+      .not('ail_mw', 'is', null);
+      
+    if (monthError || !monthData || monthData.length === 0) {
+      // Fallback to previous month or overall average
+      const { data: fallbackData } = await supabase
+        .from('aeso_training_data')
+        .select('ail_mw')
+        .not('ail_mw', 'is', null)
+        .limit(1000);
+      
+      const avgDemand = fallbackData?.length 
+        ? Math.round(fallbackData.reduce((sum: number, r: any) => sum + r.ail_mw, 0) / fallbackData.length)
+        : 10500;
+      
+      // Update all records in this group with the average
+      const { error: updateError } = await supabase
+        .from('aeso_training_data')
+        .update({ ail_mw: avgDemand })
+        .in('id', group.ids);
+      
+      if (updateError) {
+        errors.push(`Failed to update ${month}: ${updateError.message}`);
+      } else {
+        totalUpdated += group.ids.length;
+        console.log(`Updated ${group.ids.length} records in ${month} with fallback average ${avgDemand}`);
+      }
+      continue;
+    }
+    
+    // Calculate hourly averages
+    const hourlyTotals: Record<number, { sum: number, count: number }> = {};
+    for (const record of monthData) {
+      const hour = new Date(record.timestamp).getUTCHours();
+      if (!hourlyTotals[hour]) {
+        hourlyTotals[hour] = { sum: 0, count: 0 };
+      }
+      hourlyTotals[hour].sum += record.ail_mw;
+      hourlyTotals[hour].count++;
+    }
+    
+    const hourlyAvg: Record<number, number> = {};
+    const overallAvg = Math.round(monthData.reduce((sum: number, r: any) => sum + r.ail_mw, 0) / monthData.length);
+    
+    for (let h = 0; h < 24; h++) {
+      if (hourlyTotals[h] && hourlyTotals[h].count > 0) {
+        hourlyAvg[h] = Math.round(hourlyTotals[h].sum / hourlyTotals[h].count);
+      } else {
+        hourlyAvg[h] = overallAvg;
+      }
+    }
+    
+    // Update each record with its hour's average
+    for (let i = 0; i < group.ids.length; i++) {
+      const id = group.ids[i];
+      const hour = group.hours[i];
+      const avgValue = hourlyAvg[hour] || overallAvg;
+      
+      const { error: updateError } = await supabase
+        .from('aeso_training_data')
+        .update({ ail_mw: avgValue })
+        .eq('id', id);
+      
+      if (updateError) {
+        errors.push(`Failed to update record ${id}: ${updateError.message}`);
+      } else {
+        totalUpdated++;
+      }
+    }
+    
+    console.log(`Interpolated ${group.ids.length} records in ${month}`);
+  }
+  
+  // Verify final count
+  const { count: remainingCount } = await supabase
+    .from('aeso_training_data')
+    .select('*', { count: 'exact', head: true })
+    .is('ail_mw', null);
+  
+  return {
+    success: errors.length === 0,
+    phase: 'interpolate',
+    recordsUpdated: totalUpdated,
+    remainingRecords: remainingCount || 0,
+    errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
+    message: `Interpolated ${totalUpdated} demand records using hourly averages`
+  };
 }
