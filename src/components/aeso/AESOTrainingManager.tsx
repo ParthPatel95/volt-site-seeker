@@ -40,6 +40,7 @@ interface TrainingJob {
   performance_after: any;
 }
 
+// AESO Training Manager - v2.1 with Data Upload tab
 export function AESOTrainingManager() {
   const [currentJob, setCurrentJob] = useState<TrainingJob | null>(null);
   const [jobHistory, setJobHistory] = useState<TrainingJob[]>([]);
