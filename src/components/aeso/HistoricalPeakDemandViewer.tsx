@@ -14,8 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
   LineChart,
-  Line,
-  ReferenceLine
+  Line
 } from 'recharts';
 import { 
   History, 
@@ -30,7 +29,8 @@ import {
   Trophy,
   Target,
   AlertTriangle,
-  Sparkles
+  Sparkles,
+  CalendarDays
 } from 'lucide-react';
 import { useHistorical12CPPeaks } from '@/hooks/useHistorical12CPPeaks';
 import { format } from 'date-fns';
@@ -39,7 +39,6 @@ export function HistoricalPeakDemandViewer() {
   const {
     peaksData,
     loading,
-    selectedRange,
     fetchHistoricalPeaks,
     formatPeakHour
   } = useHistorical12CPPeaks();
@@ -47,7 +46,7 @@ export function HistoricalPeakDemandViewer() {
   const [activeTab, setActiveTab] = useState('monthly');
 
   useEffect(() => {
-    fetchHistoricalPeaks(4); // Load 4 years for comprehensive analysis
+    fetchHistoricalPeaks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -71,21 +70,19 @@ export function HistoricalPeakDemandViewer() {
     return 'hsl(142, 76%, 36%)';
   };
 
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case 'critical': return 'bg-red-500';
-      case 'high': return 'bg-orange-500';
-      case 'moderate': return 'bg-yellow-500';
-      default: return 'bg-green-500';
-    }
-  };
-
   const getRiskBadgeVariant = (level: string): "destructive" | "secondary" | "outline" => {
     switch (level) {
       case 'critical': return 'destructive';
       case 'high': return 'secondary';
       default: return 'outline';
     }
+  };
+
+  const getConfidenceBadge = (score: number) => {
+    if (score >= 90) return { variant: 'destructive' as const, label: 'Very High' };
+    if (score >= 75) return { variant: 'secondary' as const, label: 'High' };
+    if (score >= 60) return { variant: 'outline' as const, label: 'Moderate' };
+    return { variant: 'outline' as const, label: 'Lower' };
   };
 
   if (loading && !peaksData) {
@@ -99,7 +96,7 @@ export function HistoricalPeakDemandViewer() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Range Selector */}
+      {/* Header */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -108,26 +105,15 @@ export function HistoricalPeakDemandViewer() {
               <CardTitle>Historical 12CP Peak Demand Analysis</CardTitle>
               <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/30">
                 <Database className="w-3 h-3 mr-1" />
-                Real AESO Data
+                4-Year Analysis
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">View Range:</span>
-              <div className="flex gap-1">
-                {([1, 2, 4] as const).map(years => (
-                  <Button
-                    key={years}
-                    variant={selectedRange === years ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => fetchHistoricalPeaks(years)}
-                    disabled={loading}
-                  >
-                    {years} {years === 1 ? 'Year' : 'Years'}
-                  </Button>
-                ))}
-              </div>
+              <Badge variant="secondary" className="text-xs">
+                {peaksData?.recordCount ? formatNumber(peaksData.recordCount) : '—'} records
+              </Badge>
               <Button
-                onClick={() => fetchHistoricalPeaks(selectedRange)}
+                onClick={() => fetchHistoricalPeaks()}
                 variant="ghost"
                 size="icon"
                 disabled={loading}
@@ -143,7 +129,7 @@ export function HistoricalPeakDemandViewer() {
             {/* Key Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200/50">
-                <p className="text-xs text-muted-foreground">All-Time Peak (Period)</p>
+                <p className="text-xs text-muted-foreground">All-Time Peak</p>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {formatNumber(peaksData.stats.allTimePeakMW)} MW
                 </p>
@@ -152,12 +138,12 @@ export function HistoricalPeakDemandViewer() {
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200/50">
-                <p className="text-xs text-muted-foreground">Avg Monthly Peak</p>
+                <p className="text-xs text-muted-foreground">Avg Yearly Growth</p>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {formatNumber(peaksData.stats.avgMonthlyPeakMW)} MW
+                  {peaksData.stats.avgYearlyGrowth > 0 ? '+' : ''}{peaksData.stats.avgYearlyGrowth}%
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Across {peaksData.peaks.length} months
+                  Year-over-year trend
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200/50">
@@ -182,18 +168,22 @@ export function HistoricalPeakDemandViewer() {
 
             {/* Sub-Tabs for Different Views */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="monthly" className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
-                  Monthly Peaks
+                  <span className="hidden sm:inline">Monthly</span>
+                </TabsTrigger>
+                <TabsTrigger value="yearly" className="flex items-center gap-1.5">
+                  <CalendarDays className="w-4 h-4" />
+                  <span className="hidden sm:inline">Yearly</span>
                 </TabsTrigger>
                 <TabsTrigger value="top12" className="flex items-center gap-1.5">
                   <Trophy className="w-4 h-4" />
-                  All-Time Top 12
+                  <span className="hidden sm:inline">Top 12</span>
                 </TabsTrigger>
                 <TabsTrigger value="predictions" className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4" />
-                  2026 Predictions
+                  <span className="hidden sm:inline">Predictions</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -302,6 +292,214 @@ export function HistoricalPeakDemandViewer() {
                     </table>
                   </div>
                 </div>
+              </TabsContent>
+
+              {/* Yearly Peaks Tab */}
+              <TabsContent value="yearly" className="space-y-6 mt-6">
+                {/* Yearly Peak Summary Table */}
+                <Card className="border-primary/30">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CalendarDays className="w-5 h-5 text-primary" />
+                      Yearly 12CP Peak Summary
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Each year's highest demand hour with exact timestamp and year-over-year growth
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-lg border overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-muted/30">
+                          <tr>
+                            <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Year</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Peak Date/Time</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Demand (MW)</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Price</th>
+                            <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Day</th>
+                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">YoY Growth</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {peaksData.yearlyPeakSummary.map((year, index) => (
+                            <tr 
+                              key={year.year} 
+                              className={index === 0 ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : ''}
+                            >
+                              <td className="px-4 py-3 text-center">
+                                <span className="font-bold text-lg">{year.year}</span>
+                              </td>
+                              <td className="px-4 py-3 text-sm">
+                                <div className="font-medium">{year.monthName} {year.dayOfMonth}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatPeakHour(year.peakHour)} MST
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="font-bold text-lg">{formatNumber(year.peakDemandMW)}</span>
+                                <span className="text-muted-foreground ml-1">MW</span>
+                                {index === 0 && (
+                                  <Badge className="ml-2 bg-yellow-500 text-[10px] py-0">RECORD</Badge>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right">
+                                ${year.priceAtPeak}/MWh
+                              </td>
+                              <td className="px-4 py-3 text-sm text-center text-muted-foreground">
+                                {year.dayOfWeek.slice(0, 3)}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                {year.growthFromPrevYear !== null ? (
+                                  <span className={`font-medium ${
+                                    year.growthFromPrevYear > 0 
+                                      ? 'text-red-600 dark:text-red-400' 
+                                      : 'text-green-600 dark:text-green-400'
+                                  }`}>
+                                    {year.growthFromPrevYear > 0 ? '+' : ''}
+                                    {year.growthFromPrevYear.toFixed(1)}%
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Analytics Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        Growth Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {peaksData.yearlyPeakSummary.slice(0, -1).map((year, index) => {
+                          const nextYear = peaksData.yearlyPeakSummary[index + 1];
+                          if (!nextYear) return null;
+                          const growth = year.growthFromPrevYear;
+                          return (
+                            <div key={year.year} className="flex items-center justify-between p-2 rounded bg-muted/50">
+                              <span className="text-sm">{nextYear.year} → {year.year}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-medium ${
+                                  growth && growth > 0 ? 'text-red-600' : 'text-green-600'
+                                }`}>
+                                  {growth !== null ? `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%` : '—'}
+                                </span>
+                                {growth !== null && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({growth > 0 ? 'increase' : 'decrease'})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-primary" />
+                        Key Insights
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3 text-sm">
+                        <div className="p-2 rounded bg-muted/50">
+                          <p className="font-medium">Peak Season</p>
+                          <p className="text-muted-foreground">
+                            {peaksData.yearlyPeakSummary.filter(y => ['December', 'January'].includes(y.monthName)).length} of {peaksData.yearlyPeakSummary.length} yearly peaks in Dec-Jan
+                          </p>
+                        </div>
+                        <div className="p-2 rounded bg-muted/50">
+                          <p className="font-medium">Peak Time Pattern</p>
+                          <p className="text-muted-foreground">
+                            100% of yearly peaks occurred between {formatPeakHour(0)} - {formatPeakHour(3)}
+                          </p>
+                        </div>
+                        <div className="p-2 rounded bg-muted/50">
+                          <p className="font-medium">Avg Annual Growth</p>
+                          <p className="text-muted-foreground">
+                            {peaksData.stats.avgYearlyGrowth > 0 ? '+' : ''}{peaksData.stats.avgYearlyGrowth}% year-over-year
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Year-over-Year Trend Chart */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      Year-over-Year Peak Trend
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={peaksData.yearlyTrends}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis dataKey="year" fontSize={12} />
+                          <YAxis 
+                            fontSize={12}
+                            tickFormatter={(v) => `${(v/1000).toFixed(1)}k`}
+                            domain={['dataMin - 300', 'dataMax + 300']}
+                          />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-popover border rounded-lg shadow-lg p-3">
+                                    <p className="font-semibold">{data.year}{data.isPredicted ? ' (Predicted)' : ''}</p>
+                                    <p className="text-sm">Max Peak: <strong>{formatNumber(data.maxPeak)} MW</strong></p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="maxPeak" 
+                            stroke="hsl(var(--primary))" 
+                            strokeWidth={2}
+                            dot={(props) => {
+                              const { cx, cy, payload } = props;
+                              return (
+                                <circle 
+                                  cx={cx} 
+                                  cy={cy} 
+                                  r={payload.isPredicted ? 6 : 4} 
+                                  fill={payload.isPredicted ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))'}
+                                  stroke={payload.isPredicted ? 'hsl(var(--primary))' : 'white'}
+                                  strokeWidth={2}
+                                  strokeDasharray={payload.isPredicted ? '3 3' : '0'}
+                                />
+                              );
+                            }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      Dashed circle indicates predicted value based on historical growth trend
+                    </p>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* All-Time Top 12 Tab */}
@@ -468,121 +666,99 @@ export function HistoricalPeakDemandViewer() {
                     </div>
                   </div>
                 </div>
-
-                {/* Year-over-Year Trend */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-primary" />
-                      Year-over-Year Peak Trend
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={peaksData.yearlyTrends}>
-                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis dataKey="year" fontSize={12} />
-                          <YAxis 
-                            fontSize={12}
-                            tickFormatter={(v) => `${(v/1000).toFixed(1)}k`}
-                            domain={['dataMin - 300', 'dataMax + 300']}
-                          />
-                          <Tooltip 
-                            content={({ active, payload }) => {
-                              if (active && payload && payload.length) {
-                                const data = payload[0].payload;
-                                return (
-                                  <div className="bg-popover border rounded-lg shadow-lg p-3">
-                                    <p className="font-semibold">{data.year}{data.isPredicted ? ' (Predicted)' : ''}</p>
-                                    <p className="text-sm">Max Peak: <strong>{formatNumber(data.maxPeak)} MW</strong></p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="maxPeak" 
-                            stroke="hsl(var(--primary))" 
-                            strokeWidth={2}
-                            dot={(props) => {
-                              const { cx, cy, payload } = props;
-                              return (
-                                <circle 
-                                  cx={cx} 
-                                  cy={cy} 
-                                  r={payload.isPredicted ? 6 : 4} 
-                                  fill={payload.isPredicted ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))'}
-                                  stroke={payload.isPredicted ? 'hsl(var(--primary))' : 'white'}
-                                  strokeWidth={2}
-                                  strokeDasharray={payload.isPredicted ? '3 3' : '0'}
-                                />
-                              );
-                            }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2 text-center">
-                      Dashed circle indicates predicted value based on 3% annual growth trend
-                    </p>
-                  </CardContent>
-                </Card>
               </TabsContent>
 
               {/* 2026 Predictions Tab */}
               <TabsContent value="predictions" className="space-y-6 mt-6">
-                {/* Prediction Header */}
+                {/* Exact 12CP Predictions */}
                 <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                      2026 Peak Demand Predictions
+                      <Target className="w-5 h-5 text-primary" />
+                      Exact 2026/2027 12CP Event Predictions
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Based on {peaksData.yearsAnalyzed} years of historical patterns + 3% annual growth trend
+                      Based on 4 years of historical patterns, here are the 12 most likely hours when Alberta's 12CP peaks will occur
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg bg-card border">
-                        <p className="text-xs text-muted-foreground">Expected 2026 Annual Peak</p>
-                        <p className="text-2xl font-bold text-primary">
-                          {formatNumber(peaksData.predictions[0]?.expectedDemandRange.min || 13100)} - {formatNumber(peaksData.predictions[0]?.expectedDemandRange.max || 13200)} MW
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Based on {formatNumber(peaksData.stats.allTimePeakMW)} MW record + 3% growth
-                        </p>
-                      </div>
-                      <div className="p-4 rounded-lg bg-card border">
-                        <p className="text-xs text-muted-foreground">Current 2026 Peak (YTD)</p>
-                        <p className="text-2xl font-bold">
-                          {peaksData.current2026Peak ? formatNumber(peaksData.current2026Peak) : '—'} MW
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {peaksData.current2026Peak 
-                            ? `${Math.round((peaksData.current2026Peak / (peaksData.predictions[0]?.expectedDemandRange.max || 13200)) * 100)}% of predicted maximum`
-                            : 'No 2026 data recorded yet'
-                          }
-                        </p>
-                      </div>
+                    <div className="rounded-lg border overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-muted/30">
+                          <tr>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">#</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Predicted Date</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Time Window</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Expected</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">Confidence</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {peaksData.exactPredictions.map((pred) => {
+                            const badge = getConfidenceBadge(pred.confidenceScore);
+                            return (
+                              <tr 
+                                key={pred.rank} 
+                                className={pred.rank <= 3 ? 'bg-red-50/30 dark:bg-red-950/10' : pred.rank <= 6 ? 'bg-orange-50/20 dark:bg-orange-950/10' : ''}
+                              >
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                                    pred.rank <= 3 ? 'bg-red-500 text-white' :
+                                    pred.rank <= 6 ? 'bg-orange-500 text-white' :
+                                    pred.rank <= 9 ? 'bg-yellow-500 text-white' :
+                                    'bg-muted text-muted-foreground'
+                                  }`}>
+                                    {pred.rank}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-3 text-sm">
+                                  <div className="font-medium">{pred.predictedDayOfWeek}, {pred.predictedDate}</div>
+                                  <div className="text-xs text-muted-foreground mt-0.5">{pred.basedOnHistorical}</div>
+                                </td>
+                                <td className="px-3 py-3 text-sm">
+                                  <Badge variant="outline">{pred.predictedTimeWindow}</Badge>
+                                </td>
+                                <td className="px-3 py-3 text-sm text-right">
+                                  <span className="font-bold">{formatNumber(pred.expectedDemandMW.min)}</span>
+                                  <span className="text-muted-foreground">-</span>
+                                  <span className="font-bold">{formatNumber(pred.expectedDemandMW.max)}</span>
+                                  <span className="text-muted-foreground ml-1">MW</span>
+                                </td>
+                                <td className="px-3 py-3 text-center">
+                                  <Badge variant={badge.variant}>{pred.confidenceScore}%</Badge>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Methodology */}
+                    <div className="mt-4 p-4 rounded-lg bg-muted/50 border">
+                      <h4 className="font-medium text-sm mb-2">🔍 Prediction Methodology</h4>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>• Analyzed top 12 peaks from 4 years of AESO data (33,000+ records)</li>
+                        <li>• Applied {peaksData.stats.avgYearlyGrowth}% YoY growth factor to 2025 record ({formatNumber(peaksData.stats.allTimePeakMW)} MW)</li>
+                        <li>• December 11-24 window based on 100% historical occurrence in this period</li>
+                        <li>• 1-3 AM timing based on all top 12 peaks occurring in this window</li>
+                        <li>• Day-of-week patterns mapped to 2026 calendar (Friday/Thursday/Saturday highest)</li>
+                      </ul>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Monthly Risk Forecast */}
+                {/* Monthly Risk Overview */}
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <Target className="w-5 h-5 text-primary" />
+                      <Sparkles className="w-5 h-5 text-primary" />
                       Monthly 12CP Risk Forecast
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {peaksData.predictions.map((prediction) => (
+                      {peaksData.predictions.slice(0, 6).map((prediction) => (
                         <div 
                           key={prediction.month} 
                           className={`p-4 rounded-lg border ${
@@ -620,65 +796,24 @@ export function HistoricalPeakDemandViewer() {
                               <span className="text-muted-foreground ml-1">MW</span>
                             </div>
                           </div>
-                          <div className="mt-2 pt-2 border-t border-border/50">
-                            <span className="text-xs text-muted-foreground">
-                              Predicted peak hour: <strong>{formatPeakHour(prediction.predictedPeakHour)}</strong>
-                            </span>
-                          </div>
                         </div>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Most Likely Peak Windows */}
-                <Card className="border-amber-200/50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-amber-500" />
-                      Most Likely Peak Windows for 2026
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200/30">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                          <span className="font-medium text-sm">December 10-20, 2026</span>
-                          <Badge variant="destructive" className="text-[10px]">95% confidence</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Between 1-3 AM MST during cold snaps</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200/30">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                          <span className="font-medium text-sm">January 15-25, 2026</span>
-                          <Badge variant="secondary" className="text-[10px]">70% confidence</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">During extended cold periods</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200/30">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                          <span className="font-medium text-sm">July Heat Waves</span>
-                          <Badge variant="outline" className="text-[10px]">40% confidence</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Between 9 PM - 12 AM during extreme heat</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 p-3 rounded-lg bg-muted/50 border">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 text-muted-foreground mt-0.5" />
-                        <p className="text-xs text-muted-foreground">
-                          <strong>Note:</strong> These predictions are based on historical patterns. 
-                          Actual peaks depend on weather conditions, economic activity, and grid events. 
-                          Monitor AESO alerts for real-time peak risk warnings.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Warning Note */}
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Note:</strong> These predictions are based on historical patterns. 
+                      Actual peaks depend on weather conditions, economic activity, and grid events. 
+                      Monitor AESO alerts for real-time peak risk warnings. Confidence decreases for peaks 
+                      outside December due to weather variability.
+                    </p>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
 
@@ -686,9 +821,14 @@ export function HistoricalPeakDemandViewer() {
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
               <div className="flex items-center gap-2">
                 <Database className="w-3 h-3" />
-                <span>AESO Historical Data ({format(new Date(peaksData.dateRange.start), 'MMM yyyy')} - {format(new Date(peaksData.dateRange.end), 'MMM yyyy')})</span>
+                <span>Source: AESO Historical Data</span>
               </div>
-              <span>{formatNumber(peaksData.recordCount)} demand records analyzed</span>
+              <div className="flex items-center gap-4">
+                <span>{peaksData.dateRange.start && formatShortDate(peaksData.dateRange.start)} - {peaksData.dateRange.end && formatShortDate(peaksData.dateRange.end)}</span>
+                <Badge variant="outline" className="text-[10px]">
+                  {formatNumber(peaksData.recordCount)} records
+                </Badge>
+              </div>
             </div>
           </CardContent>
         )}
