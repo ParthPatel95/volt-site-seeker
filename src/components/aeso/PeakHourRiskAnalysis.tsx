@@ -15,7 +15,9 @@ import {
   Clock, 
   AlertTriangle,
   CheckCircle2,
-  Thermometer
+  Thermometer,
+  Database,
+  Zap
 } from 'lucide-react';
 import { TwelveCPSavingsData } from '@/hooks/use12CPSavingsAnalytics';
 
@@ -50,18 +52,30 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
     return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
   };
 
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('en-CA').format(value);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Peak Hour Risk Heatmap */}
+      {/* Peak Hour Risk Heatmap - Based on DEMAND */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-orange-600" />
-            Peak Hour Risk Analysis
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Hourly risk scores based on historical peak probability and average prices
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-orange-600" />
+                Peak Hour Risk Analysis
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Hourly risk scores based on historical <strong>demand (MW)</strong> — 12CP is demand-based
+              </p>
+            </div>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <Database className="w-3 h-3 mr-1" />
+              Real AESO Data
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-64">
@@ -88,7 +102,8 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
                           <p className="text-sm text-muted-foreground">{data.seasonalPattern}</p>
                           <div className="mt-2 space-y-1">
                             <p className="text-sm">Risk Score: <strong>{data.riskScore}%</strong></p>
-                            <p className="text-sm">Avg Price: <strong>${data.avgPriceAtPeak}/MWh</strong></p>
+                            <p className="text-sm">Avg Demand: <strong>{formatNumber(data.avgDemandMW)} MW</strong></p>
+                            <p className="text-sm">Avg Price: <strong>${data.avgPriceAtHour}/MWh</strong></p>
                             <p className="text-sm">Data Points: <strong>{data.occurrences}</strong></p>
                           </div>
                         </div>
@@ -110,20 +125,27 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
           <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t justify-center">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-sm text-muted-foreground">High Risk (70%+)</span>
+              <span className="text-sm text-muted-foreground">Very High (≥95% of max demand)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-orange-500" />
-              <span className="text-sm text-muted-foreground">Moderate (50-70%)</span>
+              <span className="text-sm text-muted-foreground">High (90-95%)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <span className="text-sm text-muted-foreground">Low-Moderate (30-50%)</span>
+              <span className="text-sm text-muted-foreground">Moderate (85-90%)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span className="text-sm text-muted-foreground">Safe (&lt;30%)</span>
+              <span className="text-sm text-muted-foreground">Safe (&lt;85%)</span>
             </div>
+          </div>
+
+          {/* Max Demand Reference */}
+          <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm text-center">
+            <Zap className="w-4 h-4 inline mr-2 text-yellow-600" />
+            Max Historical Demand: <strong>{formatNumber(savingsData.maxHistoricalDemandMW)} MW</strong> — 
+            Risk percentile is relative to this value
           </div>
         </CardContent>
       </Card>
@@ -135,7 +157,7 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-600" />
-              High-Risk Hours (Avoid)
+              High-Risk Hours (Avoid for 12CP)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -147,11 +169,11 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
                   </Badge>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No consistently high-risk hours identified</p>
+                <p className="text-sm text-muted-foreground">No consistently high-demand hours identified</p>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              These hours historically have the highest prices and peak probability
+              These hours historically have the highest grid demand and 12CP peak probability
             </p>
           </CardContent>
         </Card>
@@ -173,23 +195,26 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
                   </Badge>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">All hours have moderate risk</p>
+                <p className="text-sm text-muted-foreground">All hours have moderate demand risk</p>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Maximize operations during these hours for lowest energy costs
+              Maximize operations during these lower-demand hours to avoid 12CP
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Seasonal Insights */}
+      {/* Seasonal Insights - Based on DEMAND */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Thermometer className="w-5 h-5 text-blue-600" />
-            Seasonal Risk Patterns
+            Seasonal Demand Patterns
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Alberta's 12CP peaks are typically in winter due to heating demand
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -199,10 +224,13 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
                 <span className="font-medium">Winter</span>
                 {getRiskBadge(savingsData.seasonalInsights.winter.riskLevel)}
               </div>
-              <p className="text-2xl font-bold">${savingsData.seasonalInsights.winter.avgPeak}/MWh</p>
-              <p className="text-xs text-muted-foreground mt-1">Avg Peak Hour Price</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Dec-Feb: Morning heating demand drives peaks
+              <p className="text-2xl font-bold">{formatNumber(savingsData.seasonalInsights.winter.avgPeakDemandMW)} MW</p>
+              <p className="text-xs text-muted-foreground mt-1">Avg Peak Demand</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                ${savingsData.seasonalInsights.winter.avgPeakPrice}/MWh avg price at peaks
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Nov-Feb: Heating demand drives highest peaks
               </p>
             </div>
 
@@ -212,10 +240,13 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
                 <span className="font-medium">Summer</span>
                 {getRiskBadge(savingsData.seasonalInsights.summer.riskLevel)}
               </div>
-              <p className="text-2xl font-bold">${savingsData.seasonalInsights.summer.avgPeak}/MWh</p>
-              <p className="text-xs text-muted-foreground mt-1">Avg Peak Hour Price</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Jun-Aug: Afternoon cooling demand increases risk
+              <p className="text-2xl font-bold">{formatNumber(savingsData.seasonalInsights.summer.avgPeakDemandMW)} MW</p>
+              <p className="text-xs text-muted-foreground mt-1">Avg Peak Demand</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                ${savingsData.seasonalInsights.summer.avgPeakPrice}/MWh avg price at peaks
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Jun-Aug: Cooling demand increases afternoon risk
               </p>
             </div>
 
@@ -225,10 +256,13 @@ export function PeakHourRiskAnalysis({ savingsData }: PeakHourRiskAnalysisProps)
                 <span className="font-medium">Shoulder</span>
                 {getRiskBadge(savingsData.seasonalInsights.shoulder.riskLevel)}
               </div>
-              <p className="text-2xl font-bold">${savingsData.seasonalInsights.shoulder.avgPeak}/MWh</p>
-              <p className="text-xs text-muted-foreground mt-1">Avg Peak Hour Price</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Mar-May, Sep-Nov: Lower risk, optimal for operations
+              <p className="text-2xl font-bold">{formatNumber(savingsData.seasonalInsights.shoulder.avgPeakDemandMW)} MW</p>
+              <p className="text-xs text-muted-foreground mt-1">Avg Peak Demand</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                ${savingsData.seasonalInsights.shoulder.avgPeakPrice}/MWh avg price at peaks
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Mar-May, Sep-Oct: Lower 12CP risk, optimal for operations
               </p>
             </div>
           </div>
