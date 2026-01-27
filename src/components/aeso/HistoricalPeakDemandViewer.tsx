@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   BarChart,
   Bar,
@@ -30,7 +31,9 @@ import {
   Target,
   AlertTriangle,
   Sparkles,
-  CalendarDays
+  CalendarDays,
+  ChevronDown,
+  Award
 } from 'lucide-react';
 import { useHistorical12CPPeaks } from '@/hooks/useHistorical12CPPeaks';
 import { format } from 'date-fns';
@@ -294,145 +297,167 @@ export function HistoricalPeakDemandViewer() {
                 </div>
               </TabsContent>
 
-              {/* Yearly Peaks Tab */}
+              {/* Yearly Peaks Tab - Now showing top 12 peaks per year */}
               <TabsContent value="yearly" className="space-y-6 mt-6">
-                {/* Yearly Peak Summary Table */}
-                <Card className="border-primary/30">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <CalendarDays className="w-5 h-5 text-primary" />
-                      Yearly 12CP Peak Summary
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Each year's highest demand hour with exact timestamp and year-over-year growth
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg border overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-muted/30">
-                          <tr>
-                            <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Year</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Peak Date/Time</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Demand (MW)</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Price</th>
-                            <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Day</th>
-                            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">YoY Growth</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {peaksData.yearlyPeakSummary.map((year, index) => (
-                            <tr 
-                              key={year.year} 
-                              className={index === 0 ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : ''}
-                            >
-                              <td className="px-4 py-3 text-center">
-                                <span className="font-bold text-lg">{year.year}</span>
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                <div className="font-medium">{year.monthName} {year.dayOfMonth}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {formatPeakHour(year.peakHour)} MST
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <span className="font-bold text-lg">{formatNumber(year.peakDemandMW)}</span>
-                                <span className="text-muted-foreground ml-1">MW</span>
-                                {index === 0 && (
-                                  <Badge className="ml-2 bg-yellow-500 text-[10px] py-0">RECORD</Badge>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-right">
-                                ${year.priceAtPeak}/MWh
-                              </td>
-                              <td className="px-4 py-3 text-sm text-center text-muted-foreground">
-                                {year.dayOfWeek.slice(0, 3)}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {year.growthFromPrevYear !== null ? (
-                                  <span className={`font-medium ${
-                                    year.growthFromPrevYear > 0 
-                                      ? 'text-red-600 dark:text-red-400' 
-                                      : 'text-green-600 dark:text-green-400'
-                                  }`}>
-                                    {year.growthFromPrevYear > 0 ? '+' : ''}
-                                    {year.growthFromPrevYear.toFixed(1)}%
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                {/* Intro Card */}
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardContent className="py-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/20">
+                        <Trophy className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-primary">12CP Methodology - Top 12 Peaks Per Year</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          The 12 Coincident Peak (12CP) methodology identifies the 12 highest demand hours each year. 
+                          These peaks are critical for transmission cost allocation calculations.
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Analytics Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-primary" />
-                        Growth Analysis
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {peaksData.yearlyPeakSummary.slice(0, -1).map((year, index) => {
-                          const nextYear = peaksData.yearlyPeakSummary[index + 1];
-                          if (!nextYear) return null;
-                          const growth = year.growthFromPrevYear;
-                          return (
-                            <div key={year.year} className="flex items-center justify-between p-2 rounded bg-muted/50">
-                              <span className="text-sm">{nextYear.year} → {year.year}</span>
-                              <div className="flex items-center gap-2">
-                                <span className={`font-medium ${
-                                  growth && growth > 0 ? 'text-red-600' : 'text-green-600'
-                                }`}>
-                                  {growth !== null ? `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%` : '—'}
-                                </span>
-                                {growth !== null && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ({growth > 0 ? 'increase' : 'decrease'})
-                                  </span>
-                                )}
+                {/* Expandable Year Sections */}
+                {peaksData.yearlyTop12Data && peaksData.yearlyTop12Data.length > 0 ? (
+                  <Accordion type="multiple" defaultValue={[peaksData.yearlyTop12Data[0]?.year.toString()]} className="space-y-4">
+                    {peaksData.yearlyTop12Data.map((yearData, yearIndex) => (
+                      <AccordionItem 
+                        key={yearData.year} 
+                        value={yearData.year.toString()}
+                        className="border rounded-lg overflow-hidden bg-card shadow-sm"
+                      >
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
+                          <div className="flex items-center justify-between w-full pr-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${yearIndex === 0 ? 'bg-yellow-500/20' : 'bg-muted'}`}>
+                                <CalendarDays className={`w-5 h-5 ${yearIndex === 0 ? 'text-yellow-600' : 'text-muted-foreground'}`} />
+                              </div>
+                              <div className="text-left">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-lg">{yearData.year}</span>
+                                  <span className="text-muted-foreground font-normal">— Top 12 Peak Demand Hours</span>
+                                  {yearIndex === 0 && (
+                                    <Badge className="bg-yellow-500 text-yellow-950 text-[10px]">Latest</Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground font-normal">
+                                  Peak Range: <span className="font-medium text-foreground">{formatNumber(yearData.yearMinOf12)} - {formatNumber(yearData.yearMaxDemand)} MW</span>
+                                  <span className="mx-2">•</span>
+                                  Spread: <span className="font-medium text-foreground">{formatNumber(yearData.yearMaxDemand - yearData.yearMinOf12)} MW</span>
+                                </p>
                               </div>
                             </div>
-                          );
-                        })}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-0 pb-0">
+                          <div className="border-t">
+                            <table className="w-full">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-12">Rank</th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Date/Time</th>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Demand (MW)</th>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Price</th>
+                                  <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Hour</th>
+                                  <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Day</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {yearData.peaks.map((peak) => {
+                                  const getRankStyle = (rank: number) => {
+                                    if (rank === 1) return 'bg-yellow-50 dark:bg-yellow-950/30';
+                                    if (rank === 2) return 'bg-slate-100 dark:bg-slate-800/30';
+                                    if (rank === 3) return 'bg-amber-50 dark:bg-amber-950/20';
+                                    return '';
+                                  };
+                                  const getRankBadge = (rank: number) => {
+                                    if (rank === 1) return <Badge className="bg-yellow-500 text-yellow-950 w-7 h-7 rounded-full flex items-center justify-center p-0"><Award className="w-4 h-4" /></Badge>;
+                                    if (rank === 2) return <Badge className="bg-slate-400 text-white w-6 h-6 rounded-full flex items-center justify-center p-0 text-xs">#2</Badge>;
+                                    if (rank === 3) return <Badge className="bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center p-0 text-xs">#3</Badge>;
+                                    return <span className="text-sm text-muted-foreground font-medium">#{rank}</span>;
+                                  };
+                                  
+                                  return (
+                                    <tr key={`${yearData.year}-${peak.rank}`} className={getRankStyle(peak.rank)}>
+                                      <td className="px-4 py-3 text-center">
+                                        {getRankBadge(peak.rank)}
+                                      </td>
+                                      <td className="px-4 py-3 text-sm">
+                                        <div className="font-medium">{peak.monthName} {peak.dayOfMonth}, {yearData.year}</div>
+                                        <div className="text-xs text-muted-foreground">{formatPeakHour(peak.hour)} MST</div>
+                                      </td>
+                                      <td className="px-4 py-3 text-right">
+                                        <span className={`font-bold ${peak.rank === 1 ? 'text-lg text-yellow-600 dark:text-yellow-500' : ''}`}>
+                                          {formatNumber(peak.demandMW)}
+                                        </span>
+                                        <span className="text-muted-foreground ml-1">MW</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-sm text-right">
+                                        ${peak.priceAtPeak}/MWh
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        <Badge variant="outline" className="text-xs">
+                                          {formatPeakHour(peak.hour)}
+                                        </Badge>
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-sm text-muted-foreground">
+                                        {peak.dayOfWeek.slice(0, 3)}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                ) : (
+                  <Card>
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                      No yearly 12CP data available
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
+                          <Zap className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">All-Time Record</p>
+                          <p className="font-bold text-lg">{formatNumber(peaksData.stats.allTimePeakMW)} MW</p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-primary" />
-                        Key Insights
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3 text-sm">
-                        <div className="p-2 rounded bg-muted/50">
-                          <p className="font-medium">Peak Season</p>
-                          <p className="text-muted-foreground">
-                            {peaksData.yearlyPeakSummary.filter(y => ['December', 'January'].includes(y.monthName)).length} of {peaksData.yearlyPeakSummary.length} yearly peaks in Dec-Jan
-                          </p>
+                    <CardContent className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/30">
+                          <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <div className="p-2 rounded bg-muted/50">
-                          <p className="font-medium">Peak Time Pattern</p>
-                          <p className="text-muted-foreground">
-                            100% of yearly peaks occurred between {formatPeakHour(0)} - {formatPeakHour(3)}
-                          </p>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Avg Annual Growth</p>
+                          <p className="font-bold text-lg">{peaksData.stats.avgYearlyGrowth > 0 ? '+' : ''}{peaksData.stats.avgYearlyGrowth}%</p>
                         </div>
-                        <div className="p-2 rounded bg-muted/50">
-                          <p className="font-medium">Avg Annual Growth</p>
-                          <p className="text-muted-foreground">
-                            {peaksData.stats.avgYearlyGrowth > 0 ? '+' : ''}{peaksData.stats.avgYearlyGrowth}% year-over-year
-                          </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950/30">
+                          <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Peak Hour Pattern</p>
+                          <p className="font-bold text-lg">{formatPeakHour(0)} - {formatPeakHour(3)}</p>
                         </div>
                       </div>
                     </CardContent>

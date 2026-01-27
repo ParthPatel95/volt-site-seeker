@@ -11457,6 +11457,18 @@ export type Database = {
           year: number
         }[]
       }
+      get_yearly_top12_peaks: {
+        Args: never
+        Returns: {
+          day_of_week: number
+          peak_demand_mw: number
+          peak_hour: number
+          peak_timestamp: string
+          price_at_peak: number
+          rank: number
+          year: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
