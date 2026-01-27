@@ -65,6 +65,9 @@ interface MarketData {
   
   // Time-based
   hour: number;
+  dataHour: number;          // Hour from the price data timestamp
+  priceValidFor: string;     // Hour-ending notation (HE01-HE24)
+  dataAge: number;           // Minutes since price was recorded
   isWeekday: boolean;
   dayOfWeek: number;
 }
@@ -517,6 +520,13 @@ serve(async (req) => {
         ? ((currentPrice - previousPrice) / previousPrice) * 100 
         : 0;
 
+      // Use the database record's timestamp instead of execution time
+      const dataTimestamp = current?.timestamp ? new Date(current.timestamp) : now;
+      const dataTimeMtn = new Date(dataTimestamp.toLocaleString('en-US', { timeZone: 'America/Edmonton' }));
+      const dataHour = dataTimeMtn.getHours();
+      const priceValidFor = `HE${String(dataHour + 1).padStart(2, '0')}`;
+      const dataAge = Math.round((now.getTime() - dataTimestamp.getTime()) / 60000); // minutes since price recorded
+
       // Calculate 24h stats from available data
       const prices24h = latestData?.map(d => d.pool_price).filter(p => p != null) || [];
       const avgPrice = prices24h.length > 0 
@@ -559,11 +569,14 @@ serve(async (req) => {
         priceChange1h: priceChange,
         hasActiveGridAlert: hasActiveAlert,
         gridAlertType: eeaAlert ? 'eea' : (gridAlerts?.[0]?.alert_type || null),
-        timestamp: now.toLocaleString('en-US', { 
+        timestamp: dataTimestamp.toLocaleString('en-US', { 
           timeZone: 'America/Edmonton',
           dateStyle: 'short',
           timeStyle: 'short'
-        }),
+        }) + ` (${priceValidFor})`,
+        priceValidFor,
+        dataHour,
+        dataAge,
         averagePrice24h: avgPrice,
         peakPrice24h: peakPrice,
         lowPrice24h: lowPrice,
@@ -583,7 +596,10 @@ serve(async (req) => {
           matl: matlFlow,
           net: netFlow,
         },
-        hour: currentHour,
+        hour: currentHour,       // Keep execution hour for scheduled alert timing
+        dataHour,                // Hour from the price data
+        priceValidFor,           // Hour-ending notation (HE01-HE24)
+        dataAge,                 // Minutes since price was recorded
         isWeekday,
         dayOfWeek,
       };
@@ -602,7 +618,7 @@ serve(async (req) => {
           timeZone: 'America/Edmonton',
           dateStyle: 'short',
           timeStyle: 'short'
-        }),
+        }) + ` (HE${String(currentHour + 1).padStart(2, '0')})`,
         averagePrice24h: 0,
         peakPrice24h: 0,
         lowPrice24h: 0,
@@ -611,6 +627,9 @@ serve(async (req) => {
         renewablePercentage: 0,
         intertieFlows: { bc: 0, sk: 0, matl: 0, net: 0 },
         hour: currentHour,
+        dataHour: currentHour,
+        priceValidFor: `HE${String(currentHour + 1).padStart(2, '0')}`,
+        dataAge: 0,
         isWeekday,
         dayOfWeek,
       };
