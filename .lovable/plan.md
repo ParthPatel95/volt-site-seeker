@@ -1,116 +1,274 @@
 
-# Plan: Fix Telegram Price Timestamp Delay
 
-## Problem Identified
+# Plan: Enhance 12CP & Reserves Feature with Real Demand-Based Data
 
-The Telegram alerts are showing prices with **incorrect timestamps** (1-2 hours delayed). The root cause is in the `aeso-telegram-alerts` edge function:
+## Overview
 
-**Current behavior (WRONG):**
-```typescript
-timestamp: now.toLocaleString('en-US', { timeZone: 'America/Edmonton', ... })
-hour: currentHour  // derived from `now`
+This plan addresses critical issues with the current 12CP feature and adds new capabilities:
+
+1. **Fix core issue**: 12CP is currently based on **price** but should be based on **demand (AIL/MW)**
+2. **Use only real data**: All calculations will use actual `aeso_training_data` records (no mock data)
+3. **Add historical peak viewer**: See highest demand peaks for 1, 2, or 4-year periods
+4. **Correct math formulas**: Implement proper 12CP transmission cost calculation based on AESO methodology
+
+---
+
+## Current Problems Identified
+
+### Problem 1: 12CP Logic Uses Price Instead of Demand
+The current `use12CPSavingsAnalytics.ts` hook calculates risk based on **price**:
+```text
+// WRONG: Risk calculated from price
+riskScore = avgPriceAtHour > annualAvgPrice * 1.5 ? 90 : ...
 ```
 
-The function uses the **current execution time** (`now`) instead of the **actual timestamp from the database record** (`current?.timestamp`).
+12CP should be based on **demand (ail_mw)** because AESO determines the peak hour by finding the hour with the **highest provincial demand**, not highest price.
 
-## Root Cause Analysis
+### Problem 2: Peak Hour Detection Uses Price
+Current logic finds the "peak hour" by looking for the hour with the highest average price per month, but 12CP peaks are the hours with highest **demand**.
 
-1. **Database stores correct timestamps**: Records have accurate timestamps from when the price was valid (e.g., `2026-01-27 01:00:14.904+00`)
+### Problem 3: Missing Historical Peak Demand Viewer
+No ability to view actual historical 12CP peaks across multiple years.
 
-2. **Alert function ignores the data timestamp**: It uses `now` (function execution time) for display, creating a mismatch
+### Problem 4: Incorrect Transmission Cost Formula
+Current formula applies transmission cost per MWh across all operating hours. The correct 12CP calculation should be:
+- Your share of transmission = (Your load during 12 peaks / Total system peaks) x Transmission revenue requirement
 
-3. **AESO API lag**: The AESO Pool Price API reports prices in "hour-ending" format (HE01-HE24), meaning the "current" price is technically for the previous completed hour
+---
 
-## Solution
+## Database Data Available
 
-Modify `supabase/functions/aeso-telegram-alerts/index.ts` to:
+Verified real data in `aeso_training_data`:
+- **Date range**: June 2022 - January 2026 (3.5+ years)
+- **Total records with demand**: 33,259 hourly records
+- **Key column**: `ail_mw` (Alberta Internal Load - the demand metric)
+- **Peak demand recorded**: 12,785 MW (December 2025)
 
-1. **Use the database record's timestamp** instead of `now` for display
-2. **Extract the hour from the data timestamp** for scheduled alert logic
-3. **Handle AESO hour-ending format** correctly (the price for HE17 is the price that was in effect from 16:00-17:00)
+---
 
 ## Technical Changes
 
-### File: `supabase/functions/aeso-telegram-alerts/index.ts`
+### 1. Update `use12CPSavingsAnalytics.ts`
 
-**Change 1: Extract data timestamp (around line 512-514)**
-```typescript
-// BEFORE
-const current = latestData?.[0];
-const previous = latestData?.[1];
-const currentPrice = current?.pool_price || 0;
+**Change peak detection from price-based to demand-based:**
 
-// AFTER
-const current = latestData?.[0];
-const previous = latestData?.[1];
-const currentPrice = current?.pool_price || 0;
-const dataTimestamp = current?.timestamp ? new Date(current.timestamp) : now;
-const dataTimeMtn = new Date(dataTimestamp.toLocaleString('en-US', { timeZone: 'America/Edmonton' }));
-const dataHour = dataTimeMtn.getHours();
+```text
+// CURRENT (WRONG): Finding peak hour by price
+const hourlyPrices: { [hour: number]: number[] } = {};
+rows.forEach(r => {
+  hourlyPrices[hour].push(r.pool_price || 0);
+});
+// Peak hour = hour with highest average PRICE
+
+// NEW (CORRECT): Finding peak hour by demand
+const hourlyDemands: { [hour: number]: number[] } = {};
+rows.forEach(r => {
+  hourlyDemands[hour].push(r.ail_mw || 0);
+});
+// Peak hour = hour with highest average DEMAND
 ```
 
-**Change 2: Use data timestamp for display (around line 562-566)**
-```typescript
-// BEFORE
-timestamp: now.toLocaleString('en-US', { 
-  timeZone: 'America/Edmonton',
-  dateStyle: 'short',
-  timeStyle: 'short'
-}),
+**Update risk scoring to use demand:**
 
-// AFTER
-timestamp: dataTimestamp.toLocaleString('en-US', { 
-  timeZone: 'America/Edmonton',
-  dateStyle: 'short',
-  timeStyle: 'short'
-}) + ' (HE' + (dataHour + 1) + ')',  // Add hour-ending notation for clarity
+```text
+// CURRENT (WRONG): Risk based on price
+riskScore = avgPriceAtHour > annualAvgPrice * 1.5 ? 90 : ...
+
+// NEW (CORRECT): Risk based on demand threshold
+// System peak threshold ~11,500 MW based on historical data
+riskScore = avgDemandAtHour > 11500 ? 90 : avgDemandAtHour > 11000 ? 70 : ...
 ```
 
-**Change 3: Keep execution hour for scheduled alerts but add data hour (around line 586)**
-```typescript
-// BEFORE
-hour: currentHour,
+**Add new interface for real 12CP peak data:**
 
-// AFTER  
-hour: currentHour,       // Keep for scheduled alert timing (morning/evening briefings)
-dataHour: dataHour,      // Add data hour for logging/debugging
-priceValidFor: `HE${String(dataHour + 1).padStart(2, '0')}`,  // Hour-ending the price applies to
+```text
+interface Monthly12CPPeak {
+  month: string;           // e.g., "2025-12"
+  monthLabel: string;      // e.g., "Dec 25"
+  peakTimestamp: string;   // ISO timestamp of actual peak
+  peakDemandMW: number;    // Actual AIL at peak (e.g., 12785)
+  peakHour: number;        // Hour of day (0-23)
+  priceAtPeak: number;     // Pool price during the peak hour
+  dayOfWeek: string;       // e.g., "Friday"
+}
 ```
 
-**Change 4: Add indicator showing data freshness**
-```typescript
-// In the template data passed to formatMessage, add:
-dataAge: Math.round((now.getTime() - dataTimestamp.getTime()) / 60000)  // minutes since price was recorded
+### 2. Create New Hook: `useHistorical12CPPeaks.ts`
+
+**Purpose:** Fetch and display the actual 12CP peaks for 1, 2, or 4 year ranges.
+
+**Key functions:**
+- `fetchHistoricalPeaks(years: 1 | 2 | 4)`: Query database for monthly peak demand
+- `getAnnualPeakSummary(year: number)`: Get all 12 peaks for a specific year
+- `calculateHistoricalTrends()`: Analyze peak timing patterns across years
+
+**Database query logic:**
+```text
+WITH monthly_peaks AS (
+  SELECT 
+    DATE_TRUNC('month', timestamp) as month,
+    timestamp as peak_timestamp,
+    ail_mw as peak_demand_mw,
+    pool_price as price_at_peak,
+    hour_of_day,
+    ROW_NUMBER() OVER (
+      PARTITION BY DATE_TRUNC('month', timestamp) 
+      ORDER BY ail_mw DESC
+    ) as rn
+  FROM aeso_training_data 
+  WHERE ail_mw IS NOT NULL
+    AND timestamp >= [start_date]
+)
+SELECT * FROM monthly_peaks WHERE rn = 1
 ```
 
-## Message Template Updates
+### 3. Update `TwelveCPSavingsSimulator.tsx`
 
-Update the message templates to clarify the timestamp represents when the price was valid:
+**Changes:**
+- Update labels from "Peak Hour Price" to "Peak Hour Demand"
+- Show demand in MW units, not price in $/MWh
+- Add data source indicator: "Live from AESO Training Data"
+- Display date range of data used
 
-```typescript
-// Example for price_high template (line 82-88)
-price_high: `🔴 <b>AESO High Price Alert</b>
+**New section: Historical Peak Demand Table**
+- Dropdown: "View peaks for: [Last 1 Year] [Last 2 Years] [Last 4 Years]"
+- Table columns: Month, Peak Date/Time, Demand (MW), Price at Peak, Hour
 
-💰 Pool Price: <b>$\${price}/MWh</b> (\${priceValidFor})
-📈 Above threshold of $\${threshold}/MWh
+### 4. Update `PeakHourRiskAnalysis.tsx`
 
-⚠️ Consider reducing load or shifting operations
-🕐 Price valid for: \${timestamp}`,
+**Changes:**
+- Risk score based on demand percentile, not price
+- Show "Avg Demand at Hour" instead of "Avg Price at Peak"
+- Update seasonal insights to show demand patterns
+
+**New demand-based risk scoring:**
+```text
+const getHourlyDemandRisk = (avgDemand: number, maxHistorical: number) => {
+  const percentile = avgDemand / maxHistorical;
+  if (percentile >= 0.95) return 90;  // Top 5% = Very High
+  if (percentile >= 0.90) return 70;  // Top 10% = High
+  if (percentile >= 0.80) return 50;  // Top 20% = Moderate
+  if (percentile >= 0.70) return 30;  // Top 30% = Low-Moderate
+  return 10;                           // Below 70% = Safe
+}
 ```
 
-## Expected Outcome
+### 5. Create `HistoricalPeakDemandViewer.tsx` Component
 
-| Before | After |
-|--------|-------|
-| "Time: 1/26/26, 5:00 PM" (wrong - shows execution time) | "Time: 1/26/26, 3:00 PM (HE16)" (correct - shows price validity time) |
-| User confused about which hour the price applies to | Clear "HE16" notation indicates price was for 15:00-16:00 hour |
+**New component for Peak Hour Risk tab or new sub-tab:**
 
-## Files to Modify
+Features:
+- Time range selector: 1 Year | 2 Years | 4 Years
+- Table showing each month's peak with:
+  - Date/time of peak
+  - Demand in MW
+  - Pool price during peak
+  - Hour of day
+  - Comparison to annual average
+- Visual chart: Monthly peak demands over time
+- Key statistics: Highest peak ever, average peak demand, trend indicator
 
-1. `supabase/functions/aeso-telegram-alerts/index.ts` - Main fix for timestamp handling
+### 6. Fix Transmission Cost Formula
 
-## Considerations
+**Current formula (simplified/incorrect):**
+```text
+transmissionCost = facilityMW × TRANSMISSION_ADDER × 8760
+```
 
-- **Scheduled alerts** (morning/evening briefings): Continue using `currentHour` for trigger timing, but display `dataHour` in the message
-- **Data freshness warning**: If `dataAge` > 30 minutes, consider adding a warning that data may be stale
-- **AESO hour-ending convention**: Prices are reported for "hour-ending" (HE), so HE17 = price from 16:00-17:00
+**Corrected formula (per AESO methodology):**
+```text
+// Your 12CP contribution = Sum of your loads during 12 monthly peaks
+// If you avoid ALL peaks, your 12CP contribution = 0
+// If you operate at full capacity during all peaks:
+//   12CP contribution = facilityMW × 12 (months)
+// Your share = 12CP contribution / Total system peaks × ~$2.3B
+
+// Simplified for calculator:
+annualTransmissionCost = facilityMW × 1000 × 12 × transmissionRatePerKW
+// Where transmissionRatePerKW ≈ $7.11/kW/month for Rate 65
+
+// Alternative (current approach is acceptable for estimation):
+// $11.73/MWh × MWh consumed, reduced proportionally by peaks avoided
+transmissionSavingsPerPeak = (totalTransmissionCost / 12) × 1  // ~8.33% per peak
+```
+
+---
+
+## Files to Create/Modify
+
+### New Files
+1. `src/hooks/useHistorical12CPPeaks.ts` - Fetch real historical 12CP peaks
+2. `src/components/aeso/HistoricalPeakDemandViewer.tsx` - Historical peak viewer UI
+
+### Modified Files
+1. `src/hooks/use12CPSavingsAnalytics.ts` - Fix demand-based logic
+2. `src/components/aeso/TwelveCPSavingsSimulator.tsx` - Update labels, add historical viewer
+3. `src/components/aeso/PeakHourRiskAnalysis.tsx` - Demand-based risk scoring
+4. `src/components/aeso/TwelveCPAnalyticsTab.tsx` - Integrate historical viewer
+
+---
+
+## Data Source Indicators
+
+All components will display clear data source badges:
+- "Live from AESO" badge on real-time reserves
+- "AESO Historical Data (Jun 2022 - Present)" on historical analysis
+- Date range of data used in each calculation
+- Record count to show data coverage
+
+---
+
+## UI/UX Changes
+
+### Historical Peak Viewer (New Feature)
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ 📊 Historical 12CP Peak Demand                                  │
+│                                                                 │
+│  View Range: [1 Year ▼] [2 Years] [4 Years]                    │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Month      │ Peak Date/Time      │ Demand   │ Price  │ Hour ││
+│  │────────────┼─────────────────────┼──────────┼────────┼──────││
+│  │ Dec 2025   │ Dec 12, 2025 02:00  │ 12,785MW │ $44.20 │ 2 AM ││
+│  │ Jan 2026   │ Jan 23, 2026 02:00  │ 12,291MW │ $55.80 │ 2 AM ││
+│  │ Feb 2025   │ Feb 04, 2025 01:00  │ 12,211MW │ $65.15 │ 1 AM ││
+│  │ ...        │ ...                 │ ...      │ ...    │ ...  ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                 │
+│  Key Statistics:                                                │
+│  • All-Time Peak: 12,785 MW (Dec 12, 2025)                     │
+│  • Avg Monthly Peak: 11,542 MW                                 │
+│  • Most Common Peak Hour: 5-6 PM (Winter), 2-3 PM (Summer)     │
+│                                                                 │
+│  📈 [View Peak Trend Chart]                                     │
+│                                                                 │
+│  ⓘ Data: AESO Historical (Jun 2022 - Present) | 33,259 records │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Testing Verification
+
+After implementation, verify:
+1. Peak hours shown are based on demand, not price
+2. All displayed peaks match actual database records
+3. No mock/placeholder data in any component
+4. Math formulas produce realistic savings estimates
+5. Historical viewer correctly shows 1/2/4 year data ranges
+6. Data source badges display correctly
+
+---
+
+## Summary of Key Fixes
+
+| Issue | Current | Fixed |
+|-------|---------|-------|
+| Peak detection | Based on price | Based on demand (ail_mw) |
+| Risk scoring | Price thresholds | Demand percentiles |
+| Peak hour display | "Peak Hour Price" | "Peak Hour Demand" |
+| Units shown | $/MWh only | MW (demand) + $/MWh (price) |
+| Historical view | None | 1/2/4 year peak history |
+| Data source | Not shown | Clear badges with date ranges |
+
