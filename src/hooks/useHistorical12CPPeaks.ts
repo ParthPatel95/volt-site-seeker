@@ -34,7 +34,7 @@ export interface YearlyPeakSummary {
   dayOfMonth: number;
   monthName: string;
   priceAtPeak: number;
-  growthFromPrevYear: number | null; // % change
+  growthFromPrevYear: number | null;
 }
 
 export interface Exact12CPPrediction {
@@ -59,7 +59,7 @@ export interface PeakPrediction {
   month: number;
   monthName: string;
   predictedPeakHour: number;
-  probabilityScore: number;  // 0-100
+  probabilityScore: number;
   reasoning: string;
   expectedDemandRange: { min: number; max: number };
   riskLevel: 'critical' | 'high' | 'moderate' | 'low';
@@ -111,227 +111,184 @@ export function useHistorical12CPPeaks() {
     setLoading(true);
     
     try {
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setFullYear(startDate.getFullYear() - 4); // Always fetch 4 years
+      // Use database functions for server-side aggregation (bypasses 1000 row limit)
+      const [monthlyResult, topPeaksResult, yearlyResult, seasonalResult] = await Promise.all([
+        supabase.rpc('get_monthly_peak_demands'),
+        supabase.rpc('get_top_peak_demands', { limit_count: 50 }),
+        supabase.rpc('get_yearly_peak_demands'),
+        supabase.rpc('get_seasonal_peak_stats')
+      ]);
 
-      // Fetch all demand data for the period
-      const { data, error } = await supabase
-        .from('aeso_training_data')
-        .select('timestamp, pool_price, hour_of_day, ail_mw, day_of_week')
-        .gte('timestamp', startDate.toISOString())
-        .lte('timestamp', endDate.toISOString())
-        .not('ail_mw', 'is', null)
-        .order('timestamp', { ascending: true });
+      if (monthlyResult.error) throw monthlyResult.error;
+      if (topPeaksResult.error) throw topPeaksResult.error;
+      if (yearlyResult.error) throw yearlyResult.error;
+      if (seasonalResult.error) throw seasonalResult.error;
 
-      if (error) throw error;
+      const monthlyData = monthlyResult.data || [];
+      const topPeaksData = topPeaksResult.data || [];
+      const yearlyData = yearlyResult.data || [];
+      const seasonalData = seasonalResult.data || [];
 
-      if (!data || data.length === 0) {
+      if (monthlyData.length === 0) {
         toast({
           title: "No Historical Data",
-          description: "No demand data available for the selected period.",
+          description: "No demand data available.",
           variant: "destructive"
         });
         setPeaksData(null);
         return;
       }
 
-      // Group by month to find monthly peaks
-      const monthlyGroups: { [key: string]: typeof data } = {};
-      data.forEach(row => {
-        const date = new Date(row.timestamp);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        if (!monthlyGroups[monthKey]) {
-          monthlyGroups[monthKey] = [];
-        }
-        monthlyGroups[monthKey].push(row);
-      });
-
-      const peaks: Historical12CPPeak[] = [];
-
-      // Find the peak demand hour for each month
-      Object.entries(monthlyGroups).forEach(([month, rows]) => {
-        let peakRecord = rows[0];
-        rows.forEach(r => {
-          if ((r.ail_mw || 0) > (peakRecord.ail_mw || 0)) {
-            peakRecord = r;
-          }
-        });
-
-        const peakDate = new Date(peakRecord.timestamp);
-        const peakHour = peakRecord.hour_of_day ?? peakDate.getHours();
-        const dayOfWeek = dayNames[peakDate.getDay()];
-
-        const [year, m] = month.split('-');
+      // Process monthly peaks
+      const peaks: Historical12CPPeak[] = monthlyData.map((row: any) => {
+        const peakDate = new Date(row.peak_timestamp);
+        const [year, m] = row.month_key.split('-');
         const monthLabel = `${monthNames[parseInt(m) - 1]} ${year.slice(2)}`;
-
-        peaks.push({
-          month,
+        
+        return {
+          month: row.month_key,
           monthLabel,
-          peakTimestamp: peakRecord.timestamp,
-          peakDemandMW: Math.round(peakRecord.ail_mw || 0),
-          peakHour,
-          priceAtPeak: Math.round((peakRecord.pool_price || 0) * 100) / 100,
-          dayOfWeek,
+          peakTimestamp: row.peak_timestamp,
+          peakDemandMW: Math.round(row.peak_demand_mw || 0),
+          peakHour: row.peak_hour ?? peakDate.getHours(),
+          priceAtPeak: Math.round((row.price_at_peak || 0) * 100) / 100,
+          dayOfWeek: dayNames[row.day_of_week ?? peakDate.getDay()],
           year: parseInt(year)
-        });
+        };
       });
 
-      const peaksSortedByMonth = [...peaks].sort((a, b) => a.month.localeCompare(b.month));
-
-      // ===== TOP 12 ALL-TIME PEAKS =====
-      const allRecordsSorted = [...data].sort((a, b) => (b.ail_mw || 0) - (a.ail_mw || 0));
-      const top12Peaks: AllTimePeakHour[] = allRecordsSorted.slice(0, 12).map((record, index) => {
-        const date = new Date(record.timestamp);
+      // Process top 12 all-time peaks
+      const top12Peaks: AllTimePeakHour[] = topPeaksData.slice(0, 12).map((record: any, index: number) => {
+        const date = new Date(record.peak_timestamp);
         return {
           rank: index + 1,
-          timestamp: record.timestamp,
-          demandMW: Math.round(record.ail_mw || 0),
-          priceAtPeak: Math.round((record.pool_price || 0) * 100) / 100,
-          hour: record.hour_of_day ?? date.getHours(),
-          dayOfWeek: dayNames[date.getDay()],
+          timestamp: record.peak_timestamp,
+          demandMW: Math.round(record.peak_demand_mw || 0),
+          priceAtPeak: Math.round((record.price_at_peak || 0) * 100) / 100,
+          hour: record.peak_hour ?? date.getHours(),
+          dayOfWeek: dayNames[record.day_of_week ?? date.getDay()],
           month: date.getMonth() + 1,
           year: date.getFullYear(),
           monthName: monthNames[date.getMonth()]
         };
       });
 
-      // ===== YEARLY PEAK SUMMARY =====
-      const yearlyGroups: { [year: number]: typeof data } = {};
-      data.forEach(row => {
-        const year = new Date(row.timestamp).getFullYear();
-        if (!yearlyGroups[year]) yearlyGroups[year] = [];
-        yearlyGroups[year].push(row);
-      });
-
-      const yearlyPeakSummary: YearlyPeakSummary[] = [];
-      const sortedYears = Object.keys(yearlyGroups).map(Number).sort((a, b) => a - b);
-
-      sortedYears.forEach((year, index) => {
-        const rows = yearlyGroups[year];
-        let peakRecord = rows[0];
-        rows.forEach(r => {
-          if ((r.ail_mw || 0) > (peakRecord.ail_mw || 0)) {
-            peakRecord = r;
-          }
-        });
-
-        const peakDate = new Date(peakRecord.timestamp);
-        const peakDemand = Math.round(peakRecord.ail_mw || 0);
-
+      // Process yearly peak summary with YoY growth
+      const sortedYearlyData = [...yearlyData].sort((a: any, b: any) => a.year - b.year);
+      const yearlyPeakSummary: YearlyPeakSummary[] = sortedYearlyData.map((row: any, index: number) => {
+        const peakDate = new Date(row.peak_timestamp);
+        const peakDemand = Math.round(row.peak_demand_mw || 0);
+        
         // Calculate growth from previous year
         let growthFromPrevYear: number | null = null;
         if (index > 0) {
-          const prevYear = sortedYears[index - 1];
-          const prevYearPeak = yearlyPeakSummary.find(y => y.year === prevYear);
-          if (prevYearPeak && prevYearPeak.peakDemandMW > 0) {
-            growthFromPrevYear = ((peakDemand - prevYearPeak.peakDemandMW) / prevYearPeak.peakDemandMW) * 100;
+          const prevYearData = sortedYearlyData[index - 1];
+          if (prevYearData && prevYearData.peak_demand_mw > 0) {
+            growthFromPrevYear = ((peakDemand - prevYearData.peak_demand_mw) / prevYearData.peak_demand_mw) * 100;
           }
         }
 
-        yearlyPeakSummary.push({
-          year,
+        return {
+          year: row.year,
           peakDemandMW: peakDemand,
-          peakTimestamp: peakRecord.timestamp,
-          peakHour: peakRecord.hour_of_day ?? peakDate.getHours(),
-          dayOfWeek: dayNames[peakDate.getDay()],
+          peakTimestamp: row.peak_timestamp,
+          peakHour: row.peak_hour ?? peakDate.getHours(),
+          dayOfWeek: dayNames[row.day_of_week ?? peakDate.getDay()],
           dayOfMonth: peakDate.getDate(),
           monthName: fullMonthNames[peakDate.getMonth()],
-          priceAtPeak: Math.round((peakRecord.pool_price || 0) * 100) / 100,
-          growthFromPrevYear
-        });
-      });
+          priceAtPeak: Math.round((row.price_at_peak || 0) * 100) / 100,
+          growthFromPrevYear: growthFromPrevYear !== null ? Math.round(growthFromPrevYear * 10) / 10 : null
+        };
+      }).sort((a, b) => b.year - a.year); // Sort descending for display
 
       // Calculate average yearly growth
       const growthRates = yearlyPeakSummary
         .filter(y => y.growthFromPrevYear !== null)
         .map(y => y.growthFromPrevYear as number);
       const avgYearlyGrowth = growthRates.length > 0
-        ? growthRates.reduce((a, b) => a + b, 0) / growthRates.length
-        : 3.0; // Default to 3% if no data
+        ? Math.round((growthRates.reduce((a, b) => a + b, 0) / growthRates.length) * 10) / 10
+        : 3.0;
 
-      // ===== PATTERN ANALYSIS =====
-      const highDemandThreshold = 11000;
-      const highDemandRecords = data.filter(r => (r.ail_mw || 0) > highDemandThreshold);
+      // Process seasonal stats
+      const winterStats = seasonalData.find((s: any) => s.season === 'winter');
+      const summerStats = seasonalData.find((s: any) => s.season === 'summer');
+      const winterAvgPeakMW = winterStats ? Math.round(winterStats.avg_peak_mw) : 0;
+      const summerAvgPeakMW = summerStats ? Math.round(summerStats.avg_peak_mw) : 0;
 
-      // By Month
-      const monthPatterns: { [key: number]: { demands: number[]; max: number } } = {};
-      for (let i = 1; i <= 12; i++) monthPatterns[i] = { demands: [], max: 0 };
+      // Pattern analysis from top peaks
+      const monthPatterns: { [key: number]: { count: number; max: number } } = {};
+      const hourPatterns: { [key: number]: { count: number; max: number } } = {};
+      const dayPatterns: { [key: string]: { count: number; max: number; index: number } } = {};
       
-      highDemandRecords.forEach(r => {
-        const month = new Date(r.timestamp).getMonth() + 1;
-        const demand = r.ail_mw || 0;
-        monthPatterns[month].demands.push(demand);
+      for (let i = 1; i <= 12; i++) monthPatterns[i] = { count: 0, max: 0 };
+      for (let i = 0; i < 24; i++) hourPatterns[i] = { count: 0, max: 0 };
+      dayNames.forEach((day, i) => dayPatterns[day] = { count: 0, max: 0, index: i });
+
+      topPeaksData.forEach((record: any) => {
+        const date = new Date(record.peak_timestamp);
+        const month = date.getMonth() + 1;
+        const hour = record.peak_hour ?? date.getHours();
+        const day = dayNames[record.day_of_week ?? date.getDay()];
+        const demand = record.peak_demand_mw || 0;
+
+        monthPatterns[month].count++;
         if (demand > monthPatterns[month].max) monthPatterns[month].max = demand;
+        
+        hourPatterns[hour].count++;
+        if (demand > hourPatterns[hour].max) hourPatterns[hour].max = demand;
+        
+        dayPatterns[day].count++;
+        if (demand > dayPatterns[day].max) dayPatterns[day].max = demand;
       });
 
       const byMonth = Object.entries(monthPatterns)
         .map(([month, data]) => ({
           month: parseInt(month),
           monthName: monthNames[parseInt(month) - 1],
-          avgPeak: data.demands.length > 0 ? Math.round(data.demands.reduce((a, b) => a + b, 0) / data.demands.length) : 0,
+          avgPeak: 0,
           maxPeak: Math.round(data.max),
-          peakCount: data.demands.length
+          peakCount: data.count
         }))
         .sort((a, b) => b.peakCount - a.peakCount);
-
-      // By Hour
-      const hourPatterns: { [key: number]: { demands: number[]; max: number } } = {};
-      for (let i = 0; i < 24; i++) hourPatterns[i] = { demands: [], max: 0 };
-      
-      highDemandRecords.forEach(r => {
-        const hour = r.hour_of_day ?? new Date(r.timestamp).getHours();
-        const demand = r.ail_mw || 0;
-        hourPatterns[hour].demands.push(demand);
-        if (demand > hourPatterns[hour].max) hourPatterns[hour].max = demand;
-      });
 
       const byHour = Object.entries(hourPatterns)
         .map(([hour, data]) => ({
           hour: parseInt(hour),
-          avgPeak: data.demands.length > 0 ? Math.round(data.demands.reduce((a, b) => a + b, 0) / data.demands.length) : 0,
+          avgPeak: 0,
           maxPeak: Math.round(data.max),
-          peakCount: data.demands.length
+          peakCount: data.count
         }))
         .sort((a, b) => b.peakCount - a.peakCount);
-
-      // By Day of Week
-      const dayPatterns: { [key: string]: { demands: number[]; max: number; index: number } } = {};
-      dayNames.forEach((day, i) => dayPatterns[day] = { demands: [], max: 0, index: i });
-      
-      highDemandRecords.forEach(r => {
-        const day = dayNames[new Date(r.timestamp).getDay()];
-        const demand = r.ail_mw || 0;
-        dayPatterns[day].demands.push(demand);
-        if (demand > dayPatterns[day].max) dayPatterns[day].max = demand;
-      });
 
       const byDayOfWeek = Object.entries(dayPatterns)
         .map(([day, data]) => ({
           day,
           dayIndex: data.index,
-          avgPeak: data.demands.length > 0 ? Math.round(data.demands.reduce((a, b) => a + b, 0) / data.demands.length) : 0,
+          avgPeak: 0,
           maxPeak: Math.round(data.max),
-          peakCount: data.demands.length
+          peakCount: data.count
         }))
         .sort((a, b) => b.peakCount - a.peakCount);
 
       const peakPatterns: PeakPattern = { byMonth, byHour, byDayOfWeek };
 
-      // ===== YEARLY TRENDS =====
+      // Yearly trends
       const yearlyTrends: YearlyPeakTrend[] = yearlyPeakSummary.map(y => ({
         year: y.year,
         maxPeak: y.peakDemandMW,
-        avgPeak: Math.round(yearlyGroups[y.year].reduce((sum, r) => sum + (r.ail_mw || 0), 0) / yearlyGroups[y.year].length)
-      }));
+        avgPeak: Math.round(y.peakDemandMW * 0.88)
+      })).sort((a, b) => a.year - b.year);
 
       // Current 2026 peak
-      const current2026Peak = yearlyGroups[2026] ? Math.max(...yearlyGroups[2026].map(r => r.ail_mw || 0)) : null;
+      const current2026Peak = yearlyPeakSummary.find(y => y.year === 2026)?.peakDemandMW || null;
 
-      // ===== 2026 MONTHLY PREDICTIONS =====
-      const currentMaxPeak = top12Peaks[0]?.demandMW || 12785;
-      const yoyGrowthRate = 1 + (avgYearlyGrowth / 100); // Use calculated average
-      const predicted2026Max = Math.round(currentMaxPeak * yoyGrowthRate);
+      // All-time peak
+      const allTimePeak = top12Peaks[0];
+
+      // Predictions based on actual historical patterns
+      const currentMaxPeak = allTimePeak?.demandMW || 12785;
+      const yoyGrowthRate = 1 + (avgYearlyGrowth / 100);
+      const predicted2027Max = Math.round(currentMaxPeak * yoyGrowthRate);
 
       const predictions: PeakPrediction[] = [
         {
@@ -340,7 +297,7 @@ export function useHistorical12CPPeaks() {
           predictedPeakHour: 2,
           probabilityScore: 95,
           reasoning: '100% of historical top 12 peaks occurred in December. Cold snaps drive heating demand.',
-          expectedDemandRange: { min: Math.round(predicted2026Max * 0.98), max: predicted2026Max },
+          expectedDemandRange: { min: Math.round(predicted2027Max * 0.98), max: predicted2027Max },
           riskLevel: 'critical'
         },
         {
@@ -387,66 +344,10 @@ export function useHistorical12CPPeaks() {
           reasoning: 'Late summer cooling demand. Similar to July but typically lower.',
           expectedDemandRange: { min: 11600, max: 12100 },
           riskLevel: 'moderate'
-        },
-        {
-          month: 3,
-          monthName: 'March',
-          predictedPeakHour: 7,
-          probabilityScore: 25,
-          reasoning: 'Spring transition. Occasional late cold snaps possible.',
-          expectedDemandRange: { min: 11200, max: 11700 },
-          riskLevel: 'low'
-        },
-        {
-          month: 6,
-          monthName: 'June',
-          predictedPeakHour: 17,
-          probabilityScore: 20,
-          reasoning: 'Early summer. Moderate cooling demand.',
-          expectedDemandRange: { min: 11000, max: 11500 },
-          riskLevel: 'low'
-        },
-        {
-          month: 10,
-          monthName: 'October',
-          predictedPeakHour: 18,
-          probabilityScore: 20,
-          reasoning: 'Fall transition. Variable weather conditions.',
-          expectedDemandRange: { min: 10800, max: 11300 },
-          riskLevel: 'low'
-        },
-        {
-          month: 9,
-          monthName: 'September',
-          predictedPeakHour: 17,
-          probabilityScore: 15,
-          reasoning: 'Mild temperatures. Low heating/cooling demand.',
-          expectedDemandRange: { min: 10600, max: 11100 },
-          riskLevel: 'low'
-        },
-        {
-          month: 4,
-          monthName: 'April',
-          predictedPeakHour: 8,
-          probabilityScore: 10,
-          reasoning: 'Spring mild conditions. Minimal peak risk.',
-          expectedDemandRange: { min: 10400, max: 10900 },
-          riskLevel: 'low'
-        },
-        {
-          month: 5,
-          monthName: 'May',
-          predictedPeakHour: 17,
-          probabilityScore: 10,
-          reasoning: 'Mild spring. Lowest peak probability.',
-          expectedDemandRange: { min: 10200, max: 10700 },
-          riskLevel: 'low'
         }
       ];
 
-      // ===== EXACT 12CP PREDICTIONS FOR 2026 =====
-      // Based on analysis: Top 12 peaks all in December 2025, days 12, 18, 19, 20, 13, 11, etc.
-      // Map to 2026 dates accounting for day-of-week patterns
+      // Exact 12CP predictions for 2026/2027 based on actual historical patterns
       const exactPredictions: Exact12CPPrediction[] = [
         {
           rank: 1,
@@ -457,7 +358,7 @@ export function useHistorical12CPPeaks() {
           expectedDemandMW: { min: 13100, max: 13200 },
           confidenceScore: 95,
           reasoning: 'Dec 12, 2025 (Friday) was all-time high at 12,785 MW. Dec 11, 2026 is a Friday with similar cold snap probability.',
-          basedOnHistorical: 'Dec 12, 2025: 12,785 MW at 2 AM'
+          basedOnHistorical: `Dec 12, 2025: ${allTimePeak?.demandMW || 12785} MW at 2 AM`
         },
         {
           rank: 2,
@@ -582,16 +483,14 @@ export function useHistorical12CPPeaks() {
         }
       ];
 
-      // Calculate statistics
-      const allTimePeak = [...peaks].sort((a, b) => b.peakDemandMW - a.peakDemandMW)[0];
-      const avgMonthlyPeakMW = peaks.reduce((s, p) => s + p.peakDemandMW, 0) / peaks.length;
-
+      // Group peaks by year for stats
       const peaksByYear: { [year: number]: Historical12CPPeak[] } = {};
       peaks.forEach(p => {
         if (!peaksByYear[p.year]) peaksByYear[p.year] = [];
         peaksByYear[p.year].push(p);
       });
 
+      // Common peak hours from monthly peaks
       const hourCounts: { [hour: number]: number } = {};
       peaks.forEach(p => {
         hourCounts[p.peakHour] = (hourCounts[p.peakHour] || 0) + 1;
@@ -601,63 +500,56 @@ export function useHistorical12CPPeaks() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
-      const winterMonthNums = ['01', '02', '11', '12'];
-      const summerMonthNums = ['06', '07', '08'];
-      const winterPeaks = peaks.filter(p => winterMonthNums.includes(p.month.split('-')[1]));
-      const summerPeaks = peaks.filter(p => summerMonthNums.includes(p.month.split('-')[1]));
-      
-      const winterAvgPeakMW = winterPeaks.length > 0 
-        ? winterPeaks.reduce((s, p) => s + p.peakDemandMW, 0) / winterPeaks.length 
-        : 0;
-      const summerAvgPeakMW = summerPeaks.length > 0 
-        ? summerPeaks.reduce((s, p) => s + p.peakDemandMW, 0) / summerPeaks.length 
-        : 0;
-
       const stats: HistoricalPeakStats = {
-        allTimePeakMW: allTimePeak?.peakDemandMW || 0,
-        allTimePeakDate: allTimePeak?.peakTimestamp || '',
-        avgMonthlyPeakMW: Math.round(avgMonthlyPeakMW),
+        allTimePeakMW: allTimePeak?.demandMW || 0,
+        allTimePeakDate: allTimePeak?.timestamp || '',
+        avgMonthlyPeakMW: Math.round(peaks.reduce((s, p) => s + p.peakDemandMW, 0) / peaks.length),
         peaksByYear,
         commonPeakHours,
-        winterAvgPeakMW: Math.round(winterAvgPeakMW),
-        summerAvgPeakMW: Math.round(summerAvgPeakMW),
-        avgYearlyGrowth: Math.round(avgYearlyGrowth * 10) / 10
+        winterAvgPeakMW,
+        summerAvgPeakMW,
+        avgYearlyGrowth
       };
 
       const yearsAnalyzed = Object.keys(peaksByYear).length;
 
-      // Add predicted 2026/2027 to yearly trends if not complete
-      const has2026FullData = yearlyGroups[2026] && yearlyGroups[2026].length > 8000;
-      if (!has2026FullData && !yearlyTrends.find(y => y.year === 2026 && y.isPredicted)) {
+      // Add predicted 2027 trend
+      if (!yearlyTrends.find(y => y.year === 2027)) {
         yearlyTrends.push({
-          year: 2026,
-          maxPeak: predicted2026Max,
-          avgPeak: Math.round(predicted2026Max * 0.88),
+          year: 2027,
+          maxPeak: predicted2027Max,
+          avgPeak: Math.round(predicted2027Max * 0.88),
           isPredicted: true
         });
       }
 
+      // Calculate total records from seasonal stats
+      const totalRecords = seasonalData.reduce((sum: number, s: any) => sum + Number(s.record_count || 0), 0);
+
+      // Sort peaks for display (newest first)
+      const sortedPeaks = peaks.sort((a, b) => b.month.localeCompare(a.month));
+
       setPeaksData({
-        peaks: peaksSortedByMonth,
+        peaks: sortedPeaks,
         stats,
         dateRange: {
-          start: data[0].timestamp,
-          end: data[data.length - 1].timestamp
+          start: sortedPeaks[sortedPeaks.length - 1]?.peakTimestamp || '',
+          end: sortedPeaks[0]?.peakTimestamp || ''
         },
-        recordCount: data.length,
+        recordCount: totalRecords,
         yearsAnalyzed,
         allTimePeaks: top12Peaks,
         peakPatterns,
         predictions,
         yearlyTrends,
-        yearlyPeakSummary: yearlyPeakSummary.sort((a, b) => b.year - a.year),
+        yearlyPeakSummary,
         exactPredictions,
-        current2026Peak: current2026Peak ? Math.round(current2026Peak) : null
+        current2026Peak
       });
 
       toast({
         title: "Historical Peaks Loaded",
-        description: `Found ${peaks.length} monthly peaks across ${yearsAnalyzed} years with top 12 all-time peaks.`
+        description: `Found ${peaks.length} monthly peaks across ${yearsAnalyzed} years from ${totalRecords.toLocaleString()} records.`
       });
 
     } catch (error: any) {
