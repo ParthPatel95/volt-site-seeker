@@ -37,6 +37,25 @@ export interface YearlyPeakSummary {
   growthFromPrevYear: number | null;
 }
 
+export interface YearlyTop12Peak {
+  year: number;
+  rank: number;
+  timestamp: string;
+  demandMW: number;
+  priceAtPeak: number;
+  hour: number;
+  dayOfWeek: string;
+  monthName: string;
+  dayOfMonth: number;
+}
+
+export interface YearlyTop12Data {
+  year: number;
+  peaks: YearlyTop12Peak[];
+  yearMaxDemand: number;
+  yearMinOf12: number;
+}
+
 export interface Exact12CPPrediction {
   rank: number;
   predictedDate: string;
@@ -96,6 +115,7 @@ export interface HistoricalPeaksData {
   yearlyPeakSummary: YearlyPeakSummary[];
   exactPredictions: Exact12CPPrediction[];
   current2026Peak: number | null;
+  yearlyTop12Data: YearlyTop12Data[];
 }
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -112,22 +132,25 @@ export function useHistorical12CPPeaks() {
     
     try {
       // Use database functions for server-side aggregation (bypasses 1000 row limit)
-      const [monthlyResult, topPeaksResult, yearlyResult, seasonalResult] = await Promise.all([
+      const [monthlyResult, topPeaksResult, yearlyResult, seasonalResult, yearlyTop12Result] = await Promise.all([
         supabase.rpc('get_monthly_peak_demands'),
         supabase.rpc('get_top_peak_demands', { limit_count: 50 }),
         supabase.rpc('get_yearly_peak_demands'),
-        supabase.rpc('get_seasonal_peak_stats')
+        supabase.rpc('get_seasonal_peak_stats'),
+        supabase.rpc('get_yearly_top12_peaks')
       ]);
 
       if (monthlyResult.error) throw monthlyResult.error;
       if (topPeaksResult.error) throw topPeaksResult.error;
       if (yearlyResult.error) throw yearlyResult.error;
       if (seasonalResult.error) throw seasonalResult.error;
+      if (yearlyTop12Result.error) throw yearlyTop12Result.error;
 
       const monthlyData = monthlyResult.data || [];
       const topPeaksData = topPeaksResult.data || [];
       const yearlyData = yearlyResult.data || [];
       const seasonalData = seasonalResult.data || [];
+      const yearlyTop12RawData = yearlyTop12Result.data || [];
 
       if (monthlyData.length === 0) {
         toast({
@@ -281,6 +304,38 @@ export function useHistorical12CPPeaks() {
 
       // Current 2026 peak
       const current2026Peak = yearlyPeakSummary.find(y => y.year === 2026)?.peakDemandMW || null;
+
+      // Process yearly top 12 peaks data
+      const yearlyTop12Map = new Map<number, YearlyTop12Peak[]>();
+      yearlyTop12RawData.forEach((row: any) => {
+        const peakDate = new Date(row.peak_timestamp);
+        const peak: YearlyTop12Peak = {
+          year: row.year,
+          rank: row.rank,
+          timestamp: row.peak_timestamp,
+          demandMW: Math.round(row.peak_demand_mw || 0),
+          priceAtPeak: Math.round((row.price_at_peak || 0) * 100) / 100,
+          hour: row.peak_hour ?? peakDate.getHours(),
+          dayOfWeek: dayNames[row.day_of_week ?? peakDate.getDay()],
+          monthName: fullMonthNames[peakDate.getMonth()],
+          dayOfMonth: peakDate.getDate()
+        };
+        
+        if (!yearlyTop12Map.has(row.year)) {
+          yearlyTop12Map.set(row.year, []);
+        }
+        yearlyTop12Map.get(row.year)!.push(peak);
+      });
+
+      // Convert to array and add summary stats
+      const yearlyTop12Data: YearlyTop12Data[] = Array.from(yearlyTop12Map.entries())
+        .map(([year, peaks]) => ({
+          year,
+          peaks: peaks.sort((a, b) => a.rank - b.rank),
+          yearMaxDemand: Math.max(...peaks.map(p => p.demandMW)),
+          yearMinOf12: Math.min(...peaks.map(p => p.demandMW))
+        }))
+        .sort((a, b) => b.year - a.year);
 
       // All-time peak
       const allTimePeak = top12Peaks[0];
@@ -544,7 +599,8 @@ export function useHistorical12CPPeaks() {
         yearlyTrends,
         yearlyPeakSummary,
         exactPredictions,
-        current2026Peak
+        current2026Peak,
+        yearlyTop12Data
       });
 
       toast({
