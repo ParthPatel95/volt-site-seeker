@@ -11384,6 +11384,36 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_monthly_peak_demands: {
+        Args: { end_date?: string; start_date?: string }
+        Returns: {
+          day_of_week: number
+          month_key: string
+          peak_demand_mw: number
+          peak_hour: number
+          peak_timestamp: string
+          price_at_peak: number
+        }[]
+      }
+      get_seasonal_peak_stats: {
+        Args: never
+        Returns: {
+          avg_peak_mw: number
+          max_peak_mw: number
+          record_count: number
+          season: string
+        }[]
+      }
+      get_top_peak_demands: {
+        Args: { limit_count?: number }
+        Returns: {
+          day_of_week: number
+          peak_demand_mw: number
+          peak_hour: number
+          peak_timestamp: string
+          price_at_peak: number
+        }[]
+      }
       get_user_analytics_summary: {
         Args: { target_user_id: string }
         Returns: {
@@ -11414,6 +11444,17 @@ export type Database = {
           phone: string
           roles: string[]
           updated_at: string
+        }[]
+      }
+      get_yearly_peak_demands: {
+        Args: never
+        Returns: {
+          day_of_week: number
+          peak_demand_mw: number
+          peak_hour: number
+          peak_timestamp: string
+          price_at_peak: number
+          year: number
         }[]
       }
       has_role: {
