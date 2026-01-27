@@ -1,274 +1,253 @@
 
-
-# Plan: Enhance 12CP & Reserves Feature with Real Demand-Based Data
+# Plan: Enhanced Historical 12CP Peaks with Top 12 All-Time Peaks & Prediction
 
 ## Overview
 
-This plan addresses critical issues with the current 12CP feature and adds new capabilities:
+This enhancement will add three key features to the Historical Peaks tab:
 
-1. **Fix core issue**: 12CP is currently based on **price** but should be based on **demand (AIL/MW)**
-2. **Use only real data**: All calculations will use actual `aeso_training_data` records (no mock data)
-3. **Add historical peak viewer**: See highest demand peaks for 1, 2, or 4-year periods
-4. **Correct math formulas**: Implement proper 12CP transmission cost calculation based on AESO methodology
-
----
-
-## Current Problems Identified
-
-### Problem 1: 12CP Logic Uses Price Instead of Demand
-The current `use12CPSavingsAnalytics.ts` hook calculates risk based on **price**:
-```text
-// WRONG: Risk calculated from price
-riskScore = avgPriceAtHour > annualAvgPrice * 1.5 ? 90 : ...
-```
-
-12CP should be based on **demand (ail_mw)** because AESO determines the peak hour by finding the hour with the **highest provincial demand**, not highest price.
-
-### Problem 2: Peak Hour Detection Uses Price
-Current logic finds the "peak hour" by looking for the hour with the highest average price per month, but 12CP peaks are the hours with highest **demand**.
-
-### Problem 3: Missing Historical Peak Demand Viewer
-No ability to view actual historical 12CP peaks across multiple years.
-
-### Problem 4: Incorrect Transmission Cost Formula
-Current formula applies transmission cost per MWh across all operating hours. The correct 12CP calculation should be:
-- Your share of transmission = (Your load during 12 peaks / Total system peaks) x Transmission revenue requirement
+1. **Top 12 All-Time Peak Demand Hours** - A dedicated section showing the 12 highest demand hours ever recorded
+2. **Pattern Analysis** - Statistical breakdown of when peaks occur (month, hour, day of week)
+3. **Current Year Peak Prediction** - AI-driven forecast of when the 12 highest peaks are likely to occur in 2026
 
 ---
 
-## Database Data Available
+## Data Validation (Verified Real AESO Data)
 
-Verified real data in `aeso_training_data`:
-- **Date range**: June 2022 - January 2026 (3.5+ years)
-- **Total records with demand**: 33,259 hourly records
-- **Key column**: `ail_mw` (Alberta Internal Load - the demand metric)
-- **Peak demand recorded**: 12,785 MW (December 2025)
+All data comes from `aeso_training_data` table:
+- **Date Range**: June 2022 - January 2026 (3.5+ years)
+- **Records**: 33,261 hourly demand records with `ail_mw` values
+- **All-Time Peak**: 12,785 MW on December 12, 2025 at 2:00 AM
+- **NO mock or synthetic data** - all values directly from AESO
 
 ---
 
-## Technical Changes
+## Technical Implementation
 
-### 1. Update `use12CPSavingsAnalytics.ts`
+### 1. Update `useHistorical12CPPeaks.ts` Hook
 
-**Change peak detection from price-based to demand-based:**
+**Add new interfaces:**
+```typescript
+export interface AllTimePeakHour {
+  rank: number;
+  timestamp: string;
+  demandMW: number;
+  priceAtPeak: number;
+  hour: number;
+  dayOfWeek: string;
+  month: number;
+  year: number;
+}
 
-```text
-// CURRENT (WRONG): Finding peak hour by price
-const hourlyPrices: { [hour: number]: number[] } = {};
-rows.forEach(r => {
-  hourlyPrices[hour].push(r.pool_price || 0);
-});
-// Peak hour = hour with highest average PRICE
+export interface PeakPrediction {
+  month: number;
+  monthName: string;
+  predictedPeakHour: number;
+  probabilityScore: number;  // 0-100
+  reasoning: string;
+  expectedDemandRange: { min: number; max: number };
+}
 
-// NEW (CORRECT): Finding peak hour by demand
-const hourlyDemands: { [hour: number]: number[] } = {};
-rows.forEach(r => {
-  hourlyDemands[hour].push(r.ail_mw || 0);
-});
-// Peak hour = hour with highest average DEMAND
-```
-
-**Update risk scoring to use demand:**
-
-```text
-// CURRENT (WRONG): Risk based on price
-riskScore = avgPriceAtHour > annualAvgPrice * 1.5 ? 90 : ...
-
-// NEW (CORRECT): Risk based on demand threshold
-// System peak threshold ~11,500 MW based on historical data
-riskScore = avgDemandAtHour > 11500 ? 90 : avgDemandAtHour > 11000 ? 70 : ...
-```
-
-**Add new interface for real 12CP peak data:**
-
-```text
-interface Monthly12CPPeak {
-  month: string;           // e.g., "2025-12"
-  monthLabel: string;      // e.g., "Dec 25"
-  peakTimestamp: string;   // ISO timestamp of actual peak
-  peakDemandMW: number;    // Actual AIL at peak (e.g., 12785)
-  peakHour: number;        // Hour of day (0-23)
-  priceAtPeak: number;     // Pool price during the peak hour
-  dayOfWeek: string;       // e.g., "Friday"
+export interface HistoricalPeaksData {
+  // Existing fields...
+  allTimePeaks: AllTimePeakHour[];  // NEW: Top 12 peaks ever
+  peakPatterns: {
+    byMonth: { month: number; avgPeak: number; maxPeak: number; peakCount: number }[];
+    byHour: { hour: number; avgPeak: number; maxPeak: number; peakCount: number }[];
+    byDayOfWeek: { day: string; avgPeak: number; maxPeak: number; peakCount: number }[];
+  };
+  predictions: PeakPrediction[];  // NEW: 2026 predictions
 }
 ```
 
-### 2. Create New Hook: `useHistorical12CPPeaks.ts`
+**Add new fetch function: `fetchAllTimePeaks()`**
+- Query top 12 demand hours across all data (deduplicated by hour)
+- Return exact timestamps, demand, price, and metadata
 
-**Purpose:** Fetch and display the actual 12CP peaks for 1, 2, or 4 year ranges.
+**Add prediction logic: `generatePeakPredictions()`**
+Based on historical patterns:
+- December peaks dominate (100% of top 12 in dataset)
+- Early morning hours (1-3 AM) are most common
+- Thursday-Saturday have highest occurrence
+- Demand growing ~3% year-over-year
 
-**Key functions:**
-- `fetchHistoricalPeaks(years: 1 | 2 | 4)`: Query database for monthly peak demand
-- `getAnnualPeakSummary(year: number)`: Get all 12 peaks for a specific year
-- `calculateHistoricalTrends()`: Analyze peak timing patterns across years
+**Prediction algorithm:**
+```typescript
+// Calculate expected 2026 peak based on trend
+const yoyGrowthRate = 1.03;  // 3% annual growth observed
+const predicted2026Peak = 12785 * yoyGrowthRate;  // ~13,168 MW
 
-**Database query logic:**
-```text
-WITH monthly_peaks AS (
-  SELECT 
-    DATE_TRUNC('month', timestamp) as month,
-    timestamp as peak_timestamp,
-    ail_mw as peak_demand_mw,
-    pool_price as price_at_peak,
-    hour_of_day,
-    ROW_NUMBER() OVER (
-      PARTITION BY DATE_TRUNC('month', timestamp) 
-      ORDER BY ail_mw DESC
-    ) as rn
-  FROM aeso_training_data 
-  WHERE ail_mw IS NOT NULL
-    AND timestamp >= [start_date]
-)
-SELECT * FROM monthly_peaks WHERE rn = 1
+// Generate monthly predictions with probability scores
+const monthlyPredictions = [
+  { month: 12, probability: 95, reasoning: "December: 100% of historical top 12 peaks" },
+  { month: 1, probability: 70, reasoning: "January: Winter heating, 2nd highest avg peak" },
+  { month: 2, probability: 50, reasoning: "February: Late winter, 4th highest avg peak" },
+  { month: 7, probability: 40, reasoning: "July: Summer cooling, unexpected peaks possible" },
+  // ... remaining months
+];
 ```
 
-### 3. Update `TwelveCPSavingsSimulator.tsx`
+### 2. Update `HistoricalPeakDemandViewer.tsx` Component
 
-**Changes:**
-- Update labels from "Peak Hour Price" to "Peak Hour Demand"
-- Show demand in MW units, not price in $/MWh
-- Add data source indicator: "Live from AESO Training Data"
-- Display date range of data used
+**Add new sections:**
 
-**New section: Historical Peak Demand Table**
-- Dropdown: "View peaks for: [Last 1 Year] [Last 2 Years] [Last 4 Years]"
-- Table columns: Month, Peak Date/Time, Demand (MW), Price at Peak, Hour
-
-### 4. Update `PeakHourRiskAnalysis.tsx`
-
-**Changes:**
-- Risk score based on demand percentile, not price
-- Show "Avg Demand at Hour" instead of "Avg Price at Peak"
-- Update seasonal insights to show demand patterns
-
-**New demand-based risk scoring:**
-```text
-const getHourlyDemandRisk = (avgDemand: number, maxHistorical: number) => {
-  const percentile = avgDemand / maxHistorical;
-  if (percentile >= 0.95) return 90;  // Top 5% = Very High
-  if (percentile >= 0.90) return 70;  // Top 10% = High
-  if (percentile >= 0.80) return 50;  // Top 20% = Moderate
-  if (percentile >= 0.70) return 30;  // Top 30% = Low-Moderate
-  return 10;                           // Below 70% = Safe
-}
+#### Section A: Top 12 All-Time Peak Hours Table
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ⚡ Top 12 All-Time Peak Demand Hours                                    │
+│                                                                         │
+│ These are the 12 highest grid demand hours ever recorded in Alberta.   │
+│ Understanding when these occurred helps predict future 12CP peaks.      │
+│                                                                         │
+│ ┌───────┬────────────────────────┬──────────┬─────────┬────────┬──────┐│
+│ │ Rank  │ Date/Time              │ Demand   │ Price   │ Day    │ Hour ││
+│ ├───────┼────────────────────────┼──────────┼─────────┼────────┼──────┤│
+│ │ #1    │ Dec 12, 2025 02:00 MST │ 12,785MW │ $44.20  │ Friday │ 2 AM ││
+│ │ #2    │ Dec 12, 2025 01:00 MST │ 12,741MW │ $43.65  │ Friday │ 1 AM ││
+│ │ #3    │ Dec 18, 2025 02:00 MST │ 12,737MW │ $22.08  │ Thu    │ 2 AM ││
+│ │ ...   │                        │          │         │        │      ││
+│ └───────┴────────────────────────┴──────────┴─────────┴────────┴──────┘│
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5. Create `HistoricalPeakDemandViewer.tsx` Component
-
-**New component for Peak Hour Risk tab or new sub-tab:**
-
-Features:
-- Time range selector: 1 Year | 2 Years | 4 Years
-- Table showing each month's peak with:
-  - Date/time of peak
-  - Demand in MW
-  - Pool price during peak
-  - Hour of day
-  - Comparison to annual average
-- Visual chart: Monthly peak demands over time
-- Key statistics: Highest peak ever, average peak demand, trend indicator
-
-### 6. Fix Transmission Cost Formula
-
-**Current formula (simplified/incorrect):**
-```text
-transmissionCost = facilityMW × TRANSMISSION_ADDER × 8760
+#### Section B: Pattern Analysis Cards
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 📊 Peak Demand Patterns (Based on Historical Data)                      │
+│                                                                         │
+│ ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────────┐ │
+│ │ Peak Months       │  │ Peak Hours        │  │ Peak Days             │ │
+│ ├───────────────────┤  ├───────────────────┤  ├───────────────────────┤ │
+│ │ #1 December       │  │ #1 2 AM (74x)     │  │ #1 Friday (355x)      │ │
+│ │ #2 January        │  │ #2 1 AM (76x)     │  │ #2 Tuesday (357x)     │ │
+│ │ #3 February       │  │ #3 3 AM (72x)     │  │ #3 Thursday (328x)    │ │
+│ └───────────────────┘  └───────────────────┘  └───────────────────────┘ │
+│                                                                         │
+│ Key Insight: All 12 highest peaks occurred in December between 1-3 AM  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Corrected formula (per AESO methodology):**
-```text
-// Your 12CP contribution = Sum of your loads during 12 monthly peaks
-// If you avoid ALL peaks, your 12CP contribution = 0
-// If you operate at full capacity during all peaks:
-//   12CP contribution = facilityMW × 12 (months)
-// Your share = 12CP contribution / Total system peaks × ~$2.3B
+#### Section C: 2026 Peak Predictions
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🔮 2026 Peak Demand Predictions                                         │
+│                                                                         │
+│ Based on 3.5 years of historical patterns + 3% annual growth trend     │
+│                                                                         │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ Expected 2026 Annual Peak: 13,100 - 13,300 MW                       │ │
+│ │ Current 2026 Peak (Jan): 12,291 MW                                  │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│                                                                         │
+│ Monthly Risk Forecast:                                                  │
+│ ┌────────────┬──────────────┬─────────────────────────────────────────┐ │
+│ │ Month      │ Risk Level   │ Reasoning                               │ │
+│ ├────────────┼──────────────┼─────────────────────────────────────────┤ │
+│ │ December   │ ████████ 95% │ 100% of top 12 peaks in December        │ │
+│ │ January    │ ██████░░ 70% │ Cold snaps, 2nd highest historical      │ │
+│ │ February   │ █████░░░ 55% │ Late winter cold events                 │ │
+│ │ July       │ ████░░░░ 40% │ Heat waves, summer cooling peaks        │ │
+│ │ November   │ ███░░░░░ 35% │ Early winter, transitional              │ │
+│ │ August     │ ███░░░░░ 30% │ Late summer cooling                     │ │
+│ └────────────┴──────────────┴─────────────────────────────────────────┘ │
+│                                                                         │
+│ Most Likely Peak Windows for 2026:                                      │
+│ • Dec 10-20, 2026 between 1-3 AM MST (95% confidence)                  │
+│ • Jan 15-25, 2026 during cold snaps (70% confidence)                   │
+│ • July heat waves between 9 PM - 12 AM (40% confidence)                │
+│                                                                         │
+│ ⚠️ Note: These predictions are based on historical patterns.            │
+│    Actual peaks depend on weather, economic activity, and grid events. │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-// Simplified for calculator:
-annualTransmissionCost = facilityMW × 1000 × 12 × transmissionRatePerKW
-// Where transmissionRatePerKW ≈ $7.11/kW/month for Rate 65
+### 3. Add Year-Over-Year Trend Visualization
 
-// Alternative (current approach is acceptable for estimation):
-// $11.73/MWh × MWh consumed, reduced proportionally by peaks avoided
-transmissionSavingsPerPeak = (totalTransmissionCost / 12) × 1  // ~8.33% per peak
+Add a small trend chart showing peak demand growth:
+```
+Year    Peak (MW)   Trend
+2022    12,193      ████████████████░░░░
+2023    11,572      ███████████████░░░░░  (mild winter)
+2024    12,384      █████████████████░░░
+2025    12,785      ██████████████████░░  (current record)
+2026*   13,100+     ███████████████████░  (predicted)
 ```
 
 ---
 
-## Files to Create/Modify
-
-### New Files
-1. `src/hooks/useHistorical12CPPeaks.ts` - Fetch real historical 12CP peaks
-2. `src/components/aeso/HistoricalPeakDemandViewer.tsx` - Historical peak viewer UI
+## Files to Modify
 
 ### Modified Files
-1. `src/hooks/use12CPSavingsAnalytics.ts` - Fix demand-based logic
-2. `src/components/aeso/TwelveCPSavingsSimulator.tsx` - Update labels, add historical viewer
-3. `src/components/aeso/PeakHourRiskAnalysis.tsx` - Demand-based risk scoring
-4. `src/components/aeso/TwelveCPAnalyticsTab.tsx` - Integrate historical viewer
+1. **`src/hooks/useHistorical12CPPeaks.ts`**
+   - Add `AllTimePeakHour` and `PeakPrediction` interfaces
+   - Add `fetchAllTimePeaks()` function to query top 12 demand hours
+   - Add `generatePeakPredictions()` function with pattern-based algorithm
+   - Update `HistoricalPeaksData` to include new data
+
+2. **`src/components/aeso/HistoricalPeakDemandViewer.tsx`**
+   - Add "Top 12 All-Time Peaks" section with ranked table
+   - Add "Pattern Analysis" section with month/hour/day breakdown
+   - Add "2026 Predictions" section with probability bars
+   - Add year-over-year trend mini-chart
+   - Add sub-tabs for "Monthly Peaks" | "All-Time Top 12" | "Predictions"
+
+---
+
+## Prediction Algorithm Details
+
+The prediction uses weighted pattern analysis:
+
+```typescript
+function generatePeakPredictions(historicalData: HistoricalPeaksData): PeakPrediction[] {
+  // Weight factors from historical analysis
+  const monthWeights = {
+    12: 0.95,  // December: 100% of top 12, highest avg peak (12,153 MW)
+    1: 0.70,   // January: 2nd highest, cold snaps
+    2: 0.55,   // February: Winter continuation
+    7: 0.40,   // July: Summer peaks (12,221 MW max)
+    11: 0.35,  // November: Early winter
+    8: 0.30,   // August: Summer cooling
+    // ... others have lower weights
+  };
+
+  // Hour weights (based on occurrence in >11,500 MW peaks)
+  const hourWeights = {
+    2: 0.90,  // 2 AM: 74 occurrences, highest avg (12,153 MW)
+    1: 0.85,  // 1 AM: 76 occurrences
+    3: 0.80,  // 3 AM: 72 occurrences
+    0: 0.75,  // Midnight: 80 occurrences
+    // ... etc
+  };
+
+  // Calculate expected peak range with 3% YoY growth
+  const yoyGrowth = 1.03;
+  const currentPeak = 12785;  // 2025 record
+  const expected2026Peak = {
+    min: Math.round(currentPeak * 1.02),  // Conservative: 2%
+    max: Math.round(currentPeak * 1.05),  // Aggressive: 5%
+  };
+
+  return predictions;
+}
+```
 
 ---
 
 ## Data Source Indicators
 
-All components will display clear data source badges:
-- "Live from AESO" badge on real-time reserves
-- "AESO Historical Data (Jun 2022 - Present)" on historical analysis
-- Date range of data used in each calculation
-- Record count to show data coverage
+All sections will display:
+- **"Real AESO Data"** badge
+- **Date range** of data analyzed
+- **Record count** for transparency
+- **"Prediction"** badge on forecast sections to distinguish from verified data
 
 ---
 
-## UI/UX Changes
+## Summary of Changes
 
-### Historical Peak Viewer (New Feature)
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│ 📊 Historical 12CP Peak Demand                                  │
-│                                                                 │
-│  View Range: [1 Year ▼] [2 Years] [4 Years]                    │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ Month      │ Peak Date/Time      │ Demand   │ Price  │ Hour ││
-│  │────────────┼─────────────────────┼──────────┼────────┼──────││
-│  │ Dec 2025   │ Dec 12, 2025 02:00  │ 12,785MW │ $44.20 │ 2 AM ││
-│  │ Jan 2026   │ Jan 23, 2026 02:00  │ 12,291MW │ $55.80 │ 2 AM ││
-│  │ Feb 2025   │ Feb 04, 2025 01:00  │ 12,211MW │ $65.15 │ 1 AM ││
-│  │ ...        │ ...                 │ ...      │ ...    │ ...  ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                 │
-│  Key Statistics:                                                │
-│  • All-Time Peak: 12,785 MW (Dec 12, 2025)                     │
-│  • Avg Monthly Peak: 11,542 MW                                 │
-│  • Most Common Peak Hour: 5-6 PM (Winter), 2-3 PM (Summer)     │
-│                                                                 │
-│  📈 [View Peak Trend Chart]                                     │
-│                                                                 │
-│  ⓘ Data: AESO Historical (Jun 2022 - Present) | 33,259 records │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Testing Verification
-
-After implementation, verify:
-1. Peak hours shown are based on demand, not price
-2. All displayed peaks match actual database records
-3. No mock/placeholder data in any component
-4. Math formulas produce realistic savings estimates
-5. Historical viewer correctly shows 1/2/4 year data ranges
-6. Data source badges display correctly
-
----
-
-## Summary of Key Fixes
-
-| Issue | Current | Fixed |
-|-------|---------|-------|
-| Peak detection | Based on price | Based on demand (ail_mw) |
-| Risk scoring | Price thresholds | Demand percentiles |
-| Peak hour display | "Peak Hour Price" | "Peak Hour Demand" |
-| Units shown | $/MWh only | MW (demand) + $/MWh (price) |
-| Historical view | None | 1/2/4 year peak history |
-| Data source | Not shown | Clear badges with date ranges |
-
+| Feature | Description |
+|---------|-------------|
+| Top 12 All-Time Peaks | Ranked table of 12 highest demand hours ever |
+| Pattern Analysis | Breakdown by month, hour, and day of week |
+| 2026 Predictions | Probability-based forecast for each month |
+| Year-over-Year Trend | Visual showing demand growth trajectory |
+| Current Year Tracking | Show how 2026 peaks compare to predictions |
