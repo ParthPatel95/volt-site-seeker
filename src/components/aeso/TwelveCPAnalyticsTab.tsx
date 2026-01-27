@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
-  Bell
+  Bell,
+  History
 } from 'lucide-react';
 import { useAESORealtimeReserves } from '@/hooks/useAESORealtimeReserves';
 import { use12CPSavingsAnalytics } from '@/hooks/use12CPSavingsAnalytics';
@@ -24,6 +25,7 @@ import { useAESOGridAlerts } from '@/hooks/useAESOGridAlerts';
 import { TwelveCPSavingsSimulator } from './TwelveCPSavingsSimulator';
 import { PeakHourRiskAnalysis } from './PeakHourRiskAnalysis';
 import { GridAlertStatusCard } from './GridAlertStatusCard';
+import { HistoricalPeakDemandViewer } from './HistoricalPeakDemandViewer';
 import { format } from 'date-fns';
 
 export function TwelveCPAnalyticsTab() {
@@ -73,7 +75,7 @@ export function TwelveCPAnalyticsTab() {
     <div className="space-y-6">
       {/* Section Navigation */}
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
           <TabsTrigger value="savings" className="min-h-[44px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Calculator className="w-4 h-4" />
             <span className="hidden sm:inline">Savings Simulator</span>
@@ -83,6 +85,11 @@ export function TwelveCPAnalyticsTab() {
             <Target className="w-4 h-4" />
             <span className="hidden sm:inline">Peak Hour Risk</span>
             <span className="sm:hidden">Risk</span>
+          </TabsTrigger>
+          <TabsTrigger value="historical" className="min-h-[44px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">Historical Peaks</span>
+            <span className="sm:hidden">History</span>
           </TabsTrigger>
           <TabsTrigger value="alerts" className="min-h-[44px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative">
             <Bell className="w-4 h-4" />
@@ -114,6 +121,11 @@ export function TwelveCPAnalyticsTab() {
           ) : (
             <PeakHourRiskAnalysis savingsData={savingsData} />
           )}
+        </TabsContent>
+
+        {/* Historical Peaks Tab */}
+        <TabsContent value="historical" className="mt-6">
+          <HistoricalPeakDemandViewer />
         </TabsContent>
 
         {/* Grid Alerts Tab */}

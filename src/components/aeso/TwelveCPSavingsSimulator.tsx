@@ -29,9 +29,11 @@ import {
   AlertTriangle,
   Loader2,
   RefreshCw,
-  Lightbulb
+  Lightbulb,
+  Database
 } from 'lucide-react';
 import { use12CPSavingsAnalytics, SavingsSimulatorResult } from '@/hooks/use12CPSavingsAnalytics';
+import { format } from 'date-fns';
 
 export function TwelveCPSavingsSimulator() {
   const {
@@ -39,7 +41,8 @@ export function TwelveCPSavingsSimulator() {
     loading,
     fetch12CPSavingsData,
     calculateSavings,
-    transmissionAdder
+    transmissionAdder,
+    transmissionRatePerKW
   } = use12CPSavingsAnalytics();
 
   const [facilityMW, setFacilityMW] = useState('50');
@@ -79,7 +82,7 @@ export function TwelveCPSavingsSimulator() {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-3 text-muted-foreground">Loading savings analysis...</span>
+        <span className="ml-3 text-muted-foreground">Loading 12CP demand analysis...</span>
       </div>
     );
   }
@@ -89,7 +92,7 @@ export function TwelveCPSavingsSimulator() {
       <Card className="border-yellow-200">
         <CardContent className="py-8 text-center">
           <AlertTriangle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-          <p className="text-muted-foreground">No pricing data available for savings analysis.</p>
+          <p className="text-muted-foreground">No demand data available for 12CP analysis.</p>
           <Button onClick={fetch12CPSavingsData} variant="outline" className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -98,6 +101,11 @@ export function TwelveCPSavingsSimulator() {
       </Card>
     );
   }
+
+  // Calculate average price at peaks for display
+  const avgPriceAtPeaks = savingsData 
+    ? savingsData.monthlyPeaks.reduce((s, m) => s + m.priceAtPeak, 0) / savingsData.monthlyPeaks.length
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -119,7 +127,7 @@ export function TwelveCPSavingsSimulator() {
                   /Year
                 </h2>
                 <p className="text-green-700/80 dark:text-green-300/80 mt-1">
-                  By avoiding just {savingsResult.withStrategy.hoursAvoided} hours during system peaks
+                  By avoiding just {savingsResult.withStrategy.hoursAvoided} hours during system <strong>demand</strong> peaks
                 </p>
               </div>
               
@@ -146,10 +154,16 @@ export function TwelveCPSavingsSimulator() {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-primary" />
-              12CP Savings Simulator
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="w-5 h-5 text-primary" />
+                12CP Savings Simulator
+              </CardTitle>
+              <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/30">
+                <Database className="w-3 h-3 mr-1" />
+                Real AESO Data
+              </Badge>
+            </div>
             <Button
               onClick={fetch12CPSavingsData}
               variant="outline"
@@ -214,7 +228,7 @@ export function TwelveCPSavingsSimulator() {
                       <p className="text-lg font-bold">{formatCurrency(savingsResult.withoutStrategy.energyCost)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Transmission Cost</p>
+                      <p className="text-xs text-muted-foreground">Transmission Cost (12CP)</p>
                       <p className="text-lg font-bold">{formatCurrency(savingsResult.withoutStrategy.transmissionCost)}</p>
                     </div>
                     <div className="pt-2 border-t border-red-200/50">
@@ -248,7 +262,7 @@ export function TwelveCPSavingsSimulator() {
                       <p className="text-lg font-bold">{formatCurrency(savingsResult.withStrategy.energyCost)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Transmission Cost</p>
+                      <p className="text-xs text-muted-foreground">Transmission Cost (12CP)</p>
                       <p className="text-lg font-bold">{formatCurrency(savingsResult.withStrategy.transmissionCost)}</p>
                     </div>
                     <div className="pt-2 border-t border-green-200/50">
@@ -261,65 +275,98 @@ export function TwelveCPSavingsSimulator() {
             </div>
           )}
 
-          {/* Transmission Adder Info */}
+          {/* Transmission Rate Info */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 text-sm">
             <Lightbulb className="w-5 h-5 text-yellow-600 shrink-0" />
             <p className="text-muted-foreground">
-              <strong>Transmission Adder:</strong> ${transmissionAdder}/MWh CAD is added to all energy costs. 
-              12CP avoidance can significantly reduce this charge by lowering your contribution to system peak.
+              <strong>12CP Transmission:</strong> Rate 65 charges ${transmissionRatePerKW}/kW/month based on your load during 12 monthly system demand peaks (not price peaks). 
+              Avoiding these peaks eliminates your 12CP contribution.
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Monthly Price Comparison Chart */}
-      {savingsData && savingsData.monthlyComparisons.length > 0 && (
+      {/* Monthly Peak Demand Chart */}
+      {savingsData && savingsData.monthlyPeaks.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-blue-600" />
-              12-Month Price Comparison
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Average price vs peak hour price — the gap is your savings opportunity
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingDown className="w-5 h-5 text-blue-600" />
+                  12-Month Peak Demand Analysis
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Monthly peak demand (MW) — 12CP is based on <strong>demand</strong>, not price
+                </p>
+              </div>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                <Database className="w-3 h-3 mr-1" />
+                {formatNumber(savingsData.recordCount)} records
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={savingsData.monthlyComparisons}>
+                <ComposedChart data={savingsData.monthlyPeaks}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="monthLabel" fontSize={11} />
                   <YAxis 
+                    yAxisId="demand"
+                    fontSize={12} 
+                    tickFormatter={(v) => `${(v/1000).toFixed(1)}k`}
+                    label={{ value: 'MW', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                  />
+                  <YAxis 
+                    yAxisId="price"
+                    orientation="right"
                     fontSize={12} 
                     tickFormatter={(v) => `$${v}`}
-                    label={{ value: '$/MWh', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                    label={{ value: '$/MWh', angle: 90, position: 'insideRight', fontSize: 11 }}
                   />
                   <Tooltip 
-                    formatter={(value: number, name: string) => [
-                      `$${value.toFixed(2)}/MWh`,
-                      name === 'avgPrice' ? 'Average Price' : name === 'peakHourPrice' ? 'Peak Hour Price' : 'Savings Opportunity'
-                    ]}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-popover border rounded-lg shadow-lg p-3">
+                            <p className="font-semibold">{data.monthLabel}</p>
+                            <div className="mt-2 space-y-1 text-sm">
+                              <p>Peak Demand: <strong>{formatNumber(data.peakDemandMW)} MW</strong></p>
+                              <p>Avg Demand: <strong>{formatNumber(data.avgDemandMW)} MW</strong></p>
+                              <p>Price at Peak: <strong>${data.priceAtPeak}/MWh</strong></p>
+                              <p>Peak Hour: <strong>HE{data.peakHour + 1}</strong></p>
+                              <p className="text-xs text-muted-foreground pt-1">{data.dayOfWeek}</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
                   <Legend />
                   <Bar 
-                    dataKey="avgPrice" 
-                    name="Average Price" 
+                    yAxisId="demand"
+                    dataKey="avgDemandMW" 
+                    name="Avg Demand (MW)" 
                     fill="hsl(var(--primary))" 
                     radius={[4, 4, 0, 0]}
-                    opacity={0.8}
+                    opacity={0.6}
                   />
                   <Bar 
-                    dataKey="peakHourPrice" 
-                    name="Peak Hour Price" 
+                    yAxisId="demand"
+                    dataKey="peakDemandMW" 
+                    name="Peak Demand (MW)" 
                     fill="hsl(0, 84%, 60%)" 
                     radius={[4, 4, 0, 0]}
                     opacity={0.8}
                   />
                   <Line 
+                    yAxisId="price"
                     type="monotone" 
-                    dataKey="savingsOpportunity" 
-                    name="Savings Gap"
+                    dataKey="priceAtPeak" 
+                    name="Price at Peak ($/MWh)"
                     stroke="hsl(142, 76%, 36%)" 
                     strokeWidth={2}
                     dot={{ fill: 'hsl(142, 76%, 36%)', r: 4 }}
@@ -329,26 +376,41 @@ export function TwelveCPSavingsSimulator() {
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6 pt-4 border-t">
               <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Annual Avg Price</p>
-                <p className="text-xl font-bold">${savingsData.annualAvgPrice}/MWh</p>
+                <p className="text-xs text-muted-foreground">Annual Avg Demand</p>
+                <p className="text-xl font-bold">{formatNumber(savingsData.annualAvgDemandMW)} MW</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Annual Peak Price</p>
-                <p className="text-xl font-bold text-red-600">${savingsData.annualPeakPrice}/MWh</p>
+                <p className="text-xs text-muted-foreground">Annual Peak Demand</p>
+                <p className="text-xl font-bold text-red-600">{formatNumber(savingsData.annualPeakDemandMW)} MW</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Price Spread</p>
+                <p className="text-xs text-muted-foreground">Avg Price at Peaks</p>
+                <p className="text-xl font-bold">${avgPriceAtPeaks.toFixed(2)}/MWh</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Demand Spread</p>
                 <p className="text-xl font-bold text-green-600">
-                  ${(savingsData.annualPeakPrice - savingsData.annualAvgPrice).toFixed(2)}/MWh
+                  {formatNumber(savingsData.annualPeakDemandMW - savingsData.annualAvgDemandMW)} MW
                 </p>
               </div>
               <div className="text-center p-3 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">Months Analyzed</p>
-                <p className="text-xl font-bold">{savingsData.monthlyComparisons.length}</p>
+                <p className="text-xl font-bold">{savingsData.monthlyPeaks.length}</p>
               </div>
             </div>
+
+            {/* Data Source Footer */}
+            {savingsData.dataDateRange && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 pt-2 border-t">
+                <div className="flex items-center gap-2">
+                  <Database className="w-3 h-3" />
+                  <span>AESO Historical Data ({format(new Date(savingsData.dataDateRange.start), 'MMM yyyy')} - {format(new Date(savingsData.dataDateRange.end), 'MMM yyyy')})</span>
+                </div>
+                <span>12CP peaks based on grid demand (AIL), not price</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
