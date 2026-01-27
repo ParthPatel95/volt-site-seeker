@@ -1,188 +1,396 @@
 
-# Plan: Show Top 12 Peaks Per Year in Yearly Tab
+# Plan: Improve 12CP Prediction Accuracy & Create Upcoming Events Schedule
 
-## Problem
-The current Yearly tab only displays **1 peak per year** (the single highest). The user wants to see the **12 highest demand peaks for each year** - this is the actual 12CP (12 Coincident Peak) methodology used for transmission cost allocation.
+## Current Issues Identified
 
-## Verified Data Available
-Based on the database query, here's what the 12CP looks like for each year:
+The current predictions are **hardcoded static values** that don't use the actual historical patterns properly:
 
-**2025 - Top 12 Peaks:**
-| Rank | Date/Time | Demand | Price |
-|------|-----------|--------|-------|
-| #1 | Dec 12, 02:00 | 12,785 MW | $44.20 |
-| #2 | Dec 12, 02:00 | 12,785 MW | $44.20 |
-| #3 | Dec 12, 01:00 | 12,741 MW | $43.65 |
-| #4 | Dec 12, 01:00 | 12,741 MW | $43.65 |
-| #5 | Dec 18, 02:00 | 12,737 MW | $22.08 |
-| ... and 7 more peaks |
+1. **Static dates** - Dec 11, 12, 17, 18, 19, 20, etc. without analyzing actual patterns
+2. **No temperature correlation** - Database shows peaks occur when Edmonton temp < -25°C
+3. **Wrong demand projections** - Not using verified YoY growth from data (varies -5% to +7%)
+4. **No 2027 January predictions** - January often has top peaks (Jan 12, 2024 was yearly high)
+5. **Missing calendar alignment** - 2026 days-of-week not properly mapped from 2025 patterns
 
-**2024 - Top 12 Peaks:**
-| Rank | Date/Time | Demand | Price |
-|------|-----------|--------|-------|
-| #1 | Jan 12, 00:00 | 12,384 MW | $225.27 |
-| #2 | Jan 12, 01:00 | 12,259 MW | $320.51 |
-| #3 | Dec 19, 00:00 | 12,241 MW | $39.83 |
-| #4 | Jul 22, 22:00 | 12,221 MW | $23.22 |
-| ... and 8 more peaks |
+## Verified Historical Peak Patterns (From Real Data)
+
+### Temperature Correlation (Critical Finding)
+| Peak Date | Max Demand | Edmonton Temp | Year |
+|-----------|------------|---------------|------|
+| Dec 12, 2025 | 12,785 MW | -25°C to -31°C | 2025 |
+| Dec 18, 2025 | 12,737 MW | -26°C to -29°C | 2025 |
+| Dec 20, 2025 | 12,709 MW | -29°C | 2025 |
+| Dec 22, 2022 | 12,193 MW | -34°C | 2022 |
+
+**Key insight: All major peaks occur when temperature drops below -20°C**
+
+### Peak Hours Distribution (From 50+ Top Peaks)
+| Year | Top Peak Hour | Count in Top 50 |
+|------|---------------|-----------------|
+| 2026 | 2 AM | 22 peaks |
+| 2025 | 2 AM | 15 peaks, 1 AM (7), 3 AM (10) |
+| 2024 | 12 AM (midnight) | 11 peaks |
+| 2023 | 12 AM (midnight) | 11 peaks |
+| 2022 | 12 AM (midnight) | 6 peaks |
+
+**Shift detected: 2025-2026 peaks moved to 1-3 AM vs 2022-2024 at midnight**
+
+### 2026 Calendar Mapping
+| Dec 2026 Date | Day of Week | Historical Match |
+|---------------|-------------|------------------|
+| Dec 11 | Friday | Dec 12, 2025 (Fri) - HIGHEST |
+| Dec 12 | Saturday | Dec 13, 2025 (Sat) |
+| Dec 17 | Thursday | Dec 18, 2025 (Thu) |
+| Dec 18 | Friday | Dec 19, 2025 (Fri) |
+| Dec 19 | Saturday | Dec 20, 2025 (Sat) |
 
 ---
 
 ## Technical Changes
 
-### 1. Create New Database Function
-Add a new RPC function `get_yearly_top12_peaks` that returns the top 12 peaks per year:
+### 1. Add New Interface for Scheduled Peak Events
 
-```sql
-CREATE OR REPLACE FUNCTION public.get_yearly_top12_peaks()
-RETURNS TABLE (
-  year integer,
-  rank integer,
-  peak_timestamp timestamp with time zone,
-  peak_demand_mw numeric,
-  price_at_peak numeric,
-  peak_hour integer,
-  day_of_week integer
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-  WITH ranked_peaks AS (
-    SELECT 
-      EXTRACT(YEAR FROM timestamp)::integer as yr,
-      timestamp as ts,
-      ail_mw,
-      pool_price,
-      hour_of_day,
-      EXTRACT(DOW FROM timestamp)::integer as dow,
-      ROW_NUMBER() OVER (
-        PARTITION BY EXTRACT(YEAR FROM timestamp) 
-        ORDER BY ail_mw DESC NULLS LAST
-      ) as rn
-    FROM aeso_training_data
-    WHERE ail_mw IS NOT NULL
-  )
-  SELECT 
-    yr,
-    rn::integer,
-    ts,
-    ail_mw,
-    pool_price,
-    hour_of_day,
-    dow
-  FROM ranked_peaks
-  WHERE rn <= 12
-  ORDER BY yr DESC, rn ASC;
-END;
-$$;
-```
-
-### 2. Update `useHistorical12CPPeaks.ts` Hook
-
-**Add new interface:**
 ```typescript
-export interface YearlyTop12Peak {
-  year: number;
+// src/hooks/useHistorical12CPPeaks.ts
+
+export interface ScheduledPeakEvent {
+  id: string;
   rank: number;
-  timestamp: string;
-  demandMW: number;
-  priceAtPeak: number;
-  hour: number;
-  dayOfWeek: string;
-  monthName: string;
-  dayOfMonth: number;
-}
-
-// Group by year
-export interface YearlyTop12Data {
-  year: number;
-  peaks: YearlyTop12Peak[];
-  yearMaxDemand: number;
-  yearMinOf12: number;
+  scheduledDate: Date;
+  displayDate: string;          // "Friday, December 11, 2026"
+  timeWindow: {
+    start: string;              // "01:00"
+    end: string;                // "03:00"  
+    timezone: string;           // "MST"
+  };
+  expectedDemandMW: {
+    min: number;
+    max: number;
+    median: number;
+  };
+  confidenceScore: number;
+  riskLevel: 'critical' | 'high' | 'moderate' | 'low';
+  weatherCondition: string;     // "Requires temp < -20°C"
+  historicalReference: {
+    date: string;
+    demand: number;
+    temperature: number;
+  };
+  daysUntilEvent: number;
+  isUpcoming: boolean;          // true if within 30 days
+  isPast: boolean;
+  calendarLink?: string;        // ICS download URL
 }
 ```
 
-**Update fetch function:**
-- Call new RPC `get_yearly_top12_peaks()`
-- Group results by year
-- Add to `HistoricalPeaksData` interface
+### 2. Improve Prediction Algorithm
 
-### 3. Update `HistoricalPeakDemandViewer.tsx` - Yearly Tab
+Replace static predictions with **data-driven algorithm**:
 
-Replace the current single-row-per-year table with an **expandable year-by-year display**:
+```typescript
+const generateImprovedPredictions = (historicalData: YearlyTop12Data[], topPeaks: AllTimePeakHour[]) => {
+  // 1. Analyze historical peak patterns
+  const peakDates = analyzePeakDatePatterns(topPeaks);  // Dec 9-24 for 80% of peaks
+  const peakHours = analyzePeakHourPatterns(topPeaks);   // 0-3 AM for 90% of peaks
+  const peakDays = analyzePeakDayPatterns(topPeaks);     // Fri/Sat/Thu for 75% of peaks
+  
+  // 2. Calculate YoY growth rate dynamically
+  const growthRate = calculateDynamicGrowthRate(historicalData); // Currently ~3% avg
+  
+  // 3. Map 2025 patterns to 2026 calendar
+  const dec2026Calendar = getDecember2026Calendar();
+  
+  // 4. Generate predictions with confidence scoring
+  const predictions = [];
+  
+  // Primary December predictions (9 of 12 expected in Dec)
+  dec2026Calendar
+    .filter(date => date.day >= 9 && date.day <= 24)
+    .filter(date => ['Friday', 'Thursday', 'Saturday'].includes(date.dayName))
+    .forEach((date, index) => {
+      const baseDemand = topPeaks[0].demandMW * growthRate;
+      const confidence = calculateConfidence(date, index, peakPatterns);
+      predictions.push({
+        scheduledDate: new Date(2026, 11, date.day),
+        displayDate: `${date.dayName}, December ${date.day}, 2026`,
+        timeWindow: { start: '01:00', end: '03:00', timezone: 'MST' },
+        expectedDemandMW: {
+          min: Math.round(baseDemand * 0.98 - index * 30),
+          max: Math.round(baseDemand * 1.02 - index * 20),
+          median: Math.round(baseDemand - index * 25)
+        },
+        confidenceScore: confidence,
+        riskLevel: confidence >= 85 ? 'critical' : confidence >= 70 ? 'high' : 'moderate',
+        weatherCondition: 'Requires sustained temp < -20°C',
+        daysUntilEvent: calculateDaysUntil(date),
+        isUpcoming: calculateDaysUntil(date) <= 30 && calculateDaysUntil(date) > 0
+      });
+    });
+  
+  // Secondary January 2027 predictions (3 of 12 expected)
+  // Based on Jan 12, 2024 (12,384 MW) and Jan 23, 2026 (12,291 MW) patterns
+  [15, 22, 23].forEach((day, index) => {
+    predictions.push({
+      scheduledDate: new Date(2027, 0, day),
+      displayDate: `${getDayName(2027, 0, day)}, January ${day}, 2027`,
+      ...
+    });
+  });
+  
+  return predictions.slice(0, 12).sort((a, b) => b.confidenceScore - a.confidenceScore);
+};
+```
+
+### 3. Create New Upcoming Events Schedule Component
+
+```typescript
+// src/components/aeso/Upcoming12CPSchedule.tsx
+
+export function Upcoming12CPSchedule({ events }: { events: ScheduledPeakEvent[] }) {
+  // Filter to show:
+  // - Past events this year (marked with checkmark or X based on actual vs predicted)
+  // - Upcoming events within 90 days (countdown timers)
+  // - Future events (grayed out)
+  
+  return (
+    <Card className="border-primary/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CalendarClock className="w-5 h-5 text-primary" />
+          Upcoming 12CP Peak Schedule
+          <Badge variant="outline">2026/2027 Season</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Timeline View */}
+        <div className="relative">
+          {events.map((event, index) => (
+            <div key={event.id} className="flex items-start gap-4 pb-6 relative">
+              {/* Timeline Line */}
+              {index < events.length - 1 && (
+                <div className="absolute left-[19px] top-10 w-0.5 h-full bg-border" />
+              )}
+              
+              {/* Event Marker */}
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center shrink-0
+                ${event.isUpcoming ? 'bg-red-500 text-white animate-pulse' : 
+                  event.isPast ? 'bg-green-500 text-white' : 
+                  'bg-muted text-muted-foreground'}
+              `}>
+                {event.isPast ? <CheckCircle2 /> : event.rank}
+              </div>
+              
+              {/* Event Details */}
+              <div className="flex-1 pb-4 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">{event.displayDate}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {event.timeWindow.start} - {event.timeWindow.end} {event.timeWindow.timezone}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant={getRiskVariant(event.riskLevel)}>
+                      {event.riskLevel.toUpperCase()}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {event.daysUntilEvent > 0 
+                        ? `${event.daysUntilEvent} days away` 
+                        : event.isPast ? 'Completed' : 'Today!'}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Expected Demand */}
+                <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">Expected: </span>
+                    <span className="font-bold">{formatNumber(event.expectedDemandMW.median)} MW</span>
+                  </div>
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">Confidence: </span>
+                    <span className="font-bold">{event.confidenceScore}%</span>
+                  </div>
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">Condition: </span>
+                    <span className="font-bold text-xs">{event.weatherCondition}</span>
+                  </div>
+                </div>
+                
+                {/* Add to Calendar Button */}
+                {event.isUpcoming && (
+                  <Button variant="outline" size="sm" className="mt-2">
+                    <Download className="w-3 h-3 mr-2" />
+                    Add to Calendar
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### 4. Update Predictions Tab in HistoricalPeakDemandViewer
+
+Add new **"Schedule"** sub-tab within predictions showing:
 
 ```text
 +------------------------------------------------------------------+
-| 2025 - Top 12 Peak Demand Hours                     [Expand/Collapse]
-|   Peak Range: 12,598 MW - 12,785 MW
+| 📅 2026/2027 12CP Peak Schedule                                   |
 +------------------------------------------------------------------+
-| # | Date/Time            | Demand    | Price     | Hour    | Day |
-|---|----------------------|-----------|-----------|---------|-----|
-| 1 | Dec 12, 2025 02:00   | 12,785 MW | $44.20    | 2 AM    | Fri |
-| 2 | Dec 12, 2025 01:00   | 12,741 MW | $43.65    | 1 AM    | Fri |
-| 3 | Dec 18, 2025 02:00   | 12,737 MW | $22.08    | 2 AM    | Thu |
-| 4 | Dec 20, 2025 02:00   | 12,709 MW | $39.83    | 2 AM    | Sat |
-| 5 | Dec 12, 2025 03:00   | 12,615 MW | $42.95    | 3 AM    | Fri |
-| 6 | Dec 13, 2025 02:00   | 12,613 MW | $54.00    | 2 AM    | Sat |
-| ... (showing all 12 peaks)
+|                                                                    |
+| December 2026                                                      |
+| ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ |
+|                                                                    |
+| ◉ #1 Friday, Dec 11, 2026 • 1-3 AM MST                   CRITICAL |
+|   Expected: 13,168 MW • Confidence: 95%                           |
+|   📍 322 days away • ❄️ Requires temp < -25°C                     |
+|   [Add to Calendar] [Set Alert]                                    |
+|                                                                    |
+| ◉ #2 Saturday, Dec 12, 2026 • 1-3 AM MST                    HIGH  |
+|   Expected: 13,120 MW • Confidence: 92%                           |
+|   📍 323 days away • ❄️ Requires temp < -25°C                     |
+|   [Add to Calendar] [Set Alert]                                    |
+|                                                                    |
+| ... (9 more December events)                                       |
+|                                                                    |
+| January 2027                                                       |
+| ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ |
+|                                                                    |
+| ◎ #10 Friday, Jan 22, 2027 • 1-3 AM MST                 MODERATE  |
+|   Expected: 12,500 MW • Confidence: 60%                           |
+|   📍 364 days away • ❄️ Requires extended cold snap               |
+|   [Add to Calendar] [Set Alert]                                    |
+|                                                                    |
 +------------------------------------------------------------------+
-
-| 2024 - Top 12 Peak Demand Hours                     [Expand/Collapse]
-|   Peak Range: 12,159 MW - 12,384 MW
-+------------------------------------------------------------------+
-| ... (12 peaks for 2024)
-+------------------------------------------------------------------+
-
-| 2023 - Top 12 Peak Demand Hours                     [Expand/Collapse]
-+------------------------------------------------------------------+
-| ... (12 peaks for 2023)
-+------------------------------------------------------------------+
-```
-
-**UI Features:**
-- Each year is a collapsible card/accordion section
-- Shows the year's peak range (min-max of 12 peaks)
-- Full table with all 12 peaks including rank, date/time, demand, price, hour, day
-- Color coding: #1 peak highlighted in gold, #2-3 in silver/bronze
-- Year-over-year comparison section showing how 12CP evolved
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `supabase/migrations/[new].sql` | Add `get_yearly_top12_peaks()` function |
-| `src/integrations/supabase/types.ts` | Add RPC type definition |
-| `src/hooks/useHistorical12CPPeaks.ts` | Add `YearlyTop12Peak` interface, call new RPC, process data |
-| `src/components/aeso/HistoricalPeakDemandViewer.tsx` | Replace Yearly tab with expandable 12-peak-per-year display |
-
----
-
-## Data Flow
-
-```text
-Database (33,000+ records)
-    ↓
-get_yearly_top12_peaks() RPC
-    ↓
-Returns ~60 rows (12 peaks × 5 years)
-    ↓
-Hook groups by year
-    ↓
-UI displays expandable year sections
-    with all 12 peaks per year
 ```
 
 ---
 
-## Summary
+## Files to Create/Modify
 
-| Current | After Fix |
-|---------|-----------|
-| 1 peak per year | 12 peaks per year |
-| Single row table | Expandable year sections |
-| No peak ranking | Ranked #1-12 with color coding |
-| Missing context | Shows peak range, patterns per year |
+| File | Action | Description |
+|------|--------|-------------|
+| `src/hooks/useHistorical12CPPeaks.ts` | Modify | Add `ScheduledPeakEvent` interface, improve prediction algorithm to use actual patterns |
+| `src/components/aeso/Upcoming12CPSchedule.tsx` | Create | New component for timeline schedule view |
+| `src/components/aeso/HistoricalPeakDemandViewer.tsx` | Modify | Add Schedule sub-section to Predictions tab, integrate improved predictions |
+| `src/lib/calendarExport.ts` | Create | Utility to generate ICS calendar files for peak events |
+
+---
+
+## Improved Prediction Algorithm Details
+
+### Confidence Scoring Formula
+```typescript
+const calculateConfidence = (
+  dayOfWeek: string,      // Fri/Thu = +20%, Sat = +15%, Sun/Mon = +5%
+  dayOfMonth: number,     // 11-14 = +15%, 17-20 = +12%, 21-25 = +8%
+  historicalCount: number // How many times this date had peaks
+) => {
+  let base = 50;
+  
+  // Day of week boost
+  if (['Friday', 'Thursday'].includes(dayOfWeek)) base += 20;
+  else if (dayOfWeek === 'Saturday') base += 15;
+  else if (['Sunday', 'Monday'].includes(dayOfWeek)) base += 5;
+  
+  // Date range boost (based on historical peak concentration)
+  if (dayOfMonth >= 11 && dayOfMonth <= 14) base += 15;
+  else if (dayOfMonth >= 17 && dayOfMonth <= 20) base += 12;
+  else if (dayOfMonth >= 21 && dayOfMonth <= 25) base += 8;
+  
+  // Historical frequency boost
+  base += Math.min(15, historicalCount * 3);
+  
+  // Cap at 95%
+  return Math.min(95, base);
+};
+```
+
+### Demand Projection Formula
+```typescript
+const projectDemand = (rank: number, allTimePeak: number, avgGrowth: number) => {
+  const baseGrowth = 1 + (avgGrowth / 100);  // e.g., 1.03 for 3%
+  const basePeak = allTimePeak * baseGrowth;  // 12,785 * 1.03 = 13,168
+  
+  // Each subsequent rank decreases by ~40 MW (based on 2025 pattern)
+  const stepDecrease = (rank - 1) * 40;
+  
+  return {
+    min: Math.round(basePeak - stepDecrease - 50),
+    max: Math.round(basePeak - stepDecrease + 50),
+    median: Math.round(basePeak - stepDecrease)
+  };
+};
+```
+
+---
+
+## Key Improvements Over Current Implementation
+
+| Aspect | Current | Improved |
+|--------|---------|----------|
+| Prediction source | Hardcoded static | Dynamic from historical patterns |
+| Temperature factor | Not considered | Requires < -20°C for high confidence |
+| Peak hour accuracy | Always "1-3 AM" | Varies by year pattern (0-3 AM) |
+| Day-of-week weighting | Equal | Fri/Thu weighted 40% higher |
+| Demand projection | Fixed values | YoY growth + rank-based decay |
+| Calendar dates | Manual 2026 mapping | Calculated from 2026 calendar |
+| Schedule view | Simple table | Timeline with countdowns, alerts |
+| Calendar export | None | ICS file download |
+| Past event tracking | None | Compare predictions vs actual |
+
+---
+
+## Calendar Export Utility
+
+```typescript
+// src/lib/calendarExport.ts
+
+export const generateICSEvent = (event: ScheduledPeakEvent): string => {
+  const startTime = new Date(event.scheduledDate);
+  startTime.setHours(1, 0, 0); // 1 AM MST
+  
+  const endTime = new Date(event.scheduledDate);
+  endTime.setHours(3, 0, 0); // 3 AM MST
+  
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//AESO 12CP Peak Alert//EN
+BEGIN:VEVENT
+UID:12cp-${event.id}@aeso-alerts
+DTSTART:${formatICSDate(startTime)}
+DTEND:${formatICSDate(endTime)}
+SUMMARY:⚡ AESO 12CP Peak Alert - ${event.expectedDemandMW.median} MW
+DESCRIPTION:High probability 12CP peak event.\\n\\nExpected demand: ${event.expectedDemandMW.min}-${event.expectedDemandMW.max} MW\\nConfidence: ${event.confidenceScore}%\\nCondition: ${event.weatherCondition}
+LOCATION:Alberta Electric System
+STATUS:TENTATIVE
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT24H
+DESCRIPTION:12CP Peak Alert in 24 hours
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT1H
+DESCRIPTION:12CP Peak Alert in 1 hour
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+};
+
+export const downloadICSFile = (events: ScheduledPeakEvent[]) => {
+  const icsContent = events.map(generateICSEvent).join('\n');
+  const blob = new Blob([icsContent], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '12cp-peak-schedule-2026.ics';
+  a.click();
+};
+```
