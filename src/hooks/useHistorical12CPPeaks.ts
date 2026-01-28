@@ -619,19 +619,32 @@ export function useHistorical12CPPeaks() {
       // Sort peaks for display (newest first)
       const sortedPeaks = peaks.sort((a, b) => b.month.localeCompare(a.month));
 
-      // Generate improved predictions using the prediction engine
+      // MST conversion for prediction engine - ensures correct day-of-week analysis
+      const parseToMSTForPredictions = (utcTimestamp: string) => {
+        const utc = new Date(utcTimestamp);
+        const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
+        const mst = new Date(mstMs);
+        return {
+          hour: mst.getUTCHours(),
+          dayOfWeek: mst.getUTCDay(),
+          month: mst.getUTCMonth() + 1,
+          year: mst.getUTCFullYear()
+        };
+      };
+
+      // Generate improved predictions using the prediction engine with MST-corrected data
       const scheduledPeakEvents = generateImprovedPredictions(yearlyTop12Data, topPeaksData.slice(0, 50).map((record: any, index: number) => {
-        const date = new Date(record.peak_timestamp);
+        const mst = parseToMSTForPredictions(record.peak_timestamp);
         return {
           rank: index + 1,
           timestamp: record.peak_timestamp,
           demandMW: Math.round(record.peak_demand_mw || 0),
           priceAtPeak: Math.round((record.price_at_peak || 0) * 100) / 100,
-          hour: record.peak_hour ?? date.getHours(),
-          dayOfWeek: dayNames[record.day_of_week ?? date.getDay()],
-          month: date.getMonth() + 1,
-          year: date.getFullYear(),
-          monthName: monthNames[date.getMonth()]
+          hour: mst.hour,
+          dayOfWeek: dayNames[mst.dayOfWeek],
+          month: mst.month,
+          year: mst.year,
+          monthName: monthNames[mst.month - 1]
         };
       }));
 

@@ -28,18 +28,30 @@ export const analyzePeakPatterns = (
   const peakDayOfWeekFrequency: { [day: string]: number } = {};
   const peakDateFrequency: { [dayOfMonth: number]: number } = {};
 
-  // Analyze top 50 peaks
-  topPeaks.forEach((peak) => {
-    const date = new Date(peak.timestamp);
-    const month = date.getMonth() + 1;
-    const hour = peak.hour;
-    const dayOfWeek = peak.dayOfWeek;
-    const dayOfMonth = date.getDate();
+  // MST conversion utility (Alberta local time = UTC - 7)
+  const parseToMST = (utcTimestamp: string) => {
+    const utc = new Date(utcTimestamp);
+    const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
+    const mst = new Date(mstMs);
+    return {
+      month: mst.getUTCMonth() + 1,
+      hour: mst.getUTCHours(),
+      dayOfWeek: mst.getUTCDay(),
+      dayOfMonth: mst.getUTCDate()
+    };
+  };
 
-    peakMonthFrequency[month] = (peakMonthFrequency[month] || 0) + 1;
-    peakHourFrequency[hour] = (peakHourFrequency[hour] || 0) + 1;
-    peakDayOfWeekFrequency[dayOfWeek] = (peakDayOfWeekFrequency[dayOfWeek] || 0) + 1;
-    peakDateFrequency[dayOfMonth] = (peakDateFrequency[dayOfMonth] || 0) + 1;
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // Analyze top 50 peaks using MST timezone
+  topPeaks.forEach((peak) => {
+    const mst = parseToMST(peak.timestamp);
+    const dayOfWeekName = dayNames[mst.dayOfWeek];
+
+    peakMonthFrequency[mst.month] = (peakMonthFrequency[mst.month] || 0) + 1;
+    peakHourFrequency[mst.hour] = (peakHourFrequency[mst.hour] || 0) + 1;
+    peakDayOfWeekFrequency[dayOfWeekName] = (peakDayOfWeekFrequency[dayOfWeekName] || 0) + 1;
+    peakDateFrequency[mst.dayOfMonth] = (peakDateFrequency[mst.dayOfMonth] || 0) + 1;
   });
 
   // Calculate YoY growth from yearly data
@@ -79,6 +91,11 @@ export const calculateConfidence = (
   rank: number
 ): number => {
   let base = 50;
+
+  // CRITICAL: Weekend penalty - historical data shows 0% of peaks on weekends
+  if (dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday') {
+    base -= 40; // Strong penalty for weekends
+  }
 
   // Day of week boost (based on historical frequency)
   const dayFreq = patterns.peakDayOfWeekFrequency[dayOfWeek] || 0;
@@ -178,9 +195,9 @@ export const generateImprovedPredictions = (
   const dec2026 = getDecember2026Calendar();
   const jan2027 = getJanuary2027Calendar();
 
-  // Priority days in December based on historical patterns
-  // Fri > Thu > Sat for highest peaks
-  const priorityDays = ['Friday', 'Thursday', 'Saturday'];
+  // Priority days in December based on historical patterns (MST)
+  // Thu (32%) > Fri (30%) > Mon (16%) > Wed (14%) > Tue (8%) - NO WEEKENDS
+  const priorityDays = ['Thursday', 'Friday', 'Monday', 'Wednesday', 'Tuesday'];
 
   // December predictions - targeting high-probability dates
   const decemberCandidates = dec2026
