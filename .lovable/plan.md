@@ -1,99 +1,101 @@
 
-# Plan: Add Weather Data to 12CP Events in Yearly Tab
 
-## Overview
-Add weather conditions (temperature, wind speed, cloud cover) beside each 12CP peak event in the Yearly tab to enable deeper analysis of the correlation between weather and peak demand.
+# Plan: Fix Timezone Display in 12CP Data
 
-## Verified Weather Data Available (Sample from Database)
+## Problem Identified
 
-The database already contains weather data for every peak event:
+The 12CP peaks display shows mixed timezone data:
+- Dates are converted from UTC to local browser timezone (variable)
+- Hours are stored as UTC (showing "1 AM" when actual MST is "6 PM")  
+- Day of week comes from UTC date (Saturday for Jan 24 UTC, but Jan 23 MST is Friday)
 
-| Date | Hour | Demand | Calgary Temp | Edmonton Temp | Wind | Cloud |
-|------|------|--------|--------------|---------------|------|-------|
-| Dec 12, 2025 | 2 AM | 12,785 MW | -13.5°C | -19.2°C | 12.5 km/h | 30% |
-| Dec 18, 2025 | 2 AM | 12,737 MW | -15.3°C | -28.6°C | 8.3 km/h | 100% |
-| Dec 20, 2025 | 2 AM | 12,709 MW | -19.5°C | -28.6°C | 9.2 km/h | 100% |
-| Dec 13, 2025 | 2 AM | 12,613 MW | -17.7°C | -30.7°C | 13.7 km/h | 100% |
+**Example from screenshot:**
+| Displayed | Should Be (MST) |
+|-----------|-----------------|
+| January 23, 2026 1 AM Sat | January 23, 2026 6 PM Fri |
+| January 23, 2026 12 AM Sat | January 23, 2026 5 PM Fri |
 
-**Key insight confirmed**: Major peaks correlate with Edmonton temperatures below -19°C
+## Root Cause
+
+1. Database `hour_of_day` stores UTC hours, not MST hours
+2. JavaScript `new Date()` converts to browser local time (inconsistent)
+3. Database `day_of_week` is calculated from UTC timestamp
+
+## Solution
+
+### Option A: Display Correction in UI (Recommended)
+Convert all times to MST explicitly in the TypeScript code:
+
+```typescript
+// In useHistorical12CPPeaks.ts
+const getMSTDate = (utcTimestamp: string) => {
+  const date = new Date(utcTimestamp);
+  // MST is UTC-7 (or UTC-6 during DST)
+  const mstOffset = -7 * 60; // minutes
+  const localOffset = date.getTimezoneOffset();
+  const diffMinutes = mstOffset - (-localOffset);
+  return new Date(date.getTime() + diffMinutes * 60 * 1000);
+};
+```
+
+### Option B: Fix at Database Level
+Update the database functions to return MST-converted timestamps and recalculate `day_of_week` based on MST.
 
 ---
 
 ## Technical Changes
 
-### 1. Update Database Function
+### 1. Update Hook: `useHistorical12CPPeaks.ts`
 
-Modify `get_yearly_top12_peaks()` to include weather columns:
-
-```sql
-CREATE OR REPLACE FUNCTION public.get_yearly_top12_peaks()
-RETURNS TABLE (
-  year integer,
-  rank integer,
-  peak_timestamp timestamp with time zone,
-  peak_demand_mw numeric,
-  price_at_peak numeric,
-  peak_hour integer,
-  day_of_week integer,
-  -- NEW weather columns:
-  temp_calgary numeric,
-  temp_edmonton numeric,
-  wind_speed numeric,
-  cloud_cover numeric
-)
-```
-
-The deduplication CTE will include `MAX()` aggregates for weather columns alongside demand data.
-
-### 2. Update TypeScript Interfaces
-
-Add weather fields to `YearlyTop12Peak` interface in `useHistorical12CPPeaks.ts`:
+Add MST timezone conversion utility:
 
 ```typescript
-export interface YearlyTop12Peak {
-  // ... existing fields
-  temperatureCalgary: number | null;
-  temperatureEdmonton: number | null;
-  windSpeed: number | null;
-  cloudCover: number | null;
-}
+// Convert UTC timestamp to MST date components
+const parseToMST = (utcTimestamp: string) => {
+  const utc = new Date(utcTimestamp);
+  // MST = UTC - 7 hours
+  const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
+  const mst = new Date(mstMs);
+  return {
+    date: mst,
+    hour: mst.getUTCHours(),
+    dayOfWeek: mst.getUTCDay(),
+    dayOfMonth: mst.getUTCDate(),
+    month: mst.getUTCMonth()
+  };
+};
 ```
 
-### 3. Update Yearly Tab UI
+Update peak processing (line ~319-335):
 
-Expand the yearly peaks table to show weather conditions:
-
-```text
-+-----------------------------------------------------------------------------------+
-| 2025 - Top 12 Peak Demand Hours                                                   |
-| Peak Range: 12,613 - 12,785 MW                                                   |
-+-----------------------------------------------------------------------------------+
-| #  | Date/Time              | Demand    | Price   | Weather Conditions           |
-|----|------------------------|-----------|---------|------------------------------|
-| 🏆 | Dec 12, 2025 2 AM MST  | 12,785 MW | $44.20  | 🌡️ -13°C/-19°C  💨 13 km/h  |
-| #2 | Dec 12, 2025 1 AM MST  | 12,741 MW | $43.65  | 🌡️ -13°C/-19°C  💨 13 km/h  |
-| #3 | Dec 18, 2025 2 AM MST  | 12,737 MW | $22.08  | 🌡️ -15°C/-29°C  ☁️ 100%     |
-| #4 | Dec 20, 2025 2 AM MST  | 12,709 MW | $39.83  | 🌡️ -20°C/-29°C  ☁️ 100%     |
-+-----------------------------------------------------------------------------------+
+```typescript
+yearlyTop12RawData.forEach((row: any) => {
+  const mst = parseToMST(row.peak_timestamp);
+  const peak: YearlyTop12Peak = {
+    year: row.year,
+    rank: row.rank,
+    timestamp: row.peak_timestamp,
+    demandMW: Math.round(row.peak_demand_mw || 0),
+    priceAtPeak: Math.round((row.price_at_peak || 0) * 100) / 100,
+    hour: mst.hour,  // Use MST hour
+    dayOfWeek: dayNames[mst.dayOfWeek],  // Use MST day
+    monthName: fullMonthNames[mst.month],  // Use MST month
+    dayOfMonth: mst.dayOfMonth,  // Use MST day of month
+    // Weather data...
+  };
+});
 ```
 
-**UI Elements for Weather:**
-- Temperature shown as "Calgary/Edmonton" format with snowflake icon for cold
-- Wind speed indicator with appropriate icon
-- Cloud cover badge (☀️ clear, ⛅ partly cloudy, ☁️ overcast)
-- Temperature color coding: blue for cold (<-10°C), purple for extreme cold (<-20°C)
+### 2. Update Database Functions (Alternative)
 
-### 4. Add Weather Summary Card Per Year
+If we want consistent server-side conversion:
 
-Include a weather analysis summary in each year accordion:
-
-```text
-+----------------------------------------------+
-| 2025 Weather Patterns at Peak Demand         |
-| Avg Temp: -17°C Calgary / -25°C Edmonton     |
-| Cold Events: 11 of 12 peaks below -15°C      |
-| Most Extreme: -31°C Edmonton (Dec 13)        |
-+----------------------------------------------+
+```sql
+-- In get_yearly_top12_peaks()
+SELECT 
+  EXTRACT(HOUR FROM (timestamp AT TIME ZONE 'America/Edmonton')) as peak_hour,
+  EXTRACT(DOW FROM (timestamp AT TIME ZONE 'America/Edmonton')) as day_of_week,
+  (timestamp AT TIME ZONE 'America/Edmonton')::date as peak_date
 ```
 
 ---
@@ -102,56 +104,23 @@ Include a weather analysis summary in each year accordion:
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/[new].sql` | Update `get_yearly_top12_peaks()` to return weather columns |
-| `src/integrations/supabase/types.ts` | Update RPC return type |
-| `src/hooks/useHistorical12CPPeaks.ts` | Add weather fields to `YearlyTop12Peak` interface, process weather data |
-| `src/components/aeso/HistoricalPeakDemandViewer.tsx` | Display weather columns in yearly table, add weather summary section |
+| `src/hooks/useHistorical12CPPeaks.ts` | Add MST conversion utility, update all peak processing to use MST dates/hours |
+| (Optional) `supabase/migrations/[new].sql` | Update DB functions to return MST-based values |
 
 ---
 
-## Data Flow
+## Expected Result After Fix
 
-```text
-Database (aeso_training_data)
-    ↓
-get_yearly_top12_peaks() RPC (with weather columns)
-    ↓
-Returns ~60 rows with demand + weather
-    ↓
-Hook maps to YearlyTop12Peak interface
-    ↓
-UI displays weather icons/values per peak
-```
+| Rank | Date (MST) | Hour (MST) | Day | Demand |
+|------|------------|------------|-----|--------|
+| #11 | January 23, 2026 | 5 PM | Friday | 12,128 MW |
+| #12 | January 23, 2026 | 6 PM | Friday | 12,128 MW |
+
+All times will correctly reflect Mountain Standard Time (Alberta local time), matching how AESO reports data and how grid operators understand peak hours.
 
 ---
 
-## Visual Design
+## Weather Data Status
 
-**Temperature Display:**
-- Format: `−13°C / −19°C` (Calgary / Edmonton)
-- Color: Blue text for cold, purple for extreme cold
-- Icon: ❄️ for temps below -15°C
+**CONFIRMED ACCURATE** - The weather data displayed (-5.8°C/-9.3°C Calgary/Edmonton, 9 km/h wind) matches the database records exactly. No changes needed for weather display.
 
-**Wind Display:**
-- Format: `12.5 km/h`
-- Icon: 💨 or wind icon from Lucide
-
-**Cloud Cover Display:**
-- 0-30%: ☀️ Clear
-- 31-70%: ⛅ Partly Cloudy
-- 71-100%: ☁️ Overcast
-
-**Table Column Layout:**
-| Rank | Date/Time | Demand | Price | Temp (C/E) | Wind | Cloud |
-|------|-----------|--------|-------|------------|------|-------|
-
----
-
-## Summary
-
-| Before | After |
-|--------|-------|
-| Only demand and price shown | Weather context for each peak |
-| No temperature correlation visible | Clear temp-demand relationship shown |
-| Missing wind data | Wind speed at each peak visible |
-| No weather summary | Year-level weather pattern summary |
