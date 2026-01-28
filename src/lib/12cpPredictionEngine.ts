@@ -14,6 +14,8 @@ interface PeakPatternAnalysis {
   peakDateFrequency: { [dayOfMonth: number]: number };
   avgYoYGrowth: number;
   allTimePeak: number;
+  avgTempAtPeak: number | null;
+  primaryPeakHour: number;
 }
 
 /**
@@ -70,6 +72,24 @@ export const analyzePeakPatterns = (
 
   const allTimePeak = topPeaks[0]?.demandMW || 12785;
 
+  // Calculate average temperature at peaks (from yearly data which has weather)
+  const temps: number[] = [];
+  yearlyData.forEach(yd => {
+    yd.peaks.forEach(p => {
+      if (p.temperatureEdmonton !== null && p.temperatureEdmonton !== undefined) {
+        temps.push(p.temperatureEdmonton);
+      }
+    });
+  });
+  const avgTempAtPeak = temps.length > 0 
+    ? temps.reduce((a, b) => a + b, 0) / temps.length 
+    : -18;
+
+  // Find primary peak hour from frequency analysis
+  const sortedHours = Object.entries(peakHourFrequency)
+    .sort((a, b) => b[1] - a[1]);
+  const primaryPeakHour = parseInt(sortedHours[0]?.[0] || '19');
+
   return {
     peakMonthFrequency,
     peakHourFrequency,
@@ -77,6 +97,8 @@ export const analyzePeakPatterns = (
     peakDateFrequency,
     avgYoYGrowth,
     allTimePeak,
+    avgTempAtPeak,
+    primaryPeakHour,
   };
 };
 
@@ -92,9 +114,10 @@ export const calculateConfidence = (
 ): number => {
   let base = 50;
 
-  // CRITICAL: Weekend penalty - historical data shows 0% of peaks on weekends
+  // CRITICAL: Weekend exclusion - historical data shows 0% of peaks on weekends
+  // This should never happen as we filter weekends out, but just in case
   if (dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday') {
-    base -= 40; // Strong penalty for weekends
+    return 0; // Zero confidence for weekends - they should never be predicted
   }
 
   // Day of week boost (based on historical frequency)
@@ -195,14 +218,24 @@ export const generateImprovedPredictions = (
   const dec2026 = getDecember2026Calendar();
   const jan2027 = getJanuary2027Calendar();
 
-  // Priority days in December based on historical patterns (MST)
-  // Thu (32%) > Fri (30%) > Mon (16%) > Wed (14%) > Tue (8%) - NO WEEKENDS
-  const priorityDays = ['Thursday', 'Friday', 'Monday', 'Wednesday', 'Tuesday'];
+  // CRITICAL: WEEKDAY ONLY - historical data shows 0% of top 50 peaks on weekends
+  // Priority days based on historical patterns (MST):
+  // Thu (32%) > Fri (30%) > Mon (16%) > Wed (14%) > Tue (8%)
+  const weekdaysOnly = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-  // December predictions - targeting high-probability dates
+  // Calculate peak hour window from historical data (default to 6-9 PM MST)
+  const peakHourStart = Math.max(18, patterns.primaryPeakHour - 1);
+  const peakHourEnd = Math.min(21, patterns.primaryPeakHour + 1);
+
+  // Weather condition based on temperature analysis
+  const weatherCondition = patterns.avgTempAtPeak !== null
+    ? `Peak probability highest when Edmonton < -15°C (avg: ${patterns.avgTempAtPeak.toFixed(1)}°C)`
+    : 'Sustained temperature < -20°C required';
+
+  // December predictions - targeting high-probability dates (WEEKDAYS ONLY)
   const decemberCandidates = dec2026
     .filter((d) => d.day >= 9 && d.day <= 24) // Core peak window
-    .filter((d) => priorityDays.includes(d.dayName))
+    .filter((d) => weekdaysOnly.includes(d.dayName)) // EXCLUDE weekends
     .map((d) => ({
       ...d,
       confidence: calculateConfidence(d.dayName, d.day, 12, patterns, 1),
@@ -222,14 +255,14 @@ export const generateImprovedPredictions = (
       scheduledDate,
       displayDate: `${candidate.dayName}, December ${candidate.day}, 2026`,
       timeWindow: {
-        start: '01:00',
-        end: '03:00',
+        start: `${peakHourStart.toString().padStart(2, '0')}:00`,
+        end: `${peakHourEnd.toString().padStart(2, '0')}:00`,
         timezone: 'MST',
       },
       expectedDemandMW: demand,
       confidenceScore: confidence,
       riskLevel: getRiskLevel(confidence),
-      weatherCondition: 'Sustained temperature < -20°C required',
+      weatherCondition,
       historicalReference: getHistoricalReference(candidate.day, 12, topPeaks),
       daysUntilEvent: calculateDaysUntil(scheduledDate),
       isUpcoming: calculateDaysUntil(scheduledDate) <= 30 && calculateDaysUntil(scheduledDate) > 0,
@@ -239,10 +272,11 @@ export const generateImprovedPredictions = (
     rank++;
   });
 
-  // January predictions - 3 slots
-  // Based on historical patterns: Jan 12, 22, 23 had significant peaks
+  // January predictions - 3 slots (WEEKDAYS ONLY)
+  // Based on historical patterns: Jan 12, 15, 21, 22, 23 had significant peaks
   const januaryCandidates = jan2027
-    .filter((d) => [12, 15, 22, 23].includes(d.day))
+    .filter((d) => d.day >= 12 && d.day <= 25) // Mid-to-late January cold snap window
+    .filter((d) => weekdaysOnly.includes(d.dayName)) // EXCLUDE weekends
     .map((d) => ({
       ...d,
       confidence: calculateConfidence(d.dayName, d.day, 1, patterns, rank),
@@ -260,14 +294,14 @@ export const generateImprovedPredictions = (
       scheduledDate,
       displayDate: `${candidate.dayName}, January ${candidate.day}, 2027`,
       timeWindow: {
-        start: '01:00',
-        end: '03:00',
+        start: `${peakHourStart.toString().padStart(2, '0')}:00`,
+        end: `${peakHourEnd.toString().padStart(2, '0')}:00`,
         timezone: 'MST',
       },
       expectedDemandMW: demand,
       confidenceScore: confidence,
       riskLevel: getRiskLevel(confidence),
-      weatherCondition: 'Extended cold snap required (<-25°C)',
+      weatherCondition,
       historicalReference: getHistoricalReference(candidate.day, 1, topPeaks),
       daysUntilEvent: calculateDaysUntil(scheduledDate),
       isUpcoming: calculateDaysUntil(scheduledDate) <= 30 && calculateDaysUntil(scheduledDate) > 0,
