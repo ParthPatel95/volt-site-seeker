@@ -130,6 +130,26 @@ const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep
 const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+/**
+ * Convert UTC timestamp to MST (Mountain Standard Time) date components.
+ * Alberta uses MST (UTC-7) in winter and MDT (UTC-6) in summer.
+ * For consistency with AESO reporting, we use MST year-round for peak analysis.
+ */
+const parseToMST = (utcTimestamp: string) => {
+  const utc = new Date(utcTimestamp);
+  // MST = UTC - 7 hours
+  const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
+  const mst = new Date(mstMs);
+  return {
+    date: mst,
+    hour: mst.getUTCHours(),
+    dayOfWeek: mst.getUTCDay(),
+    dayOfMonth: mst.getUTCDate(),
+    month: mst.getUTCMonth(),
+    year: mst.getUTCFullYear()
+  };
+};
+
 export function useHistorical12CPPeaks() {
   const [peaksData, setPeaksData] = useState<HistoricalPeaksData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -313,20 +333,22 @@ export function useHistorical12CPPeaks() {
       // Current 2026 peak
       const current2026Peak = yearlyPeakSummary.find(y => y.year === 2026)?.peakDemandMW || null;
 
-      // Process yearly top 12 peaks data
+      // Process yearly top 12 peaks data with MST timezone conversion
       const yearlyTop12Map = new Map<number, YearlyTop12Peak[]>();
       yearlyTop12RawData.forEach((row: any) => {
-        const peakDate = new Date(row.peak_timestamp);
+        // Convert UTC timestamp to MST for accurate Alberta local time display
+        const mst = parseToMST(row.peak_timestamp);
+        
         const peak: YearlyTop12Peak = {
           year: row.year,
           rank: row.rank,
           timestamp: row.peak_timestamp,
           demandMW: Math.round(row.peak_demand_mw || 0),
           priceAtPeak: Math.round((row.price_at_peak || 0) * 100) / 100,
-          hour: row.peak_hour ?? peakDate.getHours(),
-          dayOfWeek: dayNames[row.day_of_week ?? peakDate.getDay()],
-          monthName: fullMonthNames[peakDate.getMonth()],
-          dayOfMonth: peakDate.getDate(),
+          hour: mst.hour,  // Use MST hour instead of UTC
+          dayOfWeek: dayNames[mst.dayOfWeek],  // Use MST day of week
+          monthName: fullMonthNames[mst.month],  // Use MST month
+          dayOfMonth: mst.dayOfMonth,  // Use MST day of month
           // Weather data from database
           temperatureCalgary: row.temp_calgary !== null ? Math.round(row.temp_calgary * 10) / 10 : null,
           temperatureEdmonton: row.temp_edmonton !== null ? Math.round(row.temp_edmonton * 10) / 10 : null,
