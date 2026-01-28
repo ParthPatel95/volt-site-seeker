@@ -49,6 +49,11 @@ export interface YearlyTop12Peak {
   dayOfWeek: string;
   monthName: string;
   dayOfMonth: number;
+  // Weather data
+  temperatureCalgary: number | null;
+  temperatureEdmonton: number | null;
+  windSpeed: number | null;
+  cloudCover: number | null;
 }
 
 export interface YearlyTop12Data {
@@ -321,7 +326,12 @@ export function useHistorical12CPPeaks() {
           hour: row.peak_hour ?? peakDate.getHours(),
           dayOfWeek: dayNames[row.day_of_week ?? peakDate.getDay()],
           monthName: fullMonthNames[peakDate.getMonth()],
-          dayOfMonth: peakDate.getDate()
+          dayOfMonth: peakDate.getDate(),
+          // Weather data from database
+          temperatureCalgary: row.temp_calgary !== null ? Math.round(row.temp_calgary * 10) / 10 : null,
+          temperatureEdmonton: row.temp_edmonton !== null ? Math.round(row.temp_edmonton * 10) / 10 : null,
+          windSpeed: row.wind_speed !== null ? Math.round(row.wind_speed * 10) / 10 : null,
+          cloudCover: row.cloud_cover !== null ? Math.round(row.cloud_cover) : null
         };
         
         if (!yearlyTop12Map.has(row.year)) {
