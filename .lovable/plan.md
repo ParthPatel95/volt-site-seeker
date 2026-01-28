@@ -1,101 +1,106 @@
 
-
-# Plan: Fix Timezone Display in 12CP Data
+# Plan: Fix 12CP Prediction Engine to Exclude Weekend Events
 
 ## Problem Identified
 
-The 12CP peaks display shows mixed timezone data:
-- Dates are converted from UTC to local browser timezone (variable)
-- Hours are stored as UTC (showing "1 AM" when actual MST is "6 PM")  
-- Day of week comes from UTC date (Saturday for Jan 24 UTC, but Jan 23 MST is Friday)
+The 12CP prediction engine incorrectly includes **Saturday** as a priority day for peak predictions, even though historical data conclusively shows **zero weekend peaks in the top 50**.
 
-**Example from screenshot:**
-| Displayed | Should Be (MST) |
-|-----------|-----------------|
-| January 23, 2026 1 AM Sat | January 23, 2026 6 PM Fri |
-| January 23, 2026 12 AM Sat | January 23, 2026 5 PM Fri |
+### Verified Historical Day-of-Week Distribution (Top 50 Peaks, MST):
+| Day | Peak Count | Percentage |
+|-----|------------|------------|
+| Thursday | 16 | 32% |
+| Friday | 15 | 30% |
+| Monday | 8 | 16% |
+| Wednesday | 7 | 14% |
+| Tuesday | 4 | 8% |
+| **Saturday** | **0** | **0%** |
+| **Sunday** | **0** | **0%** |
 
-## Root Cause
+### Issues Found
 
-1. Database `hour_of_day` stores UTC hours, not MST hours
-2. JavaScript `new Date()` converts to browser local time (inconsistent)
-3. Database `day_of_week` is calculated from UTC timestamp
+1. **Wrong priority days in prediction engine**: Line 183 of `12cpPredictionEngine.ts` includes `'Saturday'`:
+   ```typescript
+   const priorityDays = ['Friday', 'Thursday', 'Saturday']; // BUG: Saturday should not be here
+   ```
 
-## Solution
+2. **UTC timezone used in pattern analysis**: The `analyzePeakPatterns()` function uses `new Date()` without MST conversion, corrupting the day-of-week frequency analysis.
 
-### Option A: Display Correction in UI (Recommended)
-Convert all times to MST explicitly in the TypeScript code:
-
-```typescript
-// In useHistorical12CPPeaks.ts
-const getMSTDate = (utcTimestamp: string) => {
-  const date = new Date(utcTimestamp);
-  // MST is UTC-7 (or UTC-6 during DST)
-  const mstOffset = -7 * 60; // minutes
-  const localOffset = date.getTimezoneOffset();
-  const diffMinutes = mstOffset - (-localOffset);
-  return new Date(date.getTime() + diffMinutes * 60 * 1000);
-};
-```
-
-### Option B: Fix at Database Level
-Update the database functions to return MST-converted timestamps and recalculate `day_of_week` based on MST.
+3. **UTC data fed to prediction engine**: In `useHistorical12CPPeaks.ts`, the hook passes UTC-based `dayOfWeek` values to the prediction engine instead of MST-corrected values.
 
 ---
 
-## Technical Changes
+## Technical Solution
 
-### 1. Update Hook: `useHistorical12CPPeaks.ts`
+### 1. Update Priority Days (Remove Weekend)
 
-Add MST timezone conversion utility:
+In `src/lib/12cpPredictionEngine.ts`, change priority days to exclude weekends:
 
 ```typescript
-// Convert UTC timestamp to MST date components
+// Before:
+const priorityDays = ['Friday', 'Thursday', 'Saturday'];
+
+// After:
+const priorityDays = ['Thursday', 'Friday', 'Monday', 'Wednesday', 'Tuesday'];
+```
+
+Order reflects historical frequency: Thu (32%) > Fri (30%) > Mon (16%) > Wed (14%) > Tue (8%).
+
+### 2. Add MST Conversion to Pattern Analysis
+
+Update `analyzePeakPatterns()` to use MST timezone when extracting day-of-week:
+
+```typescript
 const parseToMST = (utcTimestamp: string) => {
   const utc = new Date(utcTimestamp);
-  // MST = UTC - 7 hours
   const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
   const mst = new Date(mstMs);
   return {
-    date: mst,
-    hour: mst.getUTCHours(),
     dayOfWeek: mst.getUTCDay(),
+    month: mst.getUTCMonth() + 1,
     dayOfMonth: mst.getUTCDate(),
-    month: mst.getUTCMonth()
+    hour: mst.getUTCHours()
   };
 };
-```
 
-Update peak processing (line ~319-335):
-
-```typescript
-yearlyTop12RawData.forEach((row: any) => {
-  const mst = parseToMST(row.peak_timestamp);
-  const peak: YearlyTop12Peak = {
-    year: row.year,
-    rank: row.rank,
-    timestamp: row.peak_timestamp,
-    demandMW: Math.round(row.peak_demand_mw || 0),
-    priceAtPeak: Math.round((row.price_at_peak || 0) * 100) / 100,
-    hour: mst.hour,  // Use MST hour
-    dayOfWeek: dayNames[mst.dayOfWeek],  // Use MST day
-    monthName: fullMonthNames[mst.month],  // Use MST month
-    dayOfMonth: mst.dayOfMonth,  // Use MST day of month
-    // Weather data...
-  };
+// In analyzePeakPatterns():
+topPeaks.forEach((peak) => {
+  const mst = parseToMST(peak.timestamp);
+  const dayOfWeek = getDayName(mst.year, mst.month - 1, mst.dayOfMonth);
+  // ... use MST-derived values for frequency analysis
 });
 ```
 
-### 2. Update Database Functions (Alternative)
+### 3. Update Hook to Pass MST-Corrected Data
 
-If we want consistent server-side conversion:
+In `useHistorical12CPPeaks.ts`, update the data transformation at lines 623-636:
 
-```sql
--- In get_yearly_top12_peaks()
-SELECT 
-  EXTRACT(HOUR FROM (timestamp AT TIME ZONE 'America/Edmonton')) as peak_hour,
-  EXTRACT(DOW FROM (timestamp AT TIME ZONE 'America/Edmonton')) as day_of_week,
-  (timestamp AT TIME ZONE 'America/Edmonton')::date as peak_date
+```typescript
+const scheduledPeakEvents = generateImprovedPredictions(yearlyTop12Data, topPeaksData.slice(0, 50).map((record: any, index: number) => {
+  const mst = parseToMST(record.peak_timestamp); // Use MST
+  return {
+    rank: index + 1,
+    timestamp: record.peak_timestamp,
+    demandMW: Math.round(record.peak_demand_mw || 0),
+    priceAtPeak: Math.round((record.price_at_peak || 0) * 100) / 100,
+    hour: mst.hour,  // MST hour
+    dayOfWeek: dayNames[mst.dayOfWeek],  // MST day name
+    month: mst.month + 1,
+    year: mst.year,
+    monthName: monthNames[mst.month]
+  };
+}));
+```
+
+### 4. Update Confidence Scoring
+
+Adjust confidence calculation to penalize weekends (in case any slip through):
+
+```typescript
+// In calculateConfidence():
+// Add weekend penalty
+if (dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday') {
+  base -= 40; // Strong penalty for weekends
+}
 ```
 
 ---
@@ -104,23 +109,38 @@ SELECT
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useHistorical12CPPeaks.ts` | Add MST conversion utility, update all peak processing to use MST dates/hours |
-| (Optional) `supabase/migrations/[new].sql` | Update DB functions to return MST-based values |
+| `src/lib/12cpPredictionEngine.ts` | Remove Saturday from priority days, add MST conversion, add weekend penalty in confidence scoring |
+| `src/hooks/useHistorical12CPPeaks.ts` | Pass MST-corrected day-of-week data to prediction engine |
 
 ---
 
-## Expected Result After Fix
+## Expected Results After Fix
 
-| Rank | Date (MST) | Hour (MST) | Day | Demand |
-|------|------------|------------|-----|--------|
-| #11 | January 23, 2026 | 5 PM | Friday | 12,128 MW |
-| #12 | January 23, 2026 | 6 PM | Friday | 12,128 MW |
+**Current (Incorrect):**
+| Rank | Predicted Date | Day |
+|------|----------------|-----|
+| #1 | Dec 11, 2026 | Friday |
+| #2 | Dec 12, 2026 | **Saturday** ← WRONG |
+| #3 | Dec 17, 2026 | Thursday |
 
-All times will correctly reflect Mountain Standard Time (Alberta local time), matching how AESO reports data and how grid operators understand peak hours.
+**After Fix (Correct):**
+| Rank | Predicted Date | Day |
+|------|----------------|-----|
+| #1 | Dec 10, 2026 | Thursday |
+| #2 | Dec 11, 2026 | Friday |
+| #3 | Dec 17, 2026 | Thursday |
+| #4 | Dec 18, 2026 | Friday |
+| ... | ... | (Weekdays only) |
+
+All 12 predicted peaks will fall on weekdays (Thu/Fri/Mon/Wed/Tue), matching the historical pattern where **100% of top peaks occur on weekdays**.
 
 ---
 
-## Weather Data Status
+## Summary
 
-**CONFIRMED ACCURATE** - The weather data displayed (-5.8°C/-9.3°C Calgary/Edmonton, 9 km/h wind) matches the database records exactly. No changes needed for weather display.
-
+| Issue | Fix |
+|-------|-----|
+| Saturday in priority days | Remove, use Thu > Fri > Mon > Wed > Tue |
+| UTC timezone in pattern analysis | Add MST conversion utility |
+| UTC data passed to predictions | Use MST-corrected values |
+| No weekend penalty | Add -40 confidence penalty for weekends |
