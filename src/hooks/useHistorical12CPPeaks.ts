@@ -1,6 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ScheduledPeakEvent } from '@/lib/calendarExport';
+import { generateImprovedPredictions } from '@/lib/12cpPredictionEngine';
 
 export interface Historical12CPPeak {
   month: string;           // e.g., "2025-12"
@@ -116,6 +118,7 @@ export interface HistoricalPeaksData {
   exactPredictions: Exact12CPPrediction[];
   current2026Peak: number | null;
   yearlyTop12Data: YearlyTop12Data[];
+  scheduledPeakEvents: ScheduledPeakEvent[];
 }
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -584,6 +587,22 @@ export function useHistorical12CPPeaks() {
       // Sort peaks for display (newest first)
       const sortedPeaks = peaks.sort((a, b) => b.month.localeCompare(a.month));
 
+      // Generate improved predictions using the prediction engine
+      const scheduledPeakEvents = generateImprovedPredictions(yearlyTop12Data, topPeaksData.slice(0, 50).map((record: any, index: number) => {
+        const date = new Date(record.peak_timestamp);
+        return {
+          rank: index + 1,
+          timestamp: record.peak_timestamp,
+          demandMW: Math.round(record.peak_demand_mw || 0),
+          priceAtPeak: Math.round((record.price_at_peak || 0) * 100) / 100,
+          hour: record.peak_hour ?? date.getHours(),
+          dayOfWeek: dayNames[record.day_of_week ?? date.getDay()],
+          month: date.getMonth() + 1,
+          year: date.getFullYear(),
+          monthName: monthNames[date.getMonth()]
+        };
+      }));
+
       setPeaksData({
         peaks: sortedPeaks,
         stats,
@@ -600,7 +619,8 @@ export function useHistorical12CPPeaks() {
         yearlyPeakSummary,
         exactPredictions,
         current2026Peak,
-        yearlyTop12Data
+        yearlyTop12Data,
+        scheduledPeakEvents
       });
 
       toast({

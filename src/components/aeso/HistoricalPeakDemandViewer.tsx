@@ -33,10 +33,12 @@ import {
   Sparkles,
   CalendarDays,
   ChevronDown,
-  Award
+  Award,
+  CalendarClock
 } from 'lucide-react';
 import { useHistorical12CPPeaks } from '@/hooks/useHistorical12CPPeaks';
 import { format } from 'date-fns';
+import { Upcoming12CPSchedule } from './Upcoming12CPSchedule';
 
 export function HistoricalPeakDemandViewer() {
   const {
@@ -47,6 +49,7 @@ export function HistoricalPeakDemandViewer() {
   } = useHistorical12CPPeaks();
 
   const [activeTab, setActiveTab] = useState('monthly');
+  const [predictionsSubTab, setPredictionsSubTab] = useState('schedule');
 
   useEffect(() => {
     fetchHistoricalPeaks();
@@ -695,150 +698,180 @@ export function HistoricalPeakDemandViewer() {
 
               {/* 2026 Predictions Tab */}
               <TabsContent value="predictions" className="space-y-6 mt-6">
-                {/* Exact 12CP Predictions */}
-                <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-primary" />
-                      Exact 2026/2027 12CP Event Predictions
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Based on 4 years of historical patterns, here are the 12 most likely hours when Alberta's 12CP peaks will occur
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg border overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-muted/30">
-                          <tr>
-                            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">#</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Predicted Date</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Time Window</th>
-                            <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Expected</th>
-                            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">Confidence</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {peaksData.exactPredictions.map((pred) => {
-                            const badge = getConfidenceBadge(pred.confidenceScore);
-                            return (
-                              <tr 
-                                key={pred.rank} 
-                                className={pred.rank <= 3 ? 'bg-red-50/30 dark:bg-red-950/10' : pred.rank <= 6 ? 'bg-orange-50/20 dark:bg-orange-950/10' : ''}
-                              >
-                                <td className="px-3 py-3 text-center">
-                                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                    pred.rank <= 3 ? 'bg-red-500 text-white' :
-                                    pred.rank <= 6 ? 'bg-orange-500 text-white' :
-                                    pred.rank <= 9 ? 'bg-yellow-500 text-white' :
-                                    'bg-muted text-muted-foreground'
-                                  }`}>
-                                    {pred.rank}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-3 text-sm">
-                                  <div className="font-medium">{pred.predictedDayOfWeek}, {pred.predictedDate}</div>
-                                  <div className="text-xs text-muted-foreground mt-0.5">{pred.basedOnHistorical}</div>
-                                </td>
-                                <td className="px-3 py-3 text-sm">
-                                  <Badge variant="outline">{pred.predictedTimeWindow}</Badge>
-                                </td>
-                                <td className="px-3 py-3 text-sm text-right">
-                                  <span className="font-bold">{formatNumber(pred.expectedDemandMW.min)}</span>
-                                  <span className="text-muted-foreground">-</span>
-                                  <span className="font-bold">{formatNumber(pred.expectedDemandMW.max)}</span>
-                                  <span className="text-muted-foreground ml-1">MW</span>
-                                </td>
-                                <td className="px-3 py-3 text-center">
-                                  <Badge variant={badge.variant}>{pred.confidenceScore}%</Badge>
-                                </td>
+                {/* Sub-tabs for Schedule vs Details */}
+                <Tabs value={predictionsSubTab} onValueChange={setPredictionsSubTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 max-w-sm">
+                    <TabsTrigger value="schedule" className="flex items-center gap-1.5">
+                      <CalendarClock className="w-4 h-4" />
+                      Schedule
+                    </TabsTrigger>
+                    <TabsTrigger value="details" className="flex items-center gap-1.5">
+                      <Target className="w-4 h-4" />
+                      Details
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Schedule View */}
+                  <TabsContent value="schedule" className="mt-6">
+                    {peaksData.scheduledPeakEvents && peaksData.scheduledPeakEvents.length > 0 ? (
+                      <Upcoming12CPSchedule events={peaksData.scheduledPeakEvents} />
+                    ) : (
+                      <Card>
+                        <CardContent className="py-8 text-center text-muted-foreground">
+                          Loading schedule predictions...
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+
+                  {/* Details View (existing exact predictions table) */}
+                  <TabsContent value="details" className="space-y-6 mt-6">
+                    {/* Exact 12CP Predictions */}
+                    <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Target className="w-5 h-5 text-primary" />
+                          Exact 2026/2027 12CP Event Predictions
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Based on 4 years of historical patterns, here are the 12 most likely hours when Alberta's 12CP peaks will occur
+                        </p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="rounded-lg border overflow-hidden">
+                          <table className="w-full">
+                            <thead className="bg-muted/30">
+                              <tr>
+                                <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">#</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Predicted Date</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Time Window</th>
+                                <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Expected</th>
+                                <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground">Confidence</th>
                               </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Methodology */}
-                    <div className="mt-4 p-4 rounded-lg bg-muted/50 border">
-                      <h4 className="font-medium text-sm mb-2">🔍 Prediction Methodology</h4>
-                      <ul className="text-xs text-muted-foreground space-y-1">
-                        <li>• Analyzed top 12 peaks from 4 years of AESO data (33,000+ records)</li>
-                        <li>• Applied {peaksData.stats.avgYearlyGrowth}% YoY growth factor to 2025 record ({formatNumber(peaksData.stats.allTimePeakMW)} MW)</li>
-                        <li>• December 11-24 window based on 100% historical occurrence in this period</li>
-                        <li>• 1-3 AM timing based on all top 12 peaks occurring in this window</li>
-                        <li>• Day-of-week patterns mapped to 2026 calendar (Friday/Thursday/Saturday highest)</li>
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Monthly Risk Overview */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                      Monthly 12CP Risk Forecast
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {peaksData.predictions.slice(0, 6).map((prediction) => (
-                        <div 
-                          key={prediction.month} 
-                          className={`p-4 rounded-lg border ${
-                            prediction.riskLevel === 'critical' ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200/50' :
-                            prediction.riskLevel === 'high' ? 'bg-orange-50/50 dark:bg-orange-950/20 border-orange-200/50' :
-                            prediction.riskLevel === 'moderate' ? 'bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200/50' :
-                            'bg-muted/30'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <span className="font-semibold">{prediction.monthName}</span>
-                              <Badge variant={getRiskBadgeVariant(prediction.riskLevel)}>
-                                {prediction.riskLevel.toUpperCase()}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">{prediction.probabilityScore}%</span>
-                              <span className="text-xs text-muted-foreground">risk</span>
-                            </div>
-                          </div>
-                          <Progress 
-                            value={prediction.probabilityScore} 
-                            className={`h-2 mb-2 ${
-                              prediction.riskLevel === 'critical' ? '[&>div]:bg-red-500' :
-                              prediction.riskLevel === 'high' ? '[&>div]:bg-orange-500' :
-                              prediction.riskLevel === 'moderate' ? '[&>div]:bg-yellow-500' :
-                              '[&>div]:bg-green-500'
-                            }`}
-                          />
-                          <div className="flex items-center justify-between text-sm">
-                            <p className="text-muted-foreground">{prediction.reasoning}</p>
-                            <div className="text-right whitespace-nowrap ml-4">
-                              <span className="font-medium">{formatNumber(prediction.expectedDemandRange.min)}-{formatNumber(prediction.expectedDemandRange.max)}</span>
-                              <span className="text-muted-foreground ml-1">MW</span>
-                            </div>
-                          </div>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                              {peaksData.exactPredictions.map((pred) => {
+                                const badge = getConfidenceBadge(pred.confidenceScore);
+                                return (
+                                  <tr 
+                                    key={pred.rank} 
+                                    className={pred.rank <= 3 ? 'bg-red-50/30 dark:bg-red-950/10' : pred.rank <= 6 ? 'bg-orange-50/20 dark:bg-orange-950/10' : ''}
+                                  >
+                                    <td className="px-3 py-3 text-center">
+                                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                                        pred.rank <= 3 ? 'bg-red-500 text-white' :
+                                        pred.rank <= 6 ? 'bg-orange-500 text-white' :
+                                        pred.rank <= 9 ? 'bg-yellow-500 text-white' :
+                                        'bg-muted text-muted-foreground'
+                                      }`}>
+                                        {pred.rank}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-3 text-sm">
+                                      <div className="font-medium">{pred.predictedDayOfWeek}, {pred.predictedDate}</div>
+                                      <div className="text-xs text-muted-foreground mt-0.5">{pred.basedOnHistorical}</div>
+                                    </td>
+                                    <td className="px-3 py-3 text-sm">
+                                      <Badge variant="outline">{pred.predictedTimeWindow}</Badge>
+                                    </td>
+                                    <td className="px-3 py-3 text-sm text-right">
+                                      <span className="font-bold">{formatNumber(pred.expectedDemandMW.min)}</span>
+                                      <span className="text-muted-foreground">-</span>
+                                      <span className="font-bold">{formatNumber(pred.expectedDemandMW.max)}</span>
+                                      <span className="text-muted-foreground ml-1">MW</span>
+                                    </td>
+                                    <td className="px-3 py-3 text-center">
+                                      <Badge variant={badge.variant}>{pred.confidenceScore}%</Badge>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
 
-                {/* Warning Note */}
-                <div className="p-4 rounded-lg bg-muted/50 border">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-muted-foreground mt-0.5" />
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Note:</strong> These predictions are based on historical patterns. 
-                      Actual peaks depend on weather conditions, economic activity, and grid events. 
-                      Monitor AESO alerts for real-time peak risk warnings. Confidence decreases for peaks 
-                      outside December due to weather variability.
-                    </p>
-                  </div>
-                </div>
+                        {/* Methodology */}
+                        <div className="mt-4 p-4 rounded-lg bg-muted/50 border">
+                          <h4 className="font-medium text-sm mb-2">🔍 Prediction Methodology</h4>
+                          <ul className="text-xs text-muted-foreground space-y-1">
+                            <li>• Analyzed top 12 peaks from 4 years of AESO data (33,000+ records)</li>
+                            <li>• Applied {peaksData.stats.avgYearlyGrowth}% YoY growth factor to 2025 record ({formatNumber(peaksData.stats.allTimePeakMW)} MW)</li>
+                            <li>• December 11-24 window based on 100% historical occurrence in this period</li>
+                            <li>• 1-3 AM timing based on all top 12 peaks occurring in this window</li>
+                            <li>• Day-of-week patterns mapped to 2026 calendar (Friday/Thursday/Saturday highest)</li>
+                          </ul>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Monthly Risk Overview */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-primary" />
+                          Monthly 12CP Risk Forecast
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {peaksData.predictions.slice(0, 6).map((prediction) => (
+                            <div 
+                              key={prediction.month} 
+                              className={`p-4 rounded-lg border ${
+                                prediction.riskLevel === 'critical' ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200/50' :
+                                prediction.riskLevel === 'high' ? 'bg-orange-50/50 dark:bg-orange-950/20 border-orange-200/50' :
+                                prediction.riskLevel === 'moderate' ? 'bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200/50' :
+                                'bg-muted/30'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-semibold">{prediction.monthName}</span>
+                                  <Badge variant={getRiskBadgeVariant(prediction.riskLevel)}>
+                                    {prediction.riskLevel.toUpperCase()}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">{prediction.probabilityScore}%</span>
+                                  <span className="text-xs text-muted-foreground">risk</span>
+                                </div>
+                              </div>
+                              <Progress 
+                                value={prediction.probabilityScore} 
+                                className={`h-2 mb-2 ${
+                                  prediction.riskLevel === 'critical' ? '[&>div]:bg-red-500' :
+                                  prediction.riskLevel === 'high' ? '[&>div]:bg-orange-500' :
+                                  prediction.riskLevel === 'moderate' ? '[&>div]:bg-yellow-500' :
+                                  '[&>div]:bg-green-500'
+                                }`}
+                              />
+                              <div className="flex items-center justify-between text-sm">
+                                <p className="text-muted-foreground">{prediction.reasoning}</p>
+                                <div className="text-right whitespace-nowrap ml-4">
+                                  <span className="font-medium">{formatNumber(prediction.expectedDemandRange.min)}-{formatNumber(prediction.expectedDemandRange.max)}</span>
+                                  <span className="text-muted-foreground ml-1">MW</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Warning Note */}
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-muted-foreground mt-0.5" />
+                        <p className="text-xs text-muted-foreground">
+                          <strong>Note:</strong> These predictions are based on historical patterns. 
+                          Actual peaks depend on weather conditions, economic activity, and grid events. 
+                          Monitor AESO alerts for real-time peak risk warnings. Confidence decreases for peaks 
+                          outside December due to weather variability.
+                        </p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
 
