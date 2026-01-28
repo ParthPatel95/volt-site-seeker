@@ -45,6 +45,7 @@ import {
 import { useHistorical12CPPeaks } from '@/hooks/useHistorical12CPPeaks';
 import { format } from 'date-fns';
 import { Upcoming12CPSchedule } from './Upcoming12CPSchedule';
+import { WeatherDemandCorrelationChart } from './WeatherDemandCorrelationChart';
 
 export function HistoricalPeakDemandViewer() {
   const {
@@ -582,6 +583,9 @@ export function HistoricalPeakDemandViewer() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Weather Correlation Chart - Investor Presentation */}
+                <WeatherDemandCorrelationChart className="mt-6" />
 
                 {/* Year-over-Year Trend Chart */}
                 <Card>
