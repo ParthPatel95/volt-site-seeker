@@ -1,152 +1,99 @@
 
+# Plan: Add Weather Data to 12CP Events in Yearly Tab
 
-# Plan: Fix Duplicate Peaks in 12CP Data
+## Overview
+Add weather conditions (temperature, wind speed, cloud cover) beside each 12CP peak event in the Yearly tab to enable deeper analysis of the correlation between weather and peak demand.
 
-## Problem Identified
+## Verified Weather Data Available (Sample from Database)
 
-The database contains **1,688 duplicate hour entries** with **1,711 extra rows**. These are caused by multiple data imports creating separate records for the same hour (timestamps differ by only seconds, e.g., `2026-01-23 02:00:17.52` and `2026-01-23 02:00:19.287`).
+The database already contains weather data for every peak event:
 
-**Current incorrect display (2026 top 12):**
-| Rank | Date | Hour | Demand |
-|------|------|------|--------|
-| #1 | Jan 22, 2026 | 2 AM | 12,291 MW |
-| #2 | Jan 22, 2026 | 2 AM | 12,291 MW ← DUPLICATE |
-| #3 | Jan 22, 2026 | 3 AM | 12,250 MW |
+| Date | Hour | Demand | Calgary Temp | Edmonton Temp | Wind | Cloud |
+|------|------|--------|--------------|---------------|------|-------|
+| Dec 12, 2025 | 2 AM | 12,785 MW | -13.5°C | -19.2°C | 12.5 km/h | 30% |
+| Dec 18, 2025 | 2 AM | 12,737 MW | -15.3°C | -28.6°C | 8.3 km/h | 100% |
+| Dec 20, 2025 | 2 AM | 12,709 MW | -19.5°C | -28.6°C | 9.2 km/h | 100% |
+| Dec 13, 2025 | 2 AM | 12,613 MW | -17.7°C | -30.7°C | 13.7 km/h | 100% |
 
-**Should be (verified from database):**
-| Rank | Date | Hour | Demand | Price | Day |
-|------|------|------|--------|-------|-----|
-| #1 | Jan 23, 2026 | 2 AM | 12,291 MW | $55.80 | Friday |
-| #2 | Jan 23, 2026 | 3 AM | 12,250 MW | $53.52 | Friday |
-| #3 | Jan 24, 2026 | 2 AM | 12,238 MW | $57.61 | Saturday |
-| #4 | Jan 6, 2026 | 2 AM | 12,238 MW | $695.34 | Tuesday |
-| #5 | Jan 9, 2026 | 2 AM | 12,218 MW | $12.23 | Friday |
-| #6 | Jan 23, 2026 | 7 PM | 12,155 MW | $52.38 | Friday |
-| #7 | Jan 5, 2026 | 2 AM | 12,153 MW | $76.78 | Monday |
-| #8 | Jan 23, 2026 | 4 AM | 12,149 MW | $60.19 | Friday |
-| #9 | Jan 23, 2026 | 6 PM | 12,135 MW | $67.32 | Friday |
-| #10 | Jan 23, 2026 | 5 PM | 12,129 MW | $99.54 | Friday |
-| #11 | Jan 24, 2026 | 12 AM | 12,128 MW | $63.40 | Saturday |
-| #12 | Jan 24, 2026 | 1 AM | 12,128 MW | $63.40 | Saturday |
-
----
-
-## Root Cause
-
-All 4 database functions rank rows using `ROW_NUMBER()` on raw data without first deduplicating by unique hour:
-
-```sql
--- Current (broken): ranks all rows including duplicates
-ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM timestamp) ORDER BY ail_mw DESC)
-FROM aeso_training_data
-```
-
----
-
-## Solution
-
-Update all 4 database functions to first deduplicate by date+hour, then rank:
-
-```sql
--- Fixed: First dedupe, then rank
-WITH deduplicated AS (
-  SELECT 
-    DATE(timestamp) as date,
-    hour_of_day,
-    MAX(ail_mw) as ail_mw,
-    MAX(pool_price) as pool_price,
-    MIN(timestamp) as timestamp
-  FROM aeso_training_data
-  WHERE ail_mw IS NOT NULL
-  GROUP BY DATE(timestamp), hour_of_day
-)
-SELECT ... FROM deduplicated
-ORDER BY ail_mw DESC
-```
+**Key insight confirmed**: Major peaks correlate with Edmonton temperatures below -19°C
 
 ---
 
 ## Technical Changes
 
-### 1. Create New Migration
+### 1. Update Database Function
 
-Update all 4 database functions with deduplication logic:
+Modify `get_yearly_top12_peaks()` to include weather columns:
 
-**Function 1: `get_yearly_top12_peaks()`**
 ```sql
 CREATE OR REPLACE FUNCTION public.get_yearly_top12_peaks()
-RETURNS TABLE (...)
-AS $$
-BEGIN
-  RETURN QUERY
-  WITH deduplicated AS (
-    SELECT 
-      EXTRACT(YEAR FROM timestamp)::integer as year,
-      DATE(timestamp) as date,
-      hour_of_day,
-      MAX(ail_mw) as ail_mw,
-      MAX(pool_price) as pool_price,
-      MIN(timestamp) as timestamp
-    FROM aeso_training_data
-    WHERE ail_mw IS NOT NULL
-    GROUP BY EXTRACT(YEAR FROM timestamp)::integer, DATE(timestamp), hour_of_day
-  ),
-  ranked_peaks AS (
-    SELECT 
-      year as yr,
-      timestamp as ts,
-      ail_mw,
-      pool_price,
-      hour_of_day,
-      EXTRACT(DOW FROM timestamp)::integer as dow,
-      ROW_NUMBER() OVER (PARTITION BY year ORDER BY ail_mw DESC) as rn
-    FROM deduplicated
-  )
-  SELECT yr, rn::integer, ts, ail_mw, pool_price, hour_of_day, dow
-  FROM ranked_peaks
-  WHERE rn <= 12
-  ORDER BY yr DESC, rn ASC;
-END;
-$$;
+RETURNS TABLE (
+  year integer,
+  rank integer,
+  peak_timestamp timestamp with time zone,
+  peak_demand_mw numeric,
+  price_at_peak numeric,
+  peak_hour integer,
+  day_of_week integer,
+  -- NEW weather columns:
+  temp_calgary numeric,
+  temp_edmonton numeric,
+  wind_speed numeric,
+  cloud_cover numeric
+)
 ```
 
-**Function 2: `get_top_peak_demands()`**
-```sql
-CREATE OR REPLACE FUNCTION get_top_peak_demands(limit_count integer DEFAULT 50)
-RETURNS TABLE (...)
-AS $$
-BEGIN
-  RETURN QUERY
-  WITH deduplicated AS (
-    SELECT 
-      DATE(timestamp) as date,
-      hour_of_day,
-      MAX(ail_mw) as ail_mw,
-      MAX(pool_price) as pool_price,
-      MIN(timestamp) as timestamp
-    FROM aeso_training_data
-    WHERE ail_mw IS NOT NULL
-    GROUP BY DATE(timestamp), hour_of_day
-  )
-  SELECT timestamp, ail_mw, pool_price, hour_of_day,
-         EXTRACT(DOW FROM timestamp)::integer
-  FROM deduplicated
-  ORDER BY ail_mw DESC NULLS LAST
-  LIMIT limit_count;
-END;
-$$;
+The deduplication CTE will include `MAX()` aggregates for weather columns alongside demand data.
+
+### 2. Update TypeScript Interfaces
+
+Add weather fields to `YearlyTop12Peak` interface in `useHistorical12CPPeaks.ts`:
+
+```typescript
+export interface YearlyTop12Peak {
+  // ... existing fields
+  temperatureCalgary: number | null;
+  temperatureEdmonton: number | null;
+  windSpeed: number | null;
+  cloudCover: number | null;
+}
 ```
 
-**Function 3: `get_monthly_peak_demands()`**
-```sql
-CREATE OR REPLACE FUNCTION get_monthly_peak_demands(...)
--- Add deduplication CTE before ranking by month
+### 3. Update Yearly Tab UI
+
+Expand the yearly peaks table to show weather conditions:
+
+```text
++-----------------------------------------------------------------------------------+
+| 2025 - Top 12 Peak Demand Hours                                                   |
+| Peak Range: 12,613 - 12,785 MW                                                   |
++-----------------------------------------------------------------------------------+
+| #  | Date/Time              | Demand    | Price   | Weather Conditions           |
+|----|------------------------|-----------|---------|------------------------------|
+| 🏆 | Dec 12, 2025 2 AM MST  | 12,785 MW | $44.20  | 🌡️ -13°C/-19°C  💨 13 km/h  |
+| #2 | Dec 12, 2025 1 AM MST  | 12,741 MW | $43.65  | 🌡️ -13°C/-19°C  💨 13 km/h  |
+| #3 | Dec 18, 2025 2 AM MST  | 12,737 MW | $22.08  | 🌡️ -15°C/-29°C  ☁️ 100%     |
+| #4 | Dec 20, 2025 2 AM MST  | 12,709 MW | $39.83  | 🌡️ -20°C/-29°C  ☁️ 100%     |
++-----------------------------------------------------------------------------------+
 ```
 
-**Function 4: `get_yearly_peak_demands()`**
-```sql
-CREATE OR REPLACE FUNCTION get_yearly_peak_demands()
--- Add deduplication CTE before ranking by year
+**UI Elements for Weather:**
+- Temperature shown as "Calgary/Edmonton" format with snowflake icon for cold
+- Wind speed indicator with appropriate icon
+- Cloud cover badge (☀️ clear, ⛅ partly cloudy, ☁️ overcast)
+- Temperature color coding: blue for cold (<-10°C), purple for extreme cold (<-20°C)
+
+### 4. Add Weather Summary Card Per Year
+
+Include a weather analysis summary in each year accordion:
+
+```text
++----------------------------------------------+
+| 2025 Weather Patterns at Peak Demand         |
+| Avg Temp: -17°C Calgary / -25°C Edmonton     |
+| Cold Events: 11 of 12 peaks below -15°C      |
+| Most Extreme: -31°C Edmonton (Dec 13)        |
++----------------------------------------------+
 ```
 
 ---
@@ -155,24 +102,48 @@ CREATE OR REPLACE FUNCTION get_yearly_peak_demands()
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/[new].sql` | Create migration to update all 4 database functions with deduplication |
+| `supabase/migrations/[new].sql` | Update `get_yearly_top12_peaks()` to return weather columns |
+| `src/integrations/supabase/types.ts` | Update RPC return type |
+| `src/hooks/useHistorical12CPPeaks.ts` | Add weather fields to `YearlyTop12Peak` interface, process weather data |
+| `src/components/aeso/HistoricalPeakDemandViewer.tsx` | Display weather columns in yearly table, add weather summary section |
 
 ---
 
-## Verification After Fix
+## Data Flow
 
-**2026 Top 12 will show unique peaks:**
-- #1: Jan 23, 2026 2 AM - 12,291 MW (Friday)
-- #2: Jan 23, 2026 3 AM - 12,250 MW (Friday)
-- #3: Jan 24, 2026 2 AM - 12,238 MW (Saturday)
-- #4: Jan 6, 2026 2 AM - 12,238 MW (Tuesday)
-- #5-12: All unique date+hour combinations
+```text
+Database (aeso_training_data)
+    ↓
+get_yearly_top12_peaks() RPC (with weather columns)
+    ↓
+Returns ~60 rows with demand + weather
+    ↓
+Hook maps to YearlyTop12Peak interface
+    ↓
+UI displays weather icons/values per peak
+```
 
-**All-Time Top 12 will show:**
-- #1: Dec 12, 2025 2 AM - 12,785 MW (Friday)
-- #2: Dec 12, 2025 1 AM - 12,741 MW (Friday)
-- #3: Dec 18, 2025 2 AM - 12,737 MW (Thursday)
-- ... (all unique)
+---
+
+## Visual Design
+
+**Temperature Display:**
+- Format: `−13°C / −19°C` (Calgary / Edmonton)
+- Color: Blue text for cold, purple for extreme cold
+- Icon: ❄️ for temps below -15°C
+
+**Wind Display:**
+- Format: `12.5 km/h`
+- Icon: 💨 or wind icon from Lucide
+
+**Cloud Cover Display:**
+- 0-30%: ☀️ Clear
+- 31-70%: ⛅ Partly Cloudy
+- 71-100%: ☁️ Overcast
+
+**Table Column Layout:**
+| Rank | Date/Time | Demand | Price | Temp (C/E) | Wind | Cloud |
+|------|-----------|--------|-------|------------|------|-------|
 
 ---
 
@@ -180,8 +151,7 @@ CREATE OR REPLACE FUNCTION get_yearly_peak_demands()
 
 | Before | After |
 |--------|-------|
-| Same hour appears multiple times | Each hour appears once |
-| 2026 shows duplicate Jan 23 2AM entries | 2026 shows 12 unique peak hours |
-| All-time peaks may have duplicates | All unique date+hour combinations |
-| 1,711 extra duplicate rows counted | Proper deduplication in SQL |
-
+| Only demand and price shown | Weather context for each peak |
+| No temperature correlation visible | Clear temp-demand relationship shown |
+| Missing wind data | Wind speed at each peak visible |
+| No weather summary | Year-level weather pattern summary |
