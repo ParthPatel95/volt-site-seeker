@@ -4,6 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { ScheduledPeakEvent } from '@/lib/calendarExport';
 import { generateImprovedPredictions, analyzePeakPatterns } from '@/lib/12cpPredictionEngine';
 import { format } from 'date-fns';
+import { AllTimePeakHour, YearlyTop12Peak, YearlyTop12Data } from '@/types/12cpTypes';
+
+// Re-export types for backward compatibility
+export type { AllTimePeakHour, YearlyTop12Peak, YearlyTop12Data };
 
 export interface Historical12CPPeak {
   month: string;           // e.g., "2025-12"
@@ -16,17 +20,7 @@ export interface Historical12CPPeak {
   year: number;
 }
 
-export interface AllTimePeakHour {
-  rank: number;
-  timestamp: string;
-  demandMW: number;
-  priceAtPeak: number;
-  hour: number;
-  dayOfWeek: string;
-  month: number;
-  year: number;
-  monthName: string;
-}
+// Note: AllTimePeakHour, YearlyTop12Peak, and YearlyTop12Data are imported from @/types/12cpTypes
 
 export interface YearlyPeakSummary {
   year: number;
@@ -38,30 +32,6 @@ export interface YearlyPeakSummary {
   monthName: string;
   priceAtPeak: number;
   growthFromPrevYear: number | null;
-}
-
-export interface YearlyTop12Peak {
-  year: number;
-  rank: number;
-  timestamp: string;
-  demandMW: number;
-  priceAtPeak: number;
-  hour: number;
-  dayOfWeek: string;
-  monthName: string;
-  dayOfMonth: number;
-  // Weather data
-  temperatureCalgary: number | null;
-  temperatureEdmonton: number | null;
-  windSpeed: number | null;
-  cloudCover: number | null;
-}
-
-export interface YearlyTop12Data {
-  year: number;
-  peaks: YearlyTop12Peak[];
-  yearMaxDemand: number;
-  yearMinOf12: number;
 }
 
 export interface Exact12CPPrediction {

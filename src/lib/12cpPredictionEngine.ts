@@ -5,7 +5,7 @@
  */
 
 import { ScheduledPeakEvent, calculateDaysUntil, getDayName } from './calendarExport';
-import { YearlyTop12Data, AllTimePeakHour } from '@/hooks/useHistorical12CPPeaks';
+import { YearlyTop12Data, AllTimePeakHour } from '@/types/12cpTypes';
 
 interface PeakPatternAnalysis {
   peakMonthFrequency: { [month: number]: number };
