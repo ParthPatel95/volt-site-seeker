@@ -34,7 +34,13 @@ import {
   CalendarDays,
   ChevronDown,
   Award,
-  CalendarClock
+  CalendarClock,
+  Thermometer,
+  Wind,
+  Cloud,
+  Sun,
+  CloudSun,
+  Snowflake
 } from 'lucide-react';
 import { useHistorical12CPPeaks } from '@/hooks/useHistorical12CPPeaks';
 import { format } from 'date-fns';
@@ -361,7 +367,7 @@ export function HistoricalPeakDemandViewer() {
                                   <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Date/Time</th>
                                   <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Demand (MW)</th>
                                   <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Price</th>
-                                  <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Hour</th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Weather Conditions</th>
                                   <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Day</th>
                                 </tr>
                               </thead>
@@ -379,6 +385,24 @@ export function HistoricalPeakDemandViewer() {
                                     if (rank === 3) return <Badge className="bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center p-0 text-xs">#3</Badge>;
                                     return <span className="text-sm text-muted-foreground font-medium">#{rank}</span>;
                                   };
+                                  
+                                  // Weather display helpers
+                                  const getTemperatureColor = (temp: number | null) => {
+                                    if (temp === null) return 'text-muted-foreground';
+                                    if (temp <= -20) return 'text-purple-600 dark:text-purple-400';
+                                    if (temp <= -10) return 'text-blue-600 dark:text-blue-400';
+                                    if (temp <= 0) return 'text-cyan-600 dark:text-cyan-400';
+                                    return 'text-foreground';
+                                  };
+
+                                  const getCloudIcon = (cover: number | null) => {
+                                    if (cover === null) return null;
+                                    if (cover <= 30) return <Sun className="w-3.5 h-3.5 text-yellow-500" />;
+                                    if (cover <= 70) return <CloudSun className="w-3.5 h-3.5 text-slate-400" />;
+                                    return <Cloud className="w-3.5 h-3.5 text-slate-500" />;
+                                  };
+
+                                  const isExtremeCold = (temp: number | null) => temp !== null && temp <= -15;
                                   
                                   return (
                                     <tr key={`${yearData.year}-${peak.rank}`} className={getRankStyle(peak.rank)}>
@@ -398,10 +422,36 @@ export function HistoricalPeakDemandViewer() {
                                       <td className="px-4 py-3 text-sm text-right">
                                         ${peak.priceAtPeak}/MWh
                                       </td>
-                                      <td className="px-4 py-3 text-center">
-                                        <Badge variant="outline" className="text-xs">
-                                          {formatPeakHour(peak.hour)}
-                                        </Badge>
+                                      <td className="px-4 py-3 text-sm">
+                                        {peak.temperatureCalgary !== null || peak.temperatureEdmonton !== null ? (
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            {/* Temperature */}
+                                            <div className="flex items-center gap-1">
+                                              {isExtremeCold(peak.temperatureEdmonton) && (
+                                                <Snowflake className="w-3.5 h-3.5 text-blue-500" />
+                                              )}
+                                              <span className={`font-medium ${getTemperatureColor(peak.temperatureCalgary)}`}>
+                                                {peak.temperatureCalgary !== null ? `${peak.temperatureCalgary > 0 ? '' : ''}${peak.temperatureCalgary}°` : '—'}
+                                              </span>
+                                              <span className="text-muted-foreground">/</span>
+                                              <span className={`font-medium ${getTemperatureColor(peak.temperatureEdmonton)}`}>
+                                                {peak.temperatureEdmonton !== null ? `${peak.temperatureEdmonton > 0 ? '' : ''}${peak.temperatureEdmonton}°` : '—'}
+                                              </span>
+                                              <span className="text-[10px] text-muted-foreground">C/E</span>
+                                            </div>
+                                            {/* Wind */}
+                                            {peak.windSpeed !== null && (
+                                              <div className="flex items-center gap-1 text-muted-foreground">
+                                                <Wind className="w-3.5 h-3.5" />
+                                                <span className="text-xs">{peak.windSpeed} km/h</span>
+                                              </div>
+                                            )}
+                                            {/* Cloud */}
+                                            {peak.cloudCover !== null && getCloudIcon(peak.cloudCover)}
+                                          </div>
+                                        ) : (
+                                          <span className="text-muted-foreground text-xs">No data</span>
+                                        )}
                                       </td>
                                       <td className="px-4 py-3 text-center text-sm text-muted-foreground">
                                         {peak.dayOfWeek.slice(0, 3)}
@@ -412,6 +462,72 @@ export function HistoricalPeakDemandViewer() {
                               </tbody>
                             </table>
                           </div>
+                          
+                          {/* Weather Summary Card */}
+                          {(() => {
+                            const peaksWithWeather = yearData.peaks.filter(p => p.temperatureCalgary !== null || p.temperatureEdmonton !== null);
+                            if (peaksWithWeather.length === 0) return null;
+                            
+                            const calgaryTemps = peaksWithWeather.filter(p => p.temperatureCalgary !== null).map(p => p.temperatureCalgary as number);
+                            const edmontonTemps = peaksWithWeather.filter(p => p.temperatureEdmonton !== null).map(p => p.temperatureEdmonton as number);
+                            const windSpeeds = peaksWithWeather.filter(p => p.windSpeed !== null).map(p => p.windSpeed as number);
+                            
+                            const avgCalgary = calgaryTemps.length > 0 ? Math.round(calgaryTemps.reduce((a, b) => a + b, 0) / calgaryTemps.length) : null;
+                            const avgEdmonton = edmontonTemps.length > 0 ? Math.round(edmontonTemps.reduce((a, b) => a + b, 0) / edmontonTemps.length) : null;
+                            const minEdmonton = edmontonTemps.length > 0 ? Math.min(...edmontonTemps) : null;
+                            const coldEventCount = edmontonTemps.filter(t => t <= -15).length;
+                            const avgWind = windSpeeds.length > 0 ? Math.round(windSpeeds.reduce((a, b) => a + b, 0) / windSpeeds.length * 10) / 10 : null;
+                            
+                            // Find the peak with the coldest Edmonton temp
+                            const coldestPeak = peaksWithWeather.reduce((coldest, peak) => {
+                              if (peak.temperatureEdmonton === null) return coldest;
+                              if (coldest === null || (coldest.temperatureEdmonton !== null && peak.temperatureEdmonton < coldest.temperatureEdmonton)) {
+                                return peak;
+                              }
+                              return coldest;
+                            }, null as typeof peaksWithWeather[0] | null);
+
+                            return (
+                              <div className="border-t bg-muted/20 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Thermometer className="w-4 h-4 text-blue-500" />
+                                  <span className="font-medium text-sm">{yearData.year} Weather Patterns at Peak Demand</span>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Avg Temperature</p>
+                                    <p className="font-medium">
+                                      <span className="text-blue-600 dark:text-blue-400">{avgCalgary !== null ? `${avgCalgary}°C` : '—'}</span>
+                                      <span className="text-muted-foreground mx-1">/</span>
+                                      <span className="text-purple-600 dark:text-purple-400">{avgEdmonton !== null ? `${avgEdmonton}°C` : '—'}</span>
+                                      <span className="text-[10px] text-muted-foreground ml-1">C/E</span>
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Cold Events (&lt;-15°C)</p>
+                                    <p className="font-medium flex items-center gap-1">
+                                      <Snowflake className="w-3.5 h-3.5 text-blue-500" />
+                                      {coldEventCount} of 12 peaks
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Most Extreme Cold</p>
+                                    <p className="font-medium text-purple-600 dark:text-purple-400">
+                                      {minEdmonton !== null ? `${minEdmonton}°C Edmonton` : '—'}
+                                      {coldestPeak && <span className="text-[10px] text-muted-foreground ml-1">({coldestPeak.monthName.slice(0, 3)} {coldestPeak.dayOfMonth})</span>}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Avg Wind Speed</p>
+                                    <p className="font-medium flex items-center gap-1">
+                                      <Wind className="w-3.5 h-3.5 text-slate-500" />
+                                      {avgWind !== null ? `${avgWind} km/h` : '—'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </AccordionContent>
                       </AccordionItem>
                     ))}

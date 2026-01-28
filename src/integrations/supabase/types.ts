@@ -11460,12 +11460,16 @@ export type Database = {
       get_yearly_top12_peaks: {
         Args: never
         Returns: {
+          cloud_cover: number
           day_of_week: number
           peak_demand_mw: number
           peak_hour: number
           peak_timestamp: string
           price_at_peak: number
           rank: number
+          temp_calgary: number
+          temp_edmonton: number
+          wind_speed: number
           year: number
         }[]
       }
