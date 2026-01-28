@@ -11,10 +11,12 @@ import {
   Clock,
   Activity,
   Zap,
-  ExternalLink
+  ExternalLink,
+  Rss
 } from 'lucide-react';
 import { GridAlert, GridRiskLevel, GridAlertStatus } from '@/hooks/useAESOGridAlerts';
 import { RealtimeReserves } from '@/hooks/useAESORealtimeReserves';
+import { RefreshCountdown } from './RefreshCountdown';
 
 interface GridAlertStatusCardProps {
   alerts: GridAlert[];
@@ -24,6 +26,7 @@ interface GridAlertStatusCardProps {
   loading: boolean;
   onRefresh: () => void;
   lastFetched: Date | null;
+  nextRefresh?: Date | null;
 }
 
 export function GridAlertStatusCard({
@@ -33,7 +36,8 @@ export function GridAlertStatusCard({
   riskLevel,
   loading,
   onRefresh,
-  lastFetched
+  lastFetched,
+  nextRefresh
 }: GridAlertStatusCardProps) {
   const activeAlerts = alerts.filter(a => a.status === 'active');
   const recentAlerts = alerts.slice(0, 5);
@@ -111,6 +115,19 @@ export function GridAlertStatusCard({
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+          </div>
+          
+          {/* Auto-refresh countdown and status */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-current/10">
+            <RefreshCountdown 
+              nextRefresh={nextRefresh || null} 
+              isLoading={loading} 
+              lastFetched={lastFetched}
+            />
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Rss className="w-3 h-3" />
+              <span>AESO Grid Alert RSS</span>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GridAlert {
@@ -28,12 +28,18 @@ export interface GridAlertStatus {
   alertLevel: string;
 }
 
-export function useAESOGridAlerts() {
+const DEFAULT_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
+
+export function useAESOGridAlerts(autoRefreshInterval: number = DEFAULT_REFRESH_INTERVAL) {
   const [alerts, setAlerts] = useState<GridAlert[]>([]);
   const [currentStatus, setCurrentStatus] = useState<GridAlertStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [nextRefresh, setNextRefresh] = useState<Date | null>(null);
+  
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
 
   const fetchGridAlerts = useCallback(async () => {
     setLoading(true);
@@ -51,6 +57,7 @@ export function useAESOGridAlerts() {
         setAlerts(data.recentAlerts || []);
         setCurrentStatus(data.currentStatus || null);
         setLastFetched(new Date());
+        setNextRefresh(new Date(Date.now() + autoRefreshInterval));
       } else {
         throw new Error(data?.error || 'Failed to fetch grid alerts');
       }
@@ -74,6 +81,8 @@ export function useAESOGridAlerts() {
             activeAlertCount: activeAlerts.length,
             alertLevel: activeAlerts.length > 0 ? 'warning' : 'normal'
           });
+          setLastFetched(new Date());
+          setNextRefresh(new Date(Date.now() + autoRefreshInterval));
         }
       } catch (fallbackErr) {
         console.error('Fallback fetch also failed:', fallbackErr);
@@ -81,7 +90,41 @@ export function useAESOGridAlerts() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [autoRefreshInterval]);
+
+  // Manual refresh that resets the countdown
+  const manualRefresh = useCallback(() => {
+    // Clear existing interval and restart
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    fetchGridAlerts();
+    
+    // Restart interval
+    intervalRef.current = setInterval(() => {
+      fetchGridAlerts();
+    }, autoRefreshInterval);
+  }, [fetchGridAlerts, autoRefreshInterval]);
+
+  // Auto-fetch on mount and set up polling
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchGridAlerts();
+    }
+
+    // Set up polling interval
+    intervalRef.current = setInterval(() => {
+      fetchGridAlerts();
+    }, autoRefreshInterval);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [fetchGridAlerts, autoRefreshInterval]);
 
   // Calculate risk level based on reserve data
   const calculateRiskLevel = useCallback((
@@ -178,7 +221,9 @@ export function useAESOGridAlerts() {
     loading,
     error,
     lastFetched,
-    fetchGridAlerts,
+    nextRefresh,
+    autoRefreshInterval,
+    fetchGridAlerts: manualRefresh,
     calculateRiskLevel,
     getAlertStatistics
   };

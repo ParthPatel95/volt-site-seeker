@@ -80,6 +80,47 @@ function determineAlertStatus(title: string, description: string): string {
   return 'active';
 }
 
+// Clean up old alerts - mark stale as expired, delete very old ones
+async function cleanupOldAlerts(supabase: any) {
+  const now = new Date();
+  
+  // Mark alerts older than 7 days as expired (if still active)
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const { error: expireError, count: expiredCount } = await supabase
+    .from('aeso_grid_alerts')
+    .update({ 
+      status: 'expired',
+      updated_at: now.toISOString()
+    })
+    .eq('status', 'active')
+    .lt('published_at', sevenDaysAgo.toISOString());
+  
+  if (expireError) {
+    console.error('Error expiring old alerts:', expireError);
+  } else if (expiredCount && expiredCount > 0) {
+    console.log(`Marked ${expiredCount} stale alerts as expired`);
+  }
+  
+  // Delete alerts older than 90 days to prevent database bloat
+  const ninetyDaysAgo = new Date(now);
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  
+  const { error: deleteError, count: deletedCount } = await supabase
+    .from('aeso_grid_alerts')
+    .delete()
+    .lt('published_at', ninetyDaysAgo.toISOString());
+  
+  if (deleteError) {
+    console.error('Error deleting old alerts:', deleteError);
+  } else if (deletedCount && deletedCount > 0) {
+    console.log(`Deleted ${deletedCount} alerts older than 90 days`);
+  }
+  
+  return { expiredCount: expiredCount || 0, deletedCount: deletedCount || 0 };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -88,6 +129,15 @@ serve(async (req) => {
 
   try {
     console.log('Fetching AESO Grid Alert RSS feed...');
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Clean up old alerts first
+    const cleanupResult = await cleanupOldAlerts(supabase);
+    console.log('Cleanup result:', cleanupResult);
     
     // Fetch the RSS feed
     const rssResponse = await fetch('https://www.aeso.ca/rss/grid-alert', {
@@ -108,11 +158,6 @@ serve(async (req) => {
     // Parse the RSS feed
     const alerts = parseRSSFeed(xmlText);
     console.log('Parsed alerts count:', alerts.length);
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Store/update alerts in database, correlating "ended" alerts with originals
     const upsertedAlerts = [];
@@ -174,10 +219,11 @@ serve(async (req) => {
       }
     }
 
-    // Fetch recent alerts from database to return
+    // Fetch recent alerts from database to return (excluding expired unless recent)
     const { data: recentAlerts, error: fetchError } = await supabase
       .from('aeso_grid_alerts')
       .select('*')
+      .neq('status', 'expired')
       .order('published_at', { ascending: false })
       .limit(20);
 
@@ -194,6 +240,7 @@ serve(async (req) => {
       timestamp: new Date().toISOString(),
       feedAlertsCount: alerts.length,
       storedAlertsCount: upsertedAlerts.length,
+      cleanup: cleanupResult,
       currentStatus: {
         hasActiveAlert: hasActiveGridAlert,
         activeAlertCount: activeAlerts.length,
@@ -206,7 +253,8 @@ serve(async (req) => {
     console.log('Response prepared:', {
       feedAlerts: alerts.length,
       stored: upsertedAlerts.length,
-      hasActiveAlert: hasActiveGridAlert
+      hasActiveAlert: hasActiveGridAlert,
+      cleanup: cleanupResult
     });
 
     return new Response(JSON.stringify(response), {

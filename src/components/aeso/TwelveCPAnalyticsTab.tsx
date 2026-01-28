@@ -51,14 +51,15 @@ export function TwelveCPAnalyticsTab() {
     currentStatus,
     loading: loadingAlerts,
     lastFetched: alertsLastFetched,
+    nextRefresh: alertsNextRefresh,
     fetchGridAlerts,
     calculateRiskLevel
   } = useAESOGridAlerts();
 
+  // Fetch reserves and savings data on mount (grid alerts auto-fetch via hook)
   useEffect(() => {
     fetchRealtimeReserves();
     fetch12CPSavingsData();
-    fetchGridAlerts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -148,6 +149,7 @@ export function TwelveCPAnalyticsTab() {
                   fetchRealtimeReserves();
                 }}
                 lastFetched={alertsLastFetched}
+                nextRefresh={alertsNextRefresh}
               />
 
               {/* Alert Explanation */}
