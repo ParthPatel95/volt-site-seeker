@@ -1,8 +1,18 @@
-// Inventory Types for VoltBuild
+// Inventory Types for Standalone Inventory Module
+
+export interface InventoryWorkspace {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface InventoryCategory {
   id: string;
-  project_id: string;
+  workspace_id: string;
   name: string;
   description?: string;
   icon?: string;
@@ -15,7 +25,7 @@ export interface InventoryCategory {
 
 export interface InventoryItem {
   id: string;
-  project_id: string;
+  workspace_id: string;
   
   // Item identification
   name: string;
@@ -73,7 +83,7 @@ export type TransactionType = 'in' | 'out' | 'adjustment' | 'transfer' | 'count'
 export interface InventoryTransaction {
   id: string;
   item_id: string;
-  project_id: string;
+  workspace_id: string;
   
   transaction_type: TransactionType;
   quantity_change: number;
@@ -91,7 +101,7 @@ export interface InventoryTransaction {
   performed_at: string;
   notes?: string;
   
-  // Joined data - partial for joined queries
+  // Joined data
   item?: Partial<InventoryItem>;
 }
 

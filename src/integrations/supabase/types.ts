@@ -4612,6 +4612,7 @@ export type Database = {
           parent_id: string | null
           project_id: string | null
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           color?: string | null
@@ -4624,6 +4625,7 @@ export type Database = {
           parent_id?: string | null
           project_id?: string | null
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           color?: string | null
@@ -4636,6 +4638,7 @@ export type Database = {
           parent_id?: string | null
           project_id?: string | null
           updated_at?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -4650,6 +4653,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_categories_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -4707,6 +4717,7 @@ export type Database = {
           project_id: string
           storage_zone: string | null
           updated_at: string | null
+          workspace_id: string | null
         }
         Insert: {
           bin_number?: string | null
@@ -4721,6 +4732,7 @@ export type Database = {
           project_id: string
           storage_zone?: string | null
           updated_at?: string | null
+          workspace_id?: string | null
         }
         Update: {
           bin_number?: string | null
@@ -4735,8 +4747,17 @@ export type Database = {
           project_id?: string
           storage_zone?: string | null
           updated_at?: string | null
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_groups_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_items: {
         Row: {
@@ -4771,6 +4792,7 @@ export type Database = {
           unit: string | null
           unit_cost: number | null
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           additional_images?: string[] | null
@@ -4804,6 +4826,7 @@ export type Database = {
           unit?: string | null
           unit_cost?: number | null
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           additional_images?: string[] | null
@@ -4837,6 +4860,7 @@ export type Database = {
           unit?: string | null
           unit_cost?: number | null
           updated_at?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -4851,6 +4875,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "voltbuild_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -4871,6 +4902,7 @@ export type Database = {
           reference_number: string | null
           related_task_id: string | null
           transaction_type: string
+          workspace_id: string | null
         }
         Insert: {
           destination_location?: string | null
@@ -4887,6 +4919,7 @@ export type Database = {
           reference_number?: string | null
           related_task_id?: string | null
           transaction_type: string
+          workspace_id?: string | null
         }
         Update: {
           destination_location?: string | null
@@ -4903,6 +4936,7 @@ export type Database = {
           reference_number?: string | null
           related_task_id?: string | null
           transaction_type?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -4926,7 +4960,44 @@ export type Database = {
             referencedRelation: "voltbuild_tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "inventory_transactions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_workspaces"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      inventory_workspaces: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       investment_scores: {
         Row: {
