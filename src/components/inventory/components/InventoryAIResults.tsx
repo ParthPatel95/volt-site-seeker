@@ -14,9 +14,13 @@ import {
   AlertCircle,
   TrendingUp,
   FileText,
-  Eye
+  Eye,
+  HardHat
 } from 'lucide-react';
 import { AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
+import { ScrapMetalResults } from './ScrapMetalResults';
+import { SalvageAssessment } from './SalvageAssessment';
+import { HazmatWarning } from './HazmatWarning';
 import { cn } from '@/lib/utils';
 
 interface InventoryAIResultsProps {
@@ -276,6 +280,78 @@ export function InventoryAIResults({
             </Badge>
           ))}
         </div>
+      )}
+
+      {/* Demolition Mode Section */}
+      {(result.scrapAnalysis || result.salvageAssessment || result.hazmatFlags) && (
+        <>
+          <Separator />
+          
+          <div className="flex items-center gap-2 text-sm font-medium text-amber-600">
+            <HardHat className="w-4 h-4" />
+            <span>Demolition Analysis</span>
+          </div>
+          
+          {/* Hazmat Warning - Show first if present */}
+          {result.hazmatFlags && (
+            result.hazmatFlags.hasAsbestos || 
+            result.hazmatFlags.hasLeadPaint || 
+            result.hazmatFlags.hasPCBs || 
+            result.hazmatFlags.hasRefrigerants ||
+            (result.hazmatFlags.otherHazards && result.hazmatFlags.otherHazards.length > 0)
+          ) && (
+            <HazmatWarning hazmatFlags={result.hazmatFlags} />
+          )}
+          
+          {/* Scrap Metal Analysis */}
+          {result.scrapAnalysis && (
+            <ScrapMetalResults scrapAnalysis={result.scrapAnalysis} />
+          )}
+          
+          {/* Salvage Assessment */}
+          {result.salvageAssessment && (
+            <SalvageAssessment 
+              salvageAssessment={result.salvageAssessment}
+              scrapAnalysis={result.scrapAnalysis}
+              itemName={result.item.name}
+              condition={result.condition}
+            />
+          )}
+          
+          {/* Removal Details */}
+          {result.demolitionDetails && (
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Package className="w-4 h-4 text-muted-foreground" />
+                <span>Removal Details</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Complexity: </span>
+                  <Badge variant="outline" className="capitalize">
+                    {result.demolitionDetails.removalComplexity}
+                  </Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Labor: </span>
+                  <span className="font-medium">{result.demolitionDetails.laborHoursEstimate} hrs</span>
+                </div>
+                {result.demolitionDetails.equipmentNeeded?.length > 0 && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Equipment: </span>
+                    <span>{result.demolitionDetails.equipmentNeeded.join(', ')}</span>
+                  </div>
+                )}
+                {result.demolitionDetails.accessibilityNotes && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Notes: </span>
+                    <span>{result.demolitionDetails.accessibilityNotes}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <Separator />

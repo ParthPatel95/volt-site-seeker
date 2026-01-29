@@ -12,6 +12,51 @@ interface ExtractedText {
   otherText?: string[];
 }
 
+interface ScrapAnalysis {
+  metalType: 'copper' | 'aluminum' | 'steel' | 'brass' | 'stainless' | 'iron' | 'mixed' | 'unknown';
+  metalGrade: string;
+  estimatedWeight: {
+    value: number;
+    unit: 'lbs' | 'kg' | 'tons';
+    confidence: 'high' | 'medium' | 'low';
+  };
+  scrapValue: {
+    pricePerUnit: number;
+    totalValue: number;
+    priceSource: string;
+    lastUpdated: string;
+  };
+  recyclabilityScore: number;
+}
+
+interface SalvageAssessment {
+  isSalvageable: boolean;
+  resaleValue: {
+    lowEstimate: number;
+    highEstimate: number;
+    confidence: 'high' | 'medium' | 'low';
+  };
+  recommendedDisposition: 'resell' | 'scrap' | 'hazmat-disposal';
+  refurbishmentPotential: 'high' | 'medium' | 'low' | 'none';
+  demandLevel: 'high' | 'medium' | 'low';
+}
+
+interface HazmatFlags {
+  hasAsbestos: boolean;
+  hasLeadPaint: boolean;
+  hasPCBs: boolean;
+  hasRefrigerants: boolean;
+  otherHazards: string[];
+  disposalNotes: string;
+}
+
+interface DemolitionDetails {
+  removalComplexity: 'simple' | 'moderate' | 'complex';
+  laborHoursEstimate: number;
+  equipmentNeeded: string[];
+  accessibilityNotes: string;
+}
+
 interface AnalysisResult {
   item: {
     name: string;
@@ -40,6 +85,11 @@ interface AnalysisResult {
   };
   extractedText?: ExtractedText;
   identificationConfidence: 'high' | 'medium' | 'low';
+  // Demolition-specific fields
+  scrapAnalysis?: ScrapAnalysis;
+  salvageAssessment?: SalvageAssessment;
+  hazmatFlags?: HazmatFlags;
+  demolitionDetails?: DemolitionDetails;
 }
 
 interface MultiItemResult {
@@ -94,7 +144,70 @@ IMPORTANT GUIDELINES:
 - Consider packaging: boxed items are typically worth more than loose items
 - Factor in completeness: missing accessories/parts reduce value significantly`;
 
-// System prompt for multi-item detection - ENHANCED for better detection
+// Demolition-specific system prompt addition
+const DEMOLITION_PROMPT_ADDITION = `
+
+DEMOLITION & SCRAP METAL EXPERTISE:
+
+You are also an expert in demolition salvage and scrap metal valuation with deep knowledge of:
+
+METAL IDENTIFICATION:
+- Copper: Bare bright (#1), #2 copper, insulated wire, copper pipe, copper tubing
+- Aluminum: Cast, sheet, extrusion, cans, litho sheets, radiators, siding
+- Steel: Structural, HMS 1&2, shredder steel, tin/cans, rebar
+- Brass: Red brass, yellow brass, mixed brass, valves, fittings
+- Stainless Steel: 304, 316, mixed stainless, sinks, appliances
+- Iron: Cast iron, ductile iron, wrought iron, radiators, pipes
+
+WEIGHT ESTIMATION GUIDELINES:
+- Copper wire 4/0 gauge: ~2-3 lbs per foot
+- Copper pipe 1": ~0.65 lbs per foot
+- Steel I-beams W8x10: ~10 lbs per linear foot
+- Steel I-beams W12x26: ~26 lbs per linear foot
+- Cast iron radiators: ~75-150 lbs per section (10-section = 750-1500 lbs)
+- Aluminum windows: ~1-3 lbs per square foot
+- HVAC units: ~100-400 lbs depending on tonnage (1 ton ≈ 150 lbs)
+- Electric motors: ~5-8 lbs per HP for small, ~4-6 lbs per HP for large
+- Car batteries: ~30-50 lbs each
+- Steel drums (55 gal): ~40 lbs empty
+
+SCRAP PRICING REFERENCE (per lb, subject to market fluctuations):
+- Bare bright copper (#1): $3.50-4.50/lb
+- #2 copper: $3.00-3.80/lb
+- Insulated copper wire: $1.50-2.50/lb (depends on recovery %)
+- Clean aluminum sheet: $0.80-1.10/lb
+- Cast aluminum: $0.50-0.75/lb
+- Aluminum extrusion: $0.60-0.85/lb
+- Steel/iron HMS 1&2: $0.08-0.15/lb
+- Structural steel: $0.10-0.18/lb
+- Yellow brass: $2.00-2.80/lb
+- Red brass: $2.20-3.00/lb
+- 304 Stainless: $0.50-0.80/lb
+- 316 Stainless: $0.70-1.00/lb
+- Cast iron: $0.06-0.12/lb
+
+SALVAGE VS SCRAP DECISION CRITERIA:
+- Working HVAC units: Salvage value $200-2000+ depending on tonnage and age
+- Working motors: Salvage value typically 2-5x scrap value
+- Vintage fixtures: Potential architectural salvage premium 3-10x scrap
+- Industrial equipment: Check secondary market - often worth 10-50x scrap
+- Electrical panels: Working panels $50-500 salvage vs $5-20 scrap
+- Copper pipe in good condition: May be worth more as plumbing salvage
+
+HAZARDOUS MATERIAL IDENTIFICATION:
+- Asbestos: Pre-1980 insulation, floor tiles, roofing, pipe wrap, cement board
+- Lead paint: Pre-1978 painted surfaces, especially doors/windows
+- PCBs: Pre-1979 electrical equipment (transformers, capacitors, ballasts)
+- Refrigerants: HVAC systems, refrigeration units (R-22, R-410A, etc.)
+- Mercury: Old thermostats, fluorescent bulbs, switches
+- Batteries: Lead-acid, lithium, nickel-cadmium
+
+REMOVAL COMPLEXITY ASSESSMENT:
+- Simple: Loose items, easily accessible, no special equipment
+- Moderate: Bolted/fastened items, moderate height, basic tools needed
+- Complex: Welded structures, hazmat concerns, heavy equipment required`;
+
+// System prompt for multi-item detection
 const MULTI_ITEM_SYSTEM_PROMPT = `${SYSTEM_PROMPT}
 
 MULTI-ITEM DETECTION MODE - CRITICAL INSTRUCTIONS:
@@ -108,23 +221,9 @@ RULES:
 5. Include items in the background, on shelves, and partially visible
 6. Even if you're uncertain about an item, include it with low confidence
 7. NEVER return just 1 item if multiple distinct items are visible
-8. Count EVERY different product type, brand, or model as a separate entry
+8. Count EVERY different product type, brand, or model as a separate entry`;
 
-EXAMPLE OUTPUT:
-Image shows: 2 DeWalt drills, 1 Milwaukee impact driver, 5 boxes of screws, 1 tape measure
-Expected: 4 SEPARATE entries in the items array
-- Entry 1: DeWalt drill (quantity: 2)
-- Entry 2: Milwaukee impact driver (quantity: 1)
-- Entry 3: Screw boxes (quantity: 5)
-- Entry 4: Tape measure (quantity: 1)
-
-FAILURE CASE TO AVOID:
-- DO NOT return only 1 entry if there are clearly multiple different items
-- If you see a toolbox with multiple tools, list EACH visible tool type separately
-
-REMEMBER: Return MULTIPLE entries for MULTIPLE item types! This is critical.`;
-
-// Single item analysis tool
+// Single item analysis tool (standard mode)
 const SINGLE_ITEM_TOOL = {
   type: "function",
   function: {
@@ -149,59 +248,188 @@ const SINGLE_ITEM_TOOL = {
           properties: {
             count: { type: "number", description: "Number of items visible" },
             unit: { type: "string", description: "Unit of measurement (units, pieces, boxes, kg, etc.)" },
-            confidence: { type: "string", enum: ["high", "medium", "low"], description: "Confidence in the count accuracy" }
+            confidence: { type: "string", enum: ["high", "medium", "low"] }
           },
           required: ["count", "unit", "confidence"]
         },
         condition: {
           type: "string",
-          enum: ["new", "good", "fair", "poor"],
-          description: "Condition assessment based on visible wear and damage"
+          enum: ["new", "good", "fair", "poor"]
         },
         category: {
           type: "object",
           properties: {
-            suggested: { type: "string", description: "Primary category suggestion" },
-            alternatives: { 
-              type: "array", 
-              items: { type: "string" },
-              description: "Alternative category options"
-            }
+            suggested: { type: "string" },
+            alternatives: { type: "array", items: { type: "string" } }
           },
           required: ["suggested", "alternatives"]
         },
         marketValue: {
           type: "object",
           properties: {
-            lowEstimate: { type: "number", description: "Low end of estimated value per unit in USD" },
-            highEstimate: { type: "number", description: "High end of estimated value per unit in USD" },
+            lowEstimate: { type: "number" },
+            highEstimate: { type: "number" },
             currency: { type: "string", default: "USD" },
-            confidence: { type: "string", enum: ["high", "medium", "low"], description: "Confidence in the price estimate" },
-            notes: { type: "string", description: "Additional notes about the valuation methodology" },
-            isUsed: { type: "boolean", description: "Whether the item appears used vs new" }
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            notes: { type: "string" },
+            isUsed: { type: "boolean" }
           },
           required: ["lowEstimate", "highEstimate", "currency", "confidence", "isUsed"]
         },
         extractedText: {
           type: "object",
           properties: {
-            modelNumber: { type: "string", description: "Model number if visible on the item" },
-            serialNumber: { type: "string", description: "Serial number if visible" },
-            barcode: { type: "string", description: "Barcode value if visible and readable" },
-            otherText: { 
-              type: "array", 
-              items: { type: "string" },
-              description: "Other relevant text visible on the item"
-            }
+            modelNumber: { type: "string" },
+            serialNumber: { type: "string" },
+            barcode: { type: "string" },
+            otherText: { type: "array", items: { type: "string" } }
           }
         },
         identificationConfidence: {
           type: "string",
-          enum: ["high", "medium", "low"],
-          description: "Overall confidence in item identification accuracy"
+          enum: ["high", "medium", "low"]
         }
       },
       required: ["item", "quantity", "condition", "category", "marketValue", "identificationConfidence"]
+    }
+  }
+};
+
+// Demolition mode single item tool
+const DEMOLITION_SINGLE_ITEM_TOOL = {
+  type: "function",
+  function: {
+    name: "analyze_demolition_item",
+    description: "Return structured analysis of a demolition/scrap item including metal type, weight, and scrap value",
+    parameters: {
+      type: "object",
+      properties: {
+        item: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Name of the item" },
+            description: { type: "string", description: "Detailed description" },
+            brand: { type: "string" },
+            model: { type: "string" },
+            suggestedSku: { type: "string" }
+          },
+          required: ["name", "description"]
+        },
+        quantity: {
+          type: "object",
+          properties: {
+            count: { type: "number" },
+            unit: { type: "string" },
+            confidence: { type: "string", enum: ["high", "medium", "low"] }
+          },
+          required: ["count", "unit", "confidence"]
+        },
+        condition: { type: "string", enum: ["new", "good", "fair", "poor"] },
+        category: {
+          type: "object",
+          properties: {
+            suggested: { type: "string" },
+            alternatives: { type: "array", items: { type: "string" } }
+          },
+          required: ["suggested", "alternatives"]
+        },
+        marketValue: {
+          type: "object",
+          properties: {
+            lowEstimate: { type: "number" },
+            highEstimate: { type: "number" },
+            currency: { type: "string", default: "USD" },
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            notes: { type: "string" },
+            isUsed: { type: "boolean" }
+          },
+          required: ["lowEstimate", "highEstimate", "currency", "confidence", "isUsed"]
+        },
+        extractedText: {
+          type: "object",
+          properties: {
+            modelNumber: { type: "string" },
+            serialNumber: { type: "string" },
+            barcode: { type: "string" },
+            otherText: { type: "array", items: { type: "string" } }
+          }
+        },
+        identificationConfidence: { type: "string", enum: ["high", "medium", "low"] },
+        scrapAnalysis: {
+          type: "object",
+          description: "Scrap metal analysis for recyclable materials",
+          properties: {
+            metalType: { type: "string", enum: ["copper", "aluminum", "steel", "brass", "stainless", "iron", "mixed", "unknown"] },
+            metalGrade: { type: "string", description: "Specific grade (e.g., '#1 Copper', 'Cast Aluminum', 'HMS 1&2')" },
+            estimatedWeight: {
+              type: "object",
+              properties: {
+                value: { type: "number" },
+                unit: { type: "string", enum: ["lbs", "kg", "tons"] },
+                confidence: { type: "string", enum: ["high", "medium", "low"] }
+              },
+              required: ["value", "unit", "confidence"]
+            },
+            scrapValue: {
+              type: "object",
+              properties: {
+                pricePerUnit: { type: "number", description: "Price per pound/kg" },
+                totalValue: { type: "number" },
+                priceSource: { type: "string", default: "Market Average" },
+                lastUpdated: { type: "string", description: "Date in YYYY-MM-DD format" }
+              },
+              required: ["pricePerUnit", "totalValue", "priceSource", "lastUpdated"]
+            },
+            recyclabilityScore: { type: "number", description: "0-100 score for ease of recycling" }
+          },
+          required: ["metalType", "metalGrade", "estimatedWeight", "scrapValue", "recyclabilityScore"]
+        },
+        salvageAssessment: {
+          type: "object",
+          description: "Assessment of resale/salvage potential",
+          properties: {
+            isSalvageable: { type: "boolean" },
+            resaleValue: {
+              type: "object",
+              properties: {
+                lowEstimate: { type: "number" },
+                highEstimate: { type: "number" },
+                confidence: { type: "string", enum: ["high", "medium", "low"] }
+              },
+              required: ["lowEstimate", "highEstimate", "confidence"]
+            },
+            recommendedDisposition: { type: "string", enum: ["resell", "scrap", "hazmat-disposal"] },
+            refurbishmentPotential: { type: "string", enum: ["high", "medium", "low", "none"] },
+            demandLevel: { type: "string", enum: ["high", "medium", "low"] }
+          },
+          required: ["isSalvageable", "resaleValue", "recommendedDisposition", "refurbishmentPotential", "demandLevel"]
+        },
+        hazmatFlags: {
+          type: "object",
+          description: "Hazardous material warnings",
+          properties: {
+            hasAsbestos: { type: "boolean", default: false },
+            hasLeadPaint: { type: "boolean", default: false },
+            hasPCBs: { type: "boolean", default: false },
+            hasRefrigerants: { type: "boolean", default: false },
+            otherHazards: { type: "array", items: { type: "string" } },
+            disposalNotes: { type: "string" }
+          },
+          required: ["hasAsbestos", "hasLeadPaint", "hasPCBs", "hasRefrigerants", "otherHazards", "disposalNotes"]
+        },
+        demolitionDetails: {
+          type: "object",
+          description: "Removal and labor estimates",
+          properties: {
+            removalComplexity: { type: "string", enum: ["simple", "moderate", "complex"] },
+            laborHoursEstimate: { type: "number" },
+            equipmentNeeded: { type: "array", items: { type: "string" } },
+            accessibilityNotes: { type: "string" }
+          },
+          required: ["removalComplexity", "laborHoursEstimate", "equipmentNeeded", "accessibilityNotes"]
+        }
+      },
+      required: ["item", "quantity", "condition", "category", "marketValue", "identificationConfidence", "scrapAnalysis", "salvageAssessment", "hazmatFlags", "demolitionDetails"]
     }
   }
 };
@@ -224,27 +452,24 @@ const MULTI_ITEM_TOOL = {
               item: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Name of the item" },
-                  description: { type: "string", description: "Detailed description" },
-                  brand: { type: "string", description: "Brand name if identifiable" },
-                  model: { type: "string", description: "Model number/name if identifiable" },
-                  suggestedSku: { type: "string", description: "Suggested SKU pattern" }
+                  name: { type: "string" },
+                  description: { type: "string" },
+                  brand: { type: "string" },
+                  model: { type: "string" },
+                  suggestedSku: { type: "string" }
                 },
                 required: ["name", "description"]
               },
               quantity: {
                 type: "object",
                 properties: {
-                  count: { type: "number", description: "Number of this item type visible" },
-                  unit: { type: "string", description: "Unit of measurement" },
+                  count: { type: "number" },
+                  unit: { type: "string" },
                   confidence: { type: "string", enum: ["high", "medium", "low"] }
                 },
                 required: ["count", "unit", "confidence"]
               },
-              condition: {
-                type: "string",
-                enum: ["new", "good", "fair", "poor"]
-              },
+              condition: { type: "string", enum: ["new", "good", "fair", "poor"] },
               category: {
                 type: "object",
                 properties: {
@@ -274,18 +499,160 @@ const MULTI_ITEM_TOOL = {
                   otherText: { type: "array", items: { type: "string" } }
                 }
               },
-              identificationConfidence: {
-                type: "string",
-                enum: ["high", "medium", "low"]
-              }
+              identificationConfidence: { type: "string", enum: ["high", "medium", "low"] }
             },
             required: ["item", "quantity", "condition", "category", "marketValue", "identificationConfidence"]
           }
         },
         totalItemsDetected: {
           type: "number",
-          description: "Total count of all individual items detected (sum of all quantities)"
+          description: "Total count of all individual items detected"
         }
+      },
+      required: ["items", "totalItemsDetected"]
+    }
+  }
+};
+
+// Demolition multi-item tool
+const DEMOLITION_MULTI_ITEM_TOOL = {
+  type: "function",
+  function: {
+    name: "analyze_multiple_demolition_items",
+    description: "Return structured analysis of multiple demolition/scrap items including metal types and scrap values",
+    parameters: {
+      type: "object",
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              item: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  description: { type: "string" },
+                  brand: { type: "string" },
+                  model: { type: "string" },
+                  suggestedSku: { type: "string" }
+                },
+                required: ["name", "description"]
+              },
+              quantity: {
+                type: "object",
+                properties: {
+                  count: { type: "number" },
+                  unit: { type: "string" },
+                  confidence: { type: "string", enum: ["high", "medium", "low"] }
+                },
+                required: ["count", "unit", "confidence"]
+              },
+              condition: { type: "string", enum: ["new", "good", "fair", "poor"] },
+              category: {
+                type: "object",
+                properties: {
+                  suggested: { type: "string" },
+                  alternatives: { type: "array", items: { type: "string" } }
+                },
+                required: ["suggested", "alternatives"]
+              },
+              marketValue: {
+                type: "object",
+                properties: {
+                  lowEstimate: { type: "number" },
+                  highEstimate: { type: "number" },
+                  currency: { type: "string" },
+                  confidence: { type: "string", enum: ["high", "medium", "low"] },
+                  notes: { type: "string" },
+                  isUsed: { type: "boolean" }
+                },
+                required: ["lowEstimate", "highEstimate", "currency", "confidence", "isUsed"]
+              },
+              extractedText: {
+                type: "object",
+                properties: {
+                  modelNumber: { type: "string" },
+                  serialNumber: { type: "string" },
+                  barcode: { type: "string" },
+                  otherText: { type: "array", items: { type: "string" } }
+                }
+              },
+              identificationConfidence: { type: "string", enum: ["high", "medium", "low"] },
+              scrapAnalysis: {
+                type: "object",
+                properties: {
+                  metalType: { type: "string", enum: ["copper", "aluminum", "steel", "brass", "stainless", "iron", "mixed", "unknown"] },
+                  metalGrade: { type: "string" },
+                  estimatedWeight: {
+                    type: "object",
+                    properties: {
+                      value: { type: "number" },
+                      unit: { type: "string", enum: ["lbs", "kg", "tons"] },
+                      confidence: { type: "string", enum: ["high", "medium", "low"] }
+                    },
+                    required: ["value", "unit", "confidence"]
+                  },
+                  scrapValue: {
+                    type: "object",
+                    properties: {
+                      pricePerUnit: { type: "number" },
+                      totalValue: { type: "number" },
+                      priceSource: { type: "string" },
+                      lastUpdated: { type: "string" }
+                    },
+                    required: ["pricePerUnit", "totalValue", "priceSource", "lastUpdated"]
+                  },
+                  recyclabilityScore: { type: "number" }
+                },
+                required: ["metalType", "metalGrade", "estimatedWeight", "scrapValue", "recyclabilityScore"]
+              },
+              salvageAssessment: {
+                type: "object",
+                properties: {
+                  isSalvageable: { type: "boolean" },
+                  resaleValue: {
+                    type: "object",
+                    properties: {
+                      lowEstimate: { type: "number" },
+                      highEstimate: { type: "number" },
+                      confidence: { type: "string", enum: ["high", "medium", "low"] }
+                    },
+                    required: ["lowEstimate", "highEstimate", "confidence"]
+                  },
+                  recommendedDisposition: { type: "string", enum: ["resell", "scrap", "hazmat-disposal"] },
+                  refurbishmentPotential: { type: "string", enum: ["high", "medium", "low", "none"] },
+                  demandLevel: { type: "string", enum: ["high", "medium", "low"] }
+                },
+                required: ["isSalvageable", "resaleValue", "recommendedDisposition", "refurbishmentPotential", "demandLevel"]
+              },
+              hazmatFlags: {
+                type: "object",
+                properties: {
+                  hasAsbestos: { type: "boolean" },
+                  hasLeadPaint: { type: "boolean" },
+                  hasPCBs: { type: "boolean" },
+                  hasRefrigerants: { type: "boolean" },
+                  otherHazards: { type: "array", items: { type: "string" } },
+                  disposalNotes: { type: "string" }
+                },
+                required: ["hasAsbestos", "hasLeadPaint", "hasPCBs", "hasRefrigerants", "otherHazards", "disposalNotes"]
+              },
+              demolitionDetails: {
+                type: "object",
+                properties: {
+                  removalComplexity: { type: "string", enum: ["simple", "moderate", "complex"] },
+                  laborHoursEstimate: { type: "number" },
+                  equipmentNeeded: { type: "array", items: { type: "string" } },
+                  accessibilityNotes: { type: "string" }
+                },
+                required: ["removalComplexity", "laborHoursEstimate", "equipmentNeeded", "accessibilityNotes"]
+              }
+            },
+            required: ["item", "quantity", "condition", "category", "marketValue", "identificationConfidence", "scrapAnalysis", "salvageAssessment", "hazmatFlags", "demolitionDetails"]
+          }
+        },
+        totalItemsDetected: { type: "number" }
       },
       required: ["items", "totalItemsDetected"]
     }
@@ -298,7 +665,13 @@ serve(async (req) => {
   }
 
   try {
-    const { images, imageBase64, existingCategories, detectMultipleItems = false } = await req.json();
+    const { 
+      images, 
+      imageBase64, 
+      existingCategories, 
+      detectMultipleItems = false,
+      demolitionMode = false  // NEW: Enable demolition/scrap analysis
+    } = await req.json();
 
     // Support both single image (imageBase64) and multiple images (images array)
     const imageArray: string[] = images || (imageBase64 ? [imageBase64] : []);
@@ -332,12 +705,85 @@ serve(async (req) => {
       : '';
 
     // Choose system prompt and tool based on mode
-    const systemPrompt = detectMultipleItems ? MULTI_ITEM_SYSTEM_PROMPT : SYSTEM_PROMPT;
-    const tool = detectMultipleItems ? MULTI_ITEM_TOOL : SINGLE_ITEM_TOOL;
-    const toolName = detectMultipleItems ? "analyze_multiple_inventory_items" : "analyze_inventory_item";
+    let systemPrompt: string;
+    let tool: typeof SINGLE_ITEM_TOOL;
+    let toolName: string;
 
-    const userPrompt = detectMultipleItems
-      ? `${imageCountText}
+    if (demolitionMode) {
+      // Demolition mode
+      systemPrompt = detectMultipleItems 
+        ? SYSTEM_PROMPT + DEMOLITION_PROMPT_ADDITION + "\n\n" + MULTI_ITEM_SYSTEM_PROMPT.split(SYSTEM_PROMPT)[1]
+        : SYSTEM_PROMPT + DEMOLITION_PROMPT_ADDITION;
+      tool = detectMultipleItems ? DEMOLITION_MULTI_ITEM_TOOL : DEMOLITION_SINGLE_ITEM_TOOL;
+      toolName = detectMultipleItems ? "analyze_multiple_demolition_items" : "analyze_demolition_item";
+    } else {
+      // Standard mode
+      systemPrompt = detectMultipleItems ? MULTI_ITEM_SYSTEM_PROMPT : SYSTEM_PROMPT;
+      tool = detectMultipleItems ? MULTI_ITEM_TOOL : SINGLE_ITEM_TOOL;
+      toolName = detectMultipleItems ? "analyze_multiple_inventory_items" : "analyze_inventory_item";
+    }
+
+    // Build user prompt based on mode
+    let userPrompt: string;
+    
+    if (demolitionMode) {
+      userPrompt = detectMultipleItems
+        ? `${imageCountText}
+
+Analyze this image in DEMOLITION/SCRAP MODE and identify ALL DIFFERENT item types visible. ${categoryContext}
+
+For EACH distinct item type found, provide:
+1. IDENTIFICATION: What is this item? Include brand and model if visible.
+2. QUANTITY: How many of this specific item type are visible?
+3. CONDITION: Assess the visible condition (new/good/fair/poor).
+4. CATEGORY: What category does this belong to?
+5. MARKET VALUE: Estimate retail market value per unit.
+6. SCRAP ANALYSIS: Identify metal type, grade, estimate weight, calculate scrap value using current market prices.
+7. SALVAGE ASSESSMENT: Can this be resold as salvage? Estimate resale value vs scrap value.
+8. HAZMAT FLAGS: Check for asbestos, lead paint, PCBs, refrigerants, or other hazardous materials.
+9. REMOVAL DETAILS: Assess removal complexity, labor hours, and equipment needed.
+
+Use the current date (${new Date().toISOString().split('T')[0]}) for lastUpdated fields.
+Be thorough - identify every distinct item visible in the image.`
+        : `${imageCountText}
+
+Analyze this image in DEMOLITION/SCRAP MODE. ${categoryContext}
+
+Provide comprehensive analysis including:
+1. IDENTIFICATION: What is this item? Include brand and model if visible.
+2. QUANTITY: How many individual items are visible?
+3. CONDITION: Assess the visible condition (new/good/fair/poor).
+4. CATEGORY: What category does this belong to?
+5. MARKET VALUE: Estimate retail market value per unit.
+6. SCRAP ANALYSIS:
+   - Identify the primary metal type (copper, aluminum, steel, brass, stainless, iron, mixed)
+   - Determine the grade (e.g., "#1 Copper", "Cast Aluminum", "HMS 1&2")
+   - Estimate weight based on visual dimensions and material density
+   - Calculate scrap value using current market prices
+   - Rate recyclability (0-100)
+7. SALVAGE ASSESSMENT:
+   - Can this item be resold as working/refurbished equipment?
+   - Estimate resale value if salvageable
+   - Compare salvage vs scrap value to recommend disposition
+   - Assess refurbishment potential and market demand
+8. HAZMAT FLAGS:
+   - Check for potential asbestos (insulation, tiles, etc.)
+   - Check for lead paint (pre-1978 items)
+   - Check for PCBs (pre-1979 electrical equipment)
+   - Check for refrigerants (HVAC, refrigeration)
+   - Note any other hazards and disposal requirements
+9. REMOVAL DETAILS:
+   - Assess removal complexity (simple/moderate/complex)
+   - Estimate labor hours required
+   - List equipment needed for safe removal
+   - Note any accessibility concerns
+
+Use the current date (${new Date().toISOString().split('T')[0]}) for lastUpdated fields.
+Be thorough but conservative with weight and value estimates.`;
+    } else {
+      // Standard prompts (unchanged from original)
+      userPrompt = detectMultipleItems
+        ? `${imageCountText}
 
 Analyze this image and identify ALL DIFFERENT item types visible. ${categoryContext}
 
@@ -352,7 +798,7 @@ For EACH distinct item type found, provide:
 
 List each different item type as a separate entry. Group identical items together.
 Be thorough - identify every distinct item visible in the image.`
-      : `${imageCountText}
+        : `${imageCountText}
 
 Analyze this image and extract inventory information. ${categoryContext}
 
@@ -360,15 +806,13 @@ Provide comprehensive analysis including:
 1. IDENTIFICATION: What is this item? Include brand and model if visible. Read any text/labels.
 2. QUANTITY: How many individual items are visible? What unit of measurement is appropriate?
 3. CONDITION: Assess the visible condition (new/good/fair/poor) based on wear, scratches, damage.
-4. CATEGORY: What category does this belong to? (e.g., Power Tools, Hand Tools, Electrical, Plumbing, Materials, PPE, Equipment)
+4. CATEGORY: What category does this belong to?
 5. MARKET VALUE: Estimate the current market value per unit.
-   - Provide low and high estimates in USD
-   - Consider if items appear new or used
-   - Include your confidence level
 6. EXTRACTED TEXT: Note any visible model numbers, serial numbers, barcodes, or other text.
 7. IDENTIFICATION CONFIDENCE: Rate how confident you are in the item identification.
 
 Be thorough but conservative with estimates. If uncertain about anything, indicate so.`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -379,10 +823,7 @@ Be thorough but conservative with estimates. If uncertain about anything, indica
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
+          { role: "system", content: systemPrompt },
           {
             role: "user",
             content: [
@@ -418,15 +859,16 @@ Be thorough but conservative with estimates. If uncertain about anything, indica
     
     // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall || toolCall.function.name !== toolName) {
+    if (!toolCall || !toolCall.function.name.includes(demolitionMode ? "demolition" : "inventory")) {
       throw new Error("Unexpected AI response format");
     }
 
     const parsedResult = JSON.parse(toolCall.function.arguments);
 
-    // Debug logging for multi-item detection
+    // Debug logging
     console.log('AI Analysis Response:', JSON.stringify({
       detectMultipleItems,
+      demolitionMode,
       toolName,
       itemCount: parsedResult.items?.length || 1,
       totalDetected: parsedResult.totalItemsDetected,
@@ -444,11 +886,11 @@ Be thorough but conservative with estimates. If uncertain about anything, indica
       };
 
       return new Response(
-        JSON.stringify({ success: true, multipleItems: true, results: multiResult }),
+        JSON.stringify({ success: true, multipleItems: true, results: multiResult, demolitionMode }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      // Single item response (backward compatible)
+      // Single item response
       const analysisResult: AnalysisResult = parsedResult;
       
       // Ensure identificationConfidence exists
@@ -457,7 +899,7 @@ Be thorough but conservative with estimates. If uncertain about anything, indica
       }
 
       return new Response(
-        JSON.stringify({ success: true, analysis: analysisResult }),
+        JSON.stringify({ success: true, analysis: analysisResult, demolitionMode }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

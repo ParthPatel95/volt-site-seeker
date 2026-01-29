@@ -16,8 +16,10 @@ import {
   AlertTriangle,
   Sun,
   Focus,
-  Layers
+  Layers,
+  HardHat
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useInventoryAIAnalysis, AIAnalysisResult, MultiItemAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 import { InventoryAIResults } from './InventoryAIResults';
@@ -31,6 +33,7 @@ interface InventorySmartCaptureProps {
   onResult: (result: AIAnalysisResult, imageUrl: string) => void;
   onMultipleResults?: (results: AIAnalysisResult[], imageUrl: string) => void;
   existingCategories?: string[];
+  defaultDemolitionMode?: boolean; // Enable by default for demolition workspaces
 }
 
 type CaptureState = 'camera' | 'preview' | 'analyzing' | 'results' | 'multi-results';
@@ -60,6 +63,7 @@ export function InventorySmartCapture({
   onResult,
   onMultipleResults,
   existingCategories = [],
+  defaultDemolitionMode = false,
 }: InventorySmartCaptureProps) {
   const isMobile = useIsMobile();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -73,6 +77,7 @@ export function InventorySmartCapture({
   const [qualityWarning, setQualityWarning] = useState<ImageQualityMetrics | null>(null);
   const [analysisStep, setAnalysisStep] = useState<AnalysisStep>('detecting');
   const [multiItemMode, setMultiItemMode] = useState(false);
+  const [demolitionMode, setDemolitionMode] = useState(defaultDemolitionMode);
   
   const { analyzeImage, analyzeMultipleItems, isAnalyzing, analysisResult, multiItemResults, reset } = useInventoryAIAnalysis();
 
@@ -205,7 +210,7 @@ export function InventorySmartCapture({
     stopCamera();
     
     if (multiItemMode) {
-      const result = await analyzeMultipleItems(capturedImages, existingCategories);
+      const result = await analyzeMultipleItems(capturedImages, existingCategories, demolitionMode);
       if (result) {
         setAnalysisStep('complete');
         setTimeout(() => setState('multi-results'), 300);
@@ -215,7 +220,7 @@ export function InventorySmartCapture({
         startCamera();
       }
     } else {
-      const result = await analyzeImage(capturedImages, existingCategories);
+      const result = await analyzeImage(capturedImages, existingCategories, demolitionMode);
       if (result) {
         setAnalysisStep('complete');
         setTimeout(() => setState('results'), 300);
@@ -263,6 +268,7 @@ export function InventorySmartCapture({
     setState('camera');
     setAnalysisStep('detecting');
     setMultiItemMode(false);
+    setDemolitionMode(defaultDemolitionMode);
     onOpenChange(false);
   };
 
@@ -297,15 +303,37 @@ export function InventorySmartCapture({
             </div>
             <div className="flex items-center gap-3">
               {(state === 'camera' || state === 'preview') && (
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-muted-foreground" />
-                  <Label htmlFor="multi-mode" className="text-sm cursor-pointer">Multi</Label>
-                  <Switch
-                    id="multi-mode"
-                    checked={multiItemMode}
-                    onCheckedChange={setMultiItemMode}
-                  />
-                </div>
+                <TooltipProvider>
+                  <div className="flex items-center gap-3">
+                    {/* Demolition Mode Toggle */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2">
+                          <HardHat className={cn("w-4 h-4", demolitionMode ? "text-amber-500" : "text-muted-foreground")} />
+                          <Switch
+                            id="demo-mode"
+                            checked={demolitionMode}
+                            onCheckedChange={setDemolitionMode}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Demolition Mode: Scrap metal & salvage analysis</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    
+                    {/* Multi-item Mode Toggle */}
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="multi-mode" className="text-sm cursor-pointer">Multi</Label>
+                      <Switch
+                        id="multi-mode"
+                        checked={multiItemMode}
+                        onCheckedChange={setMultiItemMode}
+                      />
+                    </div>
+                  </div>
+                </TooltipProvider>
               )}
               <Button variant="ghost" size="icon" onClick={handleClose}>
                 <X className="w-5 h-5" />
@@ -316,9 +344,11 @@ export function InventorySmartCapture({
           {/* Capture Tips */}
           {state === 'camera' && !cameraError && (
             <div className="absolute top-16 left-0 right-0 z-10 text-center text-white text-sm bg-black/50 py-2 px-4">
-              {multiItemMode 
-                ? '📦 Multi-item mode: Capture DIFFERENT item types for best results'
-                : '📸 Tips: Good lighting • Hold steady • Include labels/tags'
+              {demolitionMode 
+                ? '🔩 Demolition mode: Capture scrap metal, equipment for weight & value analysis'
+                : multiItemMode 
+                  ? '📦 Multi-item mode: Capture DIFFERENT item types for best results'
+                  : '📸 Tips: Good lighting • Hold steady • Include labels/tags'
               }
             </div>
           )}
