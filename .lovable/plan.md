@@ -1,288 +1,325 @@
 
-# Plan: Make Inventory a Standalone Feature Outside Build Management
+# Plan: Enhance Inventory Scanning for Demolition & Scrap Metal Estimation
 
-## Current Architecture Analysis
+## Overview
 
-### Current State
-| Aspect | Current |
-|--------|---------|
-| **Location** | `src/components/voltbuild/inventory/` |
-| **Access Path** | VoltScout → Build Management → Inventory Tab |
-| **Data Model** | Tied to `voltbuild_projects` via `project_id` FK |
-| **Route** | Part of `/app/build` (VoltBuild module) |
-
-### Key Files
-- **Main Component**: `VoltInventoryTab.tsx` (600 lines)
-- **Components**: 24 UI components in `components/` directory
-- **Hooks**: 8 hooks for data management
-- **Types**: Type definitions in `types/` directory
-- **Edge Function**: `inventory-ai-analyzer/` for AI-powered item detection
+Transform the existing AI-powered inventory scanning feature into a comprehensive **Demolition & Scrap Valuation Tool** that helps demolition companies accurately estimate scrap metal values, salvage equipment pricing, and generate professional quotes for clients.
 
 ---
 
-## Proposed Architecture
+## Current Capabilities (What Exists)
 
-### New Structure
-| Aspect | New |
-|--------|-----|
-| **Location** | `src/components/inventory/` (standalone directory) |
-| **Access Path** | VoltScout → Operations → Inventory (direct sidebar link) |
-| **Data Model** | New `inventory_workspaces` table (user-level, no project dependency) |
-| **Route** | `/app/inventory` (own route in VoltScout) |
+| Feature | Current State |
+|---------|--------------|
+| **AI Image Analysis** | Identifies items, brands, condition, and retail market value |
+| **Multi-Item Detection** | Can scan multiple items in one photo |
+| **Value Estimation** | Provides low/high estimates based on retail pricing |
+| **Condition Assessment** | New, Good, Fair, Poor ratings |
+| **Categories** | Construction tools, electrical, plumbing, materials |
 
----
+### Gaps for Demolition Use Case
 
-## Implementation Strategy
-
-### Option 1: Full Decoupling (Recommended)
-
-Create a completely standalone inventory system with its own workspace concept:
-
-```text
-src/components/inventory/
-├── InventoryPage.tsx              (Main page component)
-├── InventoryLayout.tsx            (Layout with sidebar)
-├── components/                    (Copied from voltbuild/inventory)
-│   ├── InventoryDashboard.tsx
-│   ├── InventoryItemCard.tsx
-│   ├── InventoryAddDialog.tsx
-│   └── ... (all 24 components)
-├── hooks/
-│   ├── useInventoryWorkspaces.ts  (New: manage user workspaces)
-│   ├── useInventoryItems.ts       (Modified: use workspace_id)
-│   ├── useInventoryCategories.ts
-│   └── ... (all 8 hooks)
-├── types/
-│   ├── inventory.types.ts
-│   └── group.types.ts
-└── index.ts
-```
-
-### New Database Tables
-
-```text
-inventory_workspaces
-├── id (uuid, PK)
-├── user_id (uuid, FK → auth.users)
-├── name (text)
-├── description (text, nullable)
-├── icon (text, nullable)
-├── created_at (timestamptz)
-└── updated_at (timestamptz)
-
-inventory_items (modified)
-├── project_id → workspace_id (migration)
-└── ... (all other fields unchanged)
-
-inventory_categories (modified)
-├── project_id → workspace_id (migration)
-└── ... (all other fields unchanged)
-
-inventory_groups (modified)
-├── project_id → workspace_id (migration)
-└── ... (all other fields unchanged)
-
-inventory_transactions (modified)
-├── project_id → workspace_id (migration)
-└── ... (all other fields unchanged)
-
-inventory_group_items (unchanged - references by group_id and item_id)
-```
-
-### Option 2: Dual-Mode (Keep Both)
-
-Keep inventory in VoltBuild for project-specific use AND add standalone mode:
-
-- Add `workspace_id` as nullable alongside `project_id`
-- Inventory can work with either a project or a standalone workspace
-- More complex but preserves existing functionality
+1. **No weight/tonnage estimation** - Critical for scrap metal pricing
+2. **No metal type detection** - Copper, aluminum, steel, brass have vastly different values
+3. **No scrap vs. salvage distinction** - Some equipment has resale value, not just scrap
+4. **No live metal pricing integration** - Prices fluctuate daily
+5. **No hazardous material flags** - Asbestos, lead paint considerations
+6. **No demolition-specific categories** - HVAC units, structural steel, wire harnesses
 
 ---
 
-## Recommended Approach: Option 1 (Full Decoupling)
+## Proposed Enhancements
 
-### Phase 1: File Structure Migration
+### 1. New Demolition-Specific Analysis Types
 
-**Create new directory structure:**
 ```text
-src/components/inventory/           (new standalone feature)
-src/pages/Inventory.tsx             (new page wrapper)
+Extended AIAnalysisResult {
+  ...existing fields...
+  
+  // NEW: Scrap Metal Analysis
+  scrapAnalysis?: {
+    metalType: 'copper' | 'aluminum' | 'steel' | 'brass' | 'stainless' | 'iron' | 'mixed' | 'unknown';
+    metalGrade: string;           // e.g., "#1 Copper", "Cast Aluminum", "HMS 1&2"
+    estimatedWeight: {
+      value: number;
+      unit: 'lbs' | 'kg' | 'tons';
+      confidence: 'high' | 'medium' | 'low';
+    };
+    scrapValue: {
+      pricePerUnit: number;       // Current spot price per lb/kg
+      totalValue: number;
+      priceSource: string;        // "Market Average" or API source
+      lastUpdated: string;
+    };
+    recyclabilityScore: number;   // 0-100 (higher = easier to recycle)
+  };
+  
+  // NEW: Salvage Assessment
+  salvageAssessment?: {
+    isSalvageable: boolean;       // Can be resold vs. scrap only
+    resaleValue: {
+      lowEstimate: number;
+      highEstimate: number;
+      confidence: 'high' | 'medium' | 'low';
+    };
+    recommendedDisposition: 'resell' | 'scrap' | 'hazmat-disposal';
+    refurbishmentPotential: 'high' | 'medium' | 'low' | 'none';
+    demandLevel: 'high' | 'medium' | 'low';
+  };
+  
+  // NEW: Hazardous Material Flags
+  hazmatFlags?: {
+    hasAsbestos: boolean;
+    hasLeadPaint: boolean;
+    hasPCBs: boolean;
+    hasRefrigerants: boolean;
+    otherHazards: string[];
+    disposalNotes: string;
+  };
+  
+  // NEW: Demolition Metadata
+  demolitionDetails?: {
+    removalComplexity: 'simple' | 'moderate' | 'complex';
+    laborHoursEstimate: number;
+    equipmentNeeded: string[];
+    accessibilityNotes: string;
+  };
+}
 ```
 
-**Move and refactor files:**
-| From | To |
-|------|-----|
-| `voltbuild/inventory/VoltInventoryTab.tsx` | `inventory/InventoryPage.tsx` |
-| `voltbuild/inventory/components/*` | `inventory/components/*` |
-| `voltbuild/inventory/hooks/*` | `inventory/hooks/*` |
-| `voltbuild/inventory/types/*` | `inventory/types/*` |
+### 2. Enhanced AI Prompt for Demolition Analysis
 
-### Phase 2: Database Migration
+Update the edge function system prompt to include demolition-specific expertise:
 
-Create migration to rename `project_id` to `workspace_id`:
+```text
+DEMOLITION & SCRAP METAL EXPERTISE:
+
+You are also an expert in demolition salvage and scrap metal valuation with deep knowledge of:
+
+METAL IDENTIFICATION:
+- Copper: Bare bright (#1), #2 copper, insulated wire, copper pipe
+- Aluminum: Cast, sheet, extrusion, cans, litho sheets
+- Steel: Structural, HMS 1&2, shredder steel, tin/cans
+- Brass: Red brass, yellow brass, mixed brass
+- Stainless Steel: 304, 316, mixed stainless
+- Iron: Cast iron, ductile iron, wrought iron
+
+WEIGHT ESTIMATION GUIDELINES:
+- Copper wire: ~2-3 lbs per foot of 4/0 gauge
+- Steel I-beams: ~25-50 lbs per linear foot (varies by size)
+- Cast iron radiators: ~75-150 lbs per section
+- Aluminum windows: ~1-3 lbs per square foot
+- HVAC units: ~100-400 lbs depending on tonnage
+- Electric motors: Weight varies by HP rating
+
+SCRAP PRICING REFERENCE (per lb, subject to market):
+- Bare bright copper: $3.50-4.50/lb
+- #2 copper: $3.00-3.80/lb
+- Insulated copper wire: $1.50-2.50/lb (depends on recovery %)
+- Clean aluminum: $0.80-1.10/lb
+- Cast aluminum: $0.50-0.75/lb
+- Steel/iron: $0.08-0.15/lb
+- Brass: $2.00-2.80/lb
+- Stainless steel: $0.50-0.80/lb
+
+SALVAGE VS SCRAP DECISION:
+- Working HVAC units: Salvage value $200-2000+
+- Working motors: Salvage value 2-5x scrap value
+- Vintage fixtures: Potential architectural salvage
+- Industrial equipment: Check secondary market first
+```
+
+### 3. New UI Components
+
+#### A. Scrap Metal Results Card
+
+Display scrap-specific analysis with metal type, weight, and current market pricing.
+
+```text
++------------------------------------------------------------------+
+| 🔩 SCRAP ANALYSIS                                                 |
+|------------------------------------------------------------------|
+| Metal Type: #2 Copper (Insulated Wire)                           |
+| Estimated Weight: 45 lbs (±5 lbs)          [Medium Confidence]   |
+|                                                                   |
+| CURRENT PRICING (as of Jan 29, 2025)                             |
+| ├── Price/lb: $3.25 - $3.65                                      |
+| ├── Gross Value: $146.25 - $164.25                               |
+| └── After Processing: $110 - $130 (75% recovery rate)            |
+|                                                                   |
+| ♻️ Recyclability: 95/100 (Excellent)                              |
++------------------------------------------------------------------+
+```
+
+#### B. Salvage vs. Scrap Recommendation
+
+Help operators decide whether to resell equipment or scrap it.
+
+```text
++------------------------------------------------------------------+
+| 💡 DISPOSITION RECOMMENDATION                                     |
+|------------------------------------------------------------------|
+| Item: Carrier 5-Ton Commercial HVAC Unit                         |
+| Condition: Fair (Operational, cosmetic wear)                     |
+|                                                                   |
+| ┌─ SALVAGE (Recommended) ─┐   ┌─ SCRAP ─────────────┐            |
+| │ Resale: $800 - $1,200   │   │ Metal value: $85    │            |
+| │ Demand: High            │   │ (350 lbs mixed)     │            |
+| │ Refurb potential: Good  │   │                     │            |
+| └─────────────────────────┘   └─────────────────────┘            |
+|                                                                   |
+| [Add as Salvage] [Add as Scrap] [Generate Quote]                 |
++------------------------------------------------------------------+
+```
+
+#### C. Hazmat Warning Banner
+
+Alert operators to potential hazardous materials.
+
+```text
++------------------------------------------------------------------+
+| ⚠️ HAZMAT ALERT                                                   |
+|------------------------------------------------------------------|
+| This item may contain:                                           |
+| • Refrigerants (R-22 HCFC) - Requires certified recovery         |
+| • Potential PCBs in capacitor (pre-1979 manufacturing)           |
+|                                                                   |
+| Disposal Notes: Contact licensed HVAC contractor for refrigerant |
+| recovery before scrapping. EPA regulations apply.                |
++------------------------------------------------------------------+
+```
+
+### 4. Database Schema Extensions
+
+Add new columns to support demolition-specific data:
 
 ```sql
--- Create workspaces table
-CREATE TABLE inventory_workspaces (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  description TEXT,
-  icon TEXT DEFAULT 'Package',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Add RLS policies
-ALTER TABLE inventory_workspaces ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own workspaces" ON inventory_workspaces
-  FOR SELECT USING (user_id = auth.uid());
-  
-CREATE POLICY "Users can create workspaces" ON inventory_workspaces
-  FOR INSERT WITH CHECK (user_id = auth.uid());
-
-CREATE POLICY "Users can update own workspaces" ON inventory_workspaces
-  FOR UPDATE USING (user_id = auth.uid());
-
-CREATE POLICY "Users can delete own workspaces" ON inventory_workspaces
-  FOR DELETE USING (user_id = auth.uid());
-
--- Add workspace_id to inventory tables (nullable for migration)
-ALTER TABLE inventory_items ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
-ALTER TABLE inventory_categories ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
-ALTER TABLE inventory_groups ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
-ALTER TABLE inventory_transactions ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
+ALTER TABLE inventory_items ADD COLUMN metal_type TEXT;
+ALTER TABLE inventory_items ADD COLUMN metal_grade TEXT;
+ALTER TABLE inventory_items ADD COLUMN estimated_weight DECIMAL(10,2);
+ALTER TABLE inventory_items ADD COLUMN weight_unit TEXT DEFAULT 'lbs';
+ALTER TABLE inventory_items ADD COLUMN scrap_price_per_unit DECIMAL(10,4);
+ALTER TABLE inventory_items ADD COLUMN is_salvageable BOOLEAN DEFAULT false;
+ALTER TABLE inventory_items ADD COLUMN salvage_value DECIMAL(10,2);
+ALTER TABLE inventory_items ADD COLUMN has_hazmat_flags BOOLEAN DEFAULT false;
+ALTER TABLE inventory_items ADD COLUMN hazmat_details JSONB;
+ALTER TABLE inventory_items ADD COLUMN removal_complexity TEXT;
+ALTER TABLE inventory_items ADD COLUMN labor_hours_estimate DECIMAL(5,2);
 ```
 
-### Phase 3: Update Hooks
+### 5. Workspace Mode: Demolition/Scrap
 
-Modify all inventory hooks to use `workspace_id` instead of `project_id`:
+Add workspace type to enable specialized analysis:
 
-```typescript
-// Before (useInventoryItems.ts)
-export function useInventoryItems(projectId: string | null, filters?: InventoryFilters)
-
-// After
-export function useInventoryItems(workspaceId: string | null, filters?: InventoryFilters)
+```sql
+ALTER TABLE inventory_workspaces 
+ADD COLUMN workspace_type TEXT DEFAULT 'general' 
+CHECK (workspace_type IN ('general', 'demolition', 'construction', 'warehouse'));
 ```
 
-### Phase 4: Create New Entry Points
+When workspace type is "demolition", automatically:
+- Enable scrap metal analysis in AI prompts
+- Show demolition-specific UI components
+- Add scrap metal categories by default
+- Display weight and metal type columns in item lists
 
-**New page:** `src/pages/Inventory.tsx`
-```typescript
-import { InventoryPage } from '@/components/inventory/InventoryPage';
+### 6. Quote Generation Feature
 
-export default function Inventory() {
-  return <InventoryPage />;
-}
+New component for generating client quotes:
+
+```text
++------------------------------------------------------------------+
+| 📋 DEMOLITION QUOTE GENERATOR                                     |
+|------------------------------------------------------------------|
+| Project: 123 Main Street Warehouse Demolition                    |
+|                                                                   |
+| SCRAP METAL SUMMARY                                              |
+| ├── Copper (various): 850 lbs → $2,720 - $3,230                  |
+| ├── Aluminum: 2,400 lbs → $1,920 - $2,640                        |
+| ├── Steel/Iron: 45,000 lbs → $3,600 - $6,750                     |
+| └── Brass: 120 lbs → $240 - $336                                 |
+|                                                                   |
+| SALVAGE ITEMS                                                    |
+| ├── HVAC Units (3): $2,400 - $3,600                              |
+| ├── Industrial Motors (5): $1,200 - $1,800                       |
+| └── Electrical Panels (2): $300 - $500                           |
+|                                                                   |
+| ESTIMATED TOTAL RECOVERY: $12,380 - $18,856                      |
+|                                                                   |
+| [Download PDF Quote] [Email to Client] [Print]                   |
++------------------------------------------------------------------+
 ```
-
-**New layout:** `src/components/inventory/InventoryLayout.tsx`
-- Sidebar with workspaces list
-- Create/edit workspace dialogs
-- Main content area
-
-### Phase 5: Update Routing
-
-**Add to VoltScout.tsx:**
-```typescript
-<Route path="inventory" element={<Inventory />} />
-```
-
-**Add to Sidebar.tsx navigation:**
-```typescript
-{
-  title: 'Operations',
-  items: [
-    { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
-    { path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'feature.inventory' },
-  ]
-}
-```
-
-### Phase 6: Keep VoltBuild Integration (Optional)
-
-Optionally keep a simplified inventory view in VoltBuild that links to the standalone feature:
-- Add "Open Inventory" button in VoltBuild
-- Filter by associated workspace if project has one linked
 
 ---
 
-## Files to Create
+## Implementation Summary
+
+### Files to Create
 
 | File | Purpose |
 |------|---------|
-| `src/components/inventory/InventoryPage.tsx` | Main standalone page |
-| `src/components/inventory/InventoryLayout.tsx` | Layout with workspace selector |
-| `src/components/inventory/components/WorkspaceSelector.tsx` | Dropdown for workspaces |
-| `src/components/inventory/components/CreateWorkspaceDialog.tsx` | Create new workspace |
-| `src/components/inventory/hooks/useInventoryWorkspaces.ts` | CRUD for workspaces |
-| `src/pages/Inventory.tsx` | Page wrapper for routing |
+| `src/components/inventory/types/demolition.types.ts` | New types for scrap/salvage analysis |
+| `src/components/inventory/components/ScrapMetalResults.tsx` | Display scrap analysis |
+| `src/components/inventory/components/SalvageAssessment.tsx` | Salvage vs. scrap recommendation |
+| `src/components/inventory/components/HazmatWarning.tsx` | Hazardous material alerts |
+| `src/components/inventory/components/DemolitionQuoteGenerator.tsx` | Quote generation UI |
+| `src/components/inventory/hooks/useScrapPricing.ts` | Fetch/cache scrap metal prices |
+| `supabase/functions/scrap-metal-pricing/index.ts` | Edge function for pricing API |
 
-## Files to Move/Copy
-
-| Source | Destination |
-|--------|-------------|
-| `voltbuild/inventory/components/*` (24 files) | `inventory/components/*` |
-| `voltbuild/inventory/hooks/*` (8 files) | `inventory/hooks/*` |
-| `voltbuild/inventory/types/*` (2 files) | `inventory/types/*` |
-
-## Files to Modify
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/VoltScout.tsx` | Add `/inventory` route |
-| `src/components/Sidebar.tsx` | Add Inventory nav item |
-| All inventory hooks | Replace `projectId` with `workspaceId` |
-| All inventory components | Replace project prop with workspace prop |
+| `supabase/functions/inventory-ai-analyzer/index.ts` | Add demolition analysis prompts and tool definitions |
+| `src/components/inventory/hooks/useInventoryAIAnalysis.ts` | Extend result types for scrap/salvage data |
+| `src/components/inventory/components/InventoryAIResults.tsx` | Add scrap metal display sections |
+| `src/components/inventory/components/InventorySmartCapture.tsx` | Add "Demolition Mode" toggle |
+| `src/components/inventory/components/InventoryItemCard.tsx` | Show weight/metal type in card |
+| `src/components/inventory/components/InventoryDashboard.tsx` | Add scrap value summary |
+| `src/components/inventory/types/inventory.types.ts` | Extend types with demolition fields |
+| `src/components/inventory/components/CreateWorkspaceDialog.tsx` | Add workspace type selector |
+| `supabase/migrations/` | Add new columns for demolition data |
 
 ---
 
-## UI Changes
+## Technical Details
 
-### New Sidebar Structure
-```text
-Operations
-├── Build Management (/app/build)
-└── Inventory (/app/inventory)   ← NEW
-```
+### Scrap Pricing Integration Options
 
-### Inventory Page Layout
-```text
-+---------------------------+--------------------------------+
-|     Inventory             |                                |
-|  [+ New Workspace]        |     Inventory Dashboard        |
-|                           |                                |
-|  WORKSPACES               |     [Stats Cards]              |
-|  ○ Main Warehouse         |                                |
-|  ● Shop Tools             |     [Recent Items]             |
-|  ○ Project Supplies       |                                |
-|                           |     [Low Stock Alerts]         |
-|  [Settings]               |                                |
-+---------------------------+--------------------------------+
-```
+1. **MetalpriceAPI.com** - Real-time precious/industrial metals pricing
+2. **Static Reference Table** - Updated monthly with regional averages
+3. **Hybrid Approach** (Recommended):
+   - Default to curated reference prices in the AI prompt
+   - Optional API integration for live pricing (premium feature)
+   - Allow manual price overrides per workspace
 
----
+### Weight Estimation Approach
 
-## Migration Path for Existing Data
+The AI will estimate weights using visual cues and reference data:
+- Count visible items and estimate dimensions
+- Apply standard weight-per-unit formulas
+- Adjust for material density (copper = 0.321 lb/in^3, aluminum = 0.098 lb/in^3)
+- Provide confidence level based on visibility and item familiarity
 
-For users who have inventory items tied to VoltBuild projects:
+### Multi-Photo Accuracy
 
-1. Create a workspace for each project that has inventory items
-2. Copy `project_id` to `workspace_id` 
-3. After transition period, make `project_id` nullable
-4. Eventually drop `project_id` column
+Encourage users to take multiple angles to improve:
+- Metal type identification (look for rust patterns, surface finish)
+- Weight estimation (better dimension assessment)
+- Condition evaluation (check all sides for damage)
+- Text extraction (labels, manufacturer stamps)
 
 ---
 
 ## Summary
 
-| Change | Description |
-|--------|-------------|
-| **New module** | `src/components/inventory/` standalone feature |
-| **New route** | `/app/inventory` with own sidebar navigation |
-| **New table** | `inventory_workspaces` for user-level organization |
-| **Hook updates** | Change from `projectId` to `workspaceId` |
-| **Sidebar update** | Add "Inventory" under Operations section |
-| **Edge function** | No changes needed (already standalone) |
+| Enhancement | Description |
+|-------------|-------------|
+| **Metal Type Detection** | AI identifies copper, aluminum, steel, brass, stainless, iron |
+| **Weight Estimation** | Visual estimation with confidence levels |
+| **Scrap Pricing** | Current market prices per pound with total values |
+| **Salvage Assessment** | Recommend resell vs. scrap with value comparison |
+| **Hazmat Alerts** | Flag asbestos, lead, refrigerants, PCBs |
+| **Removal Complexity** | Labor hours and equipment estimates |
+| **Quote Generator** | Professional PDF quotes for clients |
+| **Workspace Type** | "Demolition" mode enables specialized features |
