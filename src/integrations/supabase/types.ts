@@ -6437,6 +6437,33 @@ export type Database = {
         }
         Relationships: []
       }
+      scrap_metal_price_cache: {
+        Row: {
+          api_calls_today: number | null
+          expires_at: string
+          fetched_at: string
+          id: string
+          last_api_call_date: string | null
+          prices: Json
+        }
+        Insert: {
+          api_calls_today?: number | null
+          expires_at: string
+          fetched_at?: string
+          id?: string
+          last_api_call_date?: string | null
+          prices: Json
+        }
+        Update: {
+          api_calls_today?: number | null
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          last_api_call_date?: string | null
+          prices?: Json
+        }
+        Relationships: []
+      }
       scraped_properties: {
         Row: {
           address: string
