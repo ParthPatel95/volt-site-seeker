@@ -52,8 +52,10 @@ const SCRAP_MULTIPLIERS = {
   steel: { hms1: 0.70, hms2: 0.60, structural: 0.72, sheet: 0.60, rebar: 0.65, galvanized: 0.45 },
 };
 
-// Rate limiting: 2,500 calls/month = ~83/day, we'll limit to 3/day for safety
-const MAX_API_CALLS_PER_DAY = 3;
+// Rate limiting: 2,500 calls/month = ~83/day
+// Price cache: 3 calls/day, Market data: 4 calls/day = 7 total (~210/month)
+const MAX_PRICE_API_CALLS_PER_DAY = 3;
+const MAX_MARKET_API_CALLS_PER_DAY = 4; // timeseries, fluctuation, news, ohlc
 const CACHE_DURATION_HOURS = 24;
 
 interface ScrapMetalPrices {
@@ -69,12 +71,45 @@ interface ScrapMetalPrices {
   cacheInfo?: { expiresAt: string; apiCallsToday: number; maxCallsPerDay: number };
 }
 
+interface TimeseriesData {
+  [date: string]: { [symbol: string]: number };
+}
+
+interface FluctuationData {
+  [symbol: string]: { change: number; change_pct: number; start_rate: number; end_rate: number };
+}
+
+interface NewsArticle {
+  title: string;
+  description: string;
+  url: string;
+  source: string;
+  published_at: string;
+}
+
+interface OHLCData {
+  [symbol: string]: { open: number; high: number; low: number; close: number };
+}
+
+interface MarketData {
+  timeseries?: { data: TimeseriesData; processedTrends?: Record<string, { prices: number[]; dates: string[]; changePercent: number }> };
+  fluctuation?: FluctuationData;
+  news?: NewsArticle[];
+  ohlc?: OHLCData;
+}
+
 function getSupabaseClient() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 }
+
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+// ============ PRICE CACHE FUNCTIONS ============
 
 async function getCachedPrices(supabase: ReturnType<typeof createClient>): Promise<{
   prices: ScrapMetalPrices | null;
@@ -97,17 +132,16 @@ async function getCachedPrices(supabase: ReturnType<typeof createClient>): Promi
     const expiresAt = new Date(data.expires_at);
     const isExpired = now > expiresAt;
     
-    // Reset counter if it's a new day
     const lastCallDate = data.last_api_call_date;
     const today = now.toISOString().split('T')[0];
     const apiCallsToday = lastCallDate === today ? (data.api_calls_today || 0) : 0;
-    const canCallApi = apiCallsToday < MAX_API_CALLS_PER_DAY;
+    const canCallApi = apiCallsToday < MAX_PRICE_API_CALLS_PER_DAY;
 
     const prices = data.prices as ScrapMetalPrices;
     prices.cacheInfo = {
       expiresAt: data.expires_at,
       apiCallsToday,
-      maxCallsPerDay: MAX_API_CALLS_PER_DAY,
+      maxCallsPerDay: MAX_PRICE_API_CALLS_PER_DAY,
     };
 
     return { prices, isExpired, apiCallsToday, canCallApi };
@@ -127,7 +161,6 @@ async function savePricesToCache(
   const today = now.toISOString().split('T')[0];
 
   try {
-    // Get current api call count
     const { data: existing } = await supabase
       .from('scrap_metal_price_cache')
       .select('api_calls_today, last_api_call_date')
@@ -159,6 +192,149 @@ async function savePricesToCache(
   }
 }
 
+// ============ MARKET DATA CACHE FUNCTIONS ============
+
+async function getMarketDataCache(supabase: ReturnType<typeof createClient>): Promise<{
+  data: MarketData | null;
+  apiCallsToday: number;
+  canCallApi: boolean;
+  cacheStatus: {
+    timeseries: { isCached: boolean; isExpired: boolean };
+    fluctuation: { isCached: boolean; isExpired: boolean };
+    news: { isCached: boolean; isExpired: boolean };
+    ohlc: { isCached: boolean; isExpired: boolean };
+  };
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('scrap_metal_market_data')
+      .select('*')
+      .eq('id', 'current')
+      .single();
+
+    if (error || !data) {
+      return { 
+        data: null, 
+        apiCallsToday: 0, 
+        canCallApi: true,
+        cacheStatus: {
+          timeseries: { isCached: false, isExpired: true },
+          fluctuation: { isCached: false, isExpired: true },
+          news: { isCached: false, isExpired: true },
+          ohlc: { isCached: false, isExpired: true },
+        }
+      };
+    }
+
+    const now = new Date();
+    const today = formatDate(now);
+    const lastCallDate = data.last_api_call_date;
+    const apiCallsToday = lastCallDate === today ? (data.api_calls_today || 0) : 0;
+    const canCallApi = apiCallsToday < MAX_MARKET_API_CALLS_PER_DAY;
+
+    const isDataExpired = (fetchedAt: string | null): boolean => {
+      if (!fetchedAt) return true;
+      const fetched = new Date(fetchedAt);
+      const expiresAt = new Date(fetched.getTime() + CACHE_DURATION_HOURS * 60 * 60 * 1000);
+      return now > expiresAt;
+    };
+
+    return {
+      data: {
+        timeseries: data.timeseries_data ? { data: data.timeseries_data as TimeseriesData } : undefined,
+        fluctuation: data.fluctuation_data as FluctuationData | undefined,
+        news: data.news_data as NewsArticle[] | undefined,
+        ohlc: data.ohlc_data as OHLCData | undefined,
+      },
+      apiCallsToday,
+      canCallApi,
+      cacheStatus: {
+        timeseries: { isCached: !!data.timeseries_data, isExpired: isDataExpired(data.timeseries_fetched_at) },
+        fluctuation: { isCached: !!data.fluctuation_data, isExpired: isDataExpired(data.fluctuation_fetched_at) },
+        news: { isCached: !!data.news_data, isExpired: isDataExpired(data.news_fetched_at) },
+        ohlc: { isCached: !!data.ohlc_data, isExpired: isDataExpired(data.ohlc_fetched_at) },
+      }
+    };
+  } catch (e) {
+    console.error("Error reading market data cache:", e);
+    return { 
+      data: null, 
+      apiCallsToday: 0, 
+      canCallApi: true,
+      cacheStatus: {
+        timeseries: { isCached: false, isExpired: true },
+        fluctuation: { isCached: false, isExpired: true },
+        news: { isCached: false, isExpired: true },
+        ohlc: { isCached: false, isExpired: true },
+      }
+    };
+  }
+}
+
+async function saveMarketDataCache(
+  supabase: ReturnType<typeof createClient>,
+  updateData: {
+    timeseries_data?: TimeseriesData;
+    fluctuation_data?: FluctuationData;
+    news_data?: NewsArticle[];
+    ohlc_data?: OHLCData;
+  },
+  incrementApiCall: boolean
+): Promise<void> {
+  const now = new Date();
+  const today = formatDate(now);
+
+  try {
+    const { data: existing } = await supabase
+      .from('scrap_metal_market_data')
+      .select('api_calls_today, last_api_call_date')
+      .eq('id', 'current')
+      .single();
+
+    let apiCallsToday = 0;
+    if (existing) {
+      apiCallsToday = existing.last_api_call_date === today ? (existing.api_calls_today || 0) : 0;
+    }
+    if (incrementApiCall) {
+      apiCallsToday++;
+    }
+
+    const upsertData: Record<string, unknown> = {
+      id: 'current',
+      api_calls_today: apiCallsToday,
+      last_api_call_date: today,
+      updated_at: now.toISOString(),
+    };
+
+    if (updateData.timeseries_data) {
+      upsertData.timeseries_data = updateData.timeseries_data;
+      upsertData.timeseries_fetched_at = now.toISOString();
+    }
+    if (updateData.fluctuation_data) {
+      upsertData.fluctuation_data = updateData.fluctuation_data;
+      upsertData.fluctuation_fetched_at = now.toISOString();
+    }
+    if (updateData.news_data) {
+      upsertData.news_data = updateData.news_data;
+      upsertData.news_fetched_at = now.toISOString();
+    }
+    if (updateData.ohlc_data) {
+      upsertData.ohlc_data = updateData.ohlc_data;
+      upsertData.ohlc_fetched_at = now.toISOString();
+    }
+
+    await supabase
+      .from('scrap_metal_market_data')
+      .upsert(upsertData);
+
+    console.log(`Market data cache saved, API calls today: ${apiCallsToday}`);
+  } catch (e) {
+    console.error("Error saving market data cache:", e);
+  }
+}
+
+// ============ API FETCH FUNCTIONS ============
+
 async function fetchLivePrices(): Promise<ScrapMetalPrices | null> {
   const METALS_API_KEY = Deno.env.get("METALS_API_KEY");
   
@@ -185,13 +361,11 @@ async function fetchLivePrices(): Promise<ScrapMetalPrices | null> {
       return null;
     }
 
-    // Invert rates: API returns 1 USD = X units, we want USD per unit
     const copperPerOz = data.rates.XCU ? 1 / data.rates.XCU : null;
     const aluminumPerOz = data.rates.XAL ? 1 / data.rates.XAL : null;
     const ironPerTon = data.rates.FE ? 1 / data.rates.FE : null;
     const nickelPerOz = data.rates.NI ? 1 / data.rates.NI : null;
 
-    // Convert to per-pound (1 lb = 14.5833 troy oz)
     const copperPerLb = copperPerOz ? copperPerOz * 14.5833 : 4.50;
     const aluminumPerLb = aluminumPerOz ? aluminumPerOz * 14.5833 : 1.15;
     const ironPerLb = ironPerTon ? ironPerTon / 2204.62 : 0.055;
@@ -252,6 +426,175 @@ async function fetchLivePrices(): Promise<ScrapMetalPrices | null> {
   }
 }
 
+async function fetchTimeseries(): Promise<TimeseriesData | null> {
+  const METALS_API_KEY = Deno.env.get("METALS_API_KEY");
+  
+  if (!METALS_API_KEY) return null;
+
+  try {
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() - 1); // Yesterday (API requirement)
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 8); // 7 days of data
+
+    const response = await fetch(
+      `https://metals-api.com/api/timeseries?access_key=${METALS_API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU,XAL,FE,NI&base=USD`,
+      { headers: { "Accept": "application/json" } }
+    );
+
+    if (!response.ok) {
+      console.error("Timeseries API error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.rates) {
+      console.error("Timeseries API error:", data.error);
+      return null;
+    }
+
+    return data.rates as TimeseriesData;
+  } catch (error) {
+    console.error("Error fetching timeseries:", error);
+    return null;
+  }
+}
+
+async function fetchFluctuation(): Promise<FluctuationData | null> {
+  const METALS_API_KEY = Deno.env.get("METALS_API_KEY");
+  
+  if (!METALS_API_KEY) return null;
+
+  try {
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() - 1);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 8);
+
+    const response = await fetch(
+      `https://metals-api.com/api/fluctuation?access_key=${METALS_API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU,XAL,FE,NI&base=USD`,
+      { headers: { "Accept": "application/json" } }
+    );
+
+    if (!response.ok) {
+      console.error("Fluctuation API error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.rates) {
+      console.error("Fluctuation API error:", data.error);
+      return null;
+    }
+
+    return data.rates as FluctuationData;
+  } catch (error) {
+    console.error("Error fetching fluctuation:", error);
+    return null;
+  }
+}
+
+async function fetchNews(): Promise<NewsArticle[] | null> {
+  const METALS_API_KEY = Deno.env.get("METALS_API_KEY");
+  
+  if (!METALS_API_KEY) return null;
+
+  try {
+    // Fetch news with metal-related keywords
+    const response = await fetch(
+      `https://metals-api.com/api/get-news?access_key=${METALS_API_KEY}&page=1`,
+      { headers: { "Accept": "application/json" } }
+    );
+
+    if (!response.ok) {
+      console.error("News API error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.data) {
+      console.error("News API error:", data.error);
+      return null;
+    }
+
+    // Return top 5 articles
+    return (data.data as NewsArticle[]).slice(0, 5);
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    return null;
+  }
+}
+
+async function fetchOHLC(): Promise<OHLCData | null> {
+  const METALS_API_KEY = Deno.env.get("METALS_API_KEY");
+  
+  if (!METALS_API_KEY) return null;
+
+  try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const response = await fetch(
+      `https://metals-api.com/api/ohlc?access_key=${METALS_API_KEY}&date=${formatDate(yesterday)}&symbols=XCU,XAL,FE,NI&base=USD`,
+      { headers: { "Accept": "application/json" } }
+    );
+
+    if (!response.ok) {
+      console.error("OHLC API error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.rates) {
+      console.error("OHLC API error:", data.error);
+      return null;
+    }
+
+    return data.rates as OHLCData;
+  } catch (error) {
+    console.error("Error fetching OHLC:", error);
+    return null;
+  }
+}
+
+// Process timeseries data to generate sparkline-ready trends
+function processTimeseriesForTrends(timeseriesData: TimeseriesData): Record<string, { prices: number[]; dates: string[]; changePercent: number }> {
+  const symbols = ['XCU', 'XAL', 'FE', 'NI'];
+  const result: Record<string, { prices: number[]; dates: string[]; changePercent: number }> = {};
+
+  for (const symbol of symbols) {
+    const dates = Object.keys(timeseriesData).sort();
+    const prices: number[] = [];
+
+    for (const date of dates) {
+      const rate = timeseriesData[date]?.[symbol];
+      if (rate) {
+        // Convert rate to USD per lb (invert and convert)
+        const pricePerOz = 1 / rate;
+        const pricePerLb = pricePerOz * 14.5833;
+        prices.push(Math.round(pricePerLb * 100) / 100);
+      }
+    }
+
+    if (prices.length >= 2) {
+      const changePercent = ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100;
+      result[symbol] = {
+        prices,
+        dates,
+        changePercent: Math.round(changePercent * 100) / 100,
+      };
+    }
+  }
+
+  return result;
+}
+
+// ============ REQUEST HANDLER ============
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -261,10 +604,11 @@ Deno.serve(async (req) => {
     const { action } = await req.json().catch(() => ({ action: 'get-prices' }));
     const supabase = getSupabaseClient();
 
+    // ============ PRICE ACTIONS ============
+
     if (action === 'get-prices') {
       const cache = await getCachedPrices(supabase);
 
-      // Return cached if not expired
       if (cache.prices && !cache.isExpired) {
         console.log("Returning cached prices (not expired)");
         return new Response(
@@ -273,20 +617,18 @@ Deno.serve(async (req) => {
         );
       }
 
-      // If expired but can't call API (rate limited), return stale cache
       if (cache.prices && !cache.canCallApi) {
-        console.log(`Rate limited (${cache.apiCallsToday}/${MAX_API_CALLS_PER_DAY} calls today), returning stale cache`);
+        console.log(`Rate limited (${cache.apiCallsToday}/${MAX_PRICE_API_CALLS_PER_DAY} calls today), returning stale cache`);
         return new Response(
           JSON.stringify({ 
             success: true, 
             prices: { ...cache.prices, source: 'cached' },
-            warning: `Rate limited - using cached data (${cache.apiCallsToday}/${MAX_API_CALLS_PER_DAY} API calls today)`
+            warning: `Rate limited - using cached data (${cache.apiCallsToday}/${MAX_PRICE_API_CALLS_PER_DAY} API calls today)`
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Fetch fresh prices
       const livePrices = await fetchLivePrices();
 
       if (livePrices) {
@@ -297,7 +639,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // API failed - return stale cache or defaults
       if (cache.prices) {
         console.log("API failed, returning stale cache");
         return new Response(
@@ -310,7 +651,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // No cache, no API - use defaults
       const defaultPrices: ScrapMetalPrices = {
         ...DEFAULT_PRICES,
         lastUpdated: new Date().toISOString(),
@@ -329,7 +669,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: `Rate limited: ${cache.apiCallsToday}/${MAX_API_CALLS_PER_DAY} API calls used today. Try again tomorrow.`,
+            error: `Rate limited: ${cache.apiCallsToday}/${MAX_PRICE_API_CALLS_PER_DAY} API calls used today. Try again tomorrow.`,
             prices: cache.prices ? { ...cache.prices, source: 'cached' } : null
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -356,19 +696,252 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ============ MARKET INTELLIGENCE ACTIONS ============
+
+    if (action === 'get-market-data') {
+      const cache = await getMarketDataCache(supabase);
+      
+      const marketData: MarketData = {};
+      let needsFetch = false;
+      const fetchTypes: string[] = [];
+
+      // Check what data we need to fetch
+      if (!cache.cacheStatus.timeseries.isCached || cache.cacheStatus.timeseries.isExpired) {
+        needsFetch = true;
+        fetchTypes.push('timeseries');
+      } else if (cache.data?.timeseries) {
+        marketData.timeseries = cache.data.timeseries;
+      }
+
+      if (!cache.cacheStatus.fluctuation.isCached || cache.cacheStatus.fluctuation.isExpired) {
+        needsFetch = true;
+        fetchTypes.push('fluctuation');
+      } else if (cache.data?.fluctuation) {
+        marketData.fluctuation = cache.data.fluctuation;
+      }
+
+      if (!cache.cacheStatus.news.isCached || cache.cacheStatus.news.isExpired) {
+        needsFetch = true;
+        fetchTypes.push('news');
+      } else if (cache.data?.news) {
+        marketData.news = cache.data.news;
+      }
+
+      if (!cache.cacheStatus.ohlc.isCached || cache.cacheStatus.ohlc.isExpired) {
+        needsFetch = true;
+        fetchTypes.push('ohlc');
+      } else if (cache.data?.ohlc) {
+        marketData.ohlc = cache.data.ohlc;
+      }
+
+      // If we need fresh data and can call API
+      if (needsFetch && cache.canCallApi && fetchTypes.length > 0) {
+        console.log(`Fetching fresh market data: ${fetchTypes.join(', ')}`);
+        
+        // Fetch only what we need (1 API call for all - we batch logically)
+        const updateData: Record<string, unknown> = {};
+        let madeApiCall = false;
+
+        // Fetch timeseries (1 call covers trends + sparklines)
+        if (fetchTypes.includes('timeseries')) {
+          const timeseries = await fetchTimeseries();
+          if (timeseries) {
+            const processedTrends = processTimeseriesForTrends(timeseries);
+            marketData.timeseries = { data: timeseries, processedTrends };
+            updateData.timeseries_data = timeseries;
+            madeApiCall = true;
+          }
+        }
+
+        // Fetch fluctuation (for volatility)
+        if (fetchTypes.includes('fluctuation') && cache.apiCallsToday < MAX_MARKET_API_CALLS_PER_DAY) {
+          const fluctuation = await fetchFluctuation();
+          if (fluctuation) {
+            marketData.fluctuation = fluctuation;
+            updateData.fluctuation_data = fluctuation;
+            madeApiCall = true;
+          }
+        }
+
+        // Fetch news
+        if (fetchTypes.includes('news') && cache.apiCallsToday < MAX_MARKET_API_CALLS_PER_DAY) {
+          const news = await fetchNews();
+          if (news) {
+            marketData.news = news;
+            updateData.news_data = news;
+            madeApiCall = true;
+          }
+        }
+
+        // Fetch OHLC
+        if (fetchTypes.includes('ohlc') && cache.apiCallsToday < MAX_MARKET_API_CALLS_PER_DAY) {
+          const ohlc = await fetchOHLC();
+          if (ohlc) {
+            marketData.ohlc = ohlc;
+            updateData.ohlc_data = ohlc;
+            madeApiCall = true;
+          }
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await saveMarketDataCache(supabase, updateData, madeApiCall);
+        }
+      }
+
+      // Process timeseries trends if not already done
+      if (marketData.timeseries?.data && !marketData.timeseries.processedTrends) {
+        marketData.timeseries.processedTrends = processTimeseriesForTrends(marketData.timeseries.data);
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          marketData,
+          cacheStatus: cache.cacheStatus,
+          apiCallsToday: cache.apiCallsToday,
+          maxCallsPerDay: MAX_MARKET_API_CALLS_PER_DAY,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === 'get-timeseries') {
+      const cache = await getMarketDataCache(supabase);
+      
+      // Return cached if available and not expired
+      if (cache.data?.timeseries && !cache.cacheStatus.timeseries.isExpired) {
+        const processedTrends = processTimeseriesForTrends(cache.data.timeseries.data);
+        return new Response(
+          JSON.stringify({ success: true, timeseries: cache.data.timeseries.data, trends: processedTrends, source: 'cached' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!cache.canCallApi) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Rate limited (${cache.apiCallsToday}/${MAX_MARKET_API_CALLS_PER_DAY} calls today)`,
+            timeseries: cache.data?.timeseries?.data || null,
+            source: 'cached'
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const timeseries = await fetchTimeseries();
+      if (timeseries) {
+        await saveMarketDataCache(supabase, { timeseries_data: timeseries }, true);
+        const processedTrends = processTimeseriesForTrends(timeseries);
+        return new Response(
+          JSON.stringify({ success: true, timeseries, trends: processedTrends, source: 'live' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: false, error: 'Could not fetch timeseries data' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === 'get-fluctuation') {
+      const cache = await getMarketDataCache(supabase);
+      
+      if (cache.data?.fluctuation && !cache.cacheStatus.fluctuation.isExpired) {
+        return new Response(
+          JSON.stringify({ success: true, fluctuation: cache.data.fluctuation, source: 'cached' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!cache.canCallApi) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Rate limited (${cache.apiCallsToday}/${MAX_MARKET_API_CALLS_PER_DAY} calls today)`,
+            fluctuation: cache.data?.fluctuation || null,
+            source: 'cached'
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const fluctuation = await fetchFluctuation();
+      if (fluctuation) {
+        await saveMarketDataCache(supabase, { fluctuation_data: fluctuation }, true);
+        return new Response(
+          JSON.stringify({ success: true, fluctuation, source: 'live' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: false, error: 'Could not fetch fluctuation data' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === 'get-news') {
+      const cache = await getMarketDataCache(supabase);
+      
+      if (cache.data?.news && !cache.cacheStatus.news.isExpired) {
+        return new Response(
+          JSON.stringify({ success: true, news: cache.data.news, source: 'cached' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!cache.canCallApi) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Rate limited (${cache.apiCallsToday}/${MAX_MARKET_API_CALLS_PER_DAY} calls today)`,
+            news: cache.data?.news || null,
+            source: 'cached'
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const news = await fetchNews();
+      if (news) {
+        await saveMarketDataCache(supabase, { news_data: news }, true);
+        return new Response(
+          JSON.stringify({ success: true, news, source: 'live' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: false, error: 'Could not fetch news' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (action === 'status') {
-      const cache = await getCachedPrices(supabase);
+      const priceCache = await getCachedPrices(supabase);
+      const marketCache = await getMarketDataCache(supabase);
+      
       return new Response(
         JSON.stringify({
           success: true,
           status: {
-            hasCachedData: !!cache.prices,
-            isExpired: cache.isExpired,
-            apiCallsToday: cache.apiCallsToday,
-            maxCallsPerDay: MAX_API_CALLS_PER_DAY,
-            canCallApi: cache.canCallApi,
+            prices: {
+              hasCachedData: !!priceCache.prices,
+              isExpired: priceCache.isExpired,
+              apiCallsToday: priceCache.apiCallsToday,
+              maxCallsPerDay: MAX_PRICE_API_CALLS_PER_DAY,
+              canCallApi: priceCache.canCallApi,
+            },
+            marketData: {
+              apiCallsToday: marketCache.apiCallsToday,
+              maxCallsPerDay: MAX_MARKET_API_CALLS_PER_DAY,
+              canCallApi: marketCache.canCallApi,
+              cacheStatus: marketCache.cacheStatus,
+            },
             cacheDurationHours: CACHE_DURATION_HOURS,
-            estimatedMonthlyUsage: `~${MAX_API_CALLS_PER_DAY * 30} of 2,500 calls`,
+            estimatedMonthlyUsage: `~${(MAX_PRICE_API_CALLS_PER_DAY + MAX_MARKET_API_CALLS_PER_DAY) * 30} of 2,500 calls`,
           }
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -376,7 +949,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: 'Unknown action. Valid: get-prices, refresh, status' }),
+      JSON.stringify({ error: 'Unknown action. Valid: get-prices, refresh, get-market-data, get-timeseries, get-fluctuation, get-news, status' }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
