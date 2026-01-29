@@ -37,6 +37,7 @@ import SharedDashboardView from './SharedDashboardView';
 import { DashboardBuilder } from '@/components/aeso/DashboardBuilder';
 import ShareDashboard from './ShareDashboard';
 import VoltBuild from './VoltBuild';
+import Inventory from './Inventory';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -44,9 +45,10 @@ const VoltScout = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   
-  // Check if we're in a full-screen module (VoltBuild, SecureShare)
+  // Check if we're in a full-screen module (VoltBuild, SecureShare, Inventory)
   const isFullScreenModule = location.pathname.startsWith('/app/build') || 
-                             location.pathname.startsWith('/app/secure-share');
+                             location.pathname.startsWith('/app/secure-share') ||
+                             location.pathname.startsWith('/app/inventory');
   
   // Initialize analytics tracking
   useAnalytics();
@@ -130,6 +132,7 @@ const VoltScout = () => {
                <Route path="risk-management" element={<RiskManagement />} />
                <Route path="advanced-features" element={<AdvancedFeatures />} />
                <Route path="build" element={<VoltBuild />} />
+               <Route path="inventory" element={<Inventory />} />
                <Route path="aeso-dashboards" element={<AESODashboards />} />
                <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
                <Route path="aeso-dashboard-builder/:id" element={<DashboardBuilder />} />

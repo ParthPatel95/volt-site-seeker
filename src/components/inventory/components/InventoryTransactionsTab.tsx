@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 interface InventoryTransactionsTabProps {
-  projectId: string;
+  workspaceId: string;
   onItemClick: (item: InventoryItem) => void;
 }
 
@@ -69,16 +69,16 @@ const getTransactionLabel = (type: TransactionType) => {
 };
 
 export function InventoryTransactionsTab({
-  projectId,
+  workspaceId,
   onItemClick,
 }: InventoryTransactionsTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
   
-  const { projectTransactions, isLoadingProject } = useInventoryTransactions(null, projectId);
+  const { workspaceTransactions, isLoadingWorkspace } = useInventoryTransactions(null, workspaceId);
 
   // Filter transactions
-  const filteredTransactions = projectTransactions.filter((tx) => {
+  const filteredTransactions = workspaceTransactions.filter((tx) => {
     // Type filter
     if (typeFilter !== 'all' && tx.transaction_type !== typeFilter) {
       return false;
@@ -143,7 +143,7 @@ export function InventoryTransactionsTab({
       </div>
 
       {/* Transactions List */}
-      {isLoadingProject ? (
+      {isLoadingWorkspace ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
