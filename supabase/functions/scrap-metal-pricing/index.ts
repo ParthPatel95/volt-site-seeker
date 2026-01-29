@@ -112,6 +112,12 @@ interface ScrapMetalPrices {
   };
   lastUpdated: string;
   source: 'live' | 'cached' | 'default';
+  spotPrices?: {
+    copper?: number;
+    aluminum?: number;
+    iron?: number;
+    nickel?: number;
+  };
 }
 
 // Simple in-memory cache
@@ -135,82 +141,104 @@ async function fetchLivePrices(): Promise<ScrapMetalPrices | null> {
   }
 
   try {
-    // Fetch commodity prices from metals API
-    // Using metalpriceapi.com format
+    // Metals-API.com format (free tier: 100 requests/month)
+    // Symbols: XCU (Copper), XAL (Aluminum), FE (Iron Ore), NI (Nickel)
     const response = await fetch(
-      `https://api.metalpriceapi.com/v1/latest?api_key=${METALS_API_KEY}&base=USD&currencies=XCU,XAL,XFE`,
+      `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=XCU,XAL,FE,NI`,
       { headers: { "Accept": "application/json" } }
     );
 
     if (!response.ok) {
-      console.error("Metals API error:", response.status);
+      console.error("Metals-API error:", response.status, response.statusText);
       return null;
     }
 
     const data = await response.json();
     
-    if (!data.success || !data.rates) {
-      console.error("Invalid metals API response:", data);
+    console.log("Metals-API response:", JSON.stringify(data));
+    
+    if (!data.success) {
+      console.error("Metals-API error response:", data.error);
       return null;
     }
 
-    // Convert commodity prices to scrap prices
-    // XCU = Copper per troy oz (multiply by ~29 for per lb estimate)
-    // XAL = Aluminum per troy oz (multiply by ~29 for per lb)
-    // XFE = Iron per metric ton (divide by 2204.62 for per lb)
-    
-    const copperSpot = data.rates.USDXCU ? 1 / data.rates.USDXCU : 4.5; // USD per troy oz
-    const copperPerLb = copperSpot * 14.5833; // 14.58 troy oz per pound
-    
-    const aluminumSpot = data.rates.USDXAL ? 1 / data.rates.USDXAL : 1.15;
-    const aluminumPerLb = aluminumSpot * 14.5833;
-    
-    const ironPerTon = data.rates.USDXFE ? 1 / data.rates.USDXFE : 120;
-    const ironPerLb = ironPerTon / 2204.62;
-    const steelPerLb = ironPerLb * 1.4; // Steel typically ~40% more than iron
+    if (!data.rates) {
+      console.error("No rates in Metals-API response");
+      return null;
+    }
 
-    // Apply scrap multipliers
+    // Metals-API returns rates as 1 USD = X units of metal
+    // So we need to invert: 1/rate = USD per unit
+    // XCU = Copper (USD per troy ounce)
+    // XAL = Aluminum (USD per troy ounce)
+    // FE = Iron Ore (USD per metric ton)
+    // NI = Nickel (USD per troy ounce)
+    
+    const copperPerOz = data.rates.XCU ? 1 / data.rates.XCU : null;
+    const aluminumPerOz = data.rates.XAL ? 1 / data.rates.XAL : null;
+    const ironPerTon = data.rates.FE ? 1 / data.rates.FE : null;
+    const nickelPerOz = data.rates.NI ? 1 / data.rates.NI : null;
+
+    console.log("Calculated prices:", { copperPerOz, aluminumPerOz, ironPerTon, nickelPerOz });
+
+    // Convert to per-pound prices
+    // 1 troy ounce = 0.0685714 pounds, so 1 pound = 14.5833 troy ounces
+    const copperPerLb = copperPerOz ? copperPerOz * 14.5833 : 4.50;
+    const aluminumPerLb = aluminumPerOz ? aluminumPerOz * 14.5833 : 1.15;
+    const ironPerLb = ironPerTon ? ironPerTon / 2204.62 : 0.055;
+    const nickelPerLb = nickelPerOz ? nickelPerOz * 14.5833 : 8.00;
+    
+    // Steel is roughly iron + processing premium
+    const steelPerLb = ironPerLb * 2.5;
+
+    // Apply scrap multipliers to get scrap yard prices
     const prices: ScrapMetalPrices = {
       copper: {
-        bareBright: copperPerLb * SCRAP_MULTIPLIERS.copper.bareBright,
-        number1: copperPerLb * SCRAP_MULTIPLIERS.copper.number1,
-        number2: copperPerLb * SCRAP_MULTIPLIERS.copper.number2,
-        insulated: copperPerLb * SCRAP_MULTIPLIERS.copper.insulated,
-        pipe: copperPerLb * SCRAP_MULTIPLIERS.copper.pipe,
+        bareBright: Math.round(copperPerLb * SCRAP_MULTIPLIERS.copper.bareBright * 100) / 100,
+        number1: Math.round(copperPerLb * SCRAP_MULTIPLIERS.copper.number1 * 100) / 100,
+        number2: Math.round(copperPerLb * SCRAP_MULTIPLIERS.copper.number2 * 100) / 100,
+        insulated: Math.round(copperPerLb * SCRAP_MULTIPLIERS.copper.insulated * 100) / 100,
+        pipe: Math.round(copperPerLb * SCRAP_MULTIPLIERS.copper.pipe * 100) / 100,
       },
       aluminum: {
-        sheet: aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.sheet,
-        cast: aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.cast,
-        extrusion: aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.extrusion,
-        cans: aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.cans,
-        dirty: aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.dirty,
+        sheet: Math.round(aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.sheet * 100) / 100,
+        cast: Math.round(aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.cast * 100) / 100,
+        extrusion: Math.round(aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.extrusion * 100) / 100,
+        cans: Math.round(aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.cans * 100) / 100,
+        dirty: Math.round(aluminumPerLb * SCRAP_MULTIPLIERS.aluminum.dirty * 100) / 100,
       },
       steel: {
-        hms1: steelPerLb * SCRAP_MULTIPLIERS.steel.hms1,
-        hms2: steelPerLb * SCRAP_MULTIPLIERS.steel.hms2,
-        structural: steelPerLb * SCRAP_MULTIPLIERS.steel.structural,
-        sheet: steelPerLb * SCRAP_MULTIPLIERS.steel.sheet,
-        rebar: steelPerLb * SCRAP_MULTIPLIERS.steel.rebar,
-        galvanized: steelPerLb * SCRAP_MULTIPLIERS.steel.galvanized,
+        hms1: Math.round(steelPerLb * SCRAP_MULTIPLIERS.steel.hms1 * 100) / 100,
+        hms2: Math.round(steelPerLb * SCRAP_MULTIPLIERS.steel.hms2 * 100) / 100,
+        structural: Math.round(steelPerLb * SCRAP_MULTIPLIERS.steel.structural * 100) / 100,
+        sheet: Math.round(steelPerLb * SCRAP_MULTIPLIERS.steel.sheet * 100) / 100,
+        rebar: Math.round(steelPerLb * SCRAP_MULTIPLIERS.steel.rebar * 100) / 100,
+        galvanized: Math.round(steelPerLb * SCRAP_MULTIPLIERS.steel.galvanized * 100) / 100,
       },
       brass: {
         // Brass is ~60% copper, ~40% zinc
-        yellow: copperPerLb * 0.55,
-        red: copperPerLb * 0.60,
-        mixed: copperPerLb * 0.50,
+        yellow: Math.round(copperPerLb * 0.55 * 100) / 100,
+        red: Math.round(copperPerLb * 0.60 * 100) / 100,
+        mixed: Math.round(copperPerLb * 0.50 * 100) / 100,
       },
       stainless: {
-        // Stainless contains nickel - estimate based on steel + premium
-        ss304: steelPerLb * 4.5,
-        ss316: steelPerLb * 6.0,
-        mixed: steelPerLb * 3.5,
+        // Stainless contains nickel - use nickel price as indicator
+        ss304: Math.round((steelPerLb + nickelPerLb * 0.08) * 4.5 * 100) / 100,
+        ss316: Math.round((steelPerLb + nickelPerLb * 0.12) * 6.0 * 100) / 100,
+        mixed: Math.round((steelPerLb + nickelPerLb * 0.06) * 3.5 * 100) / 100,
       },
       iron: {
-        cast: ironPerLb * 0.9,
-        wrought: ironPerLb * 1.1,
+        cast: Math.round(ironPerLb * 1.6 * 100) / 100,
+        wrought: Math.round(ironPerLb * 2.0 * 100) / 100,
       },
       lastUpdated: new Date().toISOString(),
       source: 'live',
+      spotPrices: {
+        copper: Math.round(copperPerLb * 100) / 100,
+        aluminum: Math.round(aluminumPerLb * 100) / 100,
+        iron: Math.round(ironPerLb * 1000) / 1000,
+        nickel: Math.round(nickelPerLb * 100) / 100,
+      },
     };
 
     return prices;
@@ -232,6 +260,7 @@ serve(async (req) => {
     if (action === 'get-prices') {
       // Check cache first
       if (priceCache.prices && Date.now() - priceCache.timestamp < CACHE_DURATION) {
+        console.log("Returning cached prices from", new Date(priceCache.timestamp).toISOString());
         return new Response(
           JSON.stringify({
             success: true,
@@ -266,6 +295,39 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, prices: defaultPrices }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === 'refresh') {
+      // Force refresh from API
+      priceCache = { prices: null, timestamp: 0 };
+      const livePrices = await fetchLivePrices();
+      
+      if (livePrices) {
+        priceCache = {
+          prices: livePrices,
+          timestamp: Date.now(),
+        };
+        return new Response(
+          JSON.stringify({ success: true, prices: livePrices, refreshed: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const defaultPrices: ScrapMetalPrices = {
+        ...DEFAULT_PRICES,
+        lastUpdated: new Date().toISOString(),
+        source: 'default',
+      };
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          prices: defaultPrices, 
+          refreshed: false,
+          warning: 'Could not fetch live prices, using defaults'
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
