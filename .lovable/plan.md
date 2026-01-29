@@ -1,13 +1,9 @@
 
-# Plan: Enhanced Demolition Scanning with Excel-Like Layout & Live Metal Pricing
+# Plan: Enhanced Metals-API Integration with Price Trends, Alerts, and Market News
 
 ## Overview
 
-Enhance the demolition/scrap metal scanning feature with:
-1. **Excel-like spreadsheet layout** showing all detected metal types with values
-2. **Live metal pricing integration** from a pricing API
-3. **Enhanced weight estimation** with dimensional inputs and material formulas
-4. **Expanded metal type detection** including specific steel grades
+Leverage additional Metals-API endpoints to provide users with market intelligence, price trends, and volatility awareness to help them make better quoting decisions.
 
 ---
 
@@ -15,132 +11,128 @@ Enhance the demolition/scrap metal scanning feature with:
 
 | Feature | Status |
 |---------|--------|
-| Metal type detection | Basic (copper, aluminum, steel, brass, stainless, iron, mixed) |
-| Weight estimation | AI visual estimation only |
-| Pricing | Static hardcoded prices in `demolition.types.ts` |
-| Results display | Card-based individual items |
-| Steel grades | Generic (HMS 1&2, Structural Steel only) |
+| Live spot prices | Implemented (XCU, XAL, FE, NI) |
+| Price caching | 24-hour database cache with 3 calls/day limit |
+| Grade-based pricing | Implemented with scrap multipliers |
+| Historical data | Not implemented |
+| Price trends | Not implemented |
+| Market news | Not implemented |
 
 ---
 
 ## Proposed Enhancements
 
-### 1. Excel-Like Scrap Metal Spreadsheet Component
+### 1. Price Trend Sparklines & Change Indicators
 
-Create a new `ScrapMetalSpreadsheet.tsx` component that displays all scanned items in a sortable, editable table format:
-
-```text
-+--------------------------------------------------------------------------------------------------+
-| SCRAP METAL BREAKDOWN                                                            [Export CSV]   |
-+--------------------------------------------------------------------------------------------------+
-| Item               | Metal Type | Grade      | Weight | Unit | Price/lb | Total Value | Status |
-|--------------------|------------|------------|--------|------|----------|-------------|--------|
-| Copper Pipe Bundle | Copper     | #2 Copper  | 45     | lbs  | $3.40    | $153.00     | [Edit] |
-| HVAC Unit          | Mixed      | Steel/Copper| 280   | lbs  | -        | $85.00      | [Edit] |
-| I-Beam Section     | Steel      | Structural | 1,200  | lbs  | $0.14    | $168.00     | [Edit] |
-| Cast Iron Radiator | Iron       | Cast Iron  | 350    | lbs  | $0.09    | $31.50      | [Edit] |
-| Electrical Wire    | Copper     | Insulated  | 120    | lbs  | $1.85    | $222.00     | [Edit] |
-+--------------------|------------|------------|--------|------|----------|-------------|--------+
-| TOTALS                                       | 1,995  | lbs  |          | $659.50     |        |
-+--------------------------------------------------------------------------------------------------+
-
-[ ] Include labor costs     Margin: [15%]     QUOTED AMOUNT: $758.43
-```
-
-Features:
-- Inline editing of weight, grade, and price
-- Sortable columns (by metal type, value, weight)
-- Row actions: Edit, Delete, Override price
-- Running totals at bottom
-- Export to CSV/PDF
-- Margin calculator for quotes
-
-### 2. Live Metal Pricing Integration
-
-Create a new edge function and hook to fetch live scrap metal prices:
-
-**Edge Function: `scrap-metal-pricing/index.ts`**
-- Fetches prices from metalpriceapi.com or metals-api.com
-- Caches results for 1 hour (scrap prices don't change rapidly)
-- Fallback to hardcoded defaults if API unavailable
-- Returns prices for all common scrap grades
-
-**Hook: `useScrapMetalPricing.ts`**
-```typescript
-interface ScrapMetalPrices {
-  copper: { barebrightperLb: number; number2perLb: number; insulatedperLb: number };
-  aluminum: { sheetperLb: number; castperLb: number; extrusionperLb: number };
-  steel: { hms1perLb: number; structuralperLb: number; sheetperLb: number };
-  brass: { yellowperLb: number; redperLb: number };
-  stainless: { ss304perLb: number; ss316perLb: number };
-  iron: { castperLb: number };
-  lastUpdated: string;
-  source: 'live' | 'cached' | 'default';
-}
-```
-
-**Live Price Indicator Badge**
-- Green dot: Live prices (fetched within 1 hour)
-- Yellow dot: Cached prices (1-24 hours old)
-- Gray dot: Default/fallback prices
-
-### 3. Enhanced Weight Estimation System
-
-Add dimensional input fields for more accurate weight estimation:
-
-**Weight Calculator Component: `WeightEstimator.tsx`**
+Add visual price trend indicators showing 7-day movement:
 
 ```text
-+-------------------------------------------------------+
-| WEIGHT ESTIMATION                                      |
-|-------------------------------------------------------|
-| Material: [Copper Pipe v]                             |
-|                                                       |
-| ○ Visual AI Estimate: 45 lbs (Medium confidence)      |
-|                                                       |
-| ● Calculate from Dimensions:                          |
-|   Pipe Diameter: [1.5] inches                         |
-|   Length: [50] feet                                   |
-|   Wall Thickness: [0.065] inches (Type L)             |
-|                                                       |
-|   Calculated Weight: 52.4 lbs                         |
-|                                                       |
-| [Override Weight: ______ lbs]                         |
-+-------------------------------------------------------+
++----------------------------------+
+| COPPER                           |
+| $4.52/lb  ↑ +3.2%  [▁▂▃▄▅▆▇]    |
+| 7-day trend                      |
++----------------------------------+
 ```
 
-**Weight Formulas by Material Type:**
+**Implementation:**
+- Use the **Time-Series endpoint** to fetch 7-day historical data
+- Call once daily (during first refresh), cache results for 24 hours
+- Display mini sparkline chart next to metal prices
+- Show percentage change badge (green/red)
 
-| Material | Formula | Reference |
-|----------|---------|-----------|
-| Copper Pipe | (OD - wall) * wall * 0.3225 * length * 12 | lbs per foot |
-| Steel I-Beam | Standard tables by size (W8x10 = 10 lb/ft) | AISC tables |
-| Steel Plate | length x width x thickness x 0.2833 | lbs/cu in |
-| Aluminum Sheet | length x width x thickness x 0.0975 | lbs/cu in |
-| Cast Iron | volume x 0.26 lb/cu in | density |
-| Brass | volume x 0.3 lb/cu in | density |
+### 2. Market Volatility Warning
 
-### 4. Expanded Steel Type Detection
+Show a warning when metal prices are unusually volatile:
 
-Update the AI prompt with more granular steel grades:
-
-**New Steel Categories:**
-- **Carbon Steel**: A36, 1018, 1045
-- **Structural**: W-shapes (I-beams), C-channels, angles, tubes
-- **Stainless**: 304, 316, 410, 17-4
-- **Alloy**: 4140, 4340
-- **Tool Steel**: D2, O1, H13
-- **Galvanized**: Hot-dipped, electro-galvanized
-- **Weathering Steel**: Cor-Ten A, Cor-Ten B
-
-**Updated Type Definition:**
-```typescript
-type SteelGrade = 
-  | 'HMS 1' | 'HMS 2' | 'Shred Steel'
-  | 'Structural' | 'Plate' | 'Sheet' | 'Rebar'
-  | 'Galvanized' | 'Stainless 304' | 'Stainless 316'
-  | 'Cast Steel' | 'Tool Steel';
+```text
++-----------------------------------------------+
+| ⚠️ HIGH VOLATILITY                             |
+| Copper prices fluctuated 8.5% this week.       |
+| Consider locking in prices quickly.            |
++-----------------------------------------------+
 ```
+
+**Implementation:**
+- Use the **Fluctuation endpoint** with `type=last_week`
+- Calculate volatility threshold (>5% = high)
+- Display warning banner on spreadsheet
+
+### 3. Market News Feed Widget
+
+Surface relevant metal market news:
+
+```text
++-----------------------------------------------+
+| 📰 MARKET NEWS                                 |
+|-----------------------------------------------|
+| • Gold Prices Drop Below $2,300, Copper...    |
+|   June 27, 2024                               |
+| • Silver Shows Resilience with Monday...      |
+|   Aug 14, 2024                                |
++-----------------------------------------------+
+```
+
+**Implementation:**
+- Use the **News endpoint** with keyword filters ("copper", "aluminum", "steel")
+- Cache for 24 hours
+- Display in collapsible section on inventory dashboard
+
+### 4. Quote Comparison Tool
+
+Show how today's quote compares to historical values:
+
+```text
++-----------------------------------------------+
+| 📊 QUOTE COMPARISON                            |
+|-----------------------------------------------|
+| Today's Quote:     $659.50                    |
+| 30 days ago:       $612.80  (+7.6%)          |
+| 90 days ago:       $701.25  (-5.9%)          |
+|-----------------------------------------------|
+| Market timing: FAVORABLE                      |
++-----------------------------------------------+
+```
+
+**Implementation:**
+- Use **Historical LME endpoint** for specific date comparisons
+- Calculate equivalent quote value using historical prices
+- Show trend indicator (favorable/neutral/unfavorable)
+
+### 5. Best/Worst Case Scenario
+
+Use daily high/low data to show quote ranges:
+
+```text
++-----------------------------------------------+
+| 💰 TODAY'S QUOTE RANGE                         |
+|-----------------------------------------------|
+| Conservative (Low):   $623.40                 |
+| Your Quote:           $659.50                 |
+| Optimistic (High):    $687.20                 |
++-----------------------------------------------+
+```
+
+**Implementation:**
+- Use **Lowest/Highest endpoint** for today's date
+- Apply to all metals in quote
+- Show confidence range
+
+---
+
+## API Call Budget Management
+
+Current budget: **2,500 calls/month** (≈83/day)
+
+| Feature | Calls/Day | Monthly Cost | Priority |
+|---------|-----------|--------------|----------|
+| Current (spot prices) | 3 | 90 | High |
+| Time-series (7-day) | 1 | 30 | High |
+| Fluctuation (weekly) | 1 | 30 | Medium |
+| News (daily) | 1 | 30 | Medium |
+| OHLC (daily high/low) | 1 | 30 | Low |
+| **TOTAL** | **7** | **210** | - |
+
+This stays well under the 2,500/month limit with 2,290 calls remaining for on-demand refreshes.
 
 ---
 
@@ -148,79 +140,107 @@ type SteelGrade =
 
 | File | Purpose |
 |------|---------|
-| `src/components/inventory/components/ScrapMetalSpreadsheet.tsx` | Excel-like table component |
-| `src/components/inventory/components/WeightEstimator.tsx` | Dimensional weight calculator |
-| `src/components/inventory/components/LivePriceIndicator.tsx` | Price source badge/indicator |
-| `src/components/inventory/hooks/useScrapMetalPricing.ts` | Hook to fetch/cache live prices |
-| `supabase/functions/scrap-metal-pricing/index.ts` | Edge function for price API |
+| `src/components/inventory/components/PriceTrendSparkline.tsx` | Mini chart showing 7-day price movement |
+| `src/components/inventory/components/MarketVolatilityBanner.tsx` | Warning banner for high volatility periods |
+| `src/components/inventory/components/MarketNewsFeed.tsx` | Collapsible news widget |
+| `src/components/inventory/components/QuoteComparisonCard.tsx` | Historical quote comparison |
+| `src/components/inventory/hooks/useMarketIntelligence.ts` | Hook for fetching/caching market data |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/inventory/types/demolition.types.ts` | Add expanded steel grades, weight estimation types |
-| `src/components/inventory/components/InventoryAIResults.tsx` | Add spreadsheet view toggle for demolition mode |
-| `src/components/inventory/components/DemolitionQuoteGenerator.tsx` | Integrate live pricing and spreadsheet data |
-| `supabase/functions/inventory-ai-analyzer/index.ts` | Update AI prompt with more steel grades |
+| `supabase/functions/scrap-metal-pricing/index.ts` | Add `timeseries`, `fluctuation`, `news`, `ohlc` actions |
+| `supabase/migrations/new_cache_table.sql` | Add `scrap_metal_market_data` table for historical/news cache |
+| `src/components/inventory/components/ScrapMetalSpreadsheet.tsx` | Integrate sparklines and volatility banner |
+| `src/components/inventory/components/LivePriceIndicator.tsx` | Add price change percentage badge |
+| `src/components/inventory/hooks/useScrapMetalPricing.ts` | Add methods for historical data |
 
 ---
 
-## Technical Implementation Details
+## Implementation Priority
 
-### Live Pricing API Strategy
+### Phase 1 (Immediate - High Value)
+1. **Price change indicator** (+/-% badge next to prices)
+2. **7-day sparkline charts** for major metals
+3. Update edge function with `timeseries` action
 
-**Option 1: MetalPriceAPI (Recommended)**
-- Provides copper, aluminum, steel, iron spot prices
-- Free tier: 100 requests/month
-- Prices are commodity-level (need to apply scrap discounts)
+### Phase 2 (Near-term - Medium Value)
+4. **Market volatility banner** warning
+5. **Quote comparison tool** showing 30/90 day comparison
+6. **News feed widget** on dashboard
 
-**Conversion Formula:**
+### Phase 3 (Future - Nice to Have)
+7. **Best/worst case scenario** using OHLC data
+8. **Price alerts** (notify when copper crosses threshold)
+
+---
+
+## Database Schema Addition
+
+```sql
+CREATE TABLE scrap_metal_market_data (
+  id TEXT PRIMARY KEY DEFAULT 'current',
+  
+  -- Time series data (7-day history per metal)
+  timeseries_data JSONB,
+  timeseries_fetched_at TIMESTAMPTZ,
+  
+  -- Fluctuation data  
+  fluctuation_data JSONB,
+  fluctuation_fetched_at TIMESTAMPTZ,
+  
+  -- News data
+  news_data JSONB,
+  news_fetched_at TIMESTAMPTZ,
+  
+  -- OHLC data
+  ohlc_data JSONB,
+  ohlc_fetched_at TIMESTAMPTZ,
+  
+  -- API usage tracking
+  api_calls_today INTEGER DEFAULT 0,
+  last_api_call_date DATE
+);
+```
+
+---
+
+## Technical Details
+
+### Time-Series API Call
+
 ```typescript
-// Scrap prices are typically 60-85% of spot commodity price
-const scrapMultipliers = {
-  copper: { barebrigt: 0.85, number2: 0.75, insulated: 0.45 },
-  aluminum: { clean: 0.70, cast: 0.55 },
-  steel: { hms: 0.65, structural: 0.70 },
-};
+// Fetch 7-day copper price history
+const endDate = new Date();
+endDate.setDate(endDate.getDate() - 1); // Yesterday (API requirement)
+const startDate = new Date();
+startDate.setDate(startDate.getDate() - 8);
 
-const scrapPrice = spotPrice * scrapMultipliers[metal][grade];
+const response = await fetch(
+  `https://metals-api.com/api/timeseries?access_key=${API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU&base=USD`
+);
 ```
 
-**Option 2: Static Regional Averages (Fallback)**
-- Maintain a table of regional scrap prices updated weekly
-- No API dependency
-- User can manually override prices per workspace
+### Fluctuation API Call
 
-### Weight Estimation Flow
+```typescript
+// Get weekly price change
+const response = await fetch(
+  `https://metals-api.com/api/fluctuation?access_key=${API_KEY}&type=last_week&symbols=XCU`
+);
 
-```text
-1. AI Visual Estimate
-   ├── Low confidence → Prompt for dimensions
-   ├── Medium confidence → Show both estimates
-   └── High confidence → Use AI estimate
-
-2. User Input Dimensions (optional)
-   ├── Material type selected
-   ├── Dimension fields shown
-   └── Calculated weight displayed
-
-3. Manual Override (always available)
-   └── User enters exact weight
+// Response:
+// { change: 0.15, change_pct: 3.2 }
 ```
 
-### Spreadsheet Component Architecture
+### News API Call
 
-```text
-ScrapMetalSpreadsheet
-├── SpreadsheetHeader (sortable columns)
-├── SpreadsheetRow[] (editable cells)
-│   ├── MetalTypeCell (dropdown)
-│   ├── GradeCell (dropdown based on type)
-│   ├── WeightCell (number input)
-│   ├── PriceCell (auto-calculated, overridable)
-│   └── ActionCell (edit, delete, calculator)
-├── SpreadsheetFooter (totals, grand total)
-└── QuoteControls (margin, labor, export)
+```typescript
+// Get metal news with keyword filter
+const response = await fetch(
+  `https://metals-api.com/api/get-news?access_key=${API_KEY}&keyword=copper&page=1`
+);
 ```
 
 ---
@@ -228,38 +248,39 @@ ScrapMetalSpreadsheet
 ## User Experience Flow
 
 ```text
-1. User enables Demolition Mode and scans items
-2. AI analyzes and returns scrap analysis data
-3. Results shown in BOTH:
-   - Card view (existing) for quick overview
-   - Spreadsheet view (new) for detailed editing
-4. User can toggle between views
-5. In spreadsheet view:
-   - Adjust weights using estimator
-   - See live price indicators
-   - Edit grades/types inline
-   - View running totals
-6. Generate quote from spreadsheet data
+1. User opens Inventory → Demolition Mode
+
+2. Spreadsheet loads with:
+   - Live prices (with cache indicator)
+   - Sparkline trends next to each metal type
+   - Price change badges (+2.1% this week)
+
+3. If high volatility detected:
+   - Yellow warning banner at top
+   - "Lock in prices quickly" message
+
+4. Quote Summary shows:
+   - Today's calculated value
+   - Comparison to 30/90 days ago
+   - Market timing indicator
+
+5. Optional: Expand "Market News" section
+   - Shows latest metal market articles
+   - Links to sources
 ```
 
 ---
 
-## Database Changes
+## Summary
 
-No schema changes required. Existing columns in `inventory_items` already support:
-- `metal_type`, `metal_grade`
-- `estimated_weight`, `weight_unit`
-- `scrap_price_per_unit`
+| Enhancement | API Endpoint | Calls/Day | User Value |
+|-------------|--------------|-----------|------------|
+| Price trend sparklines | Time-Series | 1 | See if prices trending up/down |
+| Change indicators | Fluctuation | 1 | Know if good time to sell |
+| Market news | News | 1 | Stay informed on market |
+| Quote comparison | Historical LME | 0* | Compare to historical quotes |
+| Volatility warning | Fluctuation | 0* | Urgency awareness |
 
----
+*Reuses data from other calls
 
-## Summary of Enhancements
-
-| Feature | Enhancement |
-|---------|-------------|
-| **Display** | Excel-like spreadsheet with sortable/editable columns |
-| **Pricing** | Live API integration with fallback to cached/static |
-| **Weight** | Dimensional calculator + AI estimate + manual override |
-| **Steel Types** | Expanded from 2 to 12+ grades |
-| **Export** | CSV/PDF export from spreadsheet |
-| **Quotes** | Margin calculator integrated with spreadsheet |
+Total additional API calls: **3/day** (keeping well under budget)
