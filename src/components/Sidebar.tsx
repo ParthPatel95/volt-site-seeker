@@ -75,7 +75,7 @@ const navSections: NavSection[] = [
     title: 'Operations',
     items: [
       { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
-      { path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'feature.inventory' },
+      { path: '/app/inventory', icon: Package, label: 'Inventory', permission: '' },
     ]
   },
   {

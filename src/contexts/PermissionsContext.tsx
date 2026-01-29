@@ -46,6 +46,8 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   const hasPermission = useCallback((permission: string) => {
+    // Empty permission means always allowed
+    if (!permission) return true;
     // Admin always has all permissions
     if (user?.email === 'admin@voltscout.com') return true;
     return permissions.includes(permission);
