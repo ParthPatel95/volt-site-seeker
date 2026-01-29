@@ -2,10 +2,11 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Wifi, WifiOff, Clock, AlertCircle } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { PriceSource } from '../types/demolition.types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { PriceChangeBadge } from './PriceTrendSparkline';
 
 interface LivePriceIndicatorProps {
   source: PriceSource;
@@ -14,6 +15,7 @@ interface LivePriceIndicatorProps {
   onRefresh?: () => void;
   className?: string;
   compact?: boolean;
+  priceChangePercent?: number; // Add price change from market data
 }
 
 const SOURCE_CONFIG: Record<PriceSource, {
@@ -53,6 +55,7 @@ export function LivePriceIndicator({
   onRefresh,
   className,
   compact = false,
+  priceChangePercent,
 }: LivePriceIndicatorProps) {
   const config = SOURCE_CONFIG[source];
   const Icon = config.icon;
@@ -71,6 +74,9 @@ export function LivePriceIndicator({
               <span className={cn("text-xs font-medium", config.color)}>
                 {config.label}
               </span>
+              {priceChangePercent !== undefined && (
+                <PriceChangeBadge changePercent={priceChangePercent} />
+              )}
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
@@ -79,6 +85,11 @@ export function LivePriceIndicator({
               {lastUpdated && (
                 <p className="text-xs text-muted-foreground">
                   Last updated: {formattedTime}
+                </p>
+              )}
+              {priceChangePercent !== undefined && (
+                <p className="text-xs text-muted-foreground">
+                  7-day change: {priceChangePercent > 0 ? '+' : ''}{priceChangePercent.toFixed(1)}%
                 </p>
               )}
             </div>

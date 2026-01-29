@@ -6437,6 +6437,54 @@ export type Database = {
         }
         Relationships: []
       }
+      scrap_metal_market_data: {
+        Row: {
+          api_calls_today: number | null
+          created_at: string
+          fluctuation_data: Json | null
+          fluctuation_fetched_at: string | null
+          id: string
+          last_api_call_date: string | null
+          news_data: Json | null
+          news_fetched_at: string | null
+          ohlc_data: Json | null
+          ohlc_fetched_at: string | null
+          timeseries_data: Json | null
+          timeseries_fetched_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_calls_today?: number | null
+          created_at?: string
+          fluctuation_data?: Json | null
+          fluctuation_fetched_at?: string | null
+          id?: string
+          last_api_call_date?: string | null
+          news_data?: Json | null
+          news_fetched_at?: string | null
+          ohlc_data?: Json | null
+          ohlc_fetched_at?: string | null
+          timeseries_data?: Json | null
+          timeseries_fetched_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_calls_today?: number | null
+          created_at?: string
+          fluctuation_data?: Json | null
+          fluctuation_fetched_at?: string | null
+          id?: string
+          last_api_call_date?: string | null
+          news_data?: Json | null
+          news_fetched_at?: string | null
+          ohlc_data?: Json | null
+          ohlc_fetched_at?: string | null
+          timeseries_data?: Json | null
+          timeseries_fetched_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scrap_metal_price_cache: {
         Row: {
           api_calls_today: number | null

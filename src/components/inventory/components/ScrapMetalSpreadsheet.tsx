@@ -37,6 +37,11 @@ import {
 } from '../types/demolition.types';
 import { LivePriceIndicator, PriceSourceBadge } from './LivePriceIndicator';
 import { useScrapMetalPricing } from '../hooks/useScrapMetalPricing';
+import { useMarketIntelligence } from '../hooks/useMarketIntelligence';
+import { MarketVolatilityBanner } from './MarketVolatilityBanner';
+import { MarketNewsFeed } from './MarketNewsFeed';
+import { QuoteComparisonCard } from './QuoteComparisonCard';
+import { PriceTrendSparkline } from './PriceTrendSparkline';
 import { cn } from '@/lib/utils';
 import { AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 
@@ -61,6 +66,8 @@ export function ScrapMetalSpreadsheet({
   className,
 }: ScrapMetalSpreadsheetProps) {
   const { prices, source, lastUpdated, isLoading, refreshPrices, getPriceForMetal } = useScrapMetalPricing();
+  const marketIntelligence = useMarketIntelligence();
+  const [dismissedVolatility, setDismissedVolatility] = useState(false);
   
   const [sortField, setSortField] = useState<SortField>('totalValue');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -144,6 +151,33 @@ export function ScrapMetalSpreadsheet({
       withMargin,
     };
   }, [sortedRows, includeLaborCosts, laborCost, marginPercent]);
+
+  // Create metal breakdown for quote comparison
+  const metalBreakdown = useMemo(() => {
+    const breakdown: { metalType: string; weight: number; currentPrice: number }[] = [];
+    
+    for (const row of sortedRows) {
+      const existing = breakdown.find(b => b.metalType === row.metalType);
+      if (existing) {
+        existing.weight += row.weight;
+      } else {
+        breakdown.push({
+          metalType: row.metalType,
+          weight: row.weight,
+          currentPrice: row.pricePerUnit,
+        });
+      }
+    }
+    
+    return breakdown;
+  }, [sortedRows]);
+
+  // Calculate average price change for the indicator
+  const averagePriceChange = useMemo(() => {
+    const changes = Object.values(marketIntelligence.trends).map(t => t.changePercent);
+    if (changes.length === 0) return undefined;
+    return changes.reduce((sum, c) => sum + c, 0) / changes.length;
+  }, [marketIntelligence.trends]);
 
   // Handle sort
   const handleSort = (field: SortField) => {
@@ -244,6 +278,7 @@ export function ScrapMetalSpreadsheet({
               lastUpdated={lastUpdated}
               isLoading={isLoading}
               onRefresh={refreshPrices}
+              priceChangePercent={averagePriceChange}
               compact
             />
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
@@ -255,6 +290,17 @@ export function ScrapMetalSpreadsheet({
       </CardHeader>
       
       <CardContent className="space-y-4 p-0">
+        {/* Market Volatility Warning */}
+        {!dismissedVolatility && marketIntelligence.isHighVolatility() && (
+          <div className="px-4 pt-2">
+            <MarketVolatilityBanner
+              volatileMetals={marketIntelligence.getVolatileMetals()}
+              maxVolatility={marketIntelligence.getMaxVolatility()}
+              onDismiss={() => setDismissedVolatility(true)}
+            />
+          </div>
+        )}
+
         <ScrollArea className="h-[400px]">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-10">
@@ -543,6 +589,21 @@ export function ScrapMetalSpreadsheet({
               ${totals.withMargin.toFixed(2)}
             </span>
           </div>
+
+          {/* Market Intelligence Section */}
+          {Object.keys(marketIntelligence.trends).length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+              <QuoteComparisonCard
+                currentQuoteValue={totals.grandTotal}
+                trends={marketIntelligence.trends}
+                metalBreakdown={metalBreakdown}
+              />
+              <MarketNewsFeed
+                news={marketIntelligence.news}
+                isLoading={marketIntelligence.isLoading}
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
