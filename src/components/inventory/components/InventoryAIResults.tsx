@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Package, 
   Hash, 
@@ -15,12 +16,15 @@ import {
   TrendingUp,
   FileText,
   Eye,
-  HardHat
+  HardHat,
+  LayoutGrid,
+  Table as TableIcon
 } from 'lucide-react';
 import { AIAnalysisResult } from '../hooks/useInventoryAIAnalysis';
 import { ScrapMetalResults } from './ScrapMetalResults';
 import { SalvageAssessment } from './SalvageAssessment';
 import { HazmatWarning } from './HazmatWarning';
+import { ScrapMetalSpreadsheet } from './ScrapMetalSpreadsheet';
 import { cn } from '@/lib/utils';
 
 interface InventoryAIResultsProps {
@@ -52,11 +56,15 @@ export function InventoryAIResults({
   onAccept,
   onRetake,
 }: InventoryAIResultsProps) {
+  const [viewMode, setViewMode] = useState<'card' | 'spreadsheet'>('card');
+  
   const midValue = (result.marketValue.lowEstimate + result.marketValue.highEstimate) / 2;
   const totalValue = midValue * result.quantity.count;
   
   const identificationConfidence = result.identificationConfidence || result.quantity.confidence;
   const confidenceConfig = CONFIDENCE_CONFIG[identificationConfidence];
+  
+  const isDemolitionMode = !!(result.scrapAnalysis || result.salvageAssessment || result.hazmatFlags);
 
   return (
     <div className="p-4 space-y-4">
@@ -283,73 +291,107 @@ export function InventoryAIResults({
       )}
 
       {/* Demolition Mode Section */}
-      {(result.scrapAnalysis || result.salvageAssessment || result.hazmatFlags) && (
+      {isDemolitionMode && (
         <>
           <Separator />
           
-          <div className="flex items-center gap-2 text-sm font-medium text-amber-600">
-            <HardHat className="w-4 h-4" />
-            <span>Demolition Analysis</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-amber-600">
+              <HardHat className="w-4 h-4" />
+              <span>Demolition Analysis</span>
+            </div>
+            
+            {/* View Toggle */}
+            <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+              <Button
+                variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setViewMode('card')}
+              >
+                <LayoutGrid className="w-3.5 h-3.5 mr-1" />
+                Card
+              </Button>
+              <Button
+                variant={viewMode === 'spreadsheet' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setViewMode('spreadsheet')}
+              >
+                <TableIcon className="w-3.5 h-3.5 mr-1" />
+                Table
+              </Button>
+            </div>
           </div>
           
-          {/* Hazmat Warning - Show first if present */}
-          {result.hazmatFlags && (
-            result.hazmatFlags.hasAsbestos || 
-            result.hazmatFlags.hasLeadPaint || 
-            result.hazmatFlags.hasPCBs || 
-            result.hazmatFlags.hasRefrigerants ||
-            (result.hazmatFlags.otherHazards && result.hazmatFlags.otherHazards.length > 0)
-          ) && (
-            <HazmatWarning hazmatFlags={result.hazmatFlags} />
-          )}
-          
-          {/* Scrap Metal Analysis */}
-          {result.scrapAnalysis && (
-            <ScrapMetalResults scrapAnalysis={result.scrapAnalysis} />
-          )}
-          
-          {/* Salvage Assessment */}
-          {result.salvageAssessment && (
-            <SalvageAssessment 
-              salvageAssessment={result.salvageAssessment}
-              scrapAnalysis={result.scrapAnalysis}
-              itemName={result.item.name}
-              condition={result.condition}
+          {viewMode === 'card' ? (
+            <>
+              {/* Hazmat Warning - Show first if present */}
+              {result.hazmatFlags && (
+                result.hazmatFlags.hasAsbestos || 
+                result.hazmatFlags.hasLeadPaint || 
+                result.hazmatFlags.hasPCBs || 
+                result.hazmatFlags.hasRefrigerants ||
+                (result.hazmatFlags.otherHazards && result.hazmatFlags.otherHazards.length > 0)
+              ) && (
+                <HazmatWarning hazmatFlags={result.hazmatFlags} />
+              )}
+              
+              {/* Scrap Metal Analysis */}
+              {result.scrapAnalysis && (
+                <ScrapMetalResults scrapAnalysis={result.scrapAnalysis} />
+              )}
+              
+              {/* Salvage Assessment */}
+              {result.salvageAssessment && (
+                <SalvageAssessment 
+                  salvageAssessment={result.salvageAssessment}
+                  scrapAnalysis={result.scrapAnalysis}
+                  itemName={result.item.name}
+                  condition={result.condition}
+                />
+              )}
+              
+              {/* Removal Details */}
+              {result.demolitionDetails && (
+                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Package className="w-4 h-4 text-muted-foreground" />
+                    <span>Removal Details</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Complexity: </span>
+                      <Badge variant="outline" className="capitalize">
+                        {result.demolitionDetails.removalComplexity}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Labor: </span>
+                      <span className="font-medium">{result.demolitionDetails.laborHoursEstimate} hrs</span>
+                    </div>
+                    {result.demolitionDetails.equipmentNeeded?.length > 0 && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Equipment: </span>
+                        <span>{result.demolitionDetails.equipmentNeeded.join(', ')}</span>
+                      </div>
+                    )}
+                    {result.demolitionDetails.accessibilityNotes && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Notes: </span>
+                        <span>{result.demolitionDetails.accessibilityNotes}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Spreadsheet View */
+            <ScrapMetalSpreadsheet 
+              items={[result]}
+              className="border-0 shadow-none"
             />
-          )}
-          
-          {/* Removal Details */}
-          {result.demolitionDetails && (
-            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Package className="w-4 h-4 text-muted-foreground" />
-                <span>Removal Details</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Complexity: </span>
-                  <Badge variant="outline" className="capitalize">
-                    {result.demolitionDetails.removalComplexity}
-                  </Badge>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Labor: </span>
-                  <span className="font-medium">{result.demolitionDetails.laborHoursEstimate} hrs</span>
-                </div>
-                {result.demolitionDetails.equipmentNeeded?.length > 0 && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Equipment: </span>
-                    <span>{result.demolitionDetails.equipmentNeeded.join(', ')}</span>
-                  </div>
-                )}
-                {result.demolitionDetails.accessibilityNotes && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Notes: </span>
-                    <span>{result.demolitionDetails.accessibilityNotes}</span>
-                  </div>
-                )}
-              </div>
-            </div>
           )}
         </>
       )}

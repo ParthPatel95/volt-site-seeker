@@ -289,3 +289,6 @@ verify_jwt = false
 
 [functions.aeso-telegram-alerts]
 verify_jwt = false
+
+[functions.scrap-metal-pricing]
+verify_jwt = false
