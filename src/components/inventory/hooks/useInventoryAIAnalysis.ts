@@ -1,6 +1,12 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  ScrapAnalysis, 
+  SalvageAssessment, 
+  HazmatFlags, 
+  DemolitionDetails 
+} from '../types/demolition.types';
 
 export interface ExtractedText {
   modelNumber?: string;
@@ -37,6 +43,11 @@ export interface AIAnalysisResult {
   };
   extractedText?: ExtractedText;
   identificationConfidence: 'high' | 'medium' | 'low';
+  // Demolition-specific fields
+  scrapAnalysis?: ScrapAnalysis;
+  salvageAssessment?: SalvageAssessment;
+  hazmatFlags?: HazmatFlags;
+  demolitionDetails?: DemolitionDetails;
 }
 
 export interface MultiItemAnalysisResult {
@@ -45,8 +56,8 @@ export interface MultiItemAnalysisResult {
 }
 
 interface UseInventoryAIAnalysisResult {
-  analyzeImage: (images: string | string[], existingCategories?: string[]) => Promise<AIAnalysisResult | null>;
-  analyzeMultipleItems: (images: string | string[], existingCategories?: string[]) => Promise<MultiItemAnalysisResult | null>;
+  analyzeImage: (images: string | string[], existingCategories?: string[], demolitionMode?: boolean) => Promise<AIAnalysisResult | null>;
+  analyzeMultipleItems: (images: string | string[], existingCategories?: string[], demolitionMode?: boolean) => Promise<MultiItemAnalysisResult | null>;
   isAnalyzing: boolean;
   analysisResult: AIAnalysisResult | null;
   multiItemResults: MultiItemAnalysisResult | null;
@@ -87,7 +98,8 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
   // Single item analysis (backward compatible)
   const analyzeImage = useCallback(async (
     images: string | string[], 
-    existingCategories?: string[]
+    existingCategories?: string[],
+    demolitionMode: boolean = false
   ): Promise<AIAnalysisResult | null> => {
     setIsAnalyzing(true);
     setError(null);
@@ -98,8 +110,8 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
       const imageArray = Array.isArray(images) ? images : [images];
       
       const body = imageArray.length === 1 
-        ? { imageBase64: imageArray[0], existingCategories, detectMultipleItems: false }
-        : { images: imageArray, existingCategories, detectMultipleItems: false };
+        ? { imageBase64: imageArray[0], existingCategories, detectMultipleItems: false, demolitionMode }
+        : { images: imageArray, existingCategories, detectMultipleItems: false, demolitionMode };
 
       const { data, error: fnError } = await supabase.functions.invoke('inventory-ai-analyzer', {
         body
@@ -133,7 +145,8 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
   // Multi-item analysis
   const analyzeMultipleItems = useCallback(async (
     images: string | string[], 
-    existingCategories?: string[]
+    existingCategories?: string[],
+    demolitionMode: boolean = false
   ): Promise<MultiItemAnalysisResult | null> => {
     setIsAnalyzing(true);
     setError(null);
@@ -144,8 +157,8 @@ export function useInventoryAIAnalysis(): UseInventoryAIAnalysisResult {
       const imageArray = Array.isArray(images) ? images : [images];
       
       const body = imageArray.length === 1 
-        ? { imageBase64: imageArray[0], existingCategories, detectMultipleItems: true }
-        : { images: imageArray, existingCategories, detectMultipleItems: true };
+        ? { imageBase64: imageArray[0], existingCategories, detectMultipleItems: true, demolitionMode }
+        : { images: imageArray, existingCategories, detectMultipleItems: true, demolitionMode };
 
       const { data, error: fnError } = await supabase.functions.invoke('inventory-ai-analyzer', {
         body

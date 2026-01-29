@@ -4769,11 +4769,18 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          estimated_weight: number | null
           expiry_date: string | null
+          has_hazmat_flags: boolean | null
+          hazmat_details: Json | null
           id: string
+          is_salvageable: boolean | null
+          labor_hours_estimate: number | null
           last_counted_date: string | null
           location: string | null
           max_stock_level: number | null
+          metal_grade: string | null
+          metal_type: string | null
           min_stock_level: number | null
           name: string
           notes: string | null
@@ -4783,6 +4790,9 @@ export type Database = {
           qr_code: string | null
           quantity: number
           received_date: string | null
+          removal_complexity: string | null
+          salvage_value: number | null
+          scrap_price_per_unit: number | null
           sku: string | null
           status: string | null
           storage_zone: string | null
@@ -4792,6 +4802,7 @@ export type Database = {
           unit: string | null
           unit_cost: number | null
           updated_at: string
+          weight_unit: string | null
           workspace_id: string | null
         }
         Insert: {
@@ -4803,11 +4814,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          estimated_weight?: number | null
           expiry_date?: string | null
+          has_hazmat_flags?: boolean | null
+          hazmat_details?: Json | null
           id?: string
+          is_salvageable?: boolean | null
+          labor_hours_estimate?: number | null
           last_counted_date?: string | null
           location?: string | null
           max_stock_level?: number | null
+          metal_grade?: string | null
+          metal_type?: string | null
           min_stock_level?: number | null
           name: string
           notes?: string | null
@@ -4817,6 +4835,9 @@ export type Database = {
           qr_code?: string | null
           quantity?: number
           received_date?: string | null
+          removal_complexity?: string | null
+          salvage_value?: number | null
+          scrap_price_per_unit?: number | null
           sku?: string | null
           status?: string | null
           storage_zone?: string | null
@@ -4826,6 +4847,7 @@ export type Database = {
           unit?: string | null
           unit_cost?: number | null
           updated_at?: string
+          weight_unit?: string | null
           workspace_id?: string | null
         }
         Update: {
@@ -4837,11 +4859,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          estimated_weight?: number | null
           expiry_date?: string | null
+          has_hazmat_flags?: boolean | null
+          hazmat_details?: Json | null
           id?: string
+          is_salvageable?: boolean | null
+          labor_hours_estimate?: number | null
           last_counted_date?: string | null
           location?: string | null
           max_stock_level?: number | null
+          metal_grade?: string | null
+          metal_type?: string | null
           min_stock_level?: number | null
           name?: string
           notes?: string | null
@@ -4851,6 +4880,9 @@ export type Database = {
           qr_code?: string | null
           quantity?: number
           received_date?: string | null
+          removal_complexity?: string | null
+          salvage_value?: number | null
+          scrap_price_per_unit?: number | null
           sku?: string | null
           status?: string | null
           storage_zone?: string | null
@@ -4860,6 +4892,7 @@ export type Database = {
           unit?: string | null
           unit_cost?: number | null
           updated_at?: string
+          weight_unit?: string | null
           workspace_id?: string | null
         }
         Relationships: [
@@ -4978,6 +5011,7 @@ export type Database = {
           name: string
           updated_at: string | null
           user_id: string
+          workspace_type: string | null
         }
         Insert: {
           created_at?: string | null
@@ -4987,6 +5021,7 @@ export type Database = {
           name: string
           updated_at?: string | null
           user_id: string
+          workspace_type?: string | null
         }
         Update: {
           created_at?: string | null
@@ -4996,6 +5031,7 @@ export type Database = {
           name?: string
           updated_at?: string | null
           user_id?: string
+          workspace_type?: string | null
         }
         Relationships: []
       }

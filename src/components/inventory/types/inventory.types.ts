@@ -72,6 +72,26 @@ export interface InventoryItem {
   status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'on_order' | 'discontinued';
   notes?: string;
   
+  // Demolition/Scrap fields
+  metal_type?: 'copper' | 'aluminum' | 'steel' | 'brass' | 'stainless' | 'iron' | 'mixed' | 'unknown';
+  metal_grade?: string;
+  estimated_weight?: number;
+  weight_unit?: 'lbs' | 'kg' | 'tons';
+  scrap_price_per_unit?: number;
+  is_salvageable?: boolean;
+  salvage_value?: number;
+  has_hazmat_flags?: boolean;
+  hazmat_details?: {
+    hasAsbestos?: boolean;
+    hasLeadPaint?: boolean;
+    hasPCBs?: boolean;
+    hasRefrigerants?: boolean;
+    otherHazards?: string[];
+    disposalNotes?: string;
+  };
+  removal_complexity?: 'simple' | 'moderate' | 'complex';
+  labor_hours_estimate?: number;
+  
   // Audit
   created_by?: string;
   created_at: string;
