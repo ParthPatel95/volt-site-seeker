@@ -1,229 +1,288 @@
 
-# Plan: Enhance Grid Alerts Tab with Auto-Refresh & Data Management
+# Plan: Make Inventory a Standalone Feature Outside Build Management
 
-## Current State Analysis
+## Current Architecture Analysis
 
-### What Exists
-| Component | Current Behavior |
-|-----------|-----------------|
-| `useAESOGridAlerts` hook | Manual fetch only, no auto-refresh |
-| `aeso-grid-alerts` edge function | Fetches from AESO RSS feed, stores in `aeso_grid_alerts` table |
-| `GridAlertStatusCard` component | Displays alerts with status, timeline, and statistics |
-| `TwelveCPAnalyticsTab` | Renders Grid Alerts tab but only fetches on mount |
-| Database | Only 2 records from Sept 2025, no cleanup logic |
+### Current State
+| Aspect | Current |
+|--------|---------|
+| **Location** | `src/components/voltbuild/inventory/` |
+| **Access Path** | VoltScout → Build Management → Inventory Tab |
+| **Data Model** | Tied to `voltbuild_projects` via `project_id` FK |
+| **Route** | Part of `/app/build` (VoltBuild module) |
 
-### Issues Identified
-1. **No auto-refresh** - Alerts only fetched when user manually clicks refresh or tab mounts
-2. **Stale data** - Old alerts (from months ago) still showing as "active"
-3. **No periodic polling** - Users must manually refresh to see new alerts
-4. **No data cleanup** - Old/expired alerts accumulate in database
-5. **No countdown to next refresh** - Users don't know when data will update
+### Key Files
+- **Main Component**: `VoltInventoryTab.tsx` (600 lines)
+- **Components**: 24 UI components in `components/` directory
+- **Hooks**: 8 hooks for data management
+- **Types**: Type definitions in `types/` directory
+- **Edge Function**: `inventory-ai-analyzer/` for AI-powered item detection
 
 ---
 
-## Technical Implementation
+## Proposed Architecture
 
-### 1. Update `useAESOGridAlerts.ts` Hook
+### New Structure
+| Aspect | New |
+|--------|-----|
+| **Location** | `src/components/inventory/` (standalone directory) |
+| **Access Path** | VoltScout → Operations → Inventory (direct sidebar link) |
+| **Data Model** | New `inventory_workspaces` table (user-level, no project dependency) |
+| **Route** | `/app/inventory` (own route in VoltScout) |
 
-Add auto-refresh functionality with 15-minute polling interval:
+---
 
-```typescript
-export function useAESOGridAlerts(autoRefreshInterval: number = 15 * 60 * 1000) {
-  // ... existing state ...
-  const [nextRefresh, setNextRefresh] = useState<Date | null>(null);
-  
-  // Auto-fetch on mount and every 15 minutes
-  useEffect(() => {
-    fetchGridAlerts();
-    
-    const interval = setInterval(() => {
-      fetchGridAlerts();
-    }, autoRefreshInterval);
-    
-    // Update next refresh countdown
-    setNextRefresh(new Date(Date.now() + autoRefreshInterval));
-    
-    return () => clearInterval(interval);
-  }, [autoRefreshInterval]);
-  
-  // Return nextRefresh for UI countdown
-  return {
-    // ... existing returns ...
-    nextRefresh,
-    autoRefreshInterval
-  };
-}
-```
+## Implementation Strategy
 
-### 2. Update Edge Function `aeso-grid-alerts/index.ts`
+### Option 1: Full Decoupling (Recommended)
 
-Add logic to mark old alerts as expired and clean up stale data:
-
-```typescript
-// After fetching RSS feed, mark alerts older than 7 days as expired
-const sevenDaysAgo = new Date();
-sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-await supabase
-  .from('aeso_grid_alerts')
-  .update({ 
-    status: 'expired',
-    updated_at: new Date().toISOString()
-  })
-  .eq('status', 'active')
-  .lt('published_at', sevenDaysAgo.toISOString());
-
-// Delete alerts older than 90 days to prevent database bloat
-const ninetyDaysAgo = new Date();
-ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-
-await supabase
-  .from('aeso_grid_alerts')
-  .delete()
-  .lt('published_at', ninetyDaysAgo.toISOString());
-```
-
-### 3. Enhance `GridAlertStatusCard.tsx` Component
-
-Add visual enhancements for the auto-refresh feature:
+Create a completely standalone inventory system with its own workspace concept:
 
 ```text
-+--------------------------------------------------------------------+
-| Grid Status: NORMAL                                 [Refresh]      |
-| Adequate reserves: 15.2% margin above minimum                      |
-|                                                                    |
-| ⏱️ Next auto-refresh in: 14:23                                     |
-| 📡 Source: AESO Grid Alert RSS Feed                                |
-+--------------------------------------------------------------------+
+src/components/inventory/
+├── InventoryPage.tsx              (Main page component)
+├── InventoryLayout.tsx            (Layout with sidebar)
+├── components/                    (Copied from voltbuild/inventory)
+│   ├── InventoryDashboard.tsx
+│   ├── InventoryItemCard.tsx
+│   ├── InventoryAddDialog.tsx
+│   └── ... (all 24 components)
+├── hooks/
+│   ├── useInventoryWorkspaces.ts  (New: manage user workspaces)
+│   ├── useInventoryItems.ts       (Modified: use workspace_id)
+│   ├── useInventoryCategories.ts
+│   └── ... (all 8 hooks)
+├── types/
+│   ├── inventory.types.ts
+│   └── group.types.ts
+└── index.ts
 ```
 
-**New Features:**
-- Countdown timer showing time until next auto-refresh
-- Visual indicator when refresh is in progress
-- "Last updated X minutes ago" with relative time
-- Badge showing auto-refresh is enabled
+### New Database Tables
 
-### 4. Update `TwelveCPAnalyticsTab.tsx`
+```text
+inventory_workspaces
+├── id (uuid, PK)
+├── user_id (uuid, FK → auth.users)
+├── name (text)
+├── description (text, nullable)
+├── icon (text, nullable)
+├── created_at (timestamptz)
+└── updated_at (timestamptz)
 
-Remove manual `useEffect` fetch since hook now handles it:
+inventory_items (modified)
+├── project_id → workspace_id (migration)
+└── ... (all other fields unchanged)
 
-```typescript
-// Before:
-useEffect(() => {
-  fetchGridAlerts();
-}, []);
+inventory_categories (modified)
+├── project_id → workspace_id (migration)
+└── ... (all other fields unchanged)
 
-// After: Remove - hook handles auto-fetch internally
+inventory_groups (modified)
+├── project_id → workspace_id (migration)
+└── ... (all other fields unchanged)
+
+inventory_transactions (modified)
+├── project_id → workspace_id (migration)
+└── ... (all other fields unchanged)
+
+inventory_group_items (unchanged - references by group_id and item_id)
 ```
 
-### 5. Add Countdown Timer Component
+### Option 2: Dual-Mode (Keep Both)
 
-Create a reusable countdown component for next refresh:
+Keep inventory in VoltBuild for project-specific use AND add standalone mode:
+
+- Add `workspace_id` as nullable alongside `project_id`
+- Inventory can work with either a project or a standalone workspace
+- More complex but preserves existing functionality
+
+---
+
+## Recommended Approach: Option 1 (Full Decoupling)
+
+### Phase 1: File Structure Migration
+
+**Create new directory structure:**
+```text
+src/components/inventory/           (new standalone feature)
+src/pages/Inventory.tsx             (new page wrapper)
+```
+
+**Move and refactor files:**
+| From | To |
+|------|-----|
+| `voltbuild/inventory/VoltInventoryTab.tsx` | `inventory/InventoryPage.tsx` |
+| `voltbuild/inventory/components/*` | `inventory/components/*` |
+| `voltbuild/inventory/hooks/*` | `inventory/hooks/*` |
+| `voltbuild/inventory/types/*` | `inventory/types/*` |
+
+### Phase 2: Database Migration
+
+Create migration to rename `project_id` to `workspace_id`:
+
+```sql
+-- Create workspaces table
+CREATE TABLE inventory_workspaces (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT DEFAULT 'Package',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add RLS policies
+ALTER TABLE inventory_workspaces ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own workspaces" ON inventory_workspaces
+  FOR SELECT USING (user_id = auth.uid());
+  
+CREATE POLICY "Users can create workspaces" ON inventory_workspaces
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own workspaces" ON inventory_workspaces
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY "Users can delete own workspaces" ON inventory_workspaces
+  FOR DELETE USING (user_id = auth.uid());
+
+-- Add workspace_id to inventory tables (nullable for migration)
+ALTER TABLE inventory_items ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
+ALTER TABLE inventory_categories ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
+ALTER TABLE inventory_groups ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
+ALTER TABLE inventory_transactions ADD COLUMN workspace_id UUID REFERENCES inventory_workspaces(id) ON DELETE CASCADE;
+```
+
+### Phase 3: Update Hooks
+
+Modify all inventory hooks to use `workspace_id` instead of `project_id`:
 
 ```typescript
-function RefreshCountdown({ nextRefresh, isLoading }: { nextRefresh: Date | null, isLoading: boolean }) {
-  const [timeLeft, setTimeLeft] = useState('');
-  
-  useEffect(() => {
-    if (!nextRefresh) return;
-    
-    const tick = () => {
-      const diff = nextRefresh.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft('Refreshing...');
-        return;
-      }
-      const mins = Math.floor(diff / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${mins}:${secs.toString().padStart(2, '0')}`);
-    };
-    
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [nextRefresh]);
-  
-  return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <Clock className="w-3 h-3" />
-      <span>Auto-refresh: {isLoading ? 'Updating...' : timeLeft}</span>
-    </div>
-  );
+// Before (useInventoryItems.ts)
+export function useInventoryItems(projectId: string | null, filters?: InventoryFilters)
+
+// After
+export function useInventoryItems(workspaceId: string | null, filters?: InventoryFilters)
+```
+
+### Phase 4: Create New Entry Points
+
+**New page:** `src/pages/Inventory.tsx`
+```typescript
+import { InventoryPage } from '@/components/inventory/InventoryPage';
+
+export default function Inventory() {
+  return <InventoryPage />;
 }
 ```
 
+**New layout:** `src/components/inventory/InventoryLayout.tsx`
+- Sidebar with workspaces list
+- Create/edit workspace dialogs
+- Main content area
+
+### Phase 5: Update Routing
+
+**Add to VoltScout.tsx:**
+```typescript
+<Route path="inventory" element={<Inventory />} />
+```
+
+**Add to Sidebar.tsx navigation:**
+```typescript
+{
+  title: 'Operations',
+  items: [
+    { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
+    { path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'feature.inventory' },
+  ]
+}
+```
+
+### Phase 6: Keep VoltBuild Integration (Optional)
+
+Optionally keep a simplified inventory view in VoltBuild that links to the standalone feature:
+- Add "Open Inventory" button in VoltBuild
+- Filter by associated workspace if project has one linked
+
 ---
 
-## Database Cleanup Strategy
+## Files to Create
 
-### Alert Status Lifecycle
-| Status | Definition | Retention |
-|--------|-----------|-----------|
-| `active` | Currently ongoing alert | Indefinite while active |
-| `ended` | Alert has ended (confirmed by AESO) | Keep for 90 days |
-| `expired` | Marked stale by system (>7 days active) | Keep for 90 days |
+| File | Purpose |
+|------|---------|
+| `src/components/inventory/InventoryPage.tsx` | Main standalone page |
+| `src/components/inventory/InventoryLayout.tsx` | Layout with workspace selector |
+| `src/components/inventory/components/WorkspaceSelector.tsx` | Dropdown for workspaces |
+| `src/components/inventory/components/CreateWorkspaceDialog.tsx` | Create new workspace |
+| `src/components/inventory/hooks/useInventoryWorkspaces.ts` | CRUD for workspaces |
+| `src/pages/Inventory.tsx` | Page wrapper for routing |
 
-### Cleanup Rules (executed on each fetch)
-1. Mark alerts as `expired` if:
-   - Status is `active` AND
-   - `published_at` is older than 7 days
-2. Delete alerts if:
-   - `published_at` is older than 90 days
+## Files to Move/Copy
 
-This ensures:
-- Fresh data for recent alerts
-- Historical context for the past 90 days
-- No database bloat from ancient alerts
-
----
+| Source | Destination |
+|--------|-------------|
+| `voltbuild/inventory/components/*` (24 files) | `inventory/components/*` |
+| `voltbuild/inventory/hooks/*` (8 files) | `inventory/hooks/*` |
+| `voltbuild/inventory/types/*` (2 files) | `inventory/types/*` |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useAESOGridAlerts.ts` | Add auto-refresh interval, next refresh countdown, cleanup on unmount |
-| `supabase/functions/aeso-grid-alerts/index.ts` | Add expire logic for old alerts, delete very old alerts |
-| `src/components/aeso/GridAlertStatusCard.tsx` | Add countdown timer, auto-refresh indicator, enhanced status display |
-| `src/components/aeso/TwelveCPAnalyticsTab.tsx` | Remove manual fetch, rely on hook's auto-refresh |
+| `src/pages/VoltScout.tsx` | Add `/inventory` route |
+| `src/components/Sidebar.tsx` | Add Inventory nav item |
+| All inventory hooks | Replace `projectId` with `workspaceId` |
+| All inventory components | Replace project prop with workspace prop |
 
 ---
 
-## User Experience Improvements
+## UI Changes
 
-### Visual Indicators
-| Element | Purpose |
-|---------|---------|
-| Countdown timer | Shows "Next refresh: 14:23" |
-| Pulsing dot | Indicates auto-refresh is active |
-| Loading spinner | Shows when refresh is in progress |
-| Last updated | Shows "Updated 3 min ago" |
+### New Sidebar Structure
+```text
+Operations
+├── Build Management (/app/build)
+└── Inventory (/app/inventory)   ← NEW
+```
 
-### Notification on Alert Change
-When a new alert is detected or status changes:
-- Toast notification: "New grid alert detected: [Title]"
-- Badge pulse animation on tab
+### Inventory Page Layout
+```text
++---------------------------+--------------------------------+
+|     Inventory             |                                |
+|  [+ New Workspace]        |     Inventory Dashboard        |
+|                           |                                |
+|  WORKSPACES               |     [Stats Cards]              |
+|  ○ Main Warehouse         |                                |
+|  ● Shop Tools             |     [Recent Items]             |
+|  ○ Project Supplies       |                                |
+|                           |     [Low Stock Alerts]         |
+|  [Settings]               |                                |
++---------------------------+--------------------------------+
+```
 
 ---
 
-## Edge Cases Handled
+## Migration Path for Existing Data
 
-| Scenario | Behavior |
-|----------|----------|
-| RSS feed down | Use cached database alerts, show error message |
-| No new alerts in RSS | Keep existing database records, don't mark as expired |
-| User manually refreshes | Reset countdown timer, fetch immediately |
-| Tab not visible | Continue polling (data stays fresh on return) |
-| Very old "active" alerts | Auto-marked as expired after 7 days |
+For users who have inventory items tied to VoltBuild projects:
+
+1. Create a workspace for each project that has inventory items
+2. Copy `project_id` to `workspace_id` 
+3. After transition period, make `project_id` nullable
+4. Eventually drop `project_id` column
 
 ---
 
 ## Summary
 
-| Enhancement | Implementation |
-|-------------|---------------|
-| Auto-refresh every 15 mins | `useEffect` with `setInterval` in hook |
-| Countdown timer | Real-time countdown component |
-| Expire old active alerts | Edge function marks alerts >7 days as expired |
-| Delete ancient alerts | Edge function removes alerts >90 days |
-| Loading indicators | Spinner and "Updating..." text during fetch |
-| Visual refresh status | "Last updated X min ago" timestamp |
+| Change | Description |
+|--------|-------------|
+| **New module** | `src/components/inventory/` standalone feature |
+| **New route** | `/app/inventory` with own sidebar navigation |
+| **New table** | `inventory_workspaces` for user-level organization |
+| **Hook updates** | Change from `projectId` to `workspaceId` |
+| **Sidebar update** | Add "Inventory" under Operations section |
+| **Edge function** | No changes needed (already standalone) |
