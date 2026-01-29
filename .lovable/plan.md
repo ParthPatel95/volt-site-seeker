@@ -1,117 +1,265 @@
 
-# Fix: Make Inventory Link Visible in Sidebar
+# Plan: Enhanced Demolition Scanning with Excel-Like Layout & Live Metal Pricing
 
-## Problem Identified
+## Overview
 
-The **Inventory** link IS defined in the sidebar code at line 78:
+Enhance the demolition/scrap metal scanning feature with:
+1. **Excel-like spreadsheet layout** showing all detected metal types with values
+2. **Live metal pricing integration** from a pricing API
+3. **Enhanced weight estimation** with dimensional inputs and material formulas
+4. **Expanded metal type detection** including specific steel grades
+
+---
+
+## Current State
+
+| Feature | Status |
+|---------|--------|
+| Metal type detection | Basic (copper, aluminum, steel, brass, stainless, iron, mixed) |
+| Weight estimation | AI visual estimation only |
+| Pricing | Static hardcoded prices in `demolition.types.ts` |
+| Results display | Card-based individual items |
+| Steel grades | Generic (HMS 1&2, Structural Steel only) |
+
+---
+
+## Proposed Enhancements
+
+### 1. Excel-Like Scrap Metal Spreadsheet Component
+
+Create a new `ScrapMetalSpreadsheet.tsx` component that displays all scanned items in a sortable, editable table format:
+
+```text
++--------------------------------------------------------------------------------------------------+
+| SCRAP METAL BREAKDOWN                                                            [Export CSV]   |
++--------------------------------------------------------------------------------------------------+
+| Item               | Metal Type | Grade      | Weight | Unit | Price/lb | Total Value | Status |
+|--------------------|------------|------------|--------|------|----------|-------------|--------|
+| Copper Pipe Bundle | Copper     | #2 Copper  | 45     | lbs  | $3.40    | $153.00     | [Edit] |
+| HVAC Unit          | Mixed      | Steel/Copper| 280   | lbs  | -        | $85.00      | [Edit] |
+| I-Beam Section     | Steel      | Structural | 1,200  | lbs  | $0.14    | $168.00     | [Edit] |
+| Cast Iron Radiator | Iron       | Cast Iron  | 350    | lbs  | $0.09    | $31.50      | [Edit] |
+| Electrical Wire    | Copper     | Insulated  | 120    | lbs  | $1.85    | $222.00     | [Edit] |
++--------------------|------------|------------|--------|------|----------|-------------|--------+
+| TOTALS                                       | 1,995  | lbs  |          | $659.50     |        |
++--------------------------------------------------------------------------------------------------+
+
+[ ] Include labor costs     Margin: [15%]     QUOTED AMOUNT: $758.43
+```
+
+Features:
+- Inline editing of weight, grade, and price
+- Sortable columns (by metal type, value, weight)
+- Row actions: Edit, Delete, Override price
+- Running totals at bottom
+- Export to CSV/PDF
+- Margin calculator for quotes
+
+### 2. Live Metal Pricing Integration
+
+Create a new edge function and hook to fetch live scrap metal prices:
+
+**Edge Function: `scrap-metal-pricing/index.ts`**
+- Fetches prices from metalpriceapi.com or metals-api.com
+- Caches results for 1 hour (scrap prices don't change rapidly)
+- Fallback to hardcoded defaults if API unavailable
+- Returns prices for all common scrap grades
+
+**Hook: `useScrapMetalPricing.ts`**
 ```typescript
-{ path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'feature.inventory' }
+interface ScrapMetalPrices {
+  copper: { barebrightperLb: number; number2perLb: number; insulatedperLb: number };
+  aluminum: { sheetperLb: number; castperLb: number; extrusionperLb: number };
+  steel: { hms1perLb: number; structuralperLb: number; sheetperLb: number };
+  brass: { yellowperLb: number; redperLb: number };
+  stainless: { ss304perLb: number; ss316perLb: number };
+  iron: { castperLb: number };
+  lastUpdated: string;
+  source: 'live' | 'cached' | 'default';
+}
 ```
 
-However, it's **not visible** because:
-1. The sidebar hides items when `hasPermission(item.permission)` returns `false`
-2. The `feature.inventory` permission doesn't exist in your `user_permissions` table
-3. Only `admin@voltscout.com` gets automatic access to all features
+**Live Price Indicator Badge**
+- Green dot: Live prices (fetched within 1 hour)
+- Yellow dot: Cached prices (1-24 hours old)
+- Gray dot: Default/fallback prices
 
-Looking at your screenshot, you're logged in as "admin" but unless your email is exactly `admin@voltscout.com`, you need explicit permissions.
+### 3. Enhanced Weight Estimation System
 
----
+Add dimensional input fields for more accurate weight estimation:
 
-## Solution Options
+**Weight Calculator Component: `WeightEstimator.tsx`**
 
-### Option A: Grant Inventory Permission to All Users (Quick Fix)
-
-Add a database migration that grants `feature.inventory` permission to existing users and sets it as a default for new users.
-
-**Database Migration:**
-```sql
--- Grant inventory permission to all existing users
-INSERT INTO user_permissions (user_id, permission)
-SELECT id, 'feature.inventory'
-FROM auth.users
-ON CONFLICT DO NOTHING;
+```text
++-------------------------------------------------------+
+| WEIGHT ESTIMATION                                      |
+|-------------------------------------------------------|
+| Material: [Copper Pipe v]                             |
+|                                                       |
+| ○ Visual AI Estimate: 45 lbs (Medium confidence)      |
+|                                                       |
+| ● Calculate from Dimensions:                          |
+|   Pipe Diameter: [1.5] inches                         |
+|   Length: [50] feet                                   |
+|   Wall Thickness: [0.065] inches (Type L)             |
+|                                                       |
+|   Calculated Weight: 52.4 lbs                         |
+|                                                       |
+| [Override Weight: ______ lbs]                         |
++-------------------------------------------------------+
 ```
 
-### Option B: Make Inventory Always Visible (No Permission Check)
+**Weight Formulas by Material Type:**
 
-Change the Inventory nav item to not require a permission, making it visible to all authenticated users.
+| Material | Formula | Reference |
+|----------|---------|-----------|
+| Copper Pipe | (OD - wall) * wall * 0.3225 * length * 12 | lbs per foot |
+| Steel I-Beam | Standard tables by size (W8x10 = 10 lb/ft) | AISC tables |
+| Steel Plate | length x width x thickness x 0.2833 | lbs/cu in |
+| Aluminum Sheet | length x width x thickness x 0.0975 | lbs/cu in |
+| Cast Iron | volume x 0.26 lb/cu in | density |
+| Brass | volume x 0.3 lb/cu in | density |
 
-**Code Change in Sidebar.tsx:**
+### 4. Expanded Steel Type Detection
+
+Update the AI prompt with more granular steel grades:
+
+**New Steel Categories:**
+- **Carbon Steel**: A36, 1018, 1045
+- **Structural**: W-shapes (I-beams), C-channels, angles, tubes
+- **Stainless**: 304, 316, 410, 17-4
+- **Alloy**: 4140, 4340
+- **Tool Steel**: D2, O1, H13
+- **Galvanized**: Hot-dipped, electro-galvanized
+- **Weathering Steel**: Cor-Ten A, Cor-Ten B
+
+**Updated Type Definition:**
 ```typescript
-// Change from requiring permission...
-{ path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'feature.inventory' }
-
-// To using a permission that's always granted or no check
-{ path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'always' }
+type SteelGrade = 
+  | 'HMS 1' | 'HMS 2' | 'Shred Steel'
+  | 'Structural' | 'Plate' | 'Sheet' | 'Rebar'
+  | 'Galvanized' | 'Stainless 304' | 'Stainless 316'
+  | 'Cast Steel' | 'Tool Steel';
 ```
 
-And update the `hasPermission` function to treat `'always'` as returning `true`.
-
-### Option C: Update Permissions Logic for New Features (Recommended)
-
-Make the permissions system treat missing/new feature permissions as **accessible by default** rather than denied. This way new features are visible to all users until explicitly restricted.
-
 ---
 
-## Recommended: Option B (Simplest Fix)
+## Files to Create
 
-Make Inventory visible to all authenticated users by either:
-1. Removing the permission check for Inventory, OR
-2. Adding a fallback that grants access to new features by default
-
----
+| File | Purpose |
+|------|---------|
+| `src/components/inventory/components/ScrapMetalSpreadsheet.tsx` | Excel-like table component |
+| `src/components/inventory/components/WeightEstimator.tsx` | Dimensional weight calculator |
+| `src/components/inventory/components/LivePriceIndicator.tsx` | Price source badge/indicator |
+| `src/components/inventory/hooks/useScrapMetalPricing.ts` | Hook to fetch/cache live prices |
+| `supabase/functions/scrap-metal-pricing/index.ts` | Edge function for price API |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/Sidebar.tsx` | Update Inventory permission to use a universal access pattern |
-| `src/contexts/PermissionsContext.tsx` | Optionally add logic for "always allowed" features |
+| File | Changes |
+|------|---------|
+| `src/components/inventory/types/demolition.types.ts` | Add expanded steel grades, weight estimation types |
+| `src/components/inventory/components/InventoryAIResults.tsx` | Add spreadsheet view toggle for demolition mode |
+| `src/components/inventory/components/DemolitionQuoteGenerator.tsx` | Integrate live pricing and spreadsheet data |
+| `supabase/functions/inventory-ai-analyzer/index.ts` | Update AI prompt with more steel grades |
 
 ---
 
-## Implementation
+## Technical Implementation Details
 
-**Sidebar.tsx** - Change Inventory to be always accessible:
+### Live Pricing API Strategy
 
+**Option 1: MetalPriceAPI (Recommended)**
+- Provides copper, aluminum, steel, iron spot prices
+- Free tier: 100 requests/month
+- Prices are commodity-level (need to apply scrap discounts)
+
+**Conversion Formula:**
 ```typescript
-// Current (line 77-78)
-{
-  title: 'Operations',
-  items: [
-    { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
-    { path: '/app/inventory', icon: Package, label: 'Inventory', permission: 'feature.inventory' },
-  ]
-}
+// Scrap prices are typically 60-85% of spot commodity price
+const scrapMultipliers = {
+  copper: { barebrigt: 0.85, number2: 0.75, insulated: 0.45 },
+  aluminum: { clean: 0.70, cast: 0.55 },
+  steel: { hms: 0.65, structural: 0.70 },
+};
 
-// Updated - Use empty string to skip permission check
-{
-  title: 'Operations',
-  items: [
-    { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
-    { path: '/app/inventory', icon: Package, label: 'Inventory', permission: '' },  // Always visible
-  ]
-}
+const scrapPrice = spotPrice * scrapMultipliers[metal][grade];
 ```
 
-**PermissionsContext.tsx** - Treat empty permission as granted:
+**Option 2: Static Regional Averages (Fallback)**
+- Maintain a table of regional scrap prices updated weekly
+- No API dependency
+- User can manually override prices per workspace
 
-```typescript
-const hasPermission = useCallback((permission: string) => {
-  // Empty permission means always allowed
-  if (!permission) return true;
-  // Admin always has all permissions
-  if (user?.email === 'admin@voltscout.com') return true;
-  return permissions.includes(permission);
-}, [permissions, user?.email]);
+### Weight Estimation Flow
+
+```text
+1. AI Visual Estimate
+   ├── Low confidence → Prompt for dimensions
+   ├── Medium confidence → Show both estimates
+   └── High confidence → Use AI estimate
+
+2. User Input Dimensions (optional)
+   ├── Material type selected
+   ├── Dimension fields shown
+   └── Calculated weight displayed
+
+3. Manual Override (always available)
+   └── User enters exact weight
+```
+
+### Spreadsheet Component Architecture
+
+```text
+ScrapMetalSpreadsheet
+├── SpreadsheetHeader (sortable columns)
+├── SpreadsheetRow[] (editable cells)
+│   ├── MetalTypeCell (dropdown)
+│   ├── GradeCell (dropdown based on type)
+│   ├── WeightCell (number input)
+│   ├── PriceCell (auto-calculated, overridable)
+│   └── ActionCell (edit, delete, calculator)
+├── SpreadsheetFooter (totals, grand total)
+└── QuoteControls (margin, labor, export)
 ```
 
 ---
 
-## Result
+## User Experience Flow
 
-After this fix:
-- The **Inventory** link will appear in the sidebar under "Operations"
-- All authenticated users can access the Inventory feature
-- No database changes required
-- Future features can use the same pattern if they should be universally accessible
+```text
+1. User enables Demolition Mode and scans items
+2. AI analyzes and returns scrap analysis data
+3. Results shown in BOTH:
+   - Card view (existing) for quick overview
+   - Spreadsheet view (new) for detailed editing
+4. User can toggle between views
+5. In spreadsheet view:
+   - Adjust weights using estimator
+   - See live price indicators
+   - Edit grades/types inline
+   - View running totals
+6. Generate quote from spreadsheet data
+```
+
+---
+
+## Database Changes
+
+No schema changes required. Existing columns in `inventory_items` already support:
+- `metal_type`, `metal_grade`
+- `estimated_weight`, `weight_unit`
+- `scrap_price_per_unit`
+
+---
+
+## Summary of Enhancements
+
+| Feature | Enhancement |
+|---------|-------------|
+| **Display** | Excel-like spreadsheet with sortable/editable columns |
+| **Pricing** | Live API integration with fallback to cached/static |
+| **Weight** | Dimensional calculator + AI estimate + manual override |
+| **Steel Types** | Expanded from 2 to 12+ grades |
+| **Export** | CSV/PDF export from spreadsheet |
+| **Quotes** | Margin calculator integrated with spreadsheet |
