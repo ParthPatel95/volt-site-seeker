@@ -1,222 +1,273 @@
-# Plan: Add Live Metal Prices & Market Intelligence to Main Inventory Dashboard
 
-## Status: ✅ COMPLETED
 
-### Implementation Summary
+# Plan: Expand Metal Ticker with Steel, Zinc, and More Metals
 
-All features have been implemented:
+## Overview
 
-1. **MetalsMarketTicker** - Shows live prices for 8 metals (4 precious + 4 industrial) at top of inventory page
-2. **MarketIntelligencePanel** - Shows trends, news, and volatility alerts on dashboard
-3. **Edge function updated** - Fetches precious metals (XAU, XAG, XPT, XPD) live, industrial metals use defaults when API tier doesn't support them
-4. **useAllMetalPrices hook** - New hook for fetching all metal prices
+Expand the Live Metal Prices ticker to showcase all valuable metals available from the Metals-API, including steel variants, zinc, tin, lead, brass, bronze, and other specialty metals. The ticker will be reorganized into more granular categories for better user understanding.
 
 ---
 
-## Current State (AFTER Implementation)
+## Available Metals from API
 
-| Feature | Location | Visible On Main Page? |
-|---------|----------|----------------------|
-| Live scrap prices | MetalsMarketTicker | ✅ Yes |
-| Market news feed | MarketIntelligencePanel | ✅ Yes |
-| Volatility warnings | MarketIntelligencePanel | ✅ Yes |
-| Price trends | MarketIntelligencePanel | ✅ Yes |
+Based on the Metals-API symbols list, here are the metals we can add:
+
+| Symbol | Metal | Unit | Category | Notes |
+|--------|-------|------|----------|-------|
+| **New - Steel/Scrap** |
+| `STEEL-HR` | Steel HRC (Hot Rolled Coil) | Per Troy Ounce | Steel | LME FOB China |
+| `STEEL-RE` | Steel Rebar | Per Troy Ounce | Steel | LME FOB Turkey |
+| `STEEL-SC` | Steel Scrap | Per Troy Ounce | Steel | LME CFR Turkey |
+| **New - Base Metals** |
+| `ZNC` | Zinc | Per Troy Ounce | Industrial | GLOBAL |
+| `TIN` | Tin | Per Ounce | Industrial | GLOBAL |
+| `LEAD` | Lead | Per Ounce | Industrial | GLOBAL |
+| **New - Alloys** |
+| `BRASS` | Brass | Per Troy Ounce | Alloy | Copper-Zinc alloy |
+| `BRONZE` | Bronze | Per Troy Ounce | Alloy | Copper-Tin alloy |
+| **New - Specialty** |
+| `TITANIUM` | Titanium | Per Ounce | Specialty | High-value |
+| `MG` | Magnesium | Per Troy Ounce | Specialty | Light metal |
+| `TUNGSTEN` | Tungsten | Per Troy Ounce | Specialty | Heavy metal |
+| `LCO` | Cobalt | Per Troy Ounce | Battery | EV batteries |
+| `LITHIUM` | Lithium | Per Ounce | Battery | EV batteries |
+| **Existing - Precious** |
+| `XAU` | Gold | Per Troy Ounce | Precious | Active |
+| `XAG` | Silver | Per Ounce | Precious | Active |
+| `XPT` | Platinum | Per Ounce | Precious | Active |
+| `XPD` | Palladium | Per Ounce | Precious | Active |
+| **Existing - Industrial** |
+| `XCU` | Copper | Per Ounce | Industrial | Active |
+| `ALU` | Aluminum | Per Troy Ounce | Industrial | Active |
+| `NI` | Nickel | Per Ounce | Industrial | Active |
+| `IRON` | Iron Ore | Per Ounce | Industrial | Active |
 
 ---
 
-## Proposed Changes
+## New Category Structure
 
-### 1. Metals Market Ticker Bar (Top of Dashboard)
-
-Add a horizontal scrolling ticker showing live spot prices for **all metals** the API provides:
+Reorganize the ticker into 5 clear categories:
 
 ```text
-+---------------------------------------------------------------------------------+
-| GOLD        SILVER      PLATINUM   PALLADIUM   COPPER      ALUMINUM   STEEL    |
-| $2,347.80   $27.45      $967.20    $1,012.50   $4.52       $1.15      $0.14    |
-| +0.8%       -1.2%       +0.3%      -2.1%       +3.2%       +0.5%      -0.4%    |
-+---------------------------------------------------------------------------------+
-```
-
-**Metals to include:**
-- **Precious Metals**: Gold (XAU), Silver (XAG), Platinum (XPT), Palladium (XPD)
-- **Industrial Metals**: Copper (XCU), Aluminum (XAL), Iron (FE), Nickel (NI)
-
-### 2. Market Intelligence Cards (Dashboard Tab)
-
-Add a new section to the InventoryDashboard with 3 cards:
-
-| Card | Content |
-|------|---------|
-| **Price Trends** | 7-day sparklines for key metals with change percentages |
-| **Market News** | Latest 3-5 commodity news articles (collapsible) |
-| **Volatility Alert** | Warning banner when any metal moves >5% (dismissible) |
-
-### 3. Sidebar Market Summary (Optional)
-
-Add a compact version of metal prices to the sidebar or header area, always visible when browsing inventory.
-
----
-
-## API Symbol Mapping
-
-The Metals-API supports these symbols that we'll now fetch:
-
-| Symbol | Metal | Unit |
-|--------|-------|------|
-| XAU | Gold | Troy oz |
-| XAG | Silver | Troy oz |
-| XPT | Platinum | Troy oz |
-| XPD | Palladium | Troy oz |
-| XCU | Copper | Troy oz |
-| XAL | Aluminum | Troy oz |
-| FE | Iron | Metric ton |
-| NI | Nickel | Troy oz |
-
-**API Call Budget Impact:**
-- Current: 3 spot price calls/day + 4 market data calls/day = 7 calls/day
-- No additional calls needed - just expanding the symbols list
-
----
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/inventory/components/MetalsMarketTicker.tsx` | Horizontal ticker bar showing all metal prices |
-| `src/components/inventory/components/MarketIntelligencePanel.tsx` | Dashboard panel with trends, news, volatility |
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/inventory/InventoryPage.tsx` | Add MetalsMarketTicker above tabs |
-| `src/components/inventory/components/InventoryDashboard.tsx` | Add MarketIntelligencePanel section |
-| `src/components/inventory/hooks/useMarketIntelligence.ts` | Expand to include precious metals |
-| `src/components/inventory/hooks/useScrapMetalPricing.ts` | Add precious metals to spot prices |
-| `supabase/functions/scrap-metal-pricing/index.ts` | Add XAU, XAG, XPT, XPD to API calls |
-
----
-
-## Implementation Details
-
-### MetalsMarketTicker Component
-
-```text
-+--[ Live Metals Prices ]------------------------------------------------+
-| [Gold Chip] [Silver Chip] [Platinum Chip] [Palladium Chip] ...         |
-|  $2,347     $27.45        $967.20         $1,012                       |
-|  +0.8%      -1.2%         +0.3%           -2.1%                        |
++------------------------------------------------------------------------+
+| LIVE METAL PRICES                                    [Live] [Refresh]  |
++------------------------------------------------------------------------+
+| Precious  | Gold    Silver   Platinum  Palladium                       |
+|           | $2,347  $27.45   $967      $1,012                          |
++------------------------------------------------------------------------+
+| Steel     | HRC      Rebar    Scrap                                    |
+|           | $0.18    $0.16    $0.12                                    |
++------------------------------------------------------------------------+
+| Industrial| Copper   Aluminum  Zinc     Tin      Lead    Nickel  Iron  |
+|           | $4.52    $1.15     $1.25    $14.50   $0.95   $8.00   $0.06 |
++------------------------------------------------------------------------+
+| Alloys    | Brass    Bronze                                            |
+|           | $2.40    $2.20                                             |
++------------------------------------------------------------------------+
+| Specialty | Titanium  Tungsten  Magnesium  Cobalt   Lithium            |
+|           | $12.00    $18.50    $1.80      $15.00   $8.50              |
 +------------------------------------------------------------------------+
 ```
 
-Features:
-- Horizontal scroll on mobile
-- Click to expand details
-- Live/Cached/Offline status indicator
-- Refresh button
-- Auto-updates from the `useMarketIntelligence` hook
+---
 
-### MarketIntelligencePanel Component
+## Files to Modify
 
-Displays on the Dashboard tab below stats:
+### 1. Edge Function: `supabase/functions/scrap-metal-pricing/index.ts`
 
-```text
-+--[ Market Intelligence ]-----------------------------------------+
-|                                                                   |
-| [Volatility Warning Banner - if active]                          |
-|                                                                   |
-| +--[ Price Trends (7 Days) ]--+  +--[ Market News ]------------+ |
-| | COPPER   [sparkline] +3.2%  |  | JPMorgan initiates coverage |
-| | ALUMINUM [sparkline] +0.5%  |  | 2 hours ago                 |
-| | STEEL    [sparkline] -0.4%  |  |                             |
-| | GOLD     [sparkline] +0.8%  |  | Silver shows resilience...  |
-| +-----------------------------+  +-----------------------------+ |
-+-------------------------------------------------------------------+
-```
-
-### Edge Function Updates
-
-Add precious metals to the API calls:
+Update the `get-all-metals` action to fetch all new symbols:
 
 ```typescript
-// Current symbols
-const INDUSTRIAL_SYMBOLS = 'XCU,XAL,FE,NI';
-
-// New symbols (add precious metals)
-const ALL_SYMBOLS = 'XAU,XAG,XPT,XPD,XCU,XAL,FE,NI';
+// New symbol groups
+const PRECIOUS_SYMBOLS = 'XAU,XAG,XPT,XPD';
+const STEEL_SYMBOLS = 'STEEL-HR,STEEL-RE,STEEL-SC';
+const INDUSTRIAL_SYMBOLS = 'XCU,ALU,ZNC,TIN,LEAD,NI,IRON';
+const ALLOY_SYMBOLS = 'BRASS,BRONZE';
+const SPECIALTY_SYMBOLS = 'TITANIUM,MG,TUNGSTEN,LCO,LITHIUM';
 ```
 
-Price conversions:
-- Precious metals: Troy oz to grams/oz for display
-- Industrial metals: Keep current conversions (to $/lb)
+Add proper unit conversions for each metal type.
 
-### useMarketIntelligence Hook Updates
+### 2. Hook: `src/components/inventory/hooks/useAllMetalPrices.ts`
 
-Extend the hook to:
-1. Include precious metals in spot prices
-2. Provide formatted prices for display (oz, gram, lb)
-3. Return both raw API data and user-friendly formatted data
+Expand the `METAL_CONFIGS` array with new metals and categories:
+
+```typescript
+type MetalCategory = 'precious' | 'steel' | 'industrial' | 'alloy' | 'specialty';
+
+const METAL_CONFIGS = [
+  // Precious (existing)
+  { symbol: 'XAU', name: 'Gold', shortName: 'Gold', key: 'gold', unit: 'oz', category: 'precious' },
+  // ... existing precious
+  
+  // Steel (NEW)
+  { symbol: 'STEEL-HR', name: 'Steel HRC', shortName: 'HRC', key: 'steelHrc', unit: 'oz', category: 'steel' },
+  { symbol: 'STEEL-RE', name: 'Steel Rebar', shortName: 'Rebar', key: 'steelRebar', unit: 'oz', category: 'steel' },
+  { symbol: 'STEEL-SC', name: 'Steel Scrap', shortName: 'Scrap', key: 'steelScrap', unit: 'oz', category: 'steel' },
+  
+  // Industrial (expanded)
+  { symbol: 'ZNC', name: 'Zinc', shortName: 'Zinc', key: 'zinc', unit: 'oz', category: 'industrial' },
+  { symbol: 'TIN', name: 'Tin', shortName: 'Tin', key: 'tin', unit: 'oz', category: 'industrial' },
+  { symbol: 'LEAD', name: 'Lead', shortName: 'Lead', key: 'lead', unit: 'oz', category: 'industrial' },
+  
+  // Alloys (NEW)
+  { symbol: 'BRASS', name: 'Brass', shortName: 'Brass', key: 'brass', unit: 'oz', category: 'alloy' },
+  { symbol: 'BRONZE', name: 'Bronze', shortName: 'Bronze', key: 'bronze', unit: 'oz', category: 'alloy' },
+  
+  // Specialty (NEW)
+  { symbol: 'TITANIUM', name: 'Titanium', shortName: 'Titanium', key: 'titanium', unit: 'oz', category: 'specialty' },
+  { symbol: 'TUNGSTEN', name: 'Tungsten', shortName: 'Tungsten', key: 'tungsten', unit: 'oz', category: 'specialty' },
+  { symbol: 'LCO', name: 'Cobalt', shortName: 'Cobalt', key: 'cobalt', unit: 'oz', category: 'specialty' },
+  { symbol: 'LITHIUM', name: 'Lithium', shortName: 'Lithium', key: 'lithium', unit: 'oz', category: 'specialty' },
+];
+```
+
+### 3. Component: `src/components/inventory/components/MetalsMarketTicker.tsx`
+
+Update to support 5 categories with proper styling:
+
+```typescript
+type MetalCategory = 'precious' | 'steel' | 'industrial' | 'alloy' | 'specialty';
+
+const CATEGORY_CONFIG = {
+  precious: { 
+    icon: '✨', 
+    label: 'Precious', 
+    gradient: 'from-amber-500/20 to-amber-500/5' 
+  },
+  steel: { 
+    icon: '🏗️', 
+    label: 'Steel', 
+    gradient: 'from-slate-600/20 to-slate-600/5' 
+  },
+  industrial: { 
+    icon: '⚙️', 
+    label: 'Industrial', 
+    gradient: 'from-slate-500/20 to-slate-500/5' 
+  },
+  alloy: { 
+    icon: '🔗', 
+    label: 'Alloys', 
+    gradient: 'from-orange-500/20 to-orange-500/5' 
+  },
+  specialty: { 
+    icon: '💎', 
+    label: 'Specialty', 
+    gradient: 'from-purple-500/20 to-purple-500/5' 
+  },
+};
+```
 
 ---
 
-## User Experience Flow
+## Default Fallback Prices
+
+Add realistic default prices for new metals (used when API unavailable):
+
+| Metal | Default Price | Unit |
+|-------|---------------|------|
+| Steel HRC | $0.018 | /oz |
+| Steel Rebar | $0.016 | /oz |
+| Steel Scrap | $0.012 | /oz |
+| Zinc | $0.095 | /oz |
+| Tin | $0.95 | /oz |
+| Lead | $0.068 | /oz |
+| Brass | $0.16 | /oz |
+| Bronze | $0.15 | /oz |
+| Titanium | $0.38 | /oz |
+| Tungsten | $1.20 | /oz |
+| Magnesium | $0.12 | /oz |
+| Cobalt | $1.05 | /oz |
+| Lithium | $0.55 | /oz |
+
+---
+
+## API Call Budget Impact
+
+Since we're just adding more symbols to existing API calls:
+- **Before**: 1 call for precious + 1 call for industrial = 2 calls
+- **After**: 5 calls (one per category) = 5 calls per refresh
+
+But with 24-hour caching, this stays well within the 2,500/month limit:
+- 5 calls/day x 30 days = 150 calls/month for ticker alone
+- Plus existing market intelligence = ~210 calls
+- **Total**: ~360 calls/month (14% of limit)
+
+---
+
+## Implementation Steps
+
+1. **Update Edge Function**
+   - Add new symbol constants
+   - Create separate fetch calls for each category (API may limit symbols per request)
+   - Add proper unit conversions for steel/specialty metals
+   - Update default prices object
+
+2. **Update Hook**
+   - Expand `METAL_CONFIGS` with all new metals
+   - Update `SpotPrices` interface
+   - Add new `MetalCategory` type
+
+3. **Update Ticker Component**
+   - Add new category configurations
+   - Update category styling/icons
+   - Ensure horizontal scroll works for all categories
+
+4. **Update MarketIntelligence Hook**
+   - Add symbol mappings for new metals in trend/volatility detection
+
+---
+
+## Visual Preview
 
 ```text
-1. User navigates to /app/inventory
++------------------------------------------------------------------------+
+| Live Metal Prices                           [Live] Updated 2m ago [↻]  |
++------------------------------------------------------------------------+
 
-2. Sees "Live Metals Prices" ticker at top
-   - All 8 metals with current prices
-   - Green/red percentage changes
-   - "Live" indicator with last update time
+✨ PRECIOUS
++--------+--------+----------+-----------+
+| Gold   | Silver | Platinum | Palladium |
+| $2,347 | $27.45 | $967     | $1,012    |
+| +0.8%  | -1.2%  | +0.3%    | -2.1%     |
++--------+--------+----------+-----------+
 
-3. Dashboard tab shows:
-   - Existing stats (Total Items, In Stock, etc.)
-   - NEW: Market Intelligence section
-     - Volatility warning (if applicable)
-     - 7-day price trends with sparklines
-     - Market news feed (collapsed by default)
+🏗️ STEEL  
++----------+--------+--------+
+| HRC      | Rebar  | Scrap  |
+| $580/ton | $520   | $380   |
+| +1.2%    | -0.5%  | +0.8%  |
++----------+--------+--------+
 
-4. User can:
-   - Hover over metal chips for more details
-   - Click refresh to get latest prices
-   - Expand news to read articles
-   - Dismiss volatility warning
+⚙️ INDUSTRIAL
++--------+----------+------+------+------+--------+------+
+| Copper | Aluminum | Zinc | Tin  | Lead | Nickel | Iron |
+| $4.52  | $1.15    | $1.25| $14  | $0.95| $8.00  | $0.06|
++--------+----------+------+------+------+--------+------+
 
-5. All data uses cached prices (24h TTL)
-   - No additional API calls on page navigation
-   - Respects daily call limits
+🔗 ALLOYS
++--------+--------+
+| Brass  | Bronze |
+| $2.40  | $2.20  |
++--------+--------+
+
+💎 SPECIALTY
++----------+----------+------+--------+
+| Titanium | Tungsten | MG   | Cobalt |
+| $12.00   | $18.50   | $1.80| $15.00 |
++----------+----------+------+--------+
 ```
-
----
-
-## Technical Considerations
-
-### Caching Strategy
-- No changes to current caching (24-hour database-backed cache)
-- Precious metals added to same cache structure
-- Same daily call limits apply
-
-### Error Handling
-- If precious metals fail, still show industrial metals
-- Graceful fallback to cached data
-- Show "Offline" indicator if no data available
-
-### Mobile Responsiveness
-- Ticker horizontally scrolls on mobile
-- Market Intelligence cards stack vertically
-- News feed collapses to save space
 
 ---
 
 ## Summary
 
-| Enhancement | Location | User Benefit |
-|-------------|----------|--------------|
-| Metals Market Ticker | Top of Inventory page | See all metal prices at a glance |
-| Price Trends | Dashboard tab | Understand market direction |
-| Market News | Dashboard tab | Stay informed on market |
-| Volatility Alerts | Dashboard tab | Know when to act quickly |
-
-**No additional API calls required** - just expanding the symbols in existing calls.
+| Change | Impact |
+|--------|--------|
+| Add 13 new metals | Comprehensive market coverage |
+| 5 category groups | Better organization |
+| Steel prices visible | Key for demolition/scrap valuation |
+| Alloy tracking | Brass/Bronze for mixed metals |
+| Specialty metals | High-value recovery opportunities |
+| API calls | +3 calls/day (still well under budget) |
 
