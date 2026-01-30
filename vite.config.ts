@@ -23,7 +23,7 @@ export default defineConfig(({ command, mode }) => ({
     // Only run tagger during dev server, not builds
     command === 'serve' && mode === 'development' && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // Changed from 'autoUpdate' to enable needRefresh detection
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'lovable-uploads/*'],
       manifest: {
         name: 'WattByte',
@@ -57,6 +57,9 @@ export default defineConfig(({ command, mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Increase limit to handle large bundles (default is 2MB)
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+        // Ensure new service workers take control immediately
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
