@@ -9,7 +9,7 @@
  * The version is based on the deployment timestamp.
  * It will be updated with each new build.
  */
-export const APP_VERSION = '2026.01.30.001';
+export const APP_VERSION = '2026.01.30.002';
 
 /**
  * Get the current app version for display or logging
