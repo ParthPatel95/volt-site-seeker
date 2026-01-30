@@ -43,6 +43,10 @@ export interface MarketIntelligence {
 }
 
 const METAL_SYMBOL_MAP: Record<string, string> = {
+  'XAU': 'gold',
+  'XAG': 'silver',
+  'XPT': 'platinum',
+  'XPD': 'palladium',
   'XCU': 'copper',
   'XAL': 'aluminum',
   'FE': 'steel',

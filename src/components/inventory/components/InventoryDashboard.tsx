@@ -18,6 +18,7 @@ import { InventoryStats, InventoryItem } from '../types/inventory.types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { differenceInDays } from 'date-fns';
+import { MarketIntelligencePanel } from './MarketIntelligencePanel';
 
 interface InventoryDashboardProps {
   stats: InventoryStats;
@@ -280,6 +281,9 @@ export function InventoryDashboard({
           />
         </div>
       </div>
+
+      {/* Market Intelligence Section */}
+      <MarketIntelligencePanel />
     </div>
   );
 }
