@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
+import { APP_VERSION } from "./constants/app-version";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -49,8 +50,56 @@ import ViewSharedDashboard from "./pages/ViewSharedDashboard";
 
 const queryClient = new QueryClient();
 
+// Cache-busting component that forces reload on version mismatch
+function CacheBuster() {
+  useEffect(() => {
+    const cachedVersion = localStorage.getItem('app_version');
+    
+    if (cachedVersion && cachedVersion !== APP_VERSION) {
+      console.log('[Cache] Version mismatch detected:', cachedVersion, '->', APP_VERSION);
+      console.log('[Cache] Clearing all caches and service workers...');
+      
+      // Clear all caches
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            console.log('[Cache] Deleting cache:', name);
+            caches.delete(name);
+          });
+        });
+      }
+      
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(reg => {
+            console.log('[Cache] Unregistering service worker:', reg.scope);
+            reg.unregister();
+          });
+        });
+      }
+      
+      // Update stored version
+      localStorage.setItem('app_version', APP_VERSION);
+      
+      // Force reload - slight delay to ensure cache operations complete
+      setTimeout(() => {
+        console.log('[Cache] Reloading page with fresh content...');
+        window.location.reload();
+      }, 100);
+    } else if (!cachedVersion) {
+      // First visit, store version
+      console.log('[Cache] First visit, storing version:', APP_VERSION);
+      localStorage.setItem('app_version', APP_VERSION);
+    }
+  }, []);
+  
+  return null;
+}
+
 const App = () => (
-  <ErrorBoundary>
+<ErrorBoundary>
+    <CacheBuster />
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <PermissionsProvider>

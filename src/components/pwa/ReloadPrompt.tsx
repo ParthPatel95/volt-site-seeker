@@ -59,7 +59,7 @@ export function ReloadPrompt() {
         duration: 5000,
       });
       
-      // Auto-reload after 2 seconds
+      // Auto-reload after 0.5 seconds for faster updates
       const reloadTimeout = setTimeout(() => {
         console.log('[PWA] Triggering service worker update and reload');
         updateServiceWorker(true).catch((err) => {
@@ -82,7 +82,7 @@ export function ReloadPrompt() {
             ),
           });
         });
-      }, 2000);
+      }, 500);
       
       return () => {
         clearTimeout(reloadTimeout);
