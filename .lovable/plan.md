@@ -1,176 +1,133 @@
 
-# Plan: Implement Automatic PWA Update System to Fix Caching Issues
+# Plan: Force Cache Clear on App Version Mismatch
 
-## Problem Summary
+## Problem Confirmed
 
-The app uses a PWA (Progressive Web App) with service worker caching. When new code deploys, users may see stale cached content until they manually refresh. This causes issues like the Inventory link not appearing even though it exists in the code.
+Looking at your screenshot, I can see the sidebar shows:
+- ✅ Overview, Markets, Analysis, Settings sections
+- ✅ "Build Management" under Operations
+- ❌ "Inventory" is missing under Operations
 
-Currently:
-- PWA is configured with `registerType: 'autoUpdate'` (silent background updates)
-- No UI component notifies users when new content is available
-- Users don't know they need to refresh to see latest changes
+But in the code (line 78 of Sidebar.tsx), Inventory IS present:
+```typescript
+{ path: '/app/inventory', icon: Package, label: 'Inventory', permission: '' },
+```
 
-## Solution Overview
-
-Implement a **multi-layered cache management system** that automatically handles updates without user intervention:
-
-1. **Auto-Refresh on Update Detection** - Automatically reload when new content is available (not just notify)
-2. **Periodic Update Checks** - Check for updates every 15 minutes
-3. **Visible Update Toast** - Show a brief toast before auto-reloading (gives user context)
-4. **Version Tracking** - Track app version to detect stale sessions
+**This proves your browser is running OLD cached JavaScript** that doesn't include the Inventory link.
 
 ---
 
-## Files to Create
+## Solution: Force Immediate Cache Clear
 
-### 1. `src/components/pwa/ReloadPrompt.tsx`
+I'll implement an **aggressive cache-busting mechanism** that detects version mismatches and forces a full reload immediately.
 
-A component that uses `vite-plugin-pwa`'s `useRegisterSW` hook to:
-- Detect when new content is available (`needRefresh` state)
-- Show a brief toast notification: "Updating to latest version..."
-- Automatically reload after 2 seconds (no user action required)
-- Check for updates every 15 minutes
+### What I'll Do:
 
-```text
-+--[ Update Toast ]--------------------------------+
-| ↻  Updating to latest version...                |
-|    Refreshing in 2s                             |
-+-------------------------------------------------+
-```
-
-### 2. `src/constants/app-version.ts`
-
-A simple version constant that changes with each deployment:
-- Used to detect if the user's cached version is outdated
-- Allows for emergency cache-busting via version comparison
+1. **Add Version Check on App Mount** - Compare cached version with current version
+2. **Force Clear Service Worker** - Unregister old service worker and clear all caches
+3. **Auto-Reload with Cache Bypass** - Use `location.reload(true)` to bypass cache
+4. **One-Time Clear on This Build** - Ensure this specific deployment clears old caches
 
 ---
 
 ## Files to Modify
 
-### 1. `vite.config.ts`
+### 1. `src/App.tsx`
 
-Update PWA configuration:
-- Change `registerType` from `'autoUpdate'` to `'prompt'` (enables needRefresh detection)
-- Add `skipWaiting: true` and `clientsClaim: true` to workbox config
-- These ensure new service workers take control immediately
-
-### 2. `src/App.tsx`
-
-Add the new `ReloadPrompt` component to the app root (alongside existing `InstallPrompt`)
-
-### 3. `index.html`
-
-Add cache-control meta tags to discourage browser caching of the HTML shell
-
----
-
-## Technical Implementation
-
-### ReloadPrompt Component Logic
+Add a version check hook that runs on mount:
 
 ```typescript
-// Pseudo-code for the auto-update logic
-function ReloadPrompt() {
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegistered(registration) {
-      // Check for updates every 15 minutes
-      setInterval(() => registration?.update(), 15 * 60 * 1000);
-    },
-    onNeedRefresh() {
-      // New content available - will auto-reload
+import { useEffect } from 'react';
+import { APP_VERSION } from './constants/app-version';
+
+// Check if we need to force clear cache
+useEffect(() => {
+  const cachedVersion = localStorage.getItem('app_version');
+  
+  if (cachedVersion && cachedVersion !== APP_VERSION) {
+    console.log('[Cache] Version mismatch detected, clearing cache...');
+    
+    // Clear service worker caches
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
     }
-  });
-
-  useEffect(() => {
-    if (needRefresh) {
-      // Show toast, then auto-reload after 2 seconds
-      toast.info("Updating to latest version...");
-      setTimeout(() => {
-        updateServiceWorker(true); // true = reload page
-      }, 2000);
+    
+    // Unregister service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(reg => reg.unregister());
+      });
     }
-  }, [needRefresh]);
-}
-```
-
-### Vite Config Changes
-
-```typescript
-VitePWA({
-  registerType: 'prompt', // Changed from 'autoUpdate'
-  // ... existing config ...
-  workbox: {
-    // ... existing config ...
-    skipWaiting: true,      // NEW: Activate new SW immediately
-    clientsClaim: true,     // NEW: Take control of all clients
+    
+    // Update stored version
+    localStorage.setItem('app_version', APP_VERSION);
+    
+    // Force reload bypassing cache
+    window.location.reload();
+  } else if (!cachedVersion) {
+    // First visit, store version
+    localStorage.setItem('app_version', APP_VERSION);
   }
-})
+}, []);
 ```
 
-### HTML Meta Tags
+### 2. `src/constants/app-version.ts`
 
-```html
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+Update the version to trigger cache clear:
+
+```typescript
+export const APP_VERSION = '2026.01.30.002'; // Incremented
 ```
+
+### 3. `src/components/pwa/ReloadPrompt.tsx`
+
+Make auto-reload more aggressive - reduce delay from 2 seconds to 0.5 seconds.
 
 ---
 
-## User Experience Flow
+## How It Works
 
 ```text
-1. User has app open with cached version
-
-2. New deployment is pushed to production
-
-3. Within 15 minutes (or on next navigation):
-   - Service worker detects new content
-   - ReloadPrompt component shows toast:
-     "Updating to latest version..."
-
-4. After 2 seconds:
-   - Page automatically reloads
-   - User sees fresh content with all new features
-
-5. User continues with no manual action needed
+User opens app
+    │
+    ▼
+Check localStorage for cached version
+    │
+    ├── No version stored ──► Store current version, continue
+    │
+    └── Version exists ──► Compare with current
+                              │
+                              ├── Match ──► Continue normally
+                              │
+                              └── Mismatch ──► 
+                                    1. Clear all caches
+                                    2. Unregister service workers
+                                    3. Store new version
+                                    4. Force reload page
 ```
 
 ---
 
-## Why This Approach Works
+## Expected Result
 
-| Technique | Purpose |
-|-----------|---------|
-| `registerType: 'prompt'` | Enables `needRefresh` detection |
-| `skipWaiting: true` | New SW takes over immediately |
-| `clientsClaim: true` | SW controls all open tabs |
-| 15-min interval checks | Catches updates within reasonable time |
-| Auto-reload after toast | No user action required |
-| Cache-control meta tags | Prevents browser caching HTML |
+After this change:
+1. Your browser will detect the version mismatch
+2. It will clear ALL cached data
+3. Page will reload with fresh code
+4. Inventory link will appear in sidebar
 
----
-
-## Fallback Behaviors
-
-- If service worker fails to update: Toast appears with manual "Reload" button
-- If user is in middle of form: Can dismiss and reload later (optional enhancement)
-- If offline: Shows offline-ready message instead
+Future users will also get automatic cache clearing whenever a new version is deployed.
 
 ---
 
-## Summary of Changes
+## Summary
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/components/pwa/ReloadPrompt.tsx` | Create | Auto-update detection + reload |
-| `src/constants/app-version.ts` | Create | Version tracking |
-| `vite.config.ts` | Modify | Enable prompt mode + workbox settings |
-| `src/App.tsx` | Modify | Add ReloadPrompt component |
-| `index.html` | Modify | Add cache-control meta tags |
-
-This ensures users **always see the latest version** without needing to know about browser caching or manual refresh techniques.
+| Change | Purpose |
+|--------|---------|
+| Version check on mount | Detect stale cache |
+| Clear caches API | Remove old cached files |
+| Unregister service workers | Remove old SW |
+| Force reload | Get fresh code |
+| Increment version | Trigger clear for current users |
