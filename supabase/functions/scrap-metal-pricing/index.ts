@@ -344,20 +344,26 @@ async function fetchLivePrices(): Promise<ScrapMetalPrices | null> {
   }
 
   try {
-    const response = await fetch(
-      `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=XCU,XAL,FE,NI`,
-      { headers: { "Accept": "application/json" } }
-    );
+    const url = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=XCU,XAL,FE,NI`;
+    console.log("Fetching latest prices from Metals-API...");
+    
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
 
     if (!response.ok) {
-      console.error("Metals-API error:", response.status);
+      console.error("Metals-API HTTP error:", response.status, response.statusText);
       return null;
     }
 
     const data = await response.json();
+    console.log("Metals-API response:", JSON.stringify(data).substring(0, 500));
     
-    if (!data.success || !data.rates) {
-      console.error("Metals-API error:", data.error);
+    if (!data.success) {
+      console.error("Metals-API error response:", JSON.stringify(data.error || data));
+      return null;
+    }
+    
+    if (!data.rates) {
+      console.error("Metals-API missing rates in response:", JSON.stringify(data));
       return null;
     }
 
@@ -437,20 +443,28 @@ async function fetchTimeseries(): Promise<TimeseriesData | null> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 8); // 7 days of data
 
-    const response = await fetch(
-      `https://metals-api.com/api/timeseries?access_key=${METALS_API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU,XAL,FE,NI&base=USD`,
-      { headers: { "Accept": "application/json" } }
-    );
+    const url = `https://metals-api.com/api/timeseries?access_key=${METALS_API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU,XAL,FE,NI&base=USD`;
+    console.log("Fetching timeseries from Metals-API...");
+    
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
 
     if (!response.ok) {
-      console.error("Timeseries API error:", response.status);
+      console.error("Timeseries API HTTP error:", response.status, response.statusText);
       return null;
     }
 
-    const data = await response.json();
+    const rawData = await response.json();
+    // API response may be wrapped in a 'data' object
+    const data = rawData.data || rawData;
+    console.log("Timeseries API response:", JSON.stringify(rawData).substring(0, 500));
     
-    if (!data.success || !data.rates) {
-      console.error("Timeseries API error:", data.error);
+    if (!data.success) {
+      console.error("Timeseries API error response:", JSON.stringify(data.error || data));
+      return null;
+    }
+    
+    if (!data.rates) {
+      console.error("Timeseries API missing rates:", JSON.stringify(data));
       return null;
     }
 
@@ -472,20 +486,28 @@ async function fetchFluctuation(): Promise<FluctuationData | null> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 8);
 
-    const response = await fetch(
-      `https://metals-api.com/api/fluctuation?access_key=${METALS_API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU,XAL,FE,NI&base=USD`,
-      { headers: { "Accept": "application/json" } }
-    );
+    const url = `https://metals-api.com/api/fluctuation?access_key=${METALS_API_KEY}&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}&symbols=XCU,XAL,FE,NI&base=USD`;
+    console.log("Fetching fluctuation from Metals-API...");
+    
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
 
     if (!response.ok) {
-      console.error("Fluctuation API error:", response.status);
+      console.error("Fluctuation API HTTP error:", response.status, response.statusText);
       return null;
     }
 
-    const data = await response.json();
+    const rawData = await response.json();
+    // API response may be wrapped in a 'data' object
+    const data = rawData.data || rawData;
+    console.log("Fluctuation API response:", JSON.stringify(rawData).substring(0, 500));
     
-    if (!data.success || !data.rates) {
-      console.error("Fluctuation API error:", data.error);
+    if (!data.success) {
+      console.error("Fluctuation API error response:", JSON.stringify(data.error || data));
+      return null;
+    }
+    
+    if (!data.rates) {
+      console.error("Fluctuation API missing rates:", JSON.stringify(data));
       return null;
     }
 
@@ -502,26 +524,54 @@ async function fetchNews(): Promise<NewsArticle[] | null> {
   if (!METALS_API_KEY) return null;
 
   try {
-    // Fetch news with metal-related keywords
-    const response = await fetch(
-      `https://metals-api.com/api/get-news?access_key=${METALS_API_KEY}&page=1`,
-      { headers: { "Accept": "application/json" } }
-    );
+    const url = `https://metals-api.com/api/get-news?access_key=${METALS_API_KEY}&page=1`;
+    console.log("Fetching news from Metals-API...");
+    
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
 
     if (!response.ok) {
-      console.error("News API error:", response.status);
+      console.error("News API HTTP error:", response.status, response.statusText);
       return null;
     }
 
     const data = await response.json();
+    console.log("News API response structure:", JSON.stringify(Object.keys(data)));
+    console.log("News API response preview:", JSON.stringify(data).substring(0, 500));
     
-    if (!data.success || !data.data) {
-      console.error("News API error:", data.error);
+    if (!data.success) {
+      console.error("News API error response:", JSON.stringify(data.error || data));
       return null;
     }
 
+    // Handle different response structures - API returns data.news.data
+    let articles: NewsArticle[] = [];
+    
+    if (Array.isArray(data.data)) {
+      articles = data.data;
+    } else if (data.data?.news?.data && Array.isArray(data.data.news.data)) {
+      // Actual structure: { data: { news: { data: [...] } } }
+      articles = data.data.news.data.map((item: { title?: string; article?: string; url?: string; source?: string; published_at?: string }) => ({
+        title: item.title || '',
+        description: item.article || '',
+        url: item.url || '',
+        source: item.source || 'Metals-API',
+        published_at: item.published_at || new Date().toISOString(),
+      }));
+    } else if (data.data && Array.isArray(data.data.articles)) {
+      articles = data.data.articles;
+    } else if (data.data && Array.isArray(data.data.news)) {
+      articles = data.data.news;
+    } else if (data.articles && Array.isArray(data.articles)) {
+      articles = data.articles;
+    } else if (data.news && Array.isArray(data.news)) {
+      articles = data.news;
+    } else {
+      console.warn("News API: Could not find articles array in response:", JSON.stringify(data).substring(0, 300));
+      return [];
+    }
+
     // Return top 5 articles
-    return (data.data as NewsArticle[]).slice(0, 5);
+    return articles.slice(0, 5);
   } catch (error) {
     console.error("Error fetching news:", error);
     return null;
@@ -537,20 +587,28 @@ async function fetchOHLC(): Promise<OHLCData | null> {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const response = await fetch(
-      `https://metals-api.com/api/ohlc?access_key=${METALS_API_KEY}&date=${formatDate(yesterday)}&symbols=XCU,XAL,FE,NI&base=USD`,
-      { headers: { "Accept": "application/json" } }
-    );
+    const url = `https://metals-api.com/api/ohlc?access_key=${METALS_API_KEY}&date=${formatDate(yesterday)}&symbols=XCU,XAL,FE,NI&base=USD`;
+    console.log("Fetching OHLC from Metals-API...");
+    
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
 
     if (!response.ok) {
-      console.error("OHLC API error:", response.status);
+      console.error("OHLC API HTTP error:", response.status, response.statusText);
       return null;
     }
 
-    const data = await response.json();
+    const rawData = await response.json();
+    // API response may be wrapped in a 'data' object
+    const data = rawData.data || rawData;
+    console.log("OHLC API response:", JSON.stringify(rawData).substring(0, 500));
     
-    if (!data.success || !data.rates) {
-      console.error("OHLC API error:", data.error);
+    if (!data.success) {
+      console.error("OHLC API error response:", JSON.stringify(data.error || data));
+      return null;
+    }
+    
+    if (!data.rates) {
+      console.error("OHLC API missing rates:", JSON.stringify(data));
       return null;
     }
 
@@ -697,6 +755,26 @@ Deno.serve(async (req) => {
     }
 
     // ============ MARKET INTELLIGENCE ACTIONS ============
+
+    // Debug action to clear cache and force refetch
+    if (action === 'clear-market-cache') {
+      try {
+        await supabase
+          .from('scrap_metal_market_data')
+          .delete()
+          .eq('id', 'current');
+        
+        return new Response(
+          JSON.stringify({ success: true, message: 'Market data cache cleared' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to clear cache' }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     if (action === 'get-market-data') {
       const cache = await getMarketDataCache(supabase);
