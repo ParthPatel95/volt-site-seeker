@@ -14,6 +14,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LazyErrorBoundary, SectionLoader } from "./components/LazyErrorBoundary";
 import { InstallPrompt } from "./components/pwa/InstallPrompt";
+import { ReloadPrompt } from "./components/pwa/ReloadPrompt";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
@@ -136,6 +137,7 @@ const App = () => (
                 } />
               </Routes>
               <InstallPrompt />
+              <ReloadPrompt />
             </BrowserRouter>
           </TooltipProvider>
         </PermissionsProvider>
