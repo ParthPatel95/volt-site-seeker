@@ -25,6 +25,7 @@ import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
 import { useInventoryStats } from './hooks/useInventoryStats';
 import { useInventoryWorkspaces } from './hooks/useInventoryWorkspaces';
+import { useAllMetalPrices } from './hooks/useAllMetalPrices';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InventoryDashboard } from './components/InventoryDashboard';
 import { InventoryItemCard } from './components/InventoryItemCard';
@@ -42,6 +43,7 @@ import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
 import { InventoryFAB } from './components/InventoryFAB';
 import { InventoryGroupManager } from './components/InventoryGroupManager';
+import { MetalsMarketTicker } from './components/MetalsMarketTicker';
 import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
@@ -118,6 +120,9 @@ export function InventoryPage() {
   
   const { categories } = useInventoryCategories(selectedWorkspaceId);
   const { stats, lowStockItems, expiringItems, outOfStockItems, isLoading: statsLoading } = useInventoryStats(selectedWorkspaceId);
+  
+  // Metal prices for ticker
+  const { metals, isLoading: metalsLoading, source: metalsSource, lastUpdated: metalsLastUpdated, refetch: refetchMetals, isRefetching: isRefetchingMetals } = useAllMetalPrices();
 
   // Hardware barcode scanner handler
   const handleHardwareScan = useCallback(async (barcode: string) => {
@@ -289,6 +294,16 @@ export function InventoryPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+      {/* Live Metals Ticker */}
+      <MetalsMarketTicker
+        metals={metals}
+        isLoading={metalsLoading}
+        source={metalsSource}
+        lastUpdated={metalsLastUpdated}
+        onRefresh={refetchMetals}
+        isRefreshing={isRefetchingMetals}
+      />
+
       {/* Workspace Selector Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

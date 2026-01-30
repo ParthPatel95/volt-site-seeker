@@ -1,22 +1,26 @@
-
-
 # Plan: Add Live Metal Prices & Market Intelligence to Main Inventory Dashboard
 
-## Overview
+## Status: ✅ COMPLETED
 
-Enhance the main Inventory page with a prominent **Metals Market Ticker Bar** showing live prices for all supported metals (precious + industrial), plus a **Market Intelligence Panel** with news feed, sparklines, and volatility alerts - visible without needing to run AI scans.
+### Implementation Summary
+
+All features have been implemented:
+
+1. **MetalsMarketTicker** - Shows live prices for 8 metals (4 precious + 4 industrial) at top of inventory page
+2. **MarketIntelligencePanel** - Shows trends, news, and volatility alerts on dashboard
+3. **Edge function updated** - Fetches precious metals (XAU, XAG, XPT, XPD) live, industrial metals use defaults when API tier doesn't support them
+4. **useAllMetalPrices hook** - New hook for fetching all metal prices
 
 ---
 
-## Current State
+## Current State (AFTER Implementation)
 
 | Feature | Location | Visible On Main Page? |
 |---------|----------|----------------------|
-| Live scrap prices | ScrapMetalSpreadsheet | No (only after AI scan) |
-| Market news feed | ScrapMetalSpreadsheet | No (only after AI scan) |
-| Volatility warnings | ScrapMetalSpreadsheet | No (only after AI scan) |
-| Price trends | ScrapMetalSpreadsheet | No (only after AI scan) |
-| Quote comparison | ScrapMetalSpreadsheet | No (only after AI scan) |
+| Live scrap prices | MetalsMarketTicker | ✅ Yes |
+| Market news feed | MarketIntelligencePanel | ✅ Yes |
+| Volatility warnings | MarketIntelligencePanel | ✅ Yes |
+| Price trends | MarketIntelligencePanel | ✅ Yes |
 
 ---
 

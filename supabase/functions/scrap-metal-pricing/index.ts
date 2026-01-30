@@ -1026,8 +1026,121 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ============ GET ALL METALS (including precious) ============
+    if (action === 'get-all-metals') {
+      const METALS_API_KEY = Deno.env.get("METALS_API_KEY");
+      
+      // Default spot prices for all metals
+      const defaultSpotPrices = {
+        gold: 2347.80,
+        silver: 27.45,
+        platinum: 967.20,
+        palladium: 1012.50,
+        copper: 4.52,
+        aluminum: 1.15,
+        iron: 0.055,
+        nickel: 8.00,
+      };
+      
+      if (!METALS_API_KEY) {
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            spotPrices: defaultSpotPrices,
+            source: 'default',
+            lastUpdated: new Date().toISOString(),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      try {
+        const spotPrices = { ...defaultSpotPrices };
+        let source: 'live' | 'default' = 'default';
+
+        // Try precious metals first (should work on most plans)
+        const preciousSymbols = 'XAU,XAG,XPT,XPD';
+        const preciousUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${preciousSymbols}`;
+        
+        console.log("Fetching precious metal prices from Metals-API...");
+        try {
+          const preciousResponse = await fetch(preciousUrl, { headers: { "Accept": "application/json" } });
+          if (preciousResponse.ok) {
+            const preciousData = await preciousResponse.json();
+            console.log("Precious metals response:", JSON.stringify(preciousData).substring(0, 300));
+            
+            if (preciousData.success && preciousData.rates) {
+              const round = (n: number, decimals = 2) => Math.round(n * Math.pow(10, decimals)) / Math.pow(10, decimals);
+              
+              if (preciousData.rates.XAU) spotPrices.gold = round(1 / preciousData.rates.XAU);
+              if (preciousData.rates.XAG) spotPrices.silver = round(1 / preciousData.rates.XAG);
+              if (preciousData.rates.XPT) spotPrices.platinum = round(1 / preciousData.rates.XPT);
+              if (preciousData.rates.XPD) spotPrices.palladium = round(1 / preciousData.rates.XPD);
+              source = 'live';
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching precious metals:", e);
+        }
+
+        // Try industrial metals separately (may fail on free plan)
+        const industrialSymbols = 'XCU,XAL,FE,NI';
+        const industrialUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${industrialSymbols}`;
+        
+        console.log("Fetching industrial metal prices from Metals-API...");
+        try {
+          const industrialResponse = await fetch(industrialUrl, { headers: { "Accept": "application/json" } });
+          if (industrialResponse.ok) {
+            const industrialData = await industrialResponse.json();
+            console.log("Industrial metals response:", JSON.stringify(industrialData).substring(0, 300));
+            
+            if (industrialData.success && industrialData.rates) {
+              const round = (n: number, decimals = 2) => Math.round(n * Math.pow(10, decimals)) / Math.pow(10, decimals);
+              
+              if (industrialData.rates.XCU) spotPrices.copper = round((1 / industrialData.rates.XCU) * 14.5833);
+              if (industrialData.rates.XAL) spotPrices.aluminum = round((1 / industrialData.rates.XAL) * 14.5833);
+              if (industrialData.rates.FE) spotPrices.iron = round((1 / industrialData.rates.FE) / 2204.62, 3);
+              if (industrialData.rates.NI) spotPrices.nickel = round((1 / industrialData.rates.NI) * 14.5833);
+              source = 'live';
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching industrial metals:", e);
+        }
+
+        // Try to get fluctuation data for % changes
+        let fluctuation: FluctuationData | undefined;
+        const marketCache = await getMarketDataCache(supabase);
+        if (marketCache.data?.fluctuation) {
+          fluctuation = marketCache.data.fluctuation;
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            spotPrices,
+            fluctuation,
+            source,
+            lastUpdated: new Date().toISOString(),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (error) {
+        console.error("Error fetching all metals:", error);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            spotPrices: defaultSpotPrices,
+            source: 'default',
+            lastUpdated: new Date().toISOString(),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Unknown action. Valid: get-prices, refresh, get-market-data, get-timeseries, get-fluctuation, get-news, status' }),
+      JSON.stringify({ error: 'Unknown action. Valid: get-prices, refresh, get-market-data, get-timeseries, get-fluctuation, get-news, get-all-metals, status' }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
