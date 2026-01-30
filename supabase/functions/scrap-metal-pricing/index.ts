@@ -1032,17 +1032,61 @@ Deno.serve(async (req) => {
       
       // Default spot prices for all metals
       const defaultSpotPrices = {
+        // Precious metals (per oz)
         gold: 2347.80,
         silver: 27.45,
         platinum: 967.20,
         palladium: 1012.50,
+        // Steel (per lb)
+        steelHrc: 0.32,
+        steelRebar: 0.28,
+        steelScrap: 0.18,
+        // Industrial (per lb)
         copper: 4.52,
         aluminum: 1.15,
-        iron: 0.055,
+        zinc: 1.25,
+        tin: 14.50,
+        lead: 0.95,
         nickel: 8.00,
+        iron: 0.055,
+        // Alloys (per lb)
+        brass: 2.40,
+        bronze: 2.20,
+        // Specialty (per lb)
+        titanium: 12.00,
+        tungsten: 18.50,
+        magnesium: 1.80,
+        cobalt: 15.00,
+        lithium: 8.50,
       };
+
+      // Check cache first
+      const supabase = getSupabaseClient();
       
+      const cacheKey = 'all-metals-prices';
+      const { data: cachedData } = await supabase
+        .from('scrap_metal_price_cache')
+        .select('*')
+        .eq('cache_key', cacheKey)
+        .gte('expires_at', new Date().toISOString())
+        .maybeSingle();
+      
+      if (cachedData?.data) {
+        console.log("Returning cached all-metals data");
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            spotPrices: cachedData.data.spotPrices || defaultSpotPrices,
+            fluctuation: cachedData.data.fluctuation,
+            source: 'cached',
+            lastUpdated: cachedData.fetched_at,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       if (!METALS_API_KEY) {
+        console.log("No API key, returning defaults");
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -1057,21 +1101,19 @@ Deno.serve(async (req) => {
       try {
         const spotPrices = { ...defaultSpotPrices };
         let source: 'live' | 'default' = 'default';
+        const round = (n: number, decimals = 2) => Math.round(n * Math.pow(10, decimals)) / Math.pow(10, decimals);
+        const ozToLb = 14.5833; // Troy ounces per pound
 
-        // Try precious metals first (should work on most plans)
+        // 1. Fetch precious metals (XAU, XAG, XPT, XPD)
         const preciousSymbols = 'XAU,XAG,XPT,XPD';
-        const preciousUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${preciousSymbols}`;
-        
-        console.log("Fetching precious metal prices from Metals-API...");
+        console.log("Fetching precious metals...");
         try {
+          const preciousUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${preciousSymbols}`;
           const preciousResponse = await fetch(preciousUrl, { headers: { "Accept": "application/json" } });
           if (preciousResponse.ok) {
             const preciousData = await preciousResponse.json();
-            console.log("Precious metals response:", JSON.stringify(preciousData).substring(0, 300));
-            
+            console.log("Precious response:", JSON.stringify(preciousData).substring(0, 300));
             if (preciousData.success && preciousData.rates) {
-              const round = (n: number, decimals = 2) => Math.round(n * Math.pow(10, decimals)) / Math.pow(10, decimals);
-              
               if (preciousData.rates.XAU) spotPrices.gold = round(1 / preciousData.rates.XAU);
               if (preciousData.rates.XAG) spotPrices.silver = round(1 / preciousData.rates.XAG);
               if (preciousData.rates.XPT) spotPrices.platinum = round(1 / preciousData.rates.XPT);
@@ -1083,24 +1125,44 @@ Deno.serve(async (req) => {
           console.error("Error fetching precious metals:", e);
         }
 
-        // Try industrial metals separately (may fail on free plan)
-        const industrialSymbols = 'XCU,XAL,FE,NI';
-        const industrialUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${industrialSymbols}`;
-        
-        console.log("Fetching industrial metal prices from Metals-API...");
+        // 2. Fetch steel products (STEEL-HR, STEEL-RE, STEEL-SC)
+        const steelSymbols = 'STEEL-HR,STEEL-RE,STEEL-SC';
+        console.log("Fetching steel prices...");
         try {
+          const steelUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${steelSymbols}`;
+          const steelResponse = await fetch(steelUrl, { headers: { "Accept": "application/json" } });
+          if (steelResponse.ok) {
+            const steelData = await steelResponse.json();
+            console.log("Steel response:", JSON.stringify(steelData).substring(0, 400));
+            if (steelData.success && steelData.rates) {
+              // Steel prices are per ton, convert to per lb (1 ton = 2000 lbs)
+              if (steelData.rates['STEEL-HR']) spotPrices.steelHrc = round((1 / steelData.rates['STEEL-HR']) / 2000, 4);
+              if (steelData.rates['STEEL-RE']) spotPrices.steelRebar = round((1 / steelData.rates['STEEL-RE']) / 2000, 4);
+              if (steelData.rates['STEEL-SC']) spotPrices.steelScrap = round((1 / steelData.rates['STEEL-SC']) / 2000, 4);
+              source = 'live';
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching steel prices:", e);
+        }
+
+        // 3. Fetch base industrial metals (XCU, ALU, ZNC, TIN, LEAD, NI, IRON)
+        const industrialSymbols = 'XCU,ALU,ZNC,TIN,LEAD,NI,IRON';
+        console.log("Fetching industrial metals...");
+        try {
+          const industrialUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${industrialSymbols}`;
           const industrialResponse = await fetch(industrialUrl, { headers: { "Accept": "application/json" } });
           if (industrialResponse.ok) {
             const industrialData = await industrialResponse.json();
-            console.log("Industrial metals response:", JSON.stringify(industrialData).substring(0, 300));
-            
+            console.log("Industrial response:", JSON.stringify(industrialData).substring(0, 400));
             if (industrialData.success && industrialData.rates) {
-              const round = (n: number, decimals = 2) => Math.round(n * Math.pow(10, decimals)) / Math.pow(10, decimals);
-              
-              if (industrialData.rates.XCU) spotPrices.copper = round((1 / industrialData.rates.XCU) * 14.5833);
-              if (industrialData.rates.XAL) spotPrices.aluminum = round((1 / industrialData.rates.XAL) * 14.5833);
-              if (industrialData.rates.FE) spotPrices.iron = round((1 / industrialData.rates.FE) / 2204.62, 3);
-              if (industrialData.rates.NI) spotPrices.nickel = round((1 / industrialData.rates.NI) * 14.5833);
+              if (industrialData.rates.XCU) spotPrices.copper = round((1 / industrialData.rates.XCU) * ozToLb);
+              if (industrialData.rates.ALU) spotPrices.aluminum = round((1 / industrialData.rates.ALU) * ozToLb);
+              if (industrialData.rates.ZNC) spotPrices.zinc = round((1 / industrialData.rates.ZNC) * ozToLb);
+              if (industrialData.rates.TIN) spotPrices.tin = round((1 / industrialData.rates.TIN) * ozToLb);
+              if (industrialData.rates.LEAD) spotPrices.lead = round((1 / industrialData.rates.LEAD) * ozToLb);
+              if (industrialData.rates.NI) spotPrices.nickel = round((1 / industrialData.rates.NI) * ozToLb);
+              if (industrialData.rates.IRON) spotPrices.iron = round((1 / industrialData.rates.IRON) / 2204.62, 4); // ton to lb
               source = 'live';
             }
           }
@@ -1108,12 +1170,64 @@ Deno.serve(async (req) => {
           console.error("Error fetching industrial metals:", e);
         }
 
-        // Try to get fluctuation data for % changes
+        // 4. Fetch alloys (BRASS, BRONZE)
+        const alloySymbols = 'BRASS,BRONZE';
+        console.log("Fetching alloy prices...");
+        try {
+          const alloyUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${alloySymbols}`;
+          const alloyResponse = await fetch(alloyUrl, { headers: { "Accept": "application/json" } });
+          if (alloyResponse.ok) {
+            const alloyData = await alloyResponse.json();
+            console.log("Alloy response:", JSON.stringify(alloyData).substring(0, 300));
+            if (alloyData.success && alloyData.rates) {
+              if (alloyData.rates.BRASS) spotPrices.brass = round((1 / alloyData.rates.BRASS) * ozToLb);
+              if (alloyData.rates.BRONZE) spotPrices.bronze = round((1 / alloyData.rates.BRONZE) * ozToLb);
+              source = 'live';
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching alloy prices:", e);
+        }
+
+        // 5. Fetch specialty metals (TITANIUM, TUNGSTEN, MG, LCO, LITHIUM)
+        const specialtySymbols = 'TITANIUM,TUNGSTEN,MG,LCO,LITHIUM';
+        console.log("Fetching specialty metals...");
+        try {
+          const specialtyUrl = `https://metals-api.com/api/latest?access_key=${METALS_API_KEY}&base=USD&symbols=${specialtySymbols}`;
+          const specialtyResponse = await fetch(specialtyUrl, { headers: { "Accept": "application/json" } });
+          if (specialtyResponse.ok) {
+            const specialtyData = await specialtyResponse.json();
+            console.log("Specialty response:", JSON.stringify(specialtyData).substring(0, 400));
+            if (specialtyData.success && specialtyData.rates) {
+              if (specialtyData.rates.TITANIUM) spotPrices.titanium = round((1 / specialtyData.rates.TITANIUM) * ozToLb);
+              if (specialtyData.rates.TUNGSTEN) spotPrices.tungsten = round((1 / specialtyData.rates.TUNGSTEN) * ozToLb);
+              if (specialtyData.rates.MG) spotPrices.magnesium = round((1 / specialtyData.rates.MG) * ozToLb);
+              if (specialtyData.rates.LCO) spotPrices.cobalt = round((1 / specialtyData.rates.LCO) * ozToLb);
+              if (specialtyData.rates.LITHIUM) spotPrices.lithium = round((1 / specialtyData.rates.LITHIUM) * ozToLb);
+              source = 'live';
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching specialty metals:", e);
+        }
+
+        // Get fluctuation data for % changes
         let fluctuation: FluctuationData | undefined;
         const marketCache = await getMarketDataCache(supabase);
         if (marketCache.data?.fluctuation) {
           fluctuation = marketCache.data.fluctuation;
         }
+
+        // Cache the result for 24 hours
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await supabase
+          .from('scrap_metal_price_cache')
+          .upsert({
+            cache_key: cacheKey,
+            data: { spotPrices, fluctuation },
+            fetched_at: new Date().toISOString(),
+            expires_at: expiresAt,
+          }, { onConflict: 'cache_key' });
 
         return new Response(
           JSON.stringify({ 
