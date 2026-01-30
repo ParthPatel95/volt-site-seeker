@@ -1,56 +1,176 @@
 
-
-# Fix: Ensure Inventory Link Appears in Sidebar
+# Plan: Implement Automatic PWA Update System to Fix Caching Issues
 
 ## Problem Summary
-The Inventory link exists in the code (`src/components/Sidebar.tsx`, line 78) but is not appearing in your browser. This is likely due to browser caching or a hot reload failure.
 
-## Current Code Status
-The Inventory link IS present in the sidebar configuration:
+The app uses a PWA (Progressive Web App) with service worker caching. When new code deploys, users may see stale cached content until they manually refresh. This causes issues like the Inventory link not appearing even though it exists in the code.
+
+Currently:
+- PWA is configured with `registerType: 'autoUpdate'` (silent background updates)
+- No UI component notifies users when new content is available
+- Users don't know they need to refresh to see latest changes
+
+## Solution Overview
+
+Implement a **multi-layered cache management system** that automatically handles updates without user intervention:
+
+1. **Auto-Refresh on Update Detection** - Automatically reload when new content is available (not just notify)
+2. **Periodic Update Checks** - Check for updates every 15 minutes
+3. **Visible Update Toast** - Show a brief toast before auto-reloading (gives user context)
+4. **Version Tracking** - Track app version to detect stale sessions
+
+---
+
+## Files to Create
+
+### 1. `src/components/pwa/ReloadPrompt.tsx`
+
+A component that uses `vite-plugin-pwa`'s `useRegisterSW` hook to:
+- Detect when new content is available (`needRefresh` state)
+- Show a brief toast notification: "Updating to latest version..."
+- Automatically reload after 2 seconds (no user action required)
+- Check for updates every 15 minutes
+
+```text
++--[ Update Toast ]--------------------------------+
+| ↻  Updating to latest version...                |
+|    Refreshing in 2s                             |
++-------------------------------------------------+
+```
+
+### 2. `src/constants/app-version.ts`
+
+A simple version constant that changes with each deployment:
+- Used to detect if the user's cached version is outdated
+- Allows for emergency cache-busting via version comparison
+
+---
+
+## Files to Modify
+
+### 1. `vite.config.ts`
+
+Update PWA configuration:
+- Change `registerType` from `'autoUpdate'` to `'prompt'` (enables needRefresh detection)
+- Add `skipWaiting: true` and `clientsClaim: true` to workbox config
+- These ensure new service workers take control immediately
+
+### 2. `src/App.tsx`
+
+Add the new `ReloadPrompt` component to the app root (alongside existing `InstallPrompt`)
+
+### 3. `index.html`
+
+Add cache-control meta tags to discourage browser caching of the HTML shell
+
+---
+
+## Technical Implementation
+
+### ReloadPrompt Component Logic
 
 ```typescript
-// Line 74-80 in src/components/Sidebar.tsx
-{
-  title: 'Operations',
-  items: [
-    { path: '/app/build', icon: HardHat, label: 'Build Management', permission: 'feature.build-management' },
-    { path: '/app/inventory', icon: Package, label: 'Inventory', permission: '' },
-  ]
+// Pseudo-code for the auto-update logic
+function ReloadPrompt() {
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegistered(registration) {
+      // Check for updates every 15 minutes
+      setInterval(() => registration?.update(), 15 * 60 * 1000);
+    },
+    onNeedRefresh() {
+      // New content available - will auto-reload
+    }
+  });
+
+  useEffect(() => {
+    if (needRefresh) {
+      // Show toast, then auto-reload after 2 seconds
+      toast.info("Updating to latest version...");
+      setTimeout(() => {
+        updateServiceWorker(true); // true = reload page
+      }, 2000);
+    }
+  }, [needRefresh]);
 }
 ```
 
-The `permission: ''` (empty string) ensures it is visible to ALL users per the permission check logic.
+### Vite Config Changes
 
-## Immediate Fix Steps
+```typescript
+VitePWA({
+  registerType: 'prompt', // Changed from 'autoUpdate'
+  // ... existing config ...
+  workbox: {
+    // ... existing config ...
+    skipWaiting: true,      // NEW: Activate new SW immediately
+    clientsClaim: true,     // NEW: Take control of all clients
+  }
+})
+```
 
-### Step 1: Force Browser Refresh
-Perform a hard refresh to clear cached JavaScript:
-- **Windows/Linux**: `Ctrl + Shift + R` or `Ctrl + F5`
-- **Mac**: `Cmd + Shift + R`
+### HTML Meta Tags
 
-### Step 2: If Still Not Visible - Clear Site Data
-1. Open browser DevTools (F12)
-2. Go to Application tab
-3. Clear Site Data / Storage
+```html
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+```
 
-### Step 3: Code Verification (Already Done)
-The code already has the Inventory link. No code changes are needed.
+---
 
-## Technical Details
+## User Experience Flow
 
-| Item | Status | Location |
-|------|--------|----------|
-| Inventory in navSections | Present | Line 78 |
-| Package icon imported | Yes | Line 24 |
-| Permission set to '' | Yes | Visible to all |
-| Route /app/inventory | Configured | VoltScout.tsx line 105 |
+```text
+1. User has app open with cached version
 
-## Why This Happened
-The Vite development server showed "connection lost. Polling for restart..." which can cause components to not update properly during hot reload. This is a development environment issue, not intentional removal.
+2. New deployment is pushed to production
 
-## Assurance
-- The Inventory link code is present and correct
-- It was NOT deliberately removed
-- No additional credits should be needed to "re-add" something that already exists
-- A simple browser refresh should resolve this
+3. Within 15 minutes (or on next navigation):
+   - Service worker detects new content
+   - ReloadPrompt component shows toast:
+     "Updating to latest version..."
 
+4. After 2 seconds:
+   - Page automatically reloads
+   - User sees fresh content with all new features
+
+5. User continues with no manual action needed
+```
+
+---
+
+## Why This Approach Works
+
+| Technique | Purpose |
+|-----------|---------|
+| `registerType: 'prompt'` | Enables `needRefresh` detection |
+| `skipWaiting: true` | New SW takes over immediately |
+| `clientsClaim: true` | SW controls all open tabs |
+| 15-min interval checks | Catches updates within reasonable time |
+| Auto-reload after toast | No user action required |
+| Cache-control meta tags | Prevents browser caching HTML |
+
+---
+
+## Fallback Behaviors
+
+- If service worker fails to update: Toast appears with manual "Reload" button
+- If user is in middle of form: Can dismiss and reload later (optional enhancement)
+- If offline: Shows offline-ready message instead
+
+---
+
+## Summary of Changes
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/components/pwa/ReloadPrompt.tsx` | Create | Auto-update detection + reload |
+| `src/constants/app-version.ts` | Create | Version tracking |
+| `vite.config.ts` | Modify | Enable prompt mode + workbox settings |
+| `src/App.tsx` | Modify | Add ReloadPrompt component |
+| `index.html` | Modify | Add cache-control meta tags |
+
+This ensures users **always see the latest version** without needing to know about browser caching or manual refresh techniques.
