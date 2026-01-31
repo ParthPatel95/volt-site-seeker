@@ -1,311 +1,421 @@
 
 
-# Inventory UI/UX Redesign Plan
+# Complete Inventory Page Redesign
 
-## Current State Analysis
+## Overview
 
-The inventory feature has a solid foundation with:
-- Dashboard with stats, alerts, and market ticker
-- Items list with grid/list views
-- Groups/containers management
-- Transactions history
-- Alerts for low stock, out of stock, and expiring items
-- Barcode scanning (hardware + camera)
-- AI-powered smart scanning
-- Mobile FAB with quick actions
+A ground-up redesign of the Inventory feature with a modern, mobile-first approach that feels like a native app while maintaining powerful desktop functionality.
 
-### Identified UX Pain Points
+## Current Issues Identified
 
-1. **Navigation Complexity**: Tab-based navigation feels cluttered on mobile with 6 tabs
-2. **Visual Hierarchy**: Dense information presentation makes scanning difficult
-3. **Touch Targets**: Some interactive elements are too small for mobile
-4. **Empty States**: Generic empty states lack personality and guidance
-5. **Loading States**: Inconsistent loading indicators across components
-6. **Action Discoverability**: Key actions hidden in dropdown menus
-7. **Mobile Filters**: Bottom sheet pattern could be improved with swipe gestures
+1. **Overwhelming complexity** - 846 lines in the main page file with too many state variables
+2. **Inconsistent mobile experience** - Separate mobile/desktop rendering creates maintenance issues
+3. **Navigation overload** - 6 tabs feel cluttered, especially on mobile
+4. **Dense information** - Cards and lists show too much info at once
+5. **Deep menu nesting** - Key actions hidden in dropdowns
+6. **No visual delight** - Missing animations, transitions, and micro-interactions
+7. **Slow perceived performance** - No skeleton loaders or optimistic updates
 
 ---
 
-## Proposed Redesign
+## New Design Philosophy
 
-### 1. Mobile-First Bottom Navigation
+### Core Principles
+- **Mobile-first, desktop-enhanced** - Design for touch, enhance for desktop
+- **Progressive disclosure** - Show essential info first, details on demand
+- **Thumb-friendly** - Important actions within thumb reach zone
+- **Visual feedback** - Every action has immediate visual response
+- **Contextual actions** - Right action at the right time
 
-Replace the tab dropdown with a native bottom navigation bar for mobile:
+---
 
-```text
-+--------------------------------------------------+
-|  [Dashboard]  [Items]  [Scan]  [Alerts]  [More]  |
-+--------------------------------------------------+
-```
+## New Architecture
 
-- Dashboard: Overview stats and quick actions
-- Items: Full inventory list with search
-- Scan: Central prominent action button
-- Alerts: Stock alerts with badge count
-- More: Groups, Transactions, Categories, Settings
-
-### 2. Enhanced Dashboard Layout
-
-**Mobile Layout:**
-```text
-+----------------------------------+
-| Welcome back!                    |
-| [Workspace Selector ▼]           |
-+----------------------------------+
-| [Quick Stats Row - Swipeable]    |
-| Total | In Stock | Low | Value   |
-+----------------------------------+
-| [Quick Actions]                  |
-| [ + Add Item ]  [ Scan Barcode ] |
-+----------------------------------+
-| [Alerts Preview Card]            |
-| 3 Low Stock | 1 Expiring         |
-|         View All →               |
-+----------------------------------+
-| [Market Ticker - Collapsible]    |
-+----------------------------------+
-```
-
-**Desktop Layout:**
-```text
-+--------------------------------------------------+
-| Workspace: [Selector ▼]    [+ Add] [Scan] [More] |
-+--------------------------------------------------+
-| +--------+ +--------+ +--------+ +--------+ +----+
-| | Total  | | Stock  | | Low    | | Value  | |... |
-| +--------+ +--------+ +--------+ +--------+ +----+
-+--------------------------------------------------+
-| [Alerts Cards Row]     |  [Market Intelligence]  |
-|                        |                          |
-+--------------------------------------------------+
-```
-
-### 3. Improved Item Cards
-
-Redesign `InventoryItemCard` with better visual hierarchy:
+### Simplified Component Structure
 
 ```text
-Mobile Card:
-+------------------------------------------+
-| [Image]  Item Name                   [⋮] |
-|          SKU: ABC-123                    |
-|          +---------+ 45 units  $1,234    |
-|          |In Stock |                     |
-|          +---------+                     |
-|          📍 Warehouse A                  |
-+------------------------------------------+
-
-Desktop Card (Grid):
-+-------------------------+
-| +-------------------+   |
-| |    [Image]        |   |
-| +-------------------+   |
-| Item Name               |
-| SKU: ABC-123            |
-| +-------+ 45 pcs $1.2K  |
-| |Stock ✓|               |
-| +-------+               |
-| 📍 Warehouse A          |
-+-------------------------+
-```
-
-### 4. Swipeable Item Actions (Mobile)
-
-Add swipe gestures to item cards:
-- **Swipe Right**: Quick add stock (+)
-- **Swipe Left**: Quick remove stock (-)
-- **Long Press**: Context menu with all actions
-
-### 5. Full-Screen Barcode Scanner
-
-Redesign scanner for immersive experience:
-
-```text
-+----------------------------------+
-| [X Close]              [⚙ Settings]|
-|                                    |
-|     +------------------------+     |
-|     |                        |     |
-|     |   Camera Viewfinder    |     |
-|     |   [Scanning frame]     |     |
-|     |                        |     |
-|     +------------------------+     |
-|                                    |
-|     Point camera at barcode        |
-|                                    |
-|  [💡 Torch]    [⚡ Smart Scan]     |
-+------------------------------------+
-```
-
-### 6. Improved Filters Experience
-
-Replace bottom sheet with slide-in panel:
-
-```text
-Mobile Filter Panel (slides from right):
-+----------------------------------+
-| Filters              [Clear] [X] |
-+----------------------------------+
-| Category                         |
-| [All] [Electronics] [Tools]...   |
-+----------------------------------+
-| Status                           |
-| [○ All] [● In Stock] [○ Low]... |
-+----------------------------------+
-| Location                         |
-| [Select Location ▼]              |
-+----------------------------------+
-| Quick Filters                    |
-| [Toggle] Low Stock Only          |
-| [Toggle] Expiring Soon           |
-+----------------------------------+
-|        [Apply Filters]           |
-+----------------------------------+
-```
-
-### 7. Enhanced Empty States
-
-Add illustrated, actionable empty states:
-
-```text
-No Items Yet:
-+----------------------------------+
-|        📦                        |
-|    (illustration)                |
-|                                  |
-|  Your inventory is empty         |
-|                                  |
-|  Start by scanning an item or    |
-|  adding one manually             |
-|                                  |
-|  [Scan Item]  [Add Manually]     |
-+----------------------------------+
-```
-
-### 8. Item Detail Sheet Redesign
-
-Modernize the detail view:
-
-```text
-+----------------------------------+
-| [< Back]  Item Details    [Edit] |
-+----------------------------------+
-| +---------------------------+    |
-| |    [Large Image]          |    |
-| +---------------------------+    |
-|                                  |
-| Item Name                        |
-| SKU: ABC-123  •  Barcode: 789    |
-+----------------------------------+
-| +-------+  +-------+  +-------+  |
-| | 45    |  | $1.2K |  | Good  |  |
-| | Stock |  | Value |  | Cond. |  |
-| +-------+  +-------+  +-------+  |
-+----------------------------------+
-| [+ Add Stock]  [- Remove Stock]  |
-+----------------------------------+
-| Location                         |
-| 📍 Warehouse A • Zone 1 • Bin 3  |
-+----------------------------------+
-| History                          |
-| [Timeline of transactions]       |
-+----------------------------------+
+src/components/inventory/
+  InventoryPage.tsx              # Slim orchestrator (~200 lines)
+  contexts/
+    InventoryContext.tsx         # Centralized state management
+  layouts/
+    InventoryMobileLayout.tsx    # Mobile shell with bottom nav
+    InventoryDesktopLayout.tsx   # Desktop shell with sidebar
+  views/
+    InventoryHomeView.tsx        # Dashboard/overview
+    InventoryItemsView.tsx       # Items list with search
+    InventoryScanView.tsx        # Unified scanning experience
+    InventoryAlertsView.tsx      # Stock alerts
+    InventoryMoreView.tsx        # Groups, transactions, settings
+  components/
+    items/
+      ItemCard.tsx               # Unified item card
+      ItemGrid.tsx               # Grid layout
+      ItemList.tsx               # List layout
+      ItemQuickActions.tsx       # Swipe/hover actions
+    common/
+      BottomSheet.tsx            # Reusable bottom sheet
+      SearchBar.tsx              # Global search with filters
+      EmptyState.tsx             # Illustrated empty states
+      SkeletonCard.tsx           # Loading states
+    scanner/
+      ScannerOverlay.tsx         # Full-screen scanner
 ```
 
 ---
 
-## Files to Create/Modify
+## New UI Design
 
-### New Files
+### 1. Mobile Bottom Navigation (Redesigned)
+
+```text
++----------------------------------------------------+
+|                                                    |
+|  [ Home ]  [ Items ]  [ SCAN ]  [ Alerts ]  [ ⚙ ] |
+|    🏠         📦      [ 📷 ]       🔔       ⋯    |
+|                         ↑                          |
+|                   Prominent FAB                    |
++----------------------------------------------------+
+```
+
+- **4 main tabs + More** instead of 6 tabs
+- **Central scan button** raised above nav bar (like Instagram's post button)
+- **Badge indicators** for alerts count
+- **Safe area padding** for notched phones
+
+### 2. New Home View (Dashboard)
+
+```text
++--------------------------------------------------+
+| Good morning! 👋                                  |
+| Workspace ▼                                       |
++--------------------------------------------------+
+| +----------+ +----------+ +----------+           |
+| | 247      | | 12       | | $45K     |           |
+| | Items    | | Low Stock| | Value    |           |
+| +----------+ +----------+ +----------+           |
++--------------------------------------------------+
+| Quick Actions                                     |
+| +--------------------+ +--------------------+     |
+| | 📷 Scan Item      | | ➕ Add Manually   |     |
+| +--------------------+ +--------------------+     |
+| +--------------------+ +--------------------+     |
+| | ✨ AI Smart Scan  | | 📊 View Report    |     |
+| +--------------------+ +--------------------+     |
++--------------------------------------------------+
+| 🚨 Needs Attention                               |
+| +----------------------------------------------+ |
+| | [img] Low stock: Copper Wire  →  [+Add]     | |
+| | [img] Out of stock: Steel Beam →  [+Add]    | |
+| +----------------------------------------------+ |
+|                           See all alerts →        |
++--------------------------------------------------+
+| Recent Activity                                   |
+| • Added 5 items via Smart Scan - 2h ago          |
+| • Adjusted stock: Aluminum Sheets - 5h ago       |
++--------------------------------------------------+
+```
+
+### 3. Items View (Redesigned)
+
+```text
++--------------------------------------------------+
+| 🔍 Search items, SKU, barcode...          [≡]    |
++--------------------------------------------------+
+| [All] [Low Stock] [Out of Stock] [Category ▼]   |
++--------------------------------------------------+
+|                                                   |
+| +----------------------------------------------+ |
+| | [=== drag left for actions ===]              | |
+| | [IMG] Copper Wire                        [...] |
+| |       SKU: CW-001 • 45 units                 | |
+| |       [In Stock]  📍 Warehouse A             | |
+| +----------------------------------------------+ |
+|                                                   |
+| +----------------------------------------------+ |
+| | [IMG] Steel Rebar                        [...] |
+| |       SKU: SR-002 • 12 units ⚠️              | |
+| |       [Low Stock] 📍 Yard B                  | |
+| +----------------------------------------------+ |
+|                                                   |
++--------------------------------------------------+
+```
+
+**Swipe Actions:**
+```text
+Swipe Left:  [-] Remove Stock
+Swipe Right: [+] Add Stock
+```
+
+### 4. Full-Screen Scanner (Immersive)
+
+```text
++--------------------------------------------------+
+| [×]                                    [Settings] |
+|                                                   |
+|                                                   |
+|         +----------------------------+            |
+|         |                            |            |
+|         |   📷 Camera Viewfinder     |            |
+|         |                            |            |
+|         |   [═══ Scan Line ═══]      |            |
+|         |                            |            |
+|         +----------------------------+            |
+|                                                   |
+|         Point at barcode or QR code              |
+|                                                   |
+| +----------+  +----------+  +----------+         |
+| | 💡 Torch |  |✨ AI Scan|  |⌨ Manual |         |
+| +----------+  +----------+  +----------+         |
+|                                                   |
+| Recent Scans                                      |
+| [IMG] Copper Wire - found                        |
+| [IMG] Unknown item - tap to add                  |
++--------------------------------------------------+
+```
+
+### 5. Item Detail (Bottom Sheet on Mobile)
+
+```text
++--------------------------------------------------+
+| ━━━━ (drag handle)                               |
++--------------------------------------------------+
+| +--------+  Copper Wire Bundle                   |
+| |  IMG   |  SKU: CW-001 • Barcode: 7890123      |
+| +--------+  [In Stock ✓] [Good Condition]        |
++--------------------------------------------------+
+| +--------+  +--------+  +--------+               |
+| |   45   |  | $2,250 |  |  Zone  |               |
+| |  units |  |  value |  |   A-3  |               |
+| +--------+  +--------+  +--------+               |
++--------------------------------------------------+
+| [ ➕ Add Stock ]        [ ➖ Remove Stock ]       |
++--------------------------------------------------+
+| Details                                           |
+| Category: Metals > Copper                        |
+| Supplier: ABC Metals Co.                         |
+| Received: Jan 15, 2026                           |
+| Min Stock: 20 units                              |
++--------------------------------------------------+
+| History                                           |
+| • +10 units added - Yesterday                    |
+| • -5 units removed - 3 days ago                  |
++--------------------------------------------------+
+| [Print Label]  [Add to Group]  [Edit]  [Delete]  |
++--------------------------------------------------+
+```
+
+### 6. Desktop Layout (Enhanced)
+
+```text
++------------------------------------------------------------------+
+| [Logo] Inventory              [🔍 Global Search]      [User ▼]   |
++--------+---------------------------------------------------------+
+|        |                                                          |
+| 🏠 Home|  Workspace: Main Warehouse ▼                            |
+|        |  +-------+ +-------+ +-------+ +-------+ +-------+      |
+| 📦Items|  | 247   | | 198   | | 12    | | 2     | | $45K  |      |
+|        |  | Total | | Stock | | Low   | | Out   | | Value |      |
+| 📷Scan |  +-------+ +-------+ +-------+ +-------+ +-------+      |
+|        |                                                          |
+| 🔔Alerts|  [+ Add Item]  [📷 Scan]  [✨ AI Scan]  [⬇ Export]    |
+|  (12)  |                                                          |
+|--------|  +------------------------+  +------------------------+  |
+| 📁Groups|  | 🔍 Search...    [≡]   |  | Filters: [All ▼]       |  |
+|        |  +------------------------+  +------------------------+  |
+| 📋Trans|                                                          |
+|        |  +------------------+ +------------------+               |
+| ⚙ More |  | [IMG]            | | [IMG]            |               |
+|        |  | Copper Wire      | | Steel Rebar      |               |
+|        |  | 45 units [Stock] | | 12 units [Low!]  |               |
+|        |  +------------------+ +------------------+               |
+|        |                                                          |
++--------+---------------------------------------------------------+
+```
+
+---
+
+## Technical Implementation
+
+### 1. New Context Provider
+
+```typescript
+// InventoryContext.tsx
+interface InventoryContextValue {
+  // State
+  workspace: InventoryWorkspace | null;
+  items: InventoryItem[];
+  stats: InventoryStats;
+  filters: InventoryFilters;
+  
+  // UI State
+  selectedItem: InventoryItem | null;
+  isScanning: boolean;
+  viewMode: 'grid' | 'list';
+  
+  // Actions
+  selectItem: (item: InventoryItem | null) => void;
+  setFilters: (filters: InventoryFilters) => void;
+  openScanner: () => void;
+  closeScanner: () => void;
+  
+  // Mutations
+  addItem: (item: Partial<InventoryItem>) => Promise<void>;
+  updateItem: (id: string, updates: Partial<InventoryItem>) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
+  adjustStock: (id: string, change: number, reason?: string) => Promise<void>;
+}
+```
+
+### 2. Responsive Layout Detection
+
+```typescript
+// Use container queries for component-level responsiveness
+const useBreakpoint = () => {
+  const isMobile = useMediaQuery('(max-width: 639px)');
+  const isTablet = useMediaQuery('(min-width: 640px) and (max-width: 1023px)');
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  
+  return { isMobile, isTablet, isDesktop };
+};
+```
+
+### 3. Gesture System
+
+```typescript
+// Swipe actions using framer-motion
+<motion.div
+  drag="x"
+  dragConstraints={{ left: -120, right: 120 }}
+  onDragEnd={(_, info) => {
+    if (info.offset.x > 80) handleAddStock();
+    else if (info.offset.x < -80) handleRemoveStock();
+  }}
+>
+  <ItemCard item={item} />
+</motion.div>
+```
+
+### 4. Animation System
+
+```typescript
+// Consistent motion tokens
+const motionConfig = {
+  list: {
+    container: { staggerChildren: 0.05 },
+    item: { 
+      initial: { opacity: 0, y: 20 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, x: -20 }
+    }
+  },
+  sheet: {
+    initial: { y: '100%' },
+    animate: { y: 0 },
+    exit: { y: '100%' },
+    transition: { type: 'spring', damping: 25 }
+  }
+};
+```
+
+---
+
+## Files to Create
 
 | File | Purpose |
 |------|---------|
-| `src/components/inventory/components/InventoryBottomNav.tsx` | Mobile bottom navigation bar |
-| `src/components/inventory/components/InventoryQuickStats.tsx` | Swipeable stats cards |
-| `src/components/inventory/components/InventorySwipeableCard.tsx` | Item card with swipe actions |
-| `src/components/inventory/components/InventoryFilterPanel.tsx` | Slide-in filter panel |
-| `src/components/inventory/components/InventoryEmptyState.tsx` | Reusable empty state component |
-| `src/components/inventory/components/InventoryHeader.tsx` | Unified responsive header |
+| `contexts/InventoryContext.tsx` | Centralized state management |
+| `layouts/InventoryMobileLayout.tsx` | Mobile shell with bottom nav |
+| `layouts/InventoryDesktopLayout.tsx` | Desktop shell with sidebar |
+| `views/InventoryHomeView.tsx` | Dashboard/overview |
+| `views/InventoryItemsView.tsx` | Items list with search |
+| `views/InventoryScanView.tsx` | Unified scanning |
+| `views/InventoryAlertsView.tsx` | Stock alerts |
+| `views/InventoryMoreView.tsx` | Groups, transactions, settings |
+| `components/items/ItemCard.tsx` | Unified item card |
+| `components/items/ItemQuickActions.tsx` | Swipe/hover actions |
+| `components/common/BottomSheet.tsx` | Reusable bottom sheet |
+| `components/common/SearchBar.tsx` | Global search |
+| `components/common/SkeletonCard.tsx` | Loading states |
+| `components/scanner/ScannerOverlay.tsx` | Full-screen scanner |
+| `components/nav/BottomNavigation.tsx` | New bottom nav |
+| `components/nav/DesktopSidebar.tsx` | Desktop sidebar nav |
 
-### Modified Files
+## Files to Significantly Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/inventory/InventoryPage.tsx` | Restructure layout, add bottom nav, improve responsive logic |
-| `src/components/inventory/components/InventoryDashboard.tsx` | New card-based layout, swipeable stats |
-| `src/components/inventory/components/InventoryItemCard.tsx` | Visual hierarchy improvements, touch-friendly |
-| `src/components/inventory/components/InventoryItemDetail.tsx` | Modernized sheet design |
-| `src/components/inventory/components/InventoryMobileFilters.tsx` | Convert to slide-in panel |
-| `src/components/inventory/components/InventoryFAB.tsx` | Hide when bottom nav is present, improve animation |
-| `src/components/inventory/components/InventoryBarcodeScanner.tsx` | Full-screen immersive mode |
-| `src/components/inventory/components/InventoryAddDialog.tsx` | Wizard-style multi-step form |
-| `src/components/inventory/components/InventoryAlertsTab.tsx` | Better card layout, priority sorting |
+| `InventoryPage.tsx` | Complete rewrite as slim orchestrator |
+| `InventoryItemDetail.tsx` | Convert to bottom sheet pattern |
+| `InventoryAddDialog.tsx` | Modernize with wizard flow |
+| `InventoryBarcodeScanner.tsx` | Full-screen immersive mode |
+
+## Files to Delete (After Migration)
+
+| File | Reason |
+|------|--------|
+| `InventoryMobileDashboard.tsx` | Replaced by unified HomeView |
+| `InventoryMobileHeader.tsx` | Replaced by layout components |
+| `InventoryMobileFilters.tsx` | Integrated into SearchBar |
+| `InventoryFAB.tsx` | Replaced by bottom nav center button |
+| `InventoryQuickStats.tsx` | Integrated into HomeView |
 
 ---
 
-## Technical Implementation Details
+## User Experience Improvements
 
-### Bottom Navigation Component
+### Touch Targets
+- All interactive elements minimum 44x44px
+- Increased spacing between tappable items
+- Larger form inputs on mobile (48px height)
 
-```typescript
-// Key features:
-- Fixed position at bottom with safe area padding
-- Badge indicators for alerts count
-- Active state highlighting
-- Haptic feedback on mobile
-- Hide on scroll down, show on scroll up
-```
+### Loading States
+- Skeleton cards while loading
+- Optimistic updates for stock changes
+- Pull-to-refresh on mobile
 
-### Swipeable Card Implementation
+### Empty States
+- Illustrated empty states for each view
+- Clear call-to-action buttons
+- Onboarding hints for new users
 
-```typescript
-// Using framer-motion for gestures:
-- drag="x" with constraints
-- onDragEnd threshold detection
-- Visual feedback during drag
-- Haptic vibration on action trigger
-```
+### Feedback
+- Haptic feedback on actions (mobile)
+- Toast notifications for confirmations
+- Inline validation in forms
 
-### Responsive Breakpoints
-
-```text
-Mobile:    < 640px  - Bottom nav, single column, swipe gestures
-Tablet:    640-1024px - Side navigation, 2-column grid
-Desktop:   > 1024px - Full tabs, 3-4 column grid
-```
-
-### Animation Improvements
-
-- Page transitions: Slide in/out
-- List animations: Staggered fade-in
-- Loading skeletons: Shimmer effect
-- Success/error feedback: Toast + haptic
+### Accessibility
+- ARIA labels on all interactive elements
+- Keyboard navigation support
+- Screen reader announcements
+- Reduced motion support
 
 ---
 
-## Accessibility Improvements
+## Implementation Phases
 
-1. **Touch Targets**: Minimum 44x44px for all interactive elements
-2. **Focus States**: Visible focus rings for keyboard navigation
-3. **Screen Reader**: Proper ARIA labels for all icons and actions
-4. **Color Contrast**: WCAG AA compliance for all text
-5. **Reduced Motion**: Respect `prefers-reduced-motion`
+### Phase 1: Foundation
+- Create InventoryContext
+- Build layout components
+- Create new navigation components
 
----
+### Phase 2: Core Views
+- Build HomeView with stats and quick actions
+- Build ItemsView with search and filters
+- Create unified ItemCard component
 
-## Summary of Changes
+### Phase 3: Actions & Detail
+- Implement swipe actions
+- Build bottom sheet item detail
+- Update add/edit dialogs
 
-| Area | Improvement |
-|------|-------------|
-| Navigation | Mobile bottom nav, simplified tabs |
-| Item Cards | Better hierarchy, swipe actions |
-| Dashboard | Quick stats, action-oriented |
-| Filters | Slide-in panel, better UX |
-| Scanner | Full-screen immersive mode |
-| Empty States | Illustrated, actionable |
-| Item Detail | Modernized layout |
-| Touch | 44px targets, swipe gestures |
-| Performance | Optimized re-renders, skeleton loading |
+### Phase 4: Scanner & Polish
+- Create immersive scanner experience
+- Add animations and transitions
+- Implement skeleton loaders
 
-This redesign focuses on making the inventory feature feel like a native mobile app while maintaining full desktop functionality.
+### Phase 5: Cleanup
+- Remove deprecated components
+- Update imports throughout app
+- Final testing and polish
 
