@@ -204,60 +204,138 @@ IRON GRADES:
 - Ductile Iron: Newer pipes, grates (more flexible than cast)
 - Wrought Iron: Fencing, railings (fibrous structure)
 
-WEIGHT ESTIMATION GUIDELINES (Updated):
-- Copper wire 4/0 gauge: ~0.64 lbs per foot (bare)
-- Copper wire 2/0 gauge: ~0.40 lbs per foot
-- Copper pipe Type L 1": ~0.65 lbs per foot
-- Copper pipe Type L 2": ~1.75 lbs per foot
-- Steel I-beams: Use designation (W8x10 = 10 lbs/ft, W12x26 = 26 lbs/ft)
-- Steel C-channel: C6x8.2 = 8.2 lbs/ft
-- Steel angle: L4x4x1/4 = 6.6 lbs/ft
-- Steel pipe Sch40 2": ~3.65 lbs per foot
-- Cast iron radiators: ~75-150 lbs per section
-- HVAC units: ~150 lbs per ton of capacity
-- Electric motors: ~5-8 lbs per HP (small), ~4-6 lbs per HP (large)
-- Steel drums 55 gal: ~40 lbs empty
-- Car batteries: ~30-50 lbs each
-- Aluminum windows: ~1.5 lbs per square foot
+=== MANDATORY WEIGHT ESTIMATION PROCESS ===
 
-SCRAP PRICING REFERENCE (per lb, 2025 market):
-- Bare bright copper (#1): $3.50-4.50/lb
-- #1 Copper pipe: $3.25-4.00/lb
-- #2 Copper: $3.00-3.80/lb
-- Insulated copper wire: $1.50-2.50/lb
-- Clean aluminum sheet: $0.80-1.10/lb
-- Cast aluminum: $0.50-0.75/lb
-- Aluminum extrusion: $0.60-0.85/lb
-- HMS 1 Steel: $0.10-0.16/lb
-- HMS 2 Steel: $0.08-0.14/lb
-- Structural steel: $0.10-0.18/lb
-- Galvanized steel: $0.06-0.10/lb
-- Yellow brass: $2.00-2.80/lb
-- Red brass: $2.20-3.00/lb
-- 304 Stainless: $0.50-0.80/lb
-- 316 Stainless: $0.70-1.00/lb
-- Cast iron: $0.06-0.12/lb
+You MUST follow this exact process for EVERY weight estimate. DO NOT skip steps.
 
-SALVAGE VS SCRAP DECISION CRITERIA:
-- Working HVAC units: Salvage value $200-2000+ depending on tonnage and age
-- Working motors: Salvage value typically 2-5x scrap value
-- Vintage fixtures: Potential architectural salvage premium 3-10x scrap
-- Industrial equipment: Check secondary market - often worth 10-50x scrap
-- Electrical panels: Working panels $50-500 salvage vs $5-20 scrap
-- Copper pipe in good condition: May be worth more as plumbing salvage
+STEP 1 - VISUAL SCALE REFERENCE:
+Identify reference objects in the image to establish scale:
+- Adult hand span = ~8 inches
+- Standard door height = 6'8" (80 inches)
+- Standard brick = 8" x 3.5" x 2.25", ~4 lbs
+- 55-gallon drum = 23" diameter x 33" tall, ~40 lbs empty
+- Car battery = 12" x 7" x 8", ~35-50 lbs
+- Standard hard hat = ~12" diameter
+- Clipboard = 9" x 12.5"
+- Adult standing figure = ~5'6" to 6' tall
 
-HAZARDOUS MATERIAL IDENTIFICATION:
-- Asbestos: Pre-1980 insulation, floor tiles (9x9 vinyl), roofing, pipe wrap, cement board
-- Lead paint: Pre-1978 painted surfaces, especially doors/windows with layers
-- PCBs: Pre-1979 electrical equipment (transformers, capacitors, fluorescent ballasts)
-- Refrigerants: HVAC systems (R-22, R-410A), refrigeration units - must be recovered
+STEP 2 - DIMENSIONAL ESTIMATION:
+Before stating weight, you MUST identify:
+- Visible length (feet/inches)
+- Visible width/diameter (inches)
+- Gauge/wall thickness if visible
+- Quantity/count of items
+
+STEP 3 - CALCULATE USING REFERENCE TABLE:
+
+COPPER (weight per linear foot):
+| Item | 1/2" | 3/4" | 1" | 1-1/4" | 1-1/2" | 2" |
+|------|------|------|-----|--------|--------|-----|
+| Type L Pipe | 0.29 | 0.46 | 0.65 | 0.88 | 1.14 | 1.75 |
+| Type M Pipe | 0.20 | 0.33 | 0.47 | 0.68 | 0.94 | 1.46 |
+
+COPPER WIRE (weight per foot, bare):
+| Gauge | lbs/ft |
+|-------|--------|
+| 14 AWG | 0.012 |
+| 12 AWG | 0.019 |
+| 10 AWG | 0.031 |
+| 8 AWG | 0.049 |
+| 6 AWG | 0.079 |
+| 4 AWG | 0.125 |
+| 2 AWG | 0.200 |
+| 1/0 AWG | 0.320 |
+| 4/0 AWG | 0.640 |
+
+STEEL I-BEAMS (weight = designation number, e.g., W8x10 = 10 lbs/ft):
+| Designation | lbs/ft |
+|-------------|--------|
+| W4x13 | 13 |
+| W6x15 | 15 |
+| W8x10 | 10 |
+| W8x18 | 18 |
+| W10x22 | 22 |
+| W12x26 | 26 |
+| W14x30 | 30 |
+
+STEEL PIPE Schedule 40 (weight per foot):
+| Size | lbs/ft |
+|------|--------|
+| 1" | 1.68 |
+| 1-1/2" | 2.72 |
+| 2" | 3.65 |
+| 3" | 7.58 |
+| 4" | 10.79 |
+
+COMMON ITEM WEIGHTS:
+- Cast iron radiator section: 75-150 lbs each
+- HVAC unit: ~150 lbs per ton capacity
+- Electric motor: 5-8 lbs per HP (small), 4-6 lbs per HP (large)
+- 55-gal steel drum: ~40 lbs empty
+- Car battery: 30-50 lbs
+- Aluminum window: ~1.5 lbs per sq ft
+- Steel door: 40-80 lbs each
+
+STEP 4 - SHOW YOUR CALCULATION:
+Format your reasoning in the notes field:
+"Observed: [item type] approximately [dimensions].
+Reference: [weight per unit from table]
+Calculation: [length] × [weight/ft] = [total weight]
+Confidence: [High/Medium/Low] - [reason]"
+
+STEP 5 - ASSIGN CONFIDENCE:
+- HIGH: Clear visibility, standard size, visible markings/labels
+- MEDIUM: Partial visibility, estimated dimensions, recognizable type
+- LOW: Poor visibility, unusual size, uncertain identification
+
+=== SCRAP PRICING REFERENCE (per lb, 2025 market) ===
+Always use the MIDPOINT of these ranges for estimates:
+- Bare bright copper (#1): $3.50-4.50/lb → use $4.00/lb
+- #1 Copper pipe: $3.25-4.00/lb → use $3.60/lb
+- #2 Copper: $3.00-3.80/lb → use $3.40/lb
+- Insulated copper wire: $1.50-2.50/lb → use $2.00/lb
+- Clean aluminum sheet: $0.80-1.10/lb → use $0.95/lb
+- Cast aluminum: $0.50-0.75/lb → use $0.62/lb
+- Aluminum extrusion: $0.60-0.85/lb → use $0.72/lb
+- HMS 1 Steel: $0.10-0.16/lb → use $0.13/lb
+- HMS 2 Steel: $0.08-0.14/lb → use $0.11/lb
+- Structural steel: $0.10-0.18/lb → use $0.14/lb
+- Galvanized steel: $0.06-0.10/lb → use $0.08/lb
+- Yellow brass: $2.00-2.80/lb → use $2.40/lb
+- Red brass: $2.20-3.00/lb → use $2.60/lb
+- 304 Stainless: $0.50-0.80/lb → use $0.65/lb
+- 316 Stainless: $0.70-1.00/lb → use $0.85/lb
+- Cast iron: $0.06-0.12/lb → use $0.09/lb
+
+PRICE VALIDATION CHECK:
+After calculating total value, verify it seems reasonable:
+- Copper pipe 10ft should be $20-70
+- Full cast iron radiator should be $10-25
+- 100 lbs HMS steel should be $10-16
+- Car battery should be worth $5-15 at scrap
+
+=== SALVAGE VS SCRAP DECISION ===
+Check salvage value FIRST - it's often higher:
+- Working HVAC units: $200-2000+ (vs $30-60 scrap)
+- Working motors: 2-5x scrap value
+- Vintage fixtures: 3-10x scrap for architectural salvage
+- Industrial equipment: 10-50x scrap on secondary market
+- Working electrical panels: $50-500 (vs $5-20 scrap)
+- Good condition copper pipe: Worth more as plumbing salvage
+
+=== HAZARDOUS MATERIAL IDENTIFICATION ===
+MUST flag if ANY of these conditions are met:
+- Asbestos: Pre-1980 insulation, 9x9 floor tiles, pipe wrap, cement board
+- Lead paint: Pre-1978 painted surfaces, multiple paint layers
+- PCBs: Pre-1979 transformers, capacitors, fluorescent ballasts
+- Refrigerants: HVAC systems, refrigeration - requires certified recovery
 - Mercury: Thermostats, fluorescent bulbs, certain switches
-- Batteries: Lead-acid, lithium-ion, nickel-cadmium - special handling required
+- Batteries: Lead-acid, lithium-ion, nickel-cadmium
 
-REMOVAL COMPLEXITY ASSESSMENT:
-- Simple: Loose items, floor level, hand-carry possible, no special PPE
-- Moderate: Bolted/fastened, ladder required, basic tools, standard PPE
-- Complex: Welded/embedded, rigging required, hazmat concerns, specialized equipment`;
+=== REMOVAL COMPLEXITY ===
+- Simple: Loose/portable, floor level, hand-carry, no special PPE
+- Moderate: Bolted/fastened, ladder height, basic tools, standard PPE
+- Complex: Welded/embedded, rigging needed, hazmat, specialized equipment`;
 
 // System prompt for multi-item detection
 const MULTI_ITEM_SYSTEM_PROMPT = `${SYSTEM_PROMPT}

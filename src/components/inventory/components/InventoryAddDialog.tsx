@@ -140,7 +140,36 @@ export function InventoryAddDialog({
     // Calculate mid-point of market value for unit cost
     const midValue = (result.marketValue.lowEstimate + result.marketValue.highEstimate) / 2;
 
-    // Auto-fill form with AI results
+    // Extract scrap/demolition fields if present
+    const scrapFields = result.scrapAnalysis ? {
+      metal_type: result.scrapAnalysis.metalType,
+      metal_grade: result.scrapAnalysis.metalGrade,
+      estimated_weight: result.scrapAnalysis.estimatedWeight.value,
+      weight_unit: result.scrapAnalysis.estimatedWeight.unit,
+      scrap_price_per_unit: result.scrapAnalysis.scrapValue.pricePerUnit,
+    } : {};
+
+    const salvageFields = result.salvageAssessment ? {
+      is_salvageable: result.salvageAssessment.isSalvageable,
+      salvage_value: (result.salvageAssessment.resaleValue.lowEstimate + 
+                      result.salvageAssessment.resaleValue.highEstimate) / 2,
+    } : {};
+
+    const hazmatFields = result.hazmatFlags ? {
+      has_hazmat_flags: result.hazmatFlags.hasAsbestos || 
+                        result.hazmatFlags.hasLeadPaint ||
+                        result.hazmatFlags.hasPCBs ||
+                        result.hazmatFlags.hasRefrigerants ||
+                        (result.hazmatFlags.otherHazards?.length > 0),
+      hazmat_details: result.hazmatFlags,
+    } : {};
+
+    const demolitionFields = result.demolitionDetails ? {
+      removal_complexity: result.demolitionDetails.removalComplexity,
+      labor_hours_estimate: result.demolitionDetails.laborHoursEstimate,
+    } : {};
+
+    // Auto-fill form with AI results including scrap data
     setFormData(prev => ({
       ...prev,
       name: result.item.name,
@@ -156,8 +185,14 @@ export function InventoryAddDialog({
         result.item.model ? `Model: ${result.item.model}` : '',
         result.marketValue.notes || '',
         `AI Confidence: Quantity ${result.quantity.confidence}, Value ${result.marketValue.confidence}`,
+        result.scrapAnalysis ? `Metal: ${result.scrapAnalysis.metalType} (${result.scrapAnalysis.metalGrade})` : '',
+        result.scrapAnalysis?.estimatedWeight ? `Weight: ${result.scrapAnalysis.estimatedWeight.value} ${result.scrapAnalysis.estimatedWeight.unit}` : '',
       ].filter(Boolean).join('\n'),
       primary_image_url: uploadResult?.url || '',
+      ...scrapFields,
+      ...salvageFields,
+      ...hazmatFields,
+      ...demolitionFields,
     }));
   };
 
@@ -176,7 +211,7 @@ export function InventoryAddDialog({
     const blob = await fetch(imageUrl).then(r => r.blob());
     const uploadResult = await uploadImage(blob, 'items');
 
-    // Convert all AI results to inventory items
+    // Convert all AI results to inventory items including scrap/demolition data
     const inventoryItems = results.map(result => {
       // Find matching category
       const matchingCategory = categories.find(
@@ -185,6 +220,35 @@ export function InventoryAddDialog({
 
       // Calculate mid-point of market value for unit cost
       const midValue = (result.marketValue.lowEstimate + result.marketValue.highEstimate) / 2;
+
+      // Extract scrap/demolition fields if present
+      const scrapFields = result.scrapAnalysis ? {
+        metal_type: result.scrapAnalysis.metalType as InventoryItem['metal_type'],
+        metal_grade: result.scrapAnalysis.metalGrade,
+        estimated_weight: result.scrapAnalysis.estimatedWeight.value,
+        weight_unit: result.scrapAnalysis.estimatedWeight.unit as InventoryItem['weight_unit'],
+        scrap_price_per_unit: result.scrapAnalysis.scrapValue.pricePerUnit,
+      } : {};
+
+      const salvageFields = result.salvageAssessment ? {
+        is_salvageable: result.salvageAssessment.isSalvageable,
+        salvage_value: (result.salvageAssessment.resaleValue.lowEstimate + 
+                        result.salvageAssessment.resaleValue.highEstimate) / 2,
+      } : {};
+
+      const hazmatFields = result.hazmatFlags ? {
+        has_hazmat_flags: result.hazmatFlags.hasAsbestos || 
+                          result.hazmatFlags.hasLeadPaint ||
+                          result.hazmatFlags.hasPCBs ||
+                          result.hazmatFlags.hasRefrigerants ||
+                          (result.hazmatFlags.otherHazards?.length > 0),
+        hazmat_details: result.hazmatFlags,
+      } : {};
+
+      const demolitionFields = result.demolitionDetails ? {
+        removal_complexity: result.demolitionDetails.removalComplexity as InventoryItem['removal_complexity'],
+        labor_hours_estimate: result.demolitionDetails.laborHoursEstimate,
+      } : {};
 
       return {
         workspace_id: workspaceId,
@@ -212,11 +276,17 @@ export function InventoryAddDialog({
           result.item.model ? `Model: ${result.item.model}` : '',
           result.marketValue.notes || '',
           `AI Confidence: Quantity ${result.quantity.confidence}, Value ${result.marketValue.confidence}`,
+          result.scrapAnalysis ? `Metal: ${result.scrapAnalysis.metalType} (${result.scrapAnalysis.metalGrade})` : '',
+          result.scrapAnalysis?.estimatedWeight ? `Weight: ${result.scrapAnalysis.estimatedWeight.value} ${result.scrapAnalysis.estimatedWeight.unit}` : '',
         ].filter(Boolean).join('\n'),
         primary_image_url: uploadResult?.url || '',
         status: result.quantity.count === 0 ? 'out_of_stock' as const : 'in_stock' as const,
         tags: [],
         additional_images: [],
+        ...scrapFields,
+        ...salvageFields,
+        ...hazmatFields,
+        ...demolitionFields,
       };
     });
 
