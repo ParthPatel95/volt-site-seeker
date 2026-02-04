@@ -102,24 +102,13 @@ const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /**
- * Convert UTC timestamp to MST (Mountain Standard Time) date components.
- * Alberta uses MST (UTC-7) in winter and MDT (UTC-6) in summer.
- * For consistency with AESO reporting, we use MST year-round for peak analysis.
+ * Convert UTC timestamp to Mountain Time (MST/MDT) date components.
+ * Uses shared timezone utility with DST awareness.
  */
-const parseToMST = (utcTimestamp: string) => {
-  const utc = new Date(utcTimestamp);
-  // MST = UTC - 7 hours
-  const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
-  const mst = new Date(mstMs);
-  return {
-    date: mst,
-    hour: mst.getUTCHours(),
-    dayOfWeek: mst.getUTCDay(),
-    dayOfMonth: mst.getUTCDate(),
-    month: mst.getUTCMonth(),
-    year: mst.getUTCFullYear()
-  };
-};
+import { parseToMST as parseToMountainTime } from '@/lib/timezone-utils';
+
+// Re-export for local use with the same signature
+const parseToMST = parseToMountainTime;
 
 export function useHistorical12CPPeaks() {
   const [peaksData, setPeaksData] = useState<HistoricalPeaksData | null>(null);
