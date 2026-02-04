@@ -13,6 +13,7 @@ import {
   AESODeepDive,
   AESOStepByStep,
 } from './shared';
+import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
 
 const monthlyPeaks = [
   { month: 'Jan', typicalHour: '17:00-18:00', typicalTemp: '-25°C', risk: 'high' },
@@ -52,8 +53,8 @@ export const TwelveCPExplainedSection = () => {
   const [facilityMW, setFacilityMW] = useState(135);
   const [avoidedPeaks, setAvoidedPeaks] = useState(12);
 
-  // Calculations
-  const transmissionAdder = 11.73; // CAD per MWh
+  // Calculations - 2026 AESO Rate DTS values
+  const transmissionAdder = AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH; // CAD per MWh
   const hoursPerYear = 8760;
   const baseTransmissionCost = facilityMW * transmissionAdder * hoursPerYear;
   const reductionPercent = (avoidedPeaks / 12) * 100;
@@ -196,7 +197,7 @@ export const TwelveCPExplainedSection = () => {
                   (Sum of your loads during each monthly peak ÷ Sum of all system peaks) × Total transmission revenue requirement (~$2.3B)
                 </p>
                 <p>
-                  <strong className="text-foreground">2024 Transmission Adder:</strong> $11.73 CAD/MWh — applied to all consumed energy, 
+                  <strong className="text-foreground">2026 Transmission Adder:</strong> ${AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH} CAD/MWh — applied to all consumed energy, 
                   but reducible through 12CP avoidance. This adder funds the provincial transmission infrastructure.
                 </p>
                 <p>
@@ -276,7 +277,7 @@ export const TwelveCPExplainedSection = () => {
             <AESOKeyInsight variant="pro-tip">
               <strong>WattByte's 135MW Alberta Heartland:</strong> By avoiding all 12 peaks 
               (shutting down ~12 hours/year total), we can save up to 
-              <span className="font-bold text-[hsl(var(--watt-bitcoin))]"> ${(135 * 11.73 * 8760 / 1000000).toFixed(1)}M/year</span> 
+              <span className="font-bold text-[hsl(var(--watt-bitcoin))]"> ${(135 * AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH * 8760 / 1000000).toFixed(1)}M/year</span> 
               in transmission costs.
             </AESOKeyInsight>
           </div>

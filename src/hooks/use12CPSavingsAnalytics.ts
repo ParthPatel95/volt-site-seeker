@@ -63,9 +63,7 @@ export interface TwelveCPSavingsData {
   };
 }
 
-// Rate 65 transmission rate: $7.11/kW/month (per FortisAlberta 2024 tariffs)
-const TRANSMISSION_RATE_PER_KW_MONTH = 7.11;
-const TRANSMISSION_ADDER = 11.73; // $/MWh CAD (approximate for comparison)
+import { TRANSMISSION_ADDER, TRANSMISSION_RATE_PER_KW_MONTH } from '@/constants/tariff-rates';
 
 export function use12CPSavingsAnalytics() {
   const [savingsData, setSavingsData] = useState<TwelveCPSavingsData | null>(null);

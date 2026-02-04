@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Calculator, DollarSign, TrendingDown, Zap, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
 
 interface CalculatorResults {
   baseTransmissionCost: number;
@@ -15,8 +16,8 @@ export default function TwelveCPCalculator() {
   const [avoidedPeaks, setAvoidedPeaks] = useState(12);
   const [hoursPerYear, setHoursPerYear] = useState(8500);
 
-  // AESO 2024 transmission adder (CAD/MWh)
-  const TRANSMISSION_ADDER = 11.73;
+  // AESO 2026 transmission adder (CAD/MWh)
+  const TRANSMISSION_ADDER = AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH;
 
   const calculateSavings = (): CalculatorResults => {
     const baseTransmissionCost = facilityMW * TRANSMISSION_ADDER * hoursPerYear;

@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronDown, DollarSign, HelpCircle, Zap, Shield } from 'lucide-react';
 import { CreditSettings } from '@/hooks/useEnergyCredits';
+import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
 
 interface Props {
   settings: CreditSettings;
@@ -79,7 +80,7 @@ export function CreditSettingsPanel({ settings, onSettingsChange }: Props) {
                       <TooltipContent className="max-w-xs">
                         <p className="text-xs">
                           <strong>12 Coincident Peak (12CP):</strong> AESO charges transmission based on your demand during the 12 monthly system peaks. 
-                          By reducing load during these peaks, you can avoid ~$11.73/MWh in transmission charges.
+                          By reducing load during these peaks, you can avoid ~${AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH}/MWh in transmission charges (2026 Rate DTS).
                         </p>
                         <p className="text-xs mt-1">
                           100% = fully curtail during all peak hours<br/>
@@ -108,7 +109,7 @@ export function CreditSettingsPanel({ settings, onSettingsChange }: Props) {
               </div>
               {settings.enabled && settings.twelveCPAvoidanceRate > 0 && (
                 <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-md">
-                  💰 Estimated credit: ${(11.73 * (settings.twelveCPAvoidanceRate / 100)).toFixed(2)}/MWh transmission savings
+                  💰 Estimated credit: ${(AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH * (settings.twelveCPAvoidanceRate / 100)).toFixed(2)}/MWh transmission savings
                 </p>
               )}
             </div>

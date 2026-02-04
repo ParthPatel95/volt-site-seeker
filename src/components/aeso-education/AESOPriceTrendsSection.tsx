@@ -5,9 +5,11 @@ import { useAESOHistoricalPricing } from '@/hooks/useAESOHistoricalPricing';
 import { applyMonthlyUptimeFilter } from '@/utils/uptimeFilter';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 
-// Cost stack components (CAD/MWh)
-const TRANSMISSION_ADDER_CAD = 11.73; // DTS Rate - added to pool price for all-in cost
-const TWELVE_CP_SAVINGS_CAD = 11.73; // Full transmission elimination by avoiding 12 peaks
+import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
+
+// Cost stack components (CAD/MWh) - 2026 AESO Rate DTS values
+const TRANSMISSION_ADDER_CAD = AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH; // DTS Rate - added to pool price for all-in cost
+const TWELVE_CP_SAVINGS_CAD = AESO_TARIFF_2026.TWELVE_CP_SAVINGS_CAD_MWH; // Full transmission elimination by avoiding 12 peaks
 const OPERATING_RESERVE_REVENUE_CAD = 2.50; // Avg revenue from OR participation (conservative)
 
 interface YearlyDataPoint {
