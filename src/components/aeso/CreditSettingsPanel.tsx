@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ChevronDown, DollarSign, HelpCircle, Zap, Shield } from 'lucide-react';
 import { CreditSettings } from '@/hooks/useEnergyCredits';
 import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
+import { AESOTransmissionBadge } from '@/components/ui/rate-source-badge';
 
 interface Props {
   settings: CreditSettings;
@@ -106,6 +107,9 @@ export function CreditSettingsPanel({ settings, onSettingsChange }: Props) {
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>No avoidance</span>
                 <span>Full avoidance</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AESOTransmissionBadge variant="compact" />
               </div>
               {settings.enabled && settings.twelveCPAvoidanceRate > 0 && (
                 <p className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-md">

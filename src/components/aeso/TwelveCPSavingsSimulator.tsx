@@ -30,10 +30,12 @@ import {
   Loader2,
   RefreshCw,
   Lightbulb,
-  Database
+  Database,
+  Calendar
 } from 'lucide-react';
 import { use12CPSavingsAnalytics, SavingsSimulatorResult } from '@/hooks/use12CPSavingsAnalytics';
 import { format } from 'date-fns';
+import { FortisAlbertaRate65Badge, AESOTransmissionBadge } from '@/components/ui/rate-source-badge';
 
 export function TwelveCPSavingsSimulator() {
   const {
@@ -276,12 +278,18 @@ export function TwelveCPSavingsSimulator() {
           )}
 
           {/* Transmission Rate Info */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 text-sm">
-            <Lightbulb className="w-5 h-5 text-yellow-600 shrink-0" />
-            <p className="text-muted-foreground">
-              <strong>12CP Transmission:</strong> Rate 65 charges ${transmissionRatePerKW}/kW/month based on your load during 12 monthly system demand peaks (not price peaks). 
-              Avoiding these peaks eliminates your 12CP contribution.
-            </p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 text-sm">
+              <Lightbulb className="w-5 h-5 text-yellow-600 shrink-0" />
+              <p className="text-muted-foreground">
+                <strong>12CP Transmission:</strong> Rate 65 charges ${transmissionRatePerKW}/kW/month based on your load during 12 monthly system demand peaks (not price peaks). 
+                Avoiding these peaks eliminates your 12CP contribution.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <FortisAlbertaRate65Badge variant="compact" />
+              <AESOTransmissionBadge variant="compact" />
+            </div>
           </div>
         </CardContent>
       </Card>

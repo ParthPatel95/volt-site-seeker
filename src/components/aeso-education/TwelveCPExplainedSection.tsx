@@ -14,6 +14,7 @@ import {
   AESOStepByStep,
 } from './shared';
 import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
+import { AESOTransmissionBadge } from '@/components/ui/rate-source-badge';
 
 const monthlyPeaks = [
   { month: 'Jan', typicalHour: '17:00-18:00', typicalTemp: '-25°C', risk: 'high' },
@@ -196,10 +197,13 @@ export const TwelveCPExplainedSection = () => {
                   <strong className="text-foreground">Formula:</strong> Your annual transmission allocation = 
                   (Sum of your loads during each monthly peak ÷ Sum of all system peaks) × Total transmission revenue requirement (~$2.3B)
                 </p>
-                <p>
-                  <strong className="text-foreground">2026 Transmission Adder:</strong> ${AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH} CAD/MWh — applied to all consumed energy, 
-                  but reducible through 12CP avoidance. This adder funds the provincial transmission infrastructure.
-                </p>
+                <div className="flex items-start gap-2">
+                  <p>
+                    <strong className="text-foreground">2026 Transmission Adder:</strong> ${AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH} CAD/MWh — applied to all consumed energy, 
+                    but reducible through 12CP avoidance. This adder funds the provincial transmission infrastructure.
+                  </p>
+                </div>
+                <AESOTransmissionBadge variant="detailed" />
                 <p>
                   <strong className="text-foreground">Peak Identification:</strong> AESO determines peaks retroactively at month-end. 
                   The peak hour is typically 5-6 PM in winter (heating + lighting demand) or 3-4 PM in summer (AC demand).
