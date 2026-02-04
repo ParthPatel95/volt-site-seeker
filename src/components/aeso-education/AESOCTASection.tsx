@@ -4,6 +4,7 @@ import { ArrowRight, Zap, Building2, BarChart3, MessageSquare } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { AESOSectionWrapper, AESOSectionHeader, AESOStatCard } from './shared';
 import aesoIndustrialImage from '@/assets/aeso-industrial-load.jpg';
+import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
 
 const ctaCards = [
   {
@@ -34,7 +35,7 @@ const ctaCards = [
 
 const takeaways = [
   { label: 'Pool Price Range', value: '$0 - $999.99', sub: 'CAD/MWh' },
-  { label: 'Transmission Adder', value: '$11.73', sub: 'CAD/MWh' },
+  { label: 'Transmission Adder', value: `$${AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH}`, sub: 'CAD/MWh (2026)' },
   { label: '12CP Savings Potential', value: 'Up to 100%', sub: 'Transmission reduction' },
   { label: 'WattByte Facility', value: '135 MW', sub: 'Alberta Heartland' },
 ];

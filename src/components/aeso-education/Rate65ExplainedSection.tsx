@@ -9,6 +9,7 @@ import {
   AESODeepDive,
   AESOStepByStep
 } from './shared';
+import { FORTISALBERTA_RATE_65_2026 } from '@/constants/tariff-rates';
 
 const benefits = [
   {
@@ -35,7 +36,7 @@ const benefits = [
   {
     icon: Calculator,
     title: 'Demand-Based Billing',
-    description: 'Predictable $7.11/kW/month demand charge instead of volatile volumetric rates',
+    description: `Predictable $${FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH}/kW/month demand charge instead of volatile volumetric rates`,
     savings: 'Budget certainty',
     color: 'hsl(var(--watt-navy))'
   },
@@ -241,7 +242,7 @@ export const Rate65ExplainedSection = () => {
           </table>
         </div>
         <p className="text-xs text-muted-foreground/50 mt-2 text-center">
-          Based on FortisAlberta 2024 Approved Rate Schedule | Actual costs vary by usage profile
+          Based on FortisAlberta July 2025 Rate Schedule | Rates effective {FORTISALBERTA_RATE_65_2026.effectiveDate} | Actual costs vary by usage profile
         </p>
       </div>
 
