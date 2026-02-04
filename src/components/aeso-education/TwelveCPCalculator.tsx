@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calculator, DollarSign, TrendingDown, Zap, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
+import { AESOTransmissionBadge } from '@/components/ui/rate-source-badge';
 
 interface CalculatorResults {
   baseTransmissionCost: number;
@@ -48,14 +49,17 @@ export default function TwelveCPCalculator() {
     <div className="bg-card rounded-2xl border border-border overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6 text-white">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-white/20">
-            <Calculator className="w-6 h-6" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-white/20">
+              <Calculator className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">12CP Savings Calculator</h3>
+              <p className="text-white/80 text-sm">Estimate your transmission cost savings</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-bold">12CP Savings Calculator</h3>
-            <p className="text-white/80 text-sm">Estimate your transmission cost savings</p>
-          </div>
+          <AESOTransmissionBadge variant="compact" className="bg-white/20 border-white/30 text-white" />
         </div>
       </div>
 
