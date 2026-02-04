@@ -30,16 +30,39 @@ export const analyzePeakPatterns = (
   const peakDayOfWeekFrequency: { [day: string]: number } = {};
   const peakDateFrequency: { [dayOfMonth: number]: number } = {};
 
-  // MST conversion utility (Alberta local time = UTC - 7)
+  // MST/MDT conversion utility with DST awareness
   const parseToMST = (utcTimestamp: string) => {
     const utc = new Date(utcTimestamp);
-    const mstMs = utc.getTime() - (7 * 60 * 60 * 1000);
-    const mst = new Date(mstMs);
+    
+    // Check if date is in DST (MDT: UTC-6) or standard time (MST: UTC-7)
+    const isDST = (() => {
+      const year = utc.getUTCFullYear();
+      // Second Sunday of March
+      const marchFirst = new Date(Date.UTC(year, 2, 1));
+      const marchFirstDay = marchFirst.getUTCDay();
+      const daysUntilFirstSunday = (7 - marchFirstDay) % 7;
+      const secondSundayMarch = 1 + daysUntilFirstSunday + 7;
+      const dstStart = new Date(Date.UTC(year, 2, secondSundayMarch, 9, 0, 0)); // 2 AM MST = 9 AM UTC
+      
+      // First Sunday of November
+      const novFirst = new Date(Date.UTC(year, 10, 1));
+      const novFirstDay = novFirst.getUTCDay();
+      const daysUntilNovSunday = novFirstDay === 0 ? 0 : (7 - novFirstDay);
+      const firstSundayNov = 1 + daysUntilNovSunday;
+      const dstEnd = new Date(Date.UTC(year, 10, firstSundayNov, 8, 0, 0)); // 2 AM MDT = 8 AM UTC
+      
+      return utc >= dstStart && utc < dstEnd;
+    })();
+    
+    const offsetHours = isDST ? -6 : -7;
+    const mtMs = utc.getTime() + (offsetHours * 60 * 60 * 1000);
+    const mt = new Date(mtMs);
+    
     return {
-      month: mst.getUTCMonth() + 1,
-      hour: mst.getUTCHours(),
-      dayOfWeek: mst.getUTCDay(),
-      dayOfMonth: mst.getUTCDate()
+      month: mt.getUTCMonth() + 1,
+      hour: mt.getUTCHours(),
+      dayOfWeek: mt.getUTCDay(),
+      dayOfMonth: mt.getUTCDate()
     };
   };
 
