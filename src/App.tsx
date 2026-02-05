@@ -59,34 +59,42 @@ function CacheBuster() {
       console.log('[Cache] Version mismatch detected:', cachedVersion, '->', APP_VERSION);
       console.log('[Cache] Clearing all caches and service workers...');
       
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          names.forEach(name => {
-            console.log('[Cache] Deleting cache:', name);
-            caches.delete(name);
-          });
-        });
-      }
-      
-      // Unregister all service workers
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(reg => {
-            console.log('[Cache] Unregistering service worker:', reg.scope);
-            reg.unregister();
-          });
-        });
-      }
-      
       // Update stored version
       localStorage.setItem('app_version', APP_VERSION);
       
-      // Force reload - slight delay to ensure cache operations complete
-      setTimeout(() => {
-        console.log('[Cache] Reloading page with fresh content...');
-        window.location.reload();
-      }, 100);
+      // Clear all caches and service workers synchronously, then force hard reload
+      const clearAllAndReload = async () => {
+        const tasks: Promise<boolean>[] = [];
+        
+        // Clear all caches
+        if ('caches' in window) {
+          const names = await caches.keys();
+          names.forEach(name => {
+            console.log('[Cache] Deleting cache:', name);
+            tasks.push(caches.delete(name));
+          });
+        }
+        
+        // Unregister all service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          registrations.forEach(reg => {
+            console.log('[Cache] Unregistering service worker:', reg.scope);
+            tasks.push(reg.unregister());
+          });
+        }
+        
+        // Wait for all operations to complete
+        await Promise.all(tasks);
+        console.log('[Cache] All caches cleared, forcing hard reload...');
+        
+        // Force hard reload with cache-busting query parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set('_v', Date.now().toString());
+        window.location.href = url.toString();
+      };
+      
+      clearAllAndReload();
     } else if (!cachedVersion) {
       // First visit, store version
       console.log('[Cache] First visit, storing version:', APP_VERSION);
