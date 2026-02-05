@@ -7,7 +7,7 @@
  * All data is sourced from IEEE, ASHRAE, NFPA standards and verified industry sources.
  * Values include explicit variability ranges and influencing factors.
  * 
- * LAST UPDATED: December 2024
+ * LAST UPDATED: February 2026
  */
 
 // =============================================================================
@@ -197,7 +197,7 @@ export const ASHRAE_THERMAL_CLASSES = {
 export const DISCLAIMERS = {
   COST_ESTIMATE: {
     severity: 'caution',
-    template: 'Cost estimates vary significantly based on location, labor markets, material costs, vendor relationships, and market conditions. Figures shown represent industry ranges as of December 2024.',
+    template: 'Cost estimates vary significantly based on location, labor markets, material costs, vendor relationships, and market conditions. Figures shown represent industry ranges as of February 2026.',
     factors: ['Geographic location', 'Labor rates', 'Material availability', 'Vendor relationships', 'Market timing', 'Currency fluctuations'],
   },
   

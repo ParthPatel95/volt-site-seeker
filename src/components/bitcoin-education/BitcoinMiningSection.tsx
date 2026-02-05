@@ -4,8 +4,12 @@ import { Pickaxe, Cpu, Zap, Thermometer, DollarSign, Clock, TrendingUp, MapPin, 
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+ import { useBitcoinNetworkStats } from '@/hooks/useBitcoinNetworkStats';
+ import { Skeleton } from '@/components/ui/skeleton';
 
 const BitcoinMiningSection: React.FC = () => {
+   const { stats, loading } = useBitcoinNetworkStats();
+ 
   const hardwareEvolution = [
     { era: '2009-2010', type: 'CPU', hashrate: '~10 MH/s', efficiency: '~10,000 J/TH', icon: '💻' },
     { era: '2010-2013', type: 'GPU', hashrate: '~1 GH/s', efficiency: '~500 J/TH', icon: '🎮' },
@@ -164,9 +168,20 @@ const BitcoinMiningSection: React.FC = () => {
                 </div>
                 <div className="bg-muted rounded-xl p-4">
                   <div className="text-2xl font-bold text-watt-bitcoin">
-                    <AnimatedCounter end={700} suffix=" EH/s" />
+                    {loading ? (
+                      <Skeleton className="h-8 w-24" />
+                    ) : stats.isLive ? (
+                      <AnimatedCounter end={Math.round(stats.hashrate)} suffix=" EH/s" />
+                    ) : (
+                      <span>~{Math.round(stats.hashrate)} EH/s</span>
+                    )}
                   </div>
-                  <div className="text-sm text-muted-foreground">Network Hashrate</div>
+                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    Network Hashrate
+                    {stats.isLive && (
+                      <span className="inline-flex w-2 h-2 rounded-full bg-watt-success animate-pulse" title="Live from mempool.space" />
+                    )}
+                  </div>
                 </div>
                 <div className="bg-muted rounded-xl p-4">
                   <div className="text-2xl font-bold text-watt-bitcoin">
