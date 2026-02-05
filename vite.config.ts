@@ -17,6 +17,14 @@ export default defineConfig(({ command, mode }) => ({
     reportCompressedSize: false,
     // Increase chunk size warning limit to reduce warning spam
     chunkSizeWarningLimit: 2000,
+    // Ensure content-hash based filenames for proper cache invalidation
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
+      }
+    }
   },
   plugins: [
     react(),
