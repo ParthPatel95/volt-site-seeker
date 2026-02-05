@@ -6,8 +6,15 @@ import {
 } from 'lucide-react';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { BitcoinSectionWrapper, BitcoinSectionHeader, BitcoinKeyInsight } from './shared';
+ import { useBitcoinNetworkStats } from '@/hooks/useBitcoinNetworkStats';
 
 const MiningPoolsSection: React.FC = () => {
+   const { stats } = useBitcoinNetworkStats();
+   const networkHashratePH = Math.round(stats.hashrate * 1000); // Convert EH/s to PH/s
+   const expectedDaysToBlock = Math.round(networkHashratePH / 144);
+   const expectedYearsToBlock = (networkHashratePH / 144 / 365).toFixed(1);
+   const percentOfNetwork = (100 / networkHashratePH).toFixed(6);
+ 
   const topPools = [
     { name: 'Foundry USA', hashrate: 29.5, color: 'hsl(var(--watt-trust))' },
     { name: 'AntPool', hashrate: 16.2, color: 'hsl(var(--watt-bitcoin))' },
@@ -79,7 +86,7 @@ const MiningPoolsSection: React.FC = () => {
             <div>
               <h3 className="text-2xl font-bold text-foreground mb-4">Why Mine in a Pool?</h3>
               <p className="text-base text-foreground leading-relaxed mb-4">
-                With network hashrate at <strong>700+ EH/s</strong>, solo mining is like playing the lottery. 
+                With network hashrate at <strong>{stats.isLive ? Math.round(stats.hashrate) : '~' + Math.round(stats.hashrate)} EH/s</strong>, solo mining is like playing the lottery. 
                 Even a large 1 PH/s operation would wait <strong>years</strong> on average to find a single block.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed">
@@ -96,11 +103,11 @@ const MiningPoolsSection: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Network Hashrate</span>
-                  <span className="font-mono font-bold text-foreground">700,000 PH/s</span>
+                  <span className="font-mono font-bold text-foreground">{networkHashratePH.toLocaleString()} PH/s</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">% of Network</span>
-                  <span className="font-mono font-bold text-foreground">0.000143%</span>
+                  <span className="font-mono font-bold text-foreground">{percentOfNetwork}%</span>
                 </div>
                 <div className="border-t border-border my-2" />
                 <div className="flex justify-between">
@@ -109,11 +116,11 @@ const MiningPoolsSection: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Expected Days to Block</span>
-                  <span className="font-mono font-bold text-[hsl(var(--watt-bitcoin))]">~4,861 days</span>
+                  <span className="font-mono font-bold text-[hsl(var(--watt-bitcoin))]">~{expectedDaysToBlock.toLocaleString()} days</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">That's about...</span>
-                  <span className="font-mono font-bold text-destructive">~13.3 years</span>
+                  <span className="font-mono font-bold text-destructive">~{expectedYearsToBlock} years</span>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-[hsl(var(--watt-warning)/0.1)] rounded-lg border border-[hsl(var(--watt-warning)/0.2)]">

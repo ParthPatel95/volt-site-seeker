@@ -2,16 +2,31 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { MapPin, DollarSign, Shield, Zap, Building, FileText, TrendingUp, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TISectionWrapper, TISectionHeader, TIKeyInsight, TIContentCard } from './shared';
+ import DataQualityBadge from '@/components/academy/DataQualityBadge';
 
 const AlbertaCaseStudySection = () => {
   return (
     <TISectionWrapper id="case-study" theme="gradient">
       <ScrollReveal>
         <TISectionHeader badge="Lesson 10" badgeIcon={MapPin} title="Alberta 45MW Case Study" description="Complete tax and insurance analysis for our Heartland hydro-cooled Bitcoin mining facility." accentColor="purple" />
+        <div className="flex justify-center mt-4">
+          <DataQualityBadge 
+            level="illustrative" 
+            source="WattByte Financial Model" 
+            lastUpdated="February 2026"
+          />
+        </div>
       </ScrollReveal>
       
       <ScrollReveal delay={50}>
-        <div className="bg-[hsl(var(--watt-purple)/0.05)] border border-[hsl(var(--watt-purple)/0.2)] rounded-xl p-6 mb-8">
+        <div className="bg-[hsl(var(--watt-purple)/0.05)] border border-[hsl(var(--watt-purple)/0.2)] rounded-xl p-6 mb-8 mt-6">
+          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <p className="text-sm text-foreground">
+              <strong>Note:</strong> These figures are illustrative projections based on assumed BTC prices ($60K), 
+              production rates, and cost estimates. Actual results will vary based on market conditions, 
+              equipment performance, and operational factors. Not financial advice.
+            </p>
+          </div>
           <h3 className="text-xl font-bold text-foreground mb-4">Facility Overview</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center"><Zap className="w-8 h-8 mx-auto mb-2" style={{ color: 'hsl(var(--watt-bitcoin))' }} /><div className="text-2xl font-bold text-foreground">45 MW</div><div className="text-sm text-muted-foreground">Power Capacity</div></div>
