@@ -6,6 +6,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ============================================================
+// Reliable Mountain Time conversion (MST/MDT) using UTC offsets
+// Replaces the unreliable toLocaleString anti-pattern
+// ============================================================
+function toMountainTime(date: Date): {
+  hour: number;
+  minute: number;
+  dayOfWeek: number;
+  isWeekday: boolean;
+  isDST: boolean;
+  formatted: string;
+} {
+  const year = date.getUTCFullYear();
+
+  // Second Sunday of March — DST starts at 2:00 AM MST = 9:00 AM UTC
+  const marchFirst = new Date(Date.UTC(year, 2, 1));
+  const secondSundayMarch = 1 + ((7 - marchFirst.getUTCDay()) % 7) + 7;
+  const dstStart = new Date(Date.UTC(year, 2, secondSundayMarch, 9, 0, 0));
+
+  // First Sunday of November — DST ends at 2:00 AM MDT = 8:00 AM UTC
+  const novFirst = new Date(Date.UTC(year, 10, 1));
+  const firstSundayNov = 1 + (novFirst.getUTCDay() === 0 ? 0 : 7 - novFirst.getUTCDay());
+  const dstEnd = new Date(Date.UTC(year, 10, firstSundayNov, 8, 0, 0));
+
+  const isDST = date >= dstStart && date < dstEnd;
+  const offsetHours = isDST ? -6 : -7;
+  const mt = new Date(date.getTime() + offsetHours * 3600000);
+
+  const hour = mt.getUTCHours();
+  const minute = mt.getUTCMinutes();
+  const dayOfWeek = mt.getUTCDay();
+  const tzAbbr = isDST ? 'MDT' : 'MST';
+
+  return {
+    hour,
+    minute,
+    dayOfWeek,
+    isWeekday: dayOfWeek >= 1 && dayOfWeek <= 5,
+    isDST,
+    formatted: `${mt.getUTCMonth() + 1}/${mt.getUTCDate()}/${mt.getUTCFullYear()}, ` +
+      `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'} ${tzAbbr}`,
+  };
+}
+
 interface AlertRule {
   id: string;
   setting_id: string;
@@ -65,9 +109,9 @@ interface MarketData {
   
   // Time-based
   hour: number;
-  dataHour: number;          // Hour from the price data timestamp
-  priceValidFor: string;     // Hour-ending notation (HE01-HE24)
-  dataAge: number;           // Minutes since price was recorded
+  dataHour: number;
+  priceValidFor: string;
+  dataAge: number;
   isWeekday: boolean;
   dayOfWeek: number;
 }
@@ -281,7 +325,7 @@ Condition: \${condition} \${threshold}
 function formatMessage(template: string, data: Record<string, any>): string {
   let message = template;
   for (const [key, value] of Object.entries(data)) {
-    const regex = new RegExp(`\\$\\{${key}\\}`, 'g');
+    const regex = new RegExp(`\\\$\\\{${key}\\\}`, 'g');
     message = message.replace(regex, String(value ?? 'N/A'));
   }
   return message;
@@ -321,15 +365,12 @@ function shouldTrigger(rule: AlertRule, data: MarketData, lastTriggeredHour: num
     // Scheduled alerts - trigger once per hour/day
     case 'hourly_summary':
     case 'generation_mix':
-      // Trigger every hour (when hour changes and not recently triggered)
       return lastTriggeredHour !== data.hour;
 
     case 'daily_morning_briefing':
-      // Trigger at 7 AM local time on weekdays
       return data.hour === 7 && lastTriggeredHour !== 7;
 
     case 'daily_evening_summary':
-      // Trigger at 6 PM local time
       return data.hour === 18 && lastTriggeredHour !== 18;
 
     // Generation mix alerts
@@ -343,7 +384,6 @@ function shouldTrigger(rule: AlertRule, data: MarketData, lastTriggeredHour: num
       return data.generationMix.solar > (threshold_value || 100);
 
     case 'custom':
-      // For custom alerts, we need the custom_metric field
       const metricValue = (data as any)[rule.custom_metric || ''];
       if (metricValue === undefined) return false;
 
@@ -371,13 +411,11 @@ function isInCooldown(rule: AlertRule): boolean {
   return (now.getTime() - lastTriggered.getTime()) < cooldownMs;
 }
 
-// Get the hour from last triggered timestamp
+// Get the hour from last triggered timestamp — using reliable Mountain Time conversion
 function getLastTriggeredHour(rule: AlertRule): number | null {
   if (!rule.last_triggered_at) return null;
   const date = new Date(rule.last_triggered_at);
-  // Convert to Mountain time
-  const mtnDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Edmonton' }));
-  return mtnDate.getHours();
+  return toMountainTime(date).hour;
 }
 
 // Send Telegram notification
@@ -492,25 +530,38 @@ serve(async (req) => {
 
     console.log('AESO Telegram Alerts check starting...');
 
-    // Get current time in Mountain timezone
+    // Get current time in Mountain timezone using reliable UTC offset method
     const now = new Date();
-    const mtnNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Edmonton' }));
-    const currentHour = mtnNow.getHours();
-    const dayOfWeek = mtnNow.getDay();
-    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+    const mtNow = toMountainTime(now);
+    const currentHour = mtNow.hour;
+    const dayOfWeek = mtNow.dayOfWeek;
+    const isWeekday = mtNow.isWeekday;
+
+    console.log(`Mountain Time: ${mtNow.formatted} (hour=${currentHour}, dayOfWeek=${dayOfWeek}, isWeekday=${isWeekday})`);
 
     // Fetch current AESO data
     let marketData: MarketData;
     
     try {
-      // Get latest price data
-      const { data: latestData, error: dataError } = await supabase
+      // Get latest price data — fetch extra rows to handle duplicates
+      const { data: latestDataRaw, error: dataError } = await supabase
         .from('aeso_training_data')
         .select('pool_price, ail_mw, generation_gas, generation_wind, generation_solar, generation_hydro, generation_other, intertie_bc_flow, intertie_sask_flow, intertie_montana_flow, timestamp')
         .order('timestamp', { ascending: false })
-        .limit(25);
+        .limit(50);
 
       if (dataError) throw dataError;
+
+      // Deduplicate by hour to fix priceChange1h always being 0%
+      const seen = new Set<string>();
+      const latestData = (latestDataRaw || []).filter(d => {
+        const hourKey = d.timestamp?.substring(0, 13); // "2026-02-09 21"
+        if (!hourKey || seen.has(hourKey)) return false;
+        seen.add(hourKey);
+        return true;
+      }).slice(0, 25);
+
+      console.log(`Fetched ${latestDataRaw?.length || 0} records, deduplicated to ${latestData.length} unique hours`);
 
       const current = latestData?.[0];
       const previous = latestData?.[1];
@@ -520,12 +571,12 @@ serve(async (req) => {
         ? ((currentPrice - previousPrice) / previousPrice) * 100 
         : 0;
 
-      // Use the database record's timestamp instead of execution time
+      // Use the database record's timestamp — convert with reliable Mountain Time
       const dataTimestamp = current?.timestamp ? new Date(current.timestamp) : now;
-      const dataTimeMtn = new Date(dataTimestamp.toLocaleString('en-US', { timeZone: 'America/Edmonton' }));
-      const dataHour = dataTimeMtn.getHours();
+      const dataMt = toMountainTime(dataTimestamp);
+      const dataHour = dataMt.hour;
       const priceValidFor = `HE${String(dataHour + 1).padStart(2, '0')}`;
-      const dataAge = Math.round((now.getTime() - dataTimestamp.getTime()) / 60000); // minutes since price recorded
+      const dataAge = Math.round((now.getTime() - dataTimestamp.getTime()) / 60000);
 
       // Calculate 24h stats from available data
       const prices24h = latestData?.map(d => d.pool_price).filter(p => p != null) || [];
@@ -561,19 +612,18 @@ serve(async (req) => {
       const hasActiveAlert = (gridAlerts?.length || 0) > 0;
       const eeaAlert = gridAlerts?.find(a => a.alert_type === 'eea');
 
+      // Build timestamp with both data time and send time for transparency
+      const timestampDisplay = `${dataMt.formatted} (${priceValidFor}) | Sent: ${mtNow.formatted}`;
+
       marketData = {
         poolPrice: currentPrice,
-        reserveMargin: 15, // Default, would need to fetch from API
+        reserveMargin: 15,
         totalLoad: current?.ail_mw || 0,
         totalGeneration: totalGen,
         priceChange1h: priceChange,
         hasActiveGridAlert: hasActiveAlert,
         gridAlertType: eeaAlert ? 'eea' : (gridAlerts?.[0]?.alert_type || null),
-        timestamp: dataTimestamp.toLocaleString('en-US', { 
-          timeZone: 'America/Edmonton',
-          dateStyle: 'short',
-          timeStyle: 'short'
-        }) + ` (${priceValidFor})`,
+        timestamp: timestampDisplay,
         priceValidFor,
         dataHour,
         dataAge,
@@ -596,16 +646,17 @@ serve(async (req) => {
           matl: matlFlow,
           net: netFlow,
         },
-        hour: currentHour,       // Keep execution hour for scheduled alert timing
-        dataHour,                // Hour from the price data
-        priceValidFor,           // Hour-ending notation (HE01-HE24)
-        dataAge,                 // Minutes since price was recorded
+        hour: currentHour,
+        dataHour,
+        priceValidFor,
+        dataAge,
         isWeekday,
         dayOfWeek,
       };
     } catch (error) {
       console.error('Error fetching market data:', error);
-      // Use defaults if fetch fails
+      // Use defaults if fetch fails — with reliable Mountain Time
+      const fallbackHE = `HE${String(currentHour + 1).padStart(2, '0')}`;
       marketData = {
         poolPrice: 0,
         reserveMargin: 100,
@@ -614,11 +665,7 @@ serve(async (req) => {
         priceChange1h: 0,
         hasActiveGridAlert: false,
         gridAlertType: null,
-        timestamp: now.toLocaleString('en-US', { 
-          timeZone: 'America/Edmonton',
-          dateStyle: 'short',
-          timeStyle: 'short'
-        }) + ` (HE${String(currentHour + 1).padStart(2, '0')})`,
+        timestamp: `${mtNow.formatted} (${fallbackHE})`,
         averagePrice24h: 0,
         peakPrice24h: 0,
         lowPrice24h: 0,
@@ -628,7 +675,7 @@ serve(async (req) => {
         intertieFlows: { bc: 0, sk: 0, matl: 0, net: 0 },
         hour: currentHour,
         dataHour: currentHour,
-        priceValidFor: `HE${String(currentHour + 1).padStart(2, '0')}`,
+        priceValidFor: fallbackHE,
         dataAge: 0,
         isWeekday,
         dayOfWeek,
