@@ -1,172 +1,107 @@
 
-# Comprehensive Fix for Caching and Missing Features Issue
 
-## Problem Analysis
+# Fix Telegram Alert Timezone Issues
 
-After thorough debugging, I've identified **two separate issues**:
+## Root Cause Analysis
 
-### Issue 1: Version Bump Already Applied but User's Cache Still Stale
+Three issues are causing alerts to show prices "a few hours late":
 
-The console logs from the user's browser show:
-```
-[Cache] Version mismatch detected: 2026.02.03.001 -> 2026.02.05.001
-[Cache] Clearing all caches and service workers...
-[Cache] Reloading page with fresh content...
-```
+### 1. Unreliable Timezone Conversion (Primary Cause)
+The edge function uses `new Date(date.toLocaleString('en-US', { timeZone: 'America/Edmonton' }))` in multiple places (lines 497, 525, 379). This is a known anti-pattern -- Deno's `Date` constructor does not reliably parse locale-formatted strings, especially on cold starts. This can cause the Mountain Time hour to be off by several hours.
 
-This means the CacheBuster IS detecting the version change and attempting to clear caches. However, the user is still not seeing the new features, which suggests:
-1. **The PWA Service Worker may be intercepting requests** before the cache clear completes
-2. **The version file itself may be cached** by the browser or CDN
+### 2. Duplicate Database Records
+Every hour has 2 identical records in `aeso_training_data`. The query fetches 25 records with `LIMIT 25`, which only covers ~12 hours. More critically, `previous` (index 1) is the same hour as `current` (index 0), so `priceChange1h` is always 0%.
 
-### Issue 2: APP_VERSION Has a Formatting Issue
+### 3. Inconsistent Hour Detection for Scheduled Alerts
+`getLastTriggeredHour()` uses the same flawed conversion, causing morning briefings (7 AM) and evening summaries (6 PM) to fire at the wrong Mountain Time hour.
 
-Looking at the last diff, there's a **stray space** in the updated file:
-```typescript
-// Before (line has leading space)
- export const APP_VERSION = '2026.02.05.001';
+## Solution
 
-// Should be (no leading space)  
-export const APP_VERSION = '2026.02.05.001';
-```
+### Step 1: Replace toLocaleString Anti-Pattern with Direct UTC Offset Calculation
 
-This cosmetic issue won't break functionality but should be corrected.
-
-## Verified Components (All Code is Correct)
-
-I verified the following components exist and are properly implemented:
-
-| Component | Location | Status |
-|-----------|----------|--------|
-| `PeakHourRiskAnalysis` | `src/components/aeso/PeakHourRiskAnalysis.tsx` | ✅ Exists and correct |
-| `RateSourceBadge` | `src/components/ui/rate-source-badge.tsx` | ✅ Exists with AESO/FortisAlberta presets |
-| `TwelveCPSavingsSimulator` | `src/components/aeso/TwelveCPSavingsSimulator.tsx` | ✅ Has badges at lines 290-291 |
-| `TwelveCPAnalyticsTab` | `src/components/aeso/TwelveCPAnalyticsTab.tsx` | ✅ Has "Peak Hour Risk" tab at line 85-88 |
-| `tariff-rates.ts` | `src/constants/tariff-rates.ts` | ✅ Has $12.94/MWh and $7.52/kW values |
-
-All the new features ARE in the code. The user just isn't seeing them due to caching.
-
-## Root Cause: Aggressive PWA Caching
-
-The PWA configuration uses Workbox which aggressively caches JavaScript bundles. Even when the CacheBuster detects a version mismatch, the service worker may serve stale content before the cache clear takes effect.
-
-## Solution: Multi-Layer Cache Busting
-
-### Step 1: Fix APP_VERSION Formatting + Increment Version
-
-Remove the leading space and bump to a new version number to force another cache bust:
+Create a reliable `toMountainTime()` helper inside the edge function that calculates Mountain Time using a direct UTC offset (UTC-7 for MST, UTC-6 for MDT), matching the approach already used in `src/lib/timezone-utils.ts`.
 
 ```typescript
-// src/constants/app-version.ts
-export const APP_VERSION = '2026.02.05.002'; // Incremented from .001
-```
-
-### Step 2: Add Force-Reload Meta Tag to index.html
-
-Add cache-control headers that tell browsers to revalidate:
-
-```html
-<!-- In index.html <head> section -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-```
-
-### Step 3: Enhance CacheBuster with Synchronous Blocking
-
-The current CacheBuster clears caches asynchronously. We need to block rendering until the cache is cleared:
-
-```typescript
-// Modified CacheBuster logic
-useEffect(() => {
-  const cachedVersion = localStorage.getItem('app_version');
+function toMountainTime(date: Date): { hour: number; dayOfWeek: number; isWeekday: boolean; formatted: string } {
+  // February = MST (UTC-7). Full DST logic included for year-round correctness.
+  const year = date.getUTCFullYear();
+  const marchFirst = new Date(Date.UTC(year, 2, 1));
+  const secondSundayMarch = 1 + ((7 - marchFirst.getUTCDay()) % 7) + 7;
+  const dstStart = new Date(Date.UTC(year, 2, secondSundayMarch, 9, 0, 0)); // 2AM MST = 9AM UTC
+  const novFirst = new Date(Date.UTC(year, 10, 1));
+  const firstSundayNov = 1 + (novFirst.getUTCDay() === 0 ? 0 : 7 - novFirst.getUTCDay());
+  const dstEnd = new Date(Date.UTC(year, 10, firstSundayNov, 8, 0, 0)); // 2AM MDT = 8AM UTC
   
-  if (cachedVersion && cachedVersion !== APP_VERSION) {
-    console.log('[Cache] Version mismatch:', cachedVersion, '->', APP_VERSION);
-    
-    // Store new version FIRST
-    localStorage.setItem('app_version', APP_VERSION);
-    
-    // Clear caches synchronously with Promise.all
-    const clearAll = async () => {
-      const tasks = [];
-      
-      if ('caches' in window) {
-        const names = await caches.keys();
-        tasks.push(...names.map(name => caches.delete(name)));
-      }
-      
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        tasks.push(...regs.map(reg => reg.unregister()));
-      }
-      
-      await Promise.all(tasks);
-      
-      // Force hard reload bypassing cache
-      window.location.href = window.location.href + '?v=' + Date.now();
-    };
-    
-    clearAll();
-  } else if (!cachedVersion) {
-    localStorage.setItem('app_version', APP_VERSION);
-  }
-}, []);
-```
-
-### Step 4: Add Version Query Parameter to Critical Assets
-
-Update Vite config to add version hash to asset filenames:
-
-```typescript
-// vite.config.ts - ensure proper cache busting
-build: {
-  rollupOptions: {
-    output: {
-      entryFileNames: `assets/[name].[hash].js`,
-      chunkFileNames: `assets/[name].[hash].js`,
-      assetFileNames: `assets/[name].[hash].[ext]`
-    }
-  }
+  const isDST = date >= dstStart && date < dstEnd;
+  const offsetHours = isDST ? -6 : -7;
+  const mt = new Date(date.getTime() + offsetHours * 3600000);
+  
+  const hour = mt.getUTCHours();
+  const dayOfWeek = mt.getUTCDay();
+  
+  return {
+    hour,
+    dayOfWeek,
+    isWeekday: dayOfWeek >= 1 && dayOfWeek <= 5,
+    formatted: `${mt.getUTCMonth()+1}/${mt.getUTCDate()}/${mt.getUTCFullYear()}, ` +
+      `${hour % 12 || 12}:${String(mt.getUTCMinutes()).padStart(2,'0')} ${hour < 12 ? 'AM' : 'PM'} ${isDST ? 'MDT' : 'MST'}`
+  };
 }
 ```
 
-## Files to Modify
+### Step 2: Fix All Timezone Conversions in the Edge Function
+
+Replace every occurrence of the anti-pattern:
+
+| Location | Current (broken) | Fixed |
+|----------|-----------------|-------|
+| Line 497-500 | `new Date(now.toLocaleString('en-US', { timeZone: ... }))` then `.getHours()` | `toMountainTime(now).hour` |
+| Line 524-528 | `new Date(dataTimestamp.toLocaleString(...))` then `.getHours()` | `toMountainTime(dataTimestamp).hour` |
+| Line 377-380 | `getLastTriggeredHour` uses same pattern | Use `toMountainTime(date).hour` |
+| Line 572-576 | `dataTimestamp.toLocaleString(...)` for display | Use `toMountainTime(dataTimestamp).formatted` |
+| Line 617-621 | Fallback timestamp formatting | Use `toMountainTime(now).formatted` |
+
+### Step 3: Deduplicate Database Records in Query
+
+Add `DISTINCT ON` equivalent logic to avoid pulling duplicate hourly records:
+
+```typescript
+const { data: latestData } = await supabase
+  .from('aeso_training_data')
+  .select('pool_price, ail_mw, generation_gas, generation_wind, generation_solar, generation_hydro, generation_other, intertie_bc_flow, intertie_sask_flow, intertie_montana_flow, timestamp')
+  .order('timestamp', { ascending: false })
+  .limit(50); // Fetch more to ensure coverage after dedup
+
+// Deduplicate by hour
+const seen = new Set();
+const deduped = (latestData || []).filter(d => {
+  const hourKey = d.timestamp?.substring(0, 13); // "2026-02-09 21"
+  if (seen.has(hourKey)) return false;
+  seen.add(hourKey);
+  return true;
+}).slice(0, 25);
+```
+
+This ensures `previous` is actually the prior hour's price, fixing `priceChange1h`.
+
+### Step 4: Add Current Time vs Data Time to Alert Messages
+
+Include both the data timestamp and the current Mountain Time so users can see how fresh the data is:
+
+```
+Timestamp format: "2/9/2026, 2:00 PM MST (HE15) | Sent: 2:40 PM MST"
+```
+
+## File to Modify
 
 | File | Changes |
 |------|---------|
-| `src/constants/app-version.ts` | Fix formatting + bump to `2026.02.05.002` |
-| `index.html` | Add cache-control meta tags |
-| `src/App.tsx` | Enhance CacheBuster with synchronous blocking and cache-busting URL parameter |
-
-## Immediate User Action Required
-
-While I implement these fixes, you should manually clear your browser cache:
-
-**Option 1 - Hard Refresh:**
-- Windows/Linux: `Ctrl + Shift + R`
-- Mac: `Cmd + Shift + R`
-
-**Option 2 - Clear Site Data (recommended):**
-1. Open browser DevTools (F12)
-2. Go to **Application** tab
-3. Click **Storage** in the left sidebar
-4. Check all boxes (Cookies, Local Storage, Session Storage, Cache Storage, etc.)
-5. Click **Clear site data**
-6. Close DevTools and refresh the page
-
-**Option 3 - Incognito/Private Window:**
-Open the site in an incognito window to bypass all cached assets.
+| `supabase/functions/aeso-telegram-alerts/index.ts` | Add `toMountainTime()` helper, replace all `toLocaleString` anti-patterns, deduplicate DB query, enhance timestamp display |
 
 ## Expected Outcome
 
-After implementing these fixes:
-1. Version `2026.02.05.002` will force a complete cache clear
-2. Cache-control meta tags prevent future aggressive caching
-3. Enhanced CacheBuster ensures full cache clear before reload
-4. Hash-based asset names ensure stale bundles are never served
+- Alert timestamps will accurately reflect Mountain Time (MST/MDT) regardless of Deno server locale
+- Price change calculations will be correct (comparing actual different hours)
+- Scheduled alerts (morning briefing, evening summary) will fire at the correct Mountain Time hours
+- Alert messages will show both data time and send time for transparency
 
-The following features should then be visible:
-- **12CP Savings Simulator** with Rate Source badges
-- **Peak Hour Risk** tab in the AESO Market Hub → 12CP section
-- **$12.94/MWh** transmission adder values (2026 rates)
-- **$7.52/kW/month** FortisAlberta Rate 65 values
