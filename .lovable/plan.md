@@ -1,58 +1,70 @@
 
 
-# Fix: Power Model Tab Not Visible on Mobile
+# Fix: Force PWA Cache Update via index.html Inline Script
 
-## Root Cause (Deep Debug Finding)
+## Root Cause
 
-The Power Model tab IS in the code and working correctly. The problem is **not a cache issue** -- it's a **mobile navigation visibility issue**.
+The `CacheBuster` component in `App.tsx` cannot fix stale caches because it runs INSIDE the cached JS bundle. When the service worker serves the old bundle, the old `APP_VERSION` is baked into the JavaScript, so it never detects a mismatch. This is a chicken-and-egg problem.
 
-The `useResponsiveNavigation` hook limits visible tabs based on screen width:
-- Mobile (under 768px): Only **4 tabs** shown (priorities 1-4: Market, AI Predictions, Telegram, Datacenter)
-- Tablet (under 1024px): Only **6 tabs** shown
-- Small desktop (under 1280px): Only **8 tabs** shown
-- Large desktop (1280px+): All 11 tabs shown
+The solution is to add a cache-busting check directly in `index.html`, which is NOT cached by the service worker's content-hash strategy (HTML is served with `no-cache` headers).
 
-Power Model has **priority 11** (the lowest), so it's always hidden in the "..." overflow dropdown menu on every device except very large desktops. On the user's phone, it's buried 7 items deep inside a tiny "..." button that's easy to miss.
+## Fix
 
-## Fix: Two-Part Solution
+### File: `index.html`
 
-### Part 1: Promote Power Model to Higher Priority
+Add an inline script (BEFORE the React `<script>` tag) that:
+1. Stores the current deployment version in a meta tag or inline variable
+2. Compares against `localStorage` on every page load
+3. If mismatched: unregisters all service workers, clears all caches, and hard-reloads
+4. This runs before React, before the service worker can intercept
 
-In `src/components/AESOMarketComprehensive.tsx`, change Power Model's priority from 11 to **4** (making it one of the first visible tabs on mobile), and demote less-critical tabs.
-
-New priority order:
 ```
-1. Market Data (keep)
-2. Power Model (promoted from 11 to 2)
-3. Telegram Alerts (keep at 3)
-4. AI Predictions (moved from 2 to 4)
-5. Datacenter Control (moved from 4 to 5)
-6. Historical (keep)
-7. Analytics Export (keep)
-8. Generation (keep)
-9. Forecasts (keep)
-10. Outages & Alerts (keep)
-11. Dashboards (keep)
+<!-- Add before the React script tag -->
+<script>
+  (function() {
+    var DEPLOY_VERSION = '2026.02.11.003';
+    var stored = localStorage.getItem('html_deploy_version');
+    if (stored && stored !== DEPLOY_VERSION) {
+      localStorage.setItem('html_deploy_version', DEPLOY_VERSION);
+      // Purge all service workers and caches
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          names.forEach(function(n) { caches.delete(n); });
+        });
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(r) { r.unregister(); });
+        });
+      }
+      // Hard reload after short delay for cleanup
+      setTimeout(function() {
+        window.location.replace(window.location.pathname + '?_purge=' + Date.now());
+      }, 500);
+    } else {
+      localStorage.setItem('html_deploy_version', DEPLOY_VERSION);
+    }
+  })();
+</script>
 ```
 
-### Part 2: Increase Mobile Tab Count
+### File: `src/constants/app-version.ts`
 
-In `src/hooks/useResponsiveNavigation.tsx`, increase visible items:
-- Mobile: 4 to **5** items
-- Tablet: 6 to **7** items
-- Small desktop: 8 to **9** items
+Bump `APP_VERSION` to `'2026.02.11.003'` to stay in sync.
 
-This ensures Power Model is always visible on every screen size without needing to dig through overflow menus.
+## Why This Works
 
-### Part 3: Bump App Version
-
-In `src/constants/app-version.ts`, bump to `2026.02.11.002` to force cache refresh so users get the updated navigation immediately.
+- `index.html` is served with `Cache-Control: no-cache, no-store, must-revalidate` meta tags, so browsers always fetch the latest HTML
+- The inline script runs synchronously BEFORE any cached JS bundles load
+- It can detect a version change and purge the service worker before the old React app takes control
+- After purge + reload, the browser fetches fresh JS assets with new content-hash filenames
 
 ## Files to Modify
 
 | File | Change |
 |---|---|
-| `src/components/AESOMarketComprehensive.tsx` | Change Power Model priority from 11 to 2, adjust other priorities |
-| `src/hooks/useResponsiveNavigation.tsx` | Increase visible item counts for all breakpoints |
-| `src/constants/app-version.ts` | Bump version to `2026.02.11.002` |
+| `index.html` | Add inline version-check script before React script tag |
+| `src/constants/app-version.ts` | Bump to `2026.02.11.003` |
+
+This is a 2-file change that permanently fixes the stale PWA problem for all future deployments.
 
