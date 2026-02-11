@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AESO_RATE_DTS_2025, FORTISALBERTA_RATE_65_2026, DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
+import { AESO_RATE_DTS_2026, FORTISALBERTA_RATE_65_2026, DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export interface FacilityParams {
   contractedCapacityMW: number;
@@ -112,7 +112,7 @@ function calculatePODTieredCharge(
   subFraction: number,
   tierOverrides?: { rate: number; mw: number }[]
 ): number {
-  const tiers = tierOverrides ?? AESO_RATE_DTS_2025.pointOfDelivery.tiers;
+  const tiers = tierOverrides ?? AESO_RATE_DTS_2026.pointOfDelivery.tiers;
   let remaining = capacityMW;
   let total = 0;
   for (const tier of tiers) {
@@ -126,17 +126,17 @@ function calculatePODTieredCharge(
 }
 
 function calculateBreakeven(params: FacilityParams, overrides?: TariffOverrides): number {
-  const retailer = r(overrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2025.retailerFee.meteredEnergy);
-  const bulkE = r(overrides?.bulkMeteredEnergy, AESO_RATE_DTS_2025.bulkSystem.meteredEnergy);
-  const regE = r(overrides?.regionalMeteredEnergy, AESO_RATE_DTS_2025.regionalSystem.meteredEnergy);
-  const tcrE = r(overrides?.tcrMeteredEnergy, AESO_RATE_DTS_2025.tcr.meteredEnergy);
-  const vcE = r(overrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2025.voltageControl.meteredEnergy);
-  const riderE = r(overrides?.riderFMeteredEnergy, AESO_RATE_DTS_2025.riderF.meteredEnergy);
+  const retailer = r(overrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2026.retailerFee.meteredEnergy);
+  const bulkE = r(overrides?.bulkMeteredEnergy, AESO_RATE_DTS_2026.bulkSystem.meteredEnergy);
+  const regE = r(overrides?.regionalMeteredEnergy, AESO_RATE_DTS_2026.regionalSystem.meteredEnergy);
+  const tcrE = r(overrides?.tcrMeteredEnergy, AESO_RATE_DTS_2026.tcr.meteredEnergy);
+  const vcE = r(overrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2026.voltageControl.meteredEnergy);
+  const riderE = r(overrides?.riderFMeteredEnergy, AESO_RATE_DTS_2026.riderF.meteredEnergy);
   const fortisVol = r(overrides?.fortisVolumetricCentsKwh, FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH);
 
   const marginal = retailer + bulkE + regE + tcrE + vcE + riderE + (fortisVol / 100 * 1000);
   const hostingRateCAD = params.hostingRateUSD / params.cadUsdRate * 1000;
-  const orMultiplier = 1 + r(overrides?.operatingReservePercent, AESO_RATE_DTS_2025.operatingReserve.ratePercent) / 100;
+  const orMultiplier = 1 + r(overrides?.operatingReservePercent, AESO_RATE_DTS_2026.operatingReserve.ratePercent) / 100;
   return (hostingRateCAD - marginal) / orMultiplier;
 }
 
@@ -151,22 +151,22 @@ export function usePowerModelCalculator(
     const breakeven = calculateBreakeven(params, tariffOverrides);
     const cap = params.contractedCapacityMW;
     const subFrac = params.substationFraction;
-    const orRate = r(tariffOverrides?.operatingReservePercent, AESO_RATE_DTS_2025.operatingReserve.ratePercent) / 100;
+    const orRate = r(tariffOverrides?.operatingReservePercent, AESO_RATE_DTS_2026.operatingReserve.ratePercent) / 100;
     const targetUptime = params.targetUptimePercent;
 
     // Resolved rates
-    const bulkERate = r(tariffOverrides?.bulkMeteredEnergy, AESO_RATE_DTS_2025.bulkSystem.meteredEnergy);
-    const regCapRate = r(tariffOverrides?.regionalBillingCapacity, AESO_RATE_DTS_2025.regionalSystem.billingCapacity);
-    const regERate = r(tariffOverrides?.regionalMeteredEnergy, AESO_RATE_DTS_2025.regionalSystem.meteredEnergy);
-    const podSubRate = r(tariffOverrides?.podSubstation, AESO_RATE_DTS_2025.pointOfDelivery.substation);
-    const tcrRate = r(tariffOverrides?.tcrMeteredEnergy, AESO_RATE_DTS_2025.tcr.meteredEnergy);
-    const vcRate = r(tariffOverrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2025.voltageControl.meteredEnergy);
-    const ssRate = r(tariffOverrides?.systemSupportHighestDemand, AESO_RATE_DTS_2025.systemSupport.highestDemand);
-    const retailerRate = r(tariffOverrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2025.retailerFee.meteredEnergy);
-    const riderRate = r(tariffOverrides?.riderFMeteredEnergy, AESO_RATE_DTS_2025.riderF.meteredEnergy);
+    const bulkERate = r(tariffOverrides?.bulkMeteredEnergy, AESO_RATE_DTS_2026.bulkSystem.meteredEnergy);
+    const regCapRate = r(tariffOverrides?.regionalBillingCapacity, AESO_RATE_DTS_2026.regionalSystem.billingCapacity);
+    const regERate = r(tariffOverrides?.regionalMeteredEnergy, AESO_RATE_DTS_2026.regionalSystem.meteredEnergy);
+    const podSubRate = r(tariffOverrides?.podSubstation, AESO_RATE_DTS_2026.pointOfDelivery.substation);
+    const tcrRate = r(tariffOverrides?.tcrMeteredEnergy, AESO_RATE_DTS_2026.tcr.meteredEnergy);
+    const vcRate = r(tariffOverrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2026.voltageControl.meteredEnergy);
+    const ssRate = r(tariffOverrides?.systemSupportHighestDemand, AESO_RATE_DTS_2026.systemSupport.highestDemand);
+    const retailerRate = r(tariffOverrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2026.retailerFee.meteredEnergy);
+    const riderRate = r(tariffOverrides?.riderFMeteredEnergy, AESO_RATE_DTS_2026.riderF.meteredEnergy);
     const fortisDemand = r(tariffOverrides?.fortisDemandChargeKwMonth, FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH);
     const fortisVol = r(tariffOverrides?.fortisVolumetricCentsKwh, FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH);
-    const gstRate = r(tariffOverrides?.gstRate, AESO_RATE_DTS_2025.gst);
+    const gstRate = r(tariffOverrides?.gstRate, AESO_RATE_DTS_2026.gst);
 
     const monthGroups = new Map<number, HourlyRecord[]>();
     for (const rec of hourlyData) {

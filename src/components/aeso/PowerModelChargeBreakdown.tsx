@@ -23,8 +23,8 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="text-base">Monthly Cost Summary</CardTitle>
             <RateSourceBadge
-              source="AUC Decision 29606-D01-2024"
-              effectiveDate="2025-01-01"
+              source="AUC Decision 30427-D01-2025"
+              effectiveDate="2026-01-01"
               sourceUrl="https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/"
               lastVerified="2026-02-01"
               variant="compact"

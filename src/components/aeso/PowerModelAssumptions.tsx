@@ -18,9 +18,9 @@ const ASSUMPTIONS: Assumption[] = [
     label: 'AESO Rate DTS Tariff',
     detail: 'All DTS charge components (Bulk System, Regional, POD, System Support, Rider F, etc.) sourced from the official AESO ISO Tariff.',
     status: 'Verified',
-    source: 'AUC Decision 29606-D01-2024',
+    source: 'AUC Decision 30427-D01-2025',
     sourceUrl: 'https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/',
-    effectiveDate: '2025-01-01',
+    effectiveDate: '2026-01-01',
   },
   {
     label: 'FortisAlberta Rate 65',
@@ -36,8 +36,8 @@ const ASSUMPTIONS: Assumption[] = [
     status: 'User Input',
   },
   {
-    label: 'Operating Reserve (12.44%)',
-    detail: 'Percentage of pool energy costs. Actual rate varies monthly based on ancillary services costs settled by AESO. The 12.44% figure is a representative average.',
+    label: 'Operating Reserve (12.50%)',
+    detail: 'Percentage of pool energy costs. Actual rate varies monthly based on ancillary services costs settled by AESO. The 12.50% figure is an estimated average for 2026 (increased from 12.44% in 2025).',
     status: 'Estimate',
     source: 'AESO Monthly Reports',
   },

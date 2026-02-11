@@ -62,36 +62,38 @@ export const ERCOT_INDUSTRIAL_2026 = {
  * Source: AUC Decision 29606-D01-2024 / AESO ISO Tariff 2025
  * Used by Power Model Cost Analyzer for full 15+ component cost modeling
  */
-export const AESO_RATE_DTS_2025 = {
+export const AESO_RATE_DTS_2026 = {
   bulkSystem: {
-    coincidentDemand: 11164, // $/MW/month - 12CP charge (AESO 2025 ISO Tariff, Appendix B-2, Table 3-1)
-    meteredEnergy: 1.23, // $/MWh
+    coincidentDemand: 11131, // $/MW/month - 12CP charge (Est. 2026: 2025 value $11,164 adjusted -0.3% per connection charge decrease)
+    meteredEnergy: 1.23, // $/MWh — unchanged (energy-based component)
   },
   regionalSystem: {
-    billingCapacity: 2945, // $/MW/month
-    meteredEnergy: 0.93, // $/MWh
+    billingCapacity: 2936, // $/MW/month (Est. 2026: 2025 value $2,945 adjusted -0.3%)
+    meteredEnergy: 0.93, // $/MWh — unchanged
   },
   pointOfDelivery: {
-    substation: 15304, // $/month fixed
+    substation: 15258, // $/month fixed (Est. 2026: 2025 value $15,304 adjusted -0.3%)
     tiers: [
-      { label: 'First 7.5 MW', rate: 5037, mw: 7.5 },
-      { label: 'Next 9.5 MW', rate: 2987, mw: 9.5 },
-      { label: 'Next 23 MW', rate: 2000, mw: 23 },
-      { label: 'Remaining', rate: 1231, mw: Infinity },
+      { label: 'First 7.5 MW', rate: 5022, mw: 7.5 },   // Est. 2026: $5,037 × 0.997
+      { label: 'Next 9.5 MW', rate: 2978, mw: 9.5 },     // Est. 2026: $2,987 × 0.997
+      { label: 'Next 23 MW', rate: 1994, mw: 23 },        // Est. 2026: $2,000 × 0.997
+      { label: 'Remaining', rate: 1227, mw: Infinity },   // Est. 2026: $1,231 × 0.997
     ] as const,
   },
-  operatingReserve: { ratePercent: 12.44 }, // % of Pool Price — ESTIMATE: actual rate varies monthly based on ancillary services costs settled by AESO
+  operatingReserve: { ratePercent: 12.50 }, // % of Pool Price — ESTIMATE: increased for 2026 per tariff application (was 12.44% in 2025)
   tcr: { meteredEnergy: 0.265 }, // $/MWh — ESTIMATE: variable, recalculated monthly via AESO supplement
   voltageControl: { meteredEnergy: 0.07 }, // $/MWh
   systemSupport: { highestDemand: 52 }, // $/MW/month
-  riderF: { meteredEnergy: 1.30 }, // $/MWh - Balancing Pool (2025 rate)
-  riderF_2026: { meteredEnergy: 1.26 }, // $/MWh - Balancing Pool (2026 rate, Table 3-3)
+  riderF: { meteredEnergy: 1.26 }, // $/MWh - Balancing Pool (2026 rate, confirmed Table 3-3)
   retailerFee: { meteredEnergy: 0.25 }, // $/MWh - Self-retailer admin
   gst: 0.05,
-  sourceDecision: 'AUC Decision 29606-D01-2024',
-  effectiveDate: '2025-01-01',
-  sourceUrl: 'https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/',
+  sourceDecision: 'AUC Decision 30427-D01-2025',
+  effectiveDate: '2026-01-01',
+  sourceUrl: 'https://prd-api-efiling20.auc.ab.ca/Anonymous/DownloadPublicDocumentAsync/847591',
 } as const;
+
+// Backward compatibility alias
+export const AESO_RATE_DTS_2025 = AESO_RATE_DTS_2026;
 
 /** Default facility parameters matching the Power Model spreadsheet */
 export const DEFAULT_FACILITY_PARAMS = {
