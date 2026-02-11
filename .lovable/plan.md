@@ -1,70 +1,48 @@
 
 
-# Fix: Force PWA Cache Update via index.html Inline Script
+# Definitive Fix: Replace Overflow Navigation with Scrollable Tab Bar
 
-## Root Cause
+## The REAL Root Cause
 
-The `CacheBuster` component in `App.tsx` cannot fix stale caches because it runs INSIDE the cached JS bundle. When the service worker serves the old bundle, the old `APP_VERSION` is baked into the JavaScript, so it never detects a mismatch. This is a chicken-and-egg problem.
+The `ResponsiveNavigation` + `useResponsiveNavigation` hook has a React rendering bug:
 
-The solution is to add a cache-busting check directly in `index.html`, which is NOT cached by the service worker's content-hash strategy (HTML is served with `no-cache` headers).
+1. `navigationItems` is declared inside `AESOMarketComprehensive` without `useMemo` -- new array reference every render
+2. `useEffect([items])` in the hook fires every render (reference changes)
+3. `setVisibleItems(sorted.slice(0, 5))` creates a new array, triggering re-render
+4. This creates an unstable render loop where items can be lost or displayed incorrectly
 
-## Fix
+This explains why you keep seeing only 6 items instead of 11, and why Power Model never appears -- the component never stabilizes with the correct set of items.
 
-### File: `index.html`
+## Solution: Horizontally Scrollable Tab Bar
 
-Add an inline script (BEFORE the React `<script>` tag) that:
-1. Stores the current deployment version in a meta tag or inline variable
-2. Compares against `localStorage` on every page load
-3. If mismatched: unregisters all service workers, clears all caches, and hard-reloads
-4. This runs before React, before the service worker can intercept
+Instead of hiding tabs in an overflow menu (which breaks), replace the navigation with a **horizontally scrollable row of tab buttons**. ALL 11 tabs are always visible -- users just swipe/scroll left-right on mobile. Power Model will always be visible as the 2nd tab.
 
-```
-<!-- Add before the React script tag -->
-<script>
-  (function() {
-    var DEPLOY_VERSION = '2026.02.11.003';
-    var stored = localStorage.getItem('html_deploy_version');
-    if (stored && stored !== DEPLOY_VERSION) {
-      localStorage.setItem('html_deploy_version', DEPLOY_VERSION);
-      // Purge all service workers and caches
-      if ('caches' in window) {
-        caches.keys().then(function(names) {
-          names.forEach(function(n) { caches.delete(n); });
-        });
-      }
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          regs.forEach(function(r) { r.unregister(); });
-        });
-      }
-      // Hard reload after short delay for cleanup
-      setTimeout(function() {
-        window.location.replace(window.location.pathname + '?_purge=' + Date.now());
-      }, 500);
-    } else {
-      localStorage.setItem('html_deploy_version', DEPLOY_VERSION);
-    }
-  })();
-</script>
-```
-
-### File: `src/constants/app-version.ts`
-
-Bump `APP_VERSION` to `'2026.02.11.003'` to stay in sync.
-
-## Why This Works
-
-- `index.html` is served with `Cache-Control: no-cache, no-store, must-revalidate` meta tags, so browsers always fetch the latest HTML
-- The inline script runs synchronously BEFORE any cached JS bundles load
-- It can detect a version change and purge the service worker before the old React app takes control
-- After purge + reload, the browser fetches fresh JS assets with new content-hash filenames
+This is the standard pattern used by Google Chrome tabs, YouTube categories, and most mobile apps.
 
 ## Files to Modify
 
-| File | Change |
-|---|---|
-| `index.html` | Add inline version-check script before React script tag |
-| `src/constants/app-version.ts` | Bump to `2026.02.11.003` |
+### 1. `src/components/AESOMarketComprehensive.tsx`
+- Replace `ResponsiveNavigation` with a simple scrollable flex container
+- Wrap `navigationItems` in `useMemo` to prevent unnecessary re-renders
+- Render all 11 tabs as horizontally scrollable buttons (no overflow menu)
+- Keep Power Model at priority 2 position
 
-This is a 2-file change that permanently fixes the stale PWA problem for all future deployments.
+### 2. `src/constants/app-version.ts`
+- Bump to `2026.02.11.004`
 
+### What the User Will See
+- A horizontal scrollable row of tab buttons below the AESO Market Hub header
+- On mobile: swipe left/right to see all tabs (Power Model visible as 2nd tab)
+- On desktop: all tabs visible in a single row
+- No more "..." overflow menu that hides critical tabs
+
+### Technical Details
+
+The scrollable navigation will be a simple `div` with:
+- `overflow-x: auto` and `-webkit-overflow-scrolling: touch` for smooth mobile scrolling
+- `scrollbar-hide` class to hide the scrollbar for a clean look
+- All items rendered inline with `flex-shrink-0` so they don't collapse
+- Active tab highlighted with primary color
+- No dependency on `useResponsiveNavigation` hook (eliminates the bug entirely)
+
+This completely removes the possibility of Power Model being hidden. No priority sorting, no screen-width calculations, no overflow menus -- just a reliable scrollable row of all tabs.
