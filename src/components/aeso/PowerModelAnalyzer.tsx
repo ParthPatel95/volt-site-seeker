@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,13 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
-import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePowerModelCalculator, type FacilityParams, type HourlyRecord } from '@/hooks/usePowerModelCalculator';
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
+import { PowerModelCharts } from './PowerModelCharts';
+import { PowerModelRevenueAnalysis } from './PowerModelRevenueAnalysis';
+import { PowerModelSensitivity } from './PowerModelSensitivity';
+import { PowerModelDataSources } from './PowerModelDataSources';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export function PowerModelAnalyzer() {
@@ -21,6 +25,7 @@ export function PowerModelAnalyzer() {
   const [hourlyData, setHourlyData] = useState<HourlyRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState(2025);
+  const [analyticsTab, setAnalyticsTab] = useState('charts');
   const [params, setParams] = useState<FacilityParams>({
     contractedCapacityMW: DEFAULT_FACILITY_PARAMS.contractedCapacityMW,
     substationFraction: DEFAULT_FACILITY_PARAMS.substationFraction,
@@ -30,6 +35,10 @@ export function PowerModelAnalyzer() {
   });
 
   const { monthly, annual, breakeven } = usePowerModelCalculator(hourlyData, params);
+
+  const hostingRateCAD = params.hostingRateUSD / params.cadUsdRate;
+
+  const hourlyPrices = useMemo(() => hourlyData.map(r => r.poolPrice), [hourlyData]);
 
   const handleCSVUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +63,6 @@ export function PowerModelAnalyzer() {
       const startDate = `${selectedYear}-01-01`;
       const endDate = `${selectedYear}-12-31T23:59:59`;
       
-      // Fetch in batches to avoid row limits
       let allData: Array<{ timestamp: string; pool_price: number; ail_mw: number | null }> = [];
       let offset = 0;
       const batchSize = 1000;
@@ -209,8 +217,34 @@ export function PowerModelAnalyzer() {
       {/* Results */}
       {hourlyData.length > 0 && (
         <>
-          <PowerModelSummaryCards annual={annual} breakeven={breakeven} />
+          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} />
           <PowerModelChargeBreakdown monthly={monthly} annual={annual} />
+
+          {/* Analytics Tabs */}
+          <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>
+            <TabsList>
+              <TabsTrigger value="charts" className="text-xs"><BarChart3 className="w-3 h-3 mr-1" />Charts</TabsTrigger>
+              <TabsTrigger value="revenue" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Revenue</TabsTrigger>
+              <TabsTrigger value="sensitivity" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Sensitivity</TabsTrigger>
+              <TabsTrigger value="sources" className="text-xs"><Info className="w-3 h-3 mr-1" />Data Sources</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="charts" className="mt-4">
+              <PowerModelCharts monthly={monthly} breakeven={breakeven} hourlyPrices={hourlyPrices} />
+            </TabsContent>
+
+            <TabsContent value="revenue" className="mt-4">
+              <PowerModelRevenueAnalysis monthly={monthly} params={params} />
+            </TabsContent>
+
+            <TabsContent value="sensitivity" className="mt-4">
+              <PowerModelSensitivity baseCost={annual?.totalAmountDue ?? 0} params={params} monthly={monthly} />
+            </TabsContent>
+
+            <TabsContent value="sources" className="mt-4">
+              <PowerModelDataSources recordCount={hourlyData.length} dataSource={dataSource} />
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>
