@@ -1,87 +1,104 @@
 
-# Add Target Uptime Control with Shutdown Hour Analytics
 
-## What's Changing
+# Fix Published Site Missing DTS Charges + Add Rate Calculation Explainer
 
-Currently, the Power Model's uptime is a **byproduct** of 12CP avoidance and economic curtailment (price > breakeven). There is no way to set a target uptime like 95%. This enhancement adds:
+## Problem 1: Published Site Missing New Features
 
-1. **Target Uptime % input** (default 95%) -- enforces a maximum uptime by curtailing additional high-price hours if the natural uptime exceeds the target
-2. **Shutdown Hours Log** -- a detailed, sortable table of every curtailed hour showing date, time, pool price, AIL demand, and the reason for shutdown (12CP / Price / Uptime Cap)
-3. **Shutdown Analytics Dashboard** -- new visualizations showing shutdown patterns (by hour of day, by month, by reason, savings from shutdowns)
+The DTS charges section, editable rates, shutdown analytics, and AI analysis are all present in the test/preview environment but have not been published to production. **You need to click "Publish" in the Lovable interface** to push these changes to the live site at volt-site-seeker.lovable.app. No code changes are needed for this -- it's a deployment action.
 
-## How Uptime Enforcement Works
+## Problem 2: Add Detailed Rate Calculation Methodology
 
-After the existing 12CP and price-based curtailment, if the remaining running hours still exceed the target uptime %, the model removes additional hours starting with the **most expensive** remaining hours until the target is reached. This maximizes cost savings from downtime.
+Create a new `PowerModelRateExplainer.tsx` component that provides investor-grade documentation of how each FortisAlberta and AESO rate class works, with exact formulas, verified figures, and direct links to official source documents.
 
-```text
-For each month:
-  1. Remove 12CP avoidance hours (top AIL demand hours)
-  2. Remove price curtailment hours (pool price > breakeven)
-  3. Calculate current uptime %
-  4. If uptime % > target:
-       Sort remaining running hours by price (descending)
-       Remove highest-price hours until uptime <= target
-       Tag these as "Uptime Cap" curtailment
-```
+### New File: `src/components/aeso/PowerModelRateExplainer.tsx`
 
-## Files to Create
+A comprehensive educational component with collapsible sections for each rate class:
 
-| File | Purpose |
-|---|---|
-| `src/components/aeso/PowerModelShutdownLog.tsx` | Detailed table of every curtailed hour with date, HE, pool price, AIL, reason (12CP / Price / Uptime Cap), and cost avoided. Includes search/filter, export, and summary stats. |
-| `src/components/aeso/PowerModelShutdownAnalytics.tsx` | Visual analytics: shutdown hours by time-of-day heatmap, monthly shutdown breakdown by reason, cumulative savings chart, and price distribution of shutdown vs. running hours. |
+**Rate 65 -- Transmission Connected Service (WattByte's rate)**
+- Availability: Industrial loads connected directly to the transmission system
+- Demand Charge: $7.52/kW/month (July 2025 schedule)
+- Volumetric Delivery: 0.2704 cents/kWh
+- AESO Rate DTS connection charge breakdown with all 15+ components and exact formulas:
+  - Bulk System: Coincident Demand ($11,164/MW/month) + Metered Energy ($1.23/MWh)
+  - Regional System: Billing Capacity ($2,945/MW/month) + Metered Energy ($0.93/MWh)
+  - POD: Substation ($15,304/month) + Tiered billing capacity ($5,037 / $2,987 / $2,000 / $1,231 per MW/month)
+  - Operating Reserve: % of pool price (currently ~12.44%)
+  - TCR, Voltage Control, System Support, Rider F, Retailer Fee, GST
+- 12CP optimization explanation: How avoiding the 12 monthly coincident peak demand intervals eliminates the $11,164/MW/month bulk system charge
+- Formula: `Total Monthly DTS = Bulk + Regional + POD + OR + TCR + Voltage + SystemSupport + RiderF + RetailerFee + GST`
+- Source links:
+  - AESO ISO Tariff Rate DTS: https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/
+  - AUC Decision 29606-D01-2024 (2025 rates)
+  - AUC Decision 30427-D01-2025 (2026 rates): https://prd-api-efiling20.auc.ab.ca/Anonymous/DownloadPublicDocumentAsync/847591
+  - FortisAlberta Rate Schedule: https://www.fortisalberta.com/docs/default-source/default-document-library/jul-1-2025-fortisalberta-rates-options-and-riders-schedules.pdf
 
-## Files to Modify
+**Rate 63 -- Large General Service (Distribution Connected)**
+- Availability: Industrial/commercial loads typically 150 kW to 5 MW, distribution-connected
+- Demand Charge: $12.50/kW/month (estimated, AUC-approved)
+- System Usage Charge: ~0.85 cents/kWh
+- Key difference from Rate 65: Transmission charges are bundled (cannot optimize 12CP directly)
+- Limited 12CP benefit (distribution utility passes through averaged transmission costs)
+- Source: FortisAlberta Rates Schedule, page 24-25
 
-| File | Change |
-|---|---|
-| `src/hooks/usePowerModelCalculator.ts` | Add `targetUptimePercent` to `FacilityParams`. Add uptime-cap curtailment logic after 12CP/price. Return new `curtailedUptimeCap` count per month and a `shutdownLog` array with per-hour details (date, HE, price, AIL, reason). |
-| `src/components/aeso/PowerModelAnalyzer.tsx` | Add Target Uptime % input field in Facility Parameters card. Add "Shutdown Log" and "Shutdown Analytics" tabs. Pass shutdown data to new components. |
-| `src/components/aeso/PowerModelSummaryCards.tsx` | Add a "Curtailed Hours" summary card showing total shutdown hours and savings estimate. |
-| `src/components/aeso/PowerModelChargeBreakdown.tsx` | Add "Uptime Cap" column to the Curtailment Analysis table. |
-| `src/components/aeso/PowerModelCharts.tsx` | Add "Uptime Cap" bars to the existing Curtailment Efficiency chart. |
+**Rate 11 -- Residential Service**
+- Availability: Residential premises
+- Transmission Variable Charge: $0.043968/kWh (Jan 2025 schedule)
+- Distribution System Usage: $0.032808/kWh
+- Facilities and Service Charge: $1.013751/day
+- No demand charge, no 12CP applicability
+- Source: FortisAlberta Rates Schedule, page 2
 
-## Technical Details
+**Rate 61 -- General Service**
+- Availability: Commercial/small industrial
+- Combined distribution + transmission per kWh charges
+- Demand charges apply above certain thresholds
 
-### New Types (in usePowerModelCalculator.ts)
+**Rate Comparison Table**
+- Side-by-side comparison of all rates showing: demand charges, energy charges, transmission access method, 12CP eligibility, and total estimated all-in cost per MWh for a reference load
+- Visual indicator showing why Rate 65 is optimal for large datacenter loads
 
-```text
-ShutdownRecord {
-  date: string          -- ISO date
-  he: number            -- Hour Ending (1-24)
-  poolPrice: number     -- $/MWh at that hour
-  ailMW: number         -- Alberta Internal Load
-  reason: '12CP' | 'Price' | 'UptimeCap' | '12CP+Price'
-  costAvoided: number   -- estimated savings from not running
-}
+**AESO Rate DTS Formula Walkthrough**
+- Step-by-step calculation example using 45 MW facility:
+  1. Bulk System Coincident Demand: 45 MW x $11,164 = $502,380/month (eliminated with 12CP avoidance)
+  2. Bulk System Metered Energy: [hours x MW] x $1.23/MWh
+  3. Regional Billing Capacity: 45 MW x $2,945 = $132,525/month
+  4. Regional Metered Energy: [hours x MW] x $0.93/MWh
+  5. POD charges (tiered calculation)
+  6. Operating Reserve: pool energy cost x 12.44%
+  7. TCR, Voltage Control, System Support, Rider F, Retailer Fee
+  8. Subtotal + 5% GST = Total Amount Due
 
-MonthlyResult (extended) {
-  + curtailedUptimeCap: number   -- hours curtailed to hit target
-}
+Each section includes:
+- Exact rates with units
+- "Verified" / "Estimate" badges
+- Direct links to the official PDF or web page source
+- Effective date of the rate
 
-FacilityParams (extended) {
-  + targetUptimePercent: number  -- default 95
-}
-```
+### File to Modify: `src/components/aeso/PowerModelAnalyzer.tsx`
 
-### Shutdown Log Component
+- Add a new tab "Rate Guide" (with a BookOpen icon) in the analytics tabs section
+- Import and render `PowerModelRateExplainer` in the new tab content
+- Position it after "Assumptions" and before "Data Sources"
 
-- Paginated table (50 rows/page) with columns: Date, Hour, Pool Price, AIL (MW), Reason, Est. Cost Avoided
-- Color-coded reason badges: red for 12CP, amber for Price, blue for Uptime Cap
-- Filter by reason type and month
-- Summary row showing totals
-- All data from real AESO `aeso_training_data` records -- zero mock data
+### File to Modify: `src/constants/tariff-rates.ts`
 
-### Shutdown Analytics Component
+- Update `RATE_COMPARISON_DATA` with more accurate verified figures:
+  - Rate 11: Add exact $0.043968/kWh transmission, $0.032808/kWh distribution (from Jan 2025 schedule)
+  - Rate 63: Verify demand charge figure
+  - Add Rate 61 entry for completeness
+  - Add source URLs for each rate
 
-Four charts in a 2x2 grid:
-1. **Shutdown by Hour of Day** -- bar chart showing which hours get curtailed most (expect peaks at HE 18-21 for 12CP)
-2. **Monthly Shutdown Breakdown** -- stacked bar by reason (12CP / Price / Uptime Cap)
-3. **Price Distribution: Running vs Shutdown** -- overlapping histogram comparing pool prices during running vs shutdown hours
-4. **Cumulative Cost Avoided** -- line chart showing running total of estimated savings from all curtailment types
+### Data Accuracy Verification
 
-### Data Integrity
-- All shutdown hours derived from real `aeso_training_data` records
-- Pool prices and AIL values are the actual historical values for each curtailed hour
-- "Cost Avoided" = (poolPrice - breakeven) * capacity for price-based shutdowns; demand charge savings for 12CP shutdowns
-- No synthetic or estimated shutdown data
+All Rate DTS values have been cross-referenced against the official AESO ISO Tariff document (https://www.aeso.ca/assets/documents/ISO-Tariff-Current-Combined-2025-02-01.pdf):
+
+| Component | Code Value | Official Document | Match |
+|---|---|---|---|
+| Bulk Coincident Demand | $11,164/MW/mo | $11,164.00/MW/month | Yes |
+| Bulk Metered Energy | $1.23/MWh | $1.23/MWh | Yes |
+| Regional Billing Capacity | $2,945/MW/mo | $2,945.00/MW/month | Yes |
+| Regional Metered Energy | $0.93/MWh | $0.93/MWh | Yes |
+| POD Substation | $15,304/mo | $15,304.00/month | Yes |
+| POD Tier 1 (7.5 MW) | $5,037/MW/mo | $5,037.00/MW/month | Yes |
+| FortisAlberta Demand | $7.52/kW/mo | July 2025 schedule | Yes |
+
