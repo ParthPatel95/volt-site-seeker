@@ -9,11 +9,29 @@ export interface FacilityParams {
   cadUsdRate: number;
 }
 
+export interface TariffOverrides {
+  bulkCoincidentDemand?: number;
+  bulkMeteredEnergy?: number;
+  regionalBillingCapacity?: number;
+  regionalMeteredEnergy?: number;
+  podSubstation?: number;
+  podTiers?: { rate: number; mw: number }[];
+  operatingReservePercent?: number;
+  tcrMeteredEnergy?: number;
+  voltageControlMeteredEnergy?: number;
+  systemSupportHighestDemand?: number;
+  riderFMeteredEnergy?: number;
+  retailerFeeMeteredEnergy?: number;
+  gstRate?: number;
+  fortisDemandChargeKwMonth?: number;
+  fortisVolumetricCentsKwh?: number;
+}
+
 export interface HourlyRecord {
   date: string;
-  he: number; // Hour Ending 1-24
-  poolPrice: number; // $/MWh
-  ailMW: number; // Alberta Internal Load
+  he: number;
+  poolPrice: number;
+  ailMW: number;
 }
 
 export interface MonthlyResult {
@@ -29,7 +47,6 @@ export interface MonthlyResult {
   mwh: number;
   kwh: number;
   avgPoolPriceRunning: number;
-  // DTS Charges
   bulkCoincidentDemand: number;
   bulkMeteredEnergy: number;
   regionalBillingCapacity: number;
@@ -41,16 +58,13 @@ export interface MonthlyResult {
   voltageControl: number;
   systemSupport: number;
   totalDTSCharges: number;
-  // Energy charges
   poolEnergy: number;
   retailerFee: number;
   riderF: number;
   totalEnergyCharges: number;
-  // FortisAlberta Rate 65 charges
   fortisDemandCharge: number;
   fortisDistribution: number;
   totalFortisCharges: number;
-  // Totals
   totalPreGST: number;
   gst: number;
   totalAmountDue: number;
@@ -77,8 +91,17 @@ export interface AnnualSummary {
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-function calculatePODTieredCharge(capacityMW: number, subFraction: number): number {
-  const tiers = AESO_RATE_DTS_2025.pointOfDelivery.tiers;
+/** Resolve a tariff value: use override if provided, otherwise fall back to default */
+function r(override: number | undefined, defaultVal: number): number {
+  return override !== undefined ? override : defaultVal;
+}
+
+function calculatePODTieredCharge(
+  capacityMW: number,
+  subFraction: number,
+  tierOverrides?: { rate: number; mw: number }[]
+): number {
+  const tiers = tierOverrides ?? AESO_RATE_DTS_2025.pointOfDelivery.tiers;
   let remaining = capacityMW;
   let total = 0;
   for (const tier of tiers) {
@@ -91,40 +114,52 @@ function calculatePODTieredCharge(capacityMW: number, subFraction: number): numb
   return total;
 }
 
-function calculateBreakeven(): number {
-  const marginal = 
-    AESO_RATE_DTS_2025.retailerFee.meteredEnergy +
-    AESO_RATE_DTS_2025.bulkSystem.meteredEnergy +
-    AESO_RATE_DTS_2025.regionalSystem.meteredEnergy +
-    AESO_RATE_DTS_2025.tcr.meteredEnergy +
-    AESO_RATE_DTS_2025.voltageControl.meteredEnergy +
-    AESO_RATE_DTS_2025.riderF.meteredEnergy +
-    (FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH / 100 * 1000); // Convert ¢/kWh to $/MWh
-  
-  const hostingRateCAD = DEFAULT_FACILITY_PARAMS.hostingRateUSD / DEFAULT_FACILITY_PARAMS.cadUsdRate * 1000; // $/MWh
-  const orMultiplier = 1 + AESO_RATE_DTS_2025.operatingReserve.ratePercent / 100;
-  // breakeven: hosting_rate_mwh = pool * orMultiplier + marginal
-  // pool = (hosting_rate_mwh - marginal) / orMultiplier
+function calculateBreakeven(params: FacilityParams, overrides?: TariffOverrides): number {
+  const retailer = r(overrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2025.retailerFee.meteredEnergy);
+  const bulkE = r(overrides?.bulkMeteredEnergy, AESO_RATE_DTS_2025.bulkSystem.meteredEnergy);
+  const regE = r(overrides?.regionalMeteredEnergy, AESO_RATE_DTS_2025.regionalSystem.meteredEnergy);
+  const tcrE = r(overrides?.tcrMeteredEnergy, AESO_RATE_DTS_2025.tcr.meteredEnergy);
+  const vcE = r(overrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2025.voltageControl.meteredEnergy);
+  const riderE = r(overrides?.riderFMeteredEnergy, AESO_RATE_DTS_2025.riderF.meteredEnergy);
+  const fortisVol = r(overrides?.fortisVolumetricCentsKwh, FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH);
+
+  const marginal = retailer + bulkE + regE + tcrE + vcE + riderE + (fortisVol / 100 * 1000);
+  const hostingRateCAD = params.hostingRateUSD / params.cadUsdRate * 1000;
+  const orMultiplier = 1 + r(overrides?.operatingReservePercent, AESO_RATE_DTS_2025.operatingReserve.ratePercent) / 100;
   return (hostingRateCAD - marginal) / orMultiplier;
 }
 
 export function usePowerModelCalculator(
   hourlyData: HourlyRecord[],
-  params: FacilityParams
+  params: FacilityParams,
+  tariffOverrides?: TariffOverrides
 ) {
   return useMemo(() => {
-    if (!hourlyData.length) return { monthly: [], annual: null, breakeven: calculateBreakeven() };
+    if (!hourlyData.length) return { monthly: [], annual: null, breakeven: calculateBreakeven(params, tariffOverrides) };
 
-    const breakeven = calculateBreakeven();
+    const breakeven = calculateBreakeven(params, tariffOverrides);
     const cap = params.contractedCapacityMW;
     const subFrac = params.substationFraction;
-    const orRate = AESO_RATE_DTS_2025.operatingReserve.ratePercent / 100;
+    const orRate = r(tariffOverrides?.operatingReservePercent, AESO_RATE_DTS_2025.operatingReserve.ratePercent) / 100;
 
-    // Group by month
+    // Resolved rates
+    const bulkERate = r(tariffOverrides?.bulkMeteredEnergy, AESO_RATE_DTS_2025.bulkSystem.meteredEnergy);
+    const regCapRate = r(tariffOverrides?.regionalBillingCapacity, AESO_RATE_DTS_2025.regionalSystem.billingCapacity);
+    const regERate = r(tariffOverrides?.regionalMeteredEnergy, AESO_RATE_DTS_2025.regionalSystem.meteredEnergy);
+    const podSubRate = r(tariffOverrides?.podSubstation, AESO_RATE_DTS_2025.pointOfDelivery.substation);
+    const tcrRate = r(tariffOverrides?.tcrMeteredEnergy, AESO_RATE_DTS_2025.tcr.meteredEnergy);
+    const vcRate = r(tariffOverrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2025.voltageControl.meteredEnergy);
+    const ssRate = r(tariffOverrides?.systemSupportHighestDemand, AESO_RATE_DTS_2025.systemSupport.highestDemand);
+    const retailerRate = r(tariffOverrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2025.retailerFee.meteredEnergy);
+    const riderRate = r(tariffOverrides?.riderFMeteredEnergy, AESO_RATE_DTS_2025.riderF.meteredEnergy);
+    const fortisDemand = r(tariffOverrides?.fortisDemandChargeKwMonth, FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH);
+    const fortisVol = r(tariffOverrides?.fortisVolumetricCentsKwh, FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH);
+    const gstRate = r(tariffOverrides?.gstRate, AESO_RATE_DTS_2025.gst);
+
     const monthGroups = new Map<number, HourlyRecord[]>();
     for (const rec of hourlyData) {
       const d = new Date(rec.date);
-      const key = d.getMonth(); // 0-11
+      const key = d.getMonth();
       if (!monthGroups.has(key)) monthGroups.set(key, []);
       monthGroups.get(key)!.push(rec);
     }
@@ -132,7 +167,6 @@ export function usePowerModelCalculator(
     const monthly: MonthlyResult[] = [];
 
     for (const [monthIdx, records] of monthGroups) {
-      // Sort by AIL descending to find top demand hours
       const sorted = [...records].sort((a, b) => b.ailMW - a.ailMW);
       const top12CPHours = new Set(
         sorted.slice(0, params.twelveCP_AvoidanceHours).map(r => `${r.date}-${r.he}`)
@@ -156,7 +190,7 @@ export function usePowerModelCalculator(
           else curtailedPrice++;
         } else {
           runningHours++;
-          const mwh = cap; // 1 hour * capacity MW
+          const mwh = cap;
           poolEnergyTotal += rec.poolPrice * mwh;
           runningPoolPriceSum += rec.poolPrice;
         }
@@ -168,78 +202,48 @@ export function usePowerModelCalculator(
       const kwh = mwh * 1000;
       const avgPoolRunning = runningHours > 0 ? runningPoolPriceSum / runningHours : 0;
 
-      // 12CP avoidance means coincident demand = 0 MW (avoided all peaks)
-      const bulkCoincidentDemand = 0; // Successfully avoided 12CP
-      const bulkMeteredEnergy = mwh * AESO_RATE_DTS_2025.bulkSystem.meteredEnergy;
-      const regionalBillingCapacity = cap * AESO_RATE_DTS_2025.regionalSystem.billingCapacity;
-      const regionalMeteredEnergy = mwh * AESO_RATE_DTS_2025.regionalSystem.meteredEnergy;
-      const podSubstation = AESO_RATE_DTS_2025.pointOfDelivery.substation * subFrac;
-      const podTiered = calculatePODTieredCharge(cap, subFrac);
+      const bulkCoincidentDemand = 0;
+      const bulkMeteredEnergy = mwh * bulkERate;
+      const regionalBillingCapacity = cap * regCapRate;
+      const regionalMeteredEnergy = mwh * regERate;
+      const podSubstation = podSubRate * subFrac;
+      const podTiered = calculatePODTieredCharge(cap, subFrac, tariffOverrides?.podTiers);
       const operatingReserve = poolEnergyTotal * orRate;
-      const tcr = mwh * AESO_RATE_DTS_2025.tcr.meteredEnergy;
-      const voltageControl = mwh * AESO_RATE_DTS_2025.voltageControl.meteredEnergy;
-      const systemSupport = cap * AESO_RATE_DTS_2025.systemSupport.highestDemand;
+      const tcr = mwh * tcrRate;
+      const voltageControl = mwh * vcRate;
+      const systemSupport = cap * ssRate;
 
       const totalDTSCharges = bulkCoincidentDemand + bulkMeteredEnergy + regionalBillingCapacity +
         regionalMeteredEnergy + podSubstation + podTiered + operatingReserve + tcr + voltageControl + systemSupport;
 
-      const retailerFee = mwh * AESO_RATE_DTS_2025.retailerFee.meteredEnergy;
-      const riderF = mwh * AESO_RATE_DTS_2025.riderF.meteredEnergy;
+      const retailerFee = mwh * retailerRate;
+      const riderF = mwh * riderRate;
       const totalEnergyCharges = poolEnergyTotal + retailerFee + riderF;
 
-      // FortisAlberta Rate 65 charges
-      const fortisDemandCharge = cap * 1000 * FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH; // cap MW → kW × $/kW/month
-      const fortisDistribution = kwh * FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH / 100; // ¢/kWh → $
+      const fortisDemandCharge = cap * 1000 * fortisDemand;
+      const fortisDistribution = kwh * fortisVol / 100;
       const totalFortisCharges = fortisDemandCharge + fortisDistribution;
 
       const totalPreGST = totalDTSCharges + totalEnergyCharges + totalFortisCharges;
-      const gst = totalPreGST * AESO_RATE_DTS_2025.gst;
+      const gst = totalPreGST * gstRate;
       const totalAmountDue = totalPreGST + gst;
       const perKwhCAD = kwh > 0 ? totalAmountDue / kwh : 0;
       const perKwhUSD = perKwhCAD * params.cadUsdRate;
 
       monthly.push({
-        month: MONTH_NAMES[monthIdx],
-        monthIndex: monthIdx,
-        totalHours,
-        runningHours,
-        curtailedHours,
-        curtailed12CP,
-        curtailedPrice,
-        curtailedOverlap,
-        uptimePercent: totalHours > 0 ? (runningHours / totalHours) * 100 : 0,
-        mwh,
-        kwh,
-        avgPoolPriceRunning: avgPoolRunning,
-        bulkCoincidentDemand,
-        bulkMeteredEnergy,
-        regionalBillingCapacity,
-        regionalMeteredEnergy,
-        podSubstation,
-        podTiered,
-        operatingReserve,
-        tcr,
-        voltageControl,
-        systemSupport,
-        totalDTSCharges,
-        poolEnergy: poolEnergyTotal,
-        retailerFee,
-        riderF,
-        totalEnergyCharges,
-        fortisDemandCharge,
-        fortisDistribution,
-        totalFortisCharges,
-        totalPreGST,
-        gst,
-        totalAmountDue,
-        perKwhCAD,
-        perKwhUSD,
+        month: MONTH_NAMES[monthIdx], monthIndex: monthIdx, totalHours, runningHours, curtailedHours,
+        curtailed12CP, curtailedPrice, curtailedOverlap, uptimePercent: totalHours > 0 ? (runningHours / totalHours) * 100 : 0,
+        mwh, kwh, avgPoolPriceRunning: avgPoolRunning,
+        bulkCoincidentDemand, bulkMeteredEnergy, regionalBillingCapacity, regionalMeteredEnergy,
+        podSubstation, podTiered, operatingReserve, tcr, voltageControl, systemSupport, totalDTSCharges,
+        poolEnergy: poolEnergyTotal, retailerFee, riderF, totalEnergyCharges,
+        fortisDemandCharge, fortisDistribution, totalFortisCharges,
+        totalPreGST, gst, totalAmountDue, perKwhCAD, perKwhUSD,
       });
     }
 
     monthly.sort((a, b) => a.monthIndex - b.monthIndex);
 
-    // Annual summary
     const annual: AnnualSummary = {
       totalHours: monthly.reduce((s, m) => s + m.totalHours, 0),
       totalRunningHours: monthly.reduce((s, m) => s + m.runningHours, 0),
@@ -252,9 +256,7 @@ export function usePowerModelCalculator(
       totalPreGST: monthly.reduce((s, m) => s + m.totalPreGST, 0),
       totalGST: monthly.reduce((s, m) => s + m.gst, 0),
       totalAmountDue: monthly.reduce((s, m) => s + m.totalAmountDue, 0),
-      avgPerKwhCAD: 0,
-      avgPerKwhUSD: 0,
-      avgPoolPriceRunning: 0,
+      avgPerKwhCAD: 0, avgPerKwhUSD: 0, avgPoolPriceRunning: 0,
     };
     if (annual.totalKWh > 0) {
       annual.avgPerKwhCAD = annual.totalAmountDue / annual.totalKWh;
@@ -265,5 +267,5 @@ export function usePowerModelCalculator(
     }
 
     return { monthly, annual, breakeven };
-  }, [hourlyData, params]);
+  }, [hourlyData, params, tariffOverrides]);
 }
