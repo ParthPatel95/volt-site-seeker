@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
-import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info } from 'lucide-react';
+import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { usePowerModelCalculator, type FacilityParams, type HourlyRecord } from '@/hooks/usePowerModelCalculator';
+import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord } from '@/hooks/usePowerModelCalculator';
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
@@ -17,6 +17,9 @@ import { PowerModelCharts } from './PowerModelCharts';
 import { PowerModelRevenueAnalysis } from './PowerModelRevenueAnalysis';
 import { PowerModelSensitivity } from './PowerModelSensitivity';
 import { PowerModelDataSources } from './PowerModelDataSources';
+import { PowerModelEditableRates } from './PowerModelEditableRates';
+import { PowerModelAIAnalysis } from './PowerModelAIAnalysis';
+import { PowerModelAssumptions } from './PowerModelAssumptions';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export function PowerModelAnalyzer() {
@@ -33,8 +36,9 @@ export function PowerModelAnalyzer() {
     hostingRateUSD: DEFAULT_FACILITY_PARAMS.hostingRateUSD,
     cadUsdRate: DEFAULT_FACILITY_PARAMS.cadUsdRate,
   });
+  const [tariffOverrides, setTariffOverrides] = useState<TariffOverrides>({});
 
-  const { monthly, annual, breakeven } = usePowerModelCalculator(hourlyData, params);
+  const { monthly, annual, breakeven } = usePowerModelCalculator(hourlyData, params, tariffOverrides);
 
   const hostingRateCAD = params.hostingRateUSD / params.cadUsdRate;
 
@@ -214,6 +218,9 @@ export function PowerModelAnalyzer() {
         </Card>
       </div>
 
+      {/* Editable Tariff Rates */}
+      <PowerModelEditableRates overrides={tariffOverrides} onChange={setTariffOverrides} />
+
       {/* Results */}
       {hourlyData.length > 0 && (
         <>
@@ -222,10 +229,12 @@ export function PowerModelAnalyzer() {
 
           {/* Analytics Tabs */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>
-            <TabsList>
+            <TabsList className="flex-wrap h-auto gap-1">
               <TabsTrigger value="charts" className="text-xs"><BarChart3 className="w-3 h-3 mr-1" />Charts</TabsTrigger>
               <TabsTrigger value="revenue" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Revenue</TabsTrigger>
-              <TabsTrigger value="sensitivity" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Sensitivity</TabsTrigger>
+              <TabsTrigger value="sensitivity" className="text-xs"><Settings2 className="w-3 h-3 mr-1" />Sensitivity</TabsTrigger>
+              <TabsTrigger value="ai-analysis" className="text-xs"><Sparkles className="w-3 h-3 mr-1" />AI Analysis</TabsTrigger>
+              <TabsTrigger value="assumptions" className="text-xs"><BookOpen className="w-3 h-3 mr-1" />Assumptions</TabsTrigger>
               <TabsTrigger value="sources" className="text-xs"><Info className="w-3 h-3 mr-1" />Data Sources</TabsTrigger>
             </TabsList>
 
@@ -239,6 +248,14 @@ export function PowerModelAnalyzer() {
 
             <TabsContent value="sensitivity" className="mt-4">
               <PowerModelSensitivity baseCost={annual?.totalAmountDue ?? 0} params={params} monthly={monthly} />
+            </TabsContent>
+
+            <TabsContent value="ai-analysis" className="mt-4">
+              <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} />
+            </TabsContent>
+
+            <TabsContent value="assumptions" className="mt-4">
+              <PowerModelAssumptions />
             </TabsContent>
 
             <TabsContent value="sources" className="mt-4">
