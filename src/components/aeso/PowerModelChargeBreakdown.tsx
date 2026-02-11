@@ -148,16 +148,21 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
                   { label: '(2)(b) Regional Metered Energy', value: avg(m => m.regionalMeteredEnergy) },
                   { label: '(3)(a) POD Substation', value: avg(m => m.podSubstation) },
                   { label: '(3)(b-e) POD Tiered Charges', value: avg(m => m.podTiered) },
-                  { label: '(4) Operating Reserve', value: avg(m => m.operatingReserve) },
-                  { label: '(5) TCR', value: avg(m => m.tcr) },
+                  { label: '(4) Operating Reserve', value: avg(m => m.operatingReserve), estimate: true },
+                  { label: '(5) TCR', value: avg(m => m.tcr), estimate: true },
                   { label: '(6) Voltage Control', value: avg(m => m.voltageControl) },
                   { label: '(7) System Support', value: avg(m => m.systemSupport) },
+                  { label: 'FortisAlberta Demand Charge', value: avg(m => m.fortisDemandCharge), note: 'Rate 65' },
+                  { label: 'FortisAlberta Distribution', value: avg(m => m.fortisDistribution), note: 'Rate 65' },
                 ];
                 return rows.map(r => (
                   <div key={r.label} className="flex justify-between py-1.5 border-b border-border/50">
                     <span className="text-muted-foreground">
                       {r.label}
                       {r.note && <span className="ml-2 text-xs text-primary">({r.note})</span>}
+                      {'estimate' in r && r.estimate && (
+                        <Badge variant="warning" size="sm" className="ml-2">Estimate</Badge>
+                      )}
                     </span>
                     <span className="font-medium">{fmt(r.value)}</span>
                   </div>

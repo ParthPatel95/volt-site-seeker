@@ -64,7 +64,7 @@ export const ERCOT_INDUSTRIAL_2026 = {
  */
 export const AESO_RATE_DTS_2025 = {
   bulkSystem: {
-    coincidentDemand: 10927, // $/MW/month - 12CP charge
+    coincidentDemand: 11164, // $/MW/month - 12CP charge (AESO 2025 ISO Tariff, Appendix B-2, Table 3-1)
     meteredEnergy: 1.23, // $/MWh
   },
   regionalSystem: {
@@ -80,11 +80,12 @@ export const AESO_RATE_DTS_2025 = {
       { label: 'Remaining', rate: 1231, mw: Infinity },
     ] as const,
   },
-  operatingReserve: { ratePercent: 12.44 }, // % of Pool Price
-  tcr: { meteredEnergy: 0.265 }, // $/MWh - variable, AESO monthly supplement
+  operatingReserve: { ratePercent: 12.44 }, // % of Pool Price — ESTIMATE: actual rate varies monthly based on ancillary services costs settled by AESO
+  tcr: { meteredEnergy: 0.265 }, // $/MWh — ESTIMATE: variable, recalculated monthly via AESO supplement
   voltageControl: { meteredEnergy: 0.07 }, // $/MWh
   systemSupport: { highestDemand: 52 }, // $/MW/month
-  riderF: { meteredEnergy: 1.30 }, // $/MWh - Balancing Pool
+  riderF: { meteredEnergy: 1.30 }, // $/MWh - Balancing Pool (2025 rate)
+  riderF_2026: { meteredEnergy: 1.26 }, // $/MWh - Balancing Pool (2026 rate, Table 3-3)
   retailerFee: { meteredEnergy: 0.25 }, // $/MWh - Self-retailer admin
   gst: 0.05,
   sourceDecision: 'AUC Decision 29606-D01-2024',
