@@ -213,16 +213,16 @@ export function AESOMarketComprehensive() {
 
   const navigationItems: NavigationItem[] = [
     { id: 'market', label: 'Market Data', icon: Zap, priority: 1 },
-    { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 2 },
+    { id: 'power-model', label: 'Power Model', icon: Calculator, priority: 2 },
     { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare, priority: 3 },
-    { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 4 },
-    { id: 'historical', label: 'Historical', icon: Calendar, priority: 5 },
-    { id: 'analytics-export', label: 'Analytics Export', icon: FileSpreadsheet, priority: 6 },
-    { id: 'generation', label: 'Generation', icon: Activity, priority: 7 },
-    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 8 },
-    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 9 },
-    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 10 },
-    { id: 'power-model', label: 'Power Model', icon: Calculator, priority: 11 },
+    { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 4 },
+    { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 5 },
+    { id: 'historical', label: 'Historical', icon: Calendar, priority: 6 },
+    { id: 'analytics-export', label: 'Analytics Export', icon: FileSpreadsheet, priority: 7 },
+    { id: 'generation', label: 'Generation', icon: Activity, priority: 8 },
+    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 9 },
+    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 10 },
+    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 11 },
   ];
 
   // Intelligence helper functions
