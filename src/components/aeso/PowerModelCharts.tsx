@@ -78,6 +78,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
     month: m.month.slice(0, 3),
     '12CP': m.curtailed12CP,
     Price: m.curtailedPrice,
+    'Uptime Cap': m.curtailedUptimeCap,
     Overlap: m.curtailedOverlap,
     'Uptime %': m.uptimePercent,
   }));
@@ -169,6 +170,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar yAxisId="hrs" dataKey="12CP" stackId="curt" fill={COLORS.cp12} />
               <Bar yAxisId="hrs" dataKey="Price" stackId="curt" fill={COLORS.price} />
+              <Bar yAxisId="hrs" dataKey="Uptime Cap" stackId="curt" fill="hsl(220, 70%, 55%)" />
               <Bar yAxisId="hrs" dataKey="Overlap" stackId="curt" fill={COLORS.overlap} />
               <Line yAxisId="pct" type="monotone" dataKey="Uptime %" stroke={COLORS.uptime} strokeWidth={2} dot={false} />
             </ComposedChart>

@@ -107,6 +107,7 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
                   <TableHead className="text-right">Curtailed</TableHead>
                   <TableHead className="text-right">12CP Only</TableHead>
                   <TableHead className="text-right">Price Only</TableHead>
+                  <TableHead className="text-right">Uptime Cap</TableHead>
                   <TableHead className="text-right">Overlap</TableHead>
                   <TableHead className="text-right">Avg Pool (Running)</TableHead>
                 </TableRow>
@@ -120,6 +121,7 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
                     <TableCell className="text-right">{m.curtailedHours}</TableCell>
                     <TableCell className="text-right">{m.curtailed12CP}</TableCell>
                     <TableCell className="text-right">{m.curtailedPrice}</TableCell>
+                    <TableCell className="text-right">{m.curtailedUptimeCap}</TableCell>
                     <TableCell className="text-right">{m.curtailedOverlap}</TableCell>
                     <TableCell className="text-right">{fmt(m.avgPoolPriceRunning)}/MWh</TableCell>
                   </TableRow>

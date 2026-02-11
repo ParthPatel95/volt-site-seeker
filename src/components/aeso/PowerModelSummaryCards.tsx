@@ -1,15 +1,17 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank } from 'lucide-react';
+import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
   annual: AnnualSummary | null;
   breakeven: number;
   hostingRateCAD?: number;
+  totalShutdownHours?: number;
+  totalShutdownSavings?: number;
 }
 
-export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD }: Props) {
+export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings }: Props) {
   if (!annual) return null;
 
   const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
@@ -52,6 +54,13 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD }: Pr
       icon: BarChart3,
       color: 'from-purple-500 to-purple-600',
     },
+    ...(totalShutdownHours !== undefined ? [{
+      label: 'Curtailed Hours',
+      value: `${totalShutdownHours.toLocaleString()}`,
+      sub: `Est. savings: $${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`,
+      icon: PowerOff,
+      color: 'from-red-500 to-red-600',
+    }] : []),
     ...(hostingRateCAD ? [
       {
         label: 'Annual Hosting Revenue',
