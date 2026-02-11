@@ -22,6 +22,7 @@ import { PowerModelAIAnalysis } from './PowerModelAIAnalysis';
 import { PowerModelAssumptions } from './PowerModelAssumptions';
 import { PowerModelShutdownLog } from './PowerModelShutdownLog';
 import { PowerModelShutdownAnalytics } from './PowerModelShutdownAnalytics';
+import { PowerModelRateExplainer } from './PowerModelRateExplainer';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export function PowerModelAnalyzer() {
@@ -244,6 +245,7 @@ export function PowerModelAnalyzer() {
               <TabsTrigger value="shutdown-log" className="text-xs"><Clock className="w-3 h-3 mr-1" />Shutdown Log</TabsTrigger>
               <TabsTrigger value="shutdown-analytics" className="text-xs"><Zap className="w-3 h-3 mr-1" />Shutdown Analytics</TabsTrigger>
               <TabsTrigger value="assumptions" className="text-xs"><BookOpen className="w-3 h-3 mr-1" />Assumptions</TabsTrigger>
+              <TabsTrigger value="rate-guide" className="text-xs"><FileSpreadsheet className="w-3 h-3 mr-1" />Rate Guide</TabsTrigger>
               <TabsTrigger value="sources" className="text-xs"><Info className="w-3 h-3 mr-1" />Data Sources</TabsTrigger>
             </TabsList>
 
@@ -273,6 +275,10 @@ export function PowerModelAnalyzer() {
 
             <TabsContent value="assumptions" className="mt-4">
               <PowerModelAssumptions />
+            </TabsContent>
+
+            <TabsContent value="rate-guide" className="mt-4">
+              <PowerModelRateExplainer />
             </TabsContent>
 
             <TabsContent value="sources" className="mt-4">
