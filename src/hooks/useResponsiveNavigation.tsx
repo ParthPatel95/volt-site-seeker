@@ -20,20 +20,20 @@ export function useResponsiveNavigation(items: NavigationItem[]) {
       const screenWidth = window.innerWidth;
       
       if (screenWidth < 768) {
-        // Mobile: Show only top 4 priority items
+        // Mobile: Show only top 5 priority items
         const sorted = [...items].sort((a, b) => a.priority - b.priority);
-        setVisibleItems(sorted.slice(0, 4));
-        setHiddenItems(sorted.slice(4));
+        setVisibleItems(sorted.slice(0, 5));
+        setHiddenItems(sorted.slice(5));
       } else if (screenWidth < 1024) {
-        // Tablet: Show top 6 priority items
+        // Tablet: Show top 7 priority items
         const sorted = [...items].sort((a, b) => a.priority - b.priority);
-        setVisibleItems(sorted.slice(0, 6));
-        setHiddenItems(sorted.slice(6));
+        setVisibleItems(sorted.slice(0, 7));
+        setHiddenItems(sorted.slice(7));
       } else if (screenWidth < 1280) {
-        // Small desktop: Show top 8 priority items
+        // Small desktop: Show top 9 priority items
         const sorted = [...items].sort((a, b) => a.priority - b.priority);
-        setVisibleItems(sorted.slice(0, 8));
-        setHiddenItems(sorted.slice(8));
+        setVisibleItems(sorted.slice(0, 9));
+        setHiddenItems(sorted.slice(9));
       } else {
         // Large desktop: Show all items
         setVisibleItems(items);
