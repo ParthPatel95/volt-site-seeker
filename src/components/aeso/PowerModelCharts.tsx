@@ -102,7 +102,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
               <CardTitle className="text-sm">Monthly Cost Trend</CardTitle>
               <CardDescription className="text-xs">DTS + Energy + FortisAlberta + GST breakdown</CardDescription>
             </div>
-            <RateSourceBadge source="AESO Rate DTS + aeso_training_data" effectiveDate="2025-01-01" lastVerified="2026-02-01" variant="compact" />
+            <RateSourceBadge source="AESO Rate DTS + aeso_training_data" effectiveDate="2026-01-01" lastVerified="2026-02-01" variant="compact" />
           </div>
         </CardHeader>
         <CardContent>
@@ -127,7 +127,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Annual Cost Breakdown</CardTitle>
-          <CardDescription className="text-xs">By charge component — AUC Decision 29606-D01-2024</CardDescription>
+          <CardDescription className="text-xs">By charge component — AUC Decision 30427-D01-2025</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>

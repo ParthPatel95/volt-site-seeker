@@ -21,10 +21,10 @@ const sources = [
     category: 'Rate DTS Tariffs',
     icon: FileText,
     description: 'All 15+ AESO transmission charge components (Bulk, Regional, POD, OR, TCR, etc.)',
-    source: 'AUC Decision 29606-D01-2024 — AESO ISO Tariff 2025',
+    source: 'AUC Decision 30427-D01-2025 — AESO ISO Tariff 2026',
     status: 'verified' as const,
     url: 'https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/',
-    effective: 'Jan 1, 2025',
+    effective: 'Jan 1, 2026',
     verified: 'Feb 2026',
   },
   {

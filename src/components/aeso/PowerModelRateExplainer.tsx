@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ExternalLink, CheckCircle2, AlertTriangle, Zap, Building2, Home, Store, Factory } from 'lucide-react';
-import { AESO_RATE_DTS_2025, FORTISALBERTA_RATE_65_2026 } from '@/constants/tariff-rates';
+import { AESO_RATE_DTS_2026, FORTISALBERTA_RATE_65_2026 } from '@/constants/tariff-rates';
 
 const SourceLink = ({ href, label }: { href: string; label: string }) => (
   <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
@@ -34,7 +34,7 @@ const RateRow = ({ label, value, unit, verified = true }: { label: string; value
 );
 
 export function PowerModelRateExplainer() {
-  const dts = AESO_RATE_DTS_2025;
+  const dts = AESO_RATE_DTS_2026;
 
   // POD tiered calculation for 45 MW
   const podTier1 = Math.min(45, 7.5) * dts.pointOfDelivery.tiers[0].rate;
@@ -95,17 +95,17 @@ export function PowerModelRateExplainer() {
                   </p>
 
                   <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-3 mb-1">Bulk System</h5>
-                  <RateRow label="Coincident Demand (12CP)" value={`$${dts.bulkSystem.coincidentDemand.toLocaleString()}`} unit="/MW/month" />
+                  <RateRow label="Coincident Demand (12CP)" value={`$${dts.bulkSystem.coincidentDemand.toLocaleString()}`} unit="/MW/month" verified={false} />
                   <RateRow label="Metered Energy" value={`$${dts.bulkSystem.meteredEnergy.toFixed(2)}`} unit="/MWh" />
 
                   <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-3 mb-1">Regional System</h5>
-                  <RateRow label="Billing Capacity" value={`$${dts.regionalSystem.billingCapacity.toLocaleString()}`} unit="/MW/month" />
+                  <RateRow label="Billing Capacity" value={`$${dts.regionalSystem.billingCapacity.toLocaleString()}`} unit="/MW/month" verified={false} />
                   <RateRow label="Metered Energy" value={`$${dts.regionalSystem.meteredEnergy.toFixed(2)}`} unit="/MWh" />
 
                   <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-3 mb-1">Point of Delivery (POD)</h5>
-                  <RateRow label="Substation (fixed)" value={`$${dts.pointOfDelivery.substation.toLocaleString()}`} unit="/month" />
+                  <RateRow label="Substation (fixed)" value={`$${dts.pointOfDelivery.substation.toLocaleString()}`} unit="/month" verified={false} />
                   {dts.pointOfDelivery.tiers.map((tier, i) => (
-                    <RateRow key={i} label={`${tier.label}${tier.mw !== Infinity ? ` (${tier.mw} MW)` : ''}`} value={`$${tier.rate.toLocaleString()}`} unit="/MW/month" />
+                    <RateRow key={i} label={`${tier.label}${tier.mw !== Infinity ? ` (${tier.mw} MW)` : ''}`} value={`$${tier.rate.toLocaleString()}`} unit="/MW/month" verified={false} />
                   ))}
 
                   <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-3 mb-1">Other Components</h5>
@@ -113,7 +113,7 @@ export function PowerModelRateExplainer() {
                   <RateRow label="TCR (Metered Energy)" value={`$${dts.tcr.meteredEnergy.toFixed(3)}`} unit="/MWh" verified={false} />
                   <RateRow label="Voltage Control" value={`$${dts.voltageControl.meteredEnergy.toFixed(2)}`} unit="/MWh" />
                   <RateRow label="System Support" value={`$${dts.systemSupport.highestDemand}`} unit="/MW/month" />
-                  <RateRow label="Rider F (Balancing Pool)" value={`$${dts.riderF_2026.meteredEnergy.toFixed(2)}`} unit="/MWh" />
+                  <RateRow label="Rider F (Balancing Pool)" value={`$${dts.riderF.meteredEnergy.toFixed(2)}`} unit="/MWh" />
                   <RateRow label="Retailer Fee" value={`$${dts.retailerFee.meteredEnergy.toFixed(2)}`} unit="/MWh" />
                   <RateRow label="GST" value={`${(dts.gst * 100).toFixed(0)}%`} unit="on subtotal" />
 
@@ -308,7 +308,7 @@ export function PowerModelRateExplainer() {
             </table>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            All-in cost estimates are illustrative, assuming average 2025 pool prices and full 12CP avoidance for Rate 65. Actual costs vary by load profile and market conditions.
+            All-in cost estimates are illustrative, assuming average 2026 pool prices and full 12CP avoidance for Rate 65. Actual costs vary by load profile and market conditions.
           </p>
         </CardContent>
       </Card>
@@ -317,7 +317,7 @@ export function PowerModelRateExplainer() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">AESO Rate DTS — 45 MW Facility Calculation Walkthrough</CardTitle>
-          <p className="text-sm text-muted-foreground">Step-by-step monthly cost calculation using verified 2025 tariff rates</p>
+          <p className="text-sm text-muted-foreground">Step-by-step monthly cost calculation using verified 2026 tariff rates</p>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2 text-sm">
