@@ -1,15 +1,20 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Clock, Zap, TrendingUp, BarChart3 } from 'lucide-react';
+import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
   annual: AnnualSummary | null;
   breakeven: number;
+  hostingRateCAD?: number;
 }
 
-export function PowerModelSummaryCards({ annual, breakeven }: Props) {
+export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD }: Props) {
   if (!annual) return null;
+
+  const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
+  const netMargin = annualRevenue - annual.totalAmountDue;
+  const marginPct = annualRevenue > 0 ? (netMargin / annualRevenue) * 100 : 0;
 
   const cards = [
     {
@@ -47,10 +52,26 @@ export function PowerModelSummaryCards({ annual, breakeven }: Props) {
       icon: BarChart3,
       color: 'from-purple-500 to-purple-600',
     },
+    ...(hostingRateCAD ? [
+      {
+        label: 'Annual Hosting Revenue',
+        value: `CA$${(annualRevenue / 1_000_000).toFixed(2)}M`,
+        sub: `${(hostingRateCAD * 100).toFixed(2)}¢/kWh × ${(annual.totalKWh / 1e6).toFixed(1)}M kWh`,
+        icon: Banknote,
+        color: 'from-emerald-500 to-emerald-600',
+      },
+      {
+        label: 'Net Margin',
+        value: `CA$${(netMargin / 1_000_000).toFixed(2)}M`,
+        sub: `${marginPct.toFixed(1)}% margin`,
+        icon: PiggyBank,
+        color: netMargin >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
+      },
+    ] : []),
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
       {cards.map((c) => (
         <Card key={c.label} className="overflow-hidden">
           <CardContent className="p-4">
