@@ -1,116 +1,114 @@
 
 
-# Data Accuracy Audit: Power Model Cost Analyzer
+# Power Model Enhancement: Advanced Analytics & Data Source Transparency
 
-## Verification Methodology
+## Overview
 
-Cross-referenced all tariff rates in `src/constants/tariff-rates.ts` against the official **AESO 2025 ISO Tariff Update Application** (filed November 8, 2024) and the **AESO 2026 ISO Tariff Update Application** (filed November 7, 2025), both publicly available on aeso.ca.
+Enhance the Power Model Cost Analyzer with rich visualizations, deeper analytics, and explicit data source attribution for every metric — ensuring investor-grade transparency.
 
----
+## New Analytics to Add
 
-## Issues Found
+### 1. Monthly Cost Trend Chart (Recharts)
+A stacked area/bar chart showing the monthly breakdown of DTS Charges vs Energy Charges vs FortisAlberta Charges vs GST over the year. This gives an immediate visual of cost seasonality — winter months (high pool prices, 12CP risk) vs summer months (lower costs).
 
-### Issue 1: Bulk System Coincident Demand Rate is Wrong (CRITICAL)
+**Data source**: All values computed from `aeso_training_data` table (pool_price, ail_mw) or uploaded CSV.
 
-| Detail | Value |
+### 2. Cost Component Pie/Donut Chart
+Annual cost breakdown by category: Bulk System, Regional System, POD Charges, Operating Reserve, Pool Energy, Rider F, FortisAlberta, GST. Shows which charge components dominate total cost.
+
+**Data source**: Calculated from AESO Rate DTS 2025 tariff constants (AUC Decision 29606-D01-2024).
+
+### 3. Curtailment Efficiency Chart
+A monthly bar chart showing Running Hours vs 12CP Curtailed vs Price Curtailed vs Overlap hours. Visualizes how effective the curtailment strategy is across the year.
+
+**Data source**: AIL-ranked demand hours from `aeso_training_data`; breakeven price derived from tariff constants.
+
+### 4. Pool Price Distribution Histogram
+Shows the distribution of hourly pool prices during running hours, with a vertical line marking the breakeven price. Helps visualize how often the facility would curtail due to price.
+
+**Data source**: Hourly pool prices from `aeso_training_data` or uploaded CSV.
+
+### 5. Sensitivity Analysis Table
+Shows how total annual cost changes when key parameters vary:
+- Capacity: +/- 5 MW
+- Hosting Rate: +/- $0.01 USD/kWh
+- Exchange Rate: +/- 5%
+- 12CP Window: +/- 10 hours
+
+**Data source**: Parametric re-calculation using the existing calculator engine with varied inputs.
+
+### 6. Revenue vs Cost Comparison
+A monthly bar chart comparing hosting revenue (MWh x hosting rate) against total energy cost, showing net margin per month and identifying months where operations may be unprofitable.
+
+**Data source**: Hosting rate from user input; energy costs from calculator; pool prices from `aeso_training_data`.
+
+### 7. Data Source Attribution Footer
+A dedicated panel at the bottom listing every data source used, with badges:
+- **Pool Price & AIL**: `aeso_training_data` table (33,635+ verified records, June 2022 - present) or user-uploaded CSV
+- **Rate DTS Tariffs**: AUC Decision 29606-D01-2024, AESO ISO Tariff 2025 (verified Feb 2026)
+- **FortisAlberta Rate 65**: July 2025 Rate Schedule (verified Feb 2026)
+- **Operating Reserve (12.44%)**: AESO estimate — actual settled monthly
+- **TCR ($0.265/MWh)**: AESO estimate — variable monthly supplement
+- **Exchange Rate**: User-provided input (default 0.7334 CAD/USD)
+
+## Technical Implementation
+
+### New Files
+
+| File | Purpose |
 |---|---|
-| **Code value** | `$10,927/MW/month` |
-| **AESO Official (Appendix B-2, Table 3-1)** | `$11,164/MW/month` |
-| **Discrepancy** | $237/MW/month under-stated |
-| **Impact on 45 MW facility** | Irrelevant for the "avoided 12CP" scenario (charge = $0), but incorrect if user models partial avoidance |
+| `src/components/aeso/PowerModelCharts.tsx` | All 4 Recharts visualizations (cost trend, pie, curtailment, pool price histogram) |
+| `src/components/aeso/PowerModelSensitivity.tsx` | Sensitivity analysis table with parameterized re-runs |
+| `src/components/aeso/PowerModelRevenueAnalysis.tsx` | Revenue vs cost comparison chart and net margin table |
+| `src/components/aeso/PowerModelDataSources.tsx` | Data source attribution footer with badges and links |
 
-The official AESO Table 3-1 in the 2025 ISO Tariff Update Application clearly states the Bulk System Charge - Demand is **$11,164/MW/month** (Appendix B-2, effective Feb 1, 2025 through Dec 31, 2025). The $10,927 value may have come from the user's spreadsheet or an earlier draft.
+### Modified Files
 
-**Fix**: Change `coincidentDemand: 10927` to `coincidentDemand: 11164` in `AESO_RATE_DTS_2025`.
-
-### Issue 2: Rider F is Outdated for 2026 (MODERATE)
-
-| Detail | Value |
+| File | Changes |
 |---|---|
-| **Code value** | `$1.30/MWh` (2025 rate) |
-| **2026 Official** | `$1.26/MWh` |
-| **Source** | 2026 ISO Tariff Update Application, Table 3-3 |
+| `src/components/aeso/PowerModelAnalyzer.tsx` | Import and render all new components below the existing results; add tab navigation for Charts / Sensitivity / Data Sources sections |
+| `src/hooks/usePowerModelCalculator.ts` | Export additional computed fields: monthly hosting revenue, net margin, pool price min/max/median per month; add helper for sensitivity re-calculation |
+| `src/components/aeso/PowerModelSummaryCards.tsx` | Add 2 new cards: "Annual Hosting Revenue" and "Net Margin" with profit/loss color coding |
 
-The current Rate DTS effective January 1, 2026 uses Rider F at **$1.26/MWh**, not the 2025 rate of $1.30/MWh. Since this is labeled as a 2025 rate structure (`AESO_RATE_DTS_2025`), the $1.30 value is technically correct for 2025 modeling. However, users modeling 2026 costs will get slightly wrong results.
+### Chart Details (using Recharts — already installed)
 
-**Fix**: Add a note/constant for the 2026 Rider F rate ($1.26/MWh) or update the constant if the intent is current-year modeling.
+**Monthly Cost Trend** — `ComposedChart` with stacked bars for DTS/Energy/Fortis and a line for total cost, X-axis = month names.
 
-### Issue 3: Operating Reserve Rate Needs Verification (LOW RISK)
+**Cost Pie Chart** — `PieChart` with labeled segments, custom tooltip showing $ amount and % of total.
 
-The code uses `12.44%` of pool price. The AESO tariff application states the operating reserve is charged as a "percentage of pool price" but the exact percentage is calculated annually based on forecast ancillary services costs. The 12.44% value likely came from the user's spreadsheet and represents a reasonable 2025 estimate. The AESO does not publish a single fixed percentage -- it varies monthly based on actual costs settled.
+**Curtailment Stacked Bar** — `BarChart` with 3 stacked segments (12CP, Price, Overlap) per month, plus a line showing uptime %.
 
-**Fix**: Add a comment noting this is an estimate and the actual rate is settled monthly by AESO. Consider labeling it with an "Estimate" badge in the UI.
+**Pool Price Histogram** — `BarChart` with price bins ($0-25, $25-50, ..., $200+), count of hours per bin, and a `ReferenceLine` at breakeven price.
 
-### Issue 4: FortisAlberta Distribution Charge Missing from Calculator (LOW)
+**Revenue vs Cost** — `BarChart` with side-by-side bars (Revenue green, Cost red) per month, plus a line for net margin.
 
-The calculator includes all AESO Rate DTS charges but does **not** include FortisAlberta Rate 65 distribution charges ($7.52/kW/month demand + 0.2704 cents/kWh delivery). These are defined in `FORTISALBERTA_RATE_65_2026` but never consumed by `usePowerModelCalculator.ts`.
+### Sensitivity Analysis Logic
 
-**Fix**: Add FortisAlberta Rate 65 charges (demand + volumetric delivery) to the monthly cost calculation, or clearly label the model as "AESO ISO Tariff charges only (excludes DFO charges)".
+The sensitivity table will call the existing calculator logic with modified params (no new API calls needed). It will display a grid:
 
-### Issue 5: Breakeven Calculation Missing FortisAlberta Costs (LOW)
+| Parameter | -10% | -5% | Base | +5% | +10% | Impact |
+|---|---|---|---|---|---|---|
+| Capacity (MW) | ... | ... | 45 | ... | ... | $/MW change |
+| Hosting Rate | ... | ... | 0.07 | ... | ... | $/0.01 change |
+| Exchange Rate | ... | ... | 0.7334 | ... | ... | per 1% change |
+| 12CP Window | ... | ... | 35 hrs | ... | ... | per 5 hrs change |
 
-The breakeven pool price calculation in `calculateBreakeven()` only includes AESO energy charges in its marginal cost stack. If FortisAlberta distribution charges are part of the operating cost, they should be included in the marginal cost calculation.
+### Data Source Attribution
 
----
+Each chart and table will include a small footer or badge indicating its data source. The main Data Sources panel will list:
 
-## Rates Verified as Correct
+- Pool Price / AIL demand data — source and record count
+- Each Rate DTS component — AUC Decision number, effective date, verification date
+- FortisAlberta rates — schedule document, effective date
+- Estimated vs verified badges for variable charges (Operating Reserve, TCR)
+- Links to official AESO and FortisAlberta tariff documents
 
-| Component | Code Value | AESO Official | Status |
-|---|---|---|---|
-| Bulk System Energy | $1.23/MWh | $1.23/MWh | CORRECT |
-| Regional Billing Capacity | $2,945/MW/month | $2,945/MW/month | CORRECT |
-| Regional Metered Energy | $0.93/MWh | $0.93/MWh | CORRECT |
-| POD Substation | $15,304/month | $15,304/month | CORRECT |
-| POD First 7.5 MW | $5,037/MW/month | $5,037/MW/month | CORRECT |
-| POD Next 9.5 MW | $2,987/MW/month | $2,987/MW/month | CORRECT |
-| POD Next 23 MW | $2,000/MW/month | $2,000/MW/month | CORRECT |
-| POD Remaining | $1,231/MW/month | $1,231/MW/month | CORRECT |
-| Rider F (2025) | $1.30/MWh | $1.30/MWh | CORRECT |
-| TCR | $0.265/MWh | Variable (AESO supplement) | ESTIMATE - acceptable |
-| Voltage Control | $0.07/MWh | Standard charge | CORRECT |
-| System Support | $52/MW/month | Standard charge | CORRECT |
-| Retailer Fee | $0.25/MWh | Standard charge | CORRECT |
-| GST | 5% | 5% | CORRECT |
-| FortisAlberta Demand | $7.52/kW/month | July 2025 schedule | CORRECT |
-| FortisAlberta Distribution | 0.2704 cents/kWh | July 2025 schedule | CORRECT |
+## Summary of Additions
 
-## Calculation Logic Verified as Correct
-
-| Logic | Status | Notes |
-|---|---|---|
-| POD tiered charge calculation | CORRECT | Properly applies substation fraction to tier boundaries |
-| 12CP curtailment (top N demand hours) | CORRECT | Sorts by AIL descending, flags top hours |
-| Economic curtailment (breakeven) | CORRECT | Marginal cost / OR multiplier formula is sound |
-| Monthly MWh = running hours x capacity | CORRECT | Assumes full load operation when running |
-| Operating reserve = pool energy x rate% | CORRECT | Applied to total pool energy cost, not per MWh |
-| GST applied to pre-GST total | CORRECT | 5% of (DTS + Energy charges) |
-| Annual summary weighted averages | CORRECT | Pool price weighted by running hours per month |
-
----
-
-## Proposed Fixes
-
-### File: `src/constants/tariff-rates.ts`
-
-1. Change `coincidentDemand: 10927` to `coincidentDemand: 11164`
-2. Add `riderF_2026: { meteredEnergy: 1.26 }` constant
-3. Add comment on `operatingReserve` noting it's an estimate settled monthly
-
-### File: `src/hooks/usePowerModelCalculator.ts`
-
-4. Either add FortisAlberta Rate 65 charges to the cost model, or add a clear comment/UI label that DFO charges are excluded
-
-### File: `src/components/aeso/PowerModelChargeBreakdown.tsx`
-
-5. Add "Estimate" badge to Operating Reserve and TCR rows since these are variable charges settled monthly by AESO
-
----
-
-## Summary
-
-- **13 out of 15 AESO rates are 100% correct** against official filings
-- **1 critical rate error**: Bulk System Coincident Demand ($10,927 should be $11,164) -- though has zero impact when 12CP is fully avoided
-- **1 outdated rate**: Rider F uses 2025 value ($1.30) when 2026 is now $1.26
-- **All calculation logic is mathematically correct**
-- **FortisAlberta (DFO) charges are defined but not included in the power model calculations** -- should be explicitly labeled as excluded or added
+- **4 new interactive charts** (cost trends, cost breakdown pie, curtailment efficiency, pool price distribution)
+- **Revenue vs Cost analysis** with monthly net margin
+- **Sensitivity analysis** showing cost impact of parameter changes
+- **2 new summary cards** (hosting revenue, net margin)
+- **Comprehensive data source attribution** with verification badges and direct links to official tariff documents
+- All analytics use data already available in the calculator — no new API calls or edge functions needed
 
