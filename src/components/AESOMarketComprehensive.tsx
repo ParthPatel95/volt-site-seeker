@@ -30,7 +30,8 @@ import {
   FileSpreadsheet,
   Settings,
   Server,
-  MessageSquare
+  MessageSquare,
+  Calculator
 } from 'lucide-react';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -63,6 +64,7 @@ import { QuickStatsBar } from './aeso/QuickStatsBar';
 import { DatacenterControlCenter } from './datacenter';
 import { TelegramAlertSettings } from './aeso/TelegramAlertSettings';
 import { UnifiedAnalyticsExport } from './aeso/UnifiedAnalyticsExport';
+import { PowerModelAnalyzer } from './aeso/PowerModelAnalyzer';
 
 export function AESOMarketComprehensive() {
   const { hasPermission } = usePermissions();
@@ -220,6 +222,7 @@ export function AESOMarketComprehensive() {
     { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 8 },
     { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 9 },
     { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 10 },
+    { id: 'power-model', label: 'Power Model', icon: Calculator, priority: 11 },
   ];
 
   // Intelligence helper functions
@@ -757,6 +760,10 @@ export function AESOMarketComprehensive() {
 
           <TabsContent value="custom-dashboards" className="space-y-4 sm:space-y-6">
             <CustomDashboardsPanel />
+          </TabsContent>
+
+          <TabsContent value="power-model" className="space-y-4 sm:space-y-6">
+            <PowerModelAnalyzer />
           </TabsContent>
 
           <TabsContent value="analytics-export" className="space-y-4 sm:space-y-6">

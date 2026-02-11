@@ -57,6 +57,53 @@ export const ERCOT_INDUSTRIAL_2026 = {
   lastVerified: '2026-02-01',
 } as const;
 
+/**
+ * Complete AESO Rate DTS 2025 Tariff Structure
+ * Source: AUC Decision 29606-D01-2024 / AESO ISO Tariff 2025
+ * Used by Power Model Cost Analyzer for full 15+ component cost modeling
+ */
+export const AESO_RATE_DTS_2025 = {
+  bulkSystem: {
+    coincidentDemand: 10927, // $/MW/month - 12CP charge
+    meteredEnergy: 1.23, // $/MWh
+  },
+  regionalSystem: {
+    billingCapacity: 2945, // $/MW/month
+    meteredEnergy: 0.93, // $/MWh
+  },
+  pointOfDelivery: {
+    substation: 15304, // $/month fixed
+    tiers: [
+      { label: 'First 7.5 MW', rate: 5037, mw: 7.5 },
+      { label: 'Next 9.5 MW', rate: 2987, mw: 9.5 },
+      { label: 'Next 23 MW', rate: 2000, mw: 23 },
+      { label: 'Remaining', rate: 1231, mw: Infinity },
+    ] as const,
+  },
+  operatingReserve: { ratePercent: 12.44 }, // % of Pool Price
+  tcr: { meteredEnergy: 0.265 }, // $/MWh - variable, AESO monthly supplement
+  voltageControl: { meteredEnergy: 0.07 }, // $/MWh
+  systemSupport: { highestDemand: 52 }, // $/MW/month
+  riderF: { meteredEnergy: 1.30 }, // $/MWh - Balancing Pool
+  retailerFee: { meteredEnergy: 0.25 }, // $/MWh - Self-retailer admin
+  gst: 0.05,
+  sourceDecision: 'AUC Decision 29606-D01-2024',
+  effectiveDate: '2025-01-01',
+  sourceUrl: 'https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/',
+} as const;
+
+/** Default facility parameters matching the Power Model spreadsheet */
+export const DEFAULT_FACILITY_PARAMS = {
+  contractedCapacityMW: 45,
+  substationFraction: 1.0,
+  twelveCP_AvoidanceHours: 35,
+  hostingRateUSD: 0.07, // $/kWh
+  cadUsdRate: 0.7334,
+  breakEvenPoolPrice: 81.29, // $/MWh - calculated from marginal costs
+  podName: 'Albchem Beaverhill Creek',
+  dfo: 'FortisAlberta',
+} as const;
+
 // Legacy aliases for backward compatibility
 export const TRANSMISSION_ADDER = AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH;
 export const TRANSMISSION_RATE_PER_KW_MONTH = FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH;
