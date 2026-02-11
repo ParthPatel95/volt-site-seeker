@@ -4,8 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResponsiveNavigation } from '@/components/ResponsiveNavigation';
-import { NavigationItem } from '@/hooks/useResponsiveNavigation';
 import { 
   Zap, 
   TrendingUp, 
@@ -211,19 +209,19 @@ export function AESOMarketComprehensive() {
     return { label: 'Calculated', variant: 'outline' as const };
   };
 
-  const navigationItems: NavigationItem[] = [
-    { id: 'market', label: 'Market Data', icon: Zap, priority: 1 },
-    { id: 'power-model', label: 'Power Model', icon: Calculator, priority: 2 },
-    { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare, priority: 3 },
-    { id: 'predictions', label: 'AI Predictions', icon: Brain, priority: 4 },
-    { id: 'datacenter', label: 'Datacenter Control', icon: Server, priority: 5 },
-    { id: 'historical', label: 'Historical', icon: Calendar, priority: 6 },
-    { id: 'analytics-export', label: 'Analytics Export', icon: FileSpreadsheet, priority: 7 },
-    { id: 'generation', label: 'Generation', icon: Activity, priority: 8 },
-    { id: 'forecast', label: 'Forecasts', icon: Wind, priority: 9 },
-    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle, priority: 10 },
-    { id: 'custom-dashboards', label: 'Dashboards', icon: Target, priority: 11 },
-  ];
+  const navigationItems = useMemo(() => [
+    { id: 'market', label: 'Market Data', icon: Zap },
+    { id: 'power-model', label: 'Power Model', icon: Calculator },
+    { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare },
+    { id: 'predictions', label: 'AI Predictions', icon: Brain },
+    { id: 'datacenter', label: 'Datacenter Control', icon: Server },
+    { id: 'historical', label: 'Historical', icon: Calendar },
+    { id: 'analytics-export', label: 'Analytics Export', icon: FileSpreadsheet },
+    { id: 'generation', label: 'Generation', icon: Activity },
+    { id: 'forecast', label: 'Forecasts', icon: Wind },
+    { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle },
+    { id: 'custom-dashboards', label: 'Dashboards', icon: Target },
+  ], []);
 
   // Intelligence helper functions
   const getMarketStressValue = () => {
@@ -279,12 +277,27 @@ export function AESOMarketComprehensive() {
         {/* Modern Tabbed Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 shadow-sm">
-            <div className="max-w-7xl mx-auto py-2">
-              <ResponsiveNavigation
-                items={navigationItems}
-                activeItem={activeTab}
-                onItemClick={(item) => setActiveTab(item.id)}
-              />
+            <div className="max-w-7xl mx-auto py-2 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex items-center gap-1 sm:gap-2 min-w-max">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={isActive ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setActiveTab(item.id)}
+                      className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 text-xs sm:text-sm ${
+                        isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{item.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
