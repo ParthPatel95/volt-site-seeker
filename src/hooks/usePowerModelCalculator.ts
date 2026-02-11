@@ -7,6 +7,7 @@ export interface FacilityParams {
   twelveCP_AvoidanceHours: number;
   hostingRateUSD: number;
   cadUsdRate: number;
+  targetUptimePercent: number;
 }
 
 export interface TariffOverrides {
@@ -34,6 +35,15 @@ export interface HourlyRecord {
   ailMW: number;
 }
 
+export interface ShutdownRecord {
+  date: string;
+  he: number;
+  poolPrice: number;
+  ailMW: number;
+  reason: '12CP' | 'Price' | 'UptimeCap' | '12CP+Price';
+  costAvoided: number;
+}
+
 export interface MonthlyResult {
   month: string;
   monthIndex: number;
@@ -43,6 +53,7 @@ export interface MonthlyResult {
   curtailed12CP: number;
   curtailedPrice: number;
   curtailedOverlap: number;
+  curtailedUptimeCap: number;
   uptimePercent: number;
   mwh: number;
   kwh: number;
@@ -135,12 +146,13 @@ export function usePowerModelCalculator(
   tariffOverrides?: TariffOverrides
 ) {
   return useMemo(() => {
-    if (!hourlyData.length) return { monthly: [], annual: null, breakeven: calculateBreakeven(params, tariffOverrides) };
+    if (!hourlyData.length) return { monthly: [], annual: null, breakeven: calculateBreakeven(params, tariffOverrides), shutdownLog: [] as ShutdownRecord[] };
 
     const breakeven = calculateBreakeven(params, tariffOverrides);
     const cap = params.contractedCapacityMW;
     const subFrac = params.substationFraction;
     const orRate = r(tariffOverrides?.operatingReservePercent, AESO_RATE_DTS_2025.operatingReserve.ratePercent) / 100;
+    const targetUptime = params.targetUptimePercent;
 
     // Resolved rates
     const bulkERate = r(tariffOverrides?.bulkMeteredEnergy, AESO_RATE_DTS_2025.bulkSystem.meteredEnergy);
@@ -165,6 +177,7 @@ export function usePowerModelCalculator(
     }
 
     const monthly: MonthlyResult[] = [];
+    const allShutdownRecords: ShutdownRecord[] = [];
 
     for (const [monthIdx, records] of monthGroups) {
       const sorted = [...records].sort((a, b) => b.ailMW - a.ailMW);
@@ -172,31 +185,64 @@ export function usePowerModelCalculator(
         sorted.slice(0, params.twelveCP_AvoidanceHours).map(r => `${r.date}-${r.he}`)
       );
 
-      let runningHours = 0;
+      // Pass 1 & 2: 12CP and price curtailment
+      const runningAfterPass12: HourlyRecord[] = [];
       let curtailed12CP = 0;
       let curtailedPrice = 0;
       let curtailedOverlap = 0;
-      let poolEnergyTotal = 0;
-      let runningPoolPriceSum = 0;
 
       for (const rec of records) {
         const key = `${rec.date}-${rec.he}`;
         const is12CP = top12CPHours.has(key);
         const isPriceAbove = rec.poolPrice > breakeven;
-        
+
         if (is12CP || isPriceAbove) {
-          if (is12CP && isPriceAbove) curtailedOverlap++;
-          else if (is12CP) curtailed12CP++;
-          else curtailedPrice++;
+          let reason: ShutdownRecord['reason'];
+          if (is12CP && isPriceAbove) { curtailedOverlap++; reason = '12CP+Price'; }
+          else if (is12CP) { curtailed12CP++; reason = '12CP'; }
+          else { curtailedPrice++; reason = 'Price'; }
+
+          const costAvoided = isPriceAbove ? (rec.poolPrice - breakeven) * cap : 0;
+          allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason, costAvoided });
         } else {
-          runningHours++;
-          const mwh = cap;
-          poolEnergyTotal += rec.poolPrice * mwh;
-          runningPoolPriceSum += rec.poolPrice;
+          runningAfterPass12.push(rec);
         }
       }
 
+      // Pass 3: Uptime cap enforcement
       const totalHours = records.length;
+      const maxRunningHours = Math.floor(totalHours * targetUptime / 100);
+      let curtailedUptimeCap = 0;
+      let finalRunning = runningAfterPass12;
+
+      if (runningAfterPass12.length > maxRunningHours) {
+        // Sort remaining running hours by price descending, curtail most expensive first
+        const sortedByPrice = [...runningAfterPass12].sort((a, b) => b.poolPrice - a.poolPrice);
+        const toRemove = runningAfterPass12.length - maxRunningHours;
+        const removedSet = new Set<string>();
+
+        for (let i = 0; i < toRemove; i++) {
+          const rec = sortedByPrice[i];
+          const key = `${rec.date}-${rec.he}`;
+          removedSet.add(key);
+          curtailedUptimeCap++;
+          const costAvoided = rec.poolPrice > breakeven ? (rec.poolPrice - breakeven) * cap : rec.poolPrice * cap * 0.01; // minimal savings estimate
+          allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'UptimeCap', costAvoided });
+        }
+
+        finalRunning = runningAfterPass12.filter(rec => !removedSet.has(`${rec.date}-${rec.he}`));
+      }
+
+      const runningHours = finalRunning.length;
+      let poolEnergyTotal = 0;
+      let runningPoolPriceSum = 0;
+
+      for (const rec of finalRunning) {
+        const mwh = cap;
+        poolEnergyTotal += rec.poolPrice * mwh;
+        runningPoolPriceSum += rec.poolPrice;
+      }
+
       const curtailedHours = totalHours - runningHours;
       const mwh = runningHours * cap;
       const kwh = mwh * 1000;
@@ -232,7 +278,8 @@ export function usePowerModelCalculator(
 
       monthly.push({
         month: MONTH_NAMES[monthIdx], monthIndex: monthIdx, totalHours, runningHours, curtailedHours,
-        curtailed12CP, curtailedPrice, curtailedOverlap, uptimePercent: totalHours > 0 ? (runningHours / totalHours) * 100 : 0,
+        curtailed12CP, curtailedPrice, curtailedOverlap, curtailedUptimeCap,
+        uptimePercent: totalHours > 0 ? (runningHours / totalHours) * 100 : 0,
         mwh, kwh, avgPoolPriceRunning: avgPoolRunning,
         bulkCoincidentDemand, bulkMeteredEnergy, regionalBillingCapacity, regionalMeteredEnergy,
         podSubstation, podTiered, operatingReserve, tcr, voltageControl, systemSupport, totalDTSCharges,
@@ -266,6 +313,9 @@ export function usePowerModelCalculator(
       annual.avgPoolPriceRunning = monthly.reduce((s, m) => s + m.avgPoolPriceRunning * m.runningHours, 0) / annual.totalRunningHours;
     }
 
-    return { monthly, annual, breakeven };
+    // Sort shutdown log by date/he
+    allShutdownRecords.sort((a, b) => a.date.localeCompare(b.date) || a.he - b.he);
+
+    return { monthly, annual, breakeven, shutdownLog: allShutdownRecords };
   }, [hourlyData, params, tariffOverrides]);
 }

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
-import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen } from 'lucide-react';
+import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord } from '@/hooks/usePowerModelCalculator';
@@ -20,6 +20,8 @@ import { PowerModelDataSources } from './PowerModelDataSources';
 import { PowerModelEditableRates } from './PowerModelEditableRates';
 import { PowerModelAIAnalysis } from './PowerModelAIAnalysis';
 import { PowerModelAssumptions } from './PowerModelAssumptions';
+import { PowerModelShutdownLog } from './PowerModelShutdownLog';
+import { PowerModelShutdownAnalytics } from './PowerModelShutdownAnalytics';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export function PowerModelAnalyzer() {
@@ -35,10 +37,11 @@ export function PowerModelAnalyzer() {
     twelveCP_AvoidanceHours: DEFAULT_FACILITY_PARAMS.twelveCP_AvoidanceHours,
     hostingRateUSD: DEFAULT_FACILITY_PARAMS.hostingRateUSD,
     cadUsdRate: DEFAULT_FACILITY_PARAMS.cadUsdRate,
+    targetUptimePercent: 95,
   });
   const [tariffOverrides, setTariffOverrides] = useState<TariffOverrides>({});
 
-  const { monthly, annual, breakeven } = usePowerModelCalculator(hourlyData, params, tariffOverrides);
+  const { monthly, annual, breakeven, shutdownLog } = usePowerModelCalculator(hourlyData, params, tariffOverrides);
 
   const hostingRateCAD = params.hostingRateUSD / params.cadUsdRate;
 
@@ -147,6 +150,10 @@ export function PowerModelAnalyzer() {
               <Label className="text-xs">12CP Avoidance Window (hrs/month)</Label>
               <Input type="number" value={params.twelveCP_AvoidanceHours} onChange={e => updateParam('twelveCP_AvoidanceHours', e.target.value)} className="h-8 text-sm" />
             </div>
+            <div>
+              <Label className="text-xs">Target Uptime (%)</Label>
+              <Input type="number" step="0.5" min="50" max="100" value={params.targetUptimePercent} onChange={e => updateParam('targetUptimePercent', e.target.value)} className="h-8 text-sm" />
+            </div>
           </CardContent>
         </Card>
 
@@ -224,7 +231,7 @@ export function PowerModelAnalyzer() {
       {/* Results */}
       {hourlyData.length > 0 && (
         <>
-          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} />
+          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} />
           <PowerModelChargeBreakdown monthly={monthly} annual={annual} />
 
           {/* Analytics Tabs */}
@@ -234,6 +241,8 @@ export function PowerModelAnalyzer() {
               <TabsTrigger value="revenue" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Revenue</TabsTrigger>
               <TabsTrigger value="sensitivity" className="text-xs"><Settings2 className="w-3 h-3 mr-1" />Sensitivity</TabsTrigger>
               <TabsTrigger value="ai-analysis" className="text-xs"><Sparkles className="w-3 h-3 mr-1" />AI Analysis</TabsTrigger>
+              <TabsTrigger value="shutdown-log" className="text-xs"><Clock className="w-3 h-3 mr-1" />Shutdown Log</TabsTrigger>
+              <TabsTrigger value="shutdown-analytics" className="text-xs"><Zap className="w-3 h-3 mr-1" />Shutdown Analytics</TabsTrigger>
               <TabsTrigger value="assumptions" className="text-xs"><BookOpen className="w-3 h-3 mr-1" />Assumptions</TabsTrigger>
               <TabsTrigger value="sources" className="text-xs"><Info className="w-3 h-3 mr-1" />Data Sources</TabsTrigger>
             </TabsList>
@@ -252,6 +261,14 @@ export function PowerModelAnalyzer() {
 
             <TabsContent value="ai-analysis" className="mt-4">
               <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} />
+            </TabsContent>
+
+            <TabsContent value="shutdown-log" className="mt-4">
+              <PowerModelShutdownLog shutdownLog={shutdownLog} />
+            </TabsContent>
+
+            <TabsContent value="shutdown-analytics" className="mt-4">
+              <PowerModelShutdownAnalytics shutdownLog={shutdownLog} breakeven={breakeven} />
             </TabsContent>
 
             <TabsContent value="assumptions" className="mt-4">
