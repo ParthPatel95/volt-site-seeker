@@ -233,7 +233,7 @@ export function PowerModelAnalyzer() {
       {hourlyData.length > 0 && (
         <>
           <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} />
-          <PowerModelChargeBreakdown monthly={monthly} annual={annual} />
+          <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} />
 
           {/* Analytics Tabs */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>

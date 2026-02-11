@@ -3,25 +3,64 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info, TrendingDown, TrendingUp, AlertTriangle } from 'lucide-react';
 import type { MonthlyResult, AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
   monthly: MonthlyResult[];
   annual: AnnualSummary | null;
+  targetUptime?: number;
 }
 
 const fmt = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmtShort = (n: number) => {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}k`;
+  return fmt(n);
+};
 
-export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
+function getUptimeBadgeStyle(uptime: number, target: number) {
+  if (uptime >= target) return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30';
+  if (uptime >= target - 3) return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30';
+  return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
+}
+
+export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }: Props) {
   if (!monthly.length) return null;
+
+  const maxCost = Math.max(...monthly.map(m => m.totalAmountDue));
+  const minCost = Math.min(...monthly.map(m => m.totalAmountDue));
 
   return (
     <div className="space-y-6">
+      {/* Uptime Explanation Banner */}
+      <Card className="border-blue-500/20 bg-blue-500/5">
+        <CardContent className="py-3 px-4">
+          <div className="flex items-start gap-2 text-sm">
+            <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+            <div>
+              <span className="font-medium text-foreground">Why does uptime vary?</span>
+              <span className="text-muted-foreground ml-1">
+                The {targetUptime}% target is a <strong>maximum ceiling</strong>. Mandatory 12CP peak avoidance and price-based curtailment 
+                (shutting down when pool price exceeds breakeven) can push months below {targetUptime}%. 
+                Only months with fewer natural shutdowns reach the cap.
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Monthly Summary Table */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base">Monthly Cost Summary</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base">Monthly Cost Summary</CardTitle>
+              <Badge variant="outline" className="text-xs font-normal">
+                Target: {targetUptime}% uptime
+              </Badge>
+            </div>
             <RateSourceBadge
               source="AUC Decision 30427-D01-2025"
               effectiveDate="2026-01-01"
@@ -35,54 +74,86 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/30">
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Running</TableHead>
-                  <TableHead className="text-right">Uptime</TableHead>
+                  <TableHead className="text-right">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center gap-1 ml-auto">
+                          Uptime <Info className="h-3 w-3" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Actual uptime after all curtailments. Target is {targetUptime}% (ceiling). 12CP avoidance and price shutdowns may reduce this.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  <TableHead className="text-right">Curtailed</TableHead>
                   <TableHead className="text-right">MWh</TableHead>
-                  <TableHead className="text-right">DTS Charges</TableHead>
-                  <TableHead className="text-right">Energy Charges</TableHead>
-                  <TableHead className="text-right">Pre-GST</TableHead>
+                  <TableHead className="text-right">DTS</TableHead>
+                  <TableHead className="text-right">Energy</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">¢/kWh</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {monthly.map((m) => (
-                  <TableRow key={m.month}>
-                    <TableCell className="font-medium">{m.month}</TableCell>
-                    <TableCell className="text-right">{m.totalHours}</TableCell>
-                    <TableCell className="text-right">{m.runningHours}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={m.uptimePercent >= 90 ? 'default' : 'secondary'} className="text-xs">
-                        {m.uptimePercent.toFixed(1)}%
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{m.mwh.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{fmt(m.totalDTSCharges)}</TableCell>
-                    <TableCell className="text-right">{fmt(m.totalEnergyCharges)}</TableCell>
-                    <TableCell className="text-right">{fmt(m.totalPreGST)}</TableCell>
-                    <TableCell className="text-right font-medium">{fmt(m.totalAmountDue)}</TableCell>
-                    <TableCell className="text-right">{(m.perKwhCAD * 100).toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
+                {monthly.map((m) => {
+                  const isHighest = m.totalAmountDue === maxCost;
+                  const isLowest = m.totalAmountDue === minCost;
+                  const belowTarget = m.uptimePercent < targetUptime - 0.5;
+                  
+                  return (
+                    <TableRow 
+                      key={m.month} 
+                      className={belowTarget ? 'bg-amber-500/[0.03]' : ''}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-1.5">
+                          {m.month.slice(0, 3)}
+                          {isHighest && <TrendingUp className="h-3 w-3 text-red-500" />}
+                          {isLowest && <TrendingDown className="h-3 w-3 text-emerald-500" />}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{m.totalHours}</TableCell>
+                      <TableCell className="text-right tabular-nums">{m.runningHours}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-medium tabular-nums ${getUptimeBadgeStyle(m.uptimePercent, targetUptime)}`}>
+                          {m.uptimePercent.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {m.curtailedHours}h
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{m.mwh.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtShort(m.totalDTSCharges)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtShort(m.totalEnergyCharges)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">{fmt(m.totalAmountDue)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{(m.perKwhCAD * 100).toFixed(2)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
               {annual && (
                 <TableFooter>
-                  <TableRow className="font-bold">
-                    <TableCell>ANNUAL TOTAL</TableCell>
-                    <TableCell className="text-right">{annual.totalHours}</TableCell>
-                    <TableCell className="text-right">{annual.totalRunningHours}</TableCell>
+                  <TableRow className="font-bold bg-muted/50">
+                    <TableCell>ANNUAL</TableCell>
+                    <TableCell className="text-right tabular-nums">{annual.totalHours}</TableCell>
+                    <TableCell className="text-right tabular-nums">{annual.totalRunningHours}</TableCell>
                     <TableCell className="text-right">
-                      <Badge className="text-xs">{annual.avgUptimePercent.toFixed(1)}%</Badge>
+                      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-semibold tabular-nums ${getUptimeBadgeStyle(annual.avgUptimePercent, targetUptime)}`}>
+                        {annual.avgUptimePercent.toFixed(1)}%
+                      </span>
                     </TableCell>
-                    <TableCell className="text-right">{annual.totalMWh.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{fmt(annual.totalDTSCharges)}</TableCell>
-                    <TableCell className="text-right">{fmt(annual.totalEnergyCharges)}</TableCell>
-                    <TableCell className="text-right">{fmt(annual.totalPreGST)}</TableCell>
-                    <TableCell className="text-right">{fmt(annual.totalAmountDue)}</TableCell>
-                    <TableCell className="text-right">{(annual.avgPerKwhCAD * 100).toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {monthly.reduce((s, m) => s + m.curtailedHours, 0)}h
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{annual.totalMWh.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtShort(annual.totalDTSCharges)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtShort(annual.totalEnergyCharges)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmt(annual.totalAmountDue)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{(annual.avgPerKwhCAD * 100).toFixed(2)}</TableCell>
                   </TableRow>
                 </TableFooter>
               )}
@@ -94,36 +165,64 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
       {/* Curtailment Summary */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Curtailment Analysis</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">Curtailment Analysis</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p><strong>12CP:</strong> Peak demand avoidance. <strong>Price:</strong> Pool price above breakeven. <strong>Uptime Cap:</strong> Extra curtailment to enforce {targetUptime}% ceiling. <strong>Overlap:</strong> Hours matching both 12CP and price criteria.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-muted/30">
                   <TableHead>Month</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Running</TableHead>
                   <TableHead className="text-right">Curtailed</TableHead>
-                  <TableHead className="text-right">12CP Only</TableHead>
-                  <TableHead className="text-right">Price Only</TableHead>
+                  <TableHead className="text-right">12CP</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Uptime Cap</TableHead>
                   <TableHead className="text-right">Overlap</TableHead>
-                  <TableHead className="text-right">Avg Pool (Running)</TableHead>
+                  <TableHead className="text-right">Avg Pool (Run)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {monthly.map((m) => (
                   <TableRow key={m.month}>
-                    <TableCell className="font-medium">{m.month}</TableCell>
-                    <TableCell className="text-right">{m.totalHours}</TableCell>
-                    <TableCell className="text-right">{m.runningHours}</TableCell>
-                    <TableCell className="text-right">{m.curtailedHours}</TableCell>
-                    <TableCell className="text-right">{m.curtailed12CP}</TableCell>
-                    <TableCell className="text-right">{m.curtailedPrice}</TableCell>
-                    <TableCell className="text-right">{m.curtailedUptimeCap}</TableCell>
-                    <TableCell className="text-right">{m.curtailedOverlap}</TableCell>
-                    <TableCell className="text-right">{fmt(m.avgPoolPriceRunning)}/MWh</TableCell>
+                    <TableCell className="font-medium">{m.month.slice(0, 3)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{m.totalHours}</TableCell>
+                    <TableCell className="text-right tabular-nums">{m.runningHours}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">{m.curtailedHours}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {m.curtailed12CP > 0 ? (
+                        <span className="text-blue-600 dark:text-blue-400">{m.curtailed12CP}</span>
+                      ) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {m.curtailedPrice > 0 ? (
+                        <span className="text-orange-600 dark:text-orange-400">{m.curtailedPrice}</span>
+                      ) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {m.curtailedUptimeCap > 0 ? (
+                        <span className="text-purple-600 dark:text-purple-400">{m.curtailedUptimeCap}</span>
+                      ) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {m.curtailedOverlap > 0 ? (
+                        <span className="text-muted-foreground">{m.curtailedOverlap}</span>
+                      ) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{fmt(m.avgPoolPriceRunning)}/MWh</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -132,7 +231,7 @@ export function PowerModelChargeBreakdown({ monthly, annual }: Props) {
         </CardContent>
       </Card>
 
-      {/* Detailed DTS Charge Breakdown for selected month */}
+      {/* Detailed DTS Charge Breakdown */}
       {monthly.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
