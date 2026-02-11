@@ -46,6 +46,10 @@ export interface MonthlyResult {
   retailerFee: number;
   riderF: number;
   totalEnergyCharges: number;
+  // FortisAlberta Rate 65 charges
+  fortisDemandCharge: number;
+  fortisDistribution: number;
+  totalFortisCharges: number;
   // Totals
   totalPreGST: number;
   gst: number;
@@ -62,6 +66,7 @@ export interface AnnualSummary {
   totalKWh: number;
   totalDTSCharges: number;
   totalEnergyCharges: number;
+  totalFortisCharges: number;
   totalPreGST: number;
   totalGST: number;
   totalAmountDue: number;
@@ -93,7 +98,8 @@ function calculateBreakeven(): number {
     AESO_RATE_DTS_2025.regionalSystem.meteredEnergy +
     AESO_RATE_DTS_2025.tcr.meteredEnergy +
     AESO_RATE_DTS_2025.voltageControl.meteredEnergy +
-    AESO_RATE_DTS_2025.riderF.meteredEnergy;
+    AESO_RATE_DTS_2025.riderF.meteredEnergy +
+    (FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH / 100 * 1000); // Convert ¢/kWh to $/MWh
   
   const hostingRateCAD = DEFAULT_FACILITY_PARAMS.hostingRateUSD / DEFAULT_FACILITY_PARAMS.cadUsdRate * 1000; // $/MWh
   const orMultiplier = 1 + AESO_RATE_DTS_2025.operatingReserve.ratePercent / 100;
@@ -181,7 +187,12 @@ export function usePowerModelCalculator(
       const riderF = mwh * AESO_RATE_DTS_2025.riderF.meteredEnergy;
       const totalEnergyCharges = poolEnergyTotal + retailerFee + riderF;
 
-      const totalPreGST = totalDTSCharges + totalEnergyCharges;
+      // FortisAlberta Rate 65 charges
+      const fortisDemandCharge = cap * 1000 * FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH; // cap MW → kW × $/kW/month
+      const fortisDistribution = kwh * FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH / 100; // ¢/kWh → $
+      const totalFortisCharges = fortisDemandCharge + fortisDistribution;
+
+      const totalPreGST = totalDTSCharges + totalEnergyCharges + totalFortisCharges;
       const gst = totalPreGST * AESO_RATE_DTS_2025.gst;
       const totalAmountDue = totalPreGST + gst;
       const perKwhCAD = kwh > 0 ? totalAmountDue / kwh : 0;
@@ -215,6 +226,9 @@ export function usePowerModelCalculator(
         retailerFee,
         riderF,
         totalEnergyCharges,
+        fortisDemandCharge,
+        fortisDistribution,
+        totalFortisCharges,
         totalPreGST,
         gst,
         totalAmountDue,
@@ -234,6 +248,7 @@ export function usePowerModelCalculator(
       totalKWh: monthly.reduce((s, m) => s + m.kwh, 0),
       totalDTSCharges: monthly.reduce((s, m) => s + m.totalDTSCharges, 0),
       totalEnergyCharges: monthly.reduce((s, m) => s + m.totalEnergyCharges, 0),
+      totalFortisCharges: monthly.reduce((s, m) => s + m.totalFortisCharges, 0),
       totalPreGST: monthly.reduce((s, m) => s + m.totalPreGST, 0),
       totalGST: monthly.reduce((s, m) => s + m.gst, 0),
       totalAmountDue: monthly.reduce((s, m) => s + m.totalAmountDue, 0),
