@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
   Zap, 
   TrendingUp, 
@@ -275,7 +275,7 @@ export function AESOMarketComprehensive() {
 
 
         {/* Modern Tabbed Navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 shadow-sm">
             <div className="max-w-7xl mx-auto py-2 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
               <div className="flex items-center gap-1 sm:gap-2 min-w-max">
@@ -302,7 +302,7 @@ export function AESOMarketComprehensive() {
           </div>
 
           {/* Market Data Tab */}
-          <TabsContent value="market" className="space-y-6 sm:space-y-8 animate-fade-in">
+          {activeTab === 'market' && <div className="space-y-6 sm:space-y-8 animate-fade-in">
             {/* Live Connection Status */}
             <LiveConnectionStatus
               lastUpdated={priceTimestamp}
@@ -576,15 +576,15 @@ export function AESOMarketComprehensive() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </div>}
 
           {/* Historical Pricing Tab */}
-          <TabsContent value="historical" className="space-y-4 sm:space-y-6">
+          {activeTab === 'historical' && <div className="space-y-4 sm:space-y-6">
             <AESOHistoricalPricing />
-          </TabsContent>
+          </div>}
 
           {/* AI Price Predictions Tab with Sub-tabs */}
-          <TabsContent value="predictions" className="space-y-4 sm:space-y-6">
+          {activeTab === 'predictions' && <div className="space-y-4 sm:space-y-6">
             <Tabs defaultValue="predictions" className="space-y-4">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="predictions" className="flex items-center gap-2">
@@ -627,15 +627,15 @@ export function AESOMarketComprehensive() {
                 )}
               </TabsContent>
             </Tabs>
-          </TabsContent>
+          </div>}
 
           {/* Datacenter Control Tab */}
-          <TabsContent value="datacenter" className="space-y-4 sm:space-y-6 animate-fade-in">
+          {activeTab === 'datacenter' && <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <DatacenterControlCenter currentPrice={currentPrice} />
-          </TabsContent>
+          </div>}
 
           {/* Generation Tab */}
-          <TabsContent value="generation" className="space-y-4 sm:space-y-6">
+          {activeTab === 'generation' && <div className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -739,17 +739,16 @@ export function AESOMarketComprehensive() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>}
 
-          <TabsContent value="forecast">
+          {activeTab === 'forecast' && <div>
             <AESOForecastPanel 
               windSolarForecast={windSolarForecast}
               loading={enhancedLoading}
             />
-          </TabsContent>
+          </div>}
 
-          <TabsContent value="outages-alerts" className="space-y-4 sm:space-y-6">
-            {/* Alerts Section */}
+          {activeTab === 'outages-alerts' && <div className="space-y-4 sm:space-y-6">
             <div>
               <AESOAlertsPanel 
                 alerts={alerts}
@@ -757,33 +756,31 @@ export function AESOMarketComprehensive() {
                 onClearAll={clearAllAlerts}
               />
             </div>
-            
-            {/* Outages Section */}
             <div>
               <AESOOutagesPanel 
                 assetOutages={assetOutages}
                 loading={enhancedLoading}
               />
             </div>
-          </TabsContent>
+          </div>}
 
-          <TabsContent value="telegram-alerts" className="space-y-4 sm:space-y-6">
+          {activeTab === 'telegram-alerts' && <div className="space-y-4 sm:space-y-6">
             <TelegramAlertSettings />
-          </TabsContent>
+          </div>}
 
-          <TabsContent value="custom-dashboards" className="space-y-4 sm:space-y-6">
+          {activeTab === 'custom-dashboards' && <div className="space-y-4 sm:space-y-6">
             <CustomDashboardsPanel />
-          </TabsContent>
+          </div>}
 
-          <TabsContent value="power-model" className="space-y-4 sm:space-y-6">
+          {activeTab === 'power-model' && <div className="space-y-4 sm:space-y-6">
             <PowerModelAnalyzer />
-          </TabsContent>
+          </div>}
 
-          <TabsContent value="analytics-export" className="space-y-4 sm:space-y-6">
+          {activeTab === 'analytics-export' && <div className="space-y-4 sm:space-y-6">
             <UnifiedAnalyticsExport />
-          </TabsContent>
+          </div>}
 
-        </Tabs>
+        </div>
 
         {/* Real-time Market Overview (moved below tabs) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
