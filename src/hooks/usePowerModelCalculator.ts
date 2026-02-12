@@ -200,34 +200,29 @@ export function usePowerModelCalculator(
       const curtailedUptimeCap = 0;
       let finalRunning: HourlyRecord[];
 
-      // Identify top 12CP candidate hours (sorted by AIL descending)
+      // Identify the SINGLE highest peak hour for 12CP avoidance this month
+      // Only need to avoid the #1 peak to capture 12CP savings for the month
       const sorted12CP = [...records].sort((a, b) => b.ailMW - a.ailMW);
-      const top12CPSet = new Set(
-        sorted12CP.slice(0, params.twelveCP_AvoidanceHours).map(r => `${r.date}-${r.he}`)
-      );
+      const top12CPHour = sorted12CP.length > 0 ? sorted12CP[0] : null;
+      const top12CPKey = top12CPHour ? `${top12CPHour.date}-${top12CPHour.he}` : '';
 
       const isFixedPrice = params.fixedPriceCAD > 0;
 
       // Helper: calculate curtailment savings per curtailed hour
       // With fixed price, savings = fixedPrice * cap (cost avoided by not consuming)
+      // With variable price, savings = poolPrice * cap (cost avoided by not consuming at that hour's rate)
       const calcCurtailSavings = (rec: HourlyRecord) => {
-        return isFixedPrice ? params.fixedPriceCAD * cap : 0;
+        return isFixedPrice ? params.fixedPriceCAD * cap : rec.poolPrice * cap;
       };
 
       if (isFixedPrice || params.curtailmentStrategy === '12cp-priority') {
-        // === FIXED PRICE or 12CP-PRIORITY: All downtime goes to 12CP avoidance ===
-        // With fixed price, price-based curtailment saves nothing (you pay fixed rate regardless)
-        // so entire downtime budget goes to 12CP avoidance
+        // === Step 1: Curtail the single highest peak hour for 12CP ===
         let budgetRemaining = maxDowntimeHours;
-        const twelveCPLimit = Math.min(params.twelveCP_AvoidanceHours, budgetRemaining);
-        const capped12CPSet = new Set(
-          sorted12CP.slice(0, twelveCPLimit).map(r => `${r.date}-${r.he}`)
-        );
 
         const runningAfter12CP: HourlyRecord[] = [];
         for (const rec of records) {
           const key = `${rec.date}-${rec.he}`;
-          if (capped12CPSet.has(key)) {
+          if (budgetRemaining > 0 && key === top12CPKey) {
             const isPriceAbove = !isFixedPrice && rec.poolPrice > breakeven;
             const reason: ShutdownRecord['reason'] = isPriceAbove ? '12CP+Price' : '12CP';
             if (isPriceAbove) curtailedOverlap++; else curtailed12CP++;
@@ -239,14 +234,24 @@ export function usePowerModelCalculator(
           }
         }
 
-        if (!isFixedPrice) {
-          // Only do price-based curtailment when NOT on fixed price
-          const priceCandidates = runningAfter12CP
-            .filter(r => r.poolPrice > breakeven)
-            .sort((a, b) => b.poolPrice - a.poolPrice);
-          const priceCurtailCount = Math.min(priceCandidates.length, budgetRemaining);
+        // === Step 2: Use remaining budget to curtail the highest energy price hours ===
+        if (budgetRemaining > 0) {
+          // Sort remaining hours by effective cost (highest first)
+          const priceCandidates = [...runningAfter12CP].sort((a, b) => {
+            const priceA = isFixedPrice ? params.fixedPriceCAD : a.poolPrice;
+            const priceB = isFixedPrice ? params.fixedPriceCAD : b.poolPrice;
+            return priceB - priceA;
+          });
+
+          // For variable pricing, only curtail hours above breakeven
+          // For fixed pricing, all hours cost the same so curtail the ones with highest pool price (for reporting)
+          const eligibleCandidates = isFixedPrice
+            ? priceCandidates  // All hours cost the same fixed rate
+            : priceCandidates.filter(r => r.poolPrice > breakeven);
+
+          const priceCurtailCount = Math.min(eligibleCandidates.length, budgetRemaining);
           const priceCurtailSet = new Set(
-            priceCandidates.slice(0, priceCurtailCount).map(r => `${r.date}-${r.he}`)
+            eligibleCandidates.slice(0, priceCurtailCount).map(r => `${r.date}-${r.he}`)
           );
 
           finalRunning = [];
@@ -254,8 +259,10 @@ export function usePowerModelCalculator(
             const key = `${rec.date}-${rec.he}`;
             if (priceCurtailSet.has(key)) {
               curtailedPrice++;
-              const costAvoided = (rec.poolPrice - breakeven) * cap;
-              allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'Price', costAvoided, curtailmentSavings: 0 });
+              const costAvoided = isFixedPrice
+                ? params.fixedPriceCAD * cap
+                : (rec.poolPrice - breakeven) * cap;
+              allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'Price', costAvoided, curtailmentSavings: calcCurtailSavings(rec) });
             } else {
               finalRunning.push(rec);
             }
@@ -264,16 +271,17 @@ export function usePowerModelCalculator(
           finalRunning = runningAfter12CP;
         }
       } else {
-        // === COST-OPTIMIZED (non-fixed price): Score every candidate by dollar value ===
-        const twelveCPValuePerHour = bulkCoincidentRate * cap / params.twelveCP_AvoidanceHours;
+        // === COST-OPTIMIZED (non-fixed price): 1 hour for 12CP, rest by price value ===
+        // The single highest peak hour gets the full 12CP demand charge value
+        const twelveCPValue = bulkCoincidentRate * cap;
 
         const candidates = records.map(rec => {
           const key = `${rec.date}-${rec.he}`;
-          const is12CP = top12CPSet.has(key);
+          const is12CP = key === top12CPKey;
           const isExpensive = rec.poolPrice > breakeven;
-          const twelveCPValue = is12CP ? twelveCPValuePerHour : 0;
+          const cpValue = is12CP ? twelveCPValue : 0;
           const priceValue = isExpensive ? (rec.poolPrice - breakeven) * cap : 0;
-          return { rec, value: Math.max(twelveCPValue, priceValue), is12CP, isExpensive, key };
+          return { rec, value: Math.max(cpValue, priceValue), is12CP, isExpensive, key };
         })
         .filter(c => c.value > 0)
         .sort((a, b) => b.value - a.value);
@@ -287,14 +295,14 @@ export function usePowerModelCalculator(
           if (c.is12CP && c.isExpensive) {
             curtailedOverlap++;
             const costAvoided = (c.rec.poolPrice - breakeven) * cap;
-            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP+Price', costAvoided, curtailmentSavings: 0 });
+            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP+Price', costAvoided, curtailmentSavings: calcCurtailSavings(c.rec) });
           } else if (c.is12CP) {
             curtailed12CP++;
-            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP', costAvoided: 0, curtailmentSavings: 0 });
+            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP', costAvoided: 0, curtailmentSavings: calcCurtailSavings(c.rec) });
           } else {
             curtailedPrice++;
             const costAvoided = (c.rec.poolPrice - breakeven) * cap;
-            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: 'Price', costAvoided, curtailmentSavings: 0 });
+            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: 'Price', costAvoided, curtailmentSavings: calcCurtailSavings(c.rec) });
           }
         }
 
