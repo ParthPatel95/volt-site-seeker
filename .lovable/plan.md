@@ -1,107 +1,106 @@
 
 
-# Fix Uptime Floor Enforcement in Power Model Calculator
+# Reduce Effective Energy Cost by Optimizing Curtailment Priority
 
 ## Problem
 
-The target uptime (e.g., 95%) is treated as a **ceiling** (maximum), not a **floor** (minimum). The current 3-pass algorithm:
+At 95% uptime, the downtime budget is ~37 hours/month. 12CP avoidance consumes 35 of those hours, leaving only 2 hours for price-based curtailment. The facility runs through nearly all high-price hours, resulting in a 7c+/kWh blended cost.
 
-1. Pass 1: Removes ALL 35 12CP avoidance hours per month (~4.8% of 730 hours)
-2. Pass 2: Removes ALL hours where pool price exceeds breakeven (often 50-80+ hours)
-3. Pass 3: Only removes MORE hours if running hours still exceed the 95% cap
+## Root Cause (Not a Bug)
 
-Since Pass 1 + Pass 2 already remove ~12% of hours, Pass 3 never activates (uptime is already below 95%). The result: ~88% annual uptime despite a 95% target.
+This is a budget allocation problem, not a calculation error. The current system gives 12CP absolute priority, which is correct for avoiding demand charges, but it means expensive energy hours (e.g., $200-500/MWh spikes) pass through uncurtailed.
 
-## Solution: Budget-Based Curtailment
+## Solution: Smart Budget Allocation with Cost Optimization
 
-Replace the 3-pass system with a **total downtime budget** approach where 12CP gets priority and price curtailment fills the remainder:
+### Change 1: Cost-Optimized Curtailment Mode (`usePowerModelCalculator.ts`)
 
-```text
-Monthly downtime budget = totalHours x (1 - targetUptime / 100)
-Example: 730 hours x 5% = 36.5 hours max downtime
+Instead of giving 12CP blanket priority, compare the **dollar value** of each curtailment decision:
 
-Step 1: Allocate 12CP hours (priority)
-  - If 12CP hours (35) <= budget (36): use all 35, remaining budget = 1
-  - If 12CP hours > budget: cap 12CP to budget, remaining = 0
+- A 12CP hour avoids ~$11,131/MW/month in demand charges (spread across 35 hours = ~$318/hour for 1MW, or ~$14,310/hour for 45MW)
+- A $400/MWh price spike costs 45MW x $400 = $18,000/hour to run through
 
-Step 2: Fill remaining budget with price curtailment
-  - Sort non-12CP hours by price descending
-  - Curtail only the top N hours where N = remaining budget
-  - Hours below breakeven but within budget are NOT curtailed
+The optimizer should:
+1. Score every candidate hour by its savings value (12CP savings OR price-above-breakeven savings)
+2. Sort all candidates by value descending
+3. Take the top N hours where N = downtime budget
+4. This way, a $500/MWh spike beats a low-risk 12CP hour
 
-Step 3: No "UptimeCap" pass needed -- budget is already enforced
-```
+Add a `curtailmentStrategy` parameter to `FacilityParams`:
+- `'12cp-priority'` (current behavior, default)
+- `'cost-optimized'` (new: picks whichever saves more money per hour)
 
-This guarantees monthly uptime never drops below the target (within rounding).
+### Change 2: Add Strategy Selector to UI (`PowerModelAnalyzer.tsx`)
 
-## File Changes
+Add a toggle/select next to the uptime slider:
+- "12CP Priority" -- always avoid peaks first (safer for demand charges)
+- "Cost Optimized" -- maximize total savings (may skip some low-risk 12CP hours to avoid expensive energy hours)
 
-### 1. `src/hooks/usePowerModelCalculator.ts` (core fix)
+Include a tooltip explaining the tradeoff.
 
-Rewrite the curtailment logic inside the monthly loop (lines 182-234):
+### Change 3: Show Budget Allocation Transparency (`PowerModelChargeBreakdown.tsx`)
 
-- Calculate `maxDowntimeHours = Math.floor(totalHours * (1 - targetUptime / 100))`
-- Pass 1 (12CP): Take top demand hours, but cap at `maxDowntimeHours`
-- Pass 2 (Price): From remaining running hours, sort by price descending, curtail only up to `remainingBudget = maxDowntimeHours - 12cpCurtailed`
-- Remove Pass 3 entirely (no longer needed)
-- Keep the overlap tracking: if a 12CP hour is also above breakeven, label as '12CP+Price' but count against 12CP budget
-- `curtailedUptimeCap` will always be 0 now (budget prevents overrun)
+Add a "Downtime Budget" summary card showing:
+- Total budget: 37 hours
+- Used by 12CP: 35 hours
+- Used by Price: 2 hours
+- Potential savings missed: sum of (price - breakeven) for all high-price hours NOT curtailed
 
-### 2. `src/components/aeso/PowerModelChargeBreakdown.tsx` (UI update)
+This makes it immediately clear why costs are high and what the tradeoff is.
 
-- Change the explanation banner text from "maximum ceiling" to "guaranteed minimum"
-- Update tooltip copy: uptime target is now enforced as a floor, not a ceiling
-- Keep color-coded badges (they still make sense for at-target vs slightly-above)
-- Update Curtailment Analysis tooltip to explain budget-based approach
+### Change 4: Sensitivity Preview
 
-### 3. `src/constants/tariff-rates.ts` (optional tuning)
+Add a small table showing estimated per-kWh cost at different uptime levels:
+| Uptime | Price Hours Cut | Est. per kWh |
+|--------|----------------|-------------|
+| 95%    | 2              | 7.2c        |
+| 90%    | ~38            | 5.8c        |
+| 85%    | ~75            | 4.9c        |
 
-- No changes to rates needed
-- The `twelveCP_AvoidanceHours: 35` default is fine -- it fits within a 5% budget (36.5 hours for a 730-hour month)
-- For months with fewer hours (e.g., February at 672 hours), the budget is 33.6 hours, so 12CP will be auto-capped to 33
-
-## Math Verification
-
-With the fix applied, for a 95% uptime target:
-
-| Month | Total Hours | Max Downtime | 12CP Budget | Price Budget | Guaranteed Uptime |
-|-------|-------------|-------------|-------------|-------------|-------------------|
-| Jan   | 744         | 37          | 35          | 2           | 95.0%             |
-| Feb   | 672         | 33          | 33 (capped) | 0           | 95.1%             |
-| Mar   | 743         | 37          | 35          | 2           | 95.0%             |
-| Apr   | 720         | 36          | 35          | 1           | 95.0%             |
-| Jul   | 744         | 37          | 35          | 2           | 95.0%             |
-| Nov   | 721         | 36          | 35          | 1           | 95.0%             |
-
-Annual average: ~95.0% (vs current ~88%)
+This helps the user make an informed decision about the uptime-vs-cost tradeoff.
 
 ## Technical Details
 
-The key code change in the monthly loop:
+### `usePowerModelCalculator.ts` Changes
+
+Add `curtailmentStrategy` to `FacilityParams` interface (default: `'12cp-priority'`).
+
+For `'cost-optimized'` mode, replace the two-step curtailment with a unified scoring approach:
 
 ```typescript
-// NEW: Budget-based curtailment
-const totalHours = records.length;
-const maxDowntimeHours = Math.floor(totalHours * (1 - targetUptime / 100));
-let budgetRemaining = maxDowntimeHours;
+// Score every hour for potential curtailment
+const candidates = records.map(rec => {
+  const is12CP = top12CPSet.has(`${rec.date}-${rec.he}`);
+  const isExpensive = rec.poolPrice > breakeven;
+  
+  // 12CP value: monthly demand charge / avoidance hours
+  const twelveCPValue = is12CP ? (bulkCoincidentRate * cap / params.twelveCP_AvoidanceHours) : 0;
+  // Price value: cost of running minus breakeven
+  const priceValue = isExpensive ? (rec.poolPrice - breakeven) * cap : 0;
+  
+  return { rec, value: Math.max(twelveCPValue, priceValue), is12CP, isExpensive };
+})
+.filter(c => c.value > 0)
+.sort((a, b) => b.value - a.value);
 
-// Step 1: 12CP (priority) - cap to budget
-const sorted12CP = [...records].sort((a, b) => b.ailMW - a.ailMW);
-const twelveCP_limit = Math.min(params.twelveCP_AvoidanceHours, budgetRemaining);
-const top12CPHours = new Set(
-  sorted12CP.slice(0, twelveCP_limit).map(r => `${r.date}-${r.he}`)
-);
-
-// ... process 12CP curtailments, decrement budgetRemaining
-
-// Step 2: Price curtailment with remaining budget
-const candidatesForPrice = runningAfterPass1
-  .filter(r => r.poolPrice > breakeven)
-  .sort((a, b) => b.poolPrice - a.poolPrice);
-const priceCurtailCount = Math.min(candidatesForPrice.length, budgetRemaining);
-
-// ... curtail only priceCurtailCount hours
+// Take top N by value
+const curtailCount = Math.min(candidates.length, maxDowntimeHours);
+const curtailed = candidates.slice(0, curtailCount);
 ```
 
-No changes needed to the annual summary calculation -- it already averages monthly uptimes correctly. With each month now at ~95%, the annual will also show ~95%.
+### `PowerModelAnalyzer.tsx` Changes
+
+- Add a `Select` dropdown for curtailment strategy below the uptime slider
+- Pass strategy to the calculator hook
+
+### `PowerModelChargeBreakdown.tsx` Changes
+
+- Add "Downtime Budget Allocation" card with visual bar showing 12CP vs Price split
+- Add "Missed Savings" metric showing cost of high-price hours the facility ran through
+- Add uptime sensitivity mini-table
+
+## Files to Modify
+
+1. `src/hooks/usePowerModelCalculator.ts` -- Add cost-optimized curtailment mode
+2. `src/components/aeso/PowerModelAnalyzer.tsx` -- Add strategy selector UI
+3. `src/components/aeso/PowerModelChargeBreakdown.tsx` -- Add budget transparency and sensitivity preview
 
