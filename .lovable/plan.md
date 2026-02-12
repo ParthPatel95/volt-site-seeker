@@ -1,101 +1,107 @@
 
-# Update All Rate Data to 2026 Effective Tariff
+
+# Fix Uptime Floor Enforcement in Power Model Calculator
 
 ## Problem
 
-The Power Model uses 2025 AESO Rate DTS values (from AUC Decision 29606-D01-2024) but the current effective tariff is January 1, 2026 (AUC Decision 30427-D01-2025). This creates date confusion throughout the Rate Guide, source badges, and calculator defaults.
+The target uptime (e.g., 95%) is treated as a **ceiling** (maximum), not a **floor** (minimum). The current 3-pass algorithm:
 
-## What's Accurate vs. What Needs Fixing
+1. Pass 1: Removes ALL 35 12CP avoidance hours per month (~4.8% of 730 hours)
+2. Pass 2: Removes ALL hours where pool price exceeds breakeven (often 50-80+ hours)
+3. Pass 3: Only removes MORE hours if running hours still exceed the 95% cap
 
-| Item | Current State | Action |
-|---|---|---|
-| FortisAlberta Rate 65 ($7.52/kW, 0.2704c/kWh) | July 2025 schedule (latest available) | No change needed -- still current |
-| Training data "June 2022" | Historical pool price coverage dates | No change needed -- correct |
-| Rate DTS detailed breakdown (15+ components) | Uses 2025 values | Update to 2026 values (DTS connection -0.3%, overall +1.1%) |
-| Rider F | Defaults to $1.30/MWh (2025) | Switch to $1.26/MWh (2026, confirmed in Table 3-3) |
-| Source badges | "AUC Decision 29606-D01-2024" | Update to "AUC Decision 30427-D01-2025" |
-| Rate Explainer effective dates | Shows "2025-01-01" | Update to "2026-01-01" |
+Since Pass 1 + Pass 2 already remove ~12% of hours, Pass 3 never activates (uptime is already below 95%). The result: ~88% annual uptime despite a 95% target.
 
-## 2026 Rate DTS Updates
+## Solution: Budget-Based Curtailment
 
-Based on the 2026 ISO Tariff Update Application (filed Nov 7, 2025, approved in Decision 30427-D01-2025):
+Replace the 3-pass system with a **total downtime budget** approach where 12CP gets priority and price curtailment fills the remainder:
 
-- **Connection charge decreased 0.3%** (driven by increased billing determinants offsetting higher wires costs)
-- **Overall DTS increased 1.1%** (mainly from operating reserve cost increases)
-- **Rider F: $1.26/MWh** (confirmed from Table 3-3 of the application)
-- **Forecast pool price for 2026: $51.26/MWh** (used for ancillary services cost calculations)
+```text
+Monthly downtime budget = totalHours x (1 - targetUptime / 100)
+Example: 730 hours x 5% = 36.5 hours max downtime
 
-Since the exact 2026 component-level rates (Bulk, Regional, POD) are in Appendix B-1 (a separate Excel workbook not publicly available as text), the update will apply the confirmed -0.3% connection charge adjustment to the bulk/regional components and mark them with "Estimate" badges where exact 2026 figures aren't independently confirmed.
+Step 1: Allocate 12CP hours (priority)
+  - If 12CP hours (35) <= budget (36): use all 35, remaining budget = 1
+  - If 12CP hours > budget: cap 12CP to budget, remaining = 0
 
-## Files to Modify
+Step 2: Fill remaining budget with price curtailment
+  - Sort non-12CP hours by price descending
+  - Curtail only the top N hours where N = remaining budget
+  - Hours below breakeven but within budget are NOT curtailed
 
-### 1. `src/constants/tariff-rates.ts`
+Step 3: No "UptimeCap" pass needed -- budget is already enforced
+```
 
-- Rename `AESO_RATE_DTS_2025` to `AESO_RATE_DTS_2026`
-- Apply -0.3% adjustment to connection charge components (Bulk Coincident Demand, Regional Billing Capacity, POD tiers)
-- Change default Rider F from $1.30 to $1.26/MWh
-- Update `sourceDecision` to "AUC Decision 30427-D01-2025"
-- Update `effectiveDate` to "2026-01-01"
-- Update `sourceUrl` to the 2026 Rate DTS PDF download link
-- Add export alias `AESO_RATE_DTS_2025` pointing to the new object for backward compatibility
+This guarantees monthly uptime never drops below the target (within rounding).
 
-### 2. `src/hooks/usePowerModelCalculator.ts`
+## File Changes
 
-- Update import from `AESO_RATE_DTS_2025` to `AESO_RATE_DTS_2026`
-- Default Rider F to `riderF_2026` value ($1.26) instead of `riderF` ($1.30)
+### 1. `src/hooks/usePowerModelCalculator.ts` (core fix)
 
-### 3. `src/components/aeso/PowerModelRateExplainer.tsx`
+Rewrite the curtailment logic inside the monthly loop (lines 182-234):
 
-- Update import to use `AESO_RATE_DTS_2026`
-- Change "Effective: 2025-01-01" to "Effective: 2026-01-01"
-- Update source decision reference to "AUC Decision 30427-D01-2025"
-- Change "verified 2025 tariff rates" text to "verified 2026 tariff rates"
-- Mark components adjusted by the -0.3% factor with "Estimate" badges (since exact 2026 Appendix B-1 numbers aren't publicly confirmed line-by-line)
+- Calculate `maxDowntimeHours = Math.floor(totalHours * (1 - targetUptime / 100))`
+- Pass 1 (12CP): Take top demand hours, but cap at `maxDowntimeHours`
+- Pass 2 (Price): From remaining running hours, sort by price descending, curtail only up to `remainingBudget = maxDowntimeHours - 12cpCurtailed`
+- Remove Pass 3 entirely (no longer needed)
+- Keep the overlap tracking: if a 12CP hour is also above breakeven, label as '12CP+Price' but count against 12CP budget
+- `curtailedUptimeCap` will always be 0 now (budget prevents overrun)
 
-### 4. `src/components/aeso/PowerModelAnalyzer.tsx`
+### 2. `src/components/aeso/PowerModelChargeBreakdown.tsx` (UI update)
 
-- Update RateSourceBadge from "AUC Decision 29606-D01-2024" / "2025-01-01" to "AUC Decision 30427-D01-2025" / "2026-01-01"
+- Change the explanation banner text from "maximum ceiling" to "guaranteed minimum"
+- Update tooltip copy: uptime target is now enforced as a floor, not a ceiling
+- Keep color-coded badges (they still make sense for at-target vs slightly-above)
+- Update Curtailment Analysis tooltip to explain budget-based approach
 
-### 5. `src/components/aeso/PowerModelChargeBreakdown.tsx`
+### 3. `src/constants/tariff-rates.ts` (optional tuning)
 
-- Same RateSourceBadge update as above
+- No changes to rates needed
+- The `twelveCP_AvoidanceHours: 35` default is fine -- it fits within a 5% budget (36.5 hours for a 730-hour month)
+- For months with fewer hours (e.g., February at 672 hours), the budget is 33.6 hours, so 12CP will be auto-capped to 33
 
-### 6. `src/components/aeso/PowerModelCharts.tsx`
+## Math Verification
 
-- Update CardDescription reference from "AUC Decision 29606-D01-2024" to "AUC Decision 30427-D01-2025"
-- Training data badge showing "2022-06-01" is correct (historical data coverage) -- no change
+With the fix applied, for a 95% uptime target:
 
-### 7. `src/components/aeso/PowerModelAssumptions.tsx`
+| Month | Total Hours | Max Downtime | 12CP Budget | Price Budget | Guaranteed Uptime |
+|-------|-------------|-------------|-------------|-------------|-------------------|
+| Jan   | 744         | 37          | 35          | 2           | 95.0%             |
+| Feb   | 672         | 33          | 33 (capped) | 0           | 95.1%             |
+| Mar   | 743         | 37          | 35          | 2           | 95.0%             |
+| Apr   | 720         | 36          | 35          | 1           | 95.0%             |
+| Jul   | 744         | 37          | 35          | 2           | 95.0%             |
+| Nov   | 721         | 36          | 35          | 1           | 95.0%             |
 
-- Update "AUC Decision 29606-D01-2024" to "AUC Decision 30427-D01-2025"
-- Update effective date from "2025-01-01" to "2026-01-01"
+Annual average: ~95.0% (vs current ~88%)
 
-### 8. `src/components/aeso/PowerModelDataSources.tsx`
+## Technical Details
 
-- Update source text from "AUC Decision 29606-D01-2024 -- AESO ISO Tariff 2025" to "AUC Decision 30427-D01-2025 -- AESO ISO Tariff 2026"
+The key code change in the monthly loop:
 
-## Estimated 2026 Rate DTS Component Values
+```typescript
+// NEW: Budget-based curtailment
+const totalHours = records.length;
+const maxDowntimeHours = Math.floor(totalHours * (1 - targetUptime / 100));
+let budgetRemaining = maxDowntimeHours;
 
-Applying the confirmed -0.3% connection charge decrease:
+// Step 1: 12CP (priority) - cap to budget
+const sorted12CP = [...records].sort((a, b) => b.ailMW - a.ailMW);
+const twelveCP_limit = Math.min(params.twelveCP_AvoidanceHours, budgetRemaining);
+const top12CPHours = new Set(
+  sorted12CP.slice(0, twelveCP_limit).map(r => `${r.date}-${r.he}`)
+);
 
-| Component | 2025 Value | Est. 2026 Value | Change |
-|---|---|---|---|
-| Bulk Coincident Demand | $11,164/MW/mo | $11,131/MW/mo | -0.3% |
-| Bulk Metered Energy | $1.23/MWh | $1.23/MWh | Unchanged (energy-based) |
-| Regional Billing Capacity | $2,945/MW/mo | $2,936/MW/mo | -0.3% |
-| Regional Metered Energy | $0.93/MWh | $0.93/MWh | Unchanged |
-| POD Substation | $15,304/mo | $15,258/mo | -0.3% |
-| POD Tier 1 | $5,037/MW/mo | $5,022/MW/mo | -0.3% |
-| POD Tier 2 | $2,987/MW/mo | $2,978/MW/mo | -0.3% |
-| POD Tier 3 | $2,000/MW/mo | $1,994/MW/mo | -0.3% |
-| POD Tier 4 | $1,231/MW/mo | $1,227/MW/mo | -0.3% |
-| Rider F | $1.30/MWh | $1.26/MWh | Confirmed exact |
-| Operating Reserve | 12.44% | ~12.5-13% | Est. (increased per application) |
+// ... process 12CP curtailments, decrement budgetRemaining
 
-Components marked as estimates will display "Estimate" badges in the Rate Guide. Rider F ($1.26) is confirmed exact from the 2026 tariff application Table 3-3.
+// Step 2: Price curtailment with remaining budget
+const candidatesForPrice = runningAfterPass1
+  .filter(r => r.poolPrice > breakeven)
+  .sort((a, b) => b.poolPrice - a.poolPrice);
+const priceCurtailCount = Math.min(candidatesForPrice.length, budgetRemaining);
 
-## Data That Remains Unchanged (Verified Correct)
+// ... curtail only priceCurtailCount hours
+```
 
-- FortisAlberta Rate 65: $7.52/kW/month, 0.2704c/kWh (July 2025 schedule -- still the latest)
-- Training data coverage: June 2022 to present (historical data, not rates)
-- EPCOR and ERCOT comparison rates (illustrative)
+No changes needed to the annual summary calculation -- it already averages monthly uptimes correctly. With each month now at ~95%, the annual will also show ~95%.
+
