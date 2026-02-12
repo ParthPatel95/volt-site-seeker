@@ -1,5 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
-import { APP_VERSION } from "./constants/app-version";
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,64 +49,8 @@ import ViewSharedDashboard from "./pages/ViewSharedDashboard";
 
 const queryClient = new QueryClient();
 
-// Cache-busting component that forces reload on version mismatch
-function CacheBuster() {
-  useEffect(() => {
-    const cachedVersion = localStorage.getItem('app_version');
-    
-    if (cachedVersion && cachedVersion !== APP_VERSION) {
-      console.log('[Cache] Version mismatch detected:', cachedVersion, '->', APP_VERSION);
-      console.log('[Cache] Clearing all caches and service workers...');
-      
-      // Update stored version
-      localStorage.setItem('app_version', APP_VERSION);
-      
-      // Clear all caches and service workers synchronously, then force hard reload
-      const clearAllAndReload = async () => {
-        const tasks: Promise<boolean>[] = [];
-        
-        // Clear all caches
-        if ('caches' in window) {
-          const names = await caches.keys();
-          names.forEach(name => {
-            console.log('[Cache] Deleting cache:', name);
-            tasks.push(caches.delete(name));
-          });
-        }
-        
-        // Unregister all service workers
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          registrations.forEach(reg => {
-            console.log('[Cache] Unregistering service worker:', reg.scope);
-            tasks.push(reg.unregister());
-          });
-        }
-        
-        // Wait for all operations to complete
-        await Promise.all(tasks);
-        console.log('[Cache] All caches cleared, forcing hard reload...');
-        
-        // Force hard reload with cache-busting query parameter
-        const url = new URL(window.location.href);
-        url.searchParams.set('_v', Date.now().toString());
-        window.location.href = url.toString();
-      };
-      
-      clearAllAndReload();
-    } else if (!cachedVersion) {
-      // First visit, store version
-      console.log('[Cache] First visit, storing version:', APP_VERSION);
-      localStorage.setItem('app_version', APP_VERSION);
-    }
-  }, []);
-  
-  return null;
-}
-
 const App = () => (
 <ErrorBoundary>
-    <CacheBuster />
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <PermissionsProvider>

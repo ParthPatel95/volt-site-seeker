@@ -50,23 +50,30 @@ export function ReloadPrompt() {
     if (needRefresh && !reloadAttempted.current) {
       reloadAttempted.current = true;
       
+      // Only auto-reload on production domains, not preview/dev
+      const host = window.location.hostname;
+      const isProduction = !host.includes('localhost') && !host.includes('lovable.app') && !host.includes('preview');
+      
+      if (!isProduction) {
+        console.log('[PWA] New content available (skipping auto-reload in dev/preview)');
+        setNeedRefresh(false);
+        return;
+      }
+      
       console.log('[PWA] New content available, preparing to reload...');
       
       // Show toast notification
-      const { dismiss } = toast({
+      toast({
         title: "Updating to latest version...",
         description: "The app will refresh automatically in a moment.",
         duration: 5000,
       });
       
-      // Auto-reload after 0.5 seconds for faster updates
       const reloadTimeout = setTimeout(() => {
         console.log('[PWA] Triggering service worker update and reload');
         updateServiceWorker(true).catch((err) => {
           console.error('[PWA] Auto-reload failed:', err);
-          dismiss();
           
-          // Show manual reload option if auto-reload fails
           toast({
             title: "Update available",
             description: "Please refresh the page to see the latest changes.",
@@ -82,13 +89,13 @@ export function ReloadPrompt() {
             ),
           });
         });
-      }, 500);
+      }, 2000);
       
       return () => {
         clearTimeout(reloadTimeout);
       };
     }
-  }, [needRefresh, updateServiceWorker]);
+  }, [needRefresh, setNeedRefresh, updateServiceWorker]);
 
   // This component doesn't render anything visible
   // The toast notifications handle the UI
