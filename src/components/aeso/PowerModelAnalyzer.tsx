@@ -5,11 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
-import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap } from 'lucide-react';
+import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord } from '@/hooks/usePowerModelCalculator';
+import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord, type CurtailmentStrategy } from '@/hooks/usePowerModelCalculator';
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
@@ -39,6 +41,7 @@ export function PowerModelAnalyzer() {
     hostingRateUSD: DEFAULT_FACILITY_PARAMS.hostingRateUSD,
     cadUsdRate: DEFAULT_FACILITY_PARAMS.cadUsdRate,
     targetUptimePercent: 95,
+    curtailmentStrategy: '12cp-priority',
   });
   const [tariffOverrides, setTariffOverrides] = useState<TariffOverrides>({});
 
@@ -154,6 +157,31 @@ export function PowerModelAnalyzer() {
             <div>
               <Label className="text-xs">Target Uptime (%)</Label>
               <Input type="number" step="0.5" min="50" max="100" value={params.targetUptimePercent} onChange={e => updateParam('targetUptimePercent', e.target.value)} className="h-8 text-sm" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs">Curtailment Strategy</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p><strong>12CP Priority:</strong> Always avoids peak demand hours first. Safer for demand charge savings but may run through expensive energy hours.</p>
+                      <p className="mt-1"><strong>Cost Optimized:</strong> Compares the dollar value of each curtailment decision. A $500/MWh price spike may beat a low-risk 12CP hour, maximizing total savings.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Select value={params.curtailmentStrategy} onValueChange={(v) => setParams(p => ({ ...p, curtailmentStrategy: v as CurtailmentStrategy }))}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="12cp-priority">12CP Priority</SelectItem>
+                  <SelectItem value="cost-optimized">Cost Optimized</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

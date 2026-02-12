@@ -34,6 +34,59 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }
 
   return (
     <div className="space-y-6">
+      {/* Downtime Budget Allocation */}
+      {(() => {
+        const totalBudgetHours = monthly.reduce((s, m) => s + Math.floor(m.totalHours * (1 - targetUptime / 100)), 0);
+        const used12CP = monthly.reduce((s, m) => s + m.curtailed12CP + m.curtailedOverlap, 0);
+        const usedPrice = monthly.reduce((s, m) => s + m.curtailedPrice, 0);
+        const usedTotal = used12CP + usedPrice;
+        const pct12CP = totalBudgetHours > 0 ? (used12CP / totalBudgetHours) * 100 : 0;
+        const pctPrice = totalBudgetHours > 0 ? (usedPrice / totalBudgetHours) * 100 : 0;
+        const unusedPct = Math.max(0, 100 - pct12CP - pctPrice);
+
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Downtime Budget Allocation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Annual Budget</span>
+                  <span className="font-semibold">{totalBudgetHours}h ({(100 - targetUptime).toFixed(0)}% of total)</span>
+                </div>
+                {/* Visual bar */}
+                <div className="h-4 rounded-full overflow-hidden bg-muted/50 flex">
+                  {pct12CP > 0 && (
+                    <div className="bg-blue-500 h-full transition-all" style={{ width: `${pct12CP}%` }} />
+                  )}
+                  {pctPrice > 0 && (
+                    <div className="bg-orange-500 h-full transition-all" style={{ width: `${pctPrice}%` }} />
+                  )}
+                  {unusedPct > 0 && (
+                    <div className="bg-muted h-full transition-all" style={{ width: `${unusedPct}%` }} />
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-blue-500" />
+                    <span>12CP: {used12CP}h</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-orange-500" />
+                    <span>Price: {usedPrice}h</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-muted" />
+                    <span>Unused: {totalBudgetHours - usedTotal}h</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Uptime Explanation Banner */}
       <Card className="border-blue-500/20 bg-blue-500/5">
         <CardContent className="py-3 px-4">
@@ -173,7 +226,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p><strong>12CP:</strong> Peak demand avoidance. <strong>Price:</strong> Pool price above breakeven. <strong>Uptime Cap:</strong> Extra curtailment to enforce {targetUptime}% ceiling. <strong>Overlap:</strong> Hours matching both 12CP and price criteria.</p>
+                  <p><strong>12CP:</strong> Peak demand avoidance. <strong>Price:</strong> Pool price above breakeven. <strong>Overlap:</strong> Hours matching both 12CP and price criteria. Downtime is budget-capped to guarantee {targetUptime}% minimum uptime.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
