@@ -124,9 +124,13 @@
       })();
     </script>
 
-    <!-- Cache Buster: Force update when new version is deployed -->
+    <!-- Cache Buster: Force update when new version is deployed (production only) -->
     <script>
       (function() {
+        // Only run cache busting on production domains, never on preview/localhost
+        var host = window.location.hostname;
+        if (host === 'localhost' || host.includes('lovable.app') || host.includes('preview')) return;
+        
         var DEPLOY_VERSION = '2026.02.11.004';
         var stored = localStorage.getItem('html_deploy_version');
         if (stored && stored !== DEPLOY_VERSION) {
