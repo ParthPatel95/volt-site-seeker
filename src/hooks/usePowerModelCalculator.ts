@@ -180,58 +180,60 @@ export function usePowerModelCalculator(
     const allShutdownRecords: ShutdownRecord[] = [];
 
     for (const [monthIdx, records] of monthGroups) {
+      const totalHours = records.length;
+      // Budget-based curtailment: uptime target is a FLOOR (minimum guaranteed)
+      const maxDowntimeHours = Math.floor(totalHours * (1 - targetUptime / 100));
+      let budgetRemaining = maxDowntimeHours;
+
+      // Step 1: 12CP avoidance (priority) — capped to downtime budget
       const sorted = [...records].sort((a, b) => b.ailMW - a.ailMW);
+      const twelveCPLimit = Math.min(params.twelveCP_AvoidanceHours, budgetRemaining);
       const top12CPHours = new Set(
-        sorted.slice(0, params.twelveCP_AvoidanceHours).map(r => `${r.date}-${r.he}`)
+        sorted.slice(0, twelveCPLimit).map(r => `${r.date}-${r.he}`)
       );
 
-      // Pass 1 & 2: 12CP and price curtailment
-      const runningAfterPass12: HourlyRecord[] = [];
+      const runningAfter12CP: HourlyRecord[] = [];
       let curtailed12CP = 0;
-      let curtailedPrice = 0;
       let curtailedOverlap = 0;
 
       for (const rec of records) {
         const key = `${rec.date}-${rec.he}`;
-        const is12CP = top12CPHours.has(key);
-        const isPriceAbove = rec.poolPrice > breakeven;
-
-        if (is12CP || isPriceAbove) {
-          let reason: ShutdownRecord['reason'];
-          if (is12CP && isPriceAbove) { curtailedOverlap++; reason = '12CP+Price'; }
-          else if (is12CP) { curtailed12CP++; reason = '12CP'; }
-          else { curtailedPrice++; reason = 'Price'; }
-
+        if (top12CPHours.has(key)) {
+          const isPriceAbove = rec.poolPrice > breakeven;
+          const reason: ShutdownRecord['reason'] = isPriceAbove ? '12CP+Price' : '12CP';
+          if (isPriceAbove) curtailedOverlap++; else curtailed12CP++;
           const costAvoided = isPriceAbove ? (rec.poolPrice - breakeven) * cap : 0;
           allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason, costAvoided });
+          budgetRemaining--;
         } else {
-          runningAfterPass12.push(rec);
+          runningAfter12CP.push(rec);
         }
       }
 
-      // Pass 3: Uptime cap enforcement
-      const totalHours = records.length;
-      const maxRunningHours = Math.floor(totalHours * targetUptime / 100);
-      let curtailedUptimeCap = 0;
-      let finalRunning = runningAfterPass12;
+      // Step 2: Price curtailment — only use remaining budget, most expensive first
+      let curtailedPrice = 0;
+      const priceCandidates = runningAfter12CP
+        .filter(r => r.poolPrice > breakeven)
+        .sort((a, b) => b.poolPrice - a.poolPrice);
+      const priceCurtailCount = Math.min(priceCandidates.length, budgetRemaining);
+      const priceCurtailSet = new Set(
+        priceCandidates.slice(0, priceCurtailCount).map(r => `${r.date}-${r.he}`)
+      );
 
-      if (runningAfterPass12.length > maxRunningHours) {
-        // Sort remaining running hours by price descending, curtail most expensive first
-        const sortedByPrice = [...runningAfterPass12].sort((a, b) => b.poolPrice - a.poolPrice);
-        const toRemove = runningAfterPass12.length - maxRunningHours;
-        const removedSet = new Set<string>();
-
-        for (let i = 0; i < toRemove; i++) {
-          const rec = sortedByPrice[i];
-          const key = `${rec.date}-${rec.he}`;
-          removedSet.add(key);
-          curtailedUptimeCap++;
-          const costAvoided = rec.poolPrice > breakeven ? (rec.poolPrice - breakeven) * cap : rec.poolPrice * cap * 0.01; // minimal savings estimate
-          allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'UptimeCap', costAvoided });
+      const finalRunning: HourlyRecord[] = [];
+      for (const rec of runningAfter12CP) {
+        const key = `${rec.date}-${rec.he}`;
+        if (priceCurtailSet.has(key)) {
+          curtailedPrice++;
+          const costAvoided = (rec.poolPrice - breakeven) * cap;
+          allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'Price', costAvoided });
+        } else {
+          finalRunning.push(rec);
         }
-
-        finalRunning = runningAfterPass12.filter(rec => !removedSet.has(`${rec.date}-${rec.he}`));
       }
+
+      // No Pass 3 needed — budget already enforces uptime floor
+      const curtailedUptimeCap = 0;
 
       const runningHours = finalRunning.length;
       let poolEnergyTotal = 0;

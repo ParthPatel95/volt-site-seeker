@@ -40,11 +40,11 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }
           <div className="flex items-start gap-2 text-sm">
             <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
             <div>
-              <span className="font-medium text-foreground">Why does uptime vary?</span>
+              <span className="font-medium text-foreground">Uptime Guarantee</span>
               <span className="text-muted-foreground ml-1">
-                The {targetUptime}% target is a <strong>maximum ceiling</strong>. Mandatory 12CP peak avoidance and price-based curtailment 
-                (shutting down when pool price exceeds breakeven) can push months below {targetUptime}%. 
-                Only months with fewer natural shutdowns reach the cap.
+                The {targetUptime}% target is a <strong>guaranteed minimum floor</strong>. Total downtime (12CP avoidance + price curtailment) 
+                is capped to a monthly budget of {(100 - targetUptime).toFixed(0)}% of hours. 12CP gets priority; remaining budget goes to 
+                curtailing the most expensive hours above breakeven.
               </span>
             </div>
           </div>
