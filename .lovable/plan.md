@@ -1,106 +1,72 @@
 
 
-# Reduce Effective Energy Cost by Optimizing Curtailment Priority
+# Add Fixed Price Contract & Curtailment Savings Calculator
 
-## Problem
+## Overview
 
-At 95% uptime, the downtime budget is ~37 hours/month. 12CP avoidance consumes 35 of those hours, leaving only 2 hours for price-based curtailment. The facility runs through nearly all high-price hours, resulting in a 7c+/kWh blended cost.
+Add a "Fixed Price" input so users can set their contracted energy price. During curtailed hours, calculate savings as: **(Pool Price - Fixed Price) x MW** per curtailed hour. This shows how much money the facility saves (or could earn by selling back) when it shuts down during expensive hours.
 
-## Root Cause (Not a Bug)
+## Changes
 
-This is a budget allocation problem, not a calculation error. The current system gives 12CP absolute priority, which is correct for avoiding demand charges, but it means expensive energy hours (e.g., $200-500/MWh spikes) pass through uncurtailed.
+### 1. `src/hooks/usePowerModelCalculator.ts` -- Add fixed price to data model
 
-## Solution: Smart Budget Allocation with Cost Optimization
+- Add `fixedPriceCAD: number` to `FacilityParams` (default: 0, meaning disabled)
+- Add `curtailmentSavings: number` to `MonthlyResult` (sum of per-hour savings for that month)
+- Add `curtailmentSavings: number` to `AnnualSummary`
+- Add `curtailmentSavings: number` to `ShutdownRecord` (per-hour: `(poolPrice - fixedPrice) * cap`)
+- In the curtailment loop, for each curtailed hour where `poolPrice > fixedPriceCAD`, calculate savings: `(poolPrice - fixedPriceCAD) * cap`
+- Accumulate monthly and annual totals
+- When `fixedPriceCAD` is 0 or not set, savings default to 0 (feature is effectively off)
 
-### Change 1: Cost-Optimized Curtailment Mode (`usePowerModelCalculator.ts`)
+### 2. `src/components/aeso/PowerModelAnalyzer.tsx` -- Add Fixed Price input
 
-Instead of giving 12CP blanket priority, compare the **dollar value** of each curtailment decision:
+- Add a new input field in the **Revenue Parameters** card: "Fixed Contract Price (CAD/MWh)"
+- Default to 0 (disabled state)
+- When set to a positive value, the savings calculation activates
+- Add a small helper text: "Set your contracted energy rate to calculate curtailment savings"
 
-- A 12CP hour avoids ~$11,131/MW/month in demand charges (spread across 35 hours = ~$318/hour for 1MW, or ~$14,310/hour for 45MW)
-- A $400/MWh price spike costs 45MW x $400 = $18,000/hour to run through
+### 3. `src/components/aeso/PowerModelSummaryCards.tsx` -- Show total savings
 
-The optimizer should:
-1. Score every candidate hour by its savings value (12CP savings OR price-above-breakeven savings)
-2. Sort all candidates by value descending
-3. Take the top N hours where N = downtime budget
-4. This way, a $500/MWh spike beats a low-risk 12CP hour
+- Add a new summary card: "Curtailment Savings" showing the annual total savings from curtailed hours
+- Only visible when fixed price is set (greater than 0)
+- Show as a green/positive value with a dollar sign
 
-Add a `curtailmentStrategy` parameter to `FacilityParams`:
-- `'12cp-priority'` (current behavior, default)
-- `'cost-optimized'` (new: picks whichever saves more money per hour)
+### 4. `src/components/aeso/PowerModelChargeBreakdown.tsx` -- Show monthly savings
 
-### Change 2: Add Strategy Selector to UI (`PowerModelAnalyzer.tsx`)
+- Add a "Curtailment Savings" column to the monthly breakdown table
+- Shows per-month savings from curtailed hours
+- Highlight months with highest savings
 
-Add a toggle/select next to the uptime slider:
-- "12CP Priority" -- always avoid peaks first (safer for demand charges)
-- "Cost Optimized" -- maximize total savings (may skip some low-risk 12CP hours to avoid expensive energy hours)
+### 5. `src/components/aeso/PowerModelShutdownLog.tsx` -- Show per-hour savings
 
-Include a tooltip explaining the tradeoff.
+- Add a "Savings" column to the shutdown log table showing `(poolPrice - fixedPrice) * MW` for each curtailed hour
+- Only show column when fixed price is set
 
-### Change 3: Show Budget Allocation Transparency (`PowerModelChargeBreakdown.tsx`)
+## Math Example
 
-Add a "Downtime Budget" summary card showing:
-- Total budget: 37 hours
-- Used by 12CP: 35 hours
-- Used by Price: 2 hours
-- Potential savings missed: sum of (price - breakeven) for all high-price hours NOT curtailed
-
-This makes it immediately clear why costs are high and what the tradeoff is.
-
-### Change 4: Sensitivity Preview
-
-Add a small table showing estimated per-kWh cost at different uptime levels:
-| Uptime | Price Hours Cut | Est. per kWh |
-|--------|----------------|-------------|
-| 95%    | 2              | 7.2c        |
-| 90%    | ~38            | 5.8c        |
-| 85%    | ~75            | 4.9c        |
-
-This helps the user make an informed decision about the uptime-vs-cost tradeoff.
+For a 45MW facility with a fixed price of CA$80/MWh:
+- Hour curtailed at pool price $350/MWh: savings = ($350 - $80) x 45 = **$12,150**
+- Hour curtailed at pool price $50/MWh: savings = ($50 - $80) x 45 = **-$1,350** (loss -- ran when it was cheaper than contract)
+- Net savings = sum of all curtailed hours
 
 ## Technical Details
 
-### `usePowerModelCalculator.ts` Changes
-
-Add `curtailmentStrategy` to `FacilityParams` interface (default: `'12cp-priority'`).
-
-For `'cost-optimized'` mode, replace the two-step curtailment with a unified scoring approach:
+Key calculation in the curtailment loop:
 
 ```typescript
-// Score every hour for potential curtailment
-const candidates = records.map(rec => {
-  const is12CP = top12CPSet.has(`${rec.date}-${rec.he}`);
-  const isExpensive = rec.poolPrice > breakeven;
-  
-  // 12CP value: monthly demand charge / avoidance hours
-  const twelveCPValue = is12CP ? (bulkCoincidentRate * cap / params.twelveCP_AvoidanceHours) : 0;
-  // Price value: cost of running minus breakeven
-  const priceValue = isExpensive ? (rec.poolPrice - breakeven) * cap : 0;
-  
-  return { rec, value: Math.max(twelveCPValue, priceValue), is12CP, isExpensive };
-})
-.filter(c => c.value > 0)
-.sort((a, b) => b.value - a.value);
-
-// Take top N by value
-const curtailCount = Math.min(candidates.length, maxDowntimeHours);
-const curtailed = candidates.slice(0, curtailCount);
+// For each curtailed hour:
+const curtailmentSaving = (rec.poolPrice - params.fixedPriceCAD) * cap;
+// Positive = saved money by not buying expensive power
+// Negative = missed opportunity (pool was cheaper than contract)
 ```
 
-### `PowerModelAnalyzer.tsx` Changes
-
-- Add a `Select` dropdown for curtailment strategy below the uptime slider
-- Pass strategy to the calculator hook
-
-### `PowerModelChargeBreakdown.tsx` Changes
-
-- Add "Downtime Budget Allocation" card with visual bar showing 12CP vs Price split
-- Add "Missed Savings" metric showing cost of high-price hours the facility ran through
-- Add uptime sensitivity mini-table
+The savings represent: "If we had a fixed-price contract at X $/MWh, how much do we save by curtailing during hours when pool price exceeds our contract price?"
 
 ## Files to Modify
 
-1. `src/hooks/usePowerModelCalculator.ts` -- Add cost-optimized curtailment mode
-2. `src/components/aeso/PowerModelAnalyzer.tsx` -- Add strategy selector UI
-3. `src/components/aeso/PowerModelChargeBreakdown.tsx` -- Add budget transparency and sensitivity preview
+1. `src/hooks/usePowerModelCalculator.ts` -- Core savings calculation
+2. `src/components/aeso/PowerModelAnalyzer.tsx` -- Fixed price input
+3. `src/components/aeso/PowerModelSummaryCards.tsx` -- Annual savings card
+4. `src/components/aeso/PowerModelChargeBreakdown.tsx` -- Monthly savings column
+5. `src/components/aeso/PowerModelShutdownLog.tsx` -- Per-hour savings column
 
