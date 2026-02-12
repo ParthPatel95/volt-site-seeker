@@ -11,6 +11,7 @@ interface Props {
   monthly: MonthlyResult[];
   annual: AnnualSummary | null;
   targetUptime?: number;
+  fixedPriceCAD?: number;
 }
 
 const fmt = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -26,7 +27,7 @@ function getUptimeBadgeStyle(uptime: number, target: number) {
   return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
 }
 
-export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }: Props) {
+export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, fixedPriceCAD = 0 }: Props) {
   if (!monthly.length) return null;
 
   const maxCost = Math.max(...monthly.map(m => m.totalAmountDue));
@@ -149,6 +150,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }
                   <TableHead className="text-right">Energy</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">¢/kWh</TableHead>
+                  {fixedPriceCAD > 0 && <TableHead className="text-right">Curtail Savings</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -184,6 +186,11 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }
                       <TableCell className="text-right tabular-nums">{fmtShort(m.totalEnergyCharges)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums">{fmt(m.totalAmountDue)}</TableCell>
                       <TableCell className="text-right tabular-nums">{(m.perKwhCAD * 100).toFixed(2)}</TableCell>
+                      {fixedPriceCAD > 0 && (
+                        <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                          {m.curtailmentSavings > 0 ? '+' : ''}{fmtShort(m.curtailmentSavings)}
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
@@ -207,6 +214,11 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95 }
                     <TableCell className="text-right tabular-nums">{fmtShort(annual.totalEnergyCharges)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(annual.totalAmountDue)}</TableCell>
                     <TableCell className="text-right tabular-nums">{(annual.avgPerKwhCAD * 100).toFixed(2)}</TableCell>
+                    {fixedPriceCAD > 0 && (
+                      <TableCell className="text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                        {annual.curtailmentSavings > 0 ? '+' : ''}{fmtShort(annual.curtailmentSavings)}
+                      </TableCell>
+                    )}
                   </TableRow>
                 </TableFooter>
               )}

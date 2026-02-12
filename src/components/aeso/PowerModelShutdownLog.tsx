@@ -10,6 +10,7 @@ import type { ShutdownRecord } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
   shutdownLog: ShutdownRecord[];
+  fixedPriceCAD?: number;
 }
 
 const REASON_COLORS: Record<string, string> = {
@@ -28,7 +29,7 @@ const REASON_LABELS: Record<string, string> = {
 
 const PAGE_SIZE = 50;
 
-export function PowerModelShutdownLog({ shutdownLog }: Props) {
+export function PowerModelShutdownLog({ shutdownLog, fixedPriceCAD = 0 }: Props) {
   const [page, setPage] = useState(0);
   const [reasonFilter, setReasonFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
@@ -77,8 +78,8 @@ export function PowerModelShutdownLog({ shutdownLog }: Props) {
   }, [filtered]);
 
   const exportCSV = () => {
-    const header = 'Date,Hour Ending,Pool Price ($/MWh),AIL (MW),Reason,Est. Cost Avoided ($)\n';
-    const rows = filtered.map(r => `${r.date},${r.he},${r.poolPrice.toFixed(2)},${r.ailMW.toFixed(0)},${r.reason},${r.costAvoided.toFixed(2)}`).join('\n');
+    const header = 'Date,Hour Ending,Pool Price ($/MWh),AIL (MW),Reason,Est. Cost Avoided ($)' + (fixedPriceCAD > 0 ? ',Curtailment Savings ($)' : '') + '\n';
+    const rows = filtered.map(r => `${r.date},${r.he},${r.poolPrice.toFixed(2)},${r.ailMW.toFixed(0)},${r.reason},${r.costAvoided.toFixed(2)}` + (fixedPriceCAD > 0 ? `,${r.curtailmentSavings.toFixed(2)}` : '')).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -169,6 +170,7 @@ export function PowerModelShutdownLog({ shutdownLog }: Props) {
                   <TableHead className="text-right">AIL (MW)</TableHead>
                   <TableHead>Reason</TableHead>
                   <TableHead className="text-right">Est. Cost Avoided</TableHead>
+                  {fixedPriceCAD > 0 && <TableHead className="text-right">Savings</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -184,6 +186,11 @@ export function PowerModelShutdownLog({ shutdownLog }: Props) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right text-sm font-medium">${r.costAvoided.toFixed(2)}</TableCell>
+                    {fixedPriceCAD > 0 && (
+                      <TableCell className={`text-right text-sm font-medium ${r.curtailmentSavings >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {r.curtailmentSavings >= 0 ? '+' : ''}${r.curtailmentSavings.toFixed(2)}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

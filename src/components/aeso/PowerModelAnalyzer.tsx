@@ -42,6 +42,7 @@ export function PowerModelAnalyzer() {
     cadUsdRate: DEFAULT_FACILITY_PARAMS.cadUsdRate,
     targetUptimePercent: 95,
     curtailmentStrategy: '12cp-priority',
+    fixedPriceCAD: 0,
   });
   const [tariffOverrides, setTariffOverrides] = useState<TariffOverrides>({});
 
@@ -200,6 +201,11 @@ export function PowerModelAnalyzer() {
               <Label className="text-xs">CAD/USD Exchange Rate</Label>
               <Input type="number" step="0.0001" value={params.cadUsdRate} onChange={e => updateParam('cadUsdRate', e.target.value)} className="h-8 text-sm" />
             </div>
+            <div>
+              <Label className="text-xs">Fixed Contract Price (CAD/MWh)</Label>
+              <Input type="number" step="1" value={params.fixedPriceCAD} onChange={e => updateParam('fixedPriceCAD', e.target.value)} className="h-8 text-sm" />
+              <p className="text-xs text-muted-foreground mt-1">Set to calculate curtailment savings vs. contract rate</p>
+            </div>
             <div className="pt-2 border-t border-border/50">
               <p className="text-xs text-muted-foreground">Breakeven Pool Price</p>
               <p className="text-lg font-bold text-foreground">CA${breakeven.toFixed(2)}/MWh</p>
@@ -260,8 +266,8 @@ export function PowerModelAnalyzer() {
       {/* Results */}
       {hourlyData.length > 0 && (
         <>
-          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} />
-          <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} />
+          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} />
+          <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} />
 
           {/* Analytics Tabs */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>
@@ -294,7 +300,7 @@ export function PowerModelAnalyzer() {
             </TabsContent>
 
             <TabsContent value="shutdown-log" className="mt-4">
-              <PowerModelShutdownLog shutdownLog={shutdownLog} />
+              <PowerModelShutdownLog shutdownLog={shutdownLog} fixedPriceCAD={params.fixedPriceCAD} />
             </TabsContent>
 
             <TabsContent value="shutdown-analytics" className="mt-4">
