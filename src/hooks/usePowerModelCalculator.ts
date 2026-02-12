@@ -11,6 +11,7 @@ export interface FacilityParams {
   cadUsdRate: number;
   targetUptimePercent: number;
   curtailmentStrategy: CurtailmentStrategy;
+  fixedPriceCAD: number;
 }
 
 export interface TariffOverrides {
@@ -45,6 +46,7 @@ export interface ShutdownRecord {
   ailMW: number;
   reason: '12CP' | 'Price' | 'UptimeCap' | '12CP+Price';
   costAvoided: number;
+  curtailmentSavings: number;
 }
 
 export interface MonthlyResult {
@@ -84,6 +86,7 @@ export interface MonthlyResult {
   totalAmountDue: number;
   perKwhCAD: number;
   perKwhUSD: number;
+  curtailmentSavings: number;
 }
 
 export interface AnnualSummary {
@@ -101,6 +104,7 @@ export interface AnnualSummary {
   avgPerKwhCAD: number;
   avgPerKwhUSD: number;
   avgPoolPriceRunning: number;
+  curtailmentSavings: number;
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -226,14 +230,17 @@ export function usePowerModelCalculator(
           if (c.is12CP && c.isExpensive) {
             curtailedOverlap++;
             const costAvoided = (c.rec.poolPrice - breakeven) * cap;
-            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP+Price', costAvoided });
+            const curtailmentSavings = params.fixedPriceCAD > 0 ? (c.rec.poolPrice - params.fixedPriceCAD) * cap : 0;
+            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP+Price', costAvoided, curtailmentSavings });
           } else if (c.is12CP) {
             curtailed12CP++;
-            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP', costAvoided: 0 });
+            const curtailmentSavings = params.fixedPriceCAD > 0 ? (c.rec.poolPrice - params.fixedPriceCAD) * cap : 0;
+            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: '12CP', costAvoided: 0, curtailmentSavings });
           } else {
             curtailedPrice++;
             const costAvoided = (c.rec.poolPrice - breakeven) * cap;
-            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: 'Price', costAvoided });
+            const curtailmentSavings = params.fixedPriceCAD > 0 ? (c.rec.poolPrice - params.fixedPriceCAD) * cap : 0;
+            allShutdownRecords.push({ date: c.rec.date, he: c.rec.he, poolPrice: c.rec.poolPrice, ailMW: c.rec.ailMW, reason: 'Price', costAvoided, curtailmentSavings });
           }
         }
 
@@ -254,7 +261,8 @@ export function usePowerModelCalculator(
             const reason: ShutdownRecord['reason'] = isPriceAbove ? '12CP+Price' : '12CP';
             if (isPriceAbove) curtailedOverlap++; else curtailed12CP++;
             const costAvoided = isPriceAbove ? (rec.poolPrice - breakeven) * cap : 0;
-            allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason, costAvoided });
+            const curtailmentSavings = params.fixedPriceCAD > 0 ? (rec.poolPrice - params.fixedPriceCAD) * cap : 0;
+            allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason, costAvoided, curtailmentSavings });
             budgetRemaining--;
           } else {
             runningAfter12CP.push(rec);
@@ -275,7 +283,8 @@ export function usePowerModelCalculator(
           if (priceCurtailSet.has(key)) {
             curtailedPrice++;
             const costAvoided = (rec.poolPrice - breakeven) * cap;
-            allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'Price', costAvoided });
+            const curtailmentSavings = params.fixedPriceCAD > 0 ? (rec.poolPrice - params.fixedPriceCAD) * cap : 0;
+            allShutdownRecords.push({ date: rec.date, he: rec.he, poolPrice: rec.poolPrice, ailMW: rec.ailMW, reason: 'Price', costAvoided, curtailmentSavings });
           } else {
             finalRunning.push(rec);
           }
@@ -325,6 +334,11 @@ export function usePowerModelCalculator(
       const perKwhCAD = kwh > 0 ? totalAmountDue / kwh : 0;
       const perKwhUSD = perKwhCAD * params.cadUsdRate;
 
+      // Calculate curtailment savings for this month from shutdown records
+      const monthShutdownSavings = allShutdownRecords
+        .filter(sr => new Date(sr.date).getMonth() === monthIdx)
+        .reduce((s, sr) => s + sr.curtailmentSavings, 0);
+
       monthly.push({
         month: MONTH_NAMES[monthIdx], monthIndex: monthIdx, totalHours, runningHours, curtailedHours,
         curtailed12CP, curtailedPrice, curtailedOverlap, curtailedUptimeCap,
@@ -335,6 +349,7 @@ export function usePowerModelCalculator(
         poolEnergy: poolEnergyTotal, retailerFee, riderF, totalEnergyCharges,
         fortisDemandCharge, fortisDistribution, totalFortisCharges,
         totalPreGST, gst, totalAmountDue, perKwhCAD, perKwhUSD,
+        curtailmentSavings: monthShutdownSavings,
       });
     }
 
@@ -353,6 +368,7 @@ export function usePowerModelCalculator(
       totalGST: monthly.reduce((s, m) => s + m.gst, 0),
       totalAmountDue: monthly.reduce((s, m) => s + m.totalAmountDue, 0),
       avgPerKwhCAD: 0, avgPerKwhUSD: 0, avgPoolPriceRunning: 0,
+      curtailmentSavings: monthly.reduce((s, m) => s + m.curtailmentSavings, 0),
     };
     if (annual.totalKWh > 0) {
       annual.avgPerKwhCAD = annual.totalAmountDue / annual.totalKWh;

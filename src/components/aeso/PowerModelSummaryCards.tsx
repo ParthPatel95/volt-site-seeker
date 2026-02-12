@@ -9,9 +9,11 @@ interface Props {
   hostingRateCAD?: number;
   totalShutdownHours?: number;
   totalShutdownSavings?: number;
+  curtailmentSavings?: number;
+  fixedPriceCAD?: number;
 }
 
-export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings }: Props) {
+export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD }: Props) {
   if (!annual) return null;
 
   const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
@@ -60,6 +62,13 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
       sub: `Est. savings: $${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`,
       icon: PowerOff,
       color: 'from-red-500 to-red-600',
+    }] : []),
+    ...((fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? [{
+      label: 'Curtailment Savings',
+      value: `CA$${(curtailmentSavings / 1_000).toFixed(0)}k`,
+      sub: `vs. fixed CA$${fixedPriceCAD}/MWh contract`,
+      icon: PiggyBank,
+      color: curtailmentSavings >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
     }] : []),
     ...(hostingRateCAD ? [
       {
