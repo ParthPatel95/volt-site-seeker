@@ -13,6 +13,7 @@ interface Props {
   targetUptime?: number;
   fixedPriceCAD?: number;
   cadUsdRate?: number;
+  capacityMW?: number;
 }
 
 const fmt = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -28,7 +29,7 @@ function getUptimeBadgeStyle(uptime: number, target: number) {
   return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
 }
 
-export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, fixedPriceCAD = 0, cadUsdRate = 0.7334 }: Props) {
+export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, fixedPriceCAD = 0, cadUsdRate = 0.7334, capacityMW = 0 }: Props) {
   if (!monthly.length) return null;
 
   const maxCost = Math.max(...monthly.map(m => m.totalAmountDue));
@@ -203,7 +204,8 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                     </TooltipProvider>
                   </TableHead>
                   <TableHead className="text-right">Curtailed</TableHead>
-                  <TableHead className="text-right">MWh</TableHead>
+                  <TableHead className="text-right">MWh (Actual)</TableHead>
+                  {capacityMW > 0 && <TableHead className="text-right">MWh (No Curtail)</TableHead>}
                   <TableHead className="text-right">DTS</TableHead>
                   <TableHead className="text-right">Energy</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -240,6 +242,19 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                         {m.curtailedHours}h
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{m.mwh.toLocaleString()}</TableCell>
+                      {capacityMW > 0 && (() => {
+                        const fullMWh = m.totalHours * capacityMW;
+                        const avoided = fullMWh - m.mwh;
+                        const pct = fullMWh > 0 ? (avoided / fullMWh) * 100 : 0;
+                        return (
+                          <TableCell className="text-right tabular-nums">
+                            <div>{fullMWh.toLocaleString()}</div>
+                            {avoided > 0 && (
+                              <div className="text-xs text-emerald-600 dark:text-emerald-400">-{avoided.toLocaleString()} ({pct.toFixed(1)}%)</div>
+                            )}
+                          </TableCell>
+                        );
+                      })()}
                       <TableCell className="text-right tabular-nums">{fmtShort(m.totalDTSCharges)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtShort(m.totalEnergyCharges)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums">{fmt(m.totalAmountDue)}</TableCell>
@@ -268,6 +283,19 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                       {monthly.reduce((s, m) => s + m.curtailedHours, 0)}h
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{annual.totalMWh.toLocaleString()}</TableCell>
+                    {capacityMW > 0 && (() => {
+                      const fullMWh = annual.totalHours * capacityMW;
+                      const avoided = fullMWh - annual.totalMWh;
+                      const pct = fullMWh > 0 ? (avoided / fullMWh) * 100 : 0;
+                      return (
+                        <TableCell className="text-right tabular-nums">
+                          <div>{fullMWh.toLocaleString()}</div>
+                          {avoided > 0 && (
+                            <div className="text-xs text-emerald-600 dark:text-emerald-400">-{avoided.toLocaleString()} ({pct.toFixed(1)}%)</div>
+                          )}
+                        </TableCell>
+                      );
+                    })()}
                     <TableCell className="text-right tabular-nums">{fmtShort(annual.totalDTSCharges)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtShort(annual.totalEnergyCharges)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(annual.totalAmountDue)}</TableCell>
