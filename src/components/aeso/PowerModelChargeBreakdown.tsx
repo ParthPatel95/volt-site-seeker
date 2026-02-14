@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from '@/components/ui/badge';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, TrendingDown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Info, TrendingDown, TrendingUp, AlertTriangle, Zap, BarChart3 } from 'lucide-react';
 import type { MonthlyResult, AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -34,6 +34,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
 
   const maxCost = Math.max(...monthly.map(m => m.totalAmountDue));
   const minCost = Math.min(...monthly.map(m => m.totalAmountDue));
+  const showCapacity = capacityMW > 0;
 
   return (
     <div className="space-y-6">
@@ -188,7 +189,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead>Month</TableHead>
+                  <TableHead className="sticky left-0 bg-muted/30 z-10">Month</TableHead>
                   <TableHead className="text-right">Hours</TableHead>
                   <TableHead className="text-right">Running</TableHead>
                   <TableHead className="text-right">
@@ -204,13 +205,57 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                     </TooltipProvider>
                   </TableHead>
                   <TableHead className="text-right">Curtailed</TableHead>
-                  <TableHead className="text-right">MWh (Actual)</TableHead>
-                  {capacityMW > 0 && <TableHead className="text-right">MWh (No Curtail)</TableHead>}
-                  <TableHead className="text-right">DTS</TableHead>
+                  {/* Energy columns group */}
+                  <TableHead className="text-right border-l border-border/50">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center gap-1 ml-auto">
+                          <Zap className="h-3 w-3" /> MWh (Actual)
+                        </TooltipTrigger>
+                        <TooltipContent>After curtailment shutdowns</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  {showCapacity && (
+                    <TableHead className="text-right">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="flex items-center gap-1 ml-auto">
+                            MWh (Full)
+                          </TooltipTrigger>
+                          <TooltipContent>At 100% capacity — no curtailment</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableHead>
+                  )}
+                  {/* Cost columns group */}
+                  <TableHead className="text-right border-l border-border/50">DTS</TableHead>
                   <TableHead className="text-right">Energy</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">¢/kWh</TableHead>
-                  {fixedPriceCAD > 0 && <TableHead className="text-right">Curtail Savings</TableHead>}
+                  <TableHead className="text-right">Total (CAD)</TableHead>
+                  {/* Rate columns group */}
+                  <TableHead className="text-right border-l border-border/50">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center gap-1 ml-auto">
+                          <BarChart3 className="h-3 w-3" /> ¢/kWh
+                        </TooltipTrigger>
+                        <TooltipContent>All-in rate with curtailment optimization</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  {showCapacity && (
+                    <TableHead className="text-right">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="flex items-center gap-1 ml-auto">
+                            ¢/kWh (Full)
+                          </TooltipTrigger>
+                          <TooltipContent>All-in rate at 100% capacity — same total cost spread over more kWh</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableHead>
+                  )}
+                  {fixedPriceCAD > 0 && <TableHead className="text-right border-l border-border/50">Curtail Savings</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -218,20 +263,27 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                   const isHighest = m.totalAmountDue === maxCost;
                   const isLowest = m.totalAmountDue === minCost;
                   const belowTarget = m.uptimePercent < targetUptime - 0.5;
+                  const fullMWh = showCapacity ? m.totalHours * capacityMW : 0;
+                  const avoided = fullMWh - m.mwh;
+                  const pct = fullMWh > 0 ? (avoided / fullMWh) * 100 : 0;
+                  const fullKWh = fullMWh * 1000;
+                  const noCurtailCentsPerKwh = fullKWh > 0 ? (m.totalAmountDue / fullKWh) * 100 : 0;
+                  const actualCents = m.perKwhCAD * 100;
+                  const rateDelta = actualCents - noCurtailCentsPerKwh;
                   
                   return (
                     <TableRow 
                       key={m.month} 
-                      className={belowTarget ? 'bg-amber-500/[0.03]' : ''}
+                      className={belowTarget ? 'bg-amber-500/[0.03]' : 'hover:bg-muted/20'}
                     >
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium sticky left-0 bg-background z-10">
                         <div className="flex items-center gap-1.5">
                           {m.month.slice(0, 3)}
                           {isHighest && <TrendingUp className="h-3 w-3 text-red-500" />}
                           {isLowest && <TrendingDown className="h-3 w-3 text-emerald-500" />}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{m.totalHours}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{m.totalHours}</TableCell>
                       <TableCell className="text-right tabular-nums">{m.runningHours}</TableCell>
                       <TableCell className="text-right">
                         <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-medium tabular-nums ${getUptimeBadgeStyle(m.uptimePercent, targetUptime)}`}>
@@ -241,26 +293,40 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {m.curtailedHours}h
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{m.mwh.toLocaleString()}</TableCell>
-                      {capacityMW > 0 && (() => {
-                        const fullMWh = m.totalHours * capacityMW;
-                        const avoided = fullMWh - m.mwh;
-                        const pct = fullMWh > 0 ? (avoided / fullMWh) * 100 : 0;
-                        return (
-                          <TableCell className="text-right tabular-nums">
-                            <div>{fullMWh.toLocaleString()}</div>
-                            {avoided > 0 && (
-                              <div className="text-xs text-emerald-600 dark:text-emerald-400">-{avoided.toLocaleString()} ({pct.toFixed(1)}%)</div>
-                            )}
-                          </TableCell>
-                        );
-                      })()}
-                      <TableCell className="text-right tabular-nums">{fmtShort(m.totalDTSCharges)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtShort(m.totalEnergyCharges)}</TableCell>
+                      {/* Energy group */}
+                      <TableCell className="text-right tabular-nums font-medium border-l border-border/50">
+                        {m.mwh.toLocaleString()}
+                      </TableCell>
+                      {showCapacity && (
+                        <TableCell className="text-right tabular-nums">
+                          <div className="text-muted-foreground">{fullMWh.toLocaleString()}</div>
+                          {avoided > 0 && (
+                            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                              -{avoided.toLocaleString()} <span className="opacity-70">({pct.toFixed(1)}%)</span>
+                            </div>
+                          )}
+                        </TableCell>
+                      )}
+                      {/* Cost group */}
+                      <TableCell className="text-right tabular-nums text-muted-foreground border-l border-border/50">{fmtShort(m.totalDTSCharges)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmtShort(m.totalEnergyCharges)}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums">{fmt(m.totalAmountDue)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{(m.perKwhCAD * 100).toFixed(2)}</TableCell>
+                      {/* Rate group */}
+                      <TableCell className="text-right tabular-nums font-semibold border-l border-border/50">
+                        {actualCents.toFixed(2)}
+                      </TableCell>
+                      {showCapacity && (
+                        <TableCell className="text-right tabular-nums">
+                          <div className="text-muted-foreground">{noCurtailCentsPerKwh.toFixed(2)}</div>
+                          {rateDelta > 0.01 && (
+                            <div className="text-[11px] text-amber-600 dark:text-amber-400">
+                              +{rateDelta.toFixed(2)}¢
+                            </div>
+                          )}
+                        </TableCell>
+                      )}
                       {fixedPriceCAD > 0 && (
-                        <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                        <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400 border-l border-border/50">
                           {m.curtailmentSavings > 0 ? '+' : ''}{fmtShort(m.curtailmentSavings)}
                         </TableCell>
                       )}
@@ -271,7 +337,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
               {annual && (
                 <TableFooter>
                   <TableRow className="font-bold bg-muted/50">
-                    <TableCell>ANNUAL</TableCell>
+                    <TableCell className="sticky left-0 bg-muted/50 z-10">ANNUAL</TableCell>
                     <TableCell className="text-right tabular-nums">{annual.totalHours}</TableCell>
                     <TableCell className="text-right tabular-nums">{annual.totalRunningHours}</TableCell>
                     <TableCell className="text-right">
@@ -282,8 +348,9 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                     <TableCell className="text-right tabular-nums">
                       {monthly.reduce((s, m) => s + m.curtailedHours, 0)}h
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{annual.totalMWh.toLocaleString()}</TableCell>
-                    {capacityMW > 0 && (() => {
+                    {/* Energy group footer */}
+                    <TableCell className="text-right tabular-nums border-l border-border/50">{annual.totalMWh.toLocaleString()}</TableCell>
+                    {showCapacity && (() => {
                       const fullMWh = annual.totalHours * capacityMW;
                       const avoided = fullMWh - annual.totalMWh;
                       const pct = fullMWh > 0 ? (avoided / fullMWh) * 100 : 0;
@@ -291,17 +358,38 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                         <TableCell className="text-right tabular-nums">
                           <div>{fullMWh.toLocaleString()}</div>
                           {avoided > 0 && (
-                            <div className="text-xs text-emerald-600 dark:text-emerald-400">-{avoided.toLocaleString()} ({pct.toFixed(1)}%)</div>
+                            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                              -{avoided.toLocaleString()} <span className="opacity-70">({pct.toFixed(1)}%)</span>
+                            </div>
                           )}
                         </TableCell>
                       );
                     })()}
-                    <TableCell className="text-right tabular-nums">{fmtShort(annual.totalDTSCharges)}</TableCell>
+                    {/* Cost group footer */}
+                    <TableCell className="text-right tabular-nums border-l border-border/50">{fmtShort(annual.totalDTSCharges)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtShort(annual.totalEnergyCharges)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(annual.totalAmountDue)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{(annual.avgPerKwhCAD * 100).toFixed(2)}</TableCell>
+                    {/* Rate group footer */}
+                    <TableCell className="text-right tabular-nums border-l border-border/50">
+                      {(annual.avgPerKwhCAD * 100).toFixed(2)}
+                    </TableCell>
+                    {showCapacity && (() => {
+                      const fullKWh = annual.totalHours * capacityMW * 1000;
+                      const noCurtailRate = fullKWh > 0 ? (annual.totalAmountDue / fullKWh) * 100 : 0;
+                      const delta = (annual.avgPerKwhCAD * 100) - noCurtailRate;
+                      return (
+                        <TableCell className="text-right tabular-nums">
+                          <div>{noCurtailRate.toFixed(2)}</div>
+                          {delta > 0.01 && (
+                            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                              +{delta.toFixed(2)}¢
+                            </div>
+                          )}
+                        </TableCell>
+                      );
+                    })()}
                     {fixedPriceCAD > 0 && (
-                      <TableCell className="text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                      <TableCell className="text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400 border-l border-border/50">
                         {annual.curtailmentSavings > 0 ? '+' : ''}{fmtShort(annual.curtailmentSavings)}
                       </TableCell>
                     )}
