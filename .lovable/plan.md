@@ -1,63 +1,86 @@
 
-# Enhance Power Model Summary Cards: Analytical Cost Progression + Dual Currency
+# Restructure Cost Progression: Scenario-Based Rate Comparison
 
-## What Changes
+## Problem
 
-Replace the current flat grid of summary cards with a structured, analytical layout that shows:
+Two issues with the current Cost Progression table:
 
-1. **Cost Progression Table** -- How the all-in rate builds up step by step:
-   - **Base Energy Rate**: The raw energy cost (fixed contract or avg pool price) in cents/kWh
-   - **+ Operating Reserve (12.5%)**: Energy + OR surcharge
-   - **+ Transmission (DTS)**: Adding bulk metered, regional, POD, TCR, voltage, system support
-   - **+ Distribution (Fortis)**: Adding demand charge + volumetric delivery
-   - **+ Riders and Fees**: Rider F, retailer fee
-   - **+ GST (5%)**: Final all-in rate
-   - Each row shows CAD and USD side by side
+1. **Missing 12CP Demand Charge**: Line 341 in the calculator hardcodes `bulkCoincidentDemand = 0`, meaning the $11,131/MW/month 12CP charge is never shown. For 45MW, that is **$6.01M/year** or ~1.61 cents/kWh that is invisible. The current table shows the "optimized" rate as if 12CP avoidance already happened, without showing what it would cost WITHOUT it.
 
-2. **12CP Impact Column** -- Show the rate "as-is" (no curtailment) vs. "with 12CP avoidance" to quantify the savings from avoiding peak demand charges
+2. **Wrong framing**: The table currently stacks cost components (Energy, +OR, +Transmission...). The user wants a **scenario comparison**: "here is your all-in price with no optimization, then with 12CP avoidance, then with OR, etc." -- showing how each program REDUCES the effective rate.
 
-3. **Dual Currency Throughout** -- Every dollar value and cents/kWh rate shown in both CAD and USD using the existing `cadUsdRate` parameter
+## Verified Rate 65 Numbers (from tariff-rates.ts constants)
 
-## Detailed Changes
+All numbers come from `AESO_RATE_DTS_2026` and `FORTISALBERTA_RATE_65_2026`:
 
-### 1. New Component: `PowerModelCostProgression.tsx`
+| Component | Rate | Source |
+|-----------|------|--------|
+| Bulk Coincident Demand (12CP) | $11,131/MW/month | AUC Decision 30427-D01-2025 |
+| Bulk Metered Energy | $1.23/MWh | AESO Rate DTS 2026 |
+| Regional Billing Capacity | $2,936/MW/month | AESO Rate DTS 2026 |
+| Regional Metered Energy | $0.93/MWh | AESO Rate DTS 2026 |
+| POD Substation | $15,258/month | AESO Rate DTS 2026 |
+| POD Tiers | $5,022-$1,227/MW/month (tiered) | AESO Rate DTS 2026 |
+| Operating Reserve | 12.50% of pool price | AESO Rate DTS 2026 |
+| TCR | $0.265/MWh | AESO Rate DTS 2026 |
+| Voltage Control | $0.07/MWh | AESO Rate DTS 2026 |
+| System Support | $52/MW/month | AESO Rate DTS 2026 |
+| Rider F | $1.26/MWh | AESO Rate DTS 2026 |
+| Retailer Fee | $0.25/MWh | AESO Rate DTS 2026 |
+| Fortis Demand | $7.52/kW/month | FortisAlberta Rate 65 (July 2025) |
+| Fortis Distribution | 0.2704 cents/kWh | FortisAlberta Rate 65 (July 2025) |
+| GST | 5% | Federal |
 
-A table/card showing the cost buildup:
+## New Design: Scenario-Based Rate Table
+
+Replace the cumulative buildup with a **scenario comparison** showing how each program reduces the rate:
 
 ```
-| Component               | cents/kWh (CAD) | cents/kWh (USD) | Annual (CAD)  | Annual (USD)  |
-|------------------------|-----------------|-----------------|---------------|---------------|
-| Energy (Fixed $52/MWh) | 5.20            | 3.80            | $21.1M        | $15.4M        |
-| + Operating Reserve    | 5.85            | 4.27            | $23.7M        | $17.3M        |
-| + Transmission (DTS)   | 7.12            | 5.20            | $28.8M        | $21.1M        |
-| + Distribution (Fortis)| 8.21            | 5.99            | $33.2M        | $24.3M        |
-| + Riders & Fees        | 8.41            | 6.14            | $34.1M        | $24.9M        |
-| + GST (5%)             | 8.83            | 6.45            | $35.8M        | $26.1M        |
+| Scenario                          | cents/kWh (CAD) | cents/kWh (USD) | Annual (CAD)  | Annual (USD)  | Savings   |
+|----------------------------------|-----------------|-----------------|---------------|---------------|-----------|
+| Base All-in Rate (no optimization) | 7.40           | 5.43            | CA$30.0M      | US$22.0M      | --        |
+| With 12CP Avoidance              | 5.79           | 4.25            | CA$23.5M      | US$17.2M      | -CA$6.5M  |
+| With Price Curtailment           | 7.20           | 5.28            | CA$29.2M      | US$21.4M      | -CA$0.8M  |
+| With 12CP + Price Curtailment    | 5.59           | 4.10            | CA$22.7M      | US$16.6M      | -CA$7.3M  |
 ```
 
-Each row is cumulative so users can see exactly where the cost jumps happen. Color-coded bars show relative contribution.
+Each row is a complete all-in rate under that scenario, not a stacked component.
 
-### 2. Update `PowerModelSummaryCards.tsx`
+## Changes
 
-- Add USD values to every card (not just Total Annual Cost)
-- All-in Rate card: show both `8.83 CAD cents/kWh` and `6.45 USD cents/kWh`
-- Breakeven: show both CAD and USD
-- Net Margin: show both currencies
-- Curtailment Savings: show both currencies
-- Hosting Revenue: show both currencies
+### 1. Update Calculator (`usePowerModelCalculator.ts`)
 
-### 3. Update `PowerModelChargeBreakdown.tsx`
+Add a `totalBulkCoincidentDemand` field to `AnnualSummary` that shows what the 12CP demand charge WOULD be if NOT avoided:
 
-- Add a USD column next to the existing CAD cents/kWh column in the per-kWh breakdown table
-- USD conversion uses `annual.avgPerKwhUSD / annual.avgPerKwhCAD` ratio (which equals `params.cadUsdRate`)
+```typescript
+// Calculate the FULL 12CP charge (what you'd pay without avoidance)
+const fullBulkCoincidentDemand = cap * bulkCoincidentRate;
+```
 
-### 4. Pass `cadUsdRate` to Components
+This gets summed into annual totals so the progression component can compute the "base rate" scenario. Currently line 341 sets `bulkCoincidentDemand = 0` -- we keep that for the actual cost calculation (since the model assumes avoidance) but expose the full charge amount for comparison.
 
-The `PowerModelSummaryCards` and `PowerModelChargeBreakdown` components need access to `cadUsdRate` (currently only available in the calculator hook). Add it as a prop from the parent `PowerModelAnalyzer`.
+### 2. Restructure `PowerModelCostProgression.tsx`
+
+Replace the cumulative buildup table with scenario rows:
+
+- **Row 1 - "Base Rate (No Optimization)"**: Current all-in rate + full 12CP demand charge (the charge that would apply without avoidance). This is the "worst case" -- what you'd pay with no curtailment programs.
+- **Row 2 - "With 12CP Avoidance"**: Current all-in rate without the 12CP charge but before price curtailment savings. Shows the impact of participating in the 12CP program.
+- **Row 3 - "With Price Curtailment"**: Base rate minus price curtailment savings (but including 12CP charge). Shows the impact of price-based shutdowns alone.
+- **Row 4 - "With 12CP + Price Curtailment"**: The fully optimized rate. This is the current `totalAmountDue`.
+
+Each row shows: cents/kWh (CAD), cents/kWh (USD), Annual (CAD), Annual (USD), and a Savings column showing the delta from the base rate.
+
+### 3. Keep the Existing Per-kWh Breakdown (`PowerModelChargeBreakdown.tsx`)
+
+The granular per-kWh breakdown (Energy, OR, Fortis Demand, etc.) stays as-is below the scenario table -- it shows WHERE the money goes. The new scenario table shows HOW optimization reduces the total.
+
+### 4. Update AnnualSummary Type
+
+Add these fields:
+- `totalBulkCoincidentDemandFull`: The full 12CP charge that would apply without avoidance ($11,131/MW/month * capacity)
+- `totalPriceCurtailmentSavings`: The energy cost avoided by price-based shutdowns
 
 ## Files to Modify
 
-1. **`src/components/aeso/PowerModelCostProgression.tsx`** -- New component showing cumulative cost buildup table with dual currency
-2. **`src/components/aeso/PowerModelSummaryCards.tsx`** -- Add USD to all cards
-3. **`src/components/aeso/PowerModelChargeBreakdown.tsx`** -- Add USD column
-4. **`src/components/aeso/PowerModelAnalyzer.tsx`** -- Pass `cadUsdRate` prop to child components, integrate new progression component
+1. **`src/hooks/usePowerModelCalculator.ts`** -- Add `totalBulkCoincidentDemandFull` and `totalPriceCurtailmentSavings` to AnnualSummary; calculate full 12CP charge per month
+2. **`src/components/aeso/PowerModelCostProgression.tsx`** -- Replace cumulative buildup with scenario comparison table showing Base, With 12CP, With Price Curtailment, With Both
