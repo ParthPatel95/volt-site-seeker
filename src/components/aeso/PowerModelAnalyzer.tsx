@@ -15,6 +15,7 @@ import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, typ
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
+import { PowerModelCostProgression } from './PowerModelCostProgression';
 import { PowerModelCharts } from './PowerModelCharts';
 import { PowerModelRevenueAnalysis } from './PowerModelRevenueAnalysis';
 import { PowerModelSensitivity } from './PowerModelSensitivity';
@@ -299,8 +300,9 @@ export function PowerModelAnalyzer() {
       {/* Results */}
       {hourlyData.length > 0 && (
         <>
-          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} />
-          <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} />
+           <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
+          <PowerModelCostProgression annual={annual} cadUsdRate={params.cadUsdRate} fixedPriceCAD={params.fixedPriceCAD} />
+          <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
 
           {/* Analytics Tabs */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>

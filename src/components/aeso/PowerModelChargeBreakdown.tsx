@@ -12,6 +12,7 @@ interface Props {
   annual: AnnualSummary | null;
   targetUptime?: number;
   fixedPriceCAD?: number;
+  cadUsdRate?: number;
 }
 
 const fmt = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -27,7 +28,7 @@ function getUptimeBadgeStyle(uptime: number, target: number) {
   return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
 }
 
-export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, fixedPriceCAD = 0 }: Props) {
+export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, fixedPriceCAD = 0, cadUsdRate = 0.7334 }: Props) {
   if (!monthly.length) return null;
 
   const maxCost = Math.max(...monthly.map(m => m.totalAmountDue));
@@ -79,12 +80,14 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                       />
                     </div>
                     <span className="text-xs font-mono font-medium w-16 text-right tabular-nums">{row.cents.toFixed(2)}¢</span>
+                    <span className="text-xs font-mono text-muted-foreground w-16 text-right tabular-nums">{(row.cents * cadUsdRate).toFixed(2)}¢</span>
                   </div>
                 ))}
                 <div className="flex items-center gap-3 pt-2 border-t border-border">
                   <span className="text-xs font-semibold w-48 shrink-0">All-in Total</span>
                   <div className="flex-1" />
                   <span className="text-sm font-bold font-mono w-16 text-right tabular-nums">{totalCents.toFixed(2)}¢</span>
+                  <span className="text-xs font-mono font-semibold text-muted-foreground w-16 text-right tabular-nums">{(totalCents * cadUsdRate).toFixed(2)}¢</span>
                 </div>
               </div>
             </CardContent>

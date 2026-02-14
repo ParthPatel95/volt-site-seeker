@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
-import { Badge } from '@/components/ui/badge';
 
 interface Props {
   annual: AnnualSummary | null;
@@ -12,31 +11,31 @@ interface Props {
   totalShutdownSavings?: number;
   curtailmentSavings?: number;
   fixedPriceCAD?: number;
+  cadUsdRate?: number;
 }
 
-export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD }: Props) {
+export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD, cadUsdRate = 0.7334 }: Props) {
   if (!annual) return null;
 
   const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
   const netMargin = annualRevenue - annual.totalAmountDue;
   const marginPct = annualRevenue > 0 ? (netMargin / annualRevenue) * 100 : 0;
 
+  const usd = (cad: number) => cad * cadUsdRate;
+  const fmtM = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
+
   const cards = [
     {
       label: 'Total Annual Cost',
-      value: `CA$${(annual.totalAmountDue / 1_000_000).toFixed(2)}M`,
-      sub: `US$${((annual.totalAmountDue * annual.avgPerKwhUSD / (annual.avgPerKwhCAD || 1)) / 1_000_000).toFixed(2)}M`,
+      value: `CA${fmtM(annual.totalAmountDue)}`,
+      sub: `US${fmtM(usd(annual.totalAmountDue))}`,
       icon: DollarSign,
       color: 'from-primary to-primary/80',
     },
     {
       label: 'All-in Rate',
-      value: `${(annual.avgPerKwhCAD * 100).toFixed(2)}¢/kWh`,
-      sub: (() => {
-        const energyCents = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
-        const adderCents = (annual.avgPerKwhCAD * 100) - energyCents;
-        return `Energy: ${energyCents.toFixed(2)}¢ + Adders: ${adderCents.toFixed(2)}¢`;
-      })(),
+      value: `${(annual.avgPerKwhCAD * 100).toFixed(2)}¢/kWh CAD`,
+      sub: `${(annual.avgPerKwhCAD * 100 * cadUsdRate).toFixed(2)}¢/kWh USD`,
       icon: TrendingUp,
       color: 'from-blue-500 to-blue-600',
     },
@@ -57,36 +56,36 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
     {
       label: 'Breakeven Pool Price',
       value: `CA$${breakeven.toFixed(2)}/MWh`,
-      sub: `Avg running: CA$${annual.avgPoolPriceRunning.toFixed(2)}/MWh`,
+      sub: `US$${usd(breakeven).toFixed(2)}/MWh`,
       icon: BarChart3,
       color: 'from-purple-500 to-purple-600',
     },
     ...(totalShutdownHours !== undefined ? [{
       label: 'Curtailed Hours',
       value: `${totalShutdownHours.toLocaleString()}`,
-      sub: `Est. savings: $${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`,
+      sub: `Savings: CA$${((totalShutdownSavings || 0) / 1000).toFixed(0)}k / US$${(usd(totalShutdownSavings || 0) / 1000).toFixed(0)}k`,
       icon: PowerOff,
       color: 'from-red-500 to-red-600',
     }] : []),
     ...((fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? [{
       label: 'Curtailment Savings',
-      value: `CA$${(curtailmentSavings / 1_000).toFixed(0)}k`,
-      sub: `vs. fixed CA$${fixedPriceCAD}/MWh contract`,
+      value: `CA${fmtM(curtailmentSavings)}`,
+      sub: `US${fmtM(usd(curtailmentSavings))} vs fixed $${fixedPriceCAD}/MWh`,
       icon: PiggyBank,
       color: curtailmentSavings >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
     }] : []),
     ...(hostingRateCAD ? [
       {
         label: 'Annual Hosting Revenue',
-        value: `CA$${(annualRevenue / 1_000_000).toFixed(2)}M`,
-        sub: `${(hostingRateCAD * 100).toFixed(2)}¢/kWh × ${(annual.totalKWh / 1e6).toFixed(1)}M kWh`,
+        value: `CA${fmtM(annualRevenue)}`,
+        sub: `US${fmtM(usd(annualRevenue))}`,
         icon: Banknote,
         color: 'from-emerald-500 to-emerald-600',
       },
       {
         label: 'Net Margin',
-        value: `CA$${(netMargin / 1_000_000).toFixed(2)}M`,
-        sub: `${marginPct.toFixed(1)}% margin`,
+        value: `CA${fmtM(netMargin)}`,
+        sub: `US${fmtM(usd(netMargin))} · ${marginPct.toFixed(1)}%`,
         icon: PiggyBank,
         color: netMargin >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
       },
