@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { TrendingDown, Shield, Zap, ArrowDown } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -16,23 +17,62 @@ export function PowerModelCostProgression({ annual, cadUsdRate, fixedPriceCAD = 
   const kwh = annual.totalKWh;
   const isFixed = fixedPriceCAD > 0;
 
-  // Build cumulative cost layers
-  const energyCost = annual.totalPoolEnergy;
-  const orCost = annual.totalOperatingReserve;
-  const transmissionCost = annual.totalBulkMeteredEnergy + annual.totalRegionalBillingCapacity +
-    annual.totalRegionalMeteredEnergy + annual.totalPodCharges +
-    annual.totalTCR + annual.totalVoltageControl + annual.totalSystemSupport;
-  const distributionCost = annual.totalFortisDemand + annual.totalFortisDistribution;
-  const ridersCost = annual.totalRiderF + annual.totalRetailerFee;
-  const gstCost = annual.totalGST;
+  // Scenario costs (annual CAD)
+  const optimizedCost = annual.totalAmountDue; // Current: with 12CP avoidance + price curtailment
+  const full12CPCharge = annual.totalBulkCoincidentDemandFull;
+  const priceCurtailSavings = annual.totalPriceCurtailmentSavings;
 
-  const layers = [
-    { label: `Energy${isFixed ? ` (Fixed $${fixedPriceCAD}/MWh)` : ' (Avg Pool)'}`, cumulative: energyCost, badge: isFixed ? 'Fixed' : 'Floating' },
-    { label: '+ Operating Reserve (12.5%)', cumulative: energyCost + orCost },
-    { label: '+ Transmission (DTS)', cumulative: energyCost + orCost + transmissionCost },
-    { label: '+ Distribution (Fortis)', cumulative: energyCost + orCost + transmissionCost + distributionCost },
-    { label: '+ Riders & Fees', cumulative: energyCost + orCost + transmissionCost + distributionCost + ridersCost },
-    { label: '+ GST (5%)', cumulative: energyCost + orCost + transmissionCost + distributionCost + ridersCost + gstCost },
+  // Recalculate GST impact for added 12CP charge
+  const gstRate = annual.totalGST / annual.totalPreGST; // derive actual GST rate
+
+  // Base = optimized + full 12CP charge + price curtailment savings (what you'd pay with NO optimization)
+  const baseCostPreGST = annual.totalPreGST + full12CPCharge + priceCurtailSavings;
+  const baseCost = baseCostPreGST * (1 + gstRate);
+
+  // With 12CP only = base - 12CP charge (but still paying high-price hours)
+  const with12CPCostPreGST = baseCostPreGST - full12CPCharge;
+  const with12CPCost = with12CPCostPreGST * (1 + gstRate);
+
+  // With price curtailment only = base - price savings (but still paying full 12CP)
+  const withPriceCostPreGST = baseCostPreGST - priceCurtailSavings;
+  const withPriceCost = withPriceCostPreGST * (1 + gstRate);
+
+  // Fully optimized = current totalAmountDue
+  const fullyOptimizedCost = optimizedCost;
+
+  const scenarios = [
+    {
+      label: 'Base All-in Rate',
+      subtitle: 'No optimization programs',
+      cost: baseCost,
+      savings: 0,
+      icon: null,
+      highlight: false,
+    },
+    {
+      label: 'With 12CP Avoidance',
+      subtitle: 'Avoid monthly coincident peak hours',
+      cost: with12CPCost,
+      savings: baseCost - with12CPCost,
+      icon: <Shield className="h-3.5 w-3.5 text-blue-500" />,
+      highlight: false,
+    },
+    {
+      label: 'With Price Curtailment',
+      subtitle: isFixed ? 'Curtail during high pool price hours' : 'Curtail hours above breakeven',
+      cost: withPriceCost,
+      savings: baseCost - withPriceCost,
+      icon: <TrendingDown className="h-3.5 w-3.5 text-amber-500" />,
+      highlight: false,
+    },
+    {
+      label: '12CP + Price Curtailment',
+      subtitle: 'Both programs combined',
+      cost: fullyOptimizedCost,
+      savings: baseCost - fullyOptimizedCost,
+      icon: <Zap className="h-3.5 w-3.5 text-emerald-500" />,
+      highlight: true,
+    },
   ];
 
   const fmtCents = (dollars: number) => ((dollars / kwh) * 100).toFixed(2);
@@ -41,81 +81,117 @@ export function PowerModelCostProgression({ annual, cadUsdRate, fixedPriceCAD = 
     if (dollars >= 1_000) return `$${(dollars / 1_000).toFixed(0)}k`;
     return `$${dollars.toFixed(0)}`;
   };
+  const fmtSavings = (dollars: number) => {
+    if (dollars >= 1_000_000) return `-$${(dollars / 1_000_000).toFixed(2)}M`;
+    if (dollars >= 1_000) return `-$${(dollars / 1_000).toFixed(0)}k`;
+    return `-$${dollars.toFixed(0)}`;
+  };
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">Cost Progression — All-in Rate Buildup</CardTitle>
+          <CardTitle className="text-sm">Scenario Comparison — Rate 65 All-in Cost</CardTitle>
           <Badge variant={isFixed ? 'info' : 'success'} size="sm">
             {isFixed ? `Fixed @ $${fixedPriceCAD}/MWh` : 'Floating Pool Price'}
           </Badge>
         </div>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          How each optimization program reduces your effective rate (AESO Rate DTS + FortisAlberta Rate 65)
+        </p>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead>Component</TableHead>
+                <TableHead>Scenario</TableHead>
                 <TableHead className="text-right">¢/kWh (CAD)</TableHead>
                 <TableHead className="text-right">¢/kWh (USD)</TableHead>
                 <TableHead className="text-right">Annual (CAD)</TableHead>
                 <TableHead className="text-right">Annual (USD)</TableHead>
+                <TableHead className="text-right">Savings</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {layers.map((layer, i) => {
-                const centsCAD = parseFloat(fmtCents(layer.cumulative));
+              {scenarios.map((scenario) => {
+                const centsCAD = parseFloat(fmtCents(scenario.cost));
                 const centsUSD = parseFloat((centsCAD * cadUsdRate).toFixed(2));
-                const finalRow = i === layers.length - 1;
                 return (
-                  <TableRow key={layer.label} className={finalRow ? 'font-semibold bg-muted/20' : ''}>
+                  <TableRow
+                    key={scenario.label}
+                    className={scenario.highlight ? 'font-semibold bg-emerald-500/5' : ''}
+                  >
                     <TableCell className="text-xs">
                       <div className="flex items-center gap-2">
-                        {layer.label}
-                        {layer.badge && (
-                          <Badge variant={layer.badge === 'Fixed' ? 'info' : 'success'} size="sm" className="text-[10px]">
-                            {layer.badge}
-                          </Badge>
-                        )}
+                        {scenario.icon}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            {scenario.label}
+                            {scenario.highlight && (
+                              <Badge variant="success" size="sm" className="text-[10px]">Optimized</Badge>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-normal">{scenario.subtitle}</div>
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums font-mono text-xs">{fmtCents(layer.cumulative)}¢</TableCell>
-                    <TableCell className="text-right tabular-nums font-mono text-xs">{(centsCAD * cadUsdRate).toFixed(2)}¢</TableCell>
-                    <TableCell className="text-right tabular-nums text-xs">CA{fmtAnnual(layer.cumulative)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-xs">US{fmtAnnual(layer.cumulative * cadUsdRate)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-mono text-xs">
+                      {fmtCents(scenario.cost)}¢
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-mono text-xs">
+                      {(centsCAD * cadUsdRate).toFixed(2)}¢
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-xs">
+                      CA{fmtAnnual(scenario.cost)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-xs">
+                      US{fmtAnnual(scenario.cost * cadUsdRate)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {scenario.savings > 0 ? (
+                        <span className="text-emerald-600 flex items-center justify-end gap-0.5">
+                          <ArrowDown className="h-3 w-3" />
+                          {fmtSavings(scenario.savings)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
         </div>
-        {/* Visual progression bar */}
+        {/* Visual savings bar */}
         <div className="px-4 pb-3 pt-2">
-          <div className="flex h-3 rounded-full overflow-hidden bg-muted/30">
-            {(() => {
-              const total = layers[layers.length - 1].cumulative;
-              const segments = [
-                { value: energyCost, color: 'bg-primary' },
-                { value: orCost, color: 'bg-blue-500' },
-                { value: transmissionCost, color: 'bg-amber-500' },
-                { value: distributionCost, color: 'bg-orange-500' },
-                { value: ridersCost, color: 'bg-purple-500' },
-                { value: gstCost, color: 'bg-muted-foreground/50' },
-              ];
-              return segments.map((seg, i) => (
-                <div key={i} className={`${seg.color} h-full`} style={{ width: `${total > 0 ? (seg.value / total) * 100 : 0}%` }} />
-              ));
-            })()}
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1">
+            <span>Total savings from optimization:</span>
+            <span className="font-semibold text-emerald-600">
+              {fmtSavings(baseCost - fullyOptimizedCost)} CAD/yr
+              ({((1 - fullyOptimizedCost / baseCost) * 100).toFixed(1)}% reduction)
+            </span>
           </div>
-          <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-primary inline-block" />Energy</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500 inline-block" />OR</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-amber-500 inline-block" />Transmission</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" />Distribution</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-purple-500 inline-block" />Riders</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-muted-foreground/50 inline-block" />GST</span>
+          <div className="flex h-3 rounded-full overflow-hidden bg-muted/30">
+            <div
+              className="bg-emerald-500 h-full transition-all"
+              style={{ width: `${baseCost > 0 ? ((baseCost - fullyOptimizedCost) / baseCost) * 100 : 0}%` }}
+            />
+            <div
+              className="bg-muted-foreground/20 h-full"
+              style={{ width: `${baseCost > 0 ? (fullyOptimizedCost / baseCost) * 100 : 0}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" />
+              Savings ({((1 - fullyOptimizedCost / baseCost) * 100).toFixed(1)}%)
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-sm bg-muted-foreground/20 inline-block" />
+              Optimized Cost ({(fullyOptimizedCost / baseCost * 100).toFixed(1)}%)
+            </span>
           </div>
         </div>
       </CardContent>

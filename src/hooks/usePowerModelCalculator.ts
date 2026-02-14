@@ -119,6 +119,9 @@ export interface AnnualSummary {
   totalTCR: number;
   totalVoltageControl: number;
   totalSystemSupport: number;
+  // Scenario comparison fields
+  totalBulkCoincidentDemandFull: number; // Full 12CP charge WITHOUT avoidance
+  totalPriceCurtailmentSavings: number;  // Energy cost avoided by price-based shutdowns
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -415,6 +418,12 @@ export function usePowerModelCalculator(
       totalTCR: monthly.reduce((s, m) => s + m.tcr, 0),
       totalVoltageControl: monthly.reduce((s, m) => s + m.voltageControl, 0),
       totalSystemSupport: monthly.reduce((s, m) => s + m.systemSupport, 0),
+      // Full 12CP charge: what you'd pay WITHOUT avoidance ($11,131/MW/month × capacity × 12 months)
+      totalBulkCoincidentDemandFull: monthly.length * bulkCoincidentRate * cap,
+      // Price curtailment savings: energy cost avoided by shutting down during high-price hours
+      totalPriceCurtailmentSavings: allShutdownRecords
+        .filter(sr => sr.reason === 'Price' || sr.reason === '12CP+Price')
+        .reduce((s, sr) => s + sr.curtailmentSavings, 0),
     };
     if (annual.totalKWh > 0) {
       annual.avgPerKwhCAD = annual.totalAmountDue / annual.totalKWh;
