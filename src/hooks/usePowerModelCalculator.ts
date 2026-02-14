@@ -105,6 +105,20 @@ export interface AnnualSummary {
   avgPerKwhUSD: number;
   avgPoolPriceRunning: number;
   curtailmentSavings: number;
+  // Component-level totals for per-kWh breakdown
+  totalPoolEnergy: number;
+  totalOperatingReserve: number;
+  totalRetailerFee: number;
+  totalRiderF: number;
+  totalBulkMeteredEnergy: number;
+  totalRegionalBillingCapacity: number;
+  totalRegionalMeteredEnergy: number;
+  totalPodCharges: number;
+  totalFortisDemand: number;
+  totalFortisDistribution: number;
+  totalTCR: number;
+  totalVoltageControl: number;
+  totalSystemSupport: number;
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -237,11 +251,9 @@ export function usePowerModelCalculator(
         // === Step 2: Use remaining budget to curtail the highest energy price hours ===
         if (budgetRemaining > 0) {
           // Sort remaining hours by effective cost (highest first)
-          const priceCandidates = [...runningAfter12CP].sort((a, b) => {
-            const priceA = isFixedPrice ? params.fixedPriceCAD : a.poolPrice;
-            const priceB = isFixedPrice ? params.fixedPriceCAD : b.poolPrice;
-            return priceB - priceA;
-          });
+          // Always sort by pool price descending - even with fixed pricing,
+          // curtail highest pool-price hours for risk avoidance and reporting
+          const priceCandidates = [...runningAfter12CP].sort((a, b) => b.poolPrice - a.poolPrice);
 
           // For variable pricing, only curtail hours above breakeven
           // For fixed pricing, all hours cost the same so curtail the ones with highest pool price (for reporting)
@@ -389,6 +401,20 @@ export function usePowerModelCalculator(
       totalAmountDue: monthly.reduce((s, m) => s + m.totalAmountDue, 0),
       avgPerKwhCAD: 0, avgPerKwhUSD: 0, avgPoolPriceRunning: 0,
       curtailmentSavings: monthly.reduce((s, m) => s + m.curtailmentSavings, 0),
+      // Component-level totals
+      totalPoolEnergy: monthly.reduce((s, m) => s + m.poolEnergy, 0),
+      totalOperatingReserve: monthly.reduce((s, m) => s + m.operatingReserve, 0),
+      totalRetailerFee: monthly.reduce((s, m) => s + m.retailerFee, 0),
+      totalRiderF: monthly.reduce((s, m) => s + m.riderF, 0),
+      totalBulkMeteredEnergy: monthly.reduce((s, m) => s + m.bulkMeteredEnergy, 0),
+      totalRegionalBillingCapacity: monthly.reduce((s, m) => s + m.regionalBillingCapacity, 0),
+      totalRegionalMeteredEnergy: monthly.reduce((s, m) => s + m.regionalMeteredEnergy, 0),
+      totalPodCharges: monthly.reduce((s, m) => s + m.podSubstation + m.podTiered, 0),
+      totalFortisDemand: monthly.reduce((s, m) => s + m.fortisDemandCharge, 0),
+      totalFortisDistribution: monthly.reduce((s, m) => s + m.fortisDistribution, 0),
+      totalTCR: monthly.reduce((s, m) => s + m.tcr, 0),
+      totalVoltageControl: monthly.reduce((s, m) => s + m.voltageControl, 0),
+      totalSystemSupport: monthly.reduce((s, m) => s + m.systemSupport, 0),
     };
     if (annual.totalKWh > 0) {
       annual.avgPerKwhCAD = annual.totalAmountDue / annual.totalKWh;

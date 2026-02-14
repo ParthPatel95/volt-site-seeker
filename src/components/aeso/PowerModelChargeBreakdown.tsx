@@ -35,7 +35,62 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
 
   return (
     <div className="space-y-6">
-      {/* Downtime Budget Allocation */}
+      {/* Per-kWh Cost Breakdown */}
+      {annual && annual.totalKWh > 0 && (() => {
+        const kwh = annual.totalKWh;
+        const c = (v: number) => (v / kwh * 100); // to cents/kWh
+        const isFixed = fixedPriceCAD > 0;
+        const rows = [
+          { label: `Energy Price${isFixed ? ' (Fixed Contract)' : ' (Avg Pool)'}`, cents: c(annual.totalPoolEnergy), badge: isFixed ? 'Fixed' : 'Floating' },
+          { label: 'Operating Reserve (12.5%)', cents: c(annual.totalOperatingReserve) },
+          { label: 'FortisAlberta Demand', cents: c(annual.totalFortisDemand) },
+          { label: 'Regional Billing Capacity', cents: c(annual.totalRegionalBillingCapacity) },
+          { label: 'POD Charges (Sub + Tiered)', cents: c(annual.totalPodCharges) },
+          { label: 'Fortis Distribution', cents: c(annual.totalFortisDistribution) },
+          { label: 'Bulk Metered Energy', cents: c(annual.totalBulkMeteredEnergy) },
+          { label: 'Regional Metered Energy', cents: c(annual.totalRegionalMeteredEnergy) },
+          { label: 'Rider F', cents: c(annual.totalRiderF) },
+          { label: 'Retailer Fee', cents: c(annual.totalRetailerFee) },
+          { label: 'Other (TCR + Voltage + System)', cents: c(annual.totalTCR + annual.totalVoltageControl + annual.totalSystemSupport) },
+          { label: 'GST (5%)', cents: c(annual.totalGST) },
+        ];
+        const totalCents = annual.avgPerKwhCAD * 100;
+        const maxCents = Math.max(...rows.map(r => r.cents));
+
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">All-in Rate Breakdown (cents/kWh)</CardTitle>
+                <Badge variant={isFixed ? 'info' : 'success'} size="sm">
+                  {isFixed ? `Fixed @ $${fixedPriceCAD}/MWh` : 'Floating Pool Price'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1.5">
+                {rows.map(row => (
+                  <div key={row.label} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={row.label}>{row.label}</span>
+                    <div className="flex-1 h-4 rounded bg-muted/40 overflow-hidden">
+                      <div
+                        className={`h-full rounded transition-all ${row.label.startsWith('Energy') ? 'bg-primary' : 'bg-primary/40'}`}
+                        style={{ width: `${maxCents > 0 ? (row.cents / maxCents) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono font-medium w-16 text-right tabular-nums">{row.cents.toFixed(2)}¢</span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <span className="text-xs font-semibold w-48 shrink-0">All-in Total</span>
+                  <div className="flex-1" />
+                  <span className="text-sm font-bold font-mono w-16 text-right tabular-nums">{totalCents.toFixed(2)}¢</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
       {(() => {
         const totalBudgetHours = monthly.reduce((s, m) => s + Math.floor(m.totalHours * (1 - targetUptime / 100)), 0);
         const used12CP = monthly.reduce((s, m) => s + m.curtailed12CP + m.curtailedOverlap, 0);
