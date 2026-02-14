@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   annual: AnnualSummary | null;
@@ -31,7 +32,11 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
     {
       label: 'All-in Rate',
       value: `${(annual.avgPerKwhCAD * 100).toFixed(2)}¢/kWh`,
-      sub: `CA$${(annual.avgPerKwhCAD * 1000).toFixed(2)}/MWh`,
+      sub: (() => {
+        const energyCents = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
+        const adderCents = (annual.avgPerKwhCAD * 100) - energyCents;
+        return `Energy: ${energyCents.toFixed(2)}¢ + Adders: ${adderCents.toFixed(2)}¢`;
+      })(),
       icon: TrendingUp,
       color: 'from-blue-500 to-blue-600',
     },

@@ -202,9 +202,42 @@ export function PowerModelAnalyzer() {
               <Input type="number" step="0.0001" value={params.cadUsdRate} onChange={e => updateParam('cadUsdRate', e.target.value)} className="h-8 text-sm" />
             </div>
             <div>
-              <Label className="text-xs">Fixed Contract Price (CAD/MWh)</Label>
-              <Input type="number" step="1" value={params.fixedPriceCAD} onChange={e => updateParam('fixedPriceCAD', e.target.value)} className="h-8 text-sm" />
-              <p className="text-xs text-muted-foreground mt-1">Set to calculate curtailment savings vs. contract rate</p>
+              <Label className="text-xs">Energy Pricing Mode</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setParams(p => ({ ...p, fixedPriceCAD: 0 }))}
+                  className={`flex-1 h-8 rounded-md text-xs font-medium border transition-colors ${
+                    params.fixedPriceCAD === 0
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/50'
+                      : 'bg-background text-muted-foreground border-border hover:bg-secondary'
+                  }`}
+                >
+                  Floating (Pool)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setParams(p => ({ ...p, fixedPriceCAD: p.fixedPriceCAD || 52 }))}
+                  className={`flex-1 h-8 rounded-md text-xs font-medium border transition-colors ${
+                    params.fixedPriceCAD > 0
+                      ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/50'
+                      : 'bg-background text-muted-foreground border-border hover:bg-secondary'
+                  }`}
+                >
+                  Fixed Contract
+                </button>
+              </div>
+              {params.fixedPriceCAD > 0 && (
+                <div className="mt-2">
+                  <Label className="text-xs">Fixed Price (CAD/MWh)</Label>
+                  <Input type="number" step="1" value={params.fixedPriceCAD} onChange={e => updateParam('fixedPriceCAD', e.target.value)} className="h-8 text-sm" />
+                </div>
+              )}
+              <div className="mt-1.5">
+                <Badge variant={params.fixedPriceCAD > 0 ? 'info' : 'success'} size="sm">
+                  {params.fixedPriceCAD > 0 ? `Fixed @ $${params.fixedPriceCAD}/MWh` : 'Floating Pool Price'}
+                </Badge>
+              </div>
             </div>
             <div className="pt-2 border-t border-border/50">
               <p className="text-xs text-muted-foreground">Breakeven Pool Price</p>
