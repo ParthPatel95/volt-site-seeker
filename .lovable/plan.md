@@ -1,75 +1,63 @@
 
+# Enhance Power Model Summary Cards: Analytical Cost Progression + Dual Currency
 
-# Add Energy Pricing Mode Toggle and Per-kWh Charge Breakdown
+## What Changes
 
-## Overview
+Replace the current flat grid of summary cards with a structured, analytical layout that shows:
 
-Replace the current "Fixed Contract Price" number input with an explicit **Fixed / Floating toggle**, and add a detailed per-kWh charge breakdown card so users can see exactly what sits on top of the base energy price.
+1. **Cost Progression Table** -- How the all-in rate builds up step by step:
+   - **Base Energy Rate**: The raw energy cost (fixed contract or avg pool price) in cents/kWh
+   - **+ Operating Reserve (12.5%)**: Energy + OR surcharge
+   - **+ Transmission (DTS)**: Adding bulk metered, regional, POD, TCR, voltage, system support
+   - **+ Distribution (Fortis)**: Adding demand charge + volumetric delivery
+   - **+ Riders and Fees**: Rider F, retailer fee
+   - **+ GST (5%)**: Final all-in rate
+   - Each row shows CAD and USD side by side
 
-## Changes
+2. **12CP Impact Column** -- Show the rate "as-is" (no curtailment) vs. "with 12CP avoidance" to quantify the savings from avoiding peak demand charges
 
-### 1. Add Pricing Mode Toggle (UI) -- `PowerModelAnalyzer.tsx`
+3. **Dual Currency Throughout** -- Every dollar value and cents/kWh rate shown in both CAD and USD using the existing `cadUsdRate` parameter
 
-Replace the current fixed price input (lines 204-208) with:
-- A **radio group or select** with two options: "Floating (Pool Price)" and "Fixed Contract"
-- When "Fixed Contract" is selected, show the price input field for entering the rate (e.g., $52/MWh)
-- When "Floating" is selected, hide the price input and set `fixedPriceCAD` to 0
-- Add a clear label/badge showing which mode is active (e.g., green "Floating" or blue "Fixed @ $52/MWh")
+## Detailed Changes
 
-### 2. Fix Curtailment Sorting Bug -- `usePowerModelCalculator.ts`
+### 1. New Component: `PowerModelCostProgression.tsx`
 
-**Current bug (lines 240-243):** In fixed-price mode, the sort compares `fixedPriceCAD` vs `fixedPriceCAD` for every hour -- they're all equal, so the sort is meaningless and curtails random hours.
+A table/card showing the cost buildup:
 
-**Fix:** When in fixed-price mode, sort remaining hours by **pool price descending**. This way the facility curtails during the highest pool-price hours. Even though the facility pays the fixed rate regardless, this is the correct optimization because:
-- It avoids running during the most volatile/risky hours
-- It provides meaningful reporting on pool exposure avoided
-
-```typescript
-const priceCandidates = [...runningAfter12CP].sort((a, b) => {
-  return b.poolPrice - a.poolPrice; // Always sort by pool price
-});
+```
+| Component               | cents/kWh (CAD) | cents/kWh (USD) | Annual (CAD)  | Annual (USD)  |
+|------------------------|-----------------|-----------------|---------------|---------------|
+| Energy (Fixed $52/MWh) | 5.20            | 3.80            | $21.1M        | $15.4M        |
+| + Operating Reserve    | 5.85            | 4.27            | $23.7M        | $17.3M        |
+| + Transmission (DTS)   | 7.12            | 5.20            | $28.8M        | $21.1M        |
+| + Distribution (Fortis)| 8.21            | 5.99            | $33.2M        | $24.3M        |
+| + Riders & Fees        | 8.41            | 6.14            | $34.1M        | $24.9M        |
+| + GST (5%)             | 8.83            | 6.45            | $35.8M        | $26.1M        |
 ```
 
-### 3. Add Per-kWh Charge Breakdown Card -- New `PowerModelChargeBreakdown.tsx`
+Each row is cumulative so users can see exactly where the cost jumps happen. Color-coded bars show relative contribution.
 
-Create a new component that displays each cost component as cents/kWh, calculated from the annual totals:
+### 2. Update `PowerModelSummaryCards.tsx`
 
-| Component | cents/kWh |
-|-----------|-----------|
-| Energy Price (Fixed or Avg Pool) | X.XX |
-| Operating Reserve (12.5%) | X.XX |
-| FortisAlberta Demand | X.XX |
-| Regional Billing Capacity | X.XX |
-| POD Charges (Substation + Tiered) | X.XX |
-| Fortis Distribution | X.XX |
-| Bulk Metered Energy | X.XX |
-| Regional Metered Energy | X.XX |
-| Rider F | X.XX |
-| Retailer Fee | X.XX |
-| Other (TCR + Voltage + System Support) | X.XX |
-| GST (5%) | X.XX |
-| **All-in Total** | **X.XX** |
+- Add USD values to every card (not just Total Annual Cost)
+- All-in Rate card: show both `8.83 CAD cents/kWh` and `6.45 USD cents/kWh`
+- Breakeven: show both CAD and USD
+- Net Margin: show both currencies
+- Curtailment Savings: show both currencies
+- Hosting Revenue: show both currencies
 
-Each row includes a proportional bar showing relative contribution. The energy line will show "Fixed Contract" or "Avg Pool" badge.
+### 3. Update `PowerModelChargeBreakdown.tsx`
 
-### 4. Expose Component-Level Totals in AnnualSummary -- `usePowerModelCalculator.ts`
+- Add a USD column next to the existing CAD cents/kWh column in the per-kWh breakdown table
+- USD conversion uses `annual.avgPerKwhUSD / annual.avgPerKwhCAD` ratio (which equals `params.cadUsdRate`)
 
-Add these fields to `AnnualSummary` so the breakdown card can display them:
-- `totalPoolEnergy`, `totalOperatingReserve`, `totalRetailerFee`, `totalRiderF`
-- `totalBulkMeteredEnergy`, `totalRegionalBillingCapacity`, `totalRegionalMeteredEnergy`
-- `totalPodCharges`, `totalFortisDemand`, `totalFortisDistribution`
-- `totalTCR`, `totalVoltageControl`, `totalSystemSupport`
+### 4. Pass `cadUsdRate` to Components
 
-These are already computed per-month; just sum them into the annual object.
-
-### 5. Update Summary Cards Sub-text -- `PowerModelSummaryCards.tsx`
-
-Update the "All-in Rate" card to show: `Energy: X.XX cents + Adders: X.XX cents` so the split is immediately visible.
+The `PowerModelSummaryCards` and `PowerModelChargeBreakdown` components need access to `cadUsdRate` (currently only available in the calculator hook). Add it as a prop from the parent `PowerModelAnalyzer`.
 
 ## Files to Modify
 
-1. **`src/hooks/usePowerModelCalculator.ts`** -- Fix sort bug, add component totals to AnnualSummary
-2. **`src/components/aeso/PowerModelAnalyzer.tsx`** -- Add Fixed/Floating toggle UI, integrate breakdown card
-3. **`src/components/aeso/PowerModelChargeBreakdown.tsx`** -- New component for per-kWh waterfall breakdown
-4. **`src/components/aeso/PowerModelSummaryCards.tsx`** -- Update All-in Rate sub-text
-
+1. **`src/components/aeso/PowerModelCostProgression.tsx`** -- New component showing cumulative cost buildup table with dual currency
+2. **`src/components/aeso/PowerModelSummaryCards.tsx`** -- Add USD to all cards
+3. **`src/components/aeso/PowerModelChargeBreakdown.tsx`** -- Add USD column
+4. **`src/components/aeso/PowerModelAnalyzer.tsx`** -- Pass `cadUsdRate` prop to child components, integrate new progression component
