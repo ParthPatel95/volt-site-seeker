@@ -1,80 +1,75 @@
 
 
-# Fix Energy Cost Calculation with Fixed Price Contract
+# Add Energy Pricing Mode Toggle and Per-kWh Charge Breakdown
 
-## Problem
+## Overview
 
-When a fixed energy price is set (e.g., $52/MWh), the model still uses actual pool prices ($60-100+/MWh) to calculate energy costs, resulting in a 7c+/kWh rate. A fixed-price contract means the facility pays the contract rate, not the pool rate -- so energy cost should be capped at the fixed price.
+Replace the current "Fixed Contract Price" number input with an explicit **Fixed / Floating toggle**, and add a detailed per-kWh charge breakdown card so users can see exactly what sits on top of the base energy price.
 
-Additionally, with a fixed energy price, price-based curtailment is pointless (you pay $52/MWh regardless of pool price), so the entire downtime budget should go to 12CP avoidance.
+## Changes
 
-## Current Bug (Line 300 in `usePowerModelCalculator.ts`)
+### 1. Add Pricing Mode Toggle (UI) -- `PowerModelAnalyzer.tsx`
 
-```
-poolEnergyTotal += rec.poolPrice * mwh;  // WRONG when fixed price is set
-```
+Replace the current fixed price input (lines 204-208) with:
+- A **radio group or select** with two options: "Floating (Pool Price)" and "Fixed Contract"
+- When "Fixed Contract" is selected, show the price input field for entering the rate (e.g., $52/MWh)
+- When "Floating" is selected, hide the price input and set `fixedPriceCAD` to 0
+- Add a clear label/badge showing which mode is active (e.g., green "Floating" or blue "Fixed @ $52/MWh")
 
-This always uses the actual pool price. With a $52/MWh contract and 45MW running 700+ hours/month, this should be $52 x 45 = $2,340/hour, not $80+ x 45 = $3,600+/hour.
+### 2. Fix Curtailment Sorting Bug -- `usePowerModelCalculator.ts`
 
-## Changes to `src/hooks/usePowerModelCalculator.ts`
+**Current bug (lines 240-243):** In fixed-price mode, the sort compares `fixedPriceCAD` vs `fixedPriceCAD` for every hour -- they're all equal, so the sort is meaningless and curtails random hours.
 
-### 1. Fix Pool Energy Calculation (Critical)
-
-When `fixedPriceCAD > 0`, use the fixed price instead of pool price for the energy cost:
+**Fix:** When in fixed-price mode, sort remaining hours by **pool price descending**. This way the facility curtails during the highest pool-price hours. Even though the facility pays the fixed rate regardless, this is the correct optimization because:
+- It avoids running during the most volatile/risky hours
+- It provides meaningful reporting on pool exposure avoided
 
 ```typescript
-// Line 300 area - change to:
-const effectivePrice = params.fixedPriceCAD > 0 ? params.fixedPriceCAD : rec.poolPrice;
-poolEnergyTotal += effectivePrice * mwh;
+const priceCandidates = [...runningAfter12CP].sort((a, b) => {
+  return b.poolPrice - a.poolPrice; // Always sort by pool price
+});
 ```
 
-This directly caps the energy component at $52/MWh (or whatever the user sets).
+### 3. Add Per-kWh Charge Breakdown Card -- New `PowerModelChargeBreakdown.tsx`
 
-### 2. Fix Operating Reserve Calculation
+Create a new component that displays each cost component as cents/kWh, calculated from the annual totals:
 
-Operating reserve (12.5% surcharge) should also be based on the effective price, not the raw pool price. With a fixed contract at $52/MWh, OR = 12.5% x $52 = $6.50/MWh, not 12.5% x $80+ = $10+/MWh.
+| Component | cents/kWh |
+|-----------|-----------|
+| Energy Price (Fixed or Avg Pool) | X.XX |
+| Operating Reserve (12.5%) | X.XX |
+| FortisAlberta Demand | X.XX |
+| Regional Billing Capacity | X.XX |
+| POD Charges (Substation + Tiered) | X.XX |
+| Fortis Distribution | X.XX |
+| Bulk Metered Energy | X.XX |
+| Regional Metered Energy | X.XX |
+| Rider F | X.XX |
+| Retailer Fee | X.XX |
+| Other (TCR + Voltage + System Support) | X.XX |
+| GST (5%) | X.XX |
+| **All-in Total** | **X.XX** |
 
-### 3. Fix Curtailment Logic for Fixed Price Mode
+Each row includes a proportional bar showing relative contribution. The energy line will show "Fixed Contract" or "Avg Pool" badge.
 
-When `fixedPriceCAD > 0`, price-based curtailment saves nothing (you pay $52 whether pool is $200 or $30). The downtime budget should go 100% to 12CP avoidance:
+### 4. Expose Component-Level Totals in AnnualSummary -- `usePowerModelCalculator.ts`
 
-- Skip the price-curtailment step entirely
-- Allocate all `maxDowntimeHours` to 12CP avoidance
-- The `cost-optimized` strategy becomes equivalent to `12cp-priority` (since price spikes don't cost extra)
+Add these fields to `AnnualSummary` so the breakdown card can display them:
+- `totalPoolEnergy`, `totalOperatingReserve`, `totalRetailerFee`, `totalRiderF`
+- `totalBulkMeteredEnergy`, `totalRegionalBillingCapacity`, `totalRegionalMeteredEnergy`
+- `totalPodCharges`, `totalFortisDemand`, `totalFortisDistribution`
+- `totalTCR`, `totalVoltageControl`, `totalSystemSupport`
 
-### 4. Fix Breakeven Calculation
+These are already computed per-month; just sum them into the annual object.
 
-With a fixed price, the "breakeven pool price" concept changes. The breakeven becomes: the fixed price minus marginal costs, which is a static value. Update the breakeven display to show the effective rate rather than a meaningless pool-price breakeven.
+### 5. Update Summary Cards Sub-text -- `PowerModelSummaryCards.tsx`
 
-### 5. Fix Curtailment Savings Calculation  
-
-The existing savings formula `(poolPrice - fixedPrice) * cap` is correct conceptually -- it shows what the facility would have paid at pool vs. what they actually pay. But since the facility pays $0 during curtailed hours (not running), the savings should be: `fixedPrice * cap` (the cost avoided by not running) if the purpose is "money saved by shutting down", or kept as-is if the purpose is "pool exposure avoided."
-
-The correct interpretation: during curtailment, the facility avoids paying the fixed contract price. So curtailment savings = `fixedPriceCAD * cap` per curtailed hour (you don't consume, so you don't pay).
-
-## Math Verification (45MW, $52/MWh fixed, 95% uptime)
-
-**Energy cost per running hour:** $52 x 45MW = $2,340/hr
-
-**Monthly (730 hrs, 95% = 693 running):**
-- Pool Energy: 693 x $2,340 = $1,619,820
-- Operating Reserve (12.5%): $202,478
-- Bulk Metered Energy ($1.23/MWh): 693 x 45 x $1.23 = $38,360
-- Regional Metered Energy ($0.93/MWh): 693 x 45 x $0.93 = $29,014
-- All other DTS/Fortis charges: ~$750k fixed
-- Total monthly: ~$2.6M
-- Per kWh: ~$2.6M / (693 x 45,000 kWh) = ~8.3c/kWh
-
-At $52/MWh the energy component alone is 5.2c/kWh. With transmission, distribution, and DTS charges added, the all-in rate will be higher than 5.2c but significantly lower than the current 7c+ because the pool price spikes are eliminated.
-
-## Expected Result
-
-With $52/MWh fixed price:
-- Energy component: ~5.2c/kWh (down from 6-8c variable)
-- All-in rate: ~6-7c/kWh (down from 7c+) depending on demand charges
-- All downtime hours focused on 12CP avoidance for maximum transmission savings
+Update the "All-in Rate" card to show: `Energy: X.XX cents + Adders: X.XX cents` so the split is immediately visible.
 
 ## Files to Modify
 
-1. `src/hooks/usePowerModelCalculator.ts` -- Fix energy cost calc, curtailment logic, and breakeven for fixed price mode
+1. **`src/hooks/usePowerModelCalculator.ts`** -- Fix sort bug, add component totals to AnnualSummary
+2. **`src/components/aeso/PowerModelAnalyzer.tsx`** -- Add Fixed/Floating toggle UI, integrate breakdown card
+3. **`src/components/aeso/PowerModelChargeBreakdown.tsx`** -- New component for per-kWh waterfall breakdown
+4. **`src/components/aeso/PowerModelSummaryCards.tsx`** -- Update All-in Rate sub-text
 
