@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface BackfillRequest {
-  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate';
+  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate' | 'smp';
   startYear?: number;
   endYear?: number;
   batchMonths?: number;
@@ -68,6 +68,9 @@ serve(async (req) => {
         break;
       case 'interpolate':
         result = await interpolateMissingDemand(supabase);
+        break;
+      case 'smp':
+        result = await backfillSMP(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
         break;
       case 'all':
         // Run all phases in sequence for this batch (prices, weather, demand only - no fake generation)
@@ -665,6 +668,113 @@ async function backfillDemand(supabase: any, aesoKey: string | undefined, startY
 // The CSD API only provides current-hour snapshots, not historical data.
 // Generation data is only collected in real-time starting Nov 2025.
 // We do NOT estimate or fake historical generation data - investor credibility requires real data only.
+
+async function backfillSMP(supabase: any, aesoKey: string | undefined, startYear: number, endYear: number, batchMonths: number, offsetMonths: number) {
+  if (!aesoKey) {
+    return { success: false, error: 'AESO API key not configured', recordsUpdated: 0, isComplete: true };
+  }
+
+  let recordsUpdated = 0;
+  const errors: string[] = [];
+
+  const { data: missingRecords } = await supabase
+    .from('aeso_training_data')
+    .select('id, timestamp, pool_price')
+    .is('system_marginal_price', null)
+    .order('timestamp', { ascending: true })
+    .limit(1000);
+
+  if (!missingRecords || missingRecords.length === 0) {
+    return { success: true, phase: 'smp', recordsUpdated: 0, isComplete: true, remainingRecords: 0 };
+  }
+
+  const monthGroups: Record<string, string[]> = {};
+  for (const record of missingRecords) {
+    const month = record.timestamp.slice(0, 7);
+    if (!monthGroups[month]) monthGroups[month] = [];
+    monthGroups[month].push(record.id);
+  }
+
+  const months = Object.keys(monthGroups).sort();
+  const monthsToProcess = months.slice(0, batchMonths);
+  console.log(`Processing SMP for ${monthsToProcess.length} months`);
+
+  for (const month of monthsToProcess) {
+    const [yearStr, monthStr] = month.split('-');
+    const year = parseInt(yearStr);
+    const monthNum = parseInt(monthStr);
+    const startDate = `${year}-${monthStr}-01`;
+    const endDate = new Date(year, monthNum, 0).toISOString().split('T')[0];
+
+    try {
+      const url = `https://api.aeso.ca/report/v1/smp?startDate=${startDate}&endDate=${endDate}`;
+      const response = await fetch(url, {
+        headers: { 'X-API-Key': aesoKey, 'Ocp-Apim-Subscription-Key': aesoKey },
+        signal: AbortSignal.timeout(20000),
+      });
+
+      if (!response.ok) { errors.push(`SMP API error for ${month}: ${response.status}`); continue; }
+
+      const data = await response.json();
+      const smpRecords = data?.return?.['System Marginal Price Report'] || [];
+      if (smpRecords.length === 0) { console.log(`No SMP data for ${month}`); continue; }
+
+      const smpByTimestamp: Record<string, number> = {};
+      for (const rec of smpRecords) {
+        const ts = rec.begin_datetime_utc;
+        const smp = parseFloat(rec.system_marginal_price);
+        if (ts && !isNaN(smp)) {
+          try { smpByTimestamp[new Date(ts).toISOString().slice(0, 19)] = smp; }
+          catch { smpByTimestamp[ts] = smp; }
+        }
+      }
+
+      const { data: recordsForMonth } = await supabase
+        .from('aeso_training_data')
+        .select('id, timestamp, pool_price')
+        .gte('timestamp', startDate)
+        .lte('timestamp', `${endDate}T23:59:59`)
+        .is('system_marginal_price', null)
+        .limit(800);
+
+      if (!recordsForMonth || recordsForMonth.length === 0) continue;
+
+      for (let i = 0; i < recordsForMonth.length; i += 50) {
+        const batch = recordsForMonth.slice(i, i + 50);
+        const promises = batch.map((record: any) => {
+          let smp: number | undefined;
+          try { smp = smpByTimestamp[new Date(record.timestamp).toISOString().slice(0, 19)]; }
+          catch { smp = smpByTimestamp[record.timestamp]; }
+          if (smp === undefined) return Promise.resolve({ error: null });
+          return supabase.from('aeso_training_data').update({
+            system_marginal_price: smp,
+            smp_pool_price_spread: record.pool_price ? smp - record.pool_price : null,
+          }).eq('id', record.id);
+        });
+        const results = await Promise.all(promises);
+        recordsUpdated += results.filter((r: any) => !r.error).length;
+      }
+
+      console.log(`Updated SMP for ${month}`);
+      await new Promise(r => setTimeout(r, 200));
+    } catch (error: any) {
+      errors.push(`SMP error for ${month}: ${error.message}`);
+    }
+  }
+
+  const { count: remainingCount } = await supabase
+    .from('aeso_training_data')
+    .select('*', { count: 'exact', head: true })
+    .is('system_marginal_price', null);
+
+  return {
+    success: true, phase: 'smp', recordsUpdated,
+    monthsProcessed: monthsToProcess.length,
+    isComplete: !remainingCount || remainingCount === 0,
+    remainingRecords: remainingCount || 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
 
 function calculateSolarIrradiance(cloudCover: number, hour: number): number {
   const maxIrradiance = 1000;
