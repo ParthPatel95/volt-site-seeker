@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
       trainingRecordsUpdated: totalUpdated,
       remaining: remaining ?? 0,
       totalDailyPrices: Object.keys(dailyPrices).length,
-      method: allPrices.length > 100 ? 'EIA_API' : 'historical_averages',
+      method: allPrices.length > 100 ? 'EIA_API' : 'flat_monthly_estimates',
       message: remaining && remaining > 0
         ? `Call again to process remaining ${remaining} records`
         : 'All records updated',
@@ -207,10 +207,10 @@ function generateHistoricalHenryHub(startDate: string, endDate: string): Array<{
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const basePrice = monthlyAverages[monthKey] || 2.50;
-    const variation = 1 + (Math.sin(d.getTime() / 86400000 * 0.1) * 0.05);
+    // Use flat monthly average — no synthetic variation
     results.push({
       date: d.toISOString().split('T')[0],
-      henryHub: Math.round(basePrice * variation * 100) / 100
+      henryHub: basePrice
     });
   }
 
