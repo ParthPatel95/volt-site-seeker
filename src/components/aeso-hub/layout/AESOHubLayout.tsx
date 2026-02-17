@@ -5,17 +5,12 @@ import { cn } from '@/lib/utils';
 import { AESOHubSidebar, AESOHubView } from './AESOHubSidebar';
 
 const VIEW_LABELS: Record<AESOHubView, string> = {
-  market: 'Market Data',
+  market: 'Market Overview',
   'power-model': 'Power Model',
-  generation: 'Generation',
-  forecast: 'Forecasts',
   predictions: 'AI Predictions',
   datacenter: 'Datacenter Control',
-  'outages-alerts': 'Outages & Alerts',
-  historical: 'Historical',
-  'analytics-export': 'Analytics Export',
-  'custom-dashboards': 'Dashboards',
-  'telegram-alerts': 'Telegram Alerts',
+  analytics: 'Analytics',
+  settings: 'Settings',
 };
 
 interface AESOHubLayoutProps {

@@ -2,9 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Zap, Calculator, Brain, Server, Calendar, FileSpreadsheet,
-  Activity, Wind, AlertTriangle, Target, MessageSquare,
-  ChevronLeft, ChevronRight, ArrowLeft, MapPin,
+  Zap, Calculator, Brain, Server,
+  BarChart3, Settings, ChevronLeft, ChevronRight, ArrowLeft, MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from '@/components/voltbuild/layout/VoltBuildNavItem';
@@ -15,15 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export type AESOHubView =
   | 'market'
   | 'power-model'
-  | 'generation'
-  | 'forecast'
   | 'predictions'
   | 'datacenter'
-  | 'outages-alerts'
-  | 'historical'
-  | 'analytics-export'
-  | 'custom-dashboards'
-  | 'telegram-alerts';
+  | 'analytics'
+  | 'settings';
 
 interface NavGroup {
   label: string;
@@ -38,10 +32,8 @@ const navGroups: NavGroup[] = [
   {
     label: 'Market',
     items: [
-      { id: 'market', label: 'Market Data', icon: Zap },
+      { id: 'market', label: 'Market Overview', icon: Zap },
       { id: 'power-model', label: 'Power Model', icon: Calculator },
-      { id: 'generation', label: 'Generation', icon: Activity },
-      { id: 'forecast', label: 'Forecasts', icon: Wind },
     ],
   },
   {
@@ -49,16 +41,13 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'predictions', label: 'AI Predictions', icon: Brain },
       { id: 'datacenter', label: 'Datacenter Control', icon: Server },
-      { id: 'outages-alerts', label: 'Outages & Alerts', icon: AlertTriangle },
     ],
   },
   {
     label: 'Analytics',
     items: [
-      { id: 'historical', label: 'Historical', icon: Calendar },
-      { id: 'analytics-export', label: 'Analytics Export', icon: FileSpreadsheet },
-      { id: 'custom-dashboards', label: 'Dashboards', icon: Target },
-      { id: 'telegram-alerts', label: 'Telegram Alerts', icon: MessageSquare },
+      { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+      { id: 'settings', label: 'Settings', icon: Settings },
     ],
   },
 ];

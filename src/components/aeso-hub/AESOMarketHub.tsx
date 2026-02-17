@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
 import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 import { useAESOEnhancedData } from '@/hooks/useAESOEnhancedData';
 import { useAESOMarketData } from '@/hooks/useAESOMarketData';
-import { useAESOPricePrediction } from '@/hooks/useAESOPricePrediction';
-import { useAESOCrossValidation } from '@/hooks/useAESOCrossValidation';
 import { useAESOEnsemble } from '@/hooks/useAESOEnsemble';
 import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
@@ -15,15 +11,10 @@ import type { AESOHubView } from './layout/AESOHubLayout';
 // Tab components
 import { MarketDataTab } from './tabs/MarketDataTab';
 import { PowerModelTab } from './tabs/PowerModelTab';
-import { TelegramAlertsTab } from './tabs/TelegramAlertsTab';
 import { PredictionsTab } from './tabs/PredictionsTab';
 import { DatacenterTab } from './tabs/DatacenterTab';
-import { HistoricalTab } from './tabs/HistoricalTab';
-import { AnalyticsExportTab } from './tabs/AnalyticsExportTab';
-import { GenerationTab } from './tabs/GenerationTab';
-import { ForecastTab } from './tabs/ForecastTab';
-import { OutagesAlertsTab } from './tabs/OutagesAlertsTab';
-import { CustomDashboardsTab } from './tabs/CustomDashboardsTab';
+import { AnalyticsTab } from './tabs/AnalyticsTab';
+import { SettingsTab } from './tabs/SettingsTab';
 
 export function AESOMarketHub() {
   const [activeTab, setActiveTab] = React.useState<AESOHubView>('market');
@@ -44,8 +35,6 @@ export function AESOMarketHub() {
     loading: marketLoading, refetch: refetchMarket
   } = useAESOMarketData();
 
-  const { runCompletePipeline, loading: pipelineLoading } = useAESOPricePrediction();
-  const { runCrossValidation, loading: cvLoading, results: cvResults } = useAESOCrossValidation();
   const { generateEnsemblePredictions, loading: ensembleLoading, predictions: ensemblePredictions } = useAESOEnsemble();
   const { exchangeRate, convertToUSD } = useExchangeRate();
   const { rules: datacenterRules } = useDatacenterAutomation();
@@ -104,8 +93,6 @@ export function AESOMarketHub() {
   return (
     <AESOHubLayout currentView={activeTab} onViewChange={setActiveTab}>
       <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-
-        {/* Tab Content */}
         {activeTab === 'market' && (
           <MarketDataTab
             pricing={pricing} loadData={loadData} generationMix={generationMix}
@@ -116,23 +103,16 @@ export function AESOMarketHub() {
             loading={loading} enhancedLoading={enhancedLoading}
             ensembleLoading={ensembleLoading} ensemblePredictions={ensemblePredictions || []}
             handleRefreshAll={handleRefreshAll} generateEnsemblePredictions={generateEnsemblePredictions}
-          />
-        )}
-        {activeTab === 'power-model' && <PowerModelTab />}
-        {activeTab === 'telegram-alerts' && <TelegramAlertsTab />}
-        {activeTab === 'predictions' && <PredictionsTab />}
-        {activeTab === 'datacenter' && <DatacenterTab currentPrice={currentPrice} />}
-        {activeTab === 'historical' && <HistoricalTab />}
-        {activeTab === 'analytics-export' && <AnalyticsExportTab />}
-        {activeTab === 'generation' && <GenerationTab generationMix={generationMix} />}
-        {activeTab === 'forecast' && <ForecastTab windSolarForecast={windSolarForecast} loading={enhancedLoading} />}
-        {activeTab === 'outages-alerts' && (
-          <OutagesAlertsTab
-            alerts={alerts} assetOutages={assetOutages} loading={enhancedLoading}
+            windSolarForecast={windSolarForecast}
+            alerts={alerts} assetOutages={assetOutages}
             onDismissAlert={dismissAlert} onClearAll={clearAllAlerts}
           />
         )}
-        {activeTab === 'custom-dashboards' && <CustomDashboardsTab />}
+        {activeTab === 'power-model' && <PowerModelTab />}
+        {activeTab === 'predictions' && <PredictionsTab />}
+        {activeTab === 'datacenter' && <DatacenterTab currentPrice={currentPrice} />}
+        {activeTab === 'analytics' && <AnalyticsTab />}
+        {activeTab === 'settings' && <SettingsTab />}
       </div>
     </AESOHubLayout>
   );
