@@ -13,17 +13,22 @@ export function AnalyticsTab() {
 
   return (
     <div className="space-y-6">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold text-foreground">Analytics</h2>
+        <p className="text-sm text-muted-foreground">Historical pricing, data exports, and custom dashboards</p>
+      </div>
+
       <AESOHistoricalPricing />
 
       <UnifiedAnalyticsExport />
 
-      <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
-        <div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg border border-border bg-card">
+        <div className="min-w-0">
           <h3 className="font-semibold text-foreground">Custom Dashboards</h3>
           <p className="text-sm text-muted-foreground">Create and manage drag-and-drop dashboards</p>
         </div>
-        <Link to="/app/aeso-dashboards">
-          <Button variant="outline" className="gap-2">
+        <Link to="/app/aeso-dashboards" className="flex-shrink-0 w-full sm:w-auto">
+          <Button variant="outline" className="gap-2 w-full sm:w-auto">
             <LayoutDashboard className="w-4 h-4" />
             Open Dashboards
           </Button>

@@ -30,7 +30,6 @@ export function PriceTicker({
   const [displayPrice, setDisplayPrice] = useState(currentPrice);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Animate price changes
   useEffect(() => {
     if (currentPrice !== displayPrice) {
       setIsAnimating(true);
@@ -41,20 +40,15 @@ export function PriceTicker({
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function
         const easeOut = 1 - Math.pow(1 - progress, 3);
         const newPrice = startPrice + (currentPrice - startPrice) * easeOut;
-        
         setDisplayPrice(newPrice);
-        
         if (progress < 1) {
           requestAnimationFrame(animate);
         } else {
           setIsAnimating(false);
         }
       };
-      
       requestAnimationFrame(animate);
     }
   }, [currentPrice]);
@@ -64,14 +58,10 @@ export function PriceTicker({
   const isPositive = change > 0;
   const isNeutral = change === 0;
 
-  // Last 24 hours sparkline data (using hourly data)
   const sparklineData = useMemo(() => {
     if (!data || data.length === 0) return [];
-    
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    // Filter to last 24 hours and sort by timestamp
     const filtered = data
       .filter(d => {
         const ts = d.timestamp || d.datetime;
@@ -85,8 +75,6 @@ export function PriceTicker({
         return tsA - tsB;
       })
       .map(d => ({ price: d.pool_price }));
-    
-    // Return last 24 points for a clean sparkline
     return filtered.slice(-24);
   }, [data]);
 
@@ -98,7 +86,6 @@ export function PriceTicker({
 
   const getTrendColor = () => {
     if (isNeutral) return 'text-muted-foreground';
-    // For energy markets: lower prices are good (green), higher prices are concerning (red)
     if (isPositive) return 'text-red-600 dark:text-red-400';
     return 'text-green-600 dark:text-green-400';
   };
@@ -122,7 +109,7 @@ export function PriceTicker({
 
   return (
     <div className="w-full bg-gradient-to-r from-card via-card/95 to-card border-y border-border/50 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between gap-4 py-2.5 px-4 overflow-x-auto scrollbar-hide">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2.5 px-4">
         {/* Live Price Section */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -157,7 +144,7 @@ export function PriceTicker({
           </span>
         </div>
 
-        {/* Sparkline */}
+        {/* Sparkline - hidden on mobile */}
         <div className="w-24 h-8 flex-shrink-0 hidden sm:block">
           {sparklineData.length > 0 && (
             <ResponsiveContainer width="100%" height="100%">
@@ -174,8 +161,8 @@ export function PriceTicker({
           )}
         </div>
 
-        {/* High / Low / Avg Stats */}
-        <div className="flex items-center gap-4 flex-shrink-0 hidden md:flex">
+        {/* High / Low / Avg Stats - visible as second row on mobile */}
+        <div className="flex items-center gap-4 flex-shrink-0 w-full sm:w-auto order-last sm:order-none">
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">H:</span>
             <span className="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">
@@ -196,11 +183,8 @@ export function PriceTicker({
               ${averagePrice.toFixed(2)}
             </span>
           </div>
-        </div>
 
-        {/* 24h Label */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-xs text-muted-foreground">24h</span>
+          <span className="text-xs text-muted-foreground ml-auto sm:ml-0">24h</span>
         </div>
       </div>
     </div>

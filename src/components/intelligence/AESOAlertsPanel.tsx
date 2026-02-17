@@ -63,7 +63,7 @@ export function AESOAlertsPanel({ alerts, onDismissAlert, onClearAll }: AESOAler
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-orange-600" />
+              <Bell className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />
               Market Alerts
               {alerts.length > 0 && (
                 <Badge variant="destructive" className="ml-2">
@@ -93,17 +93,17 @@ export function AESOAlertsPanel({ alerts, onDismissAlert, onClearAll }: AESOAler
                   <Alert 
                     key={alert.id} 
                     className={`border-l-4 ${
-                      alert.severity === 'high' ? 'border-l-red-500 bg-red-50' :
-                      alert.severity === 'medium' ? 'border-l-yellow-500 bg-yellow-50' :
-                      'border-l-blue-500 bg-blue-50'
+                      alert.severity === 'high' ? 'border-l-red-500 bg-red-50 dark:bg-red-950/30' :
+                      alert.severity === 'medium' ? 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/30' :
+                      'border-l-blue-500 bg-blue-50 dark:bg-blue-950/30'
                     }`}
                   >
                     <div className="flex items-start justify-between w-full">
                       <div className="flex items-start space-x-3">
                         <AlertIcon className={`h-5 w-5 mt-0.5 ${
-                          alert.severity === 'high' ? 'text-red-600' :
-                          alert.severity === 'medium' ? 'text-yellow-600' :
-                          'text-blue-600'
+                          alert.severity === 'high' ? 'text-red-600 dark:text-red-400' :
+                          alert.severity === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                          'text-blue-600 dark:text-blue-400'
                         }`} />
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
@@ -152,35 +152,35 @@ export function AESOAlertsPanel({ alerts, onDismissAlert, onClearAll }: AESOAler
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-blue-600" />
+              <Activity className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
               Alert Statistics
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">
+              <div className="text-center p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {alerts.filter(a => a.severity === 'high').length}
                 </div>
-                <div className="text-sm text-red-700">High Priority</div>
+                <div className="text-sm text-red-700 dark:text-red-300">High Priority</div>
               </div>
-              <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {alerts.filter(a => a.severity === 'medium').length}
                 </div>
-                <div className="text-sm text-yellow-700">Medium Priority</div>
+                <div className="text-sm text-yellow-700 dark:text-yellow-300">Medium Priority</div>
               </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {alerts.filter(a => a.severity === 'low').length}
                 </div>
-                <div className="text-sm text-blue-700">Low Priority</div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">Low Priority</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-600">
+              <div className="text-center p-3 bg-muted/50 rounded-lg">
+                <div className="text-2xl font-bold text-foreground">
                   {alerts.length}
                 </div>
-                <div className="text-sm text-gray-700">Total Alerts</div>
+                <div className="text-sm text-muted-foreground">Total Alerts</div>
               </div>
             </div>
           </CardContent>
@@ -191,7 +191,7 @@ export function AESOAlertsPanel({ alerts, onDismissAlert, onClearAll }: AESOAler
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Bell className="w-5 h-5 mr-2 text-green-600" />
+            <Bell className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
             Alert Configuration
           </CardTitle>
         </CardHeader>

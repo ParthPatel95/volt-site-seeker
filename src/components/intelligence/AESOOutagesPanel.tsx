@@ -29,7 +29,6 @@ export function AESOOutagesPanel({ assetOutages, loading }: AESOOutagesPanelProp
     );
   }
 
-  // Check if we have real outage data
   const hasRealData = assetOutages?.outages?.length > 0;
 
   if (!hasRealData) {
@@ -45,13 +44,11 @@ export function AESOOutagesPanel({ assetOutages, loading }: AESOOutagesPanelProp
     );
   }
 
-  // Use only real data - no mock generation
   const outages = assetOutages.outages;
   const totalOutages = assetOutages?.total_outages || outages.length;
   const totalCapacity = assetOutages?.total_outage_capacity_mw || 
     outages.reduce((sum: number, outage: any) => sum + (outage.capacity_mw || 0), 0);
 
-  // Process data for charts
   const outagesByType = outages.reduce((acc: any, outage: any) => {
     acc[outage.outage_type] = (acc[outage.outage_type] || 0) + 1;
     return acc;
@@ -83,61 +80,61 @@ export function AESOOutagesPanel({ assetOutages, loading }: AESOOutagesPanelProp
     <div className="space-y-6">
       {/* Live Data Badge */}
       <div className="flex justify-end">
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
           Live Data
         </Badge>
       </div>
 
       {/* Outage Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/20 border-red-200 dark:border-red-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-700">Total Outages</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-red-700 dark:text-red-300">Total Outages</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-800">{totalOutages}</div>
-            <p className="text-xs text-red-600">Active: {activeOutages.length}</p>
+            <div className="text-2xl font-bold text-red-800 dark:text-red-200">{totalOutages}</div>
+            <p className="text-xs text-red-600 dark:text-red-400">Active: {activeOutages.length}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-orange-900/20 border-orange-200 dark:border-orange-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">Offline Capacity</CardTitle>
-            <Factory className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-300">Offline Capacity</CardTitle>
+            <Factory className="h-4 w-4 text-orange-600 dark:text-orange-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-800">
+            <div className="text-2xl font-bold text-orange-800 dark:text-orange-200">
               {(totalCapacity / 1000).toFixed(1)} GW
             </div>
-            <p className="text-xs text-orange-600">Total MW: {totalCapacity.toLocaleString()}</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400">Total MW: {totalCapacity.toLocaleString()}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/40 dark:to-yellow-900/20 border-yellow-200 dark:border-yellow-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-700">Critical Outages</CardTitle>
-            <Zap className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Critical Outages</CardTitle>
+            <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-800">{criticalOutages.length}</div>
-            <p className="text-xs text-yellow-600">&gt;200 MW capacity</p>
+            <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{criticalOutages.length}</div>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400">&gt;200 MW capacity</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Avg Duration</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Avg Duration</CardTitle>
+            <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-800">
+            <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">
               {outages.length > 0 ? Math.round(outages.reduce((sum: number, outage: any) => {
                 const duration = new Date(outage.end_date).getTime() - new Date(outage.start_date).getTime();
                 return sum + (duration / (1000 * 60 * 60));
               }, 0) / outages.length) : 0} hrs
             </div>
-            <p className="text-xs text-blue-600">Per outage</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400">Per outage</p>
           </CardContent>
         </Card>
       </div>
@@ -147,7 +144,7 @@ export function AESOOutagesPanel({ assetOutages, loading }: AESOOutagesPanelProp
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <TrendingDown className="w-5 h-5 mr-2 text-red-600" />
+              <TrendingDown className="w-5 h-5 mr-2 text-red-600 dark:text-red-400" />
               Outage Capacity by Type
             </CardTitle>
           </CardHeader>
@@ -172,7 +169,7 @@ export function AESOOutagesPanel({ assetOutages, loading }: AESOOutagesPanelProp
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2 text-orange-600" />
+              <AlertTriangle className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />
               Outages by Type
             </CardTitle>
           </CardHeader>
@@ -208,7 +205,7 @@ export function AESOOutagesPanel({ assetOutages, loading }: AESOOutagesPanelProp
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Factory className="w-5 h-5 mr-2 text-blue-600" />
+            <Factory className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
             Current Active Outages
             <Badge variant="outline" className="ml-auto">
               {activeOutages.length} active

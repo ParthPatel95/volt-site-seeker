@@ -12,13 +12,13 @@ export function PredictionsTab() {
     <div className="space-y-4 sm:space-y-6">
       <Tabs defaultValue="predictions" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="predictions" className="flex items-center gap-2">
+          <TabsTrigger value="predictions" className="flex items-center gap-2 text-xs sm:text-sm">
             <Brain className="w-4 h-4" />
             Predictions
           </TabsTrigger>
           <TabsTrigger
             value="training"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-xs sm:text-sm"
             disabled={!hasPermission('aeso.training-management')}
           >
             {!hasPermission('aeso.training-management') ? (
