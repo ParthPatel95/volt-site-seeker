@@ -69,7 +69,7 @@ export function LiveConnectionStatus({
   };
 
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg ${bgColor} border border-border/50`}>
+    <div className={`flex items-center justify-between gap-3 px-4 py-2 rounded-lg ${bgColor} border border-border/50 flex-wrap gap-y-2`}>
       <div className="flex items-center gap-3">
         {/* Connection indicator */}
         <div className="flex items-center gap-2">

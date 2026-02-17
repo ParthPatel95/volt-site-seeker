@@ -1024,7 +1024,7 @@ export function TradingViewChart({
     >
       {/* ===== TOP TOOLBAR with OHLC Display ===== */}
       <div className={cn(
-        "flex items-center justify-between gap-2 px-2 sm:px-3 py-2 border-b border-border bg-muted/30 overflow-x-auto scrollbar-hide",
+        "flex items-center justify-between gap-2 px-2 sm:px-3 py-2 border-b border-border bg-muted/30 flex-wrap gap-y-2",
         isFullscreen && "relative z-[60]"
       )}>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap min-w-0">
@@ -1120,7 +1120,7 @@ export function TradingViewChart({
           </div>
 
           {/* Chart Type Toggle - Desktop */}
-          <div className="hidden lg:flex items-center border border-border rounded overflow-hidden flex-shrink-0">
+          <div className="hidden xl:flex items-center border border-border rounded overflow-hidden flex-shrink-0">
             <Button 
               variant={chartType === 'line' ? 'secondary' : 'ghost'}
               size="sm" 
@@ -1141,7 +1141,7 @@ export function TradingViewChart({
           </div>
 
           {/* Desktop: Individual Indicator/Oscillator/Alert buttons */}
-          <div className="hidden xl:flex items-center gap-1 flex-shrink-0">
+          <div className="hidden 2xl:flex items-center gap-1 flex-shrink-0">
             {/* Indicators Popover */}
             <Popover>
               <PopoverTrigger asChild>
@@ -1264,7 +1264,7 @@ export function TradingViewChart({
           </div>
 
           {/* Tablet/Mobile: Combined "More" dropdown for Chart Options */}
-          <div className="flex xl:hidden">
+          <div className="flex 2xl:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
