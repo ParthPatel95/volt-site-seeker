@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
-import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap, HelpCircle } from 'lucide-react';
+import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap, HelpCircle, ChevronDown, ChevronUp, Thermometer, PowerOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord, type CurtailmentStrategy } from '@/hooks/usePowerModelCalculator';
@@ -20,13 +21,12 @@ import { PowerModelStrategyComparison } from './PowerModelStrategyComparison';
 import { PowerModelCharts } from './PowerModelCharts';
 import { PowerModelRevenueAnalysis } from './PowerModelRevenueAnalysis';
 import { PowerModelSensitivity } from './PowerModelSensitivity';
-import { PowerModelDataSources } from './PowerModelDataSources';
 import { PowerModelEditableRates } from './PowerModelEditableRates';
 import { PowerModelAIAnalysis } from './PowerModelAIAnalysis';
-import { PowerModelAssumptions } from './PowerModelAssumptions';
 import { PowerModelShutdownLog } from './PowerModelShutdownLog';
 import { PowerModelShutdownAnalytics } from './PowerModelShutdownAnalytics';
-import { PowerModelRateExplainer } from './PowerModelRateExplainer';
+import { PowerModelWeatherDrivers } from './PowerModelWeatherDrivers';
+import { PowerModelReference } from './PowerModelReference';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export function PowerModelAnalyzer() {
@@ -35,7 +35,9 @@ export function PowerModelAnalyzer() {
   const [hourlyData, setHourlyData] = useState<HourlyRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState(2025);
-  const [analyticsTab, setAnalyticsTab] = useState('charts');
+  const [analyticsTab, setAnalyticsTab] = useState('cost-analysis');
+  const [configOpen, setConfigOpen] = useState(true);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [params, setParams] = useState<FacilityParams>({
     contractedCapacityMW: DEFAULT_FACILITY_PARAMS.contractedCapacityMW,
     substationFraction: DEFAULT_FACILITY_PARAMS.substationFraction,
@@ -53,6 +55,16 @@ export function PowerModelAnalyzer() {
   const hostingRateCAD = params.hostingRateUSD / params.cadUsdRate;
 
   const hourlyPrices = useMemo(() => hourlyData.map(r => r.poolPrice), [hourlyData]);
+
+  // Auto-collapse config and scroll to results after data loads
+  useEffect(() => {
+    if (hourlyData.length > 0) {
+      setConfigOpen(false);
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [hourlyData.length]);
 
   const handleCSVUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -113,250 +125,267 @@ export function PowerModelAnalyzer() {
     if (!isNaN(num)) setParams(p => ({ ...p, [key]: num }));
   };
 
+  // Data summary for badge
+  const dataSummary = useMemo(() => {
+    if (hourlyData.length === 0) return null;
+    const avgPool = hourlyData.reduce((s, r) => s + r.poolPrice, 0) / hourlyData.length;
+    return { count: hourlyData.length, avgPool: avgPool.toFixed(0) };
+  }, [hourlyData]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Calculator className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Calculator className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Power Model Cost Analyzer</h2>
+            <p className="text-sm text-muted-foreground">
+              Full Rate DTS cost modeling with 15+ charge components
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold">Power Model Cost Analyzer</h2>
-          <p className="text-sm text-muted-foreground">
-            Full Rate DTS cost modeling with 15+ charge components
-          </p>
+        <div className="flex items-center gap-2">
+          {dataSummary && (
+            <Badge variant="outline" className="text-xs">
+              <FileSpreadsheet className="w-3 h-3 mr-1" />
+              {dataSummary.count.toLocaleString()} hrs · Avg Pool: ${dataSummary.avgPool}/MWh
+            </Badge>
+          )}
+          <RateSourceBadge
+            source="AUC Decision 30427-D01-2025"
+            effectiveDate="2026-01-01"
+            sourceUrl="https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/"
+            lastVerified="2026-02-01"
+            variant="detailed"
+            className="hidden lg:flex"
+          />
         </div>
-        <RateSourceBadge
-          source="AUC Decision 30427-D01-2025"
-          effectiveDate="2026-01-01"
-          sourceUrl="https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/"
-          lastVerified="2026-02-01"
-          variant="detailed"
-          className="ml-auto hidden lg:flex"
-        />
       </div>
 
-      {/* Input Parameters + Data Source */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Facility Parameters */}
+      {/* PHASE 1: Configuration (collapsible) */}
+      <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Facility Parameters</CardTitle>
-            <CardDescription className="text-xs">{DEFAULT_FACILITY_PARAMS.podName}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label className="text-xs">Contracted Capacity (MW)</Label>
-              <Input type="number" value={params.contractedCapacityMW} onChange={e => updateParam('contractedCapacityMW', e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">Substation Fraction</Label>
-              <Input type="number" step="0.1" value={params.substationFraction} onChange={e => updateParam('substationFraction', e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">12CP Avoidance Window (hrs/month)</Label>
-              <Input type="number" value={params.twelveCP_AvoidanceHours} onChange={e => updateParam('twelveCP_AvoidanceHours', e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">Target Uptime (%)</Label>
-              <Input type="number" step="0.5" min="50" max="100" value={params.targetUptimePercent} onChange={e => updateParam('targetUptimePercent', e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                <Label className="text-xs">Curtailment Strategy</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p><strong>12CP Priority:</strong> Always avoids peak demand hours first. Safer for demand charge savings but may run through expensive energy hours.</p>
-                      <p className="mt-1"><strong>Cost Optimized:</strong> Compares the dollar value of each curtailment decision. A $500/MWh price spike may beat a low-risk 12CP hour, maximizing total savings.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+          <CollapsibleTrigger className="w-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-muted-foreground" />
+                <CardTitle className="text-sm">Configuration</CardTitle>
+                {hourlyData.length > 0 && (
+                  <Badge variant="success" className="text-[9px] px-1.5 h-4">Data Loaded</Badge>
+                )}
               </div>
-              <Select value={params.curtailmentStrategy} onValueChange={(v) => setParams(p => ({ ...p, curtailmentStrategy: v as CurtailmentStrategy }))}>
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="12cp-priority">12CP Priority</SelectItem>
-                  <SelectItem value="cost-optimized">Cost Optimized</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Revenue Parameters */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Revenue Parameters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label className="text-xs">Hosting Rate (USD/kWh)</Label>
-              <Input type="number" step="0.001" value={params.hostingRateUSD} onChange={e => updateParam('hostingRateUSD', e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">CAD/USD Exchange Rate</Label>
-              <Input type="number" step="0.0001" value={params.cadUsdRate} onChange={e => updateParam('cadUsdRate', e.target.value)} className="h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">Energy Pricing Mode</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  type="button"
-                  onClick={() => setParams(p => ({ ...p, fixedPriceCAD: 0 }))}
-                  className={`flex-1 h-8 rounded-md text-xs font-medium border transition-colors ${
-                    params.fixedPriceCAD === 0
-                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/50'
-                      : 'bg-background text-muted-foreground border-border hover:bg-secondary'
-                  }`}
-                >
-                  Floating (Pool)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setParams(p => ({ ...p, fixedPriceCAD: p.fixedPriceCAD || 52 }))}
-                  className={`flex-1 h-8 rounded-md text-xs font-medium border transition-colors ${
-                    params.fixedPriceCAD > 0
-                      ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/50'
-                      : 'bg-background text-muted-foreground border-border hover:bg-secondary'
-                  }`}
-                >
-                  Fixed Contract
-                </button>
-              </div>
-              {params.fixedPriceCAD > 0 && (
-                <div className="mt-2">
-                  <Label className="text-xs">Fixed Price (CAD/MWh)</Label>
-                  <Input type="number" step="1" value={params.fixedPriceCAD} onChange={e => updateParam('fixedPriceCAD', e.target.value)} className="h-8 text-sm" />
+              {configOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0 space-y-4">
+              {/* Input Parameters + Data Source */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Facility Parameters */}
+                <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-muted/20">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Facility Parameters</h3>
+                  <p className="text-[10px] text-muted-foreground">{DEFAULT_FACILITY_PARAMS.podName}</p>
+                  <div>
+                    <Label className="text-xs">Contracted Capacity (MW)</Label>
+                    <Input type="number" value={params.contractedCapacityMW} onChange={e => updateParam('contractedCapacityMW', e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Substation Fraction</Label>
+                    <Input type="number" step="0.1" value={params.substationFraction} onChange={e => updateParam('substationFraction', e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">12CP Avoidance Window (hrs/month)</Label>
+                    <Input type="number" value={params.twelveCP_AvoidanceHours} onChange={e => updateParam('twelveCP_AvoidanceHours', e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Target Uptime (%)</Label>
+                    <Input type="number" step="0.5" min="50" max="100" value={params.targetUptimePercent} onChange={e => updateParam('targetUptimePercent', e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Curtailment Strategy</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p><strong>12CP Priority:</strong> Always avoids peak demand hours first.</p>
+                            <p className="mt-1"><strong>Cost Optimized:</strong> Compares dollar value of each curtailment decision.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Select value={params.curtailmentStrategy} onValueChange={(v) => setParams(p => ({ ...p, curtailmentStrategy: v as CurtailmentStrategy }))}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12cp-priority">12CP Priority</SelectItem>
+                        <SelectItem value="cost-optimized">Cost Optimized</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
-              <div className="mt-1.5">
-                <Badge variant={params.fixedPriceCAD > 0 ? 'info' : 'success'} size="sm">
-                  {params.fixedPriceCAD > 0 ? `Fixed @ $${params.fixedPriceCAD}/MWh` : 'Floating Pool Price'}
-                </Badge>
-              </div>
-            </div>
-            <div className="pt-2 border-t border-border/50">
-              <p className="text-xs text-muted-foreground">Breakeven Pool Price</p>
-              <p className="text-lg font-bold text-foreground">CA${breakeven.toFixed(2)}/MWh</p>
-              <p className="text-xs text-muted-foreground">Curtail when pool exceeds this</p>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Data Source */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Data Source</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Tabs value={dataSource} onValueChange={(v) => setDataSource(v as 'upload' | 'database')}>
-              <TabsList className="w-full">
-                <TabsTrigger value="database" className="flex-1 text-xs"><Database className="w-3 h-3 mr-1" />Database</TabsTrigger>
-                <TabsTrigger value="upload" className="flex-1 text-xs"><Upload className="w-3 h-3 mr-1" />CSV Upload</TabsTrigger>
-              </TabsList>
-              <TabsContent value="database" className="space-y-2 mt-2">
-                <div>
-                  <Label className="text-xs">Year</Label>
-                  <Input type="number" value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value) || 2025)} className="h-8 text-sm" />
+                {/* Revenue Parameters */}
+                <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-muted/20">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Revenue Parameters</h3>
+                  <div>
+                    <Label className="text-xs">Hosting Rate (USD/kWh)</Label>
+                    <Input type="number" step="0.001" value={params.hostingRateUSD} onChange={e => updateParam('hostingRateUSD', e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">CAD/USD Exchange Rate</Label>
+                    <Input type="number" step="0.0001" value={params.cadUsdRate} onChange={e => updateParam('cadUsdRate', e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Energy Pricing Mode</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setParams(p => ({ ...p, fixedPriceCAD: 0 }))}
+                        className={`flex-1 h-8 rounded-md text-xs font-medium border transition-colors ${
+                          params.fixedPriceCAD === 0
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/50'
+                            : 'bg-background text-muted-foreground border-border hover:bg-secondary'
+                        }`}
+                      >
+                        Floating (Pool)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setParams(p => ({ ...p, fixedPriceCAD: p.fixedPriceCAD || 52 }))}
+                        className={`flex-1 h-8 rounded-md text-xs font-medium border transition-colors ${
+                          params.fixedPriceCAD > 0
+                            ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/50'
+                            : 'bg-background text-muted-foreground border-border hover:bg-secondary'
+                        }`}
+                      >
+                        Fixed Contract
+                      </button>
+                    </div>
+                    {params.fixedPriceCAD > 0 && (
+                      <div className="mt-2">
+                        <Label className="text-xs">Fixed Price (CAD/MWh)</Label>
+                        <Input type="number" step="1" value={params.fixedPriceCAD} onChange={e => updateParam('fixedPriceCAD', e.target.value)} className="h-8 text-sm" />
+                      </div>
+                    )}
+                    <div className="mt-1.5">
+                      <Badge variant={params.fixedPriceCAD > 0 ? 'info' : 'success'} size="sm">
+                        {params.fixedPriceCAD > 0 ? `Fixed @ $${params.fixedPriceCAD}/MWh` : 'Floating Pool Price'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-border/50">
+                    <p className="text-xs text-muted-foreground">Breakeven Pool Price</p>
+                    <p className="text-lg font-bold text-foreground">CA${breakeven.toFixed(2)}/MWh</p>
+                    <p className="text-xs text-muted-foreground">Curtail when pool exceeds this</p>
+                  </div>
                 </div>
-                <Button onClick={loadFromDatabase} disabled={loading} size="sm" className="w-full">
-                  {loading ? 'Loading...' : 'Load from Database'}
-                </Button>
-              </TabsContent>
-              <TabsContent value="upload" className="mt-2">
-                <div>
-                  <Label className="text-xs">Upload CSV (Date, HE, Pool Price, AIL)</Label>
-                  <Input type="file" accept=".csv" onChange={handleCSVUpload} className="h-8 text-sm mt-1" />
+
+                {/* Data Source */}
+                <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-muted/20">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data Source</h3>
+                  <Tabs value={dataSource} onValueChange={(v) => setDataSource(v as 'upload' | 'database')}>
+                    <TabsList className="w-full">
+                      <TabsTrigger value="database" className="flex-1 text-xs"><Database className="w-3 h-3 mr-1" />Database</TabsTrigger>
+                      <TabsTrigger value="upload" className="flex-1 text-xs"><Upload className="w-3 h-3 mr-1" />CSV Upload</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="database" className="space-y-2 mt-2">
+                      <div>
+                        <Label className="text-xs">Year</Label>
+                        <Input type="number" value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value) || 2025)} className="h-8 text-sm" />
+                      </div>
+                      <Button onClick={loadFromDatabase} disabled={loading} size="sm" className="w-full">
+                        {loading ? 'Loading...' : 'Load from Database'}
+                      </Button>
+                    </TabsContent>
+                    <TabsContent value="upload" className="mt-2">
+                      <div>
+                        <Label className="text-xs">Upload CSV (Date, HE, Pool Price, AIL)</Label>
+                        <Input type="file" accept=".csv" onChange={handleCSVUpload} className="h-8 text-sm mt-1" />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  {hourlyData.length === 0 && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                      <AlertTriangle className="w-3 h-3" />
+                      Load data to generate cost model
+                    </div>
+                  )}
                 </div>
-              </TabsContent>
-            </Tabs>
+              </div>
 
-            {hourlyData.length > 0 && (
-              <div className="pt-2 border-t border-border/50">
-                <Badge variant="outline" className="text-xs">
-                  <FileSpreadsheet className="w-3 h-3 mr-1" />
-                  {hourlyData.length.toLocaleString()} hourly records loaded
-                </Badge>
-              </div>
-            )}
-            {hourlyData.length === 0 && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
-                <AlertTriangle className="w-3 h-3" />
-                Load data to generate cost model
-              </div>
-            )}
-          </CardContent>
+              {/* Editable Tariff Rates */}
+              <PowerModelEditableRates overrides={tariffOverrides} onChange={setTariffOverrides} />
+            </CardContent>
+          </CollapsibleContent>
         </Card>
-      </div>
+      </Collapsible>
 
-      {/* Editable Tariff Rates */}
-      <PowerModelEditableRates overrides={tariffOverrides} onChange={setTariffOverrides} />
-
-      {/* Results */}
+      {/* PHASE 2: Results */}
       {hourlyData.length > 0 && (
-        <>
-           <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
+        <div ref={resultsRef} className="space-y-6">
+          {/* KPI Dashboard + AI Analysis Button */}
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Results Dashboard</h3>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setConfigOpen(true)}>
+                <Settings2 className="w-3 h-3 mr-1" />Edit Config
+              </Button>
+            </div>
+          </div>
+
+          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
+
+          {/* AI Analysis - Promoted out of tabs */}
+          <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} />
+
+          {/* Strategy Comparison + Cost Progression */}
           <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />
           <PowerModelCostProgression annual={annual} cadUsdRate={params.cadUsdRate} fixedPriceCAD={params.fixedPriceCAD} />
+          
+          {/* Charge Breakdown Table */}
           <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} capacityMW={params.contractedCapacityMW} />
 
-          {/* Analytics Tabs */}
+          {/* Consolidated Analytics Tabs (5 instead of 9) */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>
-            <TabsList className="flex-wrap h-auto gap-1">
-              <TabsTrigger value="charts" className="text-xs"><BarChart3 className="w-3 h-3 mr-1" />Charts</TabsTrigger>
-              <TabsTrigger value="revenue" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Revenue</TabsTrigger>
-              <TabsTrigger value="sensitivity" className="text-xs"><Settings2 className="w-3 h-3 mr-1" />Sensitivity</TabsTrigger>
-              <TabsTrigger value="ai-analysis" className="text-xs"><Sparkles className="w-3 h-3 mr-1" />AI Analysis</TabsTrigger>
-              <TabsTrigger value="shutdown-log" className="text-xs"><Clock className="w-3 h-3 mr-1" />Shutdown Log</TabsTrigger>
-              <TabsTrigger value="shutdown-analytics" className="text-xs"><Zap className="w-3 h-3 mr-1" />Shutdown Analytics</TabsTrigger>
-              <TabsTrigger value="assumptions" className="text-xs"><BookOpen className="w-3 h-3 mr-1" />Assumptions</TabsTrigger>
-              <TabsTrigger value="rate-guide" className="text-xs"><FileSpreadsheet className="w-3 h-3 mr-1" />Rate Guide</TabsTrigger>
-              <TabsTrigger value="sources" className="text-xs"><Info className="w-3 h-3 mr-1" />Data Sources</TabsTrigger>
+            <TabsList className="overflow-x-auto flex h-auto gap-1 w-full justify-start">
+              <TabsTrigger value="cost-analysis" className="text-xs"><BarChart3 className="w-3 h-3 mr-1" />Cost Analysis</TabsTrigger>
+              <TabsTrigger value="revenue-sensitivity" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Revenue & Sensitivity</TabsTrigger>
+              <TabsTrigger value="curtailment" className="text-xs"><PowerOff className="w-3 h-3 mr-1" />Curtailment</TabsTrigger>
+              <TabsTrigger value="weather-drivers" className="text-xs"><Thermometer className="w-3 h-3 mr-1" />Weather & Drivers</TabsTrigger>
+              <TabsTrigger value="reference" className="text-xs"><BookOpen className="w-3 h-3 mr-1" />Reference</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="charts" className="mt-4">
+            <TabsContent value="cost-analysis" className="mt-4">
               <PowerModelCharts monthly={monthly} breakeven={breakeven} hourlyPrices={hourlyPrices} />
             </TabsContent>
 
-            <TabsContent value="revenue" className="mt-4">
+            <TabsContent value="revenue-sensitivity" className="mt-4 space-y-4">
               <PowerModelRevenueAnalysis monthly={monthly} params={params} />
-            </TabsContent>
-
-            <TabsContent value="sensitivity" className="mt-4">
               <PowerModelSensitivity baseCost={annual?.totalAmountDue ?? 0} params={params} monthly={monthly} />
             </TabsContent>
 
-            <TabsContent value="ai-analysis" className="mt-4">
-              <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} />
-            </TabsContent>
-
-            <TabsContent value="shutdown-log" className="mt-4">
+            <TabsContent value="curtailment" className="mt-4 space-y-4">
+              <PowerModelShutdownAnalytics shutdownLog={shutdownLog} breakeven={breakeven} />
               <PowerModelShutdownLog shutdownLog={shutdownLog} fixedPriceCAD={params.fixedPriceCAD} />
             </TabsContent>
 
-            <TabsContent value="shutdown-analytics" className="mt-4">
-              <PowerModelShutdownAnalytics shutdownLog={shutdownLog} breakeven={breakeven} />
+            <TabsContent value="weather-drivers" className="mt-4">
+              <PowerModelWeatherDrivers selectedYear={selectedYear} />
             </TabsContent>
 
-            <TabsContent value="assumptions" className="mt-4">
-              <PowerModelAssumptions />
-            </TabsContent>
-
-            <TabsContent value="rate-guide" className="mt-4">
-              <PowerModelRateExplainer />
-            </TabsContent>
-
-            <TabsContent value="sources" className="mt-4">
-              <PowerModelDataSources recordCount={hourlyData.length} dataSource={dataSource} />
+            <TabsContent value="reference" className="mt-4">
+              <PowerModelReference recordCount={hourlyData.length} dataSource={dataSource} />
             </TabsContent>
           </Tabs>
-        </>
+        </div>
       )}
     </div>
   );
