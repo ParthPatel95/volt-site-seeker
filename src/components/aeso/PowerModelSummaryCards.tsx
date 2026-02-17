@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff } from 'lucide-react';
+import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff, ArrowDown, ArrowUp } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -24,119 +24,150 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
   const usd = (cad: number) => cad * cadUsdRate;
   const fmtM = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
 
-  // Row 1: Primary KPIs (large cards)
-  const primaryCards = [
-    {
-      label: 'Total Annual Cost',
-      value: `CA${fmtM(annual.totalAmountDue)}`,
-      sub: `US${fmtM(usd(annual.totalAmountDue))}`,
-      icon: DollarSign,
-      color: 'from-primary to-primary/80',
-    },
-    {
-      label: 'All-in Rate',
-      value: `${(annual.avgPerKwhCAD * 100).toFixed(2)}¢/kWh CAD`,
-      sub: `${(annual.avgPerKwhCAD * 100 * cadUsdRate).toFixed(2)}¢/kWh USD`,
-      icon: TrendingUp,
-      color: 'from-blue-500 to-blue-600',
-    },
-    ...(hostingRateCAD ? [{
-      label: 'Net Margin',
-      value: `CA${fmtM(netMargin)}`,
-      sub: `US${fmtM(usd(netMargin))} · ${marginPct.toFixed(1)}%`,
-      icon: PiggyBank,
-      color: netMargin >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
-    }] : [{
-      label: 'Breakeven Pool Price',
-      value: `CA$${breakeven.toFixed(2)}/MWh`,
-      sub: `US$${usd(breakeven).toFixed(2)}/MWh`,
-      icon: BarChart3,
-      color: 'from-purple-500 to-purple-600',
-    }]),
-  ];
-
-  // Row 2: Secondary KPIs (compact cards)
-  const secondaryCards = [
-    {
-      label: 'Consumption',
-      value: `${(annual.totalMWh / 1000).toFixed(0)} GWh`,
-      sub: `${annual.totalMWh.toLocaleString()} MWh`,
-      icon: Zap,
-      color: 'from-emerald-500 to-emerald-600',
-    },
-    {
-      label: 'Avg Uptime',
-      value: `${annual.avgUptimePercent.toFixed(1)}%`,
-      sub: `${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`,
-      icon: Clock,
-      color: 'from-amber-500 to-amber-600',
-    },
-    ...(totalShutdownHours !== undefined ? [{
-      label: 'Curtailed Hours',
-      value: `${totalShutdownHours.toLocaleString()}`,
-      sub: `Savings: CA$${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`,
-      icon: PowerOff,
-      color: 'from-red-500 to-red-600',
-    }] : []),
-    ...(hostingRateCAD ? [{
-      label: 'Breakeven Price',
-      value: `CA$${breakeven.toFixed(0)}/MWh`,
-      sub: `US$${usd(breakeven).toFixed(0)}/MWh`,
-      icon: BarChart3,
-      color: 'from-purple-500 to-purple-600',
-    }] : []),
-    ...((fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? [{
-      label: 'Curtailment Savings',
-      value: `CA${fmtM(curtailmentSavings)}`,
-      sub: `vs fixed $${fixedPriceCAD}/MWh`,
-      icon: PiggyBank,
-      color: curtailmentSavings >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600',
-    }] : []),
-    ...(hostingRateCAD ? [{
-      label: 'Annual Revenue',
-      value: `CA${fmtM(annualRevenue)}`,
-      sub: `US${fmtM(usd(annualRevenue))}`,
-      icon: Banknote,
-      color: 'from-emerald-500 to-emerald-600',
-    }] : []),
-  ];
+  // Energy vs Adders split for all-in rate
+  const energyCentsPerKwh = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
+  const totalCentsPerKwh = annual.avgPerKwhCAD * 100;
+  const addersCentsPerKwh = totalCentsPerKwh - energyCentsPerKwh;
+  const energyPct = totalCentsPerKwh > 0 ? (energyCentsPerKwh / totalCentsPerKwh) * 100 : 0;
 
   return (
     <div className="space-y-3">
-      {/* Row 1: Primary KPIs - Large */}
+      {/* Row 1: Hero KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {primaryCards.map((c) => (
-          <Card key={c.label} className="overflow-hidden">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${c.color}`}>
-                  <c.icon className="w-4 h-4 text-white" />
+        {/* Total Annual Cost */}
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                  <DollarSign className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
+                <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Total Annual Cost</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-foreground">{c.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{c.sub}</p>
+            </div>
+            <p className="text-3xl font-bold tracking-tight">CA{fmtM(annual.totalAmountDue)}</p>
+            <p className="text-sm text-white/60 mt-1">US{fmtM(usd(annual.totalAmountDue))}</p>
+            {/* Monthly mini trend */}
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <div className="flex items-center gap-1 text-[10px] text-white/50">
+                <span>{(annual.totalAmountDue / 12 / 1000).toFixed(0)}k avg/mo</span>
+                <span className="mx-1">·</span>
+                <span>{annual.totalMWh.toLocaleString()} MWh consumed</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* All-in Rate */}
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 text-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-medium text-white/70 uppercase tracking-wider">All-in Rate</span>
+              </div>
+            </div>
+            <p className="text-3xl font-bold tracking-tight">{totalCentsPerKwh.toFixed(2)}¢<span className="text-lg font-normal text-white/60">/kWh</span></p>
+            <p className="text-sm text-white/60 mt-1">{(totalCentsPerKwh * cadUsdRate).toFixed(2)}¢/kWh USD</p>
+            {/* Energy vs Adders split bar */}
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex-1 h-2 rounded-full overflow-hidden bg-white/10 flex">
+                  <div className="h-full bg-emerald-400 transition-all" style={{ width: `${energyPct}%` }} />
+                  <div className="h-full bg-amber-400 transition-all" style={{ width: `${100 - energyPct}%` }} />
+                </div>
+              </div>
+              <div className="flex justify-between text-[10px] text-white/50">
+                <span>Energy: {energyCentsPerKwh.toFixed(1)}¢</span>
+                <span>Adders: {addersCentsPerKwh.toFixed(1)}¢</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Net Margin or Breakeven */}
+        {hostingRateCAD ? (
+          <Card className={`overflow-hidden border-0 text-white ${netMargin >= 0 ? 'bg-gradient-to-br from-emerald-600 to-emerald-800 dark:from-emerald-700 dark:to-emerald-900' : 'bg-gradient-to-br from-red-600 to-red-800 dark:from-red-700 dark:to-red-900'}`}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                    <PiggyBank className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Net Margin</span>
+                </div>
+                <div className={`flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded ${netMargin >= 0 ? 'bg-white/20' : 'bg-white/20'}`}>
+                  {netMargin >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                  {Math.abs(marginPct).toFixed(1)}%
+                </div>
+              </div>
+              <p className="text-3xl font-bold tracking-tight">CA{fmtM(netMargin)}</p>
+              <p className="text-sm text-white/60 mt-1">US{fmtM(usd(netMargin))}</p>
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <div className="text-[10px] text-white/50">
+                  Revenue: CA{fmtM(annualRevenue)} · Cost: CA{fmtM(annual.totalAmountDue)}
+                </div>
+              </div>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          <Card className="overflow-hidden border-0 bg-gradient-to-br from-purple-600 to-purple-800 dark:from-purple-700 dark:to-purple-900 text-white">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Breakeven Price</span>
+                </div>
+              </div>
+              <p className="text-3xl font-bold tracking-tight">CA${breakeven.toFixed(0)}<span className="text-lg font-normal text-white/60">/MWh</span></p>
+              <p className="text-sm text-white/60 mt-1">US${usd(breakeven).toFixed(0)}/MWh</p>
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <div className="text-[10px] text-white/50">
+                  Curtail when pool price exceeds this threshold
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Row 2: Secondary KPIs - Compact */}
-      <div className={`grid grid-cols-2 sm:grid-cols-${Math.min(secondaryCards.length, 4)} gap-3`}>
-        {secondaryCards.map((c) => (
-          <Card key={c.label} className="overflow-hidden">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className={`p-1 rounded-md bg-gradient-to-br ${c.color}`}>
-                  <c.icon className="w-3 h-3 text-white" />
-                </div>
-                <span className="text-[10px] font-medium text-muted-foreground">{c.label}</span>
-              </div>
-              <p className="text-base font-bold text-foreground">{c.value}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{c.sub}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Row 2: Compact stat ribbon */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="flex items-center divide-x divide-border overflow-x-auto">
+            <StatItem icon={<Zap className="w-3.5 h-3.5 text-emerald-500" />} label="Consumption" value={`${(annual.totalMWh / 1000).toFixed(0)} GWh`} sub={`${annual.totalMWh.toLocaleString()} MWh`} />
+            <StatItem icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Uptime" value={`${annual.avgUptimePercent.toFixed(1)}%`} sub={`${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`} />
+            {totalShutdownHours !== undefined && (
+              <StatItem icon={<PowerOff className="w-3.5 h-3.5 text-red-500" />} label="Curtailed" value={`${totalShutdownHours.toLocaleString()} hrs`} sub={`Saved: CA$${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`} />
+            )}
+            {hostingRateCAD ? (
+              <StatItem icon={<BarChart3 className="w-3.5 h-3.5 text-purple-500" />} label="Breakeven" value={`CA$${breakeven.toFixed(0)}/MWh`} sub={`US$${usd(breakeven).toFixed(0)}/MWh`} />
+            ) : null}
+            {(fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? (
+              <StatItem icon={<PiggyBank className="w-3.5 h-3.5 text-emerald-500" />} label="Curtail Savings" value={`CA${fmtM(curtailmentSavings)}`} sub={`vs fixed $${fixedPriceCAD}/MWh`} highlight={curtailmentSavings >= 0} />
+            ) : null}
+            {hostingRateCAD ? (
+              <StatItem icon={<Banknote className="w-3.5 h-3.5 text-emerald-500" />} label="Revenue" value={`CA${fmtM(annualRevenue)}`} sub={`US${fmtM(usd(annualRevenue))}`} />
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StatItem({ icon, label, value, sub, highlight }: { icon: React.ReactNode; label: string; value: string; sub: string; highlight?: boolean }) {
+  return (
+    <div className="flex-1 min-w-[140px] px-4 py-3 flex items-center gap-3">
+      <div className="shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{label}</p>
+        <p className="text-sm font-bold text-foreground truncate">{value}</p>
+        <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
       </div>
     </div>
   );

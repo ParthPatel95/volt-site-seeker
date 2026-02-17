@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Progress } from '@/components/ui/progress';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
 import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap, HelpCircle, ChevronDown, ChevronUp, Thermometer, PowerOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,9 +35,11 @@ export function PowerModelAnalyzer() {
   const [dataSource, setDataSource] = useState<'upload' | 'database'>('database');
   const [hourlyData, setHourlyData] = useState<HourlyRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [selectedYear, setSelectedYear] = useState(2025);
   const [analyticsTab, setAnalyticsTab] = useState('cost-analysis');
   const [configOpen, setConfigOpen] = useState(true);
+  const [autoTriggerAI, setAutoTriggerAI] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [params, setParams] = useState<FacilityParams>({
     contractedCapacityMW: DEFAULT_FACILITY_PARAMS.contractedCapacityMW,
@@ -85,6 +88,7 @@ export function PowerModelAnalyzer() {
 
   const loadFromDatabase = useCallback(async () => {
     setLoading(true);
+    setLoadProgress(10);
     try {
       const startDate = `${selectedYear}-01-01`;
       const endDate = `${selectedYear}-12-31T23:59:59`;
@@ -106,17 +110,23 @@ export function PowerModelAnalyzer() {
         if (error) throw error;
         if (!data || data.length === 0) break;
         allData = allData.concat(data);
+        // Estimate progress (assume ~9000 records for a full year)
+        setLoadProgress(Math.min(90, 10 + (allData.length / 9000) * 80));
         if (data.length < batchSize) break;
         offset += batchSize;
       }
 
+      setLoadProgress(95);
       const records = convertTrainingDataToHourly(allData);
       setHourlyData(records);
+      setLoadProgress(100);
+      setAutoTriggerAI(true); // Auto-trigger AI analysis
       toast({ title: `Loaded ${records.length} records`, description: `From database for ${selectedYear}` });
     } catch (err: any) {
       toast({ title: 'Failed to load data', description: err.message, variant: 'destructive' });
     } finally {
       setLoading(false);
+      setTimeout(() => setLoadProgress(0), 500);
     }
   }, [selectedYear, toast]);
 
@@ -303,6 +313,9 @@ export function PowerModelAnalyzer() {
                       <Button onClick={loadFromDatabase} disabled={loading} size="sm" className="w-full">
                         {loading ? 'Loading...' : 'Load from Database'}
                       </Button>
+                      {loading && loadProgress > 0 && (
+                        <Progress value={loadProgress} className="h-1.5 mt-1" />
+                      )}
                     </TabsContent>
                     <TabsContent value="upload" className="mt-2">
                       <div>
@@ -344,7 +357,7 @@ export function PowerModelAnalyzer() {
           <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
 
           {/* AI Analysis - Promoted out of tabs */}
-          <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} />
+          <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} autoTrigger={autoTriggerAI} />
 
           {/* Strategy Comparison + Cost Progression */}
           <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />

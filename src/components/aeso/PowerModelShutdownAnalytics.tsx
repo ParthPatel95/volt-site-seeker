@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, Clock, TrendingUp } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, ComposedChart,
+  LineChart, Line,
 } from 'recharts';
 import type { ShutdownRecord } from '@/hooks/usePowerModelCalculator';
 
@@ -21,7 +23,16 @@ const REASON_COLORS: Record<string, string> = {
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export function PowerModelShutdownAnalytics({ shutdownLog, breakeven }: Props) {
-  // 1. Shutdown by Hour of Day
+  // Efficiency KPIs
+  const efficiencyMetrics = useMemo(() => {
+    if (!shutdownLog.length) return null;
+    const totalSavings = shutdownLog.reduce((s, r) => s + r.costAvoided, 0);
+    const totalHours = shutdownLog.length;
+    const savingsPerHour = totalHours > 0 ? totalSavings / totalHours : 0;
+    const avgPriceAvoided = shutdownLog.reduce((s, r) => s + r.poolPrice, 0) / totalHours;
+    return { totalSavings, totalHours, savingsPerHour, avgPriceAvoided };
+  }, [shutdownLog]);
+
   const byHour = useMemo(() => {
     const hours = Array.from({ length: 24 }, (_, i) => ({
       hour: `HE ${i + 1}`,
@@ -37,7 +48,6 @@ export function PowerModelShutdownAnalytics({ shutdownLog, breakeven }: Props) {
     return hours;
   }, [shutdownLog]);
 
-  // 2. Monthly Shutdown Breakdown
   const byMonth = useMemo(() => {
     const months: Record<number, { '12CP': number; Price: number; UptimeCap: number; '12CP+Price': number }> = {};
     for (const r of shutdownLog) {
@@ -50,7 +60,6 @@ export function PowerModelShutdownAnalytics({ shutdownLog, breakeven }: Props) {
       .sort((a, b) => MONTH_NAMES.indexOf(a.month) - MONTH_NAMES.indexOf(b.month));
   }, [shutdownLog]);
 
-  // 3. Price Distribution: Running vs Shutdown
   const priceDistribution = useMemo(() => {
     const bins = [0, 25, 50, 75, 100, 150, 200, 300, 500];
     return bins.map((min, i) => {
@@ -61,23 +70,16 @@ export function PowerModelShutdownAnalytics({ shutdownLog, breakeven }: Props) {
     }).filter(d => d['Shutdown Hours'] > 0);
   }, [shutdownLog]);
 
-  // 4. Cumulative Cost Avoided
   const cumulative = useMemo(() => {
     const sorted = [...shutdownLog].sort((a, b) => a.date.localeCompare(b.date) || a.he - b.he);
     let running = 0;
-    const points: { label: string; savings: number }[] = [];
-    // Aggregate by month for cleaner chart
     const monthAgg: Record<string, number> = {};
     for (const r of sorted) {
       running += r.costAvoided;
       const d = new Date(r.date);
-      const key = `${MONTH_NAMES[d.getMonth()]}`;
-      monthAgg[key] = running;
+      monthAgg[MONTH_NAMES[d.getMonth()]] = running;
     }
-    for (const [label, savings] of Object.entries(monthAgg)) {
-      points.push({ label, savings });
-    }
-    return points;
+    return Object.entries(monthAgg).map(([label, savings]) => ({ label, savings }));
   }, [shutdownLog]);
 
   if (!shutdownLog.length) {
@@ -90,91 +92,125 @@ export function PowerModelShutdownAnalytics({ shutdownLog, breakeven }: Props) {
     );
   }
 
+  const fmt = (v: number) => `$${(v / 1000).toFixed(0)}k`;
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Shutdown by Hour of Day */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Shutdown by Hour of Day</CardTitle>
-          <CardDescription className="text-xs">Which hours get curtailed most frequently</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byHour}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={1} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="12CP" stackId="a" fill={REASON_COLORS['12CP']} />
-              <Bar dataKey="Price" stackId="a" fill={REASON_COLORS['Price']} />
-              <Bar dataKey="UptimeCap" stackId="a" fill={REASON_COLORS['UptimeCap']} name="Uptime Cap" />
-              <Bar dataKey="12CP+Price" stackId="a" fill={REASON_COLORS['12CP+Price']} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      {/* Efficiency KPI Header */}
+      {efficiencyMetrics && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-[10px] text-muted-foreground uppercase">Total Saved</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">{fmt(efficiencyMetrics.totalSavings)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Clock className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-[10px] text-muted-foreground uppercase">Hours Curtailed</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">{efficiencyMetrics.totalHours}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-[10px] text-muted-foreground uppercase">$/Hour Saved</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">${efficiencyMetrics.savingsPerHour.toFixed(0)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign className="w-3.5 h-3.5 text-red-500" />
+              <span className="text-[10px] text-muted-foreground uppercase">Avg Price Avoided</span>
+            </div>
+            <p className="text-lg font-bold text-foreground">${efficiencyMetrics.avgPriceAvoided.toFixed(0)}/MWh</p>
+          </div>
+        </div>
+      )}
 
-      {/* Monthly Shutdown Breakdown */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Monthly Shutdown Breakdown</CardTitle>
-          <CardDescription className="text-xs">Curtailed hours by reason per month</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byMonth}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="12CP" stackId="a" fill={REASON_COLORS['12CP']} />
-              <Bar dataKey="Price" stackId="a" fill={REASON_COLORS['Price']} />
-              <Bar dataKey="UptimeCap" stackId="a" fill={REASON_COLORS['UptimeCap']} name="Uptime Cap" />
-              <Bar dataKey="12CP+Price" stackId="a" fill={REASON_COLORS['12CP+Price']} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Shutdown by Hour of Day</CardTitle>
+            <CardDescription className="text-xs">Which hours get curtailed most</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={byHour}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="hour" tick={{ fontSize: 9 }} interval={1} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="12CP" stackId="a" fill={REASON_COLORS['12CP']} />
+                <Bar dataKey="Price" stackId="a" fill={REASON_COLORS['Price']} />
+                <Bar dataKey="UptimeCap" stackId="a" fill={REASON_COLORS['UptimeCap']} name="Uptime Cap" />
+                <Bar dataKey="12CP+Price" stackId="a" fill={REASON_COLORS['12CP+Price']} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      {/* Price Distribution */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Shutdown Price Distribution</CardTitle>
-          <CardDescription className="text-xs">Pool prices during curtailed hours</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={priceDistribution}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="range" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="Shutdown Hours" fill="hsl(0, 65%, 55%)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Monthly Shutdown Breakdown</CardTitle>
+            <CardDescription className="text-xs">Curtailed hours by reason per month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={byMonth}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="12CP" stackId="a" fill={REASON_COLORS['12CP']} />
+                <Bar dataKey="Price" stackId="a" fill={REASON_COLORS['Price']} />
+                <Bar dataKey="UptimeCap" stackId="a" fill={REASON_COLORS['UptimeCap']} name="Uptime Cap" />
+                <Bar dataKey="12CP+Price" stackId="a" fill={REASON_COLORS['12CP+Price']} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      {/* Cumulative Cost Avoided */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Cumulative Cost Avoided</CardTitle>
-          <CardDescription className="text-xs">Running total of estimated savings from all curtailment</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={cumulative}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => [`$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'Cumulative Savings']} />
-              <Line type="monotone" dataKey="savings" stroke="hsl(150, 60%, 45%)" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Shutdown Price Distribution</CardTitle>
+            <CardDescription className="text-xs">Pool prices during curtailed hours</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={priceDistribution}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="range" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="Shutdown Hours" fill="hsl(0, 65%, 55%)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Cumulative Cost Avoided</CardTitle>
+            <CardDescription className="text-xs">Running total of savings from curtailment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={cumulative}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: number) => [`$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'Cumulative Savings']} />
+                <Line type="monotone" dataKey="savings" stroke="hsl(150, 60%, 45%)" strokeWidth={2.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

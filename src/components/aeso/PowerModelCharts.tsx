@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  ComposedChart, Bar, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, ReferenceLine,
 } from 'recharts';
 import type { MonthlyResult } from '@/hooks/usePowerModelCalculator';
@@ -37,7 +37,6 @@ const fmtFull = (v: number) => `$${v.toLocaleString(undefined, { maximumFraction
 export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
   if (!monthly.length) return null;
 
-  // 1. Monthly cost trend data
   const costTrend = monthly.map(m => ({
     month: m.month.slice(0, 3),
     DTS: m.totalDTSCharges,
@@ -47,7 +46,6 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
     Total: m.totalAmountDue,
   }));
 
-  // 2. Annual cost pie data
   const annualTotals = monthly.reduce((acc, m) => {
     acc.bulk += m.bulkMeteredEnergy + m.bulkCoincidentDemand;
     acc.regional += m.regionalBillingCapacity + m.regionalMeteredEnergy;
@@ -73,7 +71,6 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
 
   const pieTotal = pieData.reduce((s, d) => s + d.value, 0);
 
-  // 3. Curtailment data
   const curtailmentData = monthly.map(m => ({
     month: m.month.slice(0, 3),
     '12CP': m.curtailed12CP,
@@ -83,7 +80,6 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
     'Uptime %': m.uptimePercent,
   }));
 
-  // 4. Pool price histogram
   const bins = [0, 25, 50, 75, 100, 125, 150, 200, 300, 500, 1000];
   const histData = bins.map((min, i) => {
     const max = i < bins.length - 1 ? bins[i + 1] : Infinity;
@@ -94,7 +90,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Monthly Cost Trend */}
+      {/* Monthly Cost Trend - with area fill */}
       <Card className="lg:col-span-2">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -108,26 +104,36 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={costTrend}>
+              <defs>
+                <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(270, 60%, 55%)" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(270, 60%, 55%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis tickFormatter={fmt} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => fmtFull(v)} />
+              <Tooltip
+                formatter={(v: number) => fmtFull(v)}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid hsl(var(--border))' }}
+              />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="DTS" stackId="cost" fill={COLORS.dts} />
+              <Bar dataKey="DTS" stackId="cost" fill={COLORS.dts} radius={[0, 0, 0, 0]} />
               <Bar dataKey="Energy" stackId="cost" fill={COLORS.energy} />
               <Bar dataKey="FortisAlberta" stackId="cost" fill={COLORS.fortis} />
-              <Bar dataKey="GST" stackId="cost" fill={COLORS.gst} />
-              <Line type="monotone" dataKey="Total" stroke={COLORS.total} strokeWidth={2} dot={false} />
+              <Bar dataKey="GST" stackId="cost" fill={COLORS.gst} radius={[2, 2, 0, 0]} />
+              <Area type="monotone" dataKey="Total" fill="url(#totalGradient)" stroke="none" />
+              <Line type="monotone" dataKey="Total" stroke={COLORS.total} strokeWidth={2.5} dot={{ r: 3, fill: COLORS.total }} activeDot={{ r: 5 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Cost Component Pie */}
+      {/* Cost Component Pie with center label */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Annual Cost Breakdown</CardTitle>
-          <CardDescription className="text-xs">By charge component — AUC Decision 30427-D01-2025</CardDescription>
+          <CardDescription className="text-xs">By charge component</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
@@ -136,7 +142,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
                 data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={55}
+                innerRadius={60}
                 outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
@@ -148,6 +154,13 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
                 ))}
               </Pie>
               <Tooltip formatter={(v: number) => [`${fmtFull(v)} (${((v / pieTotal) * 100).toFixed(1)}%)`, 'Amount']} />
+              {/* Center label */}
+              <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-sm font-bold">
+                {fmtFull(pieTotal)}
+              </text>
+              <text x="50%" y="56%" textAnchor="middle" dominantBaseline="central" className="fill-muted-foreground text-[10px]">
+                Total Annual
+              </text>
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
@@ -157,7 +170,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Curtailment Efficiency</CardTitle>
-          <CardDescription className="text-xs">Hours curtailed by reason — aeso_training_data AIL ranking</CardDescription>
+          <CardDescription className="text-xs">Hours curtailed by reason</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={280}>
@@ -185,7 +198,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <CardTitle className="text-sm">Pool Price Distribution</CardTitle>
-                <CardDescription className="text-xs">Hourly price frequency during running hours — Breakeven at CA${breakeven.toFixed(0)}/MWh</CardDescription>
+                <CardDescription className="text-xs">Breakeven at CA${breakeven.toFixed(0)}/MWh</CardDescription>
               </div>
               <RateSourceBadge source="aeso_training_data pool_price" effectiveDate="2022-06-01" lastVerified="2026-02-01" variant="compact" />
             </div>
@@ -197,7 +210,7 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices }: Props) {
                 <XAxis dataKey="range" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 11 }} label={{ value: 'Hours', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }} />
                 <Tooltip />
-                <Bar dataKey="hours" fill="hsl(220, 70%, 55%)" />
+                <Bar dataKey="hours" fill="hsl(220, 70%, 55%)" radius={[3, 3, 0, 0]} />
                 {(() => {
                   const idx = histData.findIndex((d, i) => d.min <= breakeven && ((histData[i + 1]?.min ?? Infinity) > breakeven));
                   return idx >= 0 ? (
