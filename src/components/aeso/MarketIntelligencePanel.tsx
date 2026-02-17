@@ -272,12 +272,12 @@ export function MarketIntelligencePanel({ className }: MarketIntelligencePanelPr
   return (
     <div className={cn("space-y-4", className)}>
       <Tabs defaultValue="grid" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-8">
-          <TabsTrigger value="grid" className="text-xs">Grid Health</TabsTrigger>
-          <TabsTrigger value="interties" className="text-xs">Interties</TabsTrigger>
-          <TabsTrigger value="supply" className="text-xs">Supply</TabsTrigger>
-          <TabsTrigger value="weather" className="text-xs">Weather</TabsTrigger>
-          <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
+        <TabsList className="flex w-full h-8 overflow-x-auto scrollbar-hide">
+          <TabsTrigger value="grid" className="text-xs flex-shrink-0">Grid Health</TabsTrigger>
+          <TabsTrigger value="interties" className="text-xs flex-shrink-0">Interties</TabsTrigger>
+          <TabsTrigger value="supply" className="text-xs flex-shrink-0">Supply</TabsTrigger>
+          <TabsTrigger value="weather" className="text-xs flex-shrink-0">Weather</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs flex-shrink-0">Analytics</TabsTrigger>
         </TabsList>
 
         {/* Grid Health Panel */}

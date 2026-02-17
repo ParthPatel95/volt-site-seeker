@@ -142,7 +142,7 @@ export function AESOForecastPanel({ windSolarForecast, loading }: AESOForecastPa
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height="100%" className="min-h-[250px] sm:min-h-[350px]">
             <AreaChart data={forecastData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="time" />
