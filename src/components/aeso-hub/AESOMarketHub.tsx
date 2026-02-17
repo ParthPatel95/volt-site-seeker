@@ -104,13 +104,6 @@ export function AESOMarketHub() {
   return (
     <AESOHubLayout currentView={activeTab} onViewChange={setActiveTab}>
       <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Refresh button toolbar */}
-        <div className="flex items-center justify-end">
-          <Button onClick={handleRefreshAll} disabled={loading} variant="outline" size="sm">
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
 
         {/* Tab Content */}
         {activeTab === 'market' && (
