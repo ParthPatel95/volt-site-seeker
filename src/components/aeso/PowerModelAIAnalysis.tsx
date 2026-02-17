@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Loader2, AlertCircle, Lightbulb, TrendingUp, AlertTriangle, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { FacilityParams, TariffOverrides, AnnualSummary, MonthlyResult } from '@/hooks/usePowerModelCalculator';
@@ -13,18 +13,79 @@ interface Props {
   annual: AnnualSummary | null;
   monthly: MonthlyResult[];
   breakeven: number;
+  autoTrigger?: boolean;
 }
 
-export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly, breakeven }: Props) {
+interface ParsedSection {
+  title: string;
+  type: 'summary' | 'drivers' | 'optimization' | 'risk' | 'recommendation' | 'general';
+  items: string[];
+}
+
+function parseAIResponse(text: string): ParsedSection[] {
+  const sections: ParsedSection[] = [];
+  const lines = text.split('\n');
+  let currentSection: ParsedSection | null = null;
+
+  const classifySection = (title: string): ParsedSection['type'] => {
+    const lower = title.toLowerCase();
+    if (lower.includes('summary') || lower.includes('overview') || lower.includes('executive')) return 'summary';
+    if (lower.includes('driver') || lower.includes('cost') || lower.includes('factor')) return 'drivers';
+    if (lower.includes('optim') || lower.includes('opportunit') || lower.includes('saving') || lower.includes('recommend')) return 'optimization';
+    if (lower.includes('risk') || lower.includes('concern') || lower.includes('warning') || lower.includes('caution')) return 'risk';
+    if (lower.includes('action') || lower.includes('next step') || lower.includes('conclusion')) return 'recommendation';
+    return 'general';
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
+      if (currentSection && currentSection.items.length > 0) sections.push(currentSection);
+      const title = trimmed.replace(/^#{2,3}\s*/, '');
+      currentSection = { title, type: classifySection(title), items: [] };
+    } else if (trimmed.startsWith('**') && trimmed.endsWith('**') && !currentSection) {
+      if (currentSection && currentSection.items.length > 0) sections.push(currentSection);
+      const title = trimmed.slice(2, -2);
+      currentSection = { title, type: classifySection(title), items: [] };
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+      const item = trimmed.replace(/^[-*•]\s*/, '');
+      if (currentSection) {
+        currentSection.items.push(item);
+      } else {
+        currentSection = { title: 'Key Insights', type: 'summary', items: [item] };
+      }
+    } else {
+      if (currentSection) {
+        currentSection.items.push(trimmed);
+      } else {
+        currentSection = { title: 'Executive Summary', type: 'summary', items: [trimmed] };
+      }
+    }
+  }
+  if (currentSection && currentSection.items.length > 0) sections.push(currentSection);
+
+  return sections;
+}
+
+const sectionConfig: Record<ParsedSection['type'], { icon: React.ReactNode; borderColor: string; bgColor: string; iconColor: string }> = {
+  summary: { icon: <Lightbulb className="w-4 h-4" />, borderColor: 'border-l-emerald-500', bgColor: 'bg-emerald-500/5', iconColor: 'text-emerald-500' },
+  drivers: { icon: <TrendingUp className="w-4 h-4" />, borderColor: 'border-l-amber-500', bgColor: 'bg-amber-500/5', iconColor: 'text-amber-500' },
+  optimization: { icon: <Sparkles className="w-4 h-4" />, borderColor: 'border-l-blue-500', bgColor: 'bg-blue-500/5', iconColor: 'text-blue-500' },
+  risk: { icon: <AlertTriangle className="w-4 h-4" />, borderColor: 'border-l-red-500', bgColor: 'bg-red-500/5', iconColor: 'text-red-500' },
+  recommendation: { icon: <Shield className="w-4 h-4" />, borderColor: 'border-l-primary', bgColor: 'bg-primary/5', iconColor: 'text-primary' },
+  general: { icon: <Lightbulb className="w-4 h-4" />, borderColor: 'border-l-muted-foreground', bgColor: 'bg-muted/30', iconColor: 'text-muted-foreground' },
+};
+
+export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly, breakeven, autoTrigger }: Props) {
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
 
-  const generateAnalysis = async () => {
-    if (!annual) {
-      toast({ title: 'Load data first', description: 'Load hourly data before generating AI analysis', variant: 'destructive' });
-      return;
-    }
+  const generateAnalysis = useCallback(async () => {
+    if (!annual) return;
 
     setLoading(true);
     setAnalysis(null);
@@ -73,54 +134,93 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
     } finally {
       setLoading(false);
     }
-  };
+  }, [annual, params, tariffOverrides, monthly, breakeven, toast]);
+
+  // Auto-trigger on data load
+  useEffect(() => {
+    if (autoTrigger && annual && !hasAutoTriggered && !analysis && !loading) {
+      setHasAutoTriggered(true);
+      generateAnalysis();
+    }
+  }, [autoTrigger, annual, hasAutoTriggered, analysis, loading, generateAnalysis]);
+
+  const parsedSections = analysis ? parseAIResponse(analysis) : [];
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <CardTitle className="text-sm">AI Cost Analysis</CardTitle>
-            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">Powered by Gemini</Badge>
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+            <CardTitle className="text-sm">AI Cost Intelligence</CardTitle>
+            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">Gemini</Badge>
           </div>
           <Button onClick={generateAnalysis} disabled={loading || !annual} size="sm" className="text-xs h-7">
-            {loading ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Analyzing...</> : <><Sparkles className="w-3 h-3 mr-1" />Generate Analysis</>}
+            {loading ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Analyzing...</> : <><Sparkles className="w-3 h-3 mr-1" />{analysis ? 'Regenerate' : 'Generate Analysis'}</>}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         {!analysis && !loading && (
-          <div className="text-center py-8 text-muted-foreground">
-            <Sparkles className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">Click "Generate Analysis" to get AI-powered cost optimization insights</p>
-            <p className="text-xs mt-1">Based on your actual model parameters and calculated results — no mock data</p>
+          <div className="text-center py-6 text-muted-foreground">
+            <Sparkles className="w-6 h-6 mx-auto mb-2 opacity-40" />
+            <p className="text-xs">AI analysis will auto-generate when data loads</p>
           </div>
         )}
 
         {loading && (
           <div className="text-center py-8 text-muted-foreground">
-            <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin opacity-40" />
-            <p className="text-sm">Analyzing your cost model...</p>
+            <div className="relative w-12 h-12 mx-auto mb-3">
+              <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+              <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <Sparkles className="w-5 h-5 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            </div>
+            <p className="text-sm font-medium">Analyzing your cost model...</p>
+            <p className="text-xs text-muted-foreground mt-1">Reviewing {monthly.length} months of data</p>
           </div>
         )}
 
-        {analysis && (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            {analysis.split('\n').map((line, i) => {
-              if (line.startsWith('### ')) return <h3 key={i} className="text-sm font-semibold mt-4 mb-1">{line.slice(4)}</h3>;
-              if (line.startsWith('## ')) return <h2 key={i} className="text-base font-bold mt-5 mb-2">{line.slice(3)}</h2>;
-              if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="font-semibold text-sm">{line.slice(2, -2)}</p>;
-              if (line.startsWith('- ')) return <li key={i} className="text-xs text-muted-foreground ml-4 list-disc">{line.slice(2)}</li>;
-              if (line.trim() === '') return <br key={i} />;
-              return <p key={i} className="text-xs text-muted-foreground leading-relaxed">{line}</p>;
+        {analysis && parsedSections.length > 0 && (
+          <div className="space-y-3">
+            {parsedSections.map((section, i) => {
+              const config = sectionConfig[section.type];
+              return (
+                <div key={i} className={`border-l-3 ${config.borderColor} ${config.bgColor} rounded-r-lg p-4`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={config.iconColor}>{config.icon}</span>
+                    <h4 className="text-sm font-semibold text-foreground">{section.title}</h4>
+                  </div>
+                  <div className="space-y-1.5 pl-6">
+                    {section.items.map((item, j) => {
+                      // Check if it looks like a bullet point
+                      const isBullet = item.startsWith('**') || section.items.length > 2;
+                      const cleaned = item.replace(/\*\*(.*?)\*\*/g, '$1');
+                      return (
+                        <p key={j} className={`text-xs leading-relaxed text-muted-foreground ${isBullet ? 'flex items-start gap-1.5' : ''}`}>
+                          {isBullet && <span className="text-muted-foreground/50 mt-0.5 shrink-0">•</span>}
+                          <span dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') }} />
+                        </p>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
             })}
-            <div className="mt-4 pt-3 border-t border-border/50">
+            <div className="pt-2 border-t border-border/30">
               <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
-                Analysis based on your input parameters and historical AESO data. Not financial advice.
+                Based on your input parameters and historical AESO data. Not financial advice.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Fallback if parsing fails */}
+        {analysis && parsedSections.length === 0 && (
+          <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+            {analysis}
           </div>
         )}
       </CardContent>

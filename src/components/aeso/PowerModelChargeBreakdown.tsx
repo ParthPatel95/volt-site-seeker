@@ -259,7 +259,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {monthly.map((m) => {
+                {monthly.map((m, i) => {
                   const isHighest = m.totalAmountDue === maxCost;
                   const isLowest = m.totalAmountDue === minCost;
                   const belowTarget = m.uptimePercent < targetUptime - 0.5;
@@ -274,7 +274,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                   return (
                     <TableRow 
                       key={m.month} 
-                      className={belowTarget ? 'bg-amber-500/[0.03]' : 'hover:bg-muted/20'}
+                      className={`${belowTarget ? 'bg-amber-500/[0.03]' : i % 2 === 0 ? 'bg-muted/[0.03]' : ''} hover:bg-muted/20 transition-colors`}
                     >
                       <TableCell className="font-medium sticky left-0 bg-background z-10">
                         <div className="flex items-center gap-1.5">
