@@ -1,60 +1,165 @@
 
-# Fix AESO Hub UI Overlapping & UX Issues
+# AESO Market Hub Enhancement Plan
 
-## Problem
-The TradingViewChart toolbar buttons (zoom controls, time ranges, indicators, oscillators) are overlapping and getting cut off because the new sidebar reduces available horizontal space. The screenshot shows "Indicators" and "Oscillators" text truncating into each other.
+## Overview
 
-## Fix Strategy
+Consolidate the 11 sidebar views into 6 focused views, add a live Bitcoin Mining Economics panel alongside energy data, and improve the analytical depth across all sections.
 
-### 1. TradingViewChart Toolbar Overflow Fix (`src/components/aeso/TradingViewChart.tsx`)
+## Navigation Consolidation (11 views to 6)
 
-The toolbar at lines 1026-1438 needs restructuring to prevent overlap:
+Current sidebar has too many items, several of which are thin wrappers or overlap:
 
-- **Wrap the toolbar into two rows on medium screens**: Move the left-side controls into a `flex-wrap` container so items flow to a second line when space is tight, instead of overlapping
-- **Hide "Indicators" and "Oscillators" text labels at `lg` breakpoint** (instead of only at `xl`): Since the sidebar takes 240px, the `xl:hidden` breakpoint for the "More" dropdown needs to change to `lg:hidden`, and the individual buttons should show at `xl` instead of `lg`
-- **Reduce the breakpoint threshold**: Change the desktop-only indicator/oscillator/alert buttons from `hidden xl:flex` to `hidden 2xl:flex`, and change the mobile "More" dropdown from `flex xl:hidden` to `flex 2xl:hidden`. This ensures the combined dropdown is used whenever space is tight
-- **Add `flex-wrap` to the main toolbar container** so items can flow to a second row gracefully instead of overlapping
-- **Ensure `min-w-0` and `overflow-hidden`** on text containers to prevent text bleed
+| Current View | Action |
+|---|---|
+| Market Data | KEEP - primary view |
+| Power Model | KEEP - complex standalone tool |
+| Generation | MERGE into Market Data (it's just one card showing gen mix) |
+| Forecasts | MERGE into Market Data (it's a single forecast panel) |
+| AI Predictions | KEEP - has sub-tabs for predictions + training |
+| Datacenter Control | KEEP - standalone control center |
+| Outages & Alerts | MERGE into Market Data as a section |
+| Historical | KEEP as "Analytics" combining Historical + Analytics Export |
+| Analytics Export | MERGE into Historical (rename to "Analytics") |
+| Dashboards | REMOVE from sidebar (it just links to /app/aeso-dashboards) - add a button in Analytics view instead |
+| Telegram Alerts | MERGE into a new "Settings" view (it's a configuration panel) |
 
-### 2. LiveConnectionStatus Responsive Fix (`src/components/aeso/LiveConnectionStatus.tsx`)
+### New Sidebar Structure (6 views)
 
-- Add `flex-wrap` to the main container so on narrow widths the refresh button wraps below instead of overlapping the status text
-- Add `min-w-0` to text containers
+```text
+MARKET
+  - Market Overview (was Market Data + Generation + Forecasts + Outages)
+  - Power Model
 
-### 3. MarketDataTab Grid Spacing (`src/components/aeso-hub/tabs/MarketDataTab.tsx`)
+INTELLIGENCE
+  - AI Predictions
+  - Datacenter Control
 
-- No major issues found; the tab structure looks clean with proper responsive grid classes
+ANALYTICS
+  - Analytics (was Historical + Analytics Export + Dashboards link)
+  - Settings (Telegram Alerts config)
+```
 
-### 4. Other Tabs Audit
+## Bitcoin Mining Economics Panel (NEW)
 
-All other tabs (PowerModel, Generation, Forecast, Predictions, Datacenter, Historical, Analytics Export, Dashboards, Telegram Alerts, Outages) delegate to dedicated components and have proper `space-y-4 sm:space-y-6` wrappers. No overlapping issues found in their tab wrappers.
+Add a "Mining Economics" card section to the Market Overview that shows real BTC mining data alongside energy prices. This is highly relevant for an energy market platform targeting Bitcoin miners.
+
+### Data Sources (100% Real, No Fake Data)
+
+All data from free, public, no-API-key-required endpoints:
+
+| Metric | Source | Endpoint |
+|---|---|---|
+| BTC Price | Coinbase API | `api.coinbase.com/v2/prices/BTC-USD/spot` |
+| Network Hashrate | mempool.space | `mempool.space/api/v1/mining/hashrate/3d` |
+| Difficulty | mempool.space | `mempool.space/api/v1/mining/hashrate/3d` |
+| Block Height | mempool.space | `mempool.space/api/blocks/tip/height` |
+| Block Reward | Calculated | `50 / 2^(floor(height/210000))` |
+
+### Derived Metrics (Calculated from Real Data)
+
+| Metric | Formula |
+|---|---|
+| Hash Price ($/TH/day) | `(blocksPerDay * blockReward * btcPrice) / (networkHashrate_TH)` |
+| Mining Revenue ($/MWh equivalent) | `hashPrice * THs_per_MW / 24` - shows how much BTC revenue 1 MW of mining generates |
+| Break-even Energy Cost | `hashPrice * THs_per_MW / 24` vs current AESO pool price |
+| Mining Margin | `(miningRevenue - energyCost) / miningRevenue * 100` |
+
+The `useBitcoinNetworkStats` hook already exists and fetches hashrate, difficulty, block height, and BTC price from mempool.space + Coinbase. We extend it to also compute hash price and mining-vs-energy metrics.
+
+### Implementation
+
+1. **Extend `useBitcoinNetworkStats` hook** to add computed fields: `hashPrice`, `hashPriceFormatted`, `dailyBtcPerPH` (daily BTC earned per PH/s)
+
+2. **Create `MiningEconomicsCard` component** - a card that sits in the Market Overview tab showing:
+   - BTC Price (live from Coinbase)
+   - Hash Price $/TH/day (computed from live data)
+   - Network Hashrate (live from mempool.space)
+   - Mining Margin indicator comparing mining revenue vs current AESO energy cost
+   - All values tagged with "Live" badge when from real APIs, "Fallback" when using cached/default values
+
+3. **Create `EnergyMiningCorrelation` component** - a small analytical widget showing:
+   - Current AESO pool price in $/MWh
+   - BTC mining revenue per MWh (at current hashrate/price)
+   - Simple profit/loss indicator: is it profitable to mine right now given current energy price?
+   - Assumes industry-standard efficiency (e.g., S21 Pro at 15 J/TH) for the calculation
+
+## Market Overview Tab Enhancements
+
+The current Market Data tab has good components but they're laid out sequentially with no analytical cohesion. Improvements:
+
+1. **Move Generation Mix** from its own tab into Market Overview as a compact horizontal bar chart below the QuickStatsBar
+2. **Move Wind/Solar Forecast** from its own tab into Market Overview below the TradingView chart
+3. **Move Outages & Alerts** from its own tab into Market Overview as a collapsible alert banner at the top (only shows when there are active alerts/outages)
+4. **Add the Mining Economics Card** after the Hero Price Card row
+5. **Remove DataCoverageStatus** from Market Overview (move to Analytics tab - it's an admin/diagnostic tool, not market intelligence)
+
+## Analytics Tab Enhancement
+
+Combine Historical + Analytics Export + Dashboard link into one view:
+
+- Top section: Historical pricing (existing `AESOHistoricalPricing`)
+- Middle section: Analytics Export (existing `UnifiedAnalyticsExport`)  
+- Bottom: "Create Custom Dashboard" button linking to `/app/aeso-dashboards`
+- Move DataCoverageStatus here as a collapsible section
 
 ## Technical Details
 
-### TradingViewChart.tsx Changes (lines 1026-1438)
+### Files to Create
 
-1. **Line 1027**: Change the toolbar container from `overflow-x-auto scrollbar-hide` to `flex-wrap gap-y-2` so items wrap instead of scroll/overlap
+| File | Purpose |
+|---|---|
+| `src/components/aeso/MiningEconomicsCard.tsx` | BTC mining metrics card with hash price, mining margin |
+| `src/components/aeso/EnergyMiningCorrelation.tsx` | Energy vs mining profitability indicator |
+| `src/components/aeso-hub/tabs/AnalyticsTab.tsx` | Combined Historical + Export + Dashboards |
+| `src/components/aeso-hub/tabs/SettingsTab.tsx` | Telegram alerts configuration |
 
-2. **Line 1082-1120 (Zoom controls group)**: Keep as-is, these are compact enough
+### Files to Modify
 
-3. **Line 1144 (Desktop indicators/oscillators)**: Change `hidden xl:flex` to `hidden 2xl:flex` so these individual buttons only show on very wide screens
+| File | Changes |
+|---|---|
+| `src/hooks/useBitcoinNetworkStats.ts` | Add `hashPrice`, `hashPriceFormatted`, `dailyBtcPerPH` to interface and calculation |
+| `src/components/aeso-hub/layout/AESOHubSidebar.tsx` | Update nav groups from 11 items to 6 |
+| `src/components/aeso-hub/layout/AESOHubLayout.tsx` | Update VIEW_LABELS for new 6-view structure |
+| `src/components/aeso-hub/AESOMarketHub.tsx` | Update tab rendering, pass BTC stats to Market Overview |
+| `src/components/aeso-hub/tabs/MarketDataTab.tsx` | Add MiningEconomicsCard, inline Generation/Forecast/Outages, remove DataCoverage |
 
-4. **Line 1267 (Mobile/tablet "More" dropdown)**: Change `flex xl:hidden` to `flex 2xl:hidden` so the combined dropdown is used on all screens except ultra-wide
+### Files to Delete (tab wrappers no longer needed)
 
-5. **Line 1032 (OHLC display)**: The OHLC bar already hides on smaller screens (`hidden lg:flex`), which is fine
+| File | Reason |
+|---|---|
+| `src/components/aeso-hub/tabs/GenerationTab.tsx` | Merged into Market Overview |
+| `src/components/aeso-hub/tabs/ForecastTab.tsx` | Merged into Market Overview |
+| `src/components/aeso-hub/tabs/OutagesAlertsTab.tsx` | Merged into Market Overview |
+| `src/components/aeso-hub/tabs/HistoricalTab.tsx` | Replaced by AnalyticsTab |
+| `src/components/aeso-hub/tabs/AnalyticsExportTab.tsx` | Replaced by AnalyticsTab |
+| `src/components/aeso-hub/tabs/CustomDashboardsTab.tsx` | Link moved into AnalyticsTab |
+| `src/components/aeso-hub/tabs/TelegramAlertsTab.tsx` | Replaced by SettingsTab |
 
-6. **Line 1122-1141 (Chart type toggle)**: Change `hidden lg:flex` to `hidden xl:flex` to hide earlier and prevent cramping
+### Hash Price Calculation (added to useBitcoinNetworkStats)
 
-### LiveConnectionStatus.tsx Changes
+```typescript
+// Hash Price = daily BTC revenue per TH/s
+const blocksPerDay = 144;
+const dailyBtcPerTH = (blocksPerDay * blockReward) / (hashrate * 1e6); // hashrate in EH/s = 1e6 TH/s
+const hashPrice = dailyBtcPerTH * price; // USD per TH/s per day
+```
 
-- Line 72: Add `flex-wrap` to the outer container
-- Ensure gap classes handle wrapping gracefully
+### Mining vs Energy Calculation (in MiningEconomicsCard)
 
-### Summary of File Changes
+```typescript
+// Industry standard: Antminer S21 Pro = 15 J/TH
+const MINER_EFFICIENCY_J_PER_TH = 15;
+const TH_PER_MW = 1e6 / MINER_EFFICIENCY_J_PER_TH; // ~66,667 TH/s per MW
+const dailyMiningRevenue_per_MW = hashPrice * TH_PER_MW; // USD/day per MW
+const hourlyMiningRevenue_per_MWh = dailyMiningRevenue_per_MW / 24; // USD/MWh equivalent
+const miningMargin = ((hourlyMiningRevenue_per_MWh - aesoPrice) / hourlyMiningRevenue_per_MWh) * 100;
+```
 
-| File | Change |
-|------|--------|
-| `src/components/aeso/TradingViewChart.tsx` | Adjust breakpoints for toolbar items, add flex-wrap, fix overflow |
-| `src/components/aeso/LiveConnectionStatus.tsx` | Add flex-wrap for narrow layouts |
+All inputs are from live APIs (mempool.space for hashrate, Coinbase for BTC price, AESO for energy price). The efficiency constant (15 J/TH) is clearly labeled as "Industry Standard - S21 Pro" with a badge.
 
-These are targeted CSS/className changes only -- no logic or data flow modifications.
+### Data Source Transparency
+
+Every metric in the Mining Economics card will display a small source badge:
+- "Live" (green) - data from real API within last 5 minutes
+- "Cached" (yellow) - data from localStorage cache
+- "Fallback" (red) - using hardcoded estimates (only when all APIs fail)
