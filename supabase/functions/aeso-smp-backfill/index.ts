@@ -6,15 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
-/**
- * Backfill SMP data with true hourly granularity from AESO Pool Price Report API.
- * 
- * The previous collector stored one SMP value per day (daily summary) which is invalid.
- * This function fetches the actual hourly SMP from the AESO API and updates records.
- * 
- * Step 1 (mode=clear): Null out all existing invalid daily-granularity SMP values
- * Step 2 (mode=backfill): Fetch real hourly SMP from AESO and update records
- */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -35,59 +26,44 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { mode = 'backfill', maxDays = 7 } = body;
 
-    // Mode: clear — null out all existing invalid daily-granularity SMP
+    // Mode: clear
     if (mode === 'clear') {
-      console.log('🧹 Clearing invalid daily-granularity SMP values...');
-      
-      // Process in batches to avoid timeouts
       let totalCleared = 0;
       const BATCH = 100;
-      
-      for (let i = 0; i < 50; i++) { // max 50 batches = 5000 records
+      for (let i = 0; i < 50; i++) {
         const { data: batch } = await supabase
           .from('aeso_training_data')
           .select('id')
           .not('system_marginal_price', 'is', null)
           .limit(BATCH);
-
         if (!batch || batch.length === 0) break;
-
         const ids = batch.map(r => r.id);
-        const { error } = await supabase
-          .from('aeso_training_data')
+        await supabase.from('aeso_training_data')
           .update({ system_marginal_price: null, smp_pool_price_spread: null })
           .in('id', ids);
-
-        if (error) {
-          console.error('Clear batch error:', error.message);
-          break;
-        }
         totalCleared += ids.length;
-        if (totalCleared % 500 === 0) console.log(`Cleared ${totalCleared} records...`);
       }
-
-      // Check remaining
       const { count: remaining } = await supabase
         .from('aeso_training_data')
         .select('id', { count: 'exact', head: true })
         .not('system_marginal_price', 'is', null);
-
-      return new Response(JSON.stringify({
-        success: true,
-        mode: 'clear',
-        cleared: totalCleared,
-        remaining: remaining ?? 0,
-        message: remaining && remaining > 0
-          ? `Call again to clear remaining ${remaining} records`
-          : 'All invalid SMP values cleared'
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, mode: 'clear', cleared: totalCleared, remaining: remaining ?? 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // Mode: backfill — fetch real hourly SMP from AESO API
-    console.log(`📊 SMP hourly backfill (max ${maxDays} days per run)...`);
+    // Mode: backfill — process small date chunks, working backwards from most recent null records
+    console.log(`📊 SMP hourly backfill (max ${maxDays} days per chunk)...`);
 
-    // Find the earliest record that needs SMP (only Nov 2025+ when we have CSD data)
-    const { data: missingRange } = await supabase
+    const { data: latestNull } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp')
+      .is('system_marginal_price', null)
+      .gte('timestamp', '2025-11-01T00:00:00Z')
+      .order('timestamp', { ascending: false })
+      .limit(1);
+
+    const { data: earliestNull } = await supabase
       .from('aeso_training_data')
       .select('timestamp')
       .is('system_marginal_price', null)
@@ -95,224 +71,193 @@ Deno.serve(async (req) => {
       .order('timestamp', { ascending: true })
       .limit(1);
 
-    if (!missingRange || missingRange.length === 0) {
+    if (!latestNull?.length || !earliestNull?.length) {
       return new Response(JSON.stringify({
-        success: true,
-        message: 'No records need SMP backfill from Nov 2025 onward',
-        updated: 0, remaining: 0
+        success: true, message: 'No records need SMP backfill', updated: 0, remaining: 0
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const startDate = new Date(missingRange[0].timestamp);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + maxDays);
-    const now = new Date();
-    if (endDate > now) endDate.setTime(now.getTime());
+    // Process in small chunks (7 days max) — start from the LATEST null and work backwards
+    // This ensures we match with the most recent AESO API data first
+    const latestDate = new Date(latestNull[0].timestamp);
+    const earliestDate = new Date(earliestNull[0].timestamp);
+    
+    // Calculate chunk: last maxDays days of null data
+    const chunkEnd = new Date(latestDate);
+    chunkEnd.setDate(chunkEnd.getDate() + 1); // include the day
+    const chunkStart = new Date(chunkEnd);
+    chunkStart.setDate(chunkStart.getDate() - Math.min(maxDays, 7)); // max 7 days per API call
+    if (chunkStart < earliestDate) chunkStart.setTime(earliestDate.getTime());
 
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
-    console.log(`Fetching SMP for ${startStr} to ${endStr}`);
+    const startStr = chunkStart.toISOString().split('T')[0];
+    const endStr = chunkEnd.toISOString().split('T')[0];
+    console.log(`Fetching SMP for chunk: ${startStr} to ${endStr}`);
 
-    // AESO Pool Price Report includes hourly pool price data
-    // Try the dedicated SMP endpoint first
+    // Fetch SMP from AESO API
     let smpByHour: Record<string, number> = {};
     let source = 'unknown';
 
-    // Attempt 1: Pool Price Report v1.1 (may include SMP field)
+    // Try SMP Report API first (has dedicated hourly SMP)
     try {
-      const ppUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`;
-      const ppResp = await fetch(ppUrl, {
+      const smpUrl = `https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`;
+      console.log('Fetching SMP Report API:', smpUrl);
+      const smpResp = await fetch(smpUrl, {
         headers: { 'Accept': 'application/json', 'API-KEY': aesoKey },
-        signal: AbortSignal.timeout(20000)
+        signal: AbortSignal.timeout(25000)
       });
-      
-      if (ppResp.ok) {
-        const ppData = await ppResp.json();
-        const records = ppData?.return?.['Pool Price Report'] || [];
-        console.log(`Pool Price Report returned ${records.length} records`);
-        if (records.length > 0) {
-          console.log('PP sample fields:', Object.keys(records[0]));
+
+      if (smpResp.ok) {
+        const smpData = await smpResp.json();
+        const smpRecords = smpData?.return?.['System Marginal Price Report'] || [];
+        console.log(`SMP Report returned ${smpRecords.length} records`);
+        if (smpRecords.length > 0) {
+          console.log('SMP sample:', JSON.stringify(smpRecords[0]));
         }
 
-        // Check if it has SMP
-        for (const r of records) {
-          if (r.system_marginal_price !== undefined && r.system_marginal_price !== null) {
-            const ts = r.begin_datetime_utc;
-            const smp = parseFloat(r.system_marginal_price);
-            if (ts && !isNaN(smp)) {
-              smpByHour[ts] = smp;
-            }
+        for (const r of smpRecords) {
+          const ts = r.begin_datetime_utc || r.date_time;
+          const smp = parseFloat(r.system_marginal_price || r.price || r.smp);
+          if (ts && !isNaN(smp)) {
+            // Normalize: "2025-11-13 06:32" → "2025-11-13 06"
+            const hourKey = ts.replace('T', ' ').substring(0, 13);
+            smpByHour[hourKey] = smp;
           }
         }
-
-        if (Object.keys(smpByHour).length > 0) {
-          source = 'pool_price_report';
-          console.log(`✅ Got ${Object.keys(smpByHour).length} SMP values from Pool Price Report`);
-        }
+        source = 'smp_report';
+        console.log(`Got ${Object.keys(smpByHour).length} unique hourly SMP values`);
+      } else {
+        console.error(`SMP Report API returned ${smpResp.status}: ${await smpResp.text()}`);
       }
     } catch (e: any) {
-      console.warn('Pool Price Report fetch failed:', e.message);
+      console.warn('SMP Report fetch failed:', e.message);
     }
 
-    // Attempt 2: Dedicated SMP Report API (if pool price didn't have SMP)
+    // Fallback: Pool Price Report (has pool_price but maybe not SMP)
     if (Object.keys(smpByHour).length === 0) {
       try {
-        const smpUrl = `https://apimgw.aeso.ca/public/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate=${startStr}&endDate=${endStr}`;
-        console.log('Trying SMP Report API...');
-        const smpResp = await fetch(smpUrl, {
+        const ppUrl = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startStr}&endDate=${endStr}`;
+        const ppResp = await fetch(ppUrl, {
           headers: { 'Accept': 'application/json', 'API-KEY': aesoKey },
-          signal: AbortSignal.timeout(20000)
+          signal: AbortSignal.timeout(25000)
         });
-
-        if (smpResp.ok) {
-          const smpData = await smpResp.json();
-          const smpRecords = smpData?.return?.['System Marginal Price Report'] || [];
-          console.log(`SMP Report returned ${smpRecords.length} records`);
-          if (smpRecords.length > 0) {
-            console.log('SMP sample fields:', Object.keys(smpRecords[0]));
-            console.log('SMP sample:', JSON.stringify(smpRecords[0]));
-          }
-
-          // SMP report has sub-hourly data; take the last value per hour
-          // Timestamps are in format "YYYY-MM-DD HH:MM" — normalize to "YYYY-MM-DD HH"
-          for (const r of smpRecords) {
-            const ts = r.begin_datetime_utc || r.date_time;
-            const smp = parseFloat(r.system_marginal_price || r.price || r.smp);
-            if (ts && !isNaN(smp)) {
-              // Normalize: "2025-11-13 06:32" → "2025-11-13 06"
-              const hourKey = ts.replace('T', ' ').substring(0, 13);
-              smpByHour[hourKey] = smp; // Last value per hour wins
+        if (ppResp.ok) {
+          const ppData = await ppResp.json();
+          const records = ppData?.return?.['Pool Price Report'] || [];
+          console.log(`Pool Price Report returned ${records.length} records, fields: ${records.length > 0 ? Object.keys(records[0]).join(',') : 'none'}`);
+          for (const r of records) {
+            if (r.system_marginal_price !== undefined && r.system_marginal_price !== null) {
+              const ts = r.begin_datetime_utc;
+              const smp = parseFloat(r.system_marginal_price);
+              if (ts && !isNaN(smp)) {
+                smpByHour[ts.replace('T', ' ').substring(0, 13)] = smp;
+              }
             }
           }
-          source = 'smp_report';
-          console.log(`✅ Got ${Object.keys(smpByHour).length} SMP values from SMP Report`);
-        } else {
-          console.error(`SMP Report API returned ${smpResp.status}`);
-          await smpResp.text(); // consume body
+          if (Object.keys(smpByHour).length > 0) source = 'pool_price_report';
         }
       } catch (e: any) {
-        console.warn('SMP Report fetch failed:', e.message);
+        console.warn('Pool Price Report fetch failed:', e.message);
       }
     }
 
-    const smpKeys = Object.keys(smpByHour);
+    const smpKeys = Object.keys(smpByHour).sort();
     const smpCount = smpKeys.length;
+    
     if (smpCount === 0) {
       return new Response(JSON.stringify({
-        success: true,
-        message: 'Could not extract hourly SMP from AESO API for this date range.',
+        success: true, message: 'No SMP data available from AESO API for this date range',
         updated: 0, dateRange: { start: startStr, end: endStr }
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Log some SMP keys for debugging
-    console.log('SMP hourKey samples:', smpKeys.slice(0, 5));
+    // Log diagnostic info
+    console.log(`SMP keys range: ${smpKeys[0]} to ${smpKeys[smpKeys.length - 1]}`);
+    console.log(`First 5 SMP keys: ${smpKeys.slice(0, 5).join(', ')}`);
+    console.log(`Last 5 SMP keys: ${smpKeys.slice(-5).join(', ')}`);
 
-    // Determine the actual date range covered by SMP data
-    const smpDates = smpKeys.map(k => k.substring(0, 10)).sort();
-    const smpMinDate = smpDates[0];
-    const smpMaxDate = smpDates[smpDates.length - 1];
-    console.log(`SMP data covers ${smpMinDate} to ${smpMaxDate}`);
+    // Fetch training records in the SMP date range
+    const smpMinDate = smpKeys[0].substring(0, 10);
+    const smpMaxDate = smpKeys[smpKeys.length - 1].substring(0, 10);
 
-    // Fetch training records that overlap with the SMP date range
     const { data: records, error: fetchError } = await supabase
       .from('aeso_training_data')
       .select('id, timestamp, pool_price')
       .is('system_marginal_price', null)
       .gte('timestamp', smpMinDate + 'T00:00:00Z')
       .lte('timestamp', smpMaxDate + 'T23:59:59Z')
-      .order('timestamp')
+      .order('timestamp', { ascending: false })
       .limit(5000);
 
     if (fetchError) throw new Error(`Fetch error: ${fetchError.message}`);
     if (!records || records.length === 0) {
       return new Response(JSON.stringify({
-        success: true, message: 'No training records in the SMP date range', updated: 0,
-        smpDateRange: { start: smpMinDate, end: smpMaxDate }
+        success: true, message: 'No null-SMP training records in this date range',
+        updated: 0, smpKeysFound: smpCount, dateRange: { start: smpMinDate, end: smpMaxDate }
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    console.log(`Matching ${records.length} training records with ${smpCount} SMP values...`);
-    // Log a training timestamp sample for debugging
-    if (records.length > 0) {
-      console.log('Training timestamp sample:', records[0].timestamp);
-      const sampleHourKey = records[0].timestamp.replace('T', ' ').substring(0, 13);
-      console.log('Training hourKey sample:', sampleHourKey, 'match?', smpByHour[sampleHourKey] !== undefined);
+    console.log(`Found ${records.length} training records to match`);
+    
+    // Log the first few training timestamps and their hourKeys for debugging
+    for (let i = 0; i < Math.min(3, records.length); i++) {
+      const ts = records[i].timestamp;
+      const hourKey = ts.replace('T', ' ').substring(0, 13);
+      const match = smpByHour[hourKey];
+      console.log(`Training[${i}]: ts=${ts} hourKey="${hourKey}" smp=${match !== undefined ? match : 'NO MATCH'}`);
     }
 
-    // Match and update in batches
+    // Match and group by SMP value for efficient batch updates
     let updated = 0;
-    const BATCH = 200;
+    let noMatch = 0;
 
-    for (let i = 0; i < records.length; i += BATCH) {
-      const chunk = records.slice(i, i + BATCH);
+    // Group records by their SMP+spread values
+    const smpGroups: Record<string, string[]> = {};
+    const spreadUpdates: { id: string; spread: number }[] = [];
 
-      // Group updates by SMP value for efficient batch updates
-      const smpGroups: Record<string, { ids: string[]; poolPrices: number[] }> = {};
-
-      for (const r of chunk) {
-        // Normalize: "2025-11-05 06:07:06.43+00" → "2025-11-05 06"
-        const hourKey = r.timestamp.replace('T', ' ').substring(0, 13);
-        const smp = smpByHour[hourKey];
-        if (smp !== undefined) {
-          const key = String(smp);
-          if (!smpGroups[key]) smpGroups[key] = { ids: [], poolPrices: [] };
-          smpGroups[key].ids.push(r.id);
-          smpGroups[key].poolPrices.push(r.pool_price);
-        }
+    for (const r of records) {
+      const hourKey = r.timestamp.replace('T', ' ').substring(0, 13);
+      const smp = smpByHour[hourKey];
+      if (smp !== undefined) {
+        const key = String(smp);
+        if (!smpGroups[key]) smpGroups[key] = [];
+        smpGroups[key].push(r.id);
+        const spread = Math.round((r.pool_price - smp) * 100) / 100;
+        spreadUpdates.push({ id: r.id, spread });
+      } else {
+        noMatch++;
       }
+    }
 
-      // Execute grouped updates
-      const promises = Object.entries(smpGroups).map(([smpVal, group]) => {
-        const smpNum = parseFloat(smpVal);
-        return supabase
+    // Batch update SMP values (grouped by value, max 50 IDs per call)
+    for (const [smpVal, ids] of Object.entries(smpGroups)) {
+      for (let i = 0; i < ids.length; i += 50) {
+        const batch = ids.slice(i, i + 50);
+        const { error } = await supabase
           .from('aeso_training_data')
-          .update({ system_marginal_price: smpNum })
-          .in('id', group.ids);
-      });
-
-      if (promises.length > 0) {
-        await Promise.all(promises);
-        updated += Object.values(smpGroups).reduce((sum, g) => sum + g.ids.length, 0);
+          .update({ system_marginal_price: parseFloat(smpVal) })
+          .in('id', batch);
+        if (!error) updated += batch.length;
       }
     }
 
-    // Also update smp_pool_price_spread for records that now have SMP
-    // Do this in a second pass to keep batches simple
-    if (updated > 0) {
-      const { data: updatedRecords } = await supabase
-        .from('aeso_training_data')
-        .select('id, pool_price, system_marginal_price')
-        .not('system_marginal_price', 'is', null)
-        .is('smp_pool_price_spread', null)
-        .gte('timestamp', startDate.toISOString())
-        .lte('timestamp', endDate.toISOString())
-        .limit(5000);
-
-      if (updatedRecords && updatedRecords.length > 0) {
-        for (let i = 0; i < updatedRecords.length; i += BATCH) {
-          const chunk = updatedRecords.slice(i, i + BATCH);
-          const spreadGroups: Record<string, string[]> = {};
-          
-          for (const r of chunk) {
-            if (r.system_marginal_price !== null && r.pool_price !== null) {
-              const spread = Math.round((r.pool_price - r.system_marginal_price) * 100) / 100;
-              const key = String(spread);
-              if (!spreadGroups[key]) spreadGroups[key] = [];
-              spreadGroups[key].push(r.id);
-            }
-          }
-
-          const spreadPromises = Object.entries(spreadGroups).map(([spread, ids]) =>
-            supabase
-              .from('aeso_training_data')
-              .update({ smp_pool_price_spread: parseFloat(spread) })
-              .in('id', ids)
-          );
-          await Promise.all(spreadPromises);
-        }
+    // Batch update spreads (group by spread value)
+    const spreadGroups: Record<string, string[]> = {};
+    for (const s of spreadUpdates) {
+      const key = String(s.spread);
+      if (!spreadGroups[key]) spreadGroups[key] = [];
+      spreadGroups[key].push(s.id);
+    }
+    for (const [spreadVal, ids] of Object.entries(spreadGroups)) {
+      for (let i = 0; i < ids.length; i += 50) {
+        const batch = ids.slice(i, i + 50);
+        await supabase
+          .from('aeso_training_data')
+          .update({ smp_pool_price_spread: parseFloat(spreadVal) })
+          .in('id', batch);
       }
     }
+
+    console.log(`Batch updated ${updated} SMP values, ${noMatch} unmatched`);
 
     // Count remaining
     const { count: remaining } = await supabase
@@ -321,15 +266,13 @@ Deno.serve(async (req) => {
       .is('system_marginal_price', null)
       .gte('timestamp', '2025-11-01T00:00:00Z');
 
-    console.log(`✅ SMP backfill: ${updated} updated, ${remaining ?? '?'} remaining`);
+    console.log(`✅ SMP backfill: ${updated} updated, ${noMatch} unmatched, ${remaining ?? '?'} remaining`);
 
     return new Response(JSON.stringify({
-      success: true,
-      updated,
-      remaining: remaining ?? 0,
-      source,
+      success: true, updated, noMatch, remaining: remaining ?? 0, source,
       dateRange: { start: startStr, end: endStr },
-      smpValuesFound: smpCount,
+      smpKeysFound: smpCount,
+      smpKeyRange: { first: smpKeys[0], last: smpKeys[smpKeys.length - 1] },
       message: remaining && remaining > 0
         ? `Call again to process remaining ${remaining} records`
         : 'SMP backfill complete'
