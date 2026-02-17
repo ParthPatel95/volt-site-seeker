@@ -1,100 +1,103 @@
 
 
-# Fix: Prevent Features From Disappearing During Edits
+# Plan: Fill Missing AESO Historical Data
 
-## Root Cause Analysis
+## The Problem
 
-After auditing every line of routing, navigation, and tab rendering, the code is **currently correct**. The recurring disappearance of Inventory and Power Model is caused by **file rewrite truncation** -- when large files are edited, the "keep existing code" shorthand silently drops sections.
+Your database has 34,221 hourly records but 3 major data categories are nearly empty for the Jun 2022 - Oct 2025 period (86% of your data):
 
-The highest-risk file is `AESOMarketComprehensive.tsx` at **848 lines** with 11 conditional tab blocks. When any edit touches this file, tab blocks (like Power Model at line 775) can be accidentally omitted.
+| Missing Data | Records Missing | Impact |
+|---|---|---|
+| Generation breakdown (gas, wind, solar, hydro, coal) | 29,665 | Cannot train accurate price models without knowing fuel mix |
+| Reserves, intertie flows, outages | 29,665 | Missing grid stress indicators |
+| Natural gas price (AECO hub) | 34,221 | Gas price is the #1 driver of Alberta electricity prices |
+| System marginal price | 29,891 | Missing key market microstructure signal |
 
-## Solution: Decompose the Monolithic File
+## Data Sources Available
 
-Split `AESOMarketComprehensive.tsx` into smaller, isolated files so that editing one tab's content **cannot affect another tab**.
+### 1. AESO Historical Generation CSVs (FREE - no API needed)
+AESO publishes bulk CSV downloads with hourly metered generation volumes per unit from 2001-2025:
+- `Hourly Metered Volumes and Pool Price and AIL - 2020 to 2025`
+- `Hourly Metered Volumes and Pool Price and AIL - 2010 to 2019`
 
-### New File Structure
+These contain per-unit generation which can be aggregated by fuel type (gas, wind, solar, hydro, coal). This fills the **29,665 missing generation records**.
 
-```
-src/components/aeso-hub/
-  AESOMarketHub.tsx          (~80 lines - shell with nav + tab routing)
-  tabs/
-    MarketDataTab.tsx         (lines 305-772 extracted)
-    PowerModelTab.tsx         (~5 lines - just renders PowerModelAnalyzer)
-    TelegramAlertsTab.tsx     (~5 lines - just renders TelegramAlertSettings)
-    PredictionsTab.tsx        (extracted)
-    DatacenterTab.tsx         (extracted)
-    HistoricalTab.tsx         (extracted)
-    AnalyticsExportTab.tsx    (extracted)
-    GenerationTab.tsx         (extracted)
-    ForecastTab.tsx           (extracted)
-    OutagesAlertsTab.tsx      (extracted)
-    CustomDashboardsTab.tsx   (extracted)
-```
+You already have a `GenerationDataUploader` component and `aeso-generation-upload` edge function for this -- we just need to download the CSVs and upload them.
 
-### How This Prevents the Bug
+### 2. AESO CSD API (already configured -- real-time only)
+The Current Supply Demand API only returns current snapshots, not historical data. This is why generation data only exists from Nov 2025 onward (when the hourly collector started). No fix needed here -- it's working correctly for ongoing collection.
 
-1. **Each tab is its own file** -- editing PowerModelChargeBreakdown.tsx can never touch Inventory routes or other tabs
-2. **The hub shell is ~80 lines** -- small enough to never need "keep existing code" truncation
-3. **VoltScout.tsx routes stay untouched** -- tab decomposition happens inside the AESO hub only
-4. **No functional changes** -- exact same UI, just reorganized files
+### 3. Natural Gas Prices -- New Scraper Needed
+AECO natural gas hub prices are not available from AESO. Sources to scrape/fetch:
+- **US EIA API** (you already have `EIA_API_KEY`): Has Henry Hub prices, can proxy for AECO with a basis differential
+- **Alberta Gas Reference Price**: Published monthly by the Alberta government
+- **NGX/ICE settlement prices**: Requires paid subscription
 
-### Technical Details
+### 4. AESO System Marginal Price API (already configured)
+The SMP Report API endpoint exists at `https://api.aeso.ca/report/v1/smp` -- the backfill function just needs to call it for historical periods.
 
-**Step 1: Create tab wrapper components** (11 new small files)
+## Implementation Plan
 
-Each tab file exports a single component that wraps its content. Example for PowerModelTab:
+### Step 1: Build an AESO CSV Backfill Edge Function
+Create a new edge function `aeso-generation-csv-backfill` that:
+- Fetches the AESO historical generation CSVs from their public data request page (Firecrawl or direct URL)
+- Parses the CSV (per-unit hourly generation)
+- Aggregates units by fuel type (gas, wind, solar, hydro, coal, other) per hour
+- Upserts aggregated totals into `aeso_training_data` matching on timestamp
+- Processes in batches to stay within edge function timeout limits
 
-```typescript
-// src/components/aeso-hub/tabs/PowerModelTab.tsx
-import { PowerModelAnalyzer } from '@/components/aeso/PowerModelAnalyzer';
+### Step 2: Build a Gas Price Backfill using EIA API
+Create `aeso-gas-price-backfill` edge function that:
+- Calls EIA API for Henry Hub natural gas daily prices (2022-2026)
+- Applies an AECO basis adjustment (typically Henry Hub minus $0.50-1.50 USD)
+- Converts to CAD using a historical exchange rate lookup
+- Updates `gas_price_aeco` column for all 34,221 records
 
-export function PowerModelTab() {
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <PowerModelAnalyzer />
-    </div>
-  );
-}
-```
+### Step 3: Build SMP Historical Backfill
+Extend the existing `aeso-comprehensive-backfill` function with a new `smp` phase that:
+- Calls AESO SMP Report API for each month (Jun 2022 - Oct 2025)
+- Extracts hourly system marginal price values
+- Updates `system_marginal_price` and `smp_pool_price_spread` columns
 
-**Step 2: Create the new hub shell** (`AESOMarketHub.tsx`)
+### Step 4: Calculate Derived Reserve/Intertie Estimates
+For the 29,665 records missing reserves and intertie data, create a calculation step that:
+- Estimates operating reserves from the relationship between demand, generation, and price (well-established correlations)
+- Marks these as estimated vs. real data with a flag column
+- Does NOT fabricate data -- uses statistical relationships from the 4,556 records where we have real reserve data
 
-This file contains:
-- All the hook calls (useOptimizedDashboard, useAESOEnhancedData, etc.)
-- The header and navigation bar
-- A simple switch/conditional that renders the active tab component
-- Props passed down to tabs that need market data
+### Step 5: Add a Data Coverage Dashboard Widget
+Add a small status card to the AESO Market Hub showing:
+- Total records and date range
+- Per-column fill percentage
+- One-click buttons to trigger each backfill phase
 
-**Step 3: Update `AESOMarketComprehensive.tsx`**
+## Technical Details
 
-Replace the 848-line monolith with a re-export from the new hub:
-
-```typescript
-// src/components/AESOMarketComprehensive.tsx
-export { AESOMarketHub as AESOMarketComprehensive } from './aeso-hub/AESOMarketHub';
-```
-
-This keeps all existing imports in VoltScout.tsx and App.tsx working without changes.
-
-### Files to Create
-- `src/components/aeso-hub/AESOMarketHub.tsx`
-- `src/components/aeso-hub/tabs/MarketDataTab.tsx`
-- `src/components/aeso-hub/tabs/PowerModelTab.tsx`
-- `src/components/aeso-hub/tabs/TelegramAlertsTab.tsx`
-- `src/components/aeso-hub/tabs/PredictionsTab.tsx`
-- `src/components/aeso-hub/tabs/DatacenterTab.tsx`
-- `src/components/aeso-hub/tabs/HistoricalTab.tsx`
-- `src/components/aeso-hub/tabs/AnalyticsExportTab.tsx`
-- `src/components/aeso-hub/tabs/GenerationTab.tsx`
-- `src/components/aeso-hub/tabs/ForecastTab.tsx`
-- `src/components/aeso-hub/tabs/OutagesAlertsTab.tsx`
-- `src/components/aeso-hub/tabs/CustomDashboardsTab.tsx`
+### New Files to Create
+- `supabase/functions/aeso-generation-csv-backfill/index.ts` -- Fetches and processes AESO historical generation CSVs
+- `supabase/functions/aeso-gas-price-backfill/index.ts` -- EIA API gas price fetcher with AECO conversion
+- `src/components/aeso/DataCoverageStatus.tsx` -- Dashboard widget showing data gaps
 
 ### Files to Modify
-- `src/components/AESOMarketComprehensive.tsx` (replace with re-export)
+- `supabase/functions/aeso-comprehensive-backfill/index.ts` -- Add `smp` phase for System Marginal Price backfill
+- `src/components/aeso-hub/tabs/MarketDataTab.tsx` -- Add DataCoverageStatus widget
 
-### Files NOT Modified (preserving stability)
-- `src/pages/VoltScout.tsx` -- zero changes, all routes stay intact
-- `src/components/Sidebar.tsx` -- zero changes
-- `src/components/aeso/PowerModelAnalyzer.tsx` -- zero changes
+### Manual Step Required
+The AESO historical generation CSVs are large files (potentially 100MB+) hosted on a third-party service. You may need to:
+1. Download them manually from `aeso.ca/market/market-and-system-reporting/data-requests/historical-generation-data/`
+2. Upload via the existing `GenerationDataUploader` component in the AI Predictions tab
+
+The edge function will attempt automated download first, but if the files are too large, the manual upload path is the fallback.
+
+### Expected Outcome After Completion
+
+| Data Category | Before | After |
+|---|---|---|
+| Generation | 13% (4,556) | **100%** (34,221) |
+| Gas Price | 0% (0) | **100%** (34,221) |
+| System Marginal Price | 13% (4,330) | **100%** (34,221) |
+| Reserves/Intertie | 13% (4,556) | ~13% real + ~87% estimated |
+| **Total usable records** | **~4,500** | **~34,000** |
+
+This 7.5x increase in complete training records should dramatically improve model accuracy.
 
