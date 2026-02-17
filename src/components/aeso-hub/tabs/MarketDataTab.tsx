@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { LiveConnectionStatus } from '@/components/aeso/LiveConnectionStatus';
 import { PriceTicker } from '@/components/aeso/PriceTicker';
+import { DataCoverageStatus } from '@/components/aeso/DataCoverageStatus';
 import { HeroPriceCard } from '@/components/aeso/HeroPriceCard';
 import { MarketPulse } from '@/components/aeso/MarketPulse';
 import { QuickStatsBar } from '@/components/aeso/QuickStatsBar';
@@ -165,6 +166,11 @@ export function MarketDataTab({
 
       <div className="mt-6">
         <AESOHistoricalAverages />
+      </div>
+
+      {/* Data Coverage Widget */}
+      <div className="mt-6">
+        <DataCoverageStatus />
       </div>
 
       {/* Operating Reserve / Interchange / Energy Storage */}

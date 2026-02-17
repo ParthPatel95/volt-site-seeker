@@ -215,6 +215,12 @@ verify_jwt = false
 [functions.aeso-comprehensive-backfill]
 verify_jwt = false
 
+[functions.aeso-gas-price-backfill]
+verify_jwt = false
+
+[functions.aeso-generation-csv-backfill]
+verify_jwt = false
+
 [functions.verify-email]
 verify_jwt = false
 
