@@ -24,7 +24,7 @@ import { PowerModelRevenueAnalysis } from './PowerModelRevenueAnalysis';
 import { PowerModelSensitivity } from './PowerModelSensitivity';
 import { PowerModelEditableRates } from './PowerModelEditableRates';
 import { PowerModelAIAnalysis } from './PowerModelAIAnalysis';
-import { PowerModelShutdownLog } from './PowerModelShutdownLog';
+// ShutdownLog is now rendered inside ShutdownAnalytics
 import { PowerModelShutdownAnalytics } from './PowerModelShutdownAnalytics';
 import { PowerModelWeatherDrivers } from './PowerModelWeatherDrivers';
 import { PowerModelReference } from './PowerModelReference';
@@ -377,7 +377,7 @@ export function PowerModelAnalyzer() {
             </TabsList>
 
             <TabsContent value="cost-analysis" className="mt-4">
-              <PowerModelCharts monthly={monthly} breakeven={breakeven} hourlyPrices={hourlyPrices} />
+              <PowerModelCharts monthly={monthly} breakeven={breakeven} hourlyPrices={hourlyPrices} hourlyData={hourlyData} hostingRateCAD={hostingRateCAD} />
             </TabsContent>
 
             <TabsContent value="revenue-sensitivity" className="mt-4 space-y-4">
@@ -386,8 +386,7 @@ export function PowerModelAnalyzer() {
             </TabsContent>
 
             <TabsContent value="curtailment" className="mt-4 space-y-4">
-              <PowerModelShutdownAnalytics shutdownLog={shutdownLog} breakeven={breakeven} />
-              <PowerModelShutdownLog shutdownLog={shutdownLog} fixedPriceCAD={params.fixedPriceCAD} />
+              <PowerModelShutdownAnalytics shutdownLog={shutdownLog} breakeven={breakeven} hourlyData={hourlyData} params={params} fixedPriceCAD={params.fixedPriceCAD} />
             </TabsContent>
 
             <TabsContent value="weather-drivers" className="mt-4">
