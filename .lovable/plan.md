@@ -1,171 +1,134 @@
 
-# AESO Market Hub -- Feature-by-Feature UI/UX Enhancement
 
-## Current Issues Identified
+# Redesign: Market Intelligence Section + Enhanced Mining Analytics
 
-1. **Market Overview is extremely long** -- 12+ sections stacked vertically with no visual hierarchy or grouping
-2. **Redundant data display** -- QuickStatsBar, MarketPulse, MarketIntelligencePanel, System Load card, and the Operating Reserve/Interchange/Energy Storage cards all show overlapping data (reserve margin, interties, renewable %, demand)
-3. **No section anchoring or quick navigation** -- users must scroll endlessly to reach data
-4. **Alerts and Outages panels use hardcoded light-mode colors** (e.g., `bg-red-50`, `bg-yellow-50`) that break in dark mode
-5. **Forecast panel has a fixed 400px chart height** -- wastes space on mobile, too short on desktop
-6. **Generation Mix bar has no interactive tooltip** -- just a static colored bar
-7. **Mining Economics Card** is sandwiched between unrelated sections (Hero cards above, QuickStatsBar below)
-8. **PriceTicker** `overflow-x-auto scrollbar-hide` causes content to be hidden on smaller screens without any indication
-9. **AnalyticsTab and SettingsTab** are bare-bones with no headers or page context
-10. **MarketIntelligencePanel has 5-column TabsList** that cramps on mobile
+## Problem (from screenshot)
 
----
+1. **Mining Economics card text overlaps** -- Hash Price and Mining Rev/MWh values crash into each other ("$0.0289/TH/d$80.35")
+2. **Generation Mix card has dead space** -- just a bar chart with 60% empty whitespace below
+3. **Mining analytics are surface-level** -- only shows 4 metrics + margin, no cross-referencing of AESO energy data with BTC mining data
+4. **Layout is unbalanced** -- two side-by-side cards with very different content density
 
-## Enhancement Plan by Section
+## Redesign Approach
 
-### 1. Market Overview Tab -- Section Grouping & Deduplication
+Replace the current 2-column (Generation Mix | Mining Economics) layout with a single full-width **"Energy x Mining Intelligence"** panel that combines both datasets into one cohesive analytical view.
 
-**Problem**: 12+ loose sections create a wall of cards. QuickStatsBar, MarketPulse, MarketIntelligencePanel, System Load card, and the 3 bottom cards (Reserve/Interchange/Storage) all duplicate the same metrics.
+### New Layout Structure
 
-**Fix**: Group into 3 clear zones with section headers, remove redundant components:
-
-```
-Zone 1: "Price & Status" (sticky-ish top area)
-  - LiveConnectionStatus (compact, single line)
-  - PriceTicker (stays as the stock-ticker-style banner)
-  - HeroPriceCard + MarketPulse side-by-side (already in grid)
-
-Zone 2: "Market Intelligence"  
-  - QuickStatsBar (keep as the single compact stats ribbon)
-  - Generation Mix (inline bar -- keep)
-  - MiningEconomicsCard (move here, next to gen mix)
-  - TradingViewChart (the main analytical chart)
-
-Zone 3: "Grid & Forecasts"
-  - MarketIntelligencePanel (the tabbed grid/supply/weather/analytics panel)
-  - Wind/Solar Forecast (AESOForecastPanel)
-  - Historical Averages
-  - Outages (collapsible, stays at bottom)
+```text
++------------------------------------------------------------------+
+| Generation Mix (compact bar + legend, same as before)             |
++------------------------------------------------------------------+
+| MINING & ENERGY ANALYTICS (full-width card)                       |
+|                                                                   |
+| Row 1: Core BTC Metrics (4 cols)                                  |
+| [BTC Price] [Hashrate] [Hash Price] [Difficulty]                  |
+|                                                                   |
+| Row 2: Energy-Mining Cross Analytics (4 cols)                     |
+| [Mining Rev    ] [Energy Cost   ] [Net Profit    ] [Break-even   ]|
+| [$/MWh         ] [$/MWh (AESO)  ] [$/MWh         ] [Max $/MWh   ]|
+|                                                                   |
+| Row 3: Profitability Bar + Key Ratios (inline)                    |
+| [===========MARGIN BAR===========] [Cost-to-Mine] [Sats/kWh]     |
+|                                                                   |
+| Row 4: Network Info (compact footer)                              |
+| Block: 937,036 | Reward: 3.125 BTC | Halving: ~784d | LIVE badge |
++------------------------------------------------------------------+
 ```
 
-**Remove**: The standalone "System Load & Demand" card (lines 217-269 of MarketDataTab) -- its data is already shown in QuickStatsBar (demand) and MarketPulse (reserve margin). Also remove the 3-column Operating Reserve/Interchange/Energy Storage grid (lines 291-406) -- this data is already in MarketIntelligencePanel's "Interties" and "Grid Health" tabs.
+### New Analytics (all calculated from real live data)
 
-This eliminates ~180 lines of redundant UI and shortens the scroll by ~40%.
+| Metric | Formula | Data Source |
+|---|---|---|
+| Break-even Energy Price | `hashPrice * TH_PER_MW / 24` | BTC: mempool.space + Coinbase, converted to the max energy price where margin = 0 |
+| Cost to Mine 1 BTC | `energyCostUsd / (dailyBtcPerTH * TH_PER_MW)` per day, then * days-to-mine | AESO pool price + BTC network stats |
+| Sats per kWh | `(dailyBTC_per_MW / 24) * 1e8 / 1000` | Hash price + AESO load |
+| Net Profit per MWh | `miningRevenue - energyCost` in $/MWh | Both sources combined |
+| Energy Cost Ratio | `energyCost / miningRevenue * 100` | Shows what % of mining revenue goes to energy |
+| Daily Revenue per MW | `hashPrice * TH_PER_MW` | Scale to facility-level revenue |
 
-### 2. Section Headers with Anchor Navigation
+All formulas use:
+- BTC Price from Coinbase API (live)
+- Hashrate/Difficulty from mempool.space (live)
+- Energy price from AESO pool price (live, passed as prop)
+- Miner efficiency constant: 15 J/TH (S21 Pro, clearly labeled)
 
-Add lightweight section dividers between the 3 zones:
+### Generation Mix Enhancement
 
-```tsx
-<div className="flex items-center gap-2 pt-4">
-  <div className="h-px flex-1 bg-border" />
-  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-    Market Intelligence
-  </span>
-  <div className="h-px flex-1 bg-border" />
+Move it out of a card into a compact inline bar directly above the mining panel -- saves vertical space and visually connects it to the analytics below. Keep the tooltips.
+
+## Technical Details
+
+### File: `src/components/aeso/MiningEconomicsCard.tsx` (full rewrite)
+
+**Rename to** `MiningEnergyAnalytics.tsx` for clarity.
+
+New component structure:
+- Accepts `currentAesoPrice` (CAD/MWh) and optional `cadToUsd` rate
+- Uses `useBitcoinNetworkStats()` hook (unchanged, already provides all needed BTC data)
+- Calculates all new derived metrics internally
+- Full-width card with responsive grid (4 cols on desktop, 2 cols on mobile)
+
+Key calculations added:
+```typescript
+// Break-even: the max energy price where mining still profits
+const breakEvenUsdPerMWh = hourlyMiningRevenue_per_MWh; // margin = 0 at this point
+
+// Cost to mine 1 BTC (energy cost only)
+const dailyBtcPerMW = stats.dailyBtcPerPH / 1000 * TH_PER_MW / 1e3; 
+// Simpler: dailyBTC = hashPrice * TH_PER_MW (in $ terms), so:
+const costToMine1BTC = dailyBtcPerMW > 0 
+  ? (energyCostUsd * 24) / dailyBtcPerMW 
+  : Infinity;
+
+// Sats per kWh consumed
+const dailyBtcForOneMW = (stats.hashPrice * TH_PER_MW) / stats.price; // BTC/day/MW
+const satsPerKwh = (dailyBtcForOneMW * 1e8) / (24 * 1000); // 1 MW = 1000 kWh/h
+
+// Energy cost as % of revenue
+const energyCostRatio = hourlyMiningRevenue_per_MWh > 0 
+  ? (energyCostUsd / hourlyMiningRevenue_per_MWh) * 100 
+  : 100;
+```
+
+Visual margin bar:
+```typescript
+// A horizontal bar showing energy cost (red portion) vs profit (green portion)
+// Width proportional to energyCostRatio
+<div className="h-3 rounded-full overflow-hidden flex bg-muted">
+  <div className="bg-red-500 h-full" style={{ width: `${Math.min(energyCostRatio, 100)}%` }} />
+  <div className="bg-green-500 h-full flex-1" />
 </div>
 ```
 
-This gives users visual landmarks while scrolling.
+### File: `src/components/aeso-hub/tabs/MarketDataTab.tsx`
 
-### 3. PriceTicker -- Mobile Responsiveness
+Changes to Zone 2 (Market Intelligence):
+1. Replace the `grid grid-cols-1 lg:grid-cols-2` containing Generation Mix card + MiningEconomicsCard
+2. Instead: render Generation Mix as a compact standalone section (no card wrapper, just the bar + legend)
+3. Below it: render the new full-width `MiningEnergyAnalytics` component
+4. Update import from `MiningEconomicsCard` to `MiningEnergyAnalytics`
 
-**Problem**: On mobile with sidebar, the H/L/Avg stats and sparkline are hidden (`hidden md:flex`, `hidden sm:block`) but there's no indication more data exists.
+### File: `src/hooks/useBitcoinNetworkStats.ts`
 
-**Fix**:
-- Keep sparkline hidden on mobile (it's tiny and not useful at that size)
-- Move H/L/Avg into a second row on mobile using `flex-wrap`:
-  - Line 125: Change container to `flex flex-wrap items-center justify-between gap-2 py-2.5 px-4`
-  - Line 178: Change `hidden md:flex` to `flex` and wrap in a `w-full sm:w-auto` container so it appears as a second row on mobile
+No changes needed -- it already provides `hashPrice`, `dailyBtcPerPH`, `price`, `hashrate`, `blockHeight`, `blockReward`, `nextHalvingDays`, and `difficulty`.
 
-### 4. Generation Mix -- Add Tooltip on Hover
+### Files Summary
 
-**Problem**: The stacked bar has no interactivity -- users can't see exact MW values.
-
-**Fix**: Wrap each bar segment in a Tooltip showing "{label}: {value} MW ({pct}%)". Use Radix Tooltip since this is a custom div, not a Recharts chart.
-
-### 5. MiningEconomicsCard -- Dark Mode Fix
-
-**Problem**: Minor -- the card itself is fine, but ensure all sub-badges use `dark:` variants properly.
-
-**Fix**: Already uses `dark:` prefixes correctly. No changes needed.
-
-### 6. MarketIntelligencePanel -- Responsive Tabs
-
-**Problem**: 5-column TabsList (`grid-cols-5`) cramps on mobile especially with sidebar.
-
-**Fix**:
-- Change from `grid grid-cols-5` to `flex overflow-x-auto` with `flex-shrink-0` on each trigger
-- This allows horizontal scrolling on narrow screens instead of text truncation
-
-### 7. AESOAlertsPanel -- Dark Mode Colors
-
-**Problem**: Uses hardcoded `bg-red-50`, `bg-yellow-50`, `bg-blue-50` (light-only colors).
-
-**Fix**: Add dark mode variants:
-- `bg-red-50 dark:bg-red-950/30` 
-- `border-l-red-500` stays (works in both modes)
-- Alert statistics grid: add `dark:bg-red-950/30`, `dark:text-red-400` etc.
-
-### 8. AESOOutagesPanel -- Dark Mode Colors
-
-**Problem**: Same issue -- `bg-gradient-to-br from-red-50 to-red-100 border-red-200` is light-only.
-
-**Fix**: Add dark variants to all 4 overview cards and the chart cards.
-
-### 9. AESOForecastPanel -- Responsive Chart Height
-
-**Problem**: Fixed `height={400}` on the chart regardless of screen size.
-
-**Fix**: Change to a responsive approach:
-- Mobile: `height={250}`
-- Desktop: `height={350}`
-- Use a simple ternary with `useIsMobile()` or use CSS: wrap in a `h-[250px] sm:h-[350px]` container
-
-### 10. AnalyticsTab -- Add Page Header & Better Layout
-
-**Problem**: Bare wrapper -- no title, no context for the user.
-
-**Fix**: Add a header section:
-```tsx
-<div className="space-y-1 mb-6">
-  <h2 className="text-2xl font-bold">Analytics</h2>
-  <p className="text-muted-foreground">Historical pricing, data exports, and custom dashboards</p>
-</div>
-```
-
-Also improve the "Custom Dashboards" card to be more visually prominent with an icon and better spacing on mobile (stack button below text on small screens).
-
-### 11. SettingsTab -- Add Page Header & Structure
-
-**Problem**: Just renders `<TelegramAlertSettings />` with no context.
-
-**Fix**: Add header and wrap in a max-width container for readability:
-```tsx
-<div className="space-y-1 mb-6">
-  <h2 className="text-2xl font-bold">Settings</h2>
-  <p className="text-muted-foreground">Configure alerts and notification preferences</p>
-</div>
-<div className="max-w-2xl">
-  <TelegramAlertSettings />
-</div>
-```
-
-### 12. PredictionsTab -- Responsive Tab Layout
-
-**Problem**: The 2-column TabsList works but the "Training & Management" text can truncate.
-
-**Fix**: Add `text-xs sm:text-sm` to the tab triggers so text scales down on mobile.
-
----
-
-## Technical Summary
-
-| File | Changes |
+| File | Action |
 |---|---|
-| `src/components/aeso-hub/tabs/MarketDataTab.tsx` | Remove System Load card + Reserve/Interchange/Storage grid (~180 lines). Add section dividers. Reorder: Mining Economics after Gen Mix. Add Tooltip to gen bar segments. |
-| `src/components/aeso/PriceTicker.tsx` | Make H/L/Avg visible on mobile as wrapped second row |
-| `src/components/aeso/MarketIntelligencePanel.tsx` | Change TabsList from `grid grid-cols-5` to `flex overflow-x-auto` |
-| `src/components/intelligence/AESOAlertsPanel.tsx` | Add `dark:` color variants to all hardcoded light-mode backgrounds |
-| `src/components/intelligence/AESOOutagesPanel.tsx` | Add `dark:` color variants to all overview cards and chart containers |
-| `src/components/intelligence/AESOForecastPanel.tsx` | Responsive chart height (250px mobile, 350px desktop) |
-| `src/components/aeso-hub/tabs/AnalyticsTab.tsx` | Add page header, improve dashboard card, responsive button |
-| `src/components/aeso-hub/tabs/SettingsTab.tsx` | Add page header, max-width container |
-| `src/components/aeso-hub/tabs/PredictionsTab.tsx` | Responsive text sizing on tab triggers |
+| `src/components/aeso/MiningEconomicsCard.tsx` | Delete |
+| `src/components/aeso/MiningEnergyAnalytics.tsx` | Create -- full rewrite with all new analytics |
+| `src/components/aeso-hub/tabs/MarketDataTab.tsx` | Modify -- restructure Zone 2 layout, update imports |
 
-No new files created. No data logic changes. All changes are CSS/layout/responsiveness only.
+### Responsiveness
+
+- 4-column grids become 2-column on mobile (`grid-cols-2 lg:grid-cols-4`)
+- Network footer becomes `flex-wrap` on mobile
+- All text uses `text-sm sm:text-base lg:text-lg` scaling
+- Margin bar is always full-width
+
+### Dark Mode
+
+All colors use Tailwind semantic tokens (`text-foreground`, `bg-muted`, `border-border`) plus explicit `dark:` variants for colored elements (`bg-green-500/10 dark:bg-green-500/20`).
+
