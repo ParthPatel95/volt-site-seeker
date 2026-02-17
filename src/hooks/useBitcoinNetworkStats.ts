@@ -11,32 +11,48 @@
  
  import { useState, useEffect, useCallback } from 'react';
  
- export interface BitcoinNetworkStats {
-   hashrate: number; // in EH/s
-   hashrateFormatted: string; // e.g., "850 EH/s"
-   difficulty: number;
-   blockHeight: number;
-   blockReward: number; // BTC
-   price: number; // USD
-   nextHalvingDays: number;
-   timestamp: Date;
-   dataSource: 'live' | 'cached' | 'fallback';
-   isLive: boolean;
- }
+export interface BitcoinNetworkStats {
+  hashrate: number; // in EH/s
+  hashrateFormatted: string; // e.g., "850 EH/s"
+  difficulty: number;
+  blockHeight: number;
+  blockReward: number; // BTC
+  price: number; // USD
+  nextHalvingDays: number;
+  hashPrice: number; // USD per TH/s per day
+  hashPriceFormatted: string; // e.g., "$0.052/TH/day"
+  dailyBtcPerPH: number; // daily BTC earned per PH/s
+  timestamp: Date;
+  dataSource: 'live' | 'cached' | 'fallback';
+  isLive: boolean;
+}
  
  // Fallback values for when API is unavailable (updated Feb 2026)
- const FALLBACK_STATS: BitcoinNetworkStats = {
-   hashrate: 850, // EH/s - conservative 2026 estimate
-   hashrateFormatted: '~850 EH/s',
-   difficulty: 115e12,
-   blockHeight: 885000,
-   blockReward: 3.125,
-   price: 100000,
-   nextHalvingDays: 800,
-   timestamp: new Date(),
-   dataSource: 'fallback',
-   isLive: false,
- };
+// Helper to compute hash price from network stats
+function computeHashPrice(hashrate: number, blockReward: number, price: number) {
+  const blocksPerDay = 144;
+  // hashrate in EH/s = 1e6 TH/s per EH/s
+  const dailyBtcPerTH = (blocksPerDay * blockReward) / (hashrate * 1e6);
+  const hashPrice = dailyBtcPerTH * price;
+  const dailyBtcPerPH = dailyBtcPerTH * 1e3; // 1 PH = 1000 TH
+  return { hashPrice, dailyBtcPerPH };
+}
+
+const FALLBACK_STATS: BitcoinNetworkStats = {
+  hashrate: 850,
+  hashrateFormatted: '~850 EH/s',
+  difficulty: 115e12,
+  blockHeight: 885000,
+  blockReward: 3.125,
+  price: 100000,
+  nextHalvingDays: 800,
+  hashPrice: computeHashPrice(850, 3.125, 100000).hashPrice,
+  hashPriceFormatted: `~$${computeHashPrice(850, 3.125, 100000).hashPrice.toFixed(4)}/TH/day`,
+  dailyBtcPerPH: computeHashPrice(850, 3.125, 100000).dailyBtcPerPH,
+  timestamp: new Date(),
+  dataSource: 'fallback',
+  isLive: false,
+};
  
  // Cache key and duration
  const CACHE_KEY = 'bitcoin_network_stats';
@@ -124,20 +140,29 @@
      const isLive = hashrate > 0;
      const finalHashrate = isLive ? hashrate : FALLBACK_STATS.hashrate;
  
-     const newStats: BitcoinNetworkStats = {
-       hashrate: finalHashrate,
-       hashrateFormatted: isLive 
-         ? `${Math.round(finalHashrate)} EH/s` 
-         : `~${Math.round(finalHashrate)} EH/s`,
-       difficulty: difficulty || FALLBACK_STATS.difficulty,
-       blockHeight: blockHeight || FALLBACK_STATS.blockHeight,
-       blockReward: blockReward || FALLBACK_STATS.blockReward,
-       price: price || FALLBACK_STATS.price,
-       nextHalvingDays,
-       timestamp: new Date(),
-       dataSource: isLive ? 'live' : 'fallback',
-       isLive,
-     };
+    const finalPrice = price || FALLBACK_STATS.price;
+    const finalBlockReward = blockReward || FALLBACK_STATS.blockReward;
+    const { hashPrice: hp, dailyBtcPerPH } = computeHashPrice(finalHashrate, finalBlockReward, finalPrice);
+
+    const newStats: BitcoinNetworkStats = {
+      hashrate: finalHashrate,
+      hashrateFormatted: isLive 
+        ? `${Math.round(finalHashrate)} EH/s` 
+        : `~${Math.round(finalHashrate)} EH/s`,
+      difficulty: difficulty || FALLBACK_STATS.difficulty,
+      blockHeight: blockHeight || FALLBACK_STATS.blockHeight,
+      blockReward: finalBlockReward,
+      price: finalPrice,
+      nextHalvingDays,
+      hashPrice: hp,
+      hashPriceFormatted: isLive
+        ? `$${hp.toFixed(4)}/TH/day`
+        : `~$${hp.toFixed(4)}/TH/day`,
+      dailyBtcPerPH,
+      timestamp: new Date(),
+      dataSource: isLive ? 'live' : 'fallback',
+      isLive,
+    };
  
      setStats(newStats);
      setLoading(false);
