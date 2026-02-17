@@ -15,7 +15,7 @@ import { QuickStatsBar } from '@/components/aeso/QuickStatsBar';
 import { TradingViewChart } from '@/components/aeso/TradingViewChart';
 import { MarketIntelligencePanel } from '@/components/aeso/MarketIntelligencePanel';
 import { AESOHistoricalAverages } from '@/components/aeso/AESOHistoricalAverages';
-import { MiningEconomicsCard } from '@/components/aeso/MiningEconomicsCard';
+import { MiningEnergyAnalytics } from '@/components/aeso/MiningEnergyAnalytics';
 import { AESOForecastPanel } from '@/components/intelligence/AESOForecastPanel';
 import { AESOAlertsPanel } from '@/components/intelligence/AESOAlertsPanel';
 import { AESOOutagesPanel } from '@/components/intelligence/AESOOutagesPanel';
@@ -146,76 +146,74 @@ export function MarketDataTab({
 
       <QuickStatsBar />
 
-      {/* Generation Mix + Mining Economics side by side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Generation Mix */}
-        {generationMix && (
-          <Card className="border hover:border-primary/30 transition-colors">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-green-600 dark:text-green-500" />
-                  <CardTitle className="text-sm font-semibold">Generation Mix</CardTitle>
-                </div>
+      {/* Generation Mix - compact inline bar */}
+      {generationMix && (
+        <Card className="border hover:border-primary/30 transition-colors">
+          <CardHeader className="pb-2 pt-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-green-600 dark:text-green-500" />
+                <CardTitle className="text-sm font-semibold">Generation Mix</CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
                 {generationMix.timestamp && (
                   <Badge variant="outline" className="text-[10px]">
                     {new Date(generationMix.timestamp).toLocaleTimeString()}
                   </Badge>
                 )}
-              </div>
-            </CardHeader>
-            <CardContent className="pb-3">
-              {/* Stacked bar with tooltips */}
-              <TooltipProvider delayDuration={0}>
-                <div className="w-full h-6 rounded-full overflow-hidden flex">
-                  {GEN_MIX_SOURCES.map(({ key, color, label }) => {
-                    const val = generationMix[key] || 0;
-                    const total = generationMix.total_generation_mw || 1;
-                    const pct = (val / total) * 100;
-                    if (pct <= 0) return null;
-                    return (
-                      <Tooltip key={key}>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={`${color} h-full cursor-default transition-opacity hover:opacity-80`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          <p className="font-semibold">{label}</p>
-                          <p>{Math.round(val).toLocaleString()} MW ({pct.toFixed(1)}%)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
-              </TooltipProvider>
-              {/* Legend */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
-                {GEN_MIX_SOURCES.map(({ key, color, label }) => {
-                  const val = generationMix[key] || 0;
-                  const total = generationMix.total_generation_mw || 1;
-                  return (
-                    <span key={key} className="flex items-center gap-1">
-                      <span className={`w-2 h-2 rounded-full ${color}`} />
-                      {label} {((val / total) * 100).toFixed(0)}%
-                    </span>
-                  );
-                })}
-                <span className="font-medium text-foreground ml-auto">
-                  Total: {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
+                <span className="font-medium text-xs text-foreground">
+                  {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
                   {' · '}
                   <span className="text-green-600 dark:text-green-400">
                     {generationMix.renewable_percentage?.toFixed(0)}% Renewable
                   </span>
                 </span>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardHeader>
+          <CardContent className="pb-3 pt-0">
+            <TooltipProvider delayDuration={0}>
+              <div className="w-full h-5 rounded-full overflow-hidden flex">
+                {GEN_MIX_SOURCES.map(({ key, color, label }) => {
+                  const val = generationMix[key] || 0;
+                  const total = generationMix.total_generation_mw || 1;
+                  const pct = (val / total) * 100;
+                  if (pct <= 0) return null;
+                  return (
+                    <Tooltip key={key}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`${color} h-full cursor-default transition-opacity hover:opacity-80`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        <p className="font-semibold">{label}</p>
+                        <p>{Math.round(val).toLocaleString()} MW ({pct.toFixed(1)}%)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+              {GEN_MIX_SOURCES.map(({ key, color, label }) => {
+                const val = generationMix[key] || 0;
+                const total = generationMix.total_generation_mw || 1;
+                return (
+                  <span key={key} className="flex items-center gap-1">
+                    <span className={`w-2 h-2 rounded-full ${color}`} />
+                    {label} {((val / total) * 100).toFixed(0)}%
+                  </span>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <MiningEconomicsCard currentAesoPrice={currentPrice} />
-      </div>
+      {/* Mining & Energy Analytics - full width */}
+      <MiningEnergyAnalytics currentAesoPrice={currentPrice} />
 
       <TradingViewChart
         data={historicalPrices?.prices || []}
