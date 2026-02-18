@@ -1,46 +1,90 @@
 
 
-# Fix AESO API Endpoint Paths for Comprehensive Data Collector
+# Fix All AESO API Endpoint Paths -- Comprehensive Research Results
 
-## Problem
+## Root Cause Analysis
 
-The `aeso-comprehensive-data-collector` edge function is only hitting 5 of 13 endpoints successfully. The other 8 return 404 because we're guessing wrong URL paths. The official AESO PDF documentation reveals the correct naming convention differs from what we assumed.
+After researching the official AESO developer portal at `developer-apim.aeso.ca/product#product=aeso-public-api-product`, I found that **several API names in our code don't match the actual registered API IDs on the portal**. The portal lists exactly 14 APIs, and our function is using wrong base paths and wrong operation names for 7 of them.
 
-## Root Cause
+## Key Discoveries
 
-The AESO Azure APIM gateway uses a specific naming pattern that differs from our guesses:
-- We tried: `/generationcapacity-api/v1/capacity`
-- Actual: `/aiesgencapacity-api/v1/AIESGenCapacity` (confirmed from AESO PDF)
+### 1. Intertie APIs use `itc-api` (not separate APIs)
+The portal lists a single **"Intertie Public Reports - v1"** with API ID `itc-api-v1`. Our code tries `interchangecapability-api` and `interchangeoutage-api` which don't exist. Both interchange capability and outage reports are operations under `itc-api`.
 
-The pattern is: the API name in the URL and the endpoint path use AESO-specific names (like `aiesgencapacity`, `AIESGenCapacity`) rather than generic names.
+### 2. Unit Commitment uses `unitcommitmentdata-api` (not `unitcommitment-api`)
+Portal shows `unitcommitmentdata-api-v2`. We were trying `unitcommitment-api/v1` and `unitcommitment-api/v2`.
 
-## Corrected Endpoint Paths
+### 3. Load Outage operation name is `loadOutageReport` (camelCase)
+The official docs show the endpoint as: `/loadoutageforecast-api/v1/loadOutageReport?startDate={startDate}`
+We were trying `LoadOutageForecast`, `LoadOutage`, and `outages`.
 
-Based on the AESO PDF documentation and confirmed naming conventions:
+### 4. Operation names follow camelCase pattern
+From the confirmed endpoints, the AESO APIM uses camelCase for operation paths:
+- `poolPrice` (confirmed working)
+- `systemMarginalPrice` (confirmed working)  
+- `albertaInternalLoad` (confirmed working)
+- `poolparticipantlist` (confirmed working, lowercase)
+- `assetlist` (confirmed working, lowercase)
+- `AIESGenCapacity` (confirmed working, PascalCase exception)
+- `loadOutageReport` (confirmed from docs)
 
-| API | Our Wrong Path | Corrected Path |
-|-----|---------------|----------------|
-| Gen Capacity | `/generationcapacity-api/v1/capacity` | `/aiesgencapacity-api/v1/AIESGenCapacity?startDate=&endDate=` |
-| Asset List | `/assetlist-api/v1/assetList` | `/assetlist-api/v1/AssetList` (try PascalCase) |
-| Merit Order | `/energymeritorder-api/v1/meritOrder` | `/energymeritorder-api/v1/EnergyMeritOrder` |
-| OR Report | `/operatingreserve-api/v1/orReport` | `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?startDate=&endDate=` |
-| Interchange Cap | `/interchangecapability-api/v1/capability` | `/interchangecapability-api/v1/InterchangeCapability` |
-| Load Outage | `/loadoutage-api/v1/outages` | `/loadoutageforecast-api/v1/LoadOutageForecast` |
-| Interchange Outage | `/interchangeoutage-api/v1/outages` | `/interchangeoutage-api/v1/InterchangeOutage` |
-| Metered Volume | `/meteredvolume-api/v1/meteredVolume` | `/meteredvolume-api/v1/MeteredVolume?startDate=&endDate=` |
-| Unit Commitment | (not tried) | `/unitcommitment-api/v2/UnitCommitment` |
+## Corrected Endpoint Map
 
-Note: Some of these corrected paths are educated guesses based on the confirmed `aiesgencapacity` pattern. The function will try multiple variations for each and log which ones work.
+| API | Status | Wrong Path We Tried | Correct Path |
+|-----|--------|---------------------|--------------|
+| Pool Price | WORKING | -- | `/poolprice-api/v1.1/price/poolPrice` |
+| SMP | WORKING | -- | `/systemmarginalprice-api/v1.1/price/systemMarginalPrice` |
+| AIL | WORKING | -- | `/actualforecast-api/v1/load/albertaInternalLoad` |
+| CSD | WORKING | -- | `/currentsupplydemand-api/v2/csd/summary/current` |
+| Gen Capacity | WORKING | -- | `/aiesgencapacity-api/v1/AIESGenCapacity` |
+| Asset List | WORKING | -- | `/assetlist-api/v1/assetlist` |
+| Pool Participants | WORKING | -- | `/poolparticipant-api/v1/poolparticipantlist` |
+| Load Outage | FAILING | `LoadOutageForecast` | `/loadoutageforecast-api/v1/loadOutageReport?startDate=...` |
+| Energy Merit Order | FAILING | `EnergyMeritOrder` | Try: `/energymeritorder-api/v1/energyMeritOrderReport` and `/energymeritorder-api/v1/energyMeritOrder` |
+| OR Offer Control | FAILING | `OperatingReserveOfferControl` | Try: `/operatingreserveoffercontrol-api/v1/operatingReserveOfferControlReport?startDate=...` |
+| Metered Volume | FAILING | `MeteredVolume` | Try: `/meteredvolume-api/v1/meteredVolumeReport?startDate=...` |
+| Intertie Reports | FAILING | `interchangecapability-api/...` | Try: `/itc-api/v1/interchangeCapability`, `/itc-api/v1/interchangeOutage`, `/itc-api/v1/itcReport` |
+| Unit Commitment | FAILING | `unitcommitment-api/v2/...` | Try: `/unitcommitmentdata-api/v2/unitCommitmentData`, `/unitcommitmentdata-api/v2/unitCommitment` |
 
 ## Changes
 
-### File Modified: `supabase/functions/aeso-comprehensive-data-collector/index.ts`
+### File: `supabase/functions/aeso-comprehensive-data-collector/index.ts`
 
-1. Update the `ENDPOINTS` discovery arrays with corrected path patterns based on the AESO naming convention
-2. Add the Gen Capacity endpoint as a date-parameterized endpoint (it requires `startDate` and `endDate`)
-3. Add `unitcommitment` endpoint
-4. Fix the SMP debug logging to handle undefined safely (line 180 `.substring()` on undefined)
-5. Improve discovery logging to show the full response body snippet for 404s so we can see any hints about correct paths
+**What changes (only the ENDPOINTS object and discovery arrays):**
 
-No database changes needed -- the tables already exist and match the data structure.
+1. **Load Outage** -- Replace all 3 discovery paths with the confirmed path: `/loadoutageforecast-api/v1/loadOutageReport?startDate={start}&endDate={end}` (requires date params, confirmed from docs)
+
+2. **Energy Merit Order** -- Add camelCase variations: `energyMeritOrderReport`, `energyMeritOrderSnapshot`, keep `EnergyMeritOrder` as fallback
+
+3. **OR Offer Control** -- Add camelCase variations: `operatingReserveOfferControlReport`, `orReport` (this path works in `aeso-reserves-backfill` using `Ocp-Apim-Subscription-Key` header but uses the shorter `operatingreserve-api` prefix)
+
+4. **Intertie Reports** -- Replace both `interchangecapability-api` and `interchangeoutage-api` sections with `itc-api` paths:
+   - `/itc-api/v1/interchangeCapability`
+   - `/itc-api/v1/interchangeOutage`  
+   - `/itc-api/v1/itcReport`
+   - `/itc-api/v1/intertieReport`
+
+5. **Metered Volume** -- Add camelCase: `meteredVolumeReport`
+
+6. **Unit Commitment** -- Fix base path from `unitcommitment-api` to `unitcommitmentdata-api`:
+   - `/unitcommitmentdata-api/v2/unitCommitmentData`
+   - `/unitcommitmentdata-api/v2/unitCommitment`
+
+7. **Auth header** -- The existing `aeso-reserves-backfill` function uses `Ocp-Apim-Subscription-Key` header and the path `/operatingreserve-api/v1/orReport` for OR data. Our collector tries `API-KEY` first then falls back to `Ocp-Apim-Subscription-Key`. Both should work per the official docs, but we should ensure the fallback is actually triggered properly. Currently the fallback only fires on 401 status -- add 403 as a trigger too.
+
+**What does NOT change:**
+- All 7 working endpoints remain untouched
+- The snapshot storage logic stays the same
+- The CSD parsing, pool price parsing, AIL parsing all stay the same
+- The asset list and gen capacity code stays the same
+
+### No other files are modified
+
+The `energy-data-integration` function is not changed -- it only uses the 4 confirmed working endpoints (pool price, SMP, AIL, CSD) and will continue to work exactly as before.
+
+## Technical Notes
+
+- The Load Outage API has a `startDate` as a **path template parameter** (required), meaning it must be provided. The docs say dates from 2013-09-22 onward, up to 24 months in the future.
+- The AESO APIM may return different response wrapper structures per API. The existing parsing logic with `result.return` and `result.data` fallbacks should handle most cases.
+- For any endpoints that still return 404 after this fix, the discovery logging will show the exact error response to help with further debugging.
 
