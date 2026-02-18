@@ -21,41 +21,40 @@ const ENDPOINTS = {
     "/assetlist-api/v1/assetlist",
   ],
   meritOrder: [
-    "/energymeritorder-api/v1/EnergyMeritOrder",
+    "/energymeritorder-api/v1/energyMeritOrderReport",
     "/energymeritorder-api/v1/energyMeritOrder",
-    "/energymeritorder-api/v1/meritOrder",
+    "/energymeritorder-api/v1/EnergyMeritOrder",
   ],
   orReport: [
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?start_date={start}&end_date={end}",
-    "/operatingreserve-api/v1/OperatingReserve",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?deliveryDate={start}",
   ],
   interchangeCapability: [
-    "/interchangecapability-api/v1/InterchangeCapability",
-    "/interchangecapability-api/v1/interchangeCapability",
-    "/interchangecapability-api/v1/capability",
+    "/itc-api/v1/interchangeCapability",
+    "/itc-api/v1/itcReport",
+    "/itc-api/v1/intertieReport",
   ],
   loadOutage: [
-    "/loadoutageforecast-api/v1/LoadOutageForecast",
-    "/loadoutage-api/v1/LoadOutage",
-    "/loadoutage-api/v1/outages",
+    "/loadoutageforecast-api/v1/loadOutageReport?startDate={start}&endDate={end}",
   ],
   interchangeOutage: [
-    "/interchangeoutage-api/v1/InterchangeOutage",
-    "/interchangeoutage-api/v1/interchangeOutage",
-    "/interchangeoutage-api/v1/outages",
+    "/itc-api/v1/interchangeOutage",
+    "/itc-api/v1/itcReport",
   ],
   poolParticipant: [
     "/poolparticipant-api/v1/poolparticipantlist",
     "/poolparticipant-api/v1/PoolParticipantList",
   ],
   meteredVolume: [
+    "/meteredvolume-api/v1/meteredVolumeReport?startDate={start}&endDate={end}",
     "/meteredvolume-api/v1/MeteredVolume?startDate={start}&endDate={end}",
     "/meteredvolume-api/v1/meteredVolume?startDate={start}&endDate={end}",
   ],
   unitCommitment: [
-    "/unitcommitment-api/v2/UnitCommitment",
-    "/unitcommitment-api/v1/UnitCommitment",
+    "/unitcommitmentdata-api/v2/unitCommitmentData",
+    "/unitcommitmentdata-api/v2/unitCommitment",
+    "/unitcommitmentdata-api/v2/UnitCommitment",
   ],
 };
 
@@ -63,13 +62,13 @@ async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    // Try API-KEY header first (works for most endpoints)
+    // Try API-KEY header first (official AESO docs recommend this)
     const res = await fetch(`${AESO_BASE}${path}`, {
       headers: { "API-KEY": apiKey, "Accept": "application/json" },
       signal: controller.signal,
     });
     clearTimeout(timer);
-    if (res.status === 401) {
+    if (res.status === 401 || res.status === 403) {
       // Try Ocp-Apim-Subscription-Key header as fallback
       const controller2 = new AbortController();
       const timer2 = setTimeout(() => controller2.abort(), timeout);
@@ -314,9 +313,11 @@ Deno.serve(async (req) => {
     discoveryResults.meritOrder = { path: meritResult.path, sampleKeys: Object.keys(meritResult.data?.return || meritResult.data || {}).slice(0, 5) };
   }
 
-  // OR Report
-  // OR Report
-  const orResult = await tryEndpoints(ENDPOINTS.orReport, apiKey, dateReplace);
+  // OR Report (use 90-day-old dates since OR data has 60-day public access delay)
+  const orDateEnd = new Date(now); orDateEnd.setDate(orDateEnd.getDate() - 61);
+  const orDateStart = new Date(orDateEnd); orDateStart.setDate(orDateStart.getDate() - 7);
+  const orDateReplace = { start: formatDate(orDateStart), end: formatDate(orDateEnd) };
+  const orResult = await tryEndpoints(ENDPOINTS.orReport, apiKey, orDateReplace);
   results.orReport = !!orResult;
   if (orResult) {
     discoveryResults.orReport = { path: orResult.path, sampleKeys: Object.keys(orResult.data?.return || orResult.data || {}).slice(0, 5) };
@@ -348,7 +349,7 @@ Deno.serve(async (req) => {
   }
 
   // Load Outage
-  const loadOutResult = await tryEndpoints(ENDPOINTS.loadOutage, apiKey);
+  const loadOutResult = await tryEndpoints(ENDPOINTS.loadOutage, apiKey, dateReplace);
   results.loadOutage = !!loadOutResult;
   if (loadOutResult) {
     discoveryResults.loadOutage = { path: loadOutResult.path };
