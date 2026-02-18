@@ -301,3 +301,6 @@ verify_jwt = false
 
 [functions.aeso-smp-backfill]
 verify_jwt = false
+
+[functions.aeso-comprehensive-data-collector]
+verify_jwt = false
