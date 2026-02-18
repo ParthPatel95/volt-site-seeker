@@ -9,7 +9,7 @@ const ENDPOINTS = {
   smp: "/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate={start}&endDate={end}",
   ail: "/actualforecast-api/v1/load/albertaInternalLoad?startDate={start}&endDate={end}",
   csd: "/currentsupplydemand-api/v2/csd/summary/current",
-  // Discovery endpoints - corrected paths based on AESO APIM naming conventions
+  // Discovery endpoints
   genCapacity: [
     "/aiesgencapacity-api/v1/AIESGenCapacity?startDate={start}&endDate={end}",
     "/aiesgencapacity-api/v1/aiesgencapacity?startDate={start}&endDate={end}",
@@ -31,15 +31,21 @@ const ENDPOINTS = {
     "/energymeritorder-api/v1/",
   ],
   orReport: [
-    // Known working path from aeso-reserves-backfill (confirmed in production)
-    "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",
-    // Fallbacks using the portal-listed API ID
-    "/operatingreserveoffercontrol-api/v1/operatingReserveOfferControlReport?startDate={start}&endDate={end}",
+    // Portal-listed API ID prefix — returned 400 before (path exists, params wrong)
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date={start}",
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?delivery_date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?startDate={start}&endDate={end}",
+    "/operatingreserveoffercontrol-api/v1/operatingReserveOfferControlReport?startDate={start}&endDate={end}",
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",
   ],
   interchangeCapability: [
+    // Try separate API prefixes first (AESO lists these as separate APIs)
+    "/interchangecapability-api/v1/interchangeCapability",
+    "/interchangecapability-api/v1/capability",
+    "/interchangecapability-api/v1/report",
+    "/interchangecapability-api/v1/InterchangeCapability",
+    "/interchangecapability-api/v1/",
+    // Fallback to itc-api
     "/itc-api/v1/interchangeCapability",
     "/itc-api/v1/itcReport",
     "/itc-api/v1/intertieReport",
@@ -52,6 +58,13 @@ const ENDPOINTS = {
     "/loadoutageforecast-api/v1/loadOutageReport?startDate={start}&endDate={end}",
   ],
   interchangeOutage: [
+    // Try separate API prefix first
+    "/interchangeoutage-api/v1/interchangeOutage",
+    "/interchangeoutage-api/v1/outage",
+    "/interchangeoutage-api/v1/report",
+    "/interchangeoutage-api/v1/InterchangeOutage",
+    "/interchangeoutage-api/v1/",
+    // Fallback to itc-api
     "/itc-api/v1/interchangeOutage",
     "/itc-api/v1/InterchangeOutage",
     "/itc-api/v1/outage",
@@ -77,87 +90,93 @@ const ENDPOINTS = {
   ],
 };
 
-async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise<any> {
-  // For operatingreserve paths, use Ocp-Apim-Subscription-Key first (confirmed working in aeso-reserves-backfill)
-  const useOcpFirst = path.includes("operatingreserve");
-  const headerPrimary = useOcpFirst
-    ? { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" }
-    : { "API-KEY": apiKey, "Accept": "application/json" };
-  const headerFallback = useOcpFirst
-    ? { "API-KEY": apiKey, "Accept": "application/json" }
-    : { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" };
+// Get all available API keys (they may be different keys)
+function getAllApiKeys(): string[] {
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  for (const envVar of ["AESO_SUBSCRIPTION_KEY_PRIMARY", "AESO_API_KEY", "AESO_SUB_KEY", "AESO_SUBSCRIPTION_KEY_SECONDARY"]) {
+    const val = Deno.env.get(envVar);
+    if (val && !seen.has(val)) {
+      seen.add(val);
+      keys.push(val);
+    }
+  }
+  return keys;
+}
 
+// Raw fetch with a specific header and key — no auth logic magic
+async function rawFetchAESO(path: string, headerName: string, apiKey: string, timeout = 15000): Promise<{ ok: boolean; status: number; data?: any; body?: string; error?: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(`${AESO_BASE}${path}`, {
-      headers: headerPrimary,
+      headers: {
+        [headerName]: apiKey,
+        "Cache-Control": "no-cache",
+        "Accept": "application/json",
+      },
       signal: controller.signal,
     });
     clearTimeout(timer);
-    if (res.status === 401 || res.status === 403) {
-      // Try alternate auth header
-      const controller2 = new AbortController();
-      const timer2 = setTimeout(() => controller2.abort(), timeout);
-      const res2 = await fetch(`${AESO_BASE}${path}`, {
-        headers: headerFallback,
-        signal: controller2.signal,
-      });
-      clearTimeout(timer2);
-      if (!res2.ok) {
-        const text = await res2.text().catch(() => "");
-        return { error: true, status: res2.status, path, body: text.substring(0, 200) };
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        return { ok: true, status: res.status, data };
+      } catch {
+        const text = await res.text().catch(() => "");
+        return { ok: false, status: res.status, body: text.substring(0, 300), error: "JSON parse failed" };
       }
-      return await res2.json();
     }
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return { error: true, status: res.status, path, body: text.substring(0, 200) };
-    }
-    return await res.json();
-  } catch (e) {
+    const text = await res.text().catch(() => "");
+    return { ok: false, status: res.status, body: text.substring(0, 300) };
+  } catch (e: any) {
     clearTimeout(timer);
-    return { error: true, path, message: e.message };
+    return { ok: false, status: 0, error: e.message };
   }
 }
 
-// Enhanced discovery: try both auth headers for each path
-async function tryEndpointsDualAuth(paths: string[], apiKey: string, dateReplace?: { start: string; end: string }): Promise<{ data: any; path: string } | null> {
+// Simple fetch using API-KEY header (for confirmed working endpoints)
+async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise<any> {
+  const r = await rawFetchAESO(path, "API-KEY", apiKey, timeout);
+  if (r.ok) return r.data;
+  // Fallback to Ocp-Apim-Subscription-Key on 401/403
+  if (r.status === 401 || r.status === 403) {
+    const r2 = await rawFetchAESO(path, "Ocp-Apim-Subscription-Key", apiKey, timeout);
+    if (r2.ok) return r2.data;
+    return { error: true, status: r2.status, path, body: r2.body || r2.error };
+  }
+  return { error: true, status: r.status, path, body: r.body || r.error };
+}
+
+// Enhanced discovery: try ALL combinations of auth headers × API keys for each path
+// maxPaths limits how many paths to try (for timeout management)
+async function tryEndpointsDualAuth(paths: string[], apiKeys: string[], dateReplace?: { start: string; end: string }, maxPaths = 3): Promise<{ data: any; path: string } | null> {
+  const AUTH_HEADERS = ["API-KEY", "Ocp-Apim-Subscription-Key"];
+  let tried = 0;
   for (let path of paths) {
+    if (tried >= maxPaths) break;
+    tried++;
     if (dateReplace) {
       path = path.replace("{start}", dateReplace.start).replace("{end}", dateReplace.end);
     }
-    // Try with API-KEY
-    const r1 = await fetchAESO(path, apiKey, 10000);
-    if (!r1.error) return { data: r1, path };
-    // If 404 with API-KEY, also try Ocp-Apim-Subscription-Key explicitly
-    if (r1.status === 404) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10000);
-      try {
-        const res = await fetch(`${AESO_BASE}${path}`, {
-          headers: { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-        if (res.ok) {
-          const data = await res.json();
-          console.log(`[Discovery] ${path} succeeded with Ocp-Apim-Subscription-Key!`);
-          return { data, path };
+    for (const key of apiKeys) {
+      for (const hdr of AUTH_HEADERS) {
+        const r = await rawFetchAESO(path, hdr, key, 6000);
+        if (r.ok) {
+          console.log(`[Discovery] ✅ ${path} succeeded with ${hdr} (key ending ...${key.slice(-4)})`);
+          return { data: r.data, path };
         }
-        const text = await res.text().catch(() => "");
-        console.log(`[Discovery] ${path} → API-KEY:${r1.status}, Ocp:${res.status} | ${text.substring(0, 150)}`);
-      } catch (e) {
-        clearTimeout(timer);
-        console.log(`[Discovery] ${path} → API-KEY:${r1.status}, Ocp:error(${e.message})`);
+        // Only log first failure per path to reduce noise
+        if (hdr === AUTH_HEADERS[0] && key === apiKeys[0]) {
+          console.log(`[Discovery] ${path} → ${r.status} | ${(r.body || r.error || "").substring(0, 80)}`);
+        }
       }
-    } else {
-      console.log(`[Discovery] ${path} → ${r1.status || r1.message} | ${(r1.body || "").substring(0, 150)}`);
     }
   }
   return null;
 }
 
+// Simple discovery for confirmed-working endpoints (only needs one key)
 async function tryEndpoints(paths: string[], apiKey: string, dateReplace?: { start: string; end: string }): Promise<{ data: any; path: string } | null> {
   for (let path of paths) {
     if (dateReplace) {
@@ -176,14 +195,152 @@ function formatDate(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
+// ========== Diagnostic Mode ==========
+async function runDiagnostic(apiKeys: string[]): Promise<any> {
+  const AUTH_HEADERS = ["API-KEY", "Ocp-Apim-Subscription-Key"];
+  const now = new Date();
+  const today = formatDate(now);
+  const orEnd = new Date(now); orEnd.setDate(orEnd.getDate() - 61);
+  const orStart = new Date(orEnd); orStart.setDate(orStart.getDate() - 7);
+
+  // Define focused probes for just the 5 failing APIs
+  const probes: Record<string, string[]> = {
+    meritOrder: [
+      "/energymeritorder-api/v1/energyMeritOrderReport",
+      "/energymeritorder-api/v1/energyMeritOrder",
+      "/energymeritorder-api/v1/",
+    ],
+    orReport: [
+      `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date=${formatDate(orStart)}`,
+      `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl`,
+      `/operatingreserveoffercontrol-api/v1/`,
+    ],
+    interchangeCapability: [
+      "/interchangecapability-api/v1/interchangeCapability",
+      "/interchangecapability-api/v1/",
+      "/itc-api/v1/interchangeCapability",
+      "/itc-api/v1/",
+    ],
+    interchangeOutage: [
+      "/interchangeoutage-api/v1/interchangeOutage",
+      "/interchangeoutage-api/v1/",
+      "/itc-api/v1/interchangeOutage",
+    ],
+    meteredVolume: [
+      `/meteredvolume-api/v1/meteredVolumeReport?startDate=${today}&endDate=${today}`,
+      `/meteredvolume-api/v1/meteredVolume?startDate=${today}&endDate=${today}`,
+      "/meteredvolume-api/v1/",
+    ],
+  };
+
+  // Also try without /public/ prefix
+  const BASES = [
+    "https://apimgw.aeso.ca/public",
+    "https://apimgw.aeso.ca",
+  ];
+
+  const diagnosticResults: Record<string, any[]> = {};
+
+  for (const [apiName, paths] of Object.entries(probes)) {
+    diagnosticResults[apiName] = [];
+    for (const path of paths) {
+      for (const base of BASES) {
+        for (const key of apiKeys) {
+          for (const hdr of AUTH_HEADERS) {
+            // Try GET
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 8000);
+            try {
+              const res = await fetch(`${base}${path}`, {
+                method: "GET",
+                headers: {
+                  [hdr]: key,
+                  "Cache-Control": "no-cache",
+                  "Accept": "application/json",
+                },
+                signal: controller.signal,
+              });
+              clearTimeout(timer);
+              const bodyText = await res.text().catch(() => "");
+              diagnosticResults[apiName].push({
+                url: `${base}${path}`,
+                method: "GET",
+                header: hdr,
+                keyEnding: `...${key.slice(-4)}`,
+                status: res.status,
+                body: bodyText.substring(0, 300),
+              });
+              // If we got a non-404 non-401 response, also try POST
+              if (res.status !== 404) {
+                const ctrl2 = new AbortController();
+                const t2 = setTimeout(() => ctrl2.abort(), 8000);
+                try {
+                  const res2 = await fetch(`${base}${path}`, {
+                    method: "POST",
+                    headers: {
+                      [hdr]: key,
+                      "Cache-Control": "no-cache",
+                      "Content-Type": "application/json",
+                    },
+                    body: "{}",
+                    signal: ctrl2.signal,
+                  });
+                  clearTimeout(t2);
+                  const body2 = await res2.text().catch(() => "");
+                  diagnosticResults[apiName].push({
+                    url: `${base}${path}`,
+                    method: "POST",
+                    header: hdr,
+                    keyEnding: `...${key.slice(-4)}`,
+                    status: res2.status,
+                    body: body2.substring(0, 300),
+                  });
+                } catch (e2: any) {
+                  clearTimeout(t2);
+                }
+              }
+            } catch (e: any) {
+              clearTimeout(timer);
+              diagnosticResults[apiName].push({
+                url: `${base}${path}`,
+                method: "GET",
+                header: hdr,
+                keyEnding: `...${key.slice(-4)}`,
+                status: "error",
+                body: e.message,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Summarize: find any non-404 responses
+  const summary: Record<string, any> = {};
+  for (const [apiName, results] of Object.entries(diagnosticResults)) {
+    const non404 = results.filter((r: any) => r.status !== 404 && r.status !== "error");
+    const successes = results.filter((r: any) => r.status >= 200 && r.status < 300);
+    summary[apiName] = {
+      totalProbes: results.length,
+      successes: successes.length,
+      non404Responses: non404.length,
+      non404Details: non404.slice(0, 5),
+      allStatuses: [...new Set(results.map((r: any) => r.status))],
+    };
+  }
+
+  return { summary, details: diagnosticResults };
+}
+
+// ========== Main Handler ==========
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const startTime = Date.now();
-  const results: Record<string, any> = {};
-  const apiKey = Deno.env.get("AESO_SUBSCRIPTION_KEY_PRIMARY") || Deno.env.get("AESO_API_KEY") || Deno.env.get("AESO_SUB_KEY") || Deno.env.get("AESO_SUBSCRIPTION_KEY_SECONDARY") || "";
+  const allApiKeys = getAllApiKeys();
+  const apiKey = allApiKeys[0] || "";
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: "No AESO API key configured" }), {
@@ -191,6 +348,22 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // Check for diagnostic mode
+  let body: any = {};
+  try { body = await req.json(); } catch { /* no body */ }
+
+  if (body?.mode === "diagnostic") {
+    console.log(`[Diagnostic] Running with ${allApiKeys.length} unique API keys...`);
+    const diagResult = await runDiagnostic(allApiKeys);
+    console.log("[Diagnostic Summary]", JSON.stringify(diagResult.summary, null, 2));
+    return new Response(JSON.stringify(diagResult), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const startTime = Date.now();
+  const results: Record<string, any> = {};
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -221,12 +394,10 @@ Deno.serve(async (req) => {
 
   if (!poolPriceResult.error) {
     const prices = poolPriceResult?.return?.["Pool Price Report"] || [];
-    // Find latest record with actual pool_price (not empty string)
     for (let i = prices.length - 1; i >= 0; i--) {
       const pp = parseFloat(prices[i]?.pool_price);
       if (!isNaN(pp) && pp > 0) { latestPoolPrice = pp; break; }
     }
-    // Also grab forecast if no actual
     if (latestPoolPrice === null && prices.length > 0) {
       const fp = parseFloat(prices[prices.length - 1]?.forecast_pool_price);
       if (!isNaN(fp)) latestPoolPrice = fp;
@@ -234,14 +405,12 @@ Deno.serve(async (req) => {
   }
 
   if (!smpResult.error) {
-    // SMP v1.1 may return { return: { timestamp, responseCode, "System Marginal Price Report": [...] } }
     const smpReturn = smpResult?.return;
     const smps = smpReturn?.["System Marginal Price Report"] || (Array.isArray(smpReturn) ? smpReturn : []);
     for (let i = smps.length - 1; i >= 0; i--) {
       const v = parseFloat(smps[i]?.system_marginal_price);
       if (!isNaN(v) && v > 0) { latestSMP = v; break; }
     }
-    // If empty array, try parsing responseCode for info
     if (latestSMP === null) {
       console.log("[DEBUG] SMP full response:", JSON.stringify(smpReturn || {}).slice(0, 500));
     }
@@ -249,12 +418,10 @@ Deno.serve(async (req) => {
 
   if (!ailResult.error) {
     const loads = ailResult?.return?.["Actual Forecast Report"] || [];
-    // Find latest with actual AIL value
     for (let i = loads.length - 1; i >= 0; i--) {
       const v = parseFloat(loads[i]?.alberta_internal_load);
       if (!isNaN(v) && v > 0) { latestAIL = v; break; }
     }
-    // Get forecast from last record
     if (loads.length > 0) {
       const fv = parseFloat(loads[loads.length - 1]?.forecast_alberta_internal_load);
       if (!isNaN(fv)) forecastAIL = fv;
@@ -269,7 +436,6 @@ Deno.serve(async (req) => {
 
   if (!csdResult.error) {
     const csd = csdResult?.return || csdResult;
-    // Generation by fuel type
     const genSummary = csd?.generationDataList || csd?.generation_data_list || [];
     for (const g of (Array.isArray(genSummary) ? genSummary : [])) {
       const fuel = (g?.fuel_type || g?.fuelType || "").toLowerCase();
@@ -281,33 +447,30 @@ Deno.serve(async (req) => {
       else if (fuel.includes("hydro")) genHydro = mw;
       else if (fuel.includes("coal") || fuel.includes("dual")) genCoal = mw;
       else genOther = (genOther || 0) + mw;
-
       totalInstalled = (totalInstalled || 0) + maxCap;
       totalAvailable = (totalAvailable || 0) + mw;
     }
 
-    // Interchange
     const interchanges = csd?.interchangeList || csd?.interchange_list || [];
     for (const ix of (Array.isArray(interchanges) ? interchanges : [])) {
-      const path = (ix?.path || ix?.interchange_path || "").toUpperCase();
+      const p = (ix?.path || ix?.interchange_path || "").toUpperCase();
       const flow = parseFloat(ix?.actual_flow || ix?.actualFlow || 0);
-      if (path.includes("BC")) bcFlow = flow;
-      else if (path.includes("SK") || path.includes("SASK")) skFlow = flow;
-      else if (path.includes("MT") || path.includes("MONT")) mtFlow = flow;
+      if (p.includes("BC")) bcFlow = flow;
+      else if (p.includes("SK") || p.includes("SASK")) skFlow = flow;
+      else if (p.includes("MT") || p.includes("MONT")) mtFlow = flow;
     }
   }
 
-  // ---- Phase 2: Discovery endpoints (sequential to avoid rate limiting) ----
+  // ---- Phase 2: Discovery endpoints ----
   const discoveryResults: Record<string, any> = {};
   const dateReplace = { start: todayStr, end: todayStr };
 
-  // Gen Capacity (now with date params)
+  // Gen Capacity (confirmed working — single key)
   const genCapResult = await tryEndpoints(ENDPOINTS.genCapacity, apiKey, dateReplace);
   if (genCapResult) {
     results.genCapacity = true;
     discoveryResults.genCapacity = { path: genCapResult.path, sampleKeys: Object.keys(genCapResult.data?.return || genCapResult.data || {}).slice(0, 5) };
 
-    // Parse outages from gen capacity
     const genData = genCapResult.data?.return || genCapResult.data;
     if (genData && typeof genData === "object") {
       const outages: any[] = [];
@@ -336,12 +499,11 @@ Deno.serve(async (req) => {
     results.genCapacity = false;
   }
 
-  // Asset List
+  // Asset List (confirmed working — single key)
   const assetResult = await tryEndpoints(ENDPOINTS.assetList, apiKey);
   if (assetResult) {
     results.assetList = true;
     discoveryResults.assetList = { path: assetResult.path };
-
     const assets = assetResult.data?.return || assetResult.data;
     const assetArr = Array.isArray(assets) ? assets : assets?.["Asset List"] || [];
     const upsertBatch: any[] = [];
@@ -360,7 +522,6 @@ Deno.serve(async (req) => {
       });
     }
     if (upsertBatch.length > 0) {
-      // Batch in chunks of 500
       for (let i = 0; i < upsertBatch.length; i += 500) {
         await supabase.from("aeso_assets").upsert(upsertBatch.slice(i, i + 500), { onConflict: "asset_id" });
       }
@@ -370,22 +531,21 @@ Deno.serve(async (req) => {
     results.assetList = false;
   }
 
-  // Merit Order (use dual auth probing)
-  const meritResult = await tryEndpointsDualAuth(ENDPOINTS.meritOrder, apiKey);
+  // Merit Order (FAILING — use dual auth with ALL keys)
+  const meritResult = await tryEndpointsDualAuth(ENDPOINTS.meritOrder, allApiKeys);
   results.meritOrder = !!meritResult;
   if (meritResult) {
     discoveryResults.meritOrder = { path: meritResult.path, sampleKeys: Object.keys(meritResult.data?.return || meritResult.data || {}).slice(0, 5) };
   }
 
-  // OR Report (use 90-day-old dates since OR data has 60-day public access delay)
+  // OR Report (FAILING — use dual auth with ALL keys, 60-day delayed dates)
   const orDateEnd = new Date(now); orDateEnd.setDate(orDateEnd.getDate() - 61);
   const orDateStart = new Date(orDateEnd); orDateStart.setDate(orDateStart.getDate() - 7);
   const orDateReplace = { start: formatDate(orDateStart), end: formatDate(orDateEnd) };
-  const orResult = await tryEndpointsDualAuth(ENDPOINTS.orReport, apiKey, orDateReplace);
+  const orResult = await tryEndpointsDualAuth(ENDPOINTS.orReport, allApiKeys, orDateReplace);
   results.orReport = !!orResult;
   if (orResult) {
     discoveryResults.orReport = { path: orResult.path, sampleKeys: Object.keys(orResult.data?.return || orResult.data || {}).slice(0, 5) };
-    // Try to extract OR details
     const orData = orResult.data?.return || orResult.data;
     if (orData) {
       orDispatched = parseFloat(orData?.dispatched_mw || orData?.total_dispatched || 0) || null;
@@ -395,8 +555,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Interchange Capability (dual auth probing)
-  const ixCapResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeCapability, apiKey);
+  // Interchange Capability (FAILING — use dual auth with ALL keys)
+  const ixCapResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeCapability, allApiKeys);
   results.interchangeCapability = !!ixCapResult;
   let bcCap = null, skCap = null, mtCap = null;
   if (ixCapResult) {
@@ -404,15 +564,15 @@ Deno.serve(async (req) => {
     const ixData = ixCapResult.data?.return || ixCapResult.data;
     const ixArr = Array.isArray(ixData) ? ixData : [];
     for (const ix of ixArr) {
-      const path = (ix?.path || ix?.interchange || "").toUpperCase();
+      const p = (ix?.path || ix?.interchange || "").toUpperCase();
       const cap = parseFloat(ix?.capability || ix?.ttc || ix?.total_transfer_capability || 0);
-      if (path.includes("BC")) bcCap = cap;
-      else if (path.includes("SK")) skCap = cap;
-      else if (path.includes("MT")) mtCap = cap;
+      if (p.includes("BC")) bcCap = cap;
+      else if (p.includes("SK")) skCap = cap;
+      else if (p.includes("MT")) mtCap = cap;
     }
   }
 
-  // Load Outage
+  // Load Outage (confirmed working — single key)
   const loadOutResult = await tryEndpoints(ENDPOINTS.loadOutage, apiKey, dateReplace);
   results.loadOutage = !!loadOutResult;
   if (loadOutResult) {
@@ -438,22 +598,22 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Interchange Outage
-  const ixOutResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeOutage, apiKey);
+  // Interchange Outage (FAILING — use dual auth with ALL keys)
+  const ixOutResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeOutage, allApiKeys);
   results.interchangeOutage = !!ixOutResult;
   if (ixOutResult) {
     discoveryResults.interchangeOutage = { path: ixOutResult.path };
   }
 
-  // Pool Participants
+  // Pool Participants (confirmed working — single key)
   const ppResult = await tryEndpoints(ENDPOINTS.poolParticipant, apiKey);
   results.poolParticipant = !!ppResult;
   if (ppResult) {
     discoveryResults.poolParticipant = { path: ppResult.path, count: Array.isArray(ppResult.data?.return) ? ppResult.data.return.length : "unknown" };
   }
 
-  // Metered Volume (now with date params)
-  const mvResult = await tryEndpointsDualAuth(ENDPOINTS.meteredVolume, apiKey, dateReplace);
+  // Metered Volume (FAILING — use dual auth with ALL keys)
+  const mvResult = await tryEndpointsDualAuth(ENDPOINTS.meteredVolume, allApiKeys, dateReplace);
   results.meteredVolume = !!mvResult;
   if (mvResult) {
     discoveryResults.meteredVolume = { path: mvResult.path, sampleKeys: Object.keys(mvResult.data?.return || mvResult.data || {}).slice(0, 5) };
@@ -461,7 +621,7 @@ Deno.serve(async (req) => {
     discoveryResults.meteredVolume = { tried: true, success: false };
   }
 
-  // Unit Commitment
+  // Unit Commitment (confirmed working — single key)
   const ucResult = await tryEndpoints(ENDPOINTS.unitCommitment, apiKey);
   results.unitCommitment = !!ucResult;
   if (ucResult) {
@@ -471,10 +631,7 @@ Deno.serve(async (req) => {
   }
 
   // ---- Phase 3: Store market snapshot ----
-  // Calculate total outage from gen capacity data
   let totalOutage = null, plannedOutage = null, forcedOutage = null;
-
-  // Parse merit order summary
   let meritDepth = null, marginalFuel = null, meritSnapshot = null;
   if (meritResult) {
     const mo = meritResult.data?.return || meritResult.data;
@@ -483,7 +640,6 @@ Deno.serve(async (req) => {
       meritDepth = moArr.length;
       const last = moArr[moArr.length - 1];
       marginalFuel = last?.fuel_type || last?.fuelType || null;
-      // Store compressed snapshot (first 20 + last 20 entries)
       meritSnapshot = {
         total_offers: moArr.length,
         bottom: moArr.slice(0, 20).map((m: any) => ({
@@ -553,9 +709,10 @@ Deno.serve(async (req) => {
     discovery: discoveryResults,
     snapshot_stored: !upsertError,
     upsert_error: upsertError?.message || null,
+    api_keys_available: allApiKeys.length,
   };
 
-  console.log(`[Comprehensive Collector] ${response.endpoints_succeeded}/${response.endpoints_tested} endpoints succeeded in ${elapsed}ms`);
+  console.log(`[Comprehensive Collector] ${response.endpoints_succeeded}/${response.endpoints_tested} endpoints succeeded in ${elapsed}ms (${allApiKeys.length} API keys available)`);
   console.log("[Discovery Results]", JSON.stringify(discoveryResults, null, 2));
 
   return new Response(JSON.stringify(response), {
