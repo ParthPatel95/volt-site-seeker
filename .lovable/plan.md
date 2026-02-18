@@ -1,90 +1,96 @@
 
 
-# Fix All AESO API Endpoint Paths -- Comprehensive Research Results
+# Fix Remaining AESO API Endpoints -- Evidence-Based Corrections
+
+## Current Status
+
+Working (9/14): Pool Price, SMP, AIL, CSD, Gen Capacity, Asset List, Pool Participants, Load Outage, Unit Commitment
+
+Failing (5/14): Energy Merit Order, Operating Reserve, Interchange Capability, Interchange Outage, Metered Volume
 
 ## Root Cause Analysis
 
-After researching the official AESO developer portal at `developer-apim.aeso.ca/product#product=aeso-public-api-product`, I found that **several API names in our code don't match the actual registered API IDs on the portal**. The portal lists exactly 14 APIs, and our function is using wrong base paths and wrong operation names for 7 of them.
+### 1. Operating Reserve -- WRONG API prefix (guaranteed fix)
+Our `aeso-reserves-backfill` function ALREADY successfully calls OR data using:
+```
+/operatingreserve-api/v1/orReport
+```
+with header `Ocp-Apim-Subscription-Key`. But the comprehensive collector uses the WRONG prefix `operatingreserveoffercontrol-api`. The portal lists `operatingreserveoffercontrol-api-v1` as the API ID, but the actual gateway routes through `operatingreserve-api`.
 
-## Key Discoveries
+### 2. Remaining 4 APIs -- Path discovery needed
+For Energy Merit Order, ITC (interchange), and Metered Volume, we've tried many path variations and all return `{ "statusCode": 404, "message": "Resource not found" }` from Azure APIM itself. This means the APIM gateway doesn't recognize ANY of our operation name guesses.
 
-### 1. Intertie APIs use `itc-api` (not separate APIs)
-The portal lists a single **"Intertie Public Reports - v1"** with API ID `itc-api-v1`. Our code tries `interchangecapability-api` and `interchangeoutage-api` which don't exist. Both interchange capability and outage reports are operations under `itc-api`.
-
-### 2. Unit Commitment uses `unitcommitmentdata-api` (not `unitcommitment-api`)
-Portal shows `unitcommitmentdata-api-v2`. We were trying `unitcommitment-api/v1` and `unitcommitment-api/v2`.
-
-### 3. Load Outage operation name is `loadOutageReport` (camelCase)
-The official docs show the endpoint as: `/loadoutageforecast-api/v1/loadOutageReport?startDate={startDate}`
-We were trying `LoadOutageForecast`, `LoadOutage`, and `outages`.
-
-### 4. Operation names follow camelCase pattern
-From the confirmed endpoints, the AESO APIM uses camelCase for operation paths:
-- `poolPrice` (confirmed working)
-- `systemMarginalPrice` (confirmed working)  
-- `albertaInternalLoad` (confirmed working)
-- `poolparticipantlist` (confirmed working, lowercase)
-- `assetlist` (confirmed working, lowercase)
-- `AIESGenCapacity` (confirmed working, PascalCase exception)
-- `loadOutageReport` (confirmed from docs)
-
-## Corrected Endpoint Map
-
-| API | Status | Wrong Path We Tried | Correct Path |
-|-----|--------|---------------------|--------------|
-| Pool Price | WORKING | -- | `/poolprice-api/v1.1/price/poolPrice` |
-| SMP | WORKING | -- | `/systemmarginalprice-api/v1.1/price/systemMarginalPrice` |
-| AIL | WORKING | -- | `/actualforecast-api/v1/load/albertaInternalLoad` |
-| CSD | WORKING | -- | `/currentsupplydemand-api/v2/csd/summary/current` |
-| Gen Capacity | WORKING | -- | `/aiesgencapacity-api/v1/AIESGenCapacity` |
-| Asset List | WORKING | -- | `/assetlist-api/v1/assetlist` |
-| Pool Participants | WORKING | -- | `/poolparticipant-api/v1/poolparticipantlist` |
-| Load Outage | FAILING | `LoadOutageForecast` | `/loadoutageforecast-api/v1/loadOutageReport?startDate=...` |
-| Energy Merit Order | FAILING | `EnergyMeritOrder` | Try: `/energymeritorder-api/v1/energyMeritOrderReport` and `/energymeritorder-api/v1/energyMeritOrder` |
-| OR Offer Control | FAILING | `OperatingReserveOfferControl` | Try: `/operatingreserveoffercontrol-api/v1/operatingReserveOfferControlReport?startDate=...` |
-| Metered Volume | FAILING | `MeteredVolume` | Try: `/meteredvolume-api/v1/meteredVolumeReport?startDate=...` |
-| Intertie Reports | FAILING | `interchangecapability-api/...` | Try: `/itc-api/v1/interchangeCapability`, `/itc-api/v1/interchangeOutage`, `/itc-api/v1/itcReport` |
-| Unit Commitment | FAILING | `unitcommitment-api/v2/...` | Try: `/unitcommitmentdata-api/v2/unitCommitmentData`, `/unitcommitmentdata-api/v2/unitCommitment` |
+The approach: add a comprehensive "probe" mode that tries the base API path (no operation), both auth headers, and many more path patterns including path-based date parameters.
 
 ## Changes
 
 ### File: `supabase/functions/aeso-comprehensive-data-collector/index.ts`
 
-**What changes (only the ENDPOINTS object and discovery arrays):**
+#### Change 1: Fix OR Report (confirmed fix)
+Add the known-working path from `aeso-reserves-backfill` as the FIRST entry in the OR discovery array:
+```
+orReport: [
+  "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",  // Known working path
+  "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?...",  // Keep as fallbacks
+]
+```
 
-1. **Load Outage** -- Replace all 3 discovery paths with the confirmed path: `/loadoutageforecast-api/v1/loadOutageReport?startDate={start}&endDate={end}` (requires date params, confirmed from docs)
+#### Change 2: Fix `fetchAESO` to try `Ocp-Apim-Subscription-Key` FIRST for OR-related paths
+The `aeso-reserves-backfill` function uses `Ocp-Apim-Subscription-Key` header (not `API-KEY`) and it works. Add logic so paths containing `operatingreserve` use this header first.
 
-2. **Energy Merit Order** -- Add camelCase variations: `energyMeritOrderReport`, `energyMeritOrderSnapshot`, keep `EnergyMeritOrder` as fallback
+#### Change 3: Expand path discovery arrays for remaining 4 APIs
+Add many more path variations based on Azure APIM naming conventions:
 
-3. **OR Offer Control** -- Add camelCase variations: `operatingReserveOfferControlReport`, `orReport` (this path works in `aeso-reserves-backfill` using `Ocp-Apim-Subscription-Key` header but uses the shorter `operatingreserve-api` prefix)
+**Energy Merit Order** (try path-based parameters and more operation names):
+```
+/energymeritorder-api/v1/                                  // Base path probe
+/energymeritorder-api/v1/report
+/energymeritorder-api/v1/snapshot
+/energymeritorder-api/v1/merit-order
+/energymeritorder-api/v1/energymeritorder
+```
 
-4. **Intertie Reports** -- Replace both `interchangecapability-api` and `interchangeoutage-api` sections with `itc-api` paths:
-   - `/itc-api/v1/interchangeCapability`
-   - `/itc-api/v1/interchangeOutage`  
-   - `/itc-api/v1/itcReport`
-   - `/itc-api/v1/intertieReport`
+**Interchange (ITC)** (try date parameters and more operations):
+```
+/itc-api/v1/                                               // Base path probe
+/itc-api/v1/capability
+/itc-api/v1/outage
+/itc-api/v1/report
+/itc-api/v1/InterchangeCapability
+/itc-api/v1/InterchangeOutage
+```
 
-5. **Metered Volume** -- Add camelCase: `meteredVolumeReport`
+**Metered Volume** (try path-based dates like other confirmed APIs):
+```
+/meteredvolume-api/v1/                                     // Base path probe
+/meteredvolume-api/v1/report?startDate={start}&endDate={end}
+/meteredvolume-api/v1/volume?startDate={start}&endDate={end}
+/meteredvolume-api/v1/meteredvolume?startDate={start}&endDate={end}
+```
 
-6. **Unit Commitment** -- Fix base path from `unitcommitment-api` to `unitcommitmentdata-api`:
-   - `/unitcommitmentdata-api/v2/unitCommitmentData`
-   - `/unitcommitmentdata-api/v2/unitCommitment`
+#### Change 4: Improve discovery logging
+For any 404 response, also probe the API root path (e.g., `/energymeritorder-api/v1/`) to see if APIM returns a list of available operations or a more helpful error message.
 
-7. **Auth header** -- The existing `aeso-reserves-backfill` function uses `Ocp-Apim-Subscription-Key` header and the path `/operatingreserve-api/v1/orReport` for OR data. Our collector tries `API-KEY` first then falls back to `Ocp-Apim-Subscription-Key`. Both should work per the official docs, but we should ensure the fallback is actually triggered properly. Currently the fallback only fires on 401 status -- add 403 as a trigger too.
+#### Change 5: Try both auth headers for ALL discovery endpoints
+Currently we only fallback on 401/403. For discovery probing, try both headers independently and log which one works, since some APIs may only accept one header type.
 
-**What does NOT change:**
-- All 7 working endpoints remain untouched
-- The snapshot storage logic stays the same
-- The CSD parsing, pool price parsing, AIL parsing all stay the same
-- The asset list and gen capacity code stays the same
+### What does NOT change
+- All 9 working endpoints remain untouched (same paths, same logic)
+- The CSD parsing, pool price parsing, AIL parsing unchanged
+- The asset list and gen capacity code unchanged
+- The snapshot storage logic unchanged
+- The `energy-data-integration` function unchanged
 
-### No other files are modified
+### No other files modified
 
-The `energy-data-integration` function is not changed -- it only uses the 4 confirmed working endpoints (pool price, SMP, AIL, CSD) and will continue to work exactly as before.
+## Expected Outcome
+- OR Report should immediately start working (confirmed path from existing codebase)
+- For the remaining 4 APIs, expanded probing will discover the correct paths or confirm they need special handling
+- Enhanced logging will show exactly what APIM returns for each probe, helping diagnose the remaining issues
 
 ## Technical Notes
-
-- The Load Outage API has a `startDate` as a **path template parameter** (required), meaning it must be provided. The docs say dates from 2013-09-22 onward, up to 24 months in the future.
-- The AESO APIM may return different response wrapper structures per API. The existing parsing logic with `result.return` and `result.data` fallbacks should handle most cases.
-- For any endpoints that still return 404 after this fix, the discovery logging will show the exact error response to help with further debugging.
+- The `operatingreserve-api` prefix works in production (proven by `aeso-reserves-backfill`) despite the portal listing it as `operatingreserveoffercontrol-api-v1`
+- Azure APIM may have different "API IDs" in the portal vs the actual gateway routing prefix
+- Some APIs may require specific date ranges (e.g., OR data has 60-day delay)
+- The base path probe (`/api-name/v1/`) may return a Swagger/OpenAPI spec or a list of operations
 
