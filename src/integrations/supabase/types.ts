@@ -269,6 +269,51 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_assets: {
+        Row: {
+          asset_id: string
+          asset_name: string | null
+          fuel_type: string | null
+          id: string
+          installed_capacity_mw: number | null
+          last_updated: string | null
+          metadata: Json | null
+          net_to_grid_capacity_mw: number | null
+          operating_status: string | null
+          owner: string | null
+          region: string | null
+          sub_fuel_type: string | null
+        }
+        Insert: {
+          asset_id: string
+          asset_name?: string | null
+          fuel_type?: string | null
+          id?: string
+          installed_capacity_mw?: number | null
+          last_updated?: string | null
+          metadata?: Json | null
+          net_to_grid_capacity_mw?: number | null
+          operating_status?: string | null
+          owner?: string | null
+          region?: string | null
+          sub_fuel_type?: string | null
+        }
+        Update: {
+          asset_id?: string
+          asset_name?: string | null
+          fuel_type?: string | null
+          id?: string
+          installed_capacity_mw?: number | null
+          last_updated?: string | null
+          metadata?: Json | null
+          net_to_grid_capacity_mw?: number | null
+          operating_status?: string | null
+          owner?: string | null
+          region?: string | null
+          sub_fuel_type?: string | null
+        }
+        Relationships: []
+      }
       aeso_custom_dashboards: {
         Row: {
           created_at: string
@@ -774,6 +819,117 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_market_snapshots: {
+        Row: {
+          ail_mw: number | null
+          created_at: string | null
+          data_sources: Json | null
+          forced_outage_mw: number | null
+          forecast_ail_mw: number | null
+          generation_coal_mw: number | null
+          generation_gas_mw: number | null
+          generation_hydro_mw: number | null
+          generation_other_mw: number | null
+          generation_solar_mw: number | null
+          generation_wind_mw: number | null
+          id: string
+          interchange_bc_capability_mw: number | null
+          interchange_bc_flow_mw: number | null
+          interchange_mt_capability_mw: number | null
+          interchange_mt_flow_mw: number | null
+          interchange_sk_capability_mw: number | null
+          interchange_sk_flow_mw: number | null
+          marginal_fuel_type: string | null
+          merit_order_depth: number | null
+          merit_order_snapshot: Json | null
+          or_clearing_price: number | null
+          or_dispatched_mw: number | null
+          or_regulating_mw: number | null
+          or_spinning_mw: number | null
+          or_supplemental_mw: number | null
+          planned_outage_mw: number | null
+          pool_price: number | null
+          snapshot_type: string
+          system_marginal_price: number | null
+          timestamp: string
+          total_available_capacity_mw: number | null
+          total_installed_capacity_mw: number | null
+          total_outage_mw: number | null
+        }
+        Insert: {
+          ail_mw?: number | null
+          created_at?: string | null
+          data_sources?: Json | null
+          forced_outage_mw?: number | null
+          forecast_ail_mw?: number | null
+          generation_coal_mw?: number | null
+          generation_gas_mw?: number | null
+          generation_hydro_mw?: number | null
+          generation_other_mw?: number | null
+          generation_solar_mw?: number | null
+          generation_wind_mw?: number | null
+          id?: string
+          interchange_bc_capability_mw?: number | null
+          interchange_bc_flow_mw?: number | null
+          interchange_mt_capability_mw?: number | null
+          interchange_mt_flow_mw?: number | null
+          interchange_sk_capability_mw?: number | null
+          interchange_sk_flow_mw?: number | null
+          marginal_fuel_type?: string | null
+          merit_order_depth?: number | null
+          merit_order_snapshot?: Json | null
+          or_clearing_price?: number | null
+          or_dispatched_mw?: number | null
+          or_regulating_mw?: number | null
+          or_spinning_mw?: number | null
+          or_supplemental_mw?: number | null
+          planned_outage_mw?: number | null
+          pool_price?: number | null
+          snapshot_type?: string
+          system_marginal_price?: number | null
+          timestamp: string
+          total_available_capacity_mw?: number | null
+          total_installed_capacity_mw?: number | null
+          total_outage_mw?: number | null
+        }
+        Update: {
+          ail_mw?: number | null
+          created_at?: string | null
+          data_sources?: Json | null
+          forced_outage_mw?: number | null
+          forecast_ail_mw?: number | null
+          generation_coal_mw?: number | null
+          generation_gas_mw?: number | null
+          generation_hydro_mw?: number | null
+          generation_other_mw?: number | null
+          generation_solar_mw?: number | null
+          generation_wind_mw?: number | null
+          id?: string
+          interchange_bc_capability_mw?: number | null
+          interchange_bc_flow_mw?: number | null
+          interchange_mt_capability_mw?: number | null
+          interchange_mt_flow_mw?: number | null
+          interchange_sk_capability_mw?: number | null
+          interchange_sk_flow_mw?: number | null
+          marginal_fuel_type?: string | null
+          merit_order_depth?: number | null
+          merit_order_snapshot?: Json | null
+          or_clearing_price?: number | null
+          or_dispatched_mw?: number | null
+          or_regulating_mw?: number | null
+          or_spinning_mw?: number | null
+          or_supplemental_mw?: number | null
+          planned_outage_mw?: number | null
+          pool_price?: number | null
+          snapshot_type?: string
+          system_marginal_price?: number | null
+          timestamp?: string
+          total_available_capacity_mw?: number | null
+          total_installed_capacity_mw?: number | null
+          total_outage_mw?: number | null
+        }
+        Relationships: []
+      }
       aeso_model_parameters: {
         Row: {
           created_at: string
@@ -1020,6 +1176,51 @@ export type Database = {
           price?: number
           source?: string
           timestamp?: string
+        }
+        Relationships: []
+      }
+      aeso_outages: {
+        Row: {
+          asset_id: string | null
+          asset_name: string | null
+          end_time: string | null
+          fetched_at: string | null
+          id: string
+          metadata: Json | null
+          outage_mw: number | null
+          outage_type: string
+          reason: string | null
+          source_api: string | null
+          start_time: string | null
+          status: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          asset_name?: string | null
+          end_time?: string | null
+          fetched_at?: string | null
+          id?: string
+          metadata?: Json | null
+          outage_mw?: number | null
+          outage_type: string
+          reason?: string | null
+          source_api?: string | null
+          start_time?: string | null
+          status?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          asset_name?: string | null
+          end_time?: string | null
+          fetched_at?: string | null
+          id?: string
+          metadata?: Json | null
+          outage_mw?: number | null
+          outage_type?: string
+          reason?: string | null
+          source_api?: string | null
+          start_time?: string | null
+          status?: string | null
         }
         Relationships: []
       }
