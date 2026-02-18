@@ -2,9 +2,15 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, AlertCircle, Lightbulb, TrendingUp, AlertTriangle, Shield, CheckCircle2, BarChart3, Brain, Zap, Target } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Sparkles, Loader2, AlertCircle, Lightbulb, TrendingUp, AlertTriangle, Shield, CheckCircle2, BarChart3, Brain, Zap, Target, Activity, Gauge } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, ComposedChart, Line, Area, ReferenceLine,
+  PieChart, Pie, Cell,
+} from 'recharts';
 import type { FacilityParams, TariffOverrides, AnnualSummary, MonthlyResult } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -67,10 +73,8 @@ function parseAIResponse(text: string): ParsedSection[] {
   return sections;
 }
 
-/** Extract key metrics mentioned in the AI response */
 function extractQuickStats(text: string): { label: string; value: string }[] {
   const stats: { label: string; value: string }[] = [];
-  // Match patterns like "8.8¢/kWh" or "$1.2M" or "23%" etc
   const patterns = [
     { regex: /(\d+\.?\d*)\s*[¢c]\/kWh/i, label: 'All-in Rate' },
     { regex: /\$(\d+\.?\d*)[Mm]/i, label: 'Annual Cost', prefix: '$', suffix: 'M' },
@@ -141,6 +145,322 @@ const sectionConfig: Record<ParsedSection['type'], { icon: React.ReactNode; grad
   },
 };
 
+// ===== VISUAL PANEL COMPONENTS =====
+
+const CHART_COLORS = [
+  'hsl(220, 70%, 55%)', // DTS Blue
+  'hsl(35, 85%, 55%)',  // Energy Amber
+  'hsl(160, 60%, 45%)', // Fortis Green
+  'hsl(0, 65%, 55%)',   // GST Red
+  'hsl(270, 60%, 55%)', // Operating Reserve Purple
+  'hsl(190, 70%, 45%)', // Misc Teal
+];
+
+function CostWaterfallChart({ annual }: { annual: AnnualSummary }) {
+  const data = useMemo(() => {
+    const total = annual.totalAmountDue;
+    const items = [
+      { name: 'Energy', value: annual.totalPoolEnergy, fill: 'hsl(35, 85%, 55%)' },
+      { name: 'Op Reserve', value: annual.totalOperatingReserve, fill: 'hsl(270, 60%, 55%)' },
+      { name: 'Bulk 12CP', value: annual.totalBulkCoincidentDemandFull - (annual.totalBulkCoincidentDemandFull - (annual.totalDTSCharges - annual.totalRegionalBillingCapacity - annual.totalRegionalMeteredEnergy - annual.totalPodCharges - annual.totalBulkMeteredEnergy - annual.totalTCR - annual.totalVoltageControl - annual.totalSystemSupport)), fill: 'hsl(220, 70%, 55%)' },
+      { name: 'Regional', value: annual.totalRegionalBillingCapacity + annual.totalRegionalMeteredEnergy, fill: 'hsl(200, 65%, 50%)' },
+      { name: 'POD', value: annual.totalPodCharges, fill: 'hsl(240, 55%, 60%)' },
+      { name: 'Fortis', value: annual.totalFortisCharges, fill: 'hsl(160, 60%, 45%)' },
+      { name: 'Riders/Fees', value: annual.totalRetailerFee + annual.totalRiderF + annual.totalTCR + annual.totalVoltageControl + annual.totalSystemSupport, fill: 'hsl(190, 70%, 45%)' },
+      { name: 'GST', value: annual.totalGST, fill: 'hsl(0, 65%, 55%)' },
+    ].filter(d => d.value > 0);
+
+    return items.map(d => ({
+      ...d,
+      value: Math.round(d.value),
+      pct: ((d.value / total) * 100).toFixed(1),
+    }));
+  }, [annual]);
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          Cost Waterfall — Where the Money Goes
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={data} layout="vertical" margin={{ left: 60, right: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+            <XAxis type="number" tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={55} />
+            <Tooltip
+              formatter={(v: number) => [`$${v.toLocaleString()}`, 'Cost']}
+              contentStyle={{ fontSize: 11, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+            />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+              {data.map((entry, i) => (
+                <Cell key={i} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {data.map((d, i) => (
+            <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground">
+              {d.name}: {d.pct}%
+            </span>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MonthlyRateTrendChart({ monthly, breakeven, params }: { monthly: MonthlyResult[]; breakeven: number; params: FacilityParams }) {
+  const data = useMemo(() => {
+    const hostingRateCAD_centsKwh = (params.hostingRateUSD / params.cadUsdRate) * 100;
+    const breakevenCentsKwh = breakeven / 10; // $/MWh -> ¢/kWh
+    return monthly.map(m => ({
+      month: m.month.slice(0, 3),
+      rate: +(m.perKwhCAD * 100).toFixed(2),
+      poolPrice: +(m.avgPoolPriceRunning / 10).toFixed(2), // $/MWh -> ¢/kWh
+      breakeven: +breakevenCentsKwh.toFixed(2),
+      hosting: +hostingRateCAD_centsKwh.toFixed(2),
+    }));
+  }, [monthly, breakeven, params]);
+
+  const rates = data.map(d => d.rate);
+  const minRate = Math.min(...rates);
+  const maxRate = Math.max(...rates);
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" />
+          Monthly All-in Rate Trend (¢/kWh)
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={240}>
+          <ComposedChart data={data} margin={{ left: 5, right: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
+            <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} domain={[Math.floor(minRate * 0.8), Math.ceil(maxRate * 1.2)]} />
+            <Tooltip contentStyle={{ fontSize: 11, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+            <Area type="monotone" dataKey="rate" fill="hsl(220, 70%, 55%)" fillOpacity={0.1} stroke="none" />
+            <Line type="monotone" dataKey="rate" stroke="hsl(220, 70%, 55%)" strokeWidth={2.5} dot={{ r: 3 }} name="All-in Rate" />
+            <Line type="monotone" dataKey="poolPrice" stroke="hsl(35, 85%, 55%)" strokeWidth={1.5} strokeDasharray="4 2" dot={false} name="Pool Price" />
+            <ReferenceLine y={data[0]?.breakeven} stroke="hsl(0, 65%, 55%)" strokeDasharray="6 3" label={{ value: 'Breakeven', fontSize: 9, fill: 'hsl(0, 65%, 55%)' }} />
+            <ReferenceLine y={data[0]?.hosting} stroke="hsl(160, 60%, 45%)" strokeDasharray="6 3" label={{ value: 'Hosting Rate', fontSize: 9, fill: 'hsl(160, 60%, 45%)' }} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CostComponentDonut({ annual }: { annual: AnnualSummary }) {
+  const data = useMemo(() => {
+    const items = [
+      { name: 'DTS', value: annual.totalDTSCharges, color: 'hsl(220, 70%, 55%)' },
+      { name: 'Energy', value: annual.totalEnergyCharges, color: 'hsl(35, 85%, 55%)' },
+      { name: 'Fortis', value: annual.totalFortisCharges, color: 'hsl(160, 60%, 45%)' },
+      { name: 'GST', value: annual.totalGST, color: 'hsl(0, 65%, 55%)' },
+    ];
+    return items;
+  }, [annual]);
+
+  const allInRate = (annual.avgPerKwhCAD * 100).toFixed(2);
+  const perKwhBreakdown = useMemo(() => {
+    const kwh = annual.totalKWh || 1;
+    return [
+      { label: 'DTS', value: (annual.totalDTSCharges / kwh * 100).toFixed(2) },
+      { label: 'Energy', value: (annual.totalEnergyCharges / kwh * 100).toFixed(2) },
+      { label: 'Fortis', value: (annual.totalFortisCharges / kwh * 100).toFixed(2) },
+      { label: 'GST', value: (annual.totalGST / kwh * 100).toFixed(2) },
+    ];
+  }, [annual]);
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" />
+          Cost Component Split
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <div className="relative w-[160px] h-[160px] shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={2}>
+                  {data.map((d, i) => (
+                    <Cell key={i} fill={d.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} contentStyle={{ fontSize: 10, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <span className="text-lg font-bold text-foreground">{allInRate}</span>
+                <span className="block text-[9px] text-muted-foreground">¢/kWh</span>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1 min-w-0">
+            {perKwhBreakdown.map((item, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: data[i]?.color }} />
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground truncate">{item.label}</p>
+                  <p className="text-xs font-semibold text-foreground">{item.value}¢/kWh</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EfficiencyScorecard({ annual, monthly, params, breakeven }: { annual: AnnualSummary; monthly: MonthlyResult[]; params: FacilityParams; breakeven: number }) {
+  const metrics = useMemo(() => {
+    const uptimeTarget = params.targetUptimePercent || 95;
+    const uptimeActual = annual.avgUptimePercent;
+    const uptimeScore = Math.min(100, (uptimeActual / uptimeTarget) * 100);
+
+    // 12CP savings: compare full 12CP charge vs actual
+    const twelveCPFull = annual.totalBulkCoincidentDemandFull;
+    const twelveCPActual = twelveCPFull - (annual.totalBulkCoincidentDemandFull - annual.totalDTSCharges + annual.totalRegionalBillingCapacity + annual.totalRegionalMeteredEnergy + annual.totalPodCharges + annual.totalBulkMeteredEnergy + annual.totalTCR + annual.totalVoltageControl + annual.totalSystemSupport);
+    const twelveCPSavingsEst = annual.curtailmentSavings;
+    const twelveCPPct = twelveCPFull > 0 ? Math.min(100, (twelveCPSavingsEst / twelveCPFull) * 100) : 0;
+
+    // Price curtailment ROI
+    const totalCurtailedHrs = monthly.reduce((s, m) => s + m.curtailedPrice, 0);
+    const priceCurtailROI = totalCurtailedHrs > 0 ? annual.totalPriceCurtailmentSavings / totalCurtailedHrs : 0;
+
+    // Rate vs benchmark (Rate 65 ~ 9¢/kWh Alberta typical)
+    const allInCents = annual.avgPerKwhCAD * 100;
+    const benchmark = 9.0; // Rate 65 benchmark
+    const rateScore = Math.min(100, Math.max(0, ((benchmark - allInCents) / benchmark) * 100 + 50));
+
+    return [
+      { label: 'Uptime Efficiency', value: uptimeScore, detail: `${uptimeActual.toFixed(1)}% of ${uptimeTarget}% target`, color: uptimeScore >= 95 ? 'hsl(160, 60%, 45%)' : uptimeScore >= 85 ? 'hsl(35, 85%, 55%)' : 'hsl(0, 65%, 55%)' },
+      { label: '12CP Avoidance Value', value: twelveCPPct, detail: `$${twelveCPSavingsEst.toLocaleString(undefined, { maximumFractionDigits: 0 })} estimated savings`, color: twelveCPPct >= 30 ? 'hsl(160, 60%, 45%)' : 'hsl(35, 85%, 55%)' },
+      { label: 'Price Curtailment ROI', value: Math.min(100, priceCurtailROI / 5 * 100), detail: `$${priceCurtailROI.toFixed(0)}/hr avoided (${totalCurtailedHrs} hrs)`, color: priceCurtailROI > 300 ? 'hsl(160, 60%, 45%)' : 'hsl(35, 85%, 55%)' },
+      { label: 'Rate vs Benchmark', value: rateScore, detail: `${allInCents.toFixed(2)}¢ vs ~${benchmark}¢ Rate 65`, color: allInCents < benchmark ? 'hsl(160, 60%, 45%)' : 'hsl(0, 65%, 55%)' },
+    ];
+  }, [annual, monthly, params, breakeven]);
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Gauge className="w-4 h-4 text-primary" />
+          Efficiency Scorecard
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {metrics.map((m, i) => (
+          <div key={i}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-medium text-foreground">{m.label}</span>
+              <span className="text-[10px] text-muted-foreground">{m.detail}</span>
+            </div>
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/30">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${Math.max(2, m.value)}%`, backgroundColor: m.color }}
+              />
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RiskHeatmap({ monthly }: { monthly: MonthlyResult[] }) {
+  const data = useMemo(() => {
+    // Pool price volatility per month
+    const avgPoolPrices = monthly.map(m => m.avgPoolPriceRunning);
+    const overallAvg = avgPoolPrices.reduce((s, v) => s + v, 0) / avgPoolPrices.length || 1;
+
+    return monthly.map(m => {
+      // Volatility: deviation from mean
+      const volRatio = Math.abs(m.avgPoolPriceRunning - overallAvg) / overallAvg;
+      const volLevel: 'low' | 'med' | 'high' = volRatio < 0.15 ? 'low' : volRatio < 0.35 ? 'med' : 'high';
+
+      // Cost intensity: per-kWh rate relative to annual average
+      const avgRate = monthly.reduce((s, x) => s + x.perKwhCAD, 0) / monthly.length;
+      const costRatio = avgRate > 0 ? m.perKwhCAD / avgRate : 1;
+      const costLevel: 'low' | 'med' | 'high' = costRatio < 0.9 ? 'low' : costRatio < 1.1 ? 'med' : 'high';
+
+      // Curtailment pressure: curtailed hours as % of total
+      const curtPct = m.totalHours > 0 ? m.curtailedHours / m.totalHours : 0;
+      const curtLevel: 'low' | 'med' | 'high' = curtPct < 0.03 ? 'low' : curtPct < 0.08 ? 'med' : 'high';
+
+      return {
+        month: m.month.slice(0, 3),
+        volatility: volLevel,
+        cost: costLevel,
+        curtailment: curtLevel,
+      };
+    });
+  }, [monthly]);
+
+  const levelColor = (level: 'low' | 'med' | 'high') =>
+    level === 'low' ? 'bg-emerald-500/60' : level === 'med' ? 'bg-amber-500/60' : 'bg-red-500/60';
+
+  const rows = [
+    { label: 'Price Volatility', key: 'volatility' as const },
+    { label: 'Cost Intensity', key: 'cost' as const },
+    { label: 'Curtailment', key: 'curtailment' as const },
+  ];
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-primary" />
+          Risk Heatmap — Seasonal Patterns
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <div className="min-w-[500px]">
+            {/* Header row */}
+            <div className="grid gap-1" style={{ gridTemplateColumns: '100px repeat(12, 1fr)' }}>
+              <div />
+              {data.map((d, i) => (
+                <div key={i} className="text-center text-[9px] font-medium text-muted-foreground pb-1">{d.month}</div>
+              ))}
+            </div>
+            {/* Data rows */}
+            {rows.map((row) => (
+              <div key={row.key} className="grid gap-1 mb-1" style={{ gridTemplateColumns: '100px repeat(12, 1fr)' }}>
+                <div className="text-[10px] text-muted-foreground flex items-center">{row.label}</div>
+                {data.map((d, i) => (
+                  <div key={i} className={`h-6 rounded-sm ${levelColor(d[row.key])} transition-colors`} title={`${d.month} ${row.label}: ${d[row.key]}`} />
+                ))}
+              </div>
+            ))}
+            {/* Legend */}
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/20">
+              <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-emerald-500/60" /><span className="text-[9px] text-muted-foreground">Low</span></div>
+              <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-amber-500/60" /><span className="text-[9px] text-muted-foreground">Medium</span></div>
+              <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-500/60" /><span className="text-[9px] text-muted-foreground">High</span></div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly, breakeven, autoTrigger }: Props) {
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -154,7 +474,6 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
     setAnalysis(null);
     setLoadingStage(0);
 
-    // Animate loading stages
     const stageTimers: NodeJS.Timeout[] = [];
     let elapsed = 0;
     for (let i = 1; i < LOADING_STAGES.length; i++) {
@@ -210,6 +529,8 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
   const recommendationSection = parsedSections.find(s => s.type === 'recommendation');
   const quickStats = useMemo(() => analysis ? extractQuickStats(analysis) : [], [analysis]);
 
+  const hasVisualData = !!annual && monthly.length > 0;
+
   return (
     <Card className="overflow-hidden border-border/60">
       {/* Header */}
@@ -236,6 +557,28 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
       </CardHeader>
 
       <CardContent className="pt-4">
+        {/* ===== VISUAL PANELS (render immediately from data, no AI needed) ===== */}
+        {hasVisualData && (
+          <div className="space-y-4 mb-6">
+            {/* Row 1: Waterfall + Rate Trend */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CostWaterfallChart annual={annual!} />
+              <MonthlyRateTrendChart monthly={monthly} breakeven={breakeven} params={params} />
+            </div>
+
+            {/* Row 2: Donut + Scorecard */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CostComponentDonut annual={annual!} />
+              <EfficiencyScorecard annual={annual!} monthly={monthly} params={params} breakeven={breakeven} />
+            </div>
+
+            {/* Row 3: Risk Heatmap */}
+            <RiskHeatmap monthly={monthly} />
+
+            <div className="border-t border-border/30" />
+          </div>
+        )}
+
         {/* Empty State */}
         {!analysis && !loading && (
           <div className="text-center py-10 space-y-3">

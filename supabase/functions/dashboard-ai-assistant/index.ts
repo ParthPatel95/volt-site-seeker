@@ -8,7 +8,23 @@ const corsHeaders = {
 function buildPowerModelPrompt(data: any): string {
   const { params, tariffOverrides, annual, monthly, breakeven } = data;
   
-  return `You are an expert Alberta energy market analyst. Analyze this Power Model cost breakdown for a ${params.contractedCapacityMW} MW facility.
+  // Compute avg pool price across months for context
+  const avgPoolPrice = monthly.length > 0
+    ? (monthly.reduce((s: number, m: any) => s + (m.avgPoolPriceRunning || 0), 0) / monthly.length).toFixed(2)
+    : 'N/A';
+  
+  // Identify highest/lowest cost months
+  const sortedByRate = [...monthly].sort((a: any, b: any) => b.perKwhCAD - a.perKwhCAD);
+  const highCostMonth = sortedByRate[0]?.month || 'N/A';
+  const lowCostMonth = sortedByRate[sortedByRate.length - 1]?.month || 'N/A';
+
+  // Summer vs winter split
+  const summerMonths = monthly.filter((m: any) => ['June','July','August','September'].includes(m.month));
+  const winterMonths = monthly.filter((m: any) => ['December','January','February','March'].includes(m.month));
+  const avgSummerRate = summerMonths.length > 0 ? (summerMonths.reduce((s: number, m: any) => s + m.perKwhCAD, 0) / summerMonths.length * 100).toFixed(2) : 'N/A';
+  const avgWinterRate = winterMonths.length > 0 ? (winterMonths.reduce((s: number, m: any) => s + m.perKwhCAD, 0) / winterMonths.length * 100).toFixed(2) : 'N/A';
+
+  return `You are an expert Alberta energy market analyst specializing in AESO Rate DTS tariff optimization. Analyze this Power Model cost breakdown for a ${params.contractedCapacityMW} MW facility connected at ${params.podName || 'an Alberta POD'} via ${params.dfo || 'FortisAlberta'}.
 
 ## Model Parameters
 - Contracted Capacity: ${params.contractedCapacityMW} MW
@@ -17,37 +33,65 @@ function buildPowerModelPrompt(data: any): string {
 - Hosting Rate: US$${params.hostingRateUSD}/kWh (CA$${(params.hostingRateUSD / params.cadUsdRate).toFixed(4)}/kWh)
 - CAD/USD Rate: ${params.cadUsdRate}
 - Breakeven Pool Price: CA$${breakeven.toFixed(2)}/MWh
+- Target Uptime: ${params.targetUptimePercent || 95}%
 
-${tariffOverrides && Object.keys(tariffOverrides).some(k => (tariffOverrides as any)[k] !== undefined) ? `## Custom Tariff Overrides Applied\n${JSON.stringify(tariffOverrides, null, 2)}` : '## Using Default Tariff Rates (AUC Decision 29606-D01-2024)'}
+${tariffOverrides && Object.keys(tariffOverrides).some(k => (tariffOverrides as any)[k] !== undefined) ? `## Custom Tariff Overrides Applied\n${JSON.stringify(tariffOverrides, null, 2)}` : '## Using Default Tariff Rates (AUC Decision 30427-D01-2025, effective Jan 2026)'}
 
 ## Annual Summary
 - Total Hours: ${annual.totalHours} | Running Hours: ${annual.totalRunningHours} (${annual.avgUptimePercent.toFixed(1)}% uptime)
 - Total MWh: ${annual.totalMWh.toLocaleString()}
-- DTS Charges: CA$${annual.totalDTSCharges.toLocaleString(undefined, {maximumFractionDigits: 0})}
-- Energy Charges: CA$${annual.totalEnergyCharges.toLocaleString(undefined, {maximumFractionDigits: 0})}
-- Fortis Charges: CA$${annual.totalFortisCharges.toLocaleString(undefined, {maximumFractionDigits: 0})}
+- DTS Charges: CA$${annual.totalDTSCharges.toLocaleString(undefined, {maximumFractionDigits: 0})} (${(annual.totalDTSCharges / annual.totalAmountDue * 100).toFixed(1)}% of total)
+- Energy Charges: CA$${annual.totalEnergyCharges.toLocaleString(undefined, {maximumFractionDigits: 0})} (${(annual.totalEnergyCharges / annual.totalAmountDue * 100).toFixed(1)}% of total)
+- Fortis Charges: CA$${annual.totalFortisCharges.toLocaleString(undefined, {maximumFractionDigits: 0})} (${(annual.totalFortisCharges / annual.totalAmountDue * 100).toFixed(1)}% of total)
+- GST: CA$${annual.totalGST?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'}
 - Total (incl GST): CA$${annual.totalAmountDue.toLocaleString(undefined, {maximumFractionDigits: 0})}
 - All-in Rate: CA$${(annual.avgPerKwhCAD * 100).toFixed(3)}¢/kWh (US$${(annual.avgPerKwhUSD * 100).toFixed(3)}¢/kWh)
 - Avg Pool Price (running hours): CA$${annual.avgPoolPriceRunning.toFixed(2)}/MWh
+- 12CP Curtailment Savings: CA$${annual.curtailmentSavings?.toLocaleString(undefined, {maximumFractionDigits: 0}) || '0'}
+- Price Curtailment Savings: CA$${annual.totalPriceCurtailmentSavings?.toLocaleString(undefined, {maximumFractionDigits: 0}) || '0'}
+
+## Key DTS Tariff Line Items (annual)
+- Bulk System 12CP Demand: CA$${annual.totalBulkCoincidentDemandFull?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'} (full charge before avoidance)
+- Bulk Metered Energy: CA$${annual.totalBulkMeteredEnergy?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'}
+- Regional Billing Capacity: CA$${annual.totalRegionalBillingCapacity?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'}
+- POD Charges: CA$${annual.totalPodCharges?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'}
+- Operating Reserve (12.5%): CA$${annual.totalOperatingReserve?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'}
+- Rider F: CA$${annual.totalRiderF?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'}
+
+## Seasonal Context
+- Avg Pool Price across months: CA$${avgPoolPrice}/MWh
+- Highest cost month: ${highCostMonth} | Lowest cost month: ${lowCostMonth}
+- Avg summer rate (Jun-Sep): ${avgSummerRate}¢/kWh | Avg winter rate (Dec-Mar): ${avgWinterRate}¢/kWh
 
 ## Monthly Breakdown
-${monthly.map((m: any) => `${m.month}: ${m.runningHours}h running (${m.uptimePercent.toFixed(1)}%), CA$${m.totalAmountDue.toLocaleString(undefined, {maximumFractionDigits: 0})}, ${(m.perKwhCAD * 100).toFixed(2)}¢/kWh, Pool $${m.avgPoolPriceRunning.toFixed(2)}/MWh`).join('\n')}
+${monthly.map((m: any) => `${m.month}: ${m.runningHours}h running (${m.uptimePercent.toFixed(1)}%), CA$${m.totalAmountDue.toLocaleString(undefined, {maximumFractionDigits: 0})}, ${(m.perKwhCAD * 100).toFixed(2)}¢/kWh, Pool $${m.avgPoolPriceRunning.toFixed(2)}/MWh, Curtailed ${m.curtailedHours || 0}h`).join('\n')}
 
-Please provide a structured analysis with these sections:
+Provide a structured analysis with these EXACT section headings:
 
-## Cost Summary
-Plain-language explanation of where the money is going — DTS vs Energy vs Distribution charges.
+## Executive Summary
+2-3 sentences summarizing overall cost position, profitability, and the single most impactful finding. Reference specific numbers.
+
+## Cost Drivers & Tariff Analysis
+- Break down exactly which AESO Rate DTS line items are the largest cost contributors
+- Quantify the Bulk 12CP demand charge impact and how 12CP avoidance is performing
+- Explain the Operating Reserve (12.5% of pool price) impact on total cost
+- Note the seasonal cost pattern between summer and winter with specific rate differences
 
 ## Top 3 Optimization Opportunities
-Specific, actionable recommendations with estimated dollar impact based on the numbers above. Consider: 12CP avoidance window changes, capacity adjustments, exchange rate hedging, pool price timing.
+For each, provide: (1) what to do, (2) estimated annual dollar savings, (3) implementation complexity.
+Consider: 12CP avoidance window tuning, capacity factor optimization, curtailment threshold adjustment, Rider F impact, exchange rate hedging.
 
 ## Risk Factors
-Key risks: pool price volatility, exchange rate movements, demand pattern shifts, tariff changes.
+Quantify each risk where possible: pool price volatility impact on margin, exchange rate sensitivity (1¢ CAD/USD = $X impact), demand charge exposure if 12CP avoidance fails.
 
-## Rate Comparison
-How this all-in rate compares to typical Alberta industrial electricity rates (Rate 11, Rate 63, Rate 65 benchmarks).
+## Benchmark Comparison
+Compare the all-in rate against these Alberta industrial benchmarks:
+- **FortisAlberta Rate 11** (residential): ~6.0¢/kWh all-in — not directly comparable but useful floor reference
+- **FortisAlberta Rate 63** (distribution-connected industrial): ~8.0¢/kWh all-in including demand charges
+- **FortisAlberta Rate 65** (transmission-connected): ~9.0¢/kWh all-in with full DTS pass-through
+- State whether this facility's rate is above or below each benchmark and explain why (e.g., pool price conditions, 12CP optimization effectiveness)
 
-Keep the response concise, data-driven, and grounded in the actual numbers provided. Do not fabricate any figures.`;
+Keep the response concise, data-driven, and grounded in the actual numbers. Do not fabricate figures. Reference specific tariff line items by their AESO names.`;
 }
 
 Deno.serve(async (req) => {
@@ -85,10 +129,10 @@ Deno.serve(async (req) => {
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: "Analyze the power model cost breakdown and provide optimization recommendations." },
+            { role: "user", content: "Analyze the power model cost breakdown and provide optimization recommendations. Be specific about tariff line items and seasonal patterns." },
           ],
           temperature: 0.5,
-          max_tokens: 2000,
+          max_tokens: 2500,
         }),
       });
 
