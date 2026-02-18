@@ -24,22 +24,38 @@ const ENDPOINTS = {
     "/energymeritorder-api/v1/energyMeritOrderReport",
     "/energymeritorder-api/v1/energyMeritOrder",
     "/energymeritorder-api/v1/EnergyMeritOrder",
+    "/energymeritorder-api/v1/report",
+    "/energymeritorder-api/v1/snapshot",
+    "/energymeritorder-api/v1/merit-order",
+    "/energymeritorder-api/v1/energymeritorder",
+    "/energymeritorder-api/v1/",
   ],
   orReport: [
+    // OperatingReserveOfferControl exists (returns 400 with startDate/endDate) - try correct param names
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date={start}",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?delivery_date={start}",
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?deliveryDate={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",
+    // Also try the reserves-backfill path
+    "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",
   ],
   interchangeCapability: [
     "/itc-api/v1/interchangeCapability",
     "/itc-api/v1/itcReport",
     "/itc-api/v1/intertieReport",
+    "/itc-api/v1/capability",
+    "/itc-api/v1/report",
+    "/itc-api/v1/InterchangeCapability",
+    "/itc-api/v1/",
   ],
   loadOutage: [
     "/loadoutageforecast-api/v1/loadOutageReport?startDate={start}&endDate={end}",
   ],
   interchangeOutage: [
     "/itc-api/v1/interchangeOutage",
+    "/itc-api/v1/InterchangeOutage",
+    "/itc-api/v1/outage",
     "/itc-api/v1/itcReport",
   ],
   poolParticipant: [
@@ -48,8 +64,12 @@ const ENDPOINTS = {
   ],
   meteredVolume: [
     "/meteredvolume-api/v1/meteredVolumeReport?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/MeteredVolume?startDate={start}&endDate={end}",
     "/meteredvolume-api/v1/meteredVolume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/MeteredVolume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/report?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/volume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/meteredvolume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/",
   ],
   unitCommitment: [
     "/unitcommitmentdata-api/v2/unitCommitmentData",
@@ -59,21 +79,24 @@ const ENDPOINTS = {
 };
 
 async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise<any> {
+  // Always use API-KEY first (most endpoints work with this)
+  const headers1 = { "API-KEY": apiKey, "Accept": "application/json" };
+  const headers2 = { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" };
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    // Try API-KEY header first (official AESO docs recommend this)
     const res = await fetch(`${AESO_BASE}${path}`, {
-      headers: { "API-KEY": apiKey, "Accept": "application/json" },
+      headers: headers1,
       signal: controller.signal,
     });
     clearTimeout(timer);
     if (res.status === 401 || res.status === 403) {
-      // Try Ocp-Apim-Subscription-Key header as fallback
+      // Try alternate auth header
       const controller2 = new AbortController();
       const timer2 = setTimeout(() => controller2.abort(), timeout);
       const res2 = await fetch(`${AESO_BASE}${path}`, {
-        headers: { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" },
+        headers: headers2,
         signal: controller2.signal,
       });
       clearTimeout(timer2);
@@ -92,6 +115,43 @@ async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise
     clearTimeout(timer);
     return { error: true, path, message: e.message };
   }
+}
+
+// Enhanced discovery: try both auth headers for each path
+async function tryEndpointsDualAuth(paths: string[], apiKey: string, dateReplace?: { start: string; end: string }): Promise<{ data: any; path: string } | null> {
+  for (let path of paths) {
+    if (dateReplace) {
+      path = path.replace("{start}", dateReplace.start).replace("{end}", dateReplace.end);
+    }
+    // Try with API-KEY
+    const r1 = await fetchAESO(path, apiKey, 10000);
+    if (!r1.error) return { data: r1, path };
+    // If 404 with API-KEY, also try Ocp-Apim-Subscription-Key explicitly
+    if (r1.status === 404) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      try {
+        const res = await fetch(`${AESO_BASE}${path}`, {
+          headers: { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`[Discovery] ${path} succeeded with Ocp-Apim-Subscription-Key!`);
+          return { data, path };
+        }
+        const text = await res.text().catch(() => "");
+        console.log(`[Discovery] ${path} → API-KEY:${r1.status}, Ocp:${res.status} | ${text.substring(0, 150)}`);
+      } catch (e) {
+        clearTimeout(timer);
+        console.log(`[Discovery] ${path} → API-KEY:${r1.status}, Ocp:error(${e.message})`);
+      }
+    } else {
+      console.log(`[Discovery] ${path} → ${r1.status || r1.message} | ${(r1.body || "").substring(0, 150)}`);
+    }
+  }
+  return null;
 }
 
 async function tryEndpoints(paths: string[], apiKey: string, dateReplace?: { start: string; end: string }): Promise<{ data: any; path: string } | null> {
@@ -306,8 +366,8 @@ Deno.serve(async (req) => {
     results.assetList = false;
   }
 
-  // Merit Order
-  const meritResult = await tryEndpoints(ENDPOINTS.meritOrder, apiKey);
+  // Merit Order (use dual auth probing)
+  const meritResult = await tryEndpointsDualAuth(ENDPOINTS.meritOrder, apiKey);
   results.meritOrder = !!meritResult;
   if (meritResult) {
     discoveryResults.meritOrder = { path: meritResult.path, sampleKeys: Object.keys(meritResult.data?.return || meritResult.data || {}).slice(0, 5) };
@@ -317,7 +377,7 @@ Deno.serve(async (req) => {
   const orDateEnd = new Date(now); orDateEnd.setDate(orDateEnd.getDate() - 61);
   const orDateStart = new Date(orDateEnd); orDateStart.setDate(orDateStart.getDate() - 7);
   const orDateReplace = { start: formatDate(orDateStart), end: formatDate(orDateEnd) };
-  const orResult = await tryEndpoints(ENDPOINTS.orReport, apiKey, orDateReplace);
+  const orResult = await tryEndpointsDualAuth(ENDPOINTS.orReport, apiKey, orDateReplace);
   results.orReport = !!orResult;
   if (orResult) {
     discoveryResults.orReport = { path: orResult.path, sampleKeys: Object.keys(orResult.data?.return || orResult.data || {}).slice(0, 5) };
@@ -331,8 +391,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Interchange Capability
-  const ixCapResult = await tryEndpoints(ENDPOINTS.interchangeCapability, apiKey);
+  // Interchange Capability (dual auth probing)
+  const ixCapResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeCapability, apiKey);
   results.interchangeCapability = !!ixCapResult;
   let bcCap = null, skCap = null, mtCap = null;
   if (ixCapResult) {
@@ -375,7 +435,7 @@ Deno.serve(async (req) => {
   }
 
   // Interchange Outage
-  const ixOutResult = await tryEndpoints(ENDPOINTS.interchangeOutage, apiKey);
+  const ixOutResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeOutage, apiKey);
   results.interchangeOutage = !!ixOutResult;
   if (ixOutResult) {
     discoveryResults.interchangeOutage = { path: ixOutResult.path };
@@ -389,7 +449,7 @@ Deno.serve(async (req) => {
   }
 
   // Metered Volume (now with date params)
-  const mvResult = await tryEndpoints(ENDPOINTS.meteredVolume, apiKey, dateReplace);
+  const mvResult = await tryEndpointsDualAuth(ENDPOINTS.meteredVolume, apiKey, dateReplace);
   results.meteredVolume = !!mvResult;
   if (mvResult) {
     discoveryResults.meteredVolume = { path: mvResult.path, sampleKeys: Object.keys(mvResult.data?.return || mvResult.data || {}).slice(0, 5) };
