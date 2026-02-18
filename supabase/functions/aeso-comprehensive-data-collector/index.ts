@@ -31,14 +31,13 @@ const ENDPOINTS = {
     "/energymeritorder-api/v1/",
   ],
   orReport: [
-    // OperatingReserveOfferControl exists (returns 400 with startDate/endDate) - try correct param names
+    // Known working path from aeso-reserves-backfill (confirmed in production)
+    "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",
+    // Fallbacks using the portal-listed API ID
+    "/operatingreserveoffercontrol-api/v1/operatingReserveOfferControlReport?startDate={start}&endDate={end}",
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date={start}",
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?delivery_date={start}",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?deliveryDate={start}",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date={start}",
     "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",
-    // Also try the reserves-backfill path
-    "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",
   ],
   interchangeCapability: [
     "/itc-api/v1/interchangeCapability",
@@ -79,15 +78,20 @@ const ENDPOINTS = {
 };
 
 async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise<any> {
-  // Always use API-KEY first (most endpoints work with this)
-  const headers1 = { "API-KEY": apiKey, "Accept": "application/json" };
-  const headers2 = { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" };
+  // For operatingreserve paths, use Ocp-Apim-Subscription-Key first (confirmed working in aeso-reserves-backfill)
+  const useOcpFirst = path.includes("operatingreserve");
+  const headerPrimary = useOcpFirst
+    ? { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" }
+    : { "API-KEY": apiKey, "Accept": "application/json" };
+  const headerFallback = useOcpFirst
+    ? { "API-KEY": apiKey, "Accept": "application/json" }
+    : { "Ocp-Apim-Subscription-Key": apiKey, "Accept": "application/json" };
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(`${AESO_BASE}${path}`, {
-      headers: headers1,
+      headers: headerPrimary,
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -96,7 +100,7 @@ async function fetchAESO(path: string, apiKey: string, timeout = 15000): Promise
       const controller2 = new AbortController();
       const timer2 = setTimeout(() => controller2.abort(), timeout);
       const res2 = await fetch(`${AESO_BASE}${path}`, {
-        headers: headers2,
+        headers: headerFallback,
         signal: controller2.signal,
       });
       clearTimeout(timer2);
