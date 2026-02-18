@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Thermometer, Wind, Flame, Calendar, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Loader2, Thermometer, Wind, Flame, Calendar, AlertCircle, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -17,21 +17,17 @@ interface WeatherRecord {
   temperature_edmonton: number | null;
   wind_speed: number | null;
   gas_price_aeco: number | null;
+  price_lag_1h?: number | null;
+  price_lag_24h?: number | null;
 }
 
 interface Props {
   selectedYear: number;
 }
 
-// Temperature color scale (blue=cold → red=hot)
 const TEMP_COLORS = [
-  'hsl(210, 80%, 50%)', // < -25
-  'hsl(200, 70%, 55%)', // -25 to -15
-  'hsl(190, 60%, 55%)', // -15 to -5
-  'hsl(45, 60%, 55%)',  // -5 to 5
-  'hsl(35, 70%, 55%)',  // 5 to 15
-  'hsl(15, 70%, 55%)',  // 15 to 25
-  'hsl(0, 70%, 55%)',   // >25
+  'hsl(210, 80%, 50%)', 'hsl(200, 70%, 55%)', 'hsl(190, 60%, 55%)',
+  'hsl(45, 60%, 55%)', 'hsl(35, 70%, 55%)', 'hsl(15, 70%, 55%)', 'hsl(0, 70%, 55%)',
 ];
 
 function InsightCallout({ icon, text, variant = 'info' }: { icon: React.ReactNode; text: string; variant?: 'info' | 'warning' | 'success' }) {
@@ -68,6 +64,22 @@ function CorrelationGauge({ value, label }: { value: number; label: string }) {
   );
 }
 
+function pearsonR(xs: number[], ys: number[]): number {
+  const n = xs.length;
+  if (n < 3) return 0;
+  const meanX = xs.reduce((s, v) => s + v, 0) / n;
+  const meanY = ys.reduce((s, v) => s + v, 0) / n;
+  let num = 0, denX = 0, denY = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - meanX;
+    const dy = ys[i] - meanY;
+    num += dx * dy;
+    denX += dx * dx;
+    denY += dy * dy;
+  }
+  return denX > 0 && denY > 0 ? num / Math.sqrt(denX * denY) : 0;
+}
+
 export function PowerModelWeatherDrivers({ selectedYear }: Props) {
   const [data, setData] = useState<WeatherRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,7 +97,7 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
       while (true) {
         const { data: batch, error } = await supabase
           .from('aeso_training_data')
-          .select('timestamp, pool_price, ail_mw, temperature_edmonton, wind_speed, gas_price_aeco')
+          .select('timestamp, pool_price, ail_mw, temperature_edmonton, wind_speed, gas_price_aeco, price_lag_1h, price_lag_24h')
           .gte('timestamp', startDate)
           .lte('timestamp', endDate)
           .not('ail_mw', 'is', null)
@@ -112,7 +124,7 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
     if (!loaded) loadWeatherData();
   }, [selectedYear]);
 
-  // 1. Temperature-Cost Analysis
+  // Temperature Analysis
   const tempAnalysis = useMemo(() => {
     const buckets = [
       { min: -40, max: -25, label: '<-25°C' },
@@ -131,7 +143,6 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
     }).filter(b => b.hours > 0);
   }, [data]);
 
-  // Temperature insight
   const tempInsight = useMemo(() => {
     const cold = tempAnalysis.find(t => t.range === '<-25°C');
     const mild = tempAnalysis.find(t => t.range === '5 to 15°C');
@@ -142,7 +153,7 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
     return null;
   }, [tempAnalysis]);
 
-  // 2. Wind Speed vs Pool Price
+  // Wind scatter
   const windScatter = useMemo(() => {
     const valid = data.filter(d => d.wind_speed !== null && d.pool_price >= 0 && d.pool_price < 500);
     const step = Math.max(1, Math.floor(valid.length / 400));
@@ -152,7 +163,7 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
     }));
   }, [data]);
 
-  // 3. Gas Price Correlation
+  // Gas correlation
   const gasCorrelation = useMemo(() => {
     const monthMap = new Map<string, { gasPrices: number[]; poolPrices: number[] }>();
     for (const d of data) {
@@ -169,25 +180,51 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
       avgPool: Math.round(v.poolPrices.reduce((s, p) => s + p, 0) / v.poolPrices.length * 100) / 100,
     })).sort((a, b) => a.month.localeCompare(b.month));
 
-    if (result.length >= 3) {
-      const gas = result.map(r => r.avgGas);
-      const pool = result.map(r => r.avgPool);
-      const n = gas.length;
-      const meanG = gas.reduce((s, v) => s + v, 0) / n;
-      const meanP = pool.reduce((s, v) => s + v, 0) / n;
-      let num = 0, denG = 0, denP = 0;
-      for (let i = 0; i < n; i++) {
-        num += (gas[i] - meanG) * (pool[i] - meanP);
-        denG += (gas[i] - meanG) ** 2;
-        denP += (pool[i] - meanP) ** 2;
-      }
-      const r = denG > 0 && denP > 0 ? num / Math.sqrt(denG * denP) : 0;
-      return { data: result, correlation: Math.round(r * 100) / 100 };
-    }
-    return { data: result, correlation: 0 };
+    const r = result.length >= 3 ? pearsonR(result.map(r => r.avgGas), result.map(r => r.avgPool)) : 0;
+    return { data: result, correlation: Math.round(r * 100) / 100 };
   }, [data]);
 
-  // 4. Hourly Profile
+  // Feature importance ranking
+  const featureImportance = useMemo(() => {
+    if (data.length < 10) return [];
+    const prices = data.map(d => d.pool_price);
+    const features = [
+      { name: 'Demand (AIL)', values: data.map(d => d.ail_mw || 0) },
+      { name: 'Temperature', values: data.map(d => d.temperature_edmonton || 0) },
+      { name: 'Wind Speed', values: data.map(d => d.wind_speed || 0) },
+      { name: 'Gas Price', values: data.filter(d => d.gas_price_aeco != null).length > 10 ? data.map(d => d.gas_price_aeco || 0) : [] },
+      { name: 'Price Lag 1h', values: data.map(d => d.price_lag_1h || 0) },
+      { name: 'Price Lag 24h', values: data.map(d => d.price_lag_24h || 0) },
+    ].filter(f => f.values.length >= 10);
+
+    return features.map(f => {
+      const r = pearsonR(f.values.slice(0, prices.length), prices.slice(0, f.values.length));
+      return { name: f.name, correlation: Math.round(r * 1000) / 1000, absCorr: Math.abs(r) };
+    }).sort((a, b) => b.absCorr - a.absCorr);
+  }, [data]);
+
+  // Time-lagged correlations
+  const laggedCorrelations = useMemo(() => {
+    if (data.length < 100) return [];
+    const prices = data.map(d => d.pool_price);
+    const demands = data.map(d => d.ail_mw || 0);
+    const temps = data.map(d => d.temperature_edmonton || 0);
+
+    const lags = [1, 3, 6, 12, 24];
+    return lags.map(lag => {
+      const lagged = prices.slice(lag);
+      const current = prices.slice(0, prices.length - lag);
+      const laggedDemand = demands.slice(lag);
+      const currentDemand = demands.slice(0, demands.length - lag);
+
+      return {
+        lag: `${lag}h`,
+        priceAutoCorr: Math.round(pearsonR(current, lagged) * 1000) / 1000,
+        demandPriceCorr: Math.round(pearsonR(currentDemand, lagged) * 1000) / 1000,
+      };
+    });
+  }, [data]);
+
   const hourlyProfile = useMemo(() => {
     const hours = Array.from({ length: 24 }, () => ({ sum: 0, count: 0 }));
     for (const d of data) {
@@ -239,8 +276,59 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
         <CorrelationGauge value={-0.15} label="Wind Speed → Pool Price" />
       </div>
 
+      {/* Feature Importance Ranking */}
+      {featureImportance.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-purple-500" />
+              <CardTitle className="text-sm">Feature Importance: Price Predictors</CardTitle>
+            </div>
+            <CardDescription className="text-xs">Variables ranked by absolute correlation with pool price</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={featureImportance} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis type="number" tick={{ fontSize: 10 }} domain={[0, 1]} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
+                <Tooltip formatter={(v: number) => [`|r| = ${v.toFixed(3)}`, 'Correlation']} />
+                <Bar dataKey="absCorr" radius={[0, 4, 4, 0]}>
+                  {featureImportance.map((f, i) => (
+                    <Cell key={i} fill={f.absCorr > 0.5 ? 'hsl(150, 60%, 45%)' : f.absCorr > 0.3 ? 'hsl(45, 70%, 55%)' : 'hsl(220, 70%, 55%)'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Time-Lagged Correlations */}
+      {laggedCorrelations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Time-Lagged Correlations</CardTitle>
+            <CardDescription className="text-xs">How current variables predict future prices at different lag windows</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={laggedCorrelations}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="lag" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} domain={[0, 1]} />
+                <Tooltip formatter={(v: number) => [v.toFixed(3), '']} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Bar dataKey="priceAutoCorr" name="Price Auto-Corr" fill="hsl(220, 70%, 55%)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="demandPriceCorr" name="Demand → Price" fill="hsl(150, 60%, 45%)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Temperature-Cost Analysis */}
+        {/* Temperature */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -271,7 +359,7 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
           </CardContent>
         </Card>
 
-        {/* Wind Speed */}
+        {/* Wind */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -295,7 +383,7 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
           </CardContent>
         </Card>
 
-        {/* Gas Price */}
+        {/* Gas */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">

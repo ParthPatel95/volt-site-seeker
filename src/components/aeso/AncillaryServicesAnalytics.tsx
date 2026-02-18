@@ -2,15 +2,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, ArrowLeftRight, AlertTriangle, Activity } from 'lucide-react';
+import { Loader2, Shield, ArrowLeftRight, AlertTriangle, Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area, BarChart, Bar, Legend,
+  AreaChart, Area, BarChart, Bar, Legend, ReferenceLine, Cell,
 } from 'recharts';
 
 interface AncillaryRecord {
   timestamp: string;
+  pool_price?: number;
   operating_reserve: number | null;
   spinning_reserve_mw: number | null;
   supplemental_reserve_mw: number | null;
@@ -20,6 +21,9 @@ interface AncillaryRecord {
   reserve_margin_percent: number | null;
   grid_stress_score: number | null;
 }
+
+// Intertie capacity limits (approximate, MW)
+const INTERTIE_CAPACITY = { bc: 1200, sask: 153, montana: 300 };
 
 export function AncillaryServicesAnalytics() {
   const [data, setData] = useState<AncillaryRecord[]>([]);
@@ -36,7 +40,7 @@ export function AncillaryServicesAnalytics() {
       while (true) {
         const { data: batch, error } = await supabase
           .from('aeso_training_data')
-          .select('timestamp, operating_reserve, spinning_reserve_mw, supplemental_reserve_mw, intertie_bc_flow, intertie_sask_flow, intertie_montana_flow, reserve_margin_percent, grid_stress_score')
+          .select('timestamp, pool_price, operating_reserve, spinning_reserve_mw, supplemental_reserve_mw, intertie_bc_flow, intertie_sask_flow, intertie_montana_flow, reserve_margin_percent, grid_stress_score')
           .not('operating_reserve', 'is', null)
           .order('timestamp', { ascending: true })
           .range(offset, offset + batchSize - 1);
@@ -61,7 +65,6 @@ export function AncillaryServicesAnalytics() {
     if (!loaded) loadData();
   }, [loaded, loadData]);
 
-  // Coverage stats
   const coverage = useMemo(() => {
     const total = data.length;
     const withReserve = data.filter(d => d.operating_reserve != null).length;
@@ -70,7 +73,6 @@ export function AncillaryServicesAnalytics() {
     return { total, withReserve, withIntertie, withStress };
   }, [data]);
 
-  // KPIs
   const kpis = useMemo(() => {
     if (data.length === 0) return null;
     const reserves = data.filter(d => d.reserve_margin_percent != null).map(d => d.reserve_margin_percent!);
@@ -79,10 +81,19 @@ export function AncillaryServicesAnalytics() {
     const stressScores = data.filter(d => d.grid_stress_score != null).map(d => d.grid_stress_score!);
     const peakStress = stressScores.length > 0 ? Math.max(...stressScores) : 0;
 
+    // Net import/export calculation
     const bcFlows = data.filter(d => d.intertie_bc_flow != null).map(d => d.intertie_bc_flow!);
-    const netImport = bcFlows.length > 0 ? bcFlows.reduce((s, v) => s + v, 0) : 0;
+    const saskFlows = data.filter(d => d.intertie_sask_flow != null).map(d => d.intertie_sask_flow!);
+    const mtFlows = data.filter(d => d.intertie_montana_flow != null).map(d => d.intertie_montana_flow!);
+    const totalNetFlow = [...bcFlows, ...saskFlows, ...mtFlows].reduce((s, v) => s + v, 0);
+    const isNetImporter = totalNetFlow > 0;
 
-    return { avgReserveMargin, peakStress, netImport };
+    // Avg intertie utilization
+    const avgBcUtil = bcFlows.length > 0 ? Math.abs(bcFlows.reduce((s, v) => s + v, 0) / bcFlows.length) / INTERTIE_CAPACITY.bc * 100 : 0;
+    const avgSaskUtil = saskFlows.length > 0 ? Math.abs(saskFlows.reduce((s, v) => s + v, 0) / saskFlows.length) / INTERTIE_CAPACITY.sask * 100 : 0;
+    const avgMtUtil = mtFlows.length > 0 ? Math.abs(mtFlows.reduce((s, v) => s + v, 0) / mtFlows.length) / INTERTIE_CAPACITY.montana * 100 : 0;
+
+    return { avgReserveMargin, peakStress, totalNetFlow, isNetImporter, avgBcUtil, avgSaskUtil, avgMtUtil };
   }, [data]);
 
   // Daily aggregated charts
@@ -122,6 +133,25 @@ export function AncillaryServicesAnalytics() {
     }));
   }, [data]);
 
+  // Reserve vs Price correlation
+  const reserveVsPrice = useMemo(() => {
+    const dayMap = new Map<string, { reserveSum: number; priceSum: number; count: number }>();
+    for (const d of data) {
+      if (d.reserve_margin_percent == null || d.pool_price == null) continue;
+      const key = d.timestamp.slice(0, 10);
+      const entry = dayMap.get(key) || { reserveSum: 0, priceSum: 0, count: 0 };
+      entry.reserveSum += d.reserve_margin_percent;
+      entry.priceSum += d.pool_price;
+      entry.count++;
+      dayMap.set(key, entry);
+    }
+    return Array.from(dayMap.entries()).map(([date, v]) => ({
+      date,
+      reserveMargin: Math.round(v.reserveSum / v.count * 10) / 10,
+      avgPrice: Math.round(v.priceSum / v.count * 100) / 100,
+    }));
+  }, [data]);
+
   // Reserve margin histogram
   const reserveHistogram = useMemo(() => {
     const margins = data.filter(d => d.reserve_margin_percent != null).map(d => d.reserve_margin_percent!);
@@ -129,13 +159,32 @@ export function AncillaryServicesAnalytics() {
     const min = Math.floor(Math.min(...margins));
     const max = Math.ceil(Math.max(...margins));
     const binWidth = Math.max(1, Math.round((max - min) / 20));
-    const bins: { range: string; count: number }[] = [];
+    const bins: { range: string; count: number; color: string }[] = [];
     for (let i = min; i < max; i += binWidth) {
       const count = margins.filter(m => m >= i && m < i + binWidth).length;
-      bins.push({ range: `${i}%`, count });
+      const color = i < 5 ? 'hsl(0, 60%, 55%)' : i < 15 ? 'hsl(45, 70%, 55%)' : 'hsl(150, 60%, 45%)';
+      bins.push({ range: `${i}%`, count, color });
     }
     return bins;
   }, [data]);
+
+  // Utilization gauge helper
+  const UtilizationGauge = ({ label, pct, capacity }: { label: string; pct: number; capacity: number }) => {
+    const clampedPct = Math.min(pct, 100);
+    const color = clampedPct > 80 ? 'bg-red-500' : clampedPct > 60 ? 'bg-amber-500' : 'bg-emerald-500';
+    return (
+      <div className="p-3 rounded-lg border border-border bg-card">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-foreground">{label}</span>
+          <span className="text-xs text-muted-foreground">{capacity} MW cap</span>
+        </div>
+        <div className="w-full h-2.5 rounded-full bg-muted overflow-hidden">
+          <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${clampedPct}%` }} />
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-1">{clampedPct.toFixed(0)}% avg utilization</p>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -169,7 +218,7 @@ export function AncillaryServicesAnalytics() {
 
       {/* KPIs */}
       {kpis && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className="p-3 rounded-lg border border-border bg-card text-center">
             <Shield className="w-4 h-4 mx-auto mb-1 text-emerald-500" />
             <p className="text-[10px] text-muted-foreground uppercase">Avg Reserve Margin</p>
@@ -182,9 +231,27 @@ export function AncillaryServicesAnalytics() {
           </div>
           <div className="p-3 rounded-lg border border-border bg-card text-center">
             <ArrowLeftRight className="w-4 h-4 mx-auto mb-1 text-blue-500" />
-            <p className="text-[10px] text-muted-foreground uppercase">Net Intertie Flow</p>
-            <p className="text-lg font-bold text-foreground">{(kpis.netImport / 1000).toFixed(0)} GWh</p>
+            <p className="text-[10px] text-muted-foreground uppercase">Net Flow</p>
+            <p className="text-lg font-bold text-foreground flex items-center justify-center gap-1">
+              {kpis.isNetImporter ? <TrendingDown className="w-4 h-4 text-blue-500" /> : <TrendingUp className="w-4 h-4 text-emerald-500" />}
+              {Math.abs(kpis.totalNetFlow / 1000).toFixed(0)} GWh
+            </p>
+            <p className="text-[10px] text-muted-foreground">Net {kpis.isNetImporter ? 'Importer' : 'Exporter'}</p>
           </div>
+          <div className="p-3 rounded-lg border border-border bg-card text-center">
+            <Shield className="w-4 h-4 mx-auto mb-1 text-purple-500" />
+            <p className="text-[10px] text-muted-foreground uppercase">Records</p>
+            <p className="text-lg font-bold text-foreground">{coverage.total.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Intertie Utilization Gauges */}
+      {kpis && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <UtilizationGauge label="BC Intertie" pct={kpis.avgBcUtil} capacity={INTERTIE_CAPACITY.bc} />
+          <UtilizationGauge label="Saskatchewan" pct={kpis.avgSaskUtil} capacity={INTERTIE_CAPACITY.sask} />
+          <UtilizationGauge label="Montana" pct={kpis.avgMtUtil} capacity={INTERTIE_CAPACITY.montana} />
         </div>
       )}
 
@@ -242,20 +309,46 @@ export function AncillaryServicesAnalytics() {
           </CardContent>
         </Card>
 
+        {/* Reserve Margin vs Price */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Reserve Margin vs Pool Price</CardTitle>
+            <CardDescription className="text-xs">Inverse relationship — low reserves correlate with price spikes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={reserveVsPrice}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="date" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                <YAxis yAxisId="reserve" tick={{ fontSize: 10 }} label={{ value: 'Reserve %', angle: -90, position: 'insideLeft', style: { fontSize: 9 } }} />
+                <YAxis yAxisId="price" orientation="right" tick={{ fontSize: 10 }} label={{ value: '$/MWh', angle: 90, position: 'insideRight', style: { fontSize: 9 } }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Line yAxisId="reserve" type="monotone" dataKey="reserveMargin" name="Reserve %" stroke="hsl(150, 60%, 45%)" strokeWidth={1.5} dot={false} />
+                <Line yAxisId="price" type="monotone" dataKey="avgPrice" name="Pool Price" stroke="hsl(0, 60%, 55%)" strokeWidth={1.5} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Reserve Margin Distribution */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Reserve Margin Distribution</CardTitle>
             <CardDescription className="text-xs">{data.filter(d => d.reserve_margin_percent != null).length.toLocaleString()} hourly observations</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={reserveHistogram}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="range" tick={{ fontSize: 9 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
-                <Bar dataKey="count" fill="hsl(220, 70%, 55%)" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="count" radius={[2, 2, 0, 0]}>
+                  {reserveHistogram.map((b, i) => (
+                    <Cell key={i} fill={b.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
