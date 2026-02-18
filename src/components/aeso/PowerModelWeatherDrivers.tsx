@@ -8,6 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ScatterChart, Scatter, ZAxis, LineChart, Line, Legend, Cell,
 } from 'recharts';
+import { CorrelationMatrix } from './CorrelationMatrix';
 
 interface WeatherRecord {
   timestamp: string;
@@ -349,6 +350,9 @@ export function PowerModelWeatherDrivers({ selectedYear }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Correlation Matrix */}
+      <CorrelationMatrix data={data} />
     </div>
   );
 }
