@@ -1,71 +1,83 @@
 
 
-# Analytics Tab UI/UX Cleanup
+# AI Cost Intelligence: Visual & Analytical Upgrade
 
-## Problem
+## Current State
 
-The current Analytics tab is cluttered and confusing:
-- 7 sub-tabs wrapping onto two rows on smaller screens
-- The "Historical Pricing" tab loads a massive component (`AESOHistoricalPricing` - 2,369 lines) that has its OWN nested tabs (Overview, Uptime Analytics, Curtailment, 12CP & Reserves, Weather, Shared Reports), creating tabs-within-tabs confusion
-- No visual grouping or hierarchy - all 7 items feel equally weighted
-- The "Custom Dashboards" link and "Data Coverage" collapsible at the bottom add more visual noise
+The AI Cost Intelligence section is text-only: it sends Power Model data to Gemini, parses the markdown response, and renders it as styled cards with regex-extracted stat pills. There are zero charts or computed visualizations.
 
-## Solution: Group into 3 Sections with Clear Visual Hierarchy
+## Upgrade: Add 5 Data-Driven Visual Panels
 
-Replace the 7-tab flat navigation with a **3-category grouped layout** using section cards:
+All visualizations are computed client-side from the `monthly`, `annual`, `params`, and `breakeven` props already available. No new API calls needed.
 
-```text
-+--------------------------------------------------+
-| Analytics                                         |
-| Pricing, exploration, strategy, and grid tools    |
-+--------------------------------------------------+
+### 1. Cost Waterfall Chart (Recharts BarChart)
+A horizontal waterfall showing how costs build up from Energy -> Operating Reserve -> DTS (Bulk + Regional + POD) -> Fortis -> GST -> Total. Each bar segment shows the absolute dollar value and percentage of total. This gives an instant visual answer to "where is the money going?"
 
-| [Pricing & Markets]  [Tools & Exploration]  [Operations] |
+### 2. Monthly Rate Trend with Breakeven Line (ComposedChart)
+- Line: monthly all-in rate (cents/kWh) over time
+- Area: shaded band between min and max cost months
+- ReferenceLine: breakeven price and hosting rate as horizontal markers
+- Shows at a glance which months are profitable vs unprofitable
 
---- When "Pricing & Markets" is active: ---
-  - Historical Pricing (full AESOHistoricalPricing component)
-  - Hourly Price Explorer
+### 3. Cost Component Donut with Drill-Down Stats
+A donut chart splitting DTS vs Energy vs Fortis vs GST, with center text showing the all-in rate. Below it, a mini stat grid showing each component's per-kWh contribution (already available from `annual` totals).
 
---- When "Tools & Exploration" is active: ---
-  - Data Explorer
-  - Ancillary & Grid
+### 4. Efficiency Scorecard (Gauge-style visual)
+Four horizontal progress bars:
+- **Uptime Efficiency**: actual vs target uptime %
+- **12CP Avoidance**: estimated DTS savings from 12CP curtailment
+- **Price Curtailment ROI**: cost avoided per curtailed hour
+- **Rate vs Benchmark**: all-in rate compared to typical Alberta industrial rates (Rate 11 ~6c, Rate 63 ~8c, Rate 65 ~9c)
 
---- When "Operations" is active: ---
-  - AESO Programs
-  - Strategy Simulator
-  - Notifications
+### 5. Risk Heatmap (Month x Metric)
+A small 12-column grid (one per month) with 3 rows (Pool Price Volatility, Cost Intensity, Curtailment Pressure), color-coded green/yellow/red based on thresholds. Provides instant pattern recognition for seasonal risk.
+
+## Layout Change
+
+The current structure:
+```
+[Header + Regenerate Button]
+[Quick Stats Pills]
+[Executive Summary Hero]
+[2-Column Insight Cards Grid]
+[Recommendation Banner]
+[Disclaimer]
 ```
 
-## Specific Changes
+New structure:
+```
+[Header + Regenerate Button]
+[Quick Stats Pills]  
+[Cost Waterfall + Monthly Rate Trend]  <-- NEW: 2-column chart row
+[Cost Donut + Efficiency Scorecard]    <-- NEW: 2-column visual row
+[Risk Heatmap]                         <-- NEW: full-width
+[Executive Summary Hero]               <-- existing AI text
+[2-Column Insight Cards Grid]          <-- existing AI text
+[Recommendation Banner]                <-- existing
+[Disclaimer]
+```
 
-### 1. Restructure `AnalyticsTab.tsx`
-- Replace 7-tab `TabsList` with 3 clean category tabs: **Pricing & Markets**, **Tools & Exploration**, **Operations**
-- Each category tab renders its child modules directly (no nested tab confusion)
-- Within categories that have 2+ modules, use clean card-based sections with headers (not nested tabs)
-- Move "Custom Dashboards" link into a subtle button in the header area
-- Move "Data Coverage" into a small badge/link rather than a collapsible at the bottom
-
-### 2. Visual Improvements
-- Category tabs get icons and clear labels with proper spacing (not cramped `text-xs`)
-- Each module within a category is separated by a subtle divider or card boundary
-- Consistent section headers: icon + title + description for each module
-- Remove the wrapping/overflow issue by having only 3 tabs instead of 7
-
-### 3. Tab Labels and Icons
-- **Pricing & Markets** (DollarSign icon): Historical Pricing, Hourly Prices
-- **Tools & Exploration** (Search icon): Data Explorer, Ancillary & Grid
-- **Operations** (Settings/Zap icon): AESO Programs, Strategy Sim, Notifications
+The visual panels render immediately from data (no AI call needed), while the AI text sections still require the Generate button.
 
 ## Technical Details
 
-### File Modified: `src/components/aeso-hub/tabs/AnalyticsTab.tsx`
+### File Modified: `src/components/aeso/PowerModelAIAnalysis.tsx`
 
-The component will be rewritten to:
-- Use 3 top-level tabs instead of 7
-- Render multiple components per tab with section dividers
-- Add a collapsible toggle within multi-module tabs so users can expand/collapse individual sections
-- Use `text-sm` instead of `text-xs` for tab labels for better readability
-- Add a utility row (Custom Dashboards link + Data Coverage badge) in the header
+Changes:
+- Add 5 new visual sub-components rendered above the AI text sections
+- These use `monthly`, `annual`, `params`, and `breakeven` props (already available)
+- Charts use `recharts` (already installed): `BarChart`, `ComposedChart`, `PieChart`, `ResponsiveContainer`
+- Efficiency scorecard uses the existing `Progress` UI component
+- Risk heatmap is a simple CSS grid with conditional background colors
+- All visuals render when `annual` is available (no AI call dependency)
+- The AI text sections remain unchanged and still require clicking "Generate"
 
-No other files need modification - all child components remain unchanged.
+### Edge Function Modified: `supabase/functions/dashboard-ai-assistant/index.ts`
 
+Enhance the prompt to request more specific, quantitative analysis:
+- Add current AESO pool price context (from the monthly data averages)
+- Ask AI to reference specific tariff line items and their impact
+- Request seasonal pattern analysis tied to the monthly data
+- Add a "Benchmark Comparison" section to the prompt requesting comparison against Rate 11, 63, 65 benchmarks with specific numbers
+
+No new files created. No new dependencies.
