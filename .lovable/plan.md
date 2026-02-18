@@ -1,144 +1,170 @@
 
 
-# Adding Reference Tool Analytics to AESO Market Hub
+# AESO Market Hub: Next-Level Analytics Upgrade
 
-## What the Reference Tool Has (and What We're Missing)
+## Gap Analysis: Reference Tool vs Our Hub
 
-Based on the reference AESO Power Model tool's navigation structure (Dashboard, Monthly Analysis, Itemized Bill, Hourly Prices, PPA vs Pool, 12CP Demand, Data Explorer, Ancillary Data, AESO Programs, Correlations, Strategy Sim, Live Market, AI Analyst), here is the gap analysis against our current hub:
-
-| Reference Feature | Our Status | Action |
+| Reference Feature | Our Status | Gap |
 |---|---|---|
-| Dashboard (KPI summary) | Have (Market Overview tab) | No change |
-| Monthly Analysis | Have (Power Model Cost Analysis tab) | No change |
-| Itemized Bill | Have (PowerModelChargeBreakdown) | No change |
-| Hourly Prices | Partial (Price Distribution chart only) | **NEW: Add dedicated Hourly Price Explorer** |
-| PPA vs Pool | Missing from Market Hub (exists in education section only) | **NEW: Add PPA vs Pool Analyzer** |
-| 12CP Demand | Have (TwelveCPAnalyticsTab) | No change |
-| Data Explorer | Missing | **NEW: Add Interactive Data Explorer** |
-| Ancillary Data | Missing | **NEW: Add Ancillary Services Analytics** |
-| Correlations | Partial (Weather & Drivers tab has temp/wind/gas) | **ENHANCE: Add more correlation types** |
-| Strategy Sim | Partial (StrategyComparison exists but basic) | **ENHANCE: Add interactive strategy simulator** |
-| Live Market | Have (Market Overview tab) | No change |
-| AI Analyst | Have (PowerModelAIAnalysis) | No change |
+| Dashboard | Have (Market Overview) | No gap |
+| Monthly Analysis | Have (Power Model Cost Analysis) | No gap |
+| Itemized Bill | Have (PowerModelChargeBreakdown) | No gap |
+| Hourly Prices | Have (HourlyPriceExplorer) | No gap |
+| PPA vs Pool | Have (PPAvsPoolAnalyzer) | No gap |
+| 12CP Demand | Have (TwelveCPAnalyticsTab) | No gap |
+| Data Explorer | Have (DataExplorerPanel) | No gap |
+| Ancillary Data | Have (AncillaryServicesAnalytics) | No gap |
+| **AESO Programs** | Education page only, not in Hub | **MISSING from Hub** |
+| Correlations | Have (CorrelationMatrix + WeatherDrivers) | No gap |
+| **Strategy Sim** | Widget only (dashboard-widgets), not in Hub | **MISSING from Hub** |
+| Live Market | Have (Market Overview) | No gap |
+| **Notifications** | Have Telegram alerts, not unified | **MISSING unified panel** |
+| AI Analyst | Have (PowerModelAIAnalysis) | No gap |
+| Settings | Have | No gap |
 
-## Plan: 5 New Analytics Modules
+All core analytics modules from the reference tool have been added. Three features remain missing from the Hub, and the existing analytics modules need visual and depth upgrades to match investor-grade standards.
 
-All modules use ONLY real data from `aeso_training_data` (34,225+ records) and live AESO API data. No fake data.
+---
 
-### 1. Hourly Price Explorer (New Tab in Analytics)
+## Part 1: Add 3 Missing Modules
 
-An interactive time-series viewer for hourly pool prices with zoom, range selection, and statistical overlays.
+### 1A. AESO Programs Panel (New sub-tab in Analytics)
 
-**Data source**: `aeso_training_data` table -- `timestamp`, `pool_price`, `ail_mw` fields (100% coverage).
+A reference card for AESO grid participation programs that miners can earn revenue from. Data sourced from official AESO tariff documents and stored program definitions.
 
-**Features**:
-- Interactive line chart of hourly pool prices for the selected date range (default: last 30 days)
-- Date range picker (day, week, month, quarter, year, custom)
-- Statistical overlays: 24h rolling average line, P10/P90 bands as shaded area
-- Price spike detection: highlight hours above user-defined threshold (default: $200/MWh) with red markers
-- Summary stats bar: Min, Max, Mean, Median, Std Dev, Spike Count, Hours Below Zero
-- Hour-of-day average profile: bar chart showing average price by hour (0-23) for the selected period
-- Exportable as CSV
+**Content:**
+- **Operating Reserve (OR)**: Explanation, qualification criteria, estimated revenue ($/MW/month), participation requirements
+- **Demand Response (DR)**: Load curtailment incentive programs, typical response windows, payout structure
+- **Ancillary Services Market**: Spinning reserve, supplemental reserve qualification for large industrial loads
+- **Rate DTS Rider F**: Interruptible service rate benefits and eligibility
+- Each program card shows: eligibility badge (Qualified/Not Qualified based on facility capacity), estimated annual value, link to official AESO document
 
-**Where it lives**: New sub-tab "Hourly Prices" inside the Analytics tab of the AESO Hub (alongside existing Historical Pricing).
+### 1B. Strategy Simulator (New sub-tab in Analytics)
 
-### 2. PPA vs Pool Comparison Analyzer (New Tab in Power Model)
+Promote the existing `OperatingStrategySimulator` widget from dashboard-widgets into a full standalone tab. Enhance it with:
 
-Lets users compare a hypothetical PPA (Power Purchase Agreement) fixed price against actual pool exposure using real hourly data.
+- **Multi-strategy comparison**: Peak-only, Off-peak, Smart (price-responsive), Continuous, Custom threshold
+- **Interactive threshold slider**: Set a price ceiling and see how many hours you'd operate and at what average cost
+- **Monte Carlo simulation**: Using historical price distribution, simulate 1000 random years to show expected profit distribution (P10, P50, P90 outcomes)
+- **Scenario matrix**: Grid showing annual profit/loss at different capacity levels x different strategies
+- All calculations use real `aeso_training_data` hourly records
 
-**Data source**: Already-loaded `hourlyData` in the Power Model (from `aeso_training_data`).
+### 1C. Notifications Center (New sub-tab in Analytics or Settings)
 
-**Features**:
-- PPA price input slider ($30-$150/MWh, default: $65)
-- Monthly comparison chart: side-by-side bars showing PPA cost vs actual pool cost per month
-- Cumulative cost curve: two lines (PPA vs Pool) showing running total over the year
-- Settlement calculation: for each hour, `settlement = poolPrice - ppaPrice`. Positive = PPA saves money, negative = pool was cheaper
-- Monthly settlement waterfall chart showing net gains/losses
-- Summary KPIs: Annual PPA Cost, Annual Pool Cost, Net Difference, % of Hours PPA Wins, Worst Month Exposure
-- Breakeven PPA rate calculator: find the exact PPA price where total cost equals pool cost
+Consolidate the existing Telegram alert configuration into a visible "Notifications" section:
 
-**Where it lives**: New tab "PPA vs Pool" added to the Power Model's analytics tabs (alongside Cost Analysis, Revenue & Sensitivity, etc.).
+- Show existing Telegram alert rules with status (active/paused)
+- Recent alert history with timestamps and trigger values
+- Quick-add common alert templates (Price spike > $200, Demand > 11,000 MW, Negative price detected)
+- This is mostly a reorganization of the existing `TelegramAlertSettings`, `TelegramAlertRules`, and `TelegramAlertHistory` components into a unified panel
 
-### 3. Interactive Data Explorer (New Tab in Analytics)
+---
 
-A flexible query builder for exploring the raw `aeso_training_data` dataset with charting.
+## Part 2: Visual and Analytical Depth Upgrades
 
-**Data source**: `aeso_training_data` -- all available columns with 100% coverage: `pool_price`, `ail_mw`, `temperature_edmonton`, `temperature_calgary`, `wind_speed`, `cloud_cover`, `gas_price_aeco`.
+### 2A. Hourly Price Explorer Enhancements
 
-**Features**:
-- Axis selector: pick any two numeric fields for X and Y axes from a dropdown (pool_price, ail_mw, temperature_edmonton, wind_speed, gas_price_aeco, etc.)
-- Chart type toggle: Scatter plot, Line chart, or Histogram
-- Date range filter
-- Aggregation toggle: Raw hourly, Daily average, Weekly average, Monthly average
-- Auto-calculated statistics panel: Pearson correlation, R-squared, trend line equation
-- Color-by selector: color data points by season, month, hour-of-day, or price regime
-- Data table below the chart showing the raw/aggregated records with sorting and filtering
-- Limit to 2,000 sampled points for scatter plots (random sampling) to maintain performance
+Current state: basic line chart with stats bar. Upgrade to:
 
-**Where it lives**: New sub-tab "Data Explorer" inside the Analytics tab of the AESO Hub.
+- **Price duration curve**: Sort all hourly prices descending and plot as a stepped line showing "X% of hours were below $Y" -- this is the standard utility industry visualization
+- **Day-of-week heatmap**: 7 rows (Mon-Sun) x 24 columns (hours), showing average price by time slot with green-to-red color scale
+- **Volatility band chart**: Replace static P10/P90 badges with a shaded band area chart showing the price envelope over time
+- **Spike event table**: Below the chart, a table listing each spike event (consecutive hours above threshold) with start time, duration, peak price, and estimated cost impact
 
-### 4. Ancillary Services Analytics (New Section in Market Overview or Analytics)
+### 2B. Data Explorer Enhancements
 
-Visualize operating reserve, intertie flows, and grid reliability metrics from real AESO data.
+Current state: basic scatter/line/histogram with stats. Upgrade to:
 
-**Data source**: `aeso_training_data` columns with ~12% coverage (Nov 2025+): `operating_reserve`, `spinning_reserve_mw`, `supplemental_reserve_mw`, `intertie_bc_flow`, `intertie_sask_flow`, `intertie_montana_flow`, `reserve_margin_percent`, `grid_stress_score`. Also uses live data from the `energy-data-integration` edge function.
+- **Regression line overlay**: Draw the trend line on scatter plots using the already-calculated slope/intercept
+- **Residual analysis**: Show a residual plot below the main chart (actual - predicted) to identify non-linear patterns
+- **Multi-variable view**: Allow plotting a third variable as bubble size (Z-axis) on scatter plots
+- **Data quality indicators**: Show null-rate percentage for each selected field with a small badge
+- **Quick presets**: One-click buttons for common analyses: "Price vs Demand", "Price vs Temperature", "Price vs Wind", "Price vs Gas"
 
-**Features**:
-- Operating Reserve trend chart (line chart over time)
-- Intertie flow breakdown: stacked area chart showing BC, Saskatchewan, and Montana flows
-- Reserve margin distribution histogram
-- Grid stress score timeline (where data exists)
-- Summary KPIs: Avg Reserve Margin, Peak Stress Score, Net Import/Export totals
-- Data availability badge showing coverage percentage since this data is only ~12% complete
+### 2C. Ancillary Services Enhancements
 
-**Where it lives**: New sub-tab "Ancillary & Grid" inside the Analytics tab. Shows a coverage warning banner for fields with limited data.
+Current state: basic line charts for reserves and interties. Upgrade to:
 
-### 5. Enhanced Correlations Dashboard (Enhance Existing Weather & Drivers Tab)
+- **Net import/export summary**: Large KPI showing whether Alberta was net importer or exporter for the period, with trend arrow
+- **Intertie utilization gauge**: For each intertie (BC, SK, MT), show a gauge of how close flows were to capacity limits
+- **Reserve adequacy timeline**: Color-coded timeline where green = adequate reserves, yellow = tight, red = below requirement
+- **Correlation with price**: Side-by-side mini chart showing reserve margin vs pool price to demonstrate the inverse relationship
 
-Expand the existing Weather & Drivers tab in the Power Model with additional correlation pairs and a multi-variable analysis.
+### 2D. PPA vs Pool Analyzer Enhancements
 
-**Data source**: `aeso_training_data` -- same fields already used in `PowerModelWeatherDrivers.tsx` plus `cloud_cover`, `solar_irradiance`, `renewable_penetration`.
+Current state: basic bar comparisons and cumulative curves. Upgrade to:
 
-**New additions**:
-- Demand vs Price correlation scatter with color gradient
-- Renewable penetration vs price correlation (where data exists)
-- Multi-variable correlation matrix heatmap: a grid showing Pearson r values between all key variables (pool_price, ail_mw, temperature, wind_speed, gas_price_aeco)
-- Time-lagged correlation: show how price_lag_1h, price_lag_24h correlate with current price (auto-correlation analysis)
-- Key insight: "Which variable is the strongest price predictor?" -- ranked by absolute correlation coefficient
+- **Risk-adjusted comparison**: Show Value-at-Risk (VaR) for pool exposure vs fixed PPA -- "In the worst 5% of months, pool exposure cost $X more than PPA"
+- **Optimal PPA range finder**: Instead of single breakeven, show a chart with PPA price on X-axis and probability of beating pool on Y-axis, marking the 50/50 crossover and the 80% confidence zone
+- **Hedge ratio slider**: Allow partial hedging (e.g., 60% PPA + 40% pool) and show blended cost outcomes
+- **Export comparison report**: Button to export the PPA analysis as a formatted summary for investor presentations
+
+### 2E. Correlation Dashboard Enhancements
+
+Current state: heatmap grid + scatter charts. Upgrade to:
+
+- **Time-lagged correlations**: Show how price correlates with demand/temperature at different lag windows (1h, 6h, 12h, 24h) to identify leading indicators
+- **Rolling correlation chart**: Plot how the correlation between price and demand changes over time (rolling 30-day window) to show seasonal relationship shifts
+- **Feature importance ranking**: Bar chart ranking all variables by absolute correlation strength with price, making it instantly clear which drivers matter most
+
+---
+
+## Part 3: Global UX Improvements
+
+### 3A. Analytics Tab Navigation Overhaul
+
+The Analytics tab currently has 4 sub-tabs. With the new modules, it needs restructuring:
+
+```
+Analytics Tab Sub-Navigation:
+  [Historical Pricing] [Hourly Prices] [Data Explorer] [Ancillary & Grid] [AESO Programs] [Strategy Sim] [Notifications]
+```
+
+Group into two rows or use a scrollable pill-based navigation with category headers.
+
+### 3B. Chart Consistency
+
+Standardize across all chart components:
+- Unified tooltip format: dark background, consistent number formatting, always show units
+- Consistent color palette: use the existing COLORS object from PowerModelCharts across all modules
+- All charts get a "fullscreen" expand button for detailed viewing
+- Add CSV export button to every chart/table
+
+### 3C. Loading States
+
+Replace basic spinners with skeleton loading patterns:
+- KPI cards show shimmer placeholders
+- Charts show a faded grid pattern while loading
+- Tables show row placeholders with pulse animation
+
+---
 
 ## Technical Implementation
 
-### New Files to Create
+### New Files
 
 | File | Purpose |
 |---|---|
-| `src/components/aeso/HourlyPriceExplorer.tsx` | Hourly price time-series viewer with zoom, spike detection, hour-of-day profile |
-| `src/components/aeso/PPAvsPoolAnalyzer.tsx` | PPA comparison tool with settlement waterfall, cumulative curves, breakeven finder |
-| `src/components/aeso/DataExplorerPanel.tsx` | Interactive X/Y axis selector with scatter/line/histogram, auto-stats, color-by |
-| `src/components/aeso/AncillaryServicesAnalytics.tsx` | Reserve, intertie, grid stress visualizations with coverage badges |
-| `src/components/aeso/CorrelationMatrix.tsx` | Multi-variable correlation heatmap grid component |
+| `src/components/aeso/AESOProgramsPanel.tsx` | Grid programs reference with eligibility badges and revenue estimates |
+| `src/components/aeso/StrategySimulator.tsx` | Enhanced strategy sim with threshold slider, scenario matrix, Monte Carlo |
+| `src/components/aeso/NotificationsPanel.tsx` | Unified alert management combining existing Telegram components |
 
 ### Files to Modify
 
 | File | Changes |
 |---|---|
-| `src/components/aeso-hub/tabs/AnalyticsTab.tsx` | Add 3 new sub-tabs: "Hourly Prices", "Data Explorer", "Ancillary & Grid" as collapsible sections or sub-tab navigation |
-| `src/components/aeso/PowerModelAnalyzer.tsx` | Add "PPA vs Pool" as 6th analytics tab, pass hourlyData and params |
-| `src/components/aeso/PowerModelWeatherDrivers.tsx` | Add correlation matrix heatmap section, demand vs price scatter, auto-correlation analysis |
+| `AnalyticsTab.tsx` | Add 3 new sub-tabs (AESO Programs, Strategy Sim, Notifications), reorganize navigation |
+| `HourlyPriceExplorer.tsx` | Add price duration curve, day-of-week heatmap, volatility bands, spike event table |
+| `DataExplorerPanel.tsx` | Add regression line overlay, residual plot, quick presets, data quality badges |
+| `AncillaryServicesAnalytics.tsx` | Add net import/export KPI, utilization gauges, reserve adequacy timeline, price correlation |
+| `PPAvsPoolAnalyzer.tsx` | Add VaR analysis, optimal PPA range chart, hedge ratio slider |
+| `PowerModelWeatherDrivers.tsx` | Add time-lagged correlations, rolling correlation chart, feature importance ranking |
 
-### Data Fetching Strategy
+### Data Sources
 
-- **Hourly Price Explorer**: Fetches from `aeso_training_data` with date range filter, paginated in 1000-row batches (same pattern as existing Power Model loader)
-- **PPA vs Pool**: Uses already-loaded `hourlyData` from Power Model -- no new queries
-- **Data Explorer**: Fetches from `aeso_training_data` with user-selected columns and date range, sampled to 2000 rows max using `ORDER BY RANDOM() LIMIT 2000` pattern for scatter plots
-- **Ancillary Services**: Fetches from `aeso_training_data` filtering for `NOT NULL` on reserve/intertie columns (which limits to ~12% of records from Nov 2025+), plus live data from existing `energy-data-integration` edge function
-- **Correlation Matrix**: Computed client-side from already-loaded weather data in the Weather & Drivers tab
+All enhancements use existing data from `aeso_training_data` (34,261+ records) and live AESO API calls. No new database tables or API integrations required.
 
-### Performance Considerations
-
-- Scatter plots cap at 2,000 data points via random sampling to prevent browser lag
-- Line charts use daily/weekly aggregation for ranges > 90 days
-- Correlation matrix calculations are memoized with `useMemo`
-- Data Explorer queries are lazy-loaded only when the tab is active
-- Ancillary data includes a prominent coverage badge since it only has ~12% of records
-
+- Strategy Simulator: queries `aeso_training_data` for hourly prices (same pattern as OperatingStrategySimulator)
+- AESO Programs: static reference data from official tariff documents (no API needed)
+- Notifications: uses existing `TelegramAlertSettings`/`TelegramAlertRules`/`TelegramAlertHistory` components
+- All new analytics (duration curves, heatmaps, VaR) computed client-side from already-loaded data
