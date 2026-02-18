@@ -27,6 +27,7 @@ import { PowerModelAIAnalysis } from './PowerModelAIAnalysis';
 // ShutdownLog is now rendered inside ShutdownAnalytics
 import { PowerModelShutdownAnalytics } from './PowerModelShutdownAnalytics';
 import { PowerModelWeatherDrivers } from './PowerModelWeatherDrivers';
+import { PPAvsPoolAnalyzer } from './PPAvsPoolAnalyzer';
 import { PowerModelReference } from './PowerModelReference';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
@@ -372,6 +373,7 @@ export function PowerModelAnalyzer() {
               <TabsTrigger value="cost-analysis" className="text-xs"><BarChart3 className="w-3 h-3 mr-1" />Cost Analysis</TabsTrigger>
               <TabsTrigger value="revenue-sensitivity" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />Revenue & Sensitivity</TabsTrigger>
               <TabsTrigger value="curtailment" className="text-xs"><PowerOff className="w-3 h-3 mr-1" />Curtailment</TabsTrigger>
+              <TabsTrigger value="ppa-vs-pool" className="text-xs"><TrendingUp className="w-3 h-3 mr-1" />PPA vs Pool</TabsTrigger>
               <TabsTrigger value="weather-drivers" className="text-xs"><Thermometer className="w-3 h-3 mr-1" />Weather & Drivers</TabsTrigger>
               <TabsTrigger value="reference" className="text-xs"><BookOpen className="w-3 h-3 mr-1" />Reference</TabsTrigger>
             </TabsList>
@@ -387,6 +389,10 @@ export function PowerModelAnalyzer() {
 
             <TabsContent value="curtailment" className="mt-4 space-y-4">
               <PowerModelShutdownAnalytics shutdownLog={shutdownLog} breakeven={breakeven} hourlyData={hourlyData} params={params} fixedPriceCAD={params.fixedPriceCAD} />
+            </TabsContent>
+
+            <TabsContent value="ppa-vs-pool" className="mt-4">
+              <PPAvsPoolAnalyzer hourlyData={hourlyData} capacityMW={params.contractedCapacityMW} />
             </TabsContent>
 
             <TabsContent value="weather-drivers" className="mt-4">
