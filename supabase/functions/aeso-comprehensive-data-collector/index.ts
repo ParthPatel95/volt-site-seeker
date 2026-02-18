@@ -9,50 +9,53 @@ const ENDPOINTS = {
   smp: "/systemmarginalprice-api/v1.1/price/systemMarginalPrice?startDate={start}&endDate={end}",
   ail: "/actualforecast-api/v1/load/albertaInternalLoad?startDate={start}&endDate={end}",
   csd: "/currentsupplydemand-api/v2/csd/summary/current",
-  // Discovery endpoints - try multiple path patterns
+  // Discovery endpoints - corrected paths based on AESO APIM naming conventions
   genCapacity: [
-    "/generationcapacity-api/v1/capacity",
-    "/generationcapacity-api/v1/generationCapacity",
-    "/generationcapacity-api/v2/capacity",
+    "/aiesgencapacity-api/v1/AIESGenCapacity?startDate={start}&endDate={end}",
+    "/aiesgencapacity-api/v1/aiesgencapacity?startDate={start}&endDate={end}",
+    "/generationcapacity-api/v1/capacity?startDate={start}&endDate={end}",
   ],
   assetList: [
+    "/assetlist-api/v1/AssetList",
     "/assetlist-api/v1/assetList",
-    "/assetlist-api/v1/asset/list",
-    "/assetlist-api/v2/assetList",
+    "/assetlist-api/v1/assetlist",
   ],
   meritOrder: [
-    "/energymeritorder-api/v1/meritOrder",
+    "/energymeritorder-api/v1/EnergyMeritOrder",
     "/energymeritorder-api/v1/energyMeritOrder",
-    "/energymeritorder-api/v2/meritOrder",
+    "/energymeritorder-api/v1/meritOrder",
   ],
   orReport: [
-    "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",
-    "/operatingreserve-api/v1/operatingReserve?startDate={start}&endDate={end}",
-    "/operatingreserve-api/v2/orReport?startDate={start}&endDate={end}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?start_date={start}&end_date={end}",
+    "/operatingreserve-api/v1/OperatingReserve",
   ],
   interchangeCapability: [
-    "/interchangecapability-api/v1/capability",
+    "/interchangecapability-api/v1/InterchangeCapability",
     "/interchangecapability-api/v1/interchangeCapability",
-    "/interchangecapability-api/v2/capability",
+    "/interchangecapability-api/v1/capability",
   ],
   loadOutage: [
+    "/loadoutageforecast-api/v1/LoadOutageForecast",
+    "/loadoutage-api/v1/LoadOutage",
     "/loadoutage-api/v1/outages",
-    "/loadoutage-api/v1/loadOutage",
-    "/loadoutage-api/v2/outages",
   ],
   interchangeOutage: [
-    "/interchangeoutage-api/v1/outages",
+    "/interchangeoutage-api/v1/InterchangeOutage",
     "/interchangeoutage-api/v1/interchangeOutage",
-    "/interchangeoutage-api/v2/outages",
+    "/interchangeoutage-api/v1/outages",
   ],
   poolParticipant: [
     "/poolparticipant-api/v1/poolparticipantlist",
-    "/poolparticipant-api/v1/poolParticipant",
+    "/poolparticipant-api/v1/PoolParticipantList",
   ],
   meteredVolume: [
-    "/meteredvolume-api/v1/meteredVolume",
-    "/meteredvolume-api/v1/metered-volume",
-    "/meteredvolume-api/v2/meteredVolume",
+    "/meteredvolume-api/v1/MeteredVolume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/meteredVolume?startDate={start}&endDate={end}",
+  ],
+  unitCommitment: [
+    "/unitcommitment-api/v2/UnitCommitment",
+    "/unitcommitment-api/v1/UnitCommitment",
   ],
 };
 
@@ -101,7 +104,7 @@ async function tryEndpoints(paths: string[], apiKey: string, dateReplace?: { sta
     if (!result.error) {
       return { data: result, path };
     }
-    console.log(`[Discovery] ${path} → ${result.status || result.message}`);
+    console.log(`[Discovery] ${path} → ${result.status || result.message} | ${(result.body || "").substring(0, 150)}`);
   }
   return null;
 }
@@ -177,7 +180,7 @@ Deno.serve(async (req) => {
     }
     // If empty array, try parsing responseCode for info
     if (latestSMP === null) {
-      console.log("[DEBUG] SMP full response:", JSON.stringify(smpReturn || {}).substring(0, 500));
+      console.log("[DEBUG] SMP full response:", JSON.stringify(smpReturn || {}).slice(0, 500));
     }
   }
 
@@ -233,9 +236,10 @@ Deno.serve(async (req) => {
 
   // ---- Phase 2: Discovery endpoints (sequential to avoid rate limiting) ----
   const discoveryResults: Record<string, any> = {};
+  const dateReplace = { start: todayStr, end: todayStr };
 
-  // Gen Capacity
-  const genCapResult = await tryEndpoints(ENDPOINTS.genCapacity, apiKey);
+  // Gen Capacity (now with date params)
+  const genCapResult = await tryEndpoints(ENDPOINTS.genCapacity, apiKey, dateReplace);
   if (genCapResult) {
     results.genCapacity = true;
     discoveryResults.genCapacity = { path: genCapResult.path, sampleKeys: Object.keys(genCapResult.data?.return || genCapResult.data || {}).slice(0, 5) };
@@ -311,7 +315,7 @@ Deno.serve(async (req) => {
   }
 
   // OR Report
-  const dateReplace = { start: todayStr, end: todayStr };
+  // OR Report
   const orResult = await tryEndpoints(ENDPOINTS.orReport, apiKey, dateReplace);
   results.orReport = !!orResult;
   if (orResult) {
@@ -383,9 +387,23 @@ Deno.serve(async (req) => {
     discoveryResults.poolParticipant = { path: ppResult.path, count: Array.isArray(ppResult.data?.return) ? ppResult.data.return.length : "unknown" };
   }
 
-  // Metered Volume (skip for now as it likely needs date params)
-  results.meteredVolume = false;
-  discoveryResults.meteredVolume = { skipped: "requires date parameters, will test separately" };
+  // Metered Volume (now with date params)
+  const mvResult = await tryEndpoints(ENDPOINTS.meteredVolume, apiKey, dateReplace);
+  results.meteredVolume = !!mvResult;
+  if (mvResult) {
+    discoveryResults.meteredVolume = { path: mvResult.path, sampleKeys: Object.keys(mvResult.data?.return || mvResult.data || {}).slice(0, 5) };
+  } else {
+    discoveryResults.meteredVolume = { tried: true, success: false };
+  }
+
+  // Unit Commitment
+  const ucResult = await tryEndpoints(ENDPOINTS.unitCommitment, apiKey);
+  results.unitCommitment = !!ucResult;
+  if (ucResult) {
+    discoveryResults.unitCommitment = { path: ucResult.path, sampleKeys: Object.keys(ucResult.data?.return || ucResult.data || {}).slice(0, 5) };
+  } else {
+    discoveryResults.unitCommitment = { tried: true, success: false };
+  }
 
   // ---- Phase 3: Store market snapshot ----
   // Calculate total outage from gen capacity data
