@@ -1,96 +1,70 @@
 
 
-# Fix Remaining AESO API Endpoints -- Evidence-Based Corrections
+# Fix AESO API Calls -- Root Cause Found + Comprehensive Fix
 
-## Current Status
+## Research Findings
 
-Working (9/14): Pool Price, SMP, AIL, CSD, Gen Capacity, Asset List, Pool Participants, Load Outage, Unit Commitment
+### Critical Discovery 1: The `gridstatus` Python library (gold-standard AESO integration) NEVER calls the 5 failing APIs
+After reading the full 1800-line gridstatus source code, they get ALL their data from just 7 endpoints -- the same 7 we already have working. Reserves, interchange flows, and generation data all come from the CSD endpoint. This is exactly what our `energy-data-integration` function already does.
 
-Failing (5/14): Energy Merit Order, Operating Reserve, Interchange Capability, Interchange Outage, Metered Volume
+### Critical Discovery 2: The `aeso-reserves-backfill` function is ALSO broken
+I tested it live -- `/operatingreserve-api/v1/orReport` returns 404 too. The 100 reserve records we have came from CSD extraction in `energy-data-integration`, not from the OR API. So the "known working path" was never actually working recently.
 
-## Root Cause Analysis
+### Critical Discovery 3: The AESO lists "Interchange Outage Report" and "Interchange Capability Report" as SEPARATE APIs from "Intertie Public Reports"
+The AESO main site lists them separately, suggesting they may have different API IDs than `itc-api`. We have been trying the wrong API prefix.
 
-### 1. Operating Reserve -- WRONG API prefix (guaranteed fix)
-Our `aeso-reserves-backfill` function ALREADY successfully calls OR data using:
-```
-/operatingreserve-api/v1/orReport
-```
-with header `Ocp-Apim-Subscription-Key`. But the comprehensive collector uses the WRONG prefix `operatingreserveoffercontrol-api`. The portal lists `operatingreserveoffercontrol-api-v1` as the API ID, but the actual gateway routes through `operatingreserve-api`.
+### Critical Discovery 4: Header mismatch
+The gridstatus library uses `Cache-Control: no-cache` header. Our code uses `Accept: application/json` instead. While unlikely to cause 404s, it should match the reference implementation.
 
-### 2. Remaining 4 APIs -- Path discovery needed
-For Energy Merit Order, ITC (interchange), and Metered Volume, we've tried many path variations and all return `{ "statusCode": 404, "message": "Resource not found" }` from Azure APIM itself. This means the APIM gateway doesn't recognize ANY of our operation name guesses.
-
-The approach: add a comprehensive "probe" mode that tries the base API path (no operation), both auth headers, and many more path patterns including path-based date parameters.
+### Critical Discovery 5: Dual-auth bug for OR paths
+In `tryEndpointsDualAuth`, for paths containing "operatingreserve", `fetchAESO` uses `Ocp-Apim-Subscription-Key` first. When it gets 404, `tryEndpointsDualAuth` explicitly retries with `Ocp-Apim-Subscription-Key` AGAIN (same header). The `API-KEY` header is never tried for OR paths.
 
 ## Changes
 
 ### File: `supabase/functions/aeso-comprehensive-data-collector/index.ts`
 
-#### Change 1: Fix OR Report (confirmed fix)
-Add the known-working path from `aeso-reserves-backfill` as the FIRST entry in the OR discovery array:
-```
-orReport: [
-  "/operatingreserve-api/v1/orReport?startDate={start}&endDate={end}",  // Known working path
-  "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?...",  // Keep as fallbacks
-]
-```
+#### Change 1: Fix the dual-auth bug in `tryEndpointsDualAuth`
+The function at line 134 always retries with `Ocp-Apim-Subscription-Key` on 404, but for OR paths, `fetchAESO` already used that header. Fix: explicitly try BOTH headers independently regardless of path, using raw fetch calls instead of relying on `fetchAESO`'s auth logic.
 
-#### Change 2: Fix `fetchAESO` to try `Ocp-Apim-Subscription-Key` FIRST for OR-related paths
-The `aeso-reserves-backfill` function uses `Ocp-Apim-Subscription-Key` header (not `API-KEY`) and it works. Add logic so paths containing `operatingreserve` use this header first.
+#### Change 2: Add `Cache-Control: no-cache` header to match gridstatus
+Add this header to all AESO API requests alongside the existing headers. This matches the reference implementation.
 
-#### Change 3: Expand path discovery arrays for remaining 4 APIs
-Add many more path variations based on Azure APIM naming conventions:
+#### Change 3: Try BOTH `AESO_API_KEY` and `AESO_SUBSCRIPTION_KEY_PRIMARY` independently
+These might be different keys. Currently we pick one and use it everywhere. For failing endpoints, try the OTHER key too.
 
-**Energy Merit Order** (try path-based parameters and more operation names):
-```
-/energymeritorder-api/v1/                                  // Base path probe
-/energymeritorder-api/v1/report
-/energymeritorder-api/v1/snapshot
-/energymeritorder-api/v1/merit-order
-/energymeritorder-api/v1/energymeritorder
-```
+#### Change 4: Add Interchange Outage/Capability as separate API prefixes
+The AESO main site lists these separately. Add paths like:
+- `/interchangecapability-api/v1/...` (separate from itc-api)
+- `/interchangeoutage-api/v1/...` (separate from itc-api)
+Keep the `itc-api` paths as fallbacks.
 
-**Interchange (ITC)** (try date parameters and more operations):
-```
-/itc-api/v1/                                               // Base path probe
-/itc-api/v1/capability
-/itc-api/v1/outage
-/itc-api/v1/report
-/itc-api/v1/InterchangeCapability
-/itc-api/v1/InterchangeOutage
-```
+#### Change 5: Add a `diagnostic` mode
+When called with `{ "mode": "diagnostic" }`, run a focused probe of JUST the failing APIs trying:
+- Multiple URL prefixes (with and without `/public/`)
+- Both API keys independently
+- Both auth headers independently  
+- GET and POST methods
+- Log exact status codes and response bodies
+This will definitively identify the correct combination.
 
-**Metered Volume** (try path-based dates like other confirmed APIs):
-```
-/meteredvolume-api/v1/                                     // Base path probe
-/meteredvolume-api/v1/report?startDate={start}&endDate={end}
-/meteredvolume-api/v1/volume?startDate={start}&endDate={end}
-/meteredvolume-api/v1/meteredvolume?startDate={start}&endDate={end}
-```
-
-#### Change 4: Improve discovery logging
-For any 404 response, also probe the API root path (e.g., `/energymeritorder-api/v1/`) to see if APIM returns a list of available operations or a more helpful error message.
-
-#### Change 5: Try both auth headers for ALL discovery endpoints
-Currently we only fallback on 401/403. For discovery probing, try both headers independently and log which one works, since some APIs may only accept one header type.
+#### Change 6: Remove the broken `/operatingreserve-api/v1/orReport` path
+This path was confirmed broken (404) in live testing of both the comprehensive collector AND the reserves backfill function. Keep only the `operatingreserveoffercontrol-api` prefix which previously returned 400 (meaning the path exists but parameters were wrong).
 
 ### What does NOT change
-- All 9 working endpoints remain untouched (same paths, same logic)
-- The CSD parsing, pool price parsing, AIL parsing unchanged
-- The asset list and gen capacity code unchanged
-- The snapshot storage logic unchanged
-- The `energy-data-integration` function unchanged
+- All 9 working endpoints remain completely untouched (poolPrice, SMP, AIL, CSD, genCapacity, assetList, loadOutage, poolParticipant, unitCommitment)
+- The `energy-data-integration` function is not modified
+- The CSD parsing, snapshot storage, and all data extraction logic stays the same
+- Frontend hooks unchanged
 
 ### No other files modified
 
 ## Expected Outcome
-- OR Report should immediately start working (confirmed path from existing codebase)
-- For the remaining 4 APIs, expanded probing will discover the correct paths or confirm they need special handling
-- Enhanced logging will show exactly what APIM returns for each probe, helping diagnose the remaining issues
+- The diagnostic mode will reveal the exact correct combination of URL prefix + auth header + API key for each failing endpoint
+- The dual-auth bug fix ensures all header combinations are actually tested
+- Even if the 5 APIs remain unreachable, all critical data (reserves, interchange, generation) is already provided by CSD
 
 ## Technical Notes
-- The `operatingreserve-api` prefix works in production (proven by `aeso-reserves-backfill`) despite the portal listing it as `operatingreserveoffercontrol-api-v1`
-- Azure APIM may have different "API IDs" in the portal vs the actual gateway routing prefix
-- Some APIs may require specific date ranges (e.g., OR data has 60-day delay)
-- The base path probe (`/api-name/v1/`) may return a Swagger/OpenAPI spec or a list of operations
+- The CSD endpoint already provides real-time reserves (560 MW spinning confirmed in logs), interchange flows (BC/SK/MT), and generation by fuel type
+- The 5 "failing" APIs provide SUPPLEMENTAL data (historical OR offers, merit order stack, metered volumes) that enhance analytics but are not required for core functionality
+- AESO may have changed their APIM gateway routing since the portal was last updated
 
