@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +90,7 @@ export function AESOHistoricalPricing() {
   const [uptimePercentage, setUptimePercentage] = useState('95');
   const [timePeriod, setTimePeriod] = useState<'30' | '90' | '180' | '365' | '730' | '1095' | '1460'>('30');
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<'daily' | 'monthly' | 'yearly' | 'historical'>('monthly');
+  const [activeInternalTab, setActiveInternalTab] = useState('overview');
   const [transmissionAdder, setTransmissionAdder] = useState('11.63');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [customAnalysisResult, setCustomAnalysisResult] = useState<any>(null);
@@ -1321,11 +1322,11 @@ export function AESOHistoricalPricing() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={activeInternalTab} onValueChange={setActiveInternalTab} className="space-y-4">
         {/* Time Period Selector + Feature Tabs */}
         <div className="flex flex-col gap-4">
-          {/* Time Period Dropdown */}
-          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border">
+          {/* Time Period Dropdown - only shown on Overview tab */}
+          {activeInternalTab === 'overview' && <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">Time Period:</span>
@@ -1350,7 +1351,7 @@ export function AESOHistoricalPricing() {
               {selectedTimePeriod === 'yearly' && '12 months'}
               {selectedTimePeriod === 'historical' && '8 years'}
             </Badge>
-          </div>
+          </div>}
 
           {/* 5 Primary Feature Tabs */}
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 gap-1 h-auto p-1.5 bg-muted/50">
