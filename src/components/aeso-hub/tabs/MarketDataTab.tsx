@@ -84,7 +84,7 @@ export function MarketDataTab({
     <div className="space-y-5 animate-fade-in">
       {/* ─── Alerts Banner ─── */}
       {hasAlerts && (
-        <Collapsible defaultOpen>
+        <Collapsible defaultOpen={false}>
           <CollapsibleTrigger asChild>
             <Button variant="outline" className="w-full justify-between border-yellow-500/30 bg-yellow-500/5 text-foreground hover:bg-yellow-500/10">
               <div className="flex items-center gap-2">
