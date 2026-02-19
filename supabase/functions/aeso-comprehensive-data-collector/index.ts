@@ -21,67 +21,46 @@ const ENDPOINTS = {
     "/assetlist-api/v1/assetlist",
   ],
   meritOrder: [
-    "/energymeritorder-api/v1/energyMeritOrderReport",
+    "/energymeritorder-api/v1/meritOrder/energy?startDate={start}",  // Official docs confirmed
+    "/energymeritorder-api/v1/energyMeritOrderReport",  // flat fallback
     "/energymeritorder-api/v1/energyMeritOrder",
-    "/energymeritorder-api/v1/EnergyMeritOrder",
-    "/energymeritorder-api/v1/report",
-    "/energymeritorder-api/v1/snapshot",
-    "/energymeritorder-api/v1/merit-order",
-    "/energymeritorder-api/v1/energymeritorder",
-    "/energymeritorder-api/v1/",
   ],
   orReport: [
-    // Portal-listed API ID prefix — returned 400 before (path exists, params wrong)
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date={start}",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?delivery_date={start}",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?startDate={start}&endDate={end}",
-    "/operatingreserveoffercontrol-api/v1/operatingReserveOfferControlReport?startDate={start}&endDate={end}",
-    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",
+    // Path confirmed WORKING (returns 400 not 404) — try parameter variations
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?start_date={start}&end_date={end}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?report_date={start}",
+    "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",  // no params
+    "/operatingreserveoffercontrol-api/v1/offerControl/operatingReserve?startDate={start}",
+    "/operatingreserveoffercontrol-api/v1/report/offerControl?startDate={start}",
   ],
   interchangeCapability: [
-    // Try separate API prefixes first (AESO lists these as separate APIs)
-    "/interchangecapability-api/v1/interchangeCapability",
-    "/interchangecapability-api/v1/capability",
-    "/interchangecapability-api/v1/report",
-    "/interchangecapability-api/v1/InterchangeCapability",
-    "/interchangecapability-api/v1/",
-    // Fallback to itc-api
-    "/itc-api/v1/interchangeCapability",
-    "/itc-api/v1/itcReport",
-    "/itc-api/v1/intertieReport",
-    "/itc-api/v1/capability",
-    "/itc-api/v1/report",
-    "/itc-api/v1/InterchangeCapability",
-    "/itc-api/v1/",
+    // Following category/operation pattern from working endpoints
+    "/itc-api/v1/intertie/capability",
+    "/itc-api/v1/report/interchangeCapability",
+    "/itc-api/v1/capability/interchange",
+    "/itc-api/v1/atc/capability",
+    "/itc-api/v1/interchangeCapability",  // flat fallback
   ],
   loadOutage: [
     "/loadoutageforecast-api/v1/loadOutageReport?startDate={start}&endDate={end}",
   ],
   interchangeOutage: [
-    // Try separate API prefix first
-    "/interchangeoutage-api/v1/interchangeOutage",
-    "/interchangeoutage-api/v1/outage",
-    "/interchangeoutage-api/v1/report",
-    "/interchangeoutage-api/v1/InterchangeOutage",
-    "/interchangeoutage-api/v1/",
-    // Fallback to itc-api
-    "/itc-api/v1/interchangeOutage",
-    "/itc-api/v1/InterchangeOutage",
-    "/itc-api/v1/outage",
-    "/itc-api/v1/itcReport",
+    // Following category/operation pattern
+    "/itc-api/v1/intertie/outage",
+    "/itc-api/v1/report/interchangeOutage",
+    "/itc-api/v1/outage/interchange",
+    "/itc-api/v1/interchangeOutage",  // flat fallback
   ],
   poolParticipant: [
     "/poolparticipant-api/v1/poolparticipantlist",
     "/poolparticipant-api/v1/PoolParticipantList",
   ],
   meteredVolume: [
-    "/meteredvolume-api/v1/meteredVolumeReport?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/meteredVolume?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/MeteredVolume?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/report?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/volume?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/meteredvolume?startDate={start}&endDate={end}",
-    "/meteredvolume-api/v1/",
+    "/meteredvolume-api/v1/volume/meteredVolume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/report/meteredVolume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/meter/volume?startDate={start}&endDate={end}",
+    "/meteredvolume-api/v1/meteredVolumeReport?startDate={start}&endDate={end}",  // flat fallback
   ],
   unitCommitment: [
     "/unitcommitmentdata-api/v2/unitCommitmentData",
@@ -206,30 +185,30 @@ async function runDiagnostic(apiKeys: string[]): Promise<any> {
   // Define focused probes for just the 5 failing APIs
   const probes: Record<string, string[]> = {
     meritOrder: [
+      `/energymeritorder-api/v1/meritOrder/energy?startDate=${formatDate(orStart)}`,
       "/energymeritorder-api/v1/energyMeritOrderReport",
-      "/energymeritorder-api/v1/energyMeritOrder",
-      "/energymeritorder-api/v1/",
     ],
     orReport: [
-      `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?settlement_date=${formatDate(orStart)}`,
+      `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?start_date=${formatDate(orStart)}&end_date=${formatDate(orEnd)}`,
+      `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date=${formatDate(orStart)}`,
       `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl`,
-      `/operatingreserveoffercontrol-api/v1/`,
+      `/operatingreserveoffercontrol-api/v1/offerControl/operatingReserve?startDate=${formatDate(orStart)}`,
     ],
     interchangeCapability: [
-      "/interchangecapability-api/v1/interchangeCapability",
-      "/interchangecapability-api/v1/",
+      "/itc-api/v1/intertie/capability",
+      "/itc-api/v1/report/interchangeCapability",
+      "/itc-api/v1/capability/interchange",
       "/itc-api/v1/interchangeCapability",
-      "/itc-api/v1/",
     ],
     interchangeOutage: [
-      "/interchangeoutage-api/v1/interchangeOutage",
-      "/interchangeoutage-api/v1/",
+      "/itc-api/v1/intertie/outage",
+      "/itc-api/v1/report/interchangeOutage",
       "/itc-api/v1/interchangeOutage",
     ],
     meteredVolume: [
+      `/meteredvolume-api/v1/volume/meteredVolume?startDate=${today}&endDate=${today}`,
+      `/meteredvolume-api/v1/report/meteredVolume?startDate=${today}&endDate=${today}`,
       `/meteredvolume-api/v1/meteredVolumeReport?startDate=${today}&endDate=${today}`,
-      `/meteredvolume-api/v1/meteredVolume?startDate=${today}&endDate=${today}`,
-      "/meteredvolume-api/v1/",
     ],
   };
 
@@ -531,8 +510,11 @@ Deno.serve(async (req) => {
     results.assetList = false;
   }
 
-  // Merit Order (FAILING — use dual auth with ALL keys)
-  const meritResult = await tryEndpointsDualAuth(ENDPOINTS.meritOrder, allApiKeys);
+  // Merit Order (FAILING — use dual auth with ALL keys, 60-day delayed dates per AESO policy)
+  const moDateEnd = new Date(now); moDateEnd.setDate(moDateEnd.getDate() - 61);
+  const moDateStart = new Date(moDateEnd); moDateStart.setDate(moDateStart.getDate() - 1);
+  const moDateReplace = { start: formatDate(moDateStart), end: formatDate(moDateEnd) };
+  const meritResult = await tryEndpointsDualAuth(ENDPOINTS.meritOrder, allApiKeys, moDateReplace, 5);
   results.meritOrder = !!meritResult;
   if (meritResult) {
     discoveryResults.meritOrder = { path: meritResult.path, sampleKeys: Object.keys(meritResult.data?.return || meritResult.data || {}).slice(0, 5) };
@@ -542,7 +524,7 @@ Deno.serve(async (req) => {
   const orDateEnd = new Date(now); orDateEnd.setDate(orDateEnd.getDate() - 61);
   const orDateStart = new Date(orDateEnd); orDateStart.setDate(orDateStart.getDate() - 7);
   const orDateReplace = { start: formatDate(orDateStart), end: formatDate(orDateEnd) };
-  const orResult = await tryEndpointsDualAuth(ENDPOINTS.orReport, allApiKeys, orDateReplace);
+  const orResult = await tryEndpointsDualAuth(ENDPOINTS.orReport, allApiKeys, orDateReplace, 6);
   results.orReport = !!orResult;
   if (orResult) {
     discoveryResults.orReport = { path: orResult.path, sampleKeys: Object.keys(orResult.data?.return || orResult.data || {}).slice(0, 5) };
@@ -556,7 +538,7 @@ Deno.serve(async (req) => {
   }
 
   // Interchange Capability (FAILING — use dual auth with ALL keys)
-  const ixCapResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeCapability, allApiKeys);
+  const ixCapResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeCapability, allApiKeys, undefined, 5);
   results.interchangeCapability = !!ixCapResult;
   let bcCap = null, skCap = null, mtCap = null;
   if (ixCapResult) {
@@ -599,7 +581,7 @@ Deno.serve(async (req) => {
   }
 
   // Interchange Outage (FAILING — use dual auth with ALL keys)
-  const ixOutResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeOutage, allApiKeys);
+  const ixOutResult = await tryEndpointsDualAuth(ENDPOINTS.interchangeOutage, allApiKeys, undefined, 5);
   results.interchangeOutage = !!ixOutResult;
   if (ixOutResult) {
     discoveryResults.interchangeOutage = { path: ixOutResult.path };
@@ -613,7 +595,7 @@ Deno.serve(async (req) => {
   }
 
   // Metered Volume (FAILING — use dual auth with ALL keys)
-  const mvResult = await tryEndpointsDualAuth(ENDPOINTS.meteredVolume, allApiKeys, dateReplace);
+  const mvResult = await tryEndpointsDualAuth(ENDPOINTS.meteredVolume, allApiKeys, dateReplace, 5);
   results.meteredVolume = !!mvResult;
   if (mvResult) {
     discoveryResults.meteredVolume = { path: mvResult.path, sampleKeys: Object.keys(mvResult.data?.return || mvResult.data || {}).slice(0, 5) };
