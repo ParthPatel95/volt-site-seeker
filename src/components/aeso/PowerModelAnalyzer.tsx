@@ -10,7 +10,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
-import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap, HelpCircle, ChevronDown, ChevronUp, Thermometer, PowerOff } from 'lucide-react';
+import { Upload, Database, Calculator, FileSpreadsheet, AlertTriangle, BarChart3, TrendingUp, Info, Sparkles, Settings2, BookOpen, Clock, Zap, HelpCircle, ChevronDown, ChevronUp, Thermometer, PowerOff, Download } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { exportPowerModelCSV, exportPowerModelPDF } from '@/utils/powerModelExport';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord, type CurtailmentStrategy } from '@/hooks/usePowerModelCalculator';
@@ -344,11 +346,26 @@ export function PowerModelAnalyzer() {
 
       {/* PHASE 2: Results */}
       {hourlyData.length > 0 && (
-        <div ref={resultsRef} className="space-y-6">
+        <div ref={resultsRef} id="power-model-results" className="space-y-6">
           {/* KPI Dashboard + AI Analysis Button */}
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Results Dashboard</h3>
             <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-xs h-7">
+                    <Download className="w-3 h-3 mr-1" />Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportPowerModelCSV(monthly, annual, params, params.cadUsdRate, params.contractedCapacityMW)}>
+                    <FileSpreadsheet className="w-3.5 h-3.5 mr-2" />Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportPowerModelPDF()}>
+                    <Download className="w-3.5 h-3.5 mr-2" />Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setConfigOpen(true)}>
                 <Settings2 className="w-3 h-3 mr-1" />Edit Config
               </Button>
