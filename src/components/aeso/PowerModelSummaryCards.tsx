@@ -31,8 +31,6 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
   const addersCentsPerKwh = totalCentsPerKwh - energyCentsPerKwh;
   const energyPct = totalCentsPerKwh > 0 ? (energyCentsPerKwh / totalCentsPerKwh) * 100 : 0;
 
-  // Count hours above fixed price for over-contract credits
-  const overContractHours = isFixedPrice ? annual.totalOverContractCredits / ((fixedPriceCAD ?? 0) > 0 ? 1 : 1) : 0;
 
   return (
     <div className="space-y-3">
@@ -149,7 +147,8 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
       {/* Row 2: Compact stat ribbon */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex items-center divide-x divide-border overflow-x-auto">
+          <div className="relative">
+            <div className="flex items-center divide-x divide-border overflow-x-auto">
             <StatItem icon={<Zap className="w-3.5 h-3.5 text-emerald-500" />} label="Consumption" value={`${(annual.totalMWh / 1000).toFixed(0)} GWh`} sub={`${annual.totalMWh.toLocaleString()} MWh`} />
             <StatItem icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Uptime" value={`${annual.avgUptimePercent.toFixed(1)}%`} sub={`${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`} />
             {totalShutdownHours !== undefined && (
@@ -167,6 +166,9 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
             {hostingRateCAD ? (
               <StatItem icon={<Banknote className="w-3.5 h-3.5 text-emerald-500" />} label="Revenue" value={`CA${fmtM(annualRevenue)}`} sub={`US${fmtM(usd(annualRevenue))}`} />
             ) : null}
+            </div>
+            {/* Scroll hint gradient */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none sm:hidden" />
           </div>
         </CardContent>
       </Card>
