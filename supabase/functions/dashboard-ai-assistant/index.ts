@@ -49,6 +49,9 @@ ${tariffOverrides && Object.keys(tariffOverrides).some(k => (tariffOverrides as 
 - Avg Pool Price (running hours): CA$${annual.avgPoolPriceRunning.toFixed(2)}/MWh
 - 12CP Curtailment Savings: CA$${annual.curtailmentSavings?.toLocaleString(undefined, {maximumFractionDigits: 0}) || '0'}
 - Price Curtailment Savings: CA$${annual.totalPriceCurtailmentSavings?.toLocaleString(undefined, {maximumFractionDigits: 0}) || '0'}
+${params.fixedPriceCAD > 0 ? `- Fixed Contract Price: CA$${params.fixedPriceCAD}/MWh` : '- Pricing Mode: Floating Pool'}
+${params.fixedPriceCAD > 0 && annual.totalOverContractCredits > 0 ? `- Over-Contract Credits: CA$${annual.totalOverContractCredits.toLocaleString(undefined, {maximumFractionDigits: 0})}
+- Effective Rate (after credits): CA$${(annual.effectivePerKwhCAD * 100).toFixed(3)}¢/kWh (US$${(annual.effectivePerKwhUSD * 100).toFixed(3)}¢/kWh)` : ''}
 
 ## Key DTS Tariff Line Items (annual)
 - Bulk System 12CP Demand: CA$${annual.totalBulkCoincidentDemandFull?.toLocaleString(undefined, {maximumFractionDigits: 0}) || 'N/A'} (full charge before avoidance)
@@ -64,7 +67,7 @@ ${tariffOverrides && Object.keys(tariffOverrides).some(k => (tariffOverrides as 
 - Avg summer rate (Jun-Sep): ${avgSummerRate}¢/kWh | Avg winter rate (Dec-Mar): ${avgWinterRate}¢/kWh
 
 ## Monthly Breakdown
-${monthly.map((m: any) => `${m.month}: ${m.runningHours}h running (${m.uptimePercent.toFixed(1)}%), CA$${m.totalAmountDue.toLocaleString(undefined, {maximumFractionDigits: 0})}, ${(m.perKwhCAD * 100).toFixed(2)}¢/kWh, Pool $${m.avgPoolPriceRunning.toFixed(2)}/MWh, Curtailed ${m.curtailedHours || 0}h`).join('\n')}
+${monthly.map((m: any) => `${m.month}: ${m.runningHours}h running (${m.uptimePercent.toFixed(1)}%), CA$${m.totalAmountDue.toLocaleString(undefined, {maximumFractionDigits: 0})}, ${(m.perKwhCAD * 100).toFixed(2)}¢/kWh, Pool $${m.avgPoolPriceRunning.toFixed(2)}/MWh, Curtailed ${m.curtailedHours || 0}h${params.fixedPriceCAD > 0 && m.overContractCredits > 0 ? `, OC Credits CA$${m.overContractCredits.toLocaleString(undefined, {maximumFractionDigits: 0})}` : ''}`).join('\n')}
 
 Provide a structured analysis with these EXACT section headings:
 
@@ -76,10 +79,12 @@ Provide a structured analysis with these EXACT section headings:
 - Quantify the Bulk 12CP demand charge impact and how 12CP avoidance is performing
 - Explain the Operating Reserve (12.5% of pool price) impact on total cost
 - Note the seasonal cost pattern between summer and winter with specific rate differences
+${params.fixedPriceCAD > 0 && annual.totalOverContractCredits > 0 ? `- Analyze over-contract credits: quantify how much the effective rate drops from the all-in rate due to credits earned when pool price exceeds the fixed contract price` : ''}
 
 ## Top 3 Optimization Opportunities
 For each, provide: (1) what to do, (2) estimated annual dollar savings, (3) implementation complexity.
 Consider: 12CP avoidance window tuning, capacity factor optimization, curtailment threshold adjustment, Rider F impact, exchange rate hedging.
+${params.fixedPriceCAD > 0 ? `Also consider: strategies to maximize over-contract credit earnings by optimizing which hours to run vs. curtail relative to the fixed contract price.` : ''}
 
 ## Risk Factors
 Quantify each risk where possible: pool price volatility impact on margin, exchange rate sensitivity (1¢ CAD/USD = $X impact), demand charge exposure if 12CP avoidance fails.
