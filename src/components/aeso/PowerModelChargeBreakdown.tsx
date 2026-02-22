@@ -64,7 +64,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">All-in Rate Breakdown (cents/kWh)</CardTitle>
+                <CardTitle className="text-xs sm:text-sm">All-in Rate Breakdown (cents/kWh)</CardTitle>
                 <Badge variant={isFixed ? 'info' : 'success'} size="sm">
                   {isFixed ? `Fixed @ $${fixedPriceCAD}/MWh` : 'Floating Pool Price'}
                 </Badge>
@@ -74,7 +74,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
               <div className="space-y-1.5">
                 {rows.map(row => (
                   <div key={row.label} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground w-48 shrink-0 truncate" title={row.label}>{row.label}</span>
+                    <span className="text-xs text-muted-foreground w-32 sm:w-48 shrink-0 truncate" title={row.label}>{row.label}</span>
                     <div className="flex-1 h-4 rounded bg-muted/40 overflow-hidden">
                       <div
                         className={`h-full rounded transition-all ${row.label.startsWith('Energy') ? 'bg-primary' : 'bg-primary/40'}`}
@@ -82,34 +82,34 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                       />
                     </div>
                     <span className="text-xs font-mono font-medium w-16 text-right tabular-nums">{row.cents.toFixed(2)}¢</span>
-                    <span className="text-xs font-mono text-muted-foreground w-16 text-right tabular-nums">{(row.cents * cadUsdRate).toFixed(2)}¢</span>
+                    <span className="text-xs font-mono text-muted-foreground w-16 text-right tabular-nums hidden sm:inline">{(row.cents * cadUsdRate).toFixed(2)}¢</span>
                   </div>
                 ))}
                 <div className="flex items-center gap-3 pt-2 border-t border-border">
-                  <span className="text-xs font-semibold w-48 shrink-0">All-in Total</span>
+                  <span className="text-xs font-semibold w-32 sm:w-48 shrink-0">All-in Total</span>
                   <div className="flex-1" />
                   <span className="text-sm font-bold font-mono w-16 text-right tabular-nums">{totalCents.toFixed(2)}¢</span>
-                  <span className="text-xs font-mono font-semibold text-muted-foreground w-16 text-right tabular-nums">{(totalCents * cadUsdRate).toFixed(2)}¢</span>
+                  <span className="text-xs font-mono font-semibold text-muted-foreground w-16 text-right tabular-nums hidden sm:inline">{(totalCents * cadUsdRate).toFixed(2)}¢</span>
                 </div>
                 {isFixed && annual && annual.totalOverContractCredits > 0 && (() => {
                   const effectiveCents = annual.effectivePerKwhCAD * 100;
                   const creditCents = (annual.totalOverContractCredits / kwh) * 100;
                   return (
                     <>
-                      <div className="flex items-center gap-3 pt-1">
-                        <span className="text-xs w-48 shrink-0 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                          <ArrowDown className="w-3 h-3" /> Over-Contract Credits
-                        </span>
-                        <div className="flex-1" />
-                        <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 w-16 text-right tabular-nums">-{creditCents.toFixed(2)}¢</span>
-                        <span className="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70 w-16 text-right tabular-nums">-{(creditCents * cadUsdRate).toFixed(2)}¢</span>
-                      </div>
-                      <div className="flex items-center gap-3 pt-2 border-t border-emerald-500/30">
-                        <span className="text-xs font-bold w-48 shrink-0 text-emerald-700 dark:text-emerald-300">Effective Rate</span>
-                        <div className="flex-1" />
-                        <span className="text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300 w-16 text-right tabular-nums">{effectiveCents.toFixed(2)}¢</span>
-                        <span className="text-xs font-mono font-semibold text-emerald-600/70 dark:text-emerald-400/70 w-16 text-right tabular-nums">{(effectiveCents * cadUsdRate).toFixed(2)}¢</span>
-                      </div>
+                       <div className="flex items-center gap-3 pt-1">
+                         <span className="text-xs w-32 sm:w-48 shrink-0 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                           <ArrowDown className="w-3 h-3" /> Over-Contract Credits
+                         </span>
+                         <div className="flex-1" />
+                         <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 w-16 text-right tabular-nums">-{creditCents.toFixed(2)}¢</span>
+                         <span className="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70 w-16 text-right tabular-nums hidden sm:inline">-{(creditCents * cadUsdRate).toFixed(2)}¢</span>
+                       </div>
+                       <div className="flex items-center gap-3 pt-2 border-t border-emerald-500/30">
+                         <span className="text-xs font-bold w-32 sm:w-48 shrink-0 text-emerald-700 dark:text-emerald-300">Effective Rate</span>
+                         <div className="flex-1" />
+                         <span className="text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300 w-16 text-right tabular-nums">{effectiveCents.toFixed(2)}¢</span>
+                         <span className="text-xs font-mono font-semibold text-emerald-600/70 dark:text-emerald-400/70 w-16 text-right tabular-nums hidden sm:inline">{(effectiveCents * cadUsdRate).toFixed(2)}¢</span>
+                       </div>
                     </>
                   );
                 })()}
