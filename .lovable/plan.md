@@ -1,50 +1,71 @@
 
-# Include Over-Contract Credits in AI Executive Briefing
+
+# Add Export/Download Button to Power Model Results
 
 ## Overview
-When in fixed-price mode, the AI Executive Briefing currently has no visibility into over-contract credits or the effective rate after credits. This change passes that data to the AI prompt so it can analyze credit earnings and effective cost savings.
+Add an export button to the Power Model results dashboard that lets users download a comprehensive CSV or PDF report containing all monthly breakdown data, over-contract credits, effective rates, and annual summary.
 
-## Changes
+## Where the Button Goes
+In `PowerModelAnalyzer.tsx`, next to the existing "Edit Config" button in the Results Dashboard header bar (line 349-355). A dropdown button with two options: "Export CSV" and "Export PDF".
 
-### 1. Frontend: Pass over-contract data to edge function
-**File: `src/components/aeso/PowerModelAIAnalysis.tsx`** (lines 490-496)
+## CSV Export
 
-Add `overContractCredits` to each monthly object being sent:
-```
-overContractCredits: m.overContractCredits,
-```
+The CSV will contain:
 
-The `annual` object is already passed in full (line 489), so `totalOverContractCredits`, `effectivePerKwhCAD`, and `effectivePerKwhUSD` are already included. The `params` object already includes `fixedPriceCAD`. No other frontend changes needed.
+**Header block (metadata comments):**
+- Facility parameters (capacity, uptime target, curtailment strategy)
+- Pricing mode (fixed @ $X/MWh or floating pool)
+- CAD/USD rate, hosting rate
+- Export timestamp
 
-### 2. Edge function: Add over-contract credits to AI prompt
-**File: `supabase/functions/dashboard-ai-assistant/index.ts`** (lines 48-51, 67)
+**Monthly rows with columns:**
+- Month, Total Hours, Running Hours, Uptime %, Curtailed Hours
+- MWh (Actual), MWh (Full Capacity)
+- DTS Charges, Energy Charges, Total (CAD)
+- All-in Rate (cents/kWh CAD), All-in Rate (cents/kWh USD)
+- Curtailment Savings (fixed-price only)
+- Over-Contract Credits (fixed-price only)
 
-**In the Annual Summary section** (after line 51), add a conditional block:
-```
-- Over-Contract Credits: CA$X (Y hours above fixed price)
-- Effective Rate (after credits): CA$X.XXX cents/kWh (US$X.XXX cents/kWh)
-```
-These lines only appear when `params.fixedPriceCAD > 0` and `annual.totalOverContractCredits > 0`.
+**Annual summary row** with the same columns plus:
+- Effective Rate after credits (fixed-price only)
 
-**In the Monthly Breakdown** (line 67), append over-contract credits per month when in fixed-price mode:
-```
-, OC Credits $X
-```
+**All-in Rate Breakdown section:**
+- Each charge component in cents/kWh (Energy, Operating Reserve, FortisAlberta Demand, etc.)
+- Over-Contract Credit deduction and Effective Rate (if applicable)
 
-**In the analysis instructions** (lines 69-94), add guidance for the AI to analyze credits:
-- Under "Cost Drivers and Tariff Analysis": mention over-contract credits and their impact on effective rate
-- Under "Top 3 Optimization Opportunities": consider credit-maximizing curtailment strategies
+## PDF Export
 
-### What does NOT change
-- Calculator logic -- no changes
-- Summary cards or charge breakdown -- no changes
-- Other edge functions -- no changes
-- Non-fixed-price mode -- prompt is identical to before (conditional sections are omitted)
+Uses the existing `exportToPDF` utility from `src/utils/pdfExport.ts` (jsPDF + html2canvas). Captures the charge breakdown card and monthly summary table as a styled PDF.
+
+## Files Modified
+
+### 1. New file: `src/utils/powerModelExport.ts`
+Contains all export logic:
+- `exportPowerModelCSV(monthly, annual, params, cadUsdRate, capacityMW)` -- builds and downloads CSV
+- `exportPowerModelPDF()` -- captures the results section via html2canvas
+
+### 2. `src/components/aeso/PowerModelAnalyzer.tsx`
+- Import `Download` icon and dropdown menu components
+- Add a dropdown button next to "Edit Config" with "Export CSV" and "Export PDF" options
+- Pass `monthly`, `annual`, `params` to the export functions
+- Add `id="power-model-results"` to the results container div for PDF capture
 
 ## Technical Details
 
-The `buildPowerModelPrompt` function receives the full `data` object which includes `params.fixedPriceCAD` and `annual.totalOverContractCredits`. The conditional prompt additions check:
-- `params.fixedPriceCAD > 0` to determine fixed-price mode
-- `annual.totalOverContractCredits > 0` to determine if any credits were earned
+### CSV generation function signature:
+```typescript
+function exportPowerModelCSV(
+  monthly: MonthlyResult[],
+  annual: AnnualSummary | null,
+  params: FacilityParams,
+  cadUsdRate: number,
+  capacityMW: number
+): void
+```
 
-Monthly `overContractCredits` values are already computed in the calculator; they just need to be included in the serialized monthly data sent from the frontend.
+### Fixed-price conditional columns:
+The CSV conditionally includes "Curtailment Savings" and "Over-Contract Credits" columns only when `params.fixedPriceCAD > 0`, and appends the "Effective Rate" line to the annual summary.
+
+### PDF capture:
+Uses the existing `exportToPDF` function from `src/utils/pdfExport.ts` targeting the `#power-model-results` element with landscape orientation for the wide table.
+
