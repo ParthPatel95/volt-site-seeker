@@ -1,80 +1,48 @@
 
-# Add Over-Contract Credits and Effective Price for Fixed Price Mode
 
-## What This Does
+# Fix Responsiveness and UI Issues in Power Model
 
-When you have a fixed contract price and the pool price spikes above your contracted rate, every hour you curtail during those spikes earns you a "credit" -- the difference between the pool price and your fixed rate. This plan adds tracking of those credits and shows a final "effective energy price" after subtracting all savings.
+## Issues Found
 
-## Example
-- Fixed contract: $52/MWh
-- Pool price spikes to $200/MWh, you curtail for 1 hour at 25 MW
-- Credit earned: ($200 - $52) x 25 = $3,700 for that hour
-- This credit reduces your effective all-in energy cost
+### 1. All-in Rate Breakdown -- labels overflow on mobile
+The rate breakdown rows use a fixed `w-48` (192px) for labels plus two `w-16` (64px) value columns = 320px minimum width before the progress bar even gets space. On a 390px mobile screen with card padding (~32px), the progress bar is crushed to nearly nothing.
 
-## Changes
+**Fix:** Change label width from `w-48` to `w-32 sm:w-48` (128px on mobile, 192px on desktop). Hide the USD column on mobile using `hidden sm:block` since the CAD value is the primary metric. This gives the bar 160px+ on mobile.
 
-### 1. Calculator Hook (`src/hooks/usePowerModelCalculator.ts`)
+### 2. Over-Contract Credits and Effective Rate rows -- same width issue
+The new credit/effective-rate rows at lines 99-112 use the same `w-48` and dual `w-16` layout. Apply the same responsive fix.
 
-**Add `overContractCredit` field to `ShutdownRecord`:**
-- For each curtailed hour in fixed-price mode: `max(0, poolPrice - fixedPriceCAD) * capacityMW`
-- This captures the spread between what you would have paid at pool vs your contract rate
+### 3. Stat ribbon -- no scroll indicator on mobile  
+The stat ribbon can contain 6-7 items at `min-w-[140px]` each (~980px). `overflow-x-auto` works but users may not realize they can scroll. 
 
-**Add `overContractCredits` to `MonthlyResult`:**
-- Sum of all over-contract credits for curtailed hours in that month
+**Fix:** Add a subtle gradient fade on the right edge to hint at scrollable content using a CSS pseudo-element approach via a wrapper div.
 
-**Add to `AnnualSummary`:**
-- `totalOverContractCredits` -- annual sum of all credits
-- `effectivePerKwhCAD` -- `(totalAmountDue - totalOverContractCredits) / totalKWh`
-- `effectivePerKwhUSD` -- same converted to USD
+### 4. Monthly Summary Table header -- wrapping on small screens
+The header text "All-in Rate Breakdown (cents/kWh)" plus the badge can wrap awkwardly on mobile.
 
-### 2. Summary Cards (`src/components/aeso/PowerModelSummaryCards.tsx`)
+**Fix:** Make the header `flex-wrap gap-2` (already done) but shrink the CardTitle text to `text-xs sm:text-sm`.
 
-**Update the All-in Rate card (fixed-price mode only):**
-- Below the current all-in rate, add a line showing "After Credits: X.XX cents/kWh" in green
-- Show the total over-contract credits in the stat ribbon as a new StatItem
+### 5. Unused variable cleanup
+`overContractHours` on line 35 of `PowerModelSummaryCards.tsx` is computed but never used. Remove it.
 
-**Add new stat ribbon item:**
-- Icon: green dollar sign
-- Label: "Over-Contract Credits"
-- Value: total credits amount
-- Sub: "X hours above $52/MWh"
+### 6. gl-matrix build error
+This is a pre-existing TypeScript error in `node_modules/gl-matrix/index.d.ts` unrelated to our changes. Fix by adding `skipLibCheck: true` to `tsconfig.json` (standard practice for third-party type issues).
 
-### 3. Charge Breakdown (`src/components/aeso/PowerModelChargeBreakdown.tsx`)
+## Files Modified
 
-**Add "Over-Contract Credit" column** (fixed-price mode only, next to existing Curtail Savings):
-- Per-month credit amounts in green
-- Annual total in footer
+### `src/components/aeso/PowerModelChargeBreakdown.tsx`
+- Change label `w-48` to `w-32 sm:w-48` in rate breakdown rows (line 77, 89, 100, 108)
+- Hide USD cents column on mobile: add `hidden sm:inline` to the USD `<span>` elements (lines 85, 92, 105, 111)
+- Apply same to the All-in Total and Effective Rate footer rows
 
-**Add "Effective Rate" row** to the All-in Rate Breakdown section:
-- Shows the all-in rate minus credits per kWh
-- Highlighted in green with a downward arrow indicator
+### `src/components/aeso/PowerModelSummaryCards.tsx`
+- Remove unused `overContractHours` variable (line 35)
+- Add a scroll-hint gradient wrapper around the stat ribbon `div`
 
-### 4. No other files modified
+### `tsconfig.json`
+- Add `"skipLibCheck": true` to fix the gl-matrix build error
 
-The revenue analysis, AI analysis, PPA analyzer, and other components remain untouched. The new fields are additive -- nothing existing breaks.
-
-## Technical Details
-
-### New fields in `MonthlyResult`:
-```
-overContractCredits: number  // Sum of max(0, poolPrice - fixedPriceCAD) * cap for curtailed hours
-```
-
-### New fields in `AnnualSummary`:
-```
-totalOverContractCredits: number
-effectivePerKwhCAD: number   // (totalAmountDue - totalOverContractCredits) / totalKWh
-effectivePerKwhUSD: number
-```
-
-### Credit calculation per curtailed hour:
-```
-overContractCredit = max(0, poolPrice - fixedPriceCAD) * contractedCapacityMW
-```
-
-### Effective price calculation:
-```
-effectivePerKwhCAD = (totalAmountDue - totalOverContractCredits) / totalKWh
-```
-
-This only applies when `fixedPriceCAD > 0`. In floating mode, these fields are all zero and the UI elements are hidden.
+## What does NOT change
+- Calculator logic, data flow, and all computations remain identical
+- Desktop layout is visually unchanged (same widths apply at `sm:` breakpoint)
+- All other AESO Hub tabs and components untouched
