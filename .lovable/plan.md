@@ -1,111 +1,80 @@
 
+# Add Over-Contract Credits and Effective Price for Fixed Price Mode
 
-# Fix Remaining 5 AESO API Endpoints -- Confirmed Paths from Official Documentation
+## What This Does
 
-## Root Cause (DEFINITIVE)
+When you have a fixed contract price and the pool price spikes above your contracted rate, every hour you curtail during those spikes earns you a "credit" -- the difference between the pool price and your fixed rate. This plan adds tracking of those credits and shows a final "effective energy price" after subtracting all savings.
 
-The AESO APIM gateway uses **nested operation paths** that we were not trying. I scraped the official developer portal and found the exact documented URLs.
-
-### Evidence Table
-
-| API | What we tried (404) | Official documented URL | Status |
-|-----|---------------------|------------------------|--------|
-| Energy Merit Order | `/energymeritorder-api/v1/energyMeritOrderReport` | `/energymeritorder-api/v1/meritOrder/energy?startDate={startDate}` | CONFIRMED from docs |
-| OR Offer Control | `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?startDate=...&endDate=...` | Same path but returns 400 "Invalid Parameter name" -- path exists, params wrong | Needs param fix |
-| ITC (Interchange) | `/itc-api/v1/interchangeCapability` | Likely nested: `/itc-api/v1/report/interchangeCapability` or `/itc-api/v1/intertie/capability` | Probe needed |
-| Metered Volume | `/meteredvolume-api/v1/meteredVolumeReport?startDate=...` | Likely nested: `/meteredvolume-api/v1/volume/meteredVolume?startDate=...` | Probe needed |
-
-### Key insight from working endpoints
-
-Looking at confirmed paths, AESO uses a **category/operation** pattern:
-- Pool Price: `/poolprice-api/v1.1/price/poolPrice` (category: `price`)
-- SMP: `/systemmarginalprice-api/v1.1/price/systemMarginalPrice` (category: `price`)
-- AIL: `/actualforecast-api/v1/load/albertaInternalLoad` (category: `load`)
-- CSD: `/currentsupplydemand-api/v2/csd/summary/current` (category: `csd/summary`)
-- Energy Merit Order: `/energymeritorder-api/v1/meritOrder/energy` (category: `meritOrder`)
-- Gen Capacity: `/aiesgencapacity-api/v1/AIESGenCapacity` (flat -- exception)
-- Asset List: `/assetlist-api/v1/assetlist` (flat -- exception)
-
-So the 5 failing APIs likely follow the nested pattern with a category prefix.
+## Example
+- Fixed contract: $52/MWh
+- Pool price spikes to $200/MWh, you curtail for 1 hour at 25 MW
+- Credit earned: ($200 - $52) x 25 = $3,700 for that hour
+- This credit reduces your effective all-in energy cost
 
 ## Changes
 
-### File: `supabase/functions/aeso-comprehensive-data-collector/index.ts`
+### 1. Calculator Hook (`src/hooks/usePowerModelCalculator.ts`)
 
-#### Change 1: Fix Energy Merit Order paths (GUARANTEED fix)
-Replace the entire `meritOrder` array with the confirmed documented URL as the first entry:
-```
-meritOrder: [
-  "/energymeritorder-api/v1/meritOrder/energy?startDate={start}",  // Official docs confirmed
-  "/energymeritorder-api/v1/energyMeritOrderReport",  // fallback
-]
-```
-Note: `startDate` must be 60+ days prior to current date (same as OR data).
+**Add `overContractCredit` field to `ShutdownRecord`:**
+- For each curtailed hour in fixed-price mode: `max(0, poolPrice - fixedPriceCAD) * capacityMW`
+- This captures the spread between what you would have paid at pool vs your contract rate
 
-#### Change 2: Fix OR Report parameter names
-The path `/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl` is confirmed WORKING (returns 400 not 404). The 400 error says "Invalid Parameter name" for `startDate`/`endDate`. Try these parameter variations:
-```
-orReport: [
-  "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?start_date={start}&end_date={end}",
-  "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?date={start}",
-  "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl?report_date={start}",
-  "/operatingreserveoffercontrol-api/v1/OperatingReserveOfferControl",  // no params at all
-  "/operatingreserveoffercontrol-api/v1/offerControl/operatingReserve?startDate={start}",
-  "/operatingreserveoffercontrol-api/v1/report/offerControl?startDate={start}",
-]
-```
+**Add `overContractCredits` to `MonthlyResult`:**
+- Sum of all over-contract credits for curtailed hours in that month
 
-#### Change 3: Fix Interchange paths with nested segments
-Following the category/operation pattern. The portal lists ONE API `itc-api-v1` with multiple operations:
-```
-interchangeCapability: [
-  "/itc-api/v1/intertie/capability",
-  "/itc-api/v1/report/interchangeCapability",
-  "/itc-api/v1/capability/interchange",
-  "/itc-api/v1/atc/capability",
-  "/itc-api/v1/interchangeCapability",  // flat fallback
-]
-interchangeOutage: [
-  "/itc-api/v1/intertie/outage",
-  "/itc-api/v1/report/interchangeOutage",
-  "/itc-api/v1/outage/interchange",
-  "/itc-api/v1/interchangeOutage",  // flat fallback
-]
-```
-Remove `interchangecapability-api` and `interchangeoutage-api` prefixes entirely -- they do not exist.
+**Add to `AnnualSummary`:**
+- `totalOverContractCredits` -- annual sum of all credits
+- `effectivePerKwhCAD` -- `(totalAmountDue - totalOverContractCredits) / totalKWh`
+- `effectivePerKwhUSD` -- same converted to USD
 
-#### Change 4: Fix Metered Volume with nested path
+### 2. Summary Cards (`src/components/aeso/PowerModelSummaryCards.tsx`)
+
+**Update the All-in Rate card (fixed-price mode only):**
+- Below the current all-in rate, add a line showing "After Credits: X.XX cents/kWh" in green
+- Show the total over-contract credits in the stat ribbon as a new StatItem
+
+**Add new stat ribbon item:**
+- Icon: green dollar sign
+- Label: "Over-Contract Credits"
+- Value: total credits amount
+- Sub: "X hours above $52/MWh"
+
+### 3. Charge Breakdown (`src/components/aeso/PowerModelChargeBreakdown.tsx`)
+
+**Add "Over-Contract Credit" column** (fixed-price mode only, next to existing Curtail Savings):
+- Per-month credit amounts in green
+- Annual total in footer
+
+**Add "Effective Rate" row** to the All-in Rate Breakdown section:
+- Shows the all-in rate minus credits per kWh
+- Highlighted in green with a downward arrow indicator
+
+### 4. No other files modified
+
+The revenue analysis, AI analysis, PPA analyzer, and other components remain untouched. The new fields are additive -- nothing existing breaks.
+
+## Technical Details
+
+### New fields in `MonthlyResult`:
 ```
-meteredVolume: [
-  "/meteredvolume-api/v1/volume/meteredVolume?startDate={start}&endDate={end}",
-  "/meteredvolume-api/v1/report/meteredVolume?startDate={start}&endDate={end}",
-  "/meteredvolume-api/v1/meter/volume?startDate={start}&endDate={end}",
-  "/meteredvolume-api/v1/meteredVolumeReport?startDate={start}&endDate={end}",  // flat fallback
-]
+overContractCredits: number  // Sum of max(0, poolPrice - fixedPriceCAD) * cap for curtailed hours
 ```
 
-#### Change 5: Use 60-day prior dates for Merit Order (like OR)
-The docs explicitly say EMMO data is "available 60 days after the date of the snapshot". Update the merit order fetch to use a date 61+ days in the past, same as the OR report already does.
+### New fields in `AnnualSummary`:
+```
+totalOverContractCredits: number
+effectivePerKwhCAD: number   // (totalAmountDue - totalOverContractCredits) / totalKWh
+effectivePerKwhUSD: number
+```
 
-#### Change 6: Increase maxPaths for discovery
-Currently `tryEndpointsDualAuth` limits to `maxPaths = 3`. For the new expanded path arrays, increase to `maxPaths = 5` to ensure all variations are tested.
+### Credit calculation per curtailed hour:
+```
+overContractCredit = max(0, poolPrice - fixedPriceCAD) * contractedCapacityMW
+```
 
-### What does NOT change
-- All 9 working endpoints remain completely untouched
-- The `energy-data-integration` function is not modified
-- CSD parsing, snapshot storage, and all data extraction logic unchanged
-- Frontend hooks unchanged
-- Diagnostic mode unchanged
+### Effective price calculation:
+```
+effectivePerKwhCAD = (totalAmountDue - totalOverContractCredits) / totalKWh
+```
 
-### No other files are modified
-
-## Expected Outcome
-- Energy Merit Order: should succeed immediately (official documented path)
-- OR Report: high chance of success since the endpoint exists (400 not 404) -- just need the right parameter names
-- ITC/Metered Volume: improved odds with nested path probing following the confirmed pattern from other AESO APIs
-
-## Technical Notes
-- Energy Merit Order data is delayed 60 days per AESO policy (same as OR data)
-- Available from September 1, 2009 onward
-- The EMMO response contains `data[]` array with `MeritOrderData` objects
-- All critical real-time data (reserves, interchange flows, generation) remains available via the working CSD endpoint regardless of whether these supplemental APIs are fixed
+This only applies when `fixedPriceCAD > 0`. In floating mode, these fields are all zero and the UI elements are hidden.
