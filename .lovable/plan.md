@@ -1,48 +1,50 @@
 
+# Include Over-Contract Credits in AI Executive Briefing
 
-# Fix Responsiveness and UI Issues in Power Model
+## Overview
+When in fixed-price mode, the AI Executive Briefing currently has no visibility into over-contract credits or the effective rate after credits. This change passes that data to the AI prompt so it can analyze credit earnings and effective cost savings.
 
-## Issues Found
+## Changes
 
-### 1. All-in Rate Breakdown -- labels overflow on mobile
-The rate breakdown rows use a fixed `w-48` (192px) for labels plus two `w-16` (64px) value columns = 320px minimum width before the progress bar even gets space. On a 390px mobile screen with card padding (~32px), the progress bar is crushed to nearly nothing.
+### 1. Frontend: Pass over-contract data to edge function
+**File: `src/components/aeso/PowerModelAIAnalysis.tsx`** (lines 490-496)
 
-**Fix:** Change label width from `w-48` to `w-32 sm:w-48` (128px on mobile, 192px on desktop). Hide the USD column on mobile using `hidden sm:block` since the CAD value is the primary metric. This gives the bar 160px+ on mobile.
+Add `overContractCredits` to each monthly object being sent:
+```
+overContractCredits: m.overContractCredits,
+```
 
-### 2. Over-Contract Credits and Effective Rate rows -- same width issue
-The new credit/effective-rate rows at lines 99-112 use the same `w-48` and dual `w-16` layout. Apply the same responsive fix.
+The `annual` object is already passed in full (line 489), so `totalOverContractCredits`, `effectivePerKwhCAD`, and `effectivePerKwhUSD` are already included. The `params` object already includes `fixedPriceCAD`. No other frontend changes needed.
 
-### 3. Stat ribbon -- no scroll indicator on mobile  
-The stat ribbon can contain 6-7 items at `min-w-[140px]` each (~980px). `overflow-x-auto` works but users may not realize they can scroll. 
+### 2. Edge function: Add over-contract credits to AI prompt
+**File: `supabase/functions/dashboard-ai-assistant/index.ts`** (lines 48-51, 67)
 
-**Fix:** Add a subtle gradient fade on the right edge to hint at scrollable content using a CSS pseudo-element approach via a wrapper div.
+**In the Annual Summary section** (after line 51), add a conditional block:
+```
+- Over-Contract Credits: CA$X (Y hours above fixed price)
+- Effective Rate (after credits): CA$X.XXX cents/kWh (US$X.XXX cents/kWh)
+```
+These lines only appear when `params.fixedPriceCAD > 0` and `annual.totalOverContractCredits > 0`.
 
-### 4. Monthly Summary Table header -- wrapping on small screens
-The header text "All-in Rate Breakdown (cents/kWh)" plus the badge can wrap awkwardly on mobile.
+**In the Monthly Breakdown** (line 67), append over-contract credits per month when in fixed-price mode:
+```
+, OC Credits $X
+```
 
-**Fix:** Make the header `flex-wrap gap-2` (already done) but shrink the CardTitle text to `text-xs sm:text-sm`.
+**In the analysis instructions** (lines 69-94), add guidance for the AI to analyze credits:
+- Under "Cost Drivers and Tariff Analysis": mention over-contract credits and their impact on effective rate
+- Under "Top 3 Optimization Opportunities": consider credit-maximizing curtailment strategies
 
-### 5. Unused variable cleanup
-`overContractHours` on line 35 of `PowerModelSummaryCards.tsx` is computed but never used. Remove it.
+### What does NOT change
+- Calculator logic -- no changes
+- Summary cards or charge breakdown -- no changes
+- Other edge functions -- no changes
+- Non-fixed-price mode -- prompt is identical to before (conditional sections are omitted)
 
-### 6. gl-matrix build error
-This is a pre-existing TypeScript error in `node_modules/gl-matrix/index.d.ts` unrelated to our changes. Fix by adding `skipLibCheck: true` to `tsconfig.json` (standard practice for third-party type issues).
+## Technical Details
 
-## Files Modified
+The `buildPowerModelPrompt` function receives the full `data` object which includes `params.fixedPriceCAD` and `annual.totalOverContractCredits`. The conditional prompt additions check:
+- `params.fixedPriceCAD > 0` to determine fixed-price mode
+- `annual.totalOverContractCredits > 0` to determine if any credits were earned
 
-### `src/components/aeso/PowerModelChargeBreakdown.tsx`
-- Change label `w-48` to `w-32 sm:w-48` in rate breakdown rows (line 77, 89, 100, 108)
-- Hide USD cents column on mobile: add `hidden sm:inline` to the USD `<span>` elements (lines 85, 92, 105, 111)
-- Apply same to the All-in Total and Effective Rate footer rows
-
-### `src/components/aeso/PowerModelSummaryCards.tsx`
-- Remove unused `overContractHours` variable (line 35)
-- Add a scroll-hint gradient wrapper around the stat ribbon `div`
-
-### `tsconfig.json`
-- Add `"skipLibCheck": true` to fix the gl-matrix build error
-
-## What does NOT change
-- Calculator logic, data flow, and all computations remain identical
-- Desktop layout is visually unchanged (same widths apply at `sm:` breakpoint)
-- All other AESO Hub tabs and components untouched
+Monthly `overContractCredits` values are already computed in the calculator; they just need to be included in the serialized monthly data sent from the frontend.
