@@ -20,6 +20,7 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
   const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
   const netMargin = annualRevenue - annual.totalAmountDue;
   const marginPct = annualRevenue > 0 ? (netMargin / annualRevenue) * 100 : 0;
+  const isFixedPrice = (fixedPriceCAD ?? 0) > 0;
 
   const usd = (cad: number) => cad * cadUsdRate;
   const fmtM = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
@@ -29,6 +30,9 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
   const totalCentsPerKwh = annual.avgPerKwhCAD * 100;
   const addersCentsPerKwh = totalCentsPerKwh - energyCentsPerKwh;
   const energyPct = totalCentsPerKwh > 0 ? (energyCentsPerKwh / totalCentsPerKwh) * 100 : 0;
+
+  // Count hours above fixed price for over-contract credits
+  const overContractHours = isFixedPrice ? annual.totalOverContractCredits / ((fixedPriceCAD ?? 0) > 0 ? 1 : 1) : 0;
 
   return (
     <div className="space-y-3">
@@ -71,6 +75,13 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
             </div>
             <p className="text-3xl font-bold tracking-tight">{totalCentsPerKwh.toFixed(2)}¢<span className="text-lg font-normal text-white/60">/kWh</span></p>
             <p className="text-sm text-white/60 mt-1">{(totalCentsPerKwh * cadUsdRate).toFixed(2)}¢/kWh USD</p>
+            {/* After credits effective rate (fixed price only) */}
+            {isFixedPrice && annual.totalOverContractCredits > 0 && (
+              <p className="text-sm font-semibold text-emerald-300 mt-1">
+                <ArrowDown className="w-3 h-3 inline mr-1" />
+                After Credits: {(annual.effectivePerKwhCAD * 100).toFixed(2)}¢/kWh
+              </p>
+            )}
             {/* Energy vs Adders split bar */}
             <div className="mt-3 pt-3 border-t border-white/10">
               <div className="flex items-center gap-2 mb-1.5">
@@ -149,6 +160,9 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
             ) : null}
             {(fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? (
               <StatItem icon={<PiggyBank className="w-3.5 h-3.5 text-emerald-500" />} label="Curtail Savings" value={`CA${fmtM(curtailmentSavings)}`} sub={`vs fixed $${fixedPriceCAD}/MWh`} highlight={curtailmentSavings >= 0} />
+            ) : null}
+            {isFixedPrice && annual.totalOverContractCredits > 0 ? (
+              <StatItem icon={<DollarSign className="w-3.5 h-3.5 text-emerald-500" />} label="Over-Contract Credits" value={`CA${fmtM(annual.totalOverContractCredits)}`} sub={`Pool above $${fixedPriceCAD}/MWh`} highlight />
             ) : null}
             {hostingRateCAD ? (
               <StatItem icon={<Banknote className="w-3.5 h-3.5 text-emerald-500" />} label="Revenue" value={`CA${fmtM(annualRevenue)}`} sub={`US${fmtM(usd(annualRevenue))}`} />
