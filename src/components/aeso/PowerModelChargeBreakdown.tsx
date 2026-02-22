@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from '@/components/ui/badge';
 import { RateSourceBadge } from '@/components/ui/rate-source-badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, TrendingDown, TrendingUp, AlertTriangle, Zap, BarChart3 } from 'lucide-react';
+import { Info, TrendingDown, TrendingUp, AlertTriangle, Zap, BarChart3, ArrowDown } from 'lucide-react';
 import type { MonthlyResult, AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -91,6 +91,28 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                   <span className="text-sm font-bold font-mono w-16 text-right tabular-nums">{totalCents.toFixed(2)}¢</span>
                   <span className="text-xs font-mono font-semibold text-muted-foreground w-16 text-right tabular-nums">{(totalCents * cadUsdRate).toFixed(2)}¢</span>
                 </div>
+                {isFixed && annual && annual.totalOverContractCredits > 0 && (() => {
+                  const effectiveCents = annual.effectivePerKwhCAD * 100;
+                  const creditCents = (annual.totalOverContractCredits / kwh) * 100;
+                  return (
+                    <>
+                      <div className="flex items-center gap-3 pt-1">
+                        <span className="text-xs w-48 shrink-0 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                          <ArrowDown className="w-3 h-3" /> Over-Contract Credits
+                        </span>
+                        <div className="flex-1" />
+                        <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 w-16 text-right tabular-nums">-{creditCents.toFixed(2)}¢</span>
+                        <span className="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70 w-16 text-right tabular-nums">-{(creditCents * cadUsdRate).toFixed(2)}¢</span>
+                      </div>
+                      <div className="flex items-center gap-3 pt-2 border-t border-emerald-500/30">
+                        <span className="text-xs font-bold w-48 shrink-0 text-emerald-700 dark:text-emerald-300">Effective Rate</span>
+                        <div className="flex-1" />
+                        <span className="text-sm font-bold font-mono text-emerald-700 dark:text-emerald-300 w-16 text-right tabular-nums">{effectiveCents.toFixed(2)}¢</span>
+                        <span className="text-xs font-mono font-semibold text-emerald-600/70 dark:text-emerald-400/70 w-16 text-right tabular-nums">{(effectiveCents * cadUsdRate).toFixed(2)}¢</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -256,6 +278,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                     </TableHead>
                   )}
                   {fixedPriceCAD > 0 && <TableHead className="text-right border-l border-border/50">Curtail Savings</TableHead>}
+                  {fixedPriceCAD > 0 && <TableHead className="text-right">Over-Contract Credit</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -330,6 +353,11 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                           {m.curtailmentSavings > 0 ? '+' : ''}{fmtShort(m.curtailmentSavings)}
                         </TableCell>
                       )}
+                      {fixedPriceCAD > 0 && (
+                        <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                          {m.overContractCredits > 0 ? '+' : ''}{fmtShort(m.overContractCredits)}
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
@@ -391,6 +419,11 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                     {fixedPriceCAD > 0 && (
                       <TableCell className="text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400 border-l border-border/50">
                         {annual.curtailmentSavings > 0 ? '+' : ''}{fmtShort(annual.curtailmentSavings)}
+                      </TableCell>
+                    )}
+                    {fixedPriceCAD > 0 && (
+                      <TableCell className="text-right tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                        {annual.totalOverContractCredits > 0 ? '+' : ''}{fmtShort(annual.totalOverContractCredits)}
                       </TableCell>
                     )}
                   </TableRow>
