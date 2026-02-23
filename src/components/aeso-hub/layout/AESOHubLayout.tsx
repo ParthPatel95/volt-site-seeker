@@ -7,6 +7,7 @@ import { AESOHubSidebar, AESOHubView } from './AESOHubSidebar';
 const VIEW_LABELS: Record<AESOHubView, string> = {
   market: 'Market Overview',
   'power-model': 'Power Model',
+  energization: 'Energization Timeline',
   predictions: 'AI Predictions',
   datacenter: 'Datacenter Control',
   analytics: 'Analytics',
