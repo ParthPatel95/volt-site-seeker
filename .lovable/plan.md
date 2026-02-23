@@ -1,73 +1,156 @@
 
 
-# Fix Power Model DTS Rates to Match Official AESO 2026 Bill Estimator
+# Energization Timeline Planner -- New AESO Hub Module
 
-## Problem
-The official AESO 2026 Bill Estimator (2026-015T Appendix 1) reveals that our tariff constants were estimated from the 2025 tariff with manual adjustments. The actual approved 2026 rates differ, with three components being significantly wrong.
+## Overview
+A new "Energization" tab in the AESO Hub that models the full financial and regulatory timeline for connecting an industrial load to the Alberta grid. Every number in this tool comes from official AESO sources (ISO Tariff, ISO Rules Section 103.3, ISO Fees, Connection Process documentation) -- nothing estimated or fabricated.
 
-## Discrepancies Found
+## What It Does
+Users input their facility parameters (capacity in MW, target energization date, DFO) and the tool produces:
+1. A visual **6-stage Gantt-style timeline** of the AESO Connection Process (Stages 1-6) with gate milestones
+2. A **financial obligations breakdown** showing every deposit, fee, and security requirement at each stage
+3. A **monthly DTS cost projection** for what charges begin on energization day
+4. A **total capital-at-risk summary** showing cumulative cash required before first kWh flows
 
-### Critical (materially affects results)
-- **Operating Reserve**: We use 12.50%, official is **8.13%** -- overstating OR charges by ~54%
-- **TCR (Transmission Constraint Rebalancing)**: We use $0.265/MWh, official is **$0.131/MWh** -- roughly 2x too high
-- **Voltage Control**: We use $0.07/MWh, official is **$0.15/MWh** -- roughly 2x too low
+## Data Sources (100% Factual)
+All figures come from official AESO documents:
 
-### Moderate (demand/capacity rates all slightly off)
-- Bulk Coincident Demand: $11,131 should be **$10,927** (-1.8%)
-- Regional Billing Capacity: $2,936 should be **$2,987** (+1.7%)
-- POD Substation: $15,258 should be **$15,562** (+2.0%)
-- POD Tier 1: $5,022 should be **$5,122** (+2.0%)
-- POD Tier 2: $2,978 should be **$3,037** (+2.0%)
-- POD Tier 3: $1,994 should be **$2,033** (+2.0%)
-- POD Tier 4: $1,227 should be **$1,252** (+2.0%)
-- System Support: $52 should be **$50** (-3.8%)
+| Data Point | Source | URL |
+|---|---|---|
+| Connection Process Stages 1-6 (timelines, deliverables) | AESO Connection Process page | aeso.ca/grid/connecting-to-the-grid/connection-process/ |
+| Stage 3 target: 32 weeks | AESO Connection Process | Same as above |
+| Financial Security = 2 months estimated obligations | ISO Rules Section 103.3 (effective May 2, 2024) | aeso.ca/rules-standards-and-tariff/iso-rules/section-103-3-financial-security-requirements/ |
+| Pool Participation Fee: $150 + GST | ISO Fees page | aeso.ca/rules-standards-and-tariff/iso-fees/ |
+| Energy Market Trading Charge: $0.606/MWh + GST | ISO Fees page | Same as above |
+| Cluster Assessment Preliminary Fee: lower of $5,000 + $150/MW or $25,000 + GST | ISO Fees page | Same as above |
+| Cluster Assessment Detailed Fee: lower of $20,000 + $300/MW or $65,000 + GST | ISO Fees page | Same as above |
+| DTS rate components (all verified from 2026-015T Bill Estimator) | tariff-rates.ts constants | Already in codebase |
+| Prudential Pool Prices (Jan 2026: $51, Feb 2026: $33) | AESO Settlement & Credit page | aeso.ca/market/market-participation/settlement-credit/ |
+| Data Centre Staged Energizations (EN2 outside dates) | AESO Process Updates Nov 2025 | aeso.ca/grid/connecting-to-the-grid/process-updates/2025/data-centre-staged-energizations/ |
 
-### Correct (no change needed)
-- Bulk Metered Energy: $1.23/MWh -- matches
-- Regional Metered Energy: $0.93/MWh -- matches
-- Rider F: $1.26/MWh -- matches
-- GST: 5% -- matches
+## UI Design
 
-## Changes
+### Section 1: Facility Input Panel
+- Contracted Capacity (MW) -- slider/input, default 45 MW
+- Target Energization Date -- date picker
+- DFO selection (FortisAlberta, EPCOR, ATCO, ENMAX)
+- Project type toggle: Load (industrial/data centre) vs Generator
+- Substation fraction (default 1.0)
 
-### File: `src/constants/tariff-rates.ts`
+### Section 2: Connection Process Timeline (Visual)
+A horizontal stage-by-stage timeline showing:
 
-Update `AESO_RATE_DTS_2026` with all corrected rates from the official bill estimator:
-
+```text
+Stage 1        Stage 2          Stage 3           Stage 4        Stage 5         Stage 6
+Screening      Assessment       Reg. Prep         AUC Apps       Construction    Close Out
+(8 wks)        (16 wks)         (32 wks)          (variable)     (variable)      (post-ISD)
+   |               |                |                  |              |               |
+ Gate 1          Gate 2           Gate 3             Gate 4         Gate 5          Gate 6
+                                   |                                  |
+                              SAS Agreement                    100-Day & 30-Day
+                            + Financial Security              Energization Packages
 ```
-bulkSystem.coincidentDemand: 11131 -> 10927
-regionalSystem.billingCapacity: 2936 -> 2987
-pointOfDelivery.substation: 15258 -> 15562
-pointOfDelivery.tiers[0].rate: 5022 -> 5122
-pointOfDelivery.tiers[1].rate: 2978 -> 3037
-pointOfDelivery.tiers[2].rate: 1994 -> 2033
-pointOfDelivery.tiers[3].rate: 1227 -> 1252
-operatingReserve.ratePercent: 12.50 -> 8.13
-tcr.meteredEnergy: 0.265 -> 0.131
-voltageControl.meteredEnergy: 0.07 -> 0.15
-systemSupport.highestDemand: 52 -> 50
+
+Each stage shows:
+- Target duration (from AESO Connection Process page)
+- Key deliverables (factual from AESO)
+- Financial obligations triggered at that gate
+
+### Section 3: Financial Obligations Breakdown
+A table/card layout showing every fee and deposit:
+
+**Pre-Connection Fees:**
+- Cluster Assessment Preliminary Fee: lower of ($5,000 + $150 x MW) or $25,000 + GST
+- Cluster Assessment Detailed Fee: lower of ($20,000 + $300 x MW) or $65,000 + GST
+- Pool Participation Fee: $150 + GST (annual)
+
+**Stage 3 -- SAS Agreement Financial Security:**
+- Calculated as 2 months of estimated DTS obligations (per ISO Rules Section 103.3)
+- Uses the full DTS rate structure from our verified 2026-015T constants
+- Formula: monthly DTS charges x 2 (bulk system + regional + POD + energy charges)
+
+**Stage 5 -- Energization Financial Security:**
+- Additional financial security may be required (per Section 103.3)
+- Calculated based on 2 months of estimated energy market obligations
+- Uses Prudential Pool Price x capacity x load factor x 2 months
+
+**Ongoing Post-Energization:**
+- Energy Market Trading Charge: $0.606/MWh + GST
+- Monthly DTS charges (calculated using existing Power Model logic)
+
+### Section 4: Total Capital-at-Risk Summary
+Summary cards showing:
+- Total upfront fees (cluster assessment + pool participation)
+- Financial security (SAS Agreement) -- refundable deposit
+- Financial security (energy market) -- refundable deposit
+- First month DTS charges estimate
+- **Total cash required before first revenue**
+
+### Section 5: Source Attribution
+Every figure links to its AESO source document with "Verified" badges and effective dates.
+
+## Files to Create/Modify
+
+### New Files:
+1. **`src/components/aeso-hub/tabs/EnergizationTab.tsx`** -- Tab wrapper (follows PowerModelTab pattern)
+2. **`src/components/aeso/EnergizationTimeline.tsx`** -- Main component containing all sections
+3. **`src/constants/energization-fees.ts`** -- All AESO fees and connection process data with source URLs
+
+### Modified Files:
+4. **`src/components/aeso-hub/layout/AESOHubSidebar.tsx`**
+   - Add `'energization'` to `AESOHubView` type union
+   - Add nav item under "Market" group: `{ id: 'energization', label: 'Energization', icon: Timer }`
+
+5. **`src/components/aeso-hub/layout/AESOHubLayout.tsx`**
+   - Add `energization: 'Energization Timeline'` to VIEW_LABELS
+
+6. **`src/components/aeso-hub/AESOMarketHub.tsx`**
+   - Import and render `EnergizationTab` when `activeTab === 'energization'`
+
+## Technical Details
+
+### Constants file structure (`energization-fees.ts`):
+```typescript
+export const AESO_CONNECTION_PROCESS = {
+  stages: [
+    {
+      id: 1, name: 'Screening',
+      targetWeeks: 8,
+      description: 'AESO reviews the SASR and determines connection requirements',
+      financialObligations: [],
+      keyDeliverables: ['System Access Service Request (SASR)'],
+      source: 'aeso.ca/grid/connecting-to-the-grid/connection-process/',
+    },
+    // ... stages 2-6 with verified data
+  ],
+} as const;
+
+export const AESO_ISO_FEES = {
+  poolParticipationFee: { amount: 150, gst: true, source: '...' },
+  energyMarketTradingCharge: { perMWh: 0.606, gst: true, source: '...' },
+  clusterPreliminaryFee: {
+    formula: 'lower of ($5,000 + $150*MW) or $25,000',
+    calculate: (mw: number) => Math.min(5000 + 150 * mw, 25000),
+    gst: true, source: '...',
+  },
+  clusterDetailedFee: {
+    formula: 'lower of ($20,000 + $300*MW) or $65,000',
+    calculate: (mw: number) => Math.min(20000 + 300 * mw, 65000),
+    gst: true, source: '...',
+  },
+} as const;
+
+export const AESO_FINANCIAL_SECURITY = {
+  rule: 'ISO Rules Section 103.3',
+  requirement: '2 months of estimated obligations above unsecured credit limit',
+  effectiveDate: '2024-05-02',
+  source: 'aeso.ca/rules-standards-and-tariff/iso-rules/section-103-3-financial-security-requirements/',
+} as const;
 ```
 
-Update `sourceDecision` to reference the 2026-015T bill estimator as the verified source.
+### Financial Security Calculation Logic:
+The SAS Agreement financial security is calculated by running the existing DTS charge calculator (from `AESO_RATE_DTS_2026`) for the given capacity and multiplying by 2 months. This reuses the verified tariff constants already in the codebase.
 
-Remove all "Est. 2026" and "ESTIMATE" comments from these values since they are now confirmed from the official document.
+### Timeline Visualization:
+Uses existing UI primitives (Card, Badge, Progress) with a horizontal step indicator. Each stage is a clickable card that expands to show deliverables, responsible parties, and financial triggers. The timeline highlights which stage corresponds to the user's target date.
 
-### File: `src/hooks/usePowerModelCalculator.ts`
-
-No structural changes needed -- the calculator already reads all rates from the constants file. The corrected values will flow through automatically.
-
-### File: `supabase/functions/energy-rate-estimator/tariff-data.ts`
-
-No changes needed -- the edge function uses simplified flat rates for the quick estimator, not the full DTS structure.
-
-## Impact
-
-For a 45 MW facility at 95% uptime with ~$50/MWh pool price:
-- Operating Reserve drops significantly (8.13% vs 12.50% of pool price), saving roughly $1.5M/year
-- TCR drops by ~50%, saving ~$100k/year
-- Voltage Control increases by ~2x, adding ~$50k/year
-- Net effect: total DTS charges decrease, improving all-in rate by approximately 0.3-0.5 cents/kWh
-
-## Verification
-
-After updating, the calculator output can be cross-checked against the official estimator's result: a 20 MW facility at 65% LF, $51.26/MWh pool price, SF=1.0 should produce a monthly DTS charge of **$376,287**.
