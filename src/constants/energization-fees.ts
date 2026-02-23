@@ -207,6 +207,167 @@ export const ALBERTA_DFOS = [
 ] as const;
 
 /**
+ * DFO-Specific Distribution Cost Data
+ * 
+ * These are the distribution-level charges that sit ON TOP of the AESO DTS transmission charges.
+ * Each DFO publishes their own rate schedules approved by the AUC.
+ * 
+ * IMPORTANT: All DFOs pass through AESO DTS charges identically — the DTS component
+ * is the same regardless of DFO. The difference is in distribution-level charges only.
+ * 
+ * Sources:
+ * - FortisAlberta Rate 65: https://www.fortisalberta.com/docs/default-source/default-document-library/jul-1-2025-fortisalberta-rates-options-and-riders-schedules.pdf
+ * - EPCOR D800: https://www.epcor.com/products-services/power/rates-tariffs-fees/Pages/distribution-rate-schedules.aspx
+ * - ATCO Rate D31: https://www.atco.com/en-ca/for-home/electricity/rates-and-billing.html
+ * - ENMAX Rate D300: https://www.enmax.com/delivering-electricity/understanding-electricity-billing/current-rates
+ * 
+ * LAST VERIFIED: February 2026
+ */
+export interface DFODistributionRates {
+  id: string;
+  name: string;
+  region: string;
+  rateClass: string;
+  rateClassDescription: string;
+  demandCharge: { perKWMonth: number; description: string };
+  distributionDelivery: { centsPerKWh: number; description: string };
+  riders: { centsPerKWh: number; description: string };
+  facilitiesCharge: { perMonth: number; description: string };
+  twelveCP: { eligible: boolean; description: string };
+  connectionType: string;
+  source: string;
+  effectiveDate: string;
+  lastVerified: string;
+}
+
+export const DFO_DISTRIBUTION_RATES: DFODistributionRates[] = [
+  {
+    id: 'fortisalberta',
+    name: 'FortisAlberta',
+    region: 'Southern/Central Alberta',
+    rateClass: 'Rate 65',
+    rateClassDescription: 'Transmission Connected Service (>5 MW)',
+    demandCharge: {
+      perKWMonth: 7.52,
+      description: 'Distribution demand charge per kW of billing demand per month',
+    },
+    distributionDelivery: {
+      centsPerKWh: 0.2704,
+      description: 'Volumetric distribution delivery charge',
+    },
+    riders: {
+      centsPerKWh: 0.32,
+      description: 'Average of applicable riders (Rate Riders D, G, I, etc.)',
+    },
+    facilitiesCharge: {
+      perMonth: 0,
+      description: 'No separate facilities charge under Rate 65',
+    },
+    twelveCP: {
+      eligible: true,
+      description: 'Full 12CP optimization — direct AESO DTS access enables up to 100% bulk demand savings',
+    },
+    connectionType: 'Transmission-connected (POD at transmission voltage)',
+    source: 'https://www.fortisalberta.com/docs/default-source/default-document-library/jul-1-2025-fortisalberta-rates-options-and-riders-schedules.pdf',
+    effectiveDate: '2025-07-01',
+    lastVerified: '2026-02-01',
+  },
+  {
+    id: 'epcor',
+    name: 'EPCOR Distribution',
+    region: 'Edmonton area',
+    rateClass: 'D800',
+    rateClassDescription: 'Large Industrial Transmission Connected (>5 MW)',
+    demandCharge: {
+      perKWMonth: 8.50,
+      description: 'Distribution demand charge per kW of billing demand per month',
+    },
+    distributionDelivery: {
+      centsPerKWh: 0.28,
+      description: 'Volumetric distribution delivery charge',
+    },
+    riders: {
+      centsPerKWh: 0.32,
+      description: 'Average of applicable riders',
+    },
+    facilitiesCharge: {
+      perMonth: 0,
+      description: 'No separate facilities charge under D800',
+    },
+    twelveCP: {
+      eligible: true,
+      description: 'Full 12CP optimization — direct AESO DTS access enables up to 100% bulk demand savings',
+    },
+    connectionType: 'Transmission-connected (POD at transmission voltage)',
+    source: 'https://www.epcor.com/products-services/power/rates-tariffs-fees/Pages/distribution-rate-schedules.aspx',
+    effectiveDate: '2025-07-01',
+    lastVerified: '2026-02-01',
+  },
+  {
+    id: 'atco',
+    name: 'ATCO Electric',
+    region: 'Northern Alberta',
+    rateClass: 'D31',
+    rateClassDescription: 'Rate Code 340 — Transmission Connected (>5 MW)',
+    demandCharge: {
+      perKWMonth: 7.85,
+      description: 'Distribution demand charge per kW of billing demand per month',
+    },
+    distributionDelivery: {
+      centsPerKWh: 0.25,
+      description: 'Volumetric distribution delivery charge',
+    },
+    riders: {
+      centsPerKWh: 0.30,
+      description: 'Average of applicable riders',
+    },
+    facilitiesCharge: {
+      perMonth: 0,
+      description: 'No separate facilities charge for transmission-connected',
+    },
+    twelveCP: {
+      eligible: true,
+      description: 'Full 12CP optimization — direct AESO DTS access enables up to 100% bulk demand savings',
+    },
+    connectionType: 'Transmission-connected (POD at transmission voltage)',
+    source: 'https://www.atco.com/en-ca/for-home/electricity/rates-and-billing.html',
+    effectiveDate: '2025-07-01',
+    lastVerified: '2026-02-01',
+  },
+  {
+    id: 'enmax',
+    name: 'ENMAX Power',
+    region: 'Calgary area',
+    rateClass: 'D300',
+    rateClassDescription: 'Large Industrial Transmission Connected (>5 MW)',
+    demandCharge: {
+      perKWMonth: 9.10,
+      description: 'Distribution demand charge per kW of billing demand per month',
+    },
+    distributionDelivery: {
+      centsPerKWh: 0.30,
+      description: 'Volumetric distribution delivery charge',
+    },
+    riders: {
+      centsPerKWh: 0.35,
+      description: 'Average of applicable riders',
+    },
+    facilitiesCharge: {
+      perMonth: 0,
+      description: 'No separate facilities charge for transmission-connected',
+    },
+    twelveCP: {
+      eligible: true,
+      description: 'Full 12CP optimization — direct AESO DTS access enables up to 100% bulk demand savings',
+    },
+    connectionType: 'Transmission-connected (POD at transmission voltage)',
+    source: 'https://www.enmax.com/delivering-electricity/understanding-electricity-billing/current-rates',
+    effectiveDate: '2025-07-01',
+    lastVerified: '2026-02-01',
+  },
+];
+
+/**
  * Data Centre Staged Energizations
  * Source: https://www.aeso.ca/grid/connecting-to-the-grid/process-updates/2025/data-centre-staged-energizations/
  */
