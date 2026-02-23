@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { format, addWeeks } from 'date-fns';
-import { CalendarIcon, ExternalLink, Shield, DollarSign, Clock, ChevronDown, ChevronUp, Info, CheckCircle2, Zap, Building2 } from 'lucide-react';
+import { CalendarIcon, ExternalLink, Shield, DollarSign, Clock, ChevronDown, ChevronUp, Info, CheckCircle2, Zap, Building2, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,9 +20,11 @@ import {
   AESO_PRUDENTIAL_POOL_PRICES,
   ALBERTA_DFOS,
   AESO_DATA_CENTRE_STAGING,
+  DFO_DISTRIBUTION_RATES,
   withGST,
   formatCAD,
   type ConnectionStage,
+  type DFODistributionRates,
 } from '@/constants/energization-fees';
 import { AESO_RATE_DTS_2026 } from '@/constants/tariff-rates';
 
@@ -607,7 +609,10 @@ export function EnergizationTimeline() {
           />
         </div>
 
-        {/* Section 5: Data Centre Staging Note */}
+        {/* Section 5: DFO Cost Comparison */}
+        <DFOComparisonSection capacityMW={capacityMW} loadFactor={loadFactor} monthlyDTS={calculations.monthlyDTS} />
+
+        {/* Section 6: Data Centre Staging Note */}
         <Card className="border-dashed">
           <CardContent className="py-4">
             <div className="flex items-start gap-3">
@@ -624,6 +629,143 @@ export function EnergizationTimeline() {
         </Card>
       </div>
     </TooltipProvider>
+  );
+}
+
+function DFOComparisonSection({ capacityMW, loadFactor, monthlyDTS }: {
+  capacityMW: number;
+  loadFactor: number;
+  monthlyDTS: { total: number; monthlyMWh: number };
+}) {
+  const comparisons = useMemo(() => {
+    const capacityKW = capacityMW * 1000;
+    const monthlyKWh = monthlyDTS.monthlyMWh * 1000;
+
+    return DFO_DISTRIBUTION_RATES.map((dfo) => {
+      const demandCost = capacityKW * dfo.demandCharge.perKWMonth;
+      const deliveryCost = monthlyKWh * (dfo.distributionDelivery.centsPerKWh / 100);
+      const ridersCost = monthlyKWh * (dfo.riders.centsPerKWh / 100);
+      const facilitiesCost = dfo.facilitiesCharge.perMonth;
+      const distributionSubtotal = demandCost + deliveryCost + ridersCost + facilitiesCost;
+      const distributionGST = distributionSubtotal * 0.05;
+      const distributionTotal = distributionSubtotal + distributionGST;
+
+      const allInMonthly = monthlyDTS.total + distributionTotal;
+      const allInPerMWh = allInMonthly / monthlyDTS.monthlyMWh;
+      const allInCentsPerKWh = allInPerMWh / 10;
+
+      return {
+        dfo,
+        demandCost,
+        deliveryCost,
+        ridersCost,
+        facilitiesCost,
+        distributionTotal,
+        allInMonthly,
+        allInPerMWh,
+        allInCentsPerKWh,
+      };
+    }).sort((a, b) => a.allInMonthly - b.allInMonthly);
+  }, [capacityMW, loadFactor, monthlyDTS]);
+
+  const lowestCost = comparisons[0]?.allInMonthly || 0;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <ArrowUpDown className="w-4 h-4" />
+          DFO Distribution Cost Comparison
+        </CardTitle>
+        <CardDescription>
+          Side-by-side comparison of distribution charges by DFO — AESO DTS transmission charges are identical across all DFOs.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Explanation callout */}
+        <div className="bg-muted/30 rounded-lg p-3 mb-4">
+          <p className="text-xs text-muted-foreground">
+            <strong className="text-foreground">How this works:</strong> All Alberta DFOs pass through the same AESO DTS transmission charges ({formatCAD(monthlyDTS.total)}/mo for your facility).
+            The difference is in <strong>distribution-level</strong> charges — demand charges, delivery fees, and riders — which vary by DFO and their AUC-approved rate schedule.
+          </p>
+        </div>
+
+        {/* Comparison grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {comparisons.map((c, idx) => (
+            <Card key={c.dfo.id} className={cn(
+              'border transition-colors',
+              idx === 0 && 'border-primary/40 bg-primary/5'
+            )}>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-foreground">{c.dfo.name}</p>
+                    <p className="text-xs text-muted-foreground">{c.dfo.rateClass} — {c.dfo.region}</p>
+                  </div>
+                  {idx === 0 && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">Lowest Cost</Badge>
+                  )}
+                </div>
+
+                {/* Key metric */}
+                <div className="mb-3">
+                  <p className="text-2xl font-bold text-foreground">{formatCAD(c.allInMonthly)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                  <p className="text-xs text-muted-foreground">
+                    All-in: {c.allInCentsPerKWh.toFixed(2)}¢/kWh · {formatCAD(c.allInPerMWh)}/MWh
+                  </p>
+                  {idx > 0 && (
+                    <p className="text-xs text-destructive mt-0.5">
+                      +{formatCAD(c.allInMonthly - lowestCost)}/mo vs {comparisons[0].dfo.name}
+                    </p>
+                  )}
+                </div>
+
+                <Separator className="my-2" />
+
+                {/* Distribution breakdown */}
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Distribution Charges</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+                    <span className="text-muted-foreground">Demand ({c.dfo.demandCharge.perKWMonth.toFixed(2)}/kW/mo)</span>
+                    <span className="text-right font-medium">{formatCAD(c.demandCost)}</span>
+                    <span className="text-muted-foreground">Delivery ({c.dfo.distributionDelivery.centsPerKWh}¢/kWh)</span>
+                    <span className="text-right font-medium">{formatCAD(c.deliveryCost)}</span>
+                    <span className="text-muted-foreground">Riders ({c.dfo.riders.centsPerKWh}¢/kWh)</span>
+                    <span className="text-right font-medium">{formatCAD(c.ridersCost)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1 border-t border-border mt-1">
+                    <span className="font-medium text-foreground">Distribution Total (incl. GST)</span>
+                    <span className="font-bold text-foreground">{formatCAD(c.distributionTotal)}</span>
+                  </div>
+                </div>
+
+                <Separator className="my-2" />
+
+                {/* 12CP eligibility */}
+                <div className="flex items-start gap-2 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">{c.dfo.twelveCP.description}</span>
+                </div>
+
+                <div className="mt-2">
+                  <SourceBadge url={c.dfo.source} label={`${c.dfo.rateClass} (eff. ${c.dfo.effectiveDate})`} />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Common DTS note */}
+        <div className="mt-4 bg-muted/20 rounded-lg p-3 flex items-start gap-2">
+          <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            <strong className="text-foreground">AESO DTS charges</strong> ({formatCAD(monthlyDTS.total)}/mo) are identical for all DFOs and are included in the all-in totals above.
+            Only the distribution-level charges vary. All DFOs provide full 12CP optimization eligibility for transmission-connected industrial loads.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
