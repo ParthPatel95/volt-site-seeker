@@ -13,6 +13,7 @@ import { MarketDataTab } from './tabs/MarketDataTab';
 import { PowerModelTab } from './tabs/PowerModelTab';
 import { PredictionsTab } from './tabs/PredictionsTab';
 import { DatacenterTab } from './tabs/DatacenterTab';
+import { EnergizationTab } from './tabs/EnergizationTab';
 import { AnalyticsTab } from './tabs/AnalyticsTab';
 import { SettingsTab } from './tabs/SettingsTab';
 
@@ -109,6 +110,7 @@ export function AESOMarketHub() {
           />
         )}
         {activeTab === 'power-model' && <PowerModelTab />}
+        {activeTab === 'energization' && <EnergizationTab />}
         {activeTab === 'predictions' && <PredictionsTab />}
         {activeTab === 'datacenter' && <DatacenterTab currentPrice={currentPrice} />}
         {activeTab === 'analytics' && <AnalyticsTab />}
