@@ -64,32 +64,32 @@ export const ERCOT_INDUSTRIAL_2026 = {
  */
 export const AESO_RATE_DTS_2026 = {
   bulkSystem: {
-    coincidentDemand: 11131, // $/MW/month - 12CP charge (Est. 2026: 2025 value $11,164 adjusted -0.3% per connection charge decrease)
-    meteredEnergy: 1.23, // $/MWh — unchanged (energy-based component)
+    coincidentDemand: 10927, // $/MW/month - 12CP charge (verified from 2026-015T Bill Estimator)
+    meteredEnergy: 1.23, // $/MWh (verified)
   },
   regionalSystem: {
-    billingCapacity: 2936, // $/MW/month (Est. 2026: 2025 value $2,945 adjusted -0.3%)
-    meteredEnergy: 0.93, // $/MWh — unchanged
+    billingCapacity: 2987, // $/MW/month (verified from 2026-015T Bill Estimator)
+    meteredEnergy: 0.93, // $/MWh (verified)
   },
   pointOfDelivery: {
-    substation: 15258, // $/month fixed (Est. 2026: 2025 value $15,304 adjusted -0.3%)
+    substation: 15562, // $/month fixed (verified from 2026-015T Bill Estimator)
     tiers: [
-      { label: 'First 7.5 MW', rate: 5022, mw: 7.5 },   // Est. 2026: $5,037 × 0.997
-      { label: 'Next 9.5 MW', rate: 2978, mw: 9.5 },     // Est. 2026: $2,987 × 0.997
-      { label: 'Next 23 MW', rate: 1994, mw: 23 },        // Est. 2026: $2,000 × 0.997
-      { label: 'Remaining', rate: 1227, mw: Infinity },   // Est. 2026: $1,231 × 0.997
+      { label: 'First 7.5 MW', rate: 5122, mw: 7.5 },   // verified
+      { label: 'Next 9.5 MW', rate: 3037, mw: 9.5 },     // verified
+      { label: 'Next 23 MW', rate: 2033, mw: 23 },        // verified
+      { label: 'Remaining', rate: 1252, mw: Infinity },   // verified
     ] as const,
   },
-  operatingReserve: { ratePercent: 12.50 }, // % of Pool Price — ESTIMATE: increased for 2026 per tariff application (was 12.44% in 2025)
-  tcr: { meteredEnergy: 0.265 }, // $/MWh — ESTIMATE: variable, recalculated monthly via AESO supplement
-  voltageControl: { meteredEnergy: 0.07 }, // $/MWh
-  systemSupport: { highestDemand: 52 }, // $/MW/month
-  riderF: { meteredEnergy: 1.26 }, // $/MWh - Balancing Pool (2026 rate, confirmed Table 3-3)
+  operatingReserve: { ratePercent: 8.13 }, // % of Pool Price (verified from 2026-015T Bill Estimator)
+  tcr: { meteredEnergy: 0.131 }, // $/MWh (verified from 2026-015T Bill Estimator)
+  voltageControl: { meteredEnergy: 0.15 }, // $/MWh (verified from 2026-015T Bill Estimator)
+  systemSupport: { highestDemand: 50 }, // $/MW/month (verified from 2026-015T Bill Estimator)
+  riderF: { meteredEnergy: 1.26 }, // $/MWh - Balancing Pool (verified)
   retailerFee: { meteredEnergy: 0.25 }, // $/MWh - Self-retailer admin
   gst: 0.05,
-  sourceDecision: 'AUC Decision 30427-D01-2025',
+  sourceDecision: 'AESO 2026-015T Appendix 1 Bill Estimator',
   effectiveDate: '2026-01-01',
-  sourceUrl: 'https://prd-api-efiling20.auc.ab.ca/Anonymous/DownloadPublicDocumentAsync/847591',
+  sourceUrl: 'https://www.aeso.ca/rules-standards-and-tariff/tariff/rate-dts-demand-transmission-service/',
 } as const;
 
 // Backward compatibility alias
