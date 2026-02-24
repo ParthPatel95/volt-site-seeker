@@ -1,152 +1,80 @@
 
-# Mining vs. Hash Purchase Optimizer -- New AESO Hub Module
 
-## Overview
-A new "Mining Economics" tab in the AESO Hub that combines historical AESO energy pricing with live Bitcoin network data to answer: **"At what energy price does it make sense to mine, and when should you buy hashrate instead?"**
+# Comprehensive Enhancements for Energization Timeline & Mining Economics
 
-## Core Concept
-For any given hour, a miner has two options:
-1. **Mine**: Consume electricity at the AESO pool price to produce BTC
-2. **Don't mine (curtail)**: Shut down and, if desired, purchase hashrate on the open market (NiceHash-style marketplace pricing)
+## Tool 1: Energization Timeline Planner
 
-The tool backtests this decision across real historical AESO data to show optimal strategies.
+### Enhancement 1A: Capacity Sensitivity Analysis Chart
+Add a Recharts line chart showing how Total Capital-at-Risk scales across capacity levels (10 MW to 200 MW in 10 MW steps). Three lines: Upfront Fees, Refundable Security, and Total. Helps investors instantly see the capital curve and identify optimal facility sizing. Uses existing `calculateMonthlyDTS()` and fee formulas -- no new data sources needed.
 
-## Data Sources (100% Real -- No Fake Data)
+### Enhancement 1B: Cash Flow Waterfall Chart
+A horizontal waterfall chart (Recharts BarChart) showing the step-by-step build-up of capital requirements: Cluster Preliminary -> Cluster Detailed -> Pool Participation -> DTS Security -> Energy Security -> First Month DTS -> Total. Each bar segment colored differently (non-refundable in amber, refundable in blue, ongoing in green). Makes the financial picture immediately visual for investor decks.
 
-| Data | Source | Method |
-|---|---|---|
-| Hourly AESO pool prices (Jun 2022 -- present) | `aeso_training_data` table | 34,545 real records in database |
-| Live BTC price | Coinbase API | Existing `useBitcoinNetworkStats` hook |
-| Live network hashrate | mempool.space API | Existing hook |
-| Live difficulty | mempool.space API | Existing hook |
-| Block reward (3.125 BTC) | Calculated from block height | Existing logic |
-| DTS transmission charges | Verified 2026-015T Bill Estimator | `tariff-rates.ts` constants |
-| Miner efficiency (15 J/TH) | Industry standard S21 Pro spec | `mining-data.ts` constants |
+### Enhancement 1C: Timeline Gantt Chart (Visual)
+Replace the current horizontal stage bar with a proper horizontal Gantt-style chart using Recharts. Each stage rendered as a colored horizontal bar proportional to its duration, with the target energization date marked as a vertical line. When a target date is set, the bars are positioned on a real calendar axis. When no date is set, bars show relative week durations.
 
-**Important constraint**: Historical BTC price and hashrate data is NOT available in the database. The tool will clearly label its approach: it uses **current** BTC network conditions applied against **historical** energy prices to answer "given today's mining economics, which past hours would have been profitable?" This is a standard backtesting methodology and will be clearly disclosed in the UI.
+### Enhancement 1D: DTS Cost Breakdown Donut Chart
+Add a Recharts PieChart/donut showing the proportional breakdown of monthly DTS charges (Bulk Demand, Regional, POD, Operating Reserve, etc.). Investors can instantly see which cost components dominate.
 
-## UI Sections
+### Enhancement 1E: Annual Cost Projection Table
+A 5-year projection table showing Year 1 through Year 5 costs, including: annual DTS charges, annual energy market trading charges, annual pool participation fee, and cumulative total. Uses existing constants -- no assumptions beyond applying current rates forward with a clear disclaimer.
 
-### Section 1: Facility Configuration Panel
-Inputs (with sensible defaults from existing constants):
-- Capacity: MW deployed (default 45 MW)
-- Miner model: dropdown from `ASIC_SPECS` (default S21 Pro, 15 J/TH)
-- Pool fee: % (default 1.5%)
-- All-in energy rate override: optional manual $/MWh (otherwise uses AESO pool + DTS adder)
-- Hash purchase price: $/TH/day -- user input for comparison (NiceHash marketplace reference)
-- Date range selector: pick from available historical data (Jun 2022 -- present)
+### Enhancement 1F: DFO Comparison Bar Chart
+Add a grouped bar chart to the existing DFO Comparison section showing all 4 DFOs side-by-side with stacked bars (Demand, Delivery, Riders) plus a separate bar for total all-in cost. Much more visual than the current card-only layout.
 
-### Section 2: Break-Even Analysis Dashboard
-Using live BTC network data, calculate and display:
-- **Break-even energy price** ($/MWh): the max pool price where mining is profitable
-- **Current AESO pool price** vs break-even (visual gauge)
-- **Mining margin** at current price
-- **Hash price** ($/TH/day from live data) vs self-mining cost per TH/day
+---
 
-Formula (reusing existing `btcRoiMath.ts` logic):
-```
-Break-even $/MWh = (hashPrice * TH_per_MW * 24) - poolFee overhead
-where TH_per_MW = 1,000,000 / efficiency_J_per_TH
-```
+## Tool 2: Mining Hash Optimizer
 
-### Section 3: Historical Backtest Results
-Query `aeso_training_data` for the selected date range and for each hour calculate:
-- **Mining revenue**: using current BTC network stats (disclosed as "current conditions backtest")
-- **All-in energy cost**: AESO pool price + DTS transmission adder ($12.94/MWh) + DFO charges
-- **Net profit/loss per MWh**
-- **Decision**: MINE (profitable) or CURTAIL (unprofitable)
+### Enhancement 2A: Profitability Heatmap (Month x Hour)
+Replace the current simplified hourly bar chart with a true Month x Hour-of-Day heatmap grid (Recharts or custom SVG). Each cell colored from red (loss) through white (break-even) to green (profit). The existing `heatmapMap` data is already computed but only aggregated by hour -- expand it to render the full 2D grid. This is the single most requested visualization in mining analytics.
 
-Display as:
-- **Profitability heatmap**: Month x Hour-of-Day grid colored by average net margin
-- **Summary stats**: % of hours profitable, average margin when mining, total profit over period
-- **Optimal curtailment threshold**: the pool price above which shutting down maximizes returns (reuses existing Power Model logic pattern)
+### Enhancement 2B: Price Duration Curve
+A line chart showing historical AESO pool prices sorted from lowest to highest, with a horizontal line at the break-even price. The intersection point shows what percentage of hours are below break-even (profitable). This is a standard energy market analytics view and reuses existing `historicalData`.
 
-### Section 4: Mine vs. Buy Hash Comparison
-Side-by-side comparison for a given period:
-- **Self-mining cost**: total energy cost for the period (from historical AESO data)
-- **Equivalent hash purchased**: what the same capital would buy on the hashrate marketplace at the user-specified $/TH/day rate
-- **BTC earned**: self-mining output vs purchased hash output
-- **Verdict**: which strategy yielded more BTC per dollar
+### Enhancement 2C: Cumulative Profit Chart
+A time-series area chart showing cumulative net profit over the backtest period. X-axis: months. Y-axis: cumulative USD. Shows the profit trajectory and whether returns are accelerating or decelerating. Uses existing `monthlyResults` data.
 
-Key metric: **"Indifference energy price"** -- the AESO pool price at which self-mining and buying hash produce equal BTC per dollar spent.
+### Enhancement 2D: Sensitivity Analysis -- Break-Even vs BTC Price
+A line chart showing how the break-even AESO pool price changes across a range of BTC prices ($50K to $200K in $10K steps). Uses the existing break-even formula with BTC price as the variable. Helps answer "if BTC drops to $X, what energy price do I need?"
 
-```
-Indifference price = hashPurchaseRate * TH_per_MW * 24 / (1000 * cadToUsd)
-```
-(Converted to CAD/MWh for AESO comparison)
+### Enhancement 2E: Efficiency Comparison Table
+An expanded ASIC comparison showing all miners from `ASIC_SPECS` with calculated metrics for the current BTC conditions: break-even price, daily BTC per MW, daily revenue per MW, and energy cost ratio. Helps users compare miners beyond just J/TH.
 
-### Section 5: Monthly Strategy Summary Table
-A table showing each month in the selected range:
-- Average pool price (real from DB)
-- Hours profitable (count)
-- Hours curtailed (count)
-- Total mining revenue (at current BTC conditions)
-- Total energy cost
-- Net profit
-- Comparison: would buying hash have been better?
+### Enhancement 2F: Seasonal Pattern Analysis
+Summary cards showing backtest results broken down by season (Winter: Nov-Feb, Summer: Jun-Aug, Shoulder: Mar-May/Sep-Oct). Shows average pool price, profitability %, and optimal strategy per season. Uses existing backtest data grouped differently.
 
-### Section 6: Source Attribution
-All figures linked to sources with badges:
-- "Live from mempool.space" for BTC network data
-- "Live from Coinbase" for BTC price
-- "Historical from AESO" for pool prices
-- "Verified 2026-015T" for DTS rates
-- Clear disclosure: "Backtest applies current BTC network conditions to historical energy prices"
+---
 
-## Files to Create
+## Technical Implementation
 
-### 1. `src/components/aeso/MiningHashOptimizer.tsx` (New)
-Main component with all 6 sections. Uses:
-- `useBitcoinNetworkStats()` for live BTC data
-- Direct Supabase query to `aeso_training_data` for historical AESO prices
-- `AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH` for all-in cost
-- `ASIC_SPECS` from `mining-data.ts` for miner efficiency
-- Recharts for heatmap and charts
+### Files Modified:
 
-### 2. `src/components/aeso-hub/tabs/MiningEconomicsTab.tsx` (New)
-Tab wrapper following the existing pattern (like `EnergizationTab.tsx`).
+1. **`src/components/aeso/EnergizationTimeline.tsx`**
+   - Add `CapacitySensitivityChart` sub-component (Recharts LineChart)
+   - Add `CashFlowWaterfall` sub-component (Recharts BarChart)
+   - Add `GanttTimeline` sub-component (Recharts BarChart horizontal)
+   - Add `DTSBreakdownDonut` sub-component (Recharts PieChart)
+   - Add `AnnualProjectionTable` sub-component (Table)
+   - Add `DFOComparisonChart` to existing DFOComparisonSection
+   - Integrate all new sections into the main layout
 
-## Files to Modify
+2. **`src/components/aeso/MiningHashOptimizer.tsx`**
+   - Add `ProfitabilityHeatmap` sub-component (custom grid using divs)
+   - Add `PriceDurationCurve` sub-component (Recharts LineChart)
+   - Add `CumulativeProfitChart` sub-component (Recharts AreaChart)
+   - Add `BreakEvenSensitivity` sub-component (Recharts LineChart)
+   - Add `ASICComparisonTable` sub-component (Table)
+   - Add `SeasonalAnalysis` sub-component (Card grid)
+   - Expand `backtestResults` to include heatmap 2D data and seasonal grouping
 
-### 3. `src/components/aeso-hub/layout/AESOHubSidebar.tsx`
-- Add `'mining-economics'` to `AESOHubView` type union
-- Add nav item under "Intelligence" group: `{ id: 'mining-economics', label: 'Mining Economics', icon: Bitcoin }`
+### Data Sources:
+All enhancements use **existing data** already in the codebase:
+- Energization: `AESO_ISO_FEES`, `AESO_RATE_DTS_2026`, `DFO_DISTRIBUTION_RATES`, `calculateMonthlyDTS()`
+- Mining: `historicalData` from `aeso_training_data`, `useBitcoinNetworkStats()`, `ASIC_SPECS`, `AESO_TARIFF_2026`
+- No new API calls, no new database queries, no new edge functions
+- No fabricated or estimated data -- all calculations derived from verified constants
 
-### 4. `src/components/aeso-hub/layout/AESOHubLayout.tsx`
-- Add `'mining-economics': 'Mining Economics'` to `VIEW_LABELS`
+### Chart Library:
+All charts use Recharts (already installed). The heatmap uses a custom CSS grid of colored divs since Recharts doesn't have a native heatmap -- this is a common pattern and keeps dependencies minimal.
 
-### 5. `src/components/aeso-hub/AESOMarketHub.tsx`
-- Import and render `MiningEconomicsTab` when `activeTab === 'mining-economics'`
-
-## Technical Details
-
-### Historical Data Query
-```sql
-SELECT 
-  date_trunc('hour', timestamp) as hour,
-  AVG(pool_price) as avg_pool_price,
-  MAX(ail_mw) as peak_demand
-FROM aeso_training_data
-WHERE timestamp >= $startDate AND timestamp <= $endDate
-  AND pool_price IS NOT NULL
-GROUP BY date_trunc('hour', timestamp)
-ORDER BY hour
-```
-This uses the 34,545+ real records already in the database.
-
-### Core Calculation Logic
-Reuses existing patterns from `btcRoiMath.ts` and `MiningEnergyAnalytics.tsx`:
-```typescript
-const TH_PER_MW = 1_000_000 / minerEfficiency; // e.g., 66,667 for 15 J/TH
-const hourlyBtcPerMW = (TH_PER_MW / (networkHashrateEH * 1e6)) * 144 * blockReward / 24;
-const hourlyRevenuePerMW = hourlyBtcPerMW * btcPrice;
-const allInEnergyCost = (poolPriceCAD + transmissionAdder) * cadToUsd; // USD/MWh
-const netMargin = hourlyRevenuePerMW - allInEnergyCost;
-const decision = netMargin > 0 ? 'MINE' : 'CURTAIL';
-```
-
-### No New Edge Functions Needed
-All data sources are already available:
-- AESO historical: direct Supabase client query to `aeso_training_data`
-- BTC network: existing `useBitcoinNetworkStats` hook (client-side API calls)
-- Tariff constants: imported from `tariff-rates.ts`
