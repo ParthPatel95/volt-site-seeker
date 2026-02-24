@@ -32,7 +32,7 @@ export function InventoryCameraCapture({
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
 
-  const { uploadFromDataUrl, isUploading } = useImageUpload();
+  const { uploadFromDataUrl, isUploading, stage, retryAttempt } = useImageUpload();
 
   // Start camera
   const startCamera = useCallback(async () => {
@@ -194,7 +194,11 @@ export function InventoryCameraCapture({
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">
-                  {isUploading ? 'Uploading...' : 'Starting camera...'}
+                  {isInitializing ? 'Starting camera...' : 
+                   stage === 'compressing' ? 'Compressing image...' :
+                   stage === 'retrying' ? `Retrying upload (${retryAttempt}/3)...` :
+                   stage === 'queued' ? 'Saved locally ✓' :
+                   'Uploading...'}
                 </p>
               </div>
             </div>

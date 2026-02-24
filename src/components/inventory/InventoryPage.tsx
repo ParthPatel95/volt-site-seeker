@@ -53,6 +53,7 @@ import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CreateWorkspaceDialog } from './components/CreateWorkspaceDialog';
+import { OfflineUploadIndicator } from './components/OfflineUploadIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TAB_OPTIONS = [
@@ -309,6 +310,10 @@ export function InventoryPage() {
   if (isMobile) {
     return (
       <div className="pb-24">
+        {/* Offline Upload Indicator */}
+        <div className="px-4 pt-2">
+          <OfflineUploadIndicator />
+        </div>
         {/* Mobile Header */}
         <InventoryMobileHeader
           workspaces={workspaces}
@@ -557,6 +562,7 @@ export function InventoryPage() {
           <Button variant="outline" size="icon" onClick={() => setShowCreateWorkspace(true)}>
             <Plus className="w-4 h-4" />
           </Button>
+          <OfflineUploadIndicator />
         </div>
       </div>
 
