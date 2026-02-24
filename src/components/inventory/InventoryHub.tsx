@@ -216,14 +216,6 @@ export function InventoryHub() {
       case 'dashboard':
         return (
           <div className="space-y-4">
-            <MetalsMarketTicker
-              metals={metals}
-              isLoading={metalsLoading}
-              source={metalsSource}
-              lastUpdated={metalsLastUpdated}
-              onRefresh={refetchMetals}
-              isRefreshing={isRefetchingMetals}
-            />
             <OfflineUploadIndicator />
             {isMobile ? (
               <InventoryMobileDashboard
@@ -248,6 +240,18 @@ export function InventoryHub() {
               />
             )}
           </div>
+        );
+
+      case 'metal-prices':
+        return (
+          <MetalsMarketTicker
+            metals={metals}
+            isLoading={metalsLoading}
+            source={metalsSource}
+            lastUpdated={metalsLastUpdated}
+            onRefresh={refetchMetals}
+            isRefreshing={isRefetchingMetals}
+          />
         );
 
       case 'alerts':

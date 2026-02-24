@@ -6,6 +6,7 @@ import { InventoryHubSidebar, InventoryHubView } from './InventoryHubSidebar';
 
 const VIEW_LABELS: Record<InventoryHubView, string> = {
   dashboard: 'Dashboard',
+  'metal-prices': 'Live Metal Prices',
   alerts: 'Alerts',
   items: 'Items',
   groups: 'Groups',

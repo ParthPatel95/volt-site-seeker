@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, LayoutDashboard, Bell, Folder, Tags, History,
-  ScanBarcode, Download, ChevronLeft, ChevronRight, ArrowLeft, Plus,
+  ScanBarcode, Download, ChevronLeft, ChevronRight, ArrowLeft, Plus, TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from '@/components/voltbuild/layout/VoltBuildNavItem';
@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 export type InventoryHubView =
   | 'dashboard'
   | 'alerts'
+  | 'metal-prices'
   | 'items'
   | 'groups'
   | 'categories'
@@ -81,6 +82,7 @@ export function InventoryHubSidebar({
       label: 'Overview',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'metal-prices', label: 'Live Metal Prices', icon: TrendingUp },
         { id: 'alerts', label: 'Alerts', icon: Bell, badge: alertsCount, badgeVariant: 'destructive' },
       ],
     },
