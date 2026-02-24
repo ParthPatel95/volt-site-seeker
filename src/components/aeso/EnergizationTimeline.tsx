@@ -37,11 +37,26 @@ import { AESO_RATE_DTS_2026 } from '@/constants/tariff-rates';
 function SourceBadge({ url, label }: { url: string; label: string }) {
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">
-      <Badge variant="outline" className="text-xs gap-1 font-normal hover:bg-accent cursor-pointer text-emerald-600 dark:text-emerald-400">
-        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+      <Badge variant="outline" className="text-xs gap-1 font-normal hover:bg-accent cursor-pointer text-primary">
+        <CheckCircle2 className="w-3 h-3 text-primary" />
         {label}
         <ExternalLink className="w-3 h-3" />
       </Badge>
+    </a>
+  );
+}
+
+function FormLink({ href, label, updated }: { href: string; label: string; updated?: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md px-2.5 py-2 transition-colors border border-border/50"
+    >
+      <ExternalLink className="w-3 h-3 flex-shrink-0 text-primary" />
+      <span className="flex-1 truncate">{label}</span>
+      {updated && <span className="text-[10px] text-muted-foreground flex-shrink-0">{updated}</span>}
     </a>
   );
 }
@@ -144,7 +159,7 @@ function StageCard({ stage, startDate, isExpanded, onToggle }: {
               <ul className="space-y-1">
                 {stage.keyDeliverables.map((d, i) => (
                   <li key={i} className="text-sm flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
                     {d}
                   </li>
                 ))}
@@ -157,7 +172,7 @@ function StageCard({ stage, startDate, isExpanded, onToggle }: {
                 <ul className="space-y-1">
                   {stage.financialObligations.map((f, i) => (
                     <li key={i} className="text-sm flex items-start gap-2">
-                      <DollarSign className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <DollarSign className="w-3.5 h-3.5 text-destructive mt-0.5 flex-shrink-0" />
                       {f}
                     </li>
                   ))}
@@ -262,6 +277,288 @@ export function EnergizationTimeline() {
             <SourceBadge url="https://www.aeso.ca/rules-standards-and-tariff/iso-rules/section-103-3-financial-security-requirements/" label="Section 103.3" />
           </div>
         </div>
+
+        {/* Cluster 3 Status Banner */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <Zap className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Cluster 3 SASR Intake Window — Now Open</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The Cluster 3 System Access Service Request (SASR) submission deadline is <strong className="text-foreground">April 30, 2026</strong>. 
+                    Projects must have a grid connection date on or before April 30, 2031. The window was extended from February to accommodate restudies 
+                    from expected Cluster 2 cancellations. Stage 1 has been extended by two months to March 2027.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+                  <div className="bg-background/50 rounded-md p-2">
+                    <p className="text-muted-foreground">SASR Deadline</p>
+                    <p className="font-semibold text-foreground">April 30, 2026</p>
+                  </div>
+                  <div className="bg-background/50 rounded-md p-2">
+                    <p className="text-muted-foreground">Fee Invoice Issued</p>
+                    <p className="font-semibold text-foreground">May 27, 2026</p>
+                  </div>
+                  <div className="bg-background/50 rounded-md p-2">
+                    <p className="text-muted-foreground">Fee + TFO Arrangement Due</p>
+                    <p className="font-semibold text-foreground">June 26, 2026</p>
+                  </div>
+                  <div className="bg-background/50 rounded-md p-2">
+                    <p className="text-muted-foreground">Project List Published</p>
+                    <p className="font-semibold text-foreground">July 3, 2026</p>
+                  </div>
+                </div>
+                <SourceBadge url="https://www.aeso.ca/grid/connecting-to-the-grid/cluster-assessment/" label="AESO Cluster 3 Schedule" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AESO Forms, Templates & Key Documents */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ExternalLink className="w-4 h-4" />
+              AESO Forms, Templates & Key Documents
+            </CardTitle>
+            <CardDescription>Official forms required throughout the connection process — sourced directly from AESO</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Quick Reference Guides */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Reference Guides</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FormLink href="https://www.aeso.ca/assets/templates/Quick-Reference-Guide-Cluster-Assessment.pdf" label="Cluster Assessment Process" updated="May 27, 2025" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Quick-Reference-Guide-Independent-Assessment.pdf" label="Independent Assessment Process" updated="May 27, 2025" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Quick-Reference-Guide-Connection-Process.pdf" label="Connection Process" updated="May 27, 2025" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Quick-Reference-Guide-Behind-The-Fence.pdf" label="Behind the Fence Process" updated="May 27, 2025" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Quick-Reference-Guide-Contract-Process.pdf" label="Contract Process" updated="May 27, 2025" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Financial-Obligations-for-Connection-BTF-Contract-Projects.pdf" label="Financial Obligations Guide" updated="July 17, 2025" />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* SASR Submission */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">SASR Submission (Stage 0)</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FormLink href="https://experience.adobe.com/" label="Adobe Workfront — SASR Online Portal" />
+                <FormLink href="https://www.aeso.ca/assets/templates/SASR-Guide.pdf" label="SASR Guide (How to Submit)" />
+                <FormLink href="https://www.aeso.ca/grid/connecting-to-the-grid/cluster-assessment/" label="Cluster Assessment Page" />
+                <FormLink href="https://www.aeso.ca/grid/connecting-to-the-grid/transmission-capability-map/" label="Transmission Capability Map" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                To set up an Adobe Workfront account, email <a href="mailto:customer.connections@aeso.ca" className="text-primary hover:underline">customer.connections@aeso.ca</a>
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Fee Guidelines */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fees & Financial Security</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FormLink href="https://www.aeso.ca/assets/templates/cluster-assessments/Fee-Guideline.pdf" label="Cluster Assessment Fee Guideline" />
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/iso-fees/" label="ISO Fees Schedule" />
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/iso-rules/section-103-3-financial-security-requirements/" label="Section 103.3 — Financial Security" />
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/tariff/guoc-rates/" label="GUOC Estimate Calculator" />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Stage 3 Templates */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Stage 3 — Regulatory Preparation</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FormLink href="https://www.aeso.ca/assets/templates/Engineering-Connection-Assessment-Study-Results.docx" label="Engineering Connection Assessment — Study Results (.docx)" />
+                <FormLink href="https://www.aeso.ca/assets/templates/aeso-cost-template.xlsx" label="AESO Cost Estimate Template (.xlsx)" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Environmental-Effects-Screening-Form.docx" label="Environmental Effects Screening Form (.docx)" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Project-Schedule-Alignment-Connection.docx" label="Project Schedule Alignment (.docx)" />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Stage 5-6 Templates */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Stages 5-6 — Energization & Close Out</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FormLink href="https://www.aeso.ca/assets/templates/Energization-Package-Requirements.pdf" label="Energization Package Requirements" />
+                <FormLink href="https://www.aeso.ca/assets/templates/Commissioning-Certificate-Request-Form.docx" label="Commissioning Certificate Request (.docx)" />
+                <FormLink href="https://www.aeso.ca/grid/connecting-to-the-grid/project-data-update-package-submissions/" label="PDUP Instruction Manual" />
+                <FormLink href="https://www.aeso.ca/market/market-participation/joining-the-energy-market/" label="Joining the Energy Market (ETS Setup)" />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ISO Rules & Standards */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Relevant ISO Rules & Standards</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/iso-rules/section-501-3-abbreviated-needs-approval-process/" label="Section 501.3 — Abbreviated Needs Approval (ANAP)" />
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/iso-rules/section-503-21-reporting-facility-modelling-data/" label="Section 503.21 — Facility Modelling Data" />
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/iso-rules/section-504-5-service-proposals-and-cost-estimating/" label="Section 504.5 — Service Proposals & Cost Estimating" />
+                <FormLink href="https://www.aeso.ca/rules-standards-and-tariff/iso-rules/section-505-3-coordinating-synchronization-commissioning-wecc-testing-and-ancillary-services-testing/" label="Section 505.3 — Commissioning & Testing" />
+                <FormLink href="https://www.aeso.ca/grid/connecting-to-the-grid/market-participant-choice/" label="Market Participant Choice (MPC) Process" />
+                <FormLink href="https://www.aeso.ca/future-of-electricity/reliability-requirements-roadmap/" label="IBR Connection Requirements" />
+              </div>
+            </div>
+
+            {/* Information Document */}
+            <div className="bg-muted/30 rounded-lg p-3 flex items-start gap-2 mt-2">
+              <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-muted-foreground">
+                <strong className="text-foreground">Key Information Document:</strong>{' '}
+                <a href="https://www.aeso.ca/rules-standards-and-tariff/tariff/id-2018-018t-provision-of-system-access-service-and-the-connection-process" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  ID #2018-018T — Provision of System Access Service and the Connection Process
+                </a> establishes the AESO's practices for efficient processing of system access service requests.
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div className="bg-muted/30 rounded-lg p-3 flex items-start gap-2">
+              <Building2 className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-muted-foreground">
+                <strong className="text-foreground">AESO Customer Connections:</strong>{' '}
+                <a href="tel:4035392793" className="text-primary hover:underline">403-539-2793</a>{' · '}
+                <a href="mailto:customer.connections@aeso.ca" className="text-primary hover:underline">customer.connections@aeso.ca</a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Educational: Connection Process Types */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="w-4 h-4" />
+              Understanding the AESO Connection Process
+            </CardTitle>
+            <CardDescription>Key concepts every market participant must understand before submitting a SASR</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Assessment Paths */}
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-2">Two Assessment Paths</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-muted/20 rounded-lg p-3 space-y-1">
+                  <p className="text-sm font-medium text-foreground">Cluster Assessment</p>
+                  <p className="text-xs text-muted-foreground">
+                    For generation and energy storage projects injecting <strong>≥5 MW</strong> of new flow into the AIES. 
+                    Projects are batched and assessed together simultaneously — a common practice across North American ISOs.
+                    SASRs must be submitted during designated intake windows.
+                  </p>
+                  <SourceBadge url="https://www.aeso.ca/grid/connecting-to-the-grid/cluster-assessment/" label="Cluster Assessment" />
+                </div>
+                <div className="bg-muted/20 rounded-lg p-3 space-y-1">
+                  <p className="text-sm font-medium text-foreground">Independent Assessment</p>
+                  <p className="text-xs text-muted-foreground">
+                    For <strong>load and reliability projects</strong>, and generation/storage projects injecting <strong>&lt;5 MW</strong>.
+                    SASRs can be submitted at any time (no intake window required).
+                  </p>
+                  <SourceBadge url="https://www.aeso.ca/grid/connecting-to-the-grid/" label="Independent Assessment" />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Project Types */}
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-2">Execution Phase — Project Types</p>
+              <p className="text-xs text-muted-foreground mb-2">After assessment, AESO categorizes your project into one of these types. The type may change as new information emerges.</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs mt-0.5 flex-shrink-0">Connection</Badge>
+                  <p className="text-xs text-muted-foreground">Requires new or altered transmission facilities built by the designated TFO upon receipt of AUC regulatory approvals. May require a new or altered SAS Agreement.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs mt-0.5 flex-shrink-0">MPC</Badge>
+                  <p className="text-xs text-muted-foreground">Market Participant Choice — a variation where the market participant builds a portion (or all) of the transmission facility in lieu of the TFO, with ownership transferred to the TFO upon completion.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs mt-0.5 flex-shrink-0">Behind the Fence</Badge>
+                  <p className="text-xs text-muted-foreground">Market participant alters existing facilities connected to the transmission system. No expansion of the transmission system required, but may require a new/altered SAS Agreement and submission of modelling data per Section 503.21.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="text-xs mt-0.5 flex-shrink-0">Contract</Badge>
+                  <p className="text-xs text-muted-foreground">Alters or terminates an existing SAS Agreement only. No alterations to transmission facilities or market participant facilities are required.</p>
+                </div>
+              </div>
+              <SourceBadge url="https://www.aeso.ca/grid/connecting-to-the-grid/" label="AESO Connection Process" />
+            </div>
+
+            <Separator />
+
+            {/* Pre-submission checklist */}
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-2">Pre-Submission Checklist</p>
+              <p className="text-xs text-muted-foreground mb-2">Prior to submitting a SASR, AESO recommends these initial steps:</p>
+              <ul className="space-y-1.5">
+                <li className="text-xs flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">Review the <a href="https://www.aeso.ca/assets/templates/SASR-Guide.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SASR Guide</a> in detail to understand submission requirements</span>
+                </li>
+                <li className="text-xs flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">Determine the reason for requesting system access and capacity requirements</span>
+                </li>
+                <li className="text-xs flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">Review the <a href="https://www.aeso.ca/grid/connecting-to-the-grid/transmission-capability-map/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Transmission Capability Map</a> for generation capacity and siting decisions</span>
+                </li>
+                <li className="text-xs flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">Contact the DFO in your region to determine if the project can be supported via distribution connection</span>
+                </li>
+                <li className="text-xs flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">Set up your <a href="https://experience.adobe.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Adobe Workfront</a> account by emailing customer.connections@aeso.ca</span>
+                </li>
+              </ul>
+              <SourceBadge url="https://www.aeso.ca/grid/connecting-to-the-grid/" label="AESO Pre-Submission Steps" />
+            </div>
+
+            <Separator />
+
+            {/* Acronym Reference */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground w-full justify-between">
+                  <span>Acronym Reference</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2 bg-muted/20 rounded-lg p-3">
+                  <span><strong className="text-foreground">AUC</strong> — Alberta Utilities Commission</span>
+                  <span><strong className="text-foreground">CCD</strong> — Construction Contribution Decision</span>
+                  <span><strong className="text-foreground">CEII</strong> — Critical Energy Infrastructure Info</span>
+                  <span><strong className="text-foreground">DFO</strong> — Distribution Facility Owner</span>
+                  <span><strong className="text-foreground">DTS</strong> — Demand Transmission Service</span>
+                  <span><strong className="text-foreground">ETS</strong> — Energy Trading System</span>
+                  <span><strong className="text-foreground">GFO</strong> — Generation Facility Owner</span>
+                  <span><strong className="text-foreground">GUOC</strong> — Gen. Unit Owner's Contribution</span>
+                  <span><strong className="text-foreground">ISD</strong> — In-Service Date</span>
+                  <span><strong className="text-foreground">MC</strong> — Maximum Capability</span>
+                  <span><strong className="text-foreground">NID</strong> — Needs Identification Document</span>
+                  <span><strong className="text-foreground">P&L</strong> — Permit & Licence</span>
+                  <span><strong className="text-foreground">PDUP</strong> — Project Data Update Package</span>
+                  <span><strong className="text-foreground">SAS</strong> — System Access Service</span>
+                  <span><strong className="text-foreground">SASR</strong> — System Access Service Request</span>
+                  <span><strong className="text-foreground">SLD</strong> — Single Line Diagram</span>
+                  <span><strong className="text-foreground">TFO</strong> — Transmission Facility Owner</span>
+                  <span><strong className="text-foreground">PILON</strong> — Payment in Lieu of Notice</span>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
 
         {/* Section 1: Input Panel */}
         <Card>
