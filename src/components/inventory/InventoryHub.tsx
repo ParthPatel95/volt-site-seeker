@@ -38,6 +38,7 @@ import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
 import { InventoryGroupManager } from './components/InventoryGroupManager';
 import { MetalsMarketTicker } from './components/MetalsMarketTicker';
+import { MarketIntelligencePanel } from './components/MarketIntelligencePanel';
 import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
@@ -244,14 +245,17 @@ export function InventoryHub() {
 
       case 'metal-prices':
         return (
-          <MetalsMarketTicker
-            metals={metals}
-            isLoading={metalsLoading}
-            source={metalsSource}
-            lastUpdated={metalsLastUpdated}
-            onRefresh={refetchMetals}
-            isRefreshing={isRefetchingMetals}
-          />
+          <div className="space-y-4">
+            <MetalsMarketTicker
+              metals={metals}
+              isLoading={metalsLoading}
+              source={metalsSource}
+              lastUpdated={metalsLastUpdated}
+              onRefresh={refetchMetals}
+              isRefreshing={isRefetchingMetals}
+            />
+            <MarketIntelligencePanel />
+          </div>
         );
 
       case 'alerts':
