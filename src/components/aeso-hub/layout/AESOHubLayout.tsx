@@ -10,6 +10,7 @@ const VIEW_LABELS: Record<AESOHubView, string> = {
   energization: 'Energization Timeline',
   predictions: 'AI Predictions',
   datacenter: 'Datacenter Control',
+  'mining-economics': 'Mining Economics',
   analytics: 'Analytics',
   settings: 'Settings',
 };
