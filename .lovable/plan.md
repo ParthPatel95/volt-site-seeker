@@ -1,98 +1,122 @@
 
-
-# Offline-Resilient Image Uploads for Inventory
+# Inventory UI Overhaul: Match AESO Hub Design
 
 ## Problem
-When you're at a job site with poor cell signal, inventory image uploads fail silently because the current implementation makes a single upload attempt with no retry, no offline queuing, and no image compression to reduce payload size.
+The current Inventory feature uses a basic tabbed layout embedded within the VoltScout shell. On desktop, it's a flat `Tabs` component with no dedicated sidebar navigation. On mobile, it uses a bottom nav but lacks the polished header and sidebar sheet pattern that the AESO Hub provides. This makes it feel inconsistent with the rest of the platform's professional modules.
 
-## Solution: Three-Layer Resilience
+## Solution
+Refactor Inventory to use the same sidebar-based layout architecture as the AESO Hub: collapsible desktop sidebar, mobile sheet menu, branded header, full-screen module mode, and smooth animated view transitions.
 
-### Layer 1: Image Compression Before Upload
-Compress photos client-side before uploading. Camera captures are typically 2-5 MB at full resolution. Compressing to 80% quality and capping dimensions at 1280px reduces most images to 100-300 KB -- dramatically improving success on slow connections.
+## Architecture Changes
 
-### Layer 2: Automatic Retry with Exponential Backoff
-When an upload fails, automatically retry up to 3 times with increasing delays (1s, 3s, 7s). This handles the common case of brief signal drops without user intervention.
-
-### Layer 3: Offline Queue with IndexedDB
-When all retries fail (no signal at all), save the image locally in the browser's IndexedDB storage along with the item metadata. When connectivity returns, a background sync process automatically uploads the queued images. A small badge on the inventory UI shows how many uploads are pending.
-
-## What You'll See
-
-- **During upload**: A progress indicator showing compression and upload stages
-- **On retry**: A toast saying "Poor connection, retrying upload... (attempt 2/3)"
-- **When offline**: A toast saying "Image saved locally -- will upload when back online" with a green checkmark so you can keep working
-- **Pending queue badge**: A small indicator showing "2 pending uploads" when queued images exist
-- **Auto-sync**: When you regain signal, pending images upload automatically in the background with a success notification
-
-## Technical Details
-
-### Files to Create
-
-1. **`src/utils/imageCompression.ts`**
-   - `compressImage(blob, maxWidth=1280, quality=0.8)` -- uses canvas API to resize and compress JPEG
-   - Targets sub-300KB output for typical inventory photos
-
-2. **`src/utils/offlineUploadQueue.ts`**
-   - IndexedDB-backed queue using simple `idb-keyval`-style wrapper (no new dependency -- raw IndexedDB API)
-   - `queueUpload(imageBlob, metadata)` -- stores image + metadata locally
-   - `getPendingUploads()` -- returns count and list
-   - `processQueue()` -- attempts to upload all pending items
-   - `clearCompleted()` -- removes successful uploads from queue
-
-3. **`src/components/inventory/components/OfflineUploadIndicator.tsx`**
-   - Small badge component showing pending upload count
-   - Listens for `online` browser event to trigger auto-sync
-   - Shows progress when syncing
-
-### Files to Modify
-
-4. **`src/components/inventory/hooks/useImageUpload.ts`**
-   - Add image compression step before upload
-   - Add retry logic with exponential backoff (3 attempts)
-   - On final failure, queue to IndexedDB instead of showing error
-   - Add `pendingCount` to returned state
-   - Add `navigator.onLine` check to skip upload attempt and queue immediately when offline
-
-5. **`src/components/inventory/components/InventoryCameraCapture.tsx`**
-   - Update upload feedback to show compression/retry/queued states
-   - Change "Uploading..." to show current stage
-
-6. **`src/components/inventory/components/InventorySmartCapture.tsx`**
-   - Same upload feedback improvements as CameraCapture
-
-7. **`src/components/inventory/InventoryPage.tsx`** (or equivalent shell)
-   - Add `OfflineUploadIndicator` component to show pending upload badge
-
-### Core Logic (useImageUpload changes)
-
+### Current Flow
 ```text
-uploadImage(file):
-  1. Compress image (canvas resize + JPEG quality reduction)
-  2. Check navigator.onLine
-     - If offline -> queue to IndexedDB, return placeholder, show toast
-  3. Attempt upload with retry:
-     - Try 1: immediate
-     - Try 2: wait 1s
-     - Try 3: wait 3s
-  4. If all retries fail -> queue to IndexedDB, return placeholder
-  5. On success -> return URL as normal
+VoltScout Shell (with main sidebar)
+  -> InventoryPage.tsx
+     -> Desktop: Tabs component (Dashboard | Items | Groups | ...)
+     -> Mobile: BottomNav + AnimatePresence content
 ```
 
-### Auto-Sync Logic
-
+### New Flow
 ```text
-- Listen for browser 'online' event
-- On reconnect: call processQueue()
-- For each queued item:
-  - Attempt upload to Supabase storage
-  - On success: update the inventory item's image_url in the database
-  - Remove from IndexedDB queue
-- Show toast: "X photos synced successfully"
+VoltScout Shell (main sidebar HIDDEN -- full-screen module)
+  -> InventoryHub.tsx (new shell component)
+     -> InventoryHubLayout (sidebar + content area)
+        -> InventoryHubSidebar (collapsible desktop, sheet on mobile)
+        -> Content: view-based rendering (Dashboard, Items, Groups, etc.)
 ```
 
-### No New Dependencies
-All functionality uses built-in browser APIs:
-- Canvas API for image compression
-- IndexedDB for offline storage
-- `navigator.onLine` and `online`/`offline` events for connectivity detection
+## What Changes for You
 
+- **Desktop**: A professional collapsible sidebar on the left with grouped navigation (Overview, Management, Tools) replacing the tab strip. Clean branded header with "Inventory Hub" branding and a "Back to VoltScout" link.
+- **Mobile**: Hamburger menu opening a slide-out sheet (same as AESO Hub) instead of the bottom navigation bar. The mobile header will show the current view name and subtitle.
+- **All views**: Smooth fade/slide transitions between views (same AnimatePresence pattern as AESO Hub).
+- **Workspace selector**: Moved into the sidebar (desktop) or the mobile header for cleaner layout.
+- **All existing functionality preserved**: Every dialog, scanner, filter, export, and feature remains exactly the same -- only the navigation shell changes.
+
+## Files to Create
+
+### 1. `src/components/inventory/layout/InventoryHubSidebar.tsx`
+Collapsible sidebar matching AESO Hub pattern:
+- "Back to VoltScout" link at top
+- Branded header with Package icon + "Inventory Hub"
+- Navigation groups:
+  - **Overview**: Dashboard, Alerts
+  - **Management**: Items (with count badge), Groups, Categories
+  - **Tools**: Transactions, Scanner Settings, Export
+- Workspace selector dropdown inside sidebar
+- Collapse/expand toggle button at bottom
+- Mobile: renders inside a Sheet component
+
+### 2. `src/components/inventory/layout/InventoryHubLayout.tsx`
+Layout shell matching AESO Hub pattern:
+- Sidebar + main content area in a flex row
+- Mobile header with hamburger menu + current view label
+- AnimatePresence for view transitions
+- Responsive breakpoint detection (lg: 1024px)
+
+### 3. `src/components/inventory/InventoryHub.tsx`
+New top-level component replacing `InventoryPage` as the entry point:
+- Manages active view state
+- Renders InventoryHubLayout with the appropriate content for each view
+- Contains all existing hooks (useInventoryItems, useInventoryCategories, etc.)
+- Contains all existing dialogs and modals
+- Workspace management logic stays here
+
+## Files to Modify
+
+### 4. `src/pages/Inventory.tsx`
+- Change import from `InventoryPage` to `InventoryHub`
+
+### 5. `src/pages/VoltScout.tsx`
+- Add `/app/inventory` to the `isFullScreenModule` check so the main sidebar hides when inventory is active (same as AESO Hub, Build Management, SecureShare)
+
+## Files Preserved (No Changes)
+All existing components remain untouched:
+- `InventoryDashboard.tsx`, `InventoryMobileDashboard.tsx`
+- `InventoryItemCard.tsx`, `InventorySwipeableCard.tsx`
+- `InventoryFilters.tsx`, `InventoryMobileFilters.tsx`
+- `InventoryGroupManager.tsx`, `InventoryCategoryManager.tsx`
+- `InventoryTransactionsTab.tsx`, `InventoryAlertsTab.tsx`
+- `InventoryBarcodeScanner.tsx`, `InventoryCameraCapture.tsx`
+- All dialogs (Add, Edit, Adjust, Delete, Export, Scanner Settings)
+- `OfflineUploadIndicator.tsx`
+- `MetalsMarketTicker.tsx`
+- All hooks
+
+## Navigation Structure
+
+```text
+OVERVIEW
+  - Dashboard        (LayoutDashboard icon)
+  - Alerts           (Bell icon, destructive badge with count)
+
+MANAGEMENT
+  - Items            (Package icon, secondary badge with count)
+  - Groups           (Folder icon)
+  - Categories       (Tags icon)
+
+TOOLS
+  - Transactions     (History icon)
+  - Scanner Settings (ScanBarcode icon)
+  - Export           (Download icon)
+```
+
+## Sidebar Visual Design
+- Same 240px expanded / 64px collapsed widths as AESO Hub
+- Same `bg-card border-r border-border` styling
+- Same spring animation for collapse/expand
+- Same `VoltBuildNavItem` component for nav items (already used by AESO Hub)
+- Workspace selector rendered below the branding header with a compact dropdown
+
+## Mobile Design
+- Same `Sheet` slide-out pattern as AESO Hub
+- Mobile header: hamburger icon + Package icon badge + current view name + "Inventory Hub" subtitle
+- No bottom navigation bar (removed -- replaced by sidebar sheet)
+- Content padding matches AESO Hub: `p-4 sm:p-6 lg:p-8`
+
+## Technical Notes
+- The `InventoryPage.tsx` file will be kept but marked as legacy. The new `InventoryHub.tsx` becomes the active entry point.
+- All state management, hooks, and dialog orchestration from `InventoryPage.tsx` will be moved into `InventoryHub.tsx` with the same logic.
+- The existing `InventoryBottomNav` and `InventoryMobileHeader` components remain in the codebase but are no longer imported by the new hub layout.
+- The `InventoryFAB` component is also no longer needed since "Add Item" and "Scan" actions are accessible from the sidebar and header buttons.
