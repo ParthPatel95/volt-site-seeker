@@ -31,6 +31,7 @@ import { PowerModelShutdownAnalytics } from './PowerModelShutdownAnalytics';
 import { PowerModelWeatherDrivers } from './PowerModelWeatherDrivers';
 import { PPAvsPoolAnalyzer } from './PPAvsPoolAnalyzer';
 import { PowerModelReference } from './PowerModelReference';
+import { PowerModelScenarioBuilder } from './PowerModelScenarioBuilder';
 import { DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
 export function PowerModelAnalyzer() {
@@ -380,6 +381,9 @@ export function PowerModelAnalyzer() {
           {/* Strategy Comparison + Cost Progression */}
           <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />
           <PowerModelCostProgression annual={annual} cadUsdRate={params.cadUsdRate} fixedPriceCAD={params.fixedPriceCAD} />
+
+          {/* All-In Price Scenario Builder */}
+          <PowerModelScenarioBuilder annual={annual} monthly={monthly} cadUsdRate={params.cadUsdRate} fixedPriceCAD={params.fixedPriceCAD} capacityMW={params.contractedCapacityMW} />
           
           {/* Charge Breakdown Table */}
           <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} capacityMW={params.contractedCapacityMW} />
