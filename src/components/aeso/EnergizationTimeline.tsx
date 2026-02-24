@@ -37,8 +37,8 @@ import { AESO_RATE_DTS_2026 } from '@/constants/tariff-rates';
 function SourceBadge({ url, label }: { url: string; label: string }) {
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">
-      <Badge variant="outline" className="text-xs gap-1 font-normal hover:bg-accent cursor-pointer text-primary">
-        <CheckCircle2 className="w-3 h-3 text-primary" />
+      <Badge variant="outline" className="text-xs gap-1 font-normal hover:bg-secondary cursor-pointer text-primary hover:text-primary">
+        <CheckCircle2 className="w-3 h-3" />
         {label}
         <ExternalLink className="w-3 h-3" />
       </Badge>
@@ -52,7 +52,7 @@ function FormLink({ href, label, updated }: { href: string; label: string; updat
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md px-2.5 py-2 transition-colors border border-border/50"
+      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md px-2.5 py-2 transition-colors border border-border/50"
     >
       <ExternalLink className="w-3 h-3 flex-shrink-0 text-primary" />
       <span className="flex-1 truncate">{label}</span>
