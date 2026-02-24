@@ -1,156 +1,152 @@
 
-
-# Energization Timeline Planner -- New AESO Hub Module
+# Mining vs. Hash Purchase Optimizer -- New AESO Hub Module
 
 ## Overview
-A new "Energization" tab in the AESO Hub that models the full financial and regulatory timeline for connecting an industrial load to the Alberta grid. Every number in this tool comes from official AESO sources (ISO Tariff, ISO Rules Section 103.3, ISO Fees, Connection Process documentation) -- nothing estimated or fabricated.
+A new "Mining Economics" tab in the AESO Hub that combines historical AESO energy pricing with live Bitcoin network data to answer: **"At what energy price does it make sense to mine, and when should you buy hashrate instead?"**
 
-## What It Does
-Users input their facility parameters (capacity in MW, target energization date, DFO) and the tool produces:
-1. A visual **6-stage Gantt-style timeline** of the AESO Connection Process (Stages 1-6) with gate milestones
-2. A **financial obligations breakdown** showing every deposit, fee, and security requirement at each stage
-3. A **monthly DTS cost projection** for what charges begin on energization day
-4. A **total capital-at-risk summary** showing cumulative cash required before first kWh flows
+## Core Concept
+For any given hour, a miner has two options:
+1. **Mine**: Consume electricity at the AESO pool price to produce BTC
+2. **Don't mine (curtail)**: Shut down and, if desired, purchase hashrate on the open market (NiceHash-style marketplace pricing)
 
-## Data Sources (100% Factual)
-All figures come from official AESO documents:
+The tool backtests this decision across real historical AESO data to show optimal strategies.
 
-| Data Point | Source | URL |
+## Data Sources (100% Real -- No Fake Data)
+
+| Data | Source | Method |
 |---|---|---|
-| Connection Process Stages 1-6 (timelines, deliverables) | AESO Connection Process page | aeso.ca/grid/connecting-to-the-grid/connection-process/ |
-| Stage 3 target: 32 weeks | AESO Connection Process | Same as above |
-| Financial Security = 2 months estimated obligations | ISO Rules Section 103.3 (effective May 2, 2024) | aeso.ca/rules-standards-and-tariff/iso-rules/section-103-3-financial-security-requirements/ |
-| Pool Participation Fee: $150 + GST | ISO Fees page | aeso.ca/rules-standards-and-tariff/iso-fees/ |
-| Energy Market Trading Charge: $0.606/MWh + GST | ISO Fees page | Same as above |
-| Cluster Assessment Preliminary Fee: lower of $5,000 + $150/MW or $25,000 + GST | ISO Fees page | Same as above |
-| Cluster Assessment Detailed Fee: lower of $20,000 + $300/MW or $65,000 + GST | ISO Fees page | Same as above |
-| DTS rate components (all verified from 2026-015T Bill Estimator) | tariff-rates.ts constants | Already in codebase |
-| Prudential Pool Prices (Jan 2026: $51, Feb 2026: $33) | AESO Settlement & Credit page | aeso.ca/market/market-participation/settlement-credit/ |
-| Data Centre Staged Energizations (EN2 outside dates) | AESO Process Updates Nov 2025 | aeso.ca/grid/connecting-to-the-grid/process-updates/2025/data-centre-staged-energizations/ |
+| Hourly AESO pool prices (Jun 2022 -- present) | `aeso_training_data` table | 34,545 real records in database |
+| Live BTC price | Coinbase API | Existing `useBitcoinNetworkStats` hook |
+| Live network hashrate | mempool.space API | Existing hook |
+| Live difficulty | mempool.space API | Existing hook |
+| Block reward (3.125 BTC) | Calculated from block height | Existing logic |
+| DTS transmission charges | Verified 2026-015T Bill Estimator | `tariff-rates.ts` constants |
+| Miner efficiency (15 J/TH) | Industry standard S21 Pro spec | `mining-data.ts` constants |
 
-## UI Design
+**Important constraint**: Historical BTC price and hashrate data is NOT available in the database. The tool will clearly label its approach: it uses **current** BTC network conditions applied against **historical** energy prices to answer "given today's mining economics, which past hours would have been profitable?" This is a standard backtesting methodology and will be clearly disclosed in the UI.
 
-### Section 1: Facility Input Panel
-- Contracted Capacity (MW) -- slider/input, default 45 MW
-- Target Energization Date -- date picker
-- DFO selection (FortisAlberta, EPCOR, ATCO, ENMAX)
-- Project type toggle: Load (industrial/data centre) vs Generator
-- Substation fraction (default 1.0)
+## UI Sections
 
-### Section 2: Connection Process Timeline (Visual)
-A horizontal stage-by-stage timeline showing:
+### Section 1: Facility Configuration Panel
+Inputs (with sensible defaults from existing constants):
+- Capacity: MW deployed (default 45 MW)
+- Miner model: dropdown from `ASIC_SPECS` (default S21 Pro, 15 J/TH)
+- Pool fee: % (default 1.5%)
+- All-in energy rate override: optional manual $/MWh (otherwise uses AESO pool + DTS adder)
+- Hash purchase price: $/TH/day -- user input for comparison (NiceHash marketplace reference)
+- Date range selector: pick from available historical data (Jun 2022 -- present)
 
-```text
-Stage 1        Stage 2          Stage 3           Stage 4        Stage 5         Stage 6
-Screening      Assessment       Reg. Prep         AUC Apps       Construction    Close Out
-(8 wks)        (16 wks)         (32 wks)          (variable)     (variable)      (post-ISD)
-   |               |                |                  |              |               |
- Gate 1          Gate 2           Gate 3             Gate 4         Gate 5          Gate 6
-                                   |                                  |
-                              SAS Agreement                    100-Day & 30-Day
-                            + Financial Security              Energization Packages
+### Section 2: Break-Even Analysis Dashboard
+Using live BTC network data, calculate and display:
+- **Break-even energy price** ($/MWh): the max pool price where mining is profitable
+- **Current AESO pool price** vs break-even (visual gauge)
+- **Mining margin** at current price
+- **Hash price** ($/TH/day from live data) vs self-mining cost per TH/day
+
+Formula (reusing existing `btcRoiMath.ts` logic):
+```
+Break-even $/MWh = (hashPrice * TH_per_MW * 24) - poolFee overhead
+where TH_per_MW = 1,000,000 / efficiency_J_per_TH
 ```
 
-Each stage shows:
-- Target duration (from AESO Connection Process page)
-- Key deliverables (factual from AESO)
-- Financial obligations triggered at that gate
+### Section 3: Historical Backtest Results
+Query `aeso_training_data` for the selected date range and for each hour calculate:
+- **Mining revenue**: using current BTC network stats (disclosed as "current conditions backtest")
+- **All-in energy cost**: AESO pool price + DTS transmission adder ($12.94/MWh) + DFO charges
+- **Net profit/loss per MWh**
+- **Decision**: MINE (profitable) or CURTAIL (unprofitable)
 
-### Section 3: Financial Obligations Breakdown
-A table/card layout showing every fee and deposit:
+Display as:
+- **Profitability heatmap**: Month x Hour-of-Day grid colored by average net margin
+- **Summary stats**: % of hours profitable, average margin when mining, total profit over period
+- **Optimal curtailment threshold**: the pool price above which shutting down maximizes returns (reuses existing Power Model logic pattern)
 
-**Pre-Connection Fees:**
-- Cluster Assessment Preliminary Fee: lower of ($5,000 + $150 x MW) or $25,000 + GST
-- Cluster Assessment Detailed Fee: lower of ($20,000 + $300 x MW) or $65,000 + GST
-- Pool Participation Fee: $150 + GST (annual)
+### Section 4: Mine vs. Buy Hash Comparison
+Side-by-side comparison for a given period:
+- **Self-mining cost**: total energy cost for the period (from historical AESO data)
+- **Equivalent hash purchased**: what the same capital would buy on the hashrate marketplace at the user-specified $/TH/day rate
+- **BTC earned**: self-mining output vs purchased hash output
+- **Verdict**: which strategy yielded more BTC per dollar
 
-**Stage 3 -- SAS Agreement Financial Security:**
-- Calculated as 2 months of estimated DTS obligations (per ISO Rules Section 103.3)
-- Uses the full DTS rate structure from our verified 2026-015T constants
-- Formula: monthly DTS charges x 2 (bulk system + regional + POD + energy charges)
+Key metric: **"Indifference energy price"** -- the AESO pool price at which self-mining and buying hash produce equal BTC per dollar spent.
 
-**Stage 5 -- Energization Financial Security:**
-- Additional financial security may be required (per Section 103.3)
-- Calculated based on 2 months of estimated energy market obligations
-- Uses Prudential Pool Price x capacity x load factor x 2 months
+```
+Indifference price = hashPurchaseRate * TH_per_MW * 24 / (1000 * cadToUsd)
+```
+(Converted to CAD/MWh for AESO comparison)
 
-**Ongoing Post-Energization:**
-- Energy Market Trading Charge: $0.606/MWh + GST
-- Monthly DTS charges (calculated using existing Power Model logic)
+### Section 5: Monthly Strategy Summary Table
+A table showing each month in the selected range:
+- Average pool price (real from DB)
+- Hours profitable (count)
+- Hours curtailed (count)
+- Total mining revenue (at current BTC conditions)
+- Total energy cost
+- Net profit
+- Comparison: would buying hash have been better?
 
-### Section 4: Total Capital-at-Risk Summary
-Summary cards showing:
-- Total upfront fees (cluster assessment + pool participation)
-- Financial security (SAS Agreement) -- refundable deposit
-- Financial security (energy market) -- refundable deposit
-- First month DTS charges estimate
-- **Total cash required before first revenue**
+### Section 6: Source Attribution
+All figures linked to sources with badges:
+- "Live from mempool.space" for BTC network data
+- "Live from Coinbase" for BTC price
+- "Historical from AESO" for pool prices
+- "Verified 2026-015T" for DTS rates
+- Clear disclosure: "Backtest applies current BTC network conditions to historical energy prices"
 
-### Section 5: Source Attribution
-Every figure links to its AESO source document with "Verified" badges and effective dates.
+## Files to Create
 
-## Files to Create/Modify
+### 1. `src/components/aeso/MiningHashOptimizer.tsx` (New)
+Main component with all 6 sections. Uses:
+- `useBitcoinNetworkStats()` for live BTC data
+- Direct Supabase query to `aeso_training_data` for historical AESO prices
+- `AESO_TARIFF_2026.TRANSMISSION_ADDER_CAD_MWH` for all-in cost
+- `ASIC_SPECS` from `mining-data.ts` for miner efficiency
+- Recharts for heatmap and charts
 
-### New Files:
-1. **`src/components/aeso-hub/tabs/EnergizationTab.tsx`** -- Tab wrapper (follows PowerModelTab pattern)
-2. **`src/components/aeso/EnergizationTimeline.tsx`** -- Main component containing all sections
-3. **`src/constants/energization-fees.ts`** -- All AESO fees and connection process data with source URLs
+### 2. `src/components/aeso-hub/tabs/MiningEconomicsTab.tsx` (New)
+Tab wrapper following the existing pattern (like `EnergizationTab.tsx`).
 
-### Modified Files:
-4. **`src/components/aeso-hub/layout/AESOHubSidebar.tsx`**
-   - Add `'energization'` to `AESOHubView` type union
-   - Add nav item under "Market" group: `{ id: 'energization', label: 'Energization', icon: Timer }`
+## Files to Modify
 
-5. **`src/components/aeso-hub/layout/AESOHubLayout.tsx`**
-   - Add `energization: 'Energization Timeline'` to VIEW_LABELS
+### 3. `src/components/aeso-hub/layout/AESOHubSidebar.tsx`
+- Add `'mining-economics'` to `AESOHubView` type union
+- Add nav item under "Intelligence" group: `{ id: 'mining-economics', label: 'Mining Economics', icon: Bitcoin }`
 
-6. **`src/components/aeso-hub/AESOMarketHub.tsx`**
-   - Import and render `EnergizationTab` when `activeTab === 'energization'`
+### 4. `src/components/aeso-hub/layout/AESOHubLayout.tsx`
+- Add `'mining-economics': 'Mining Economics'` to `VIEW_LABELS`
+
+### 5. `src/components/aeso-hub/AESOMarketHub.tsx`
+- Import and render `MiningEconomicsTab` when `activeTab === 'mining-economics'`
 
 ## Technical Details
 
-### Constants file structure (`energization-fees.ts`):
+### Historical Data Query
+```sql
+SELECT 
+  date_trunc('hour', timestamp) as hour,
+  AVG(pool_price) as avg_pool_price,
+  MAX(ail_mw) as peak_demand
+FROM aeso_training_data
+WHERE timestamp >= $startDate AND timestamp <= $endDate
+  AND pool_price IS NOT NULL
+GROUP BY date_trunc('hour', timestamp)
+ORDER BY hour
+```
+This uses the 34,545+ real records already in the database.
+
+### Core Calculation Logic
+Reuses existing patterns from `btcRoiMath.ts` and `MiningEnergyAnalytics.tsx`:
 ```typescript
-export const AESO_CONNECTION_PROCESS = {
-  stages: [
-    {
-      id: 1, name: 'Screening',
-      targetWeeks: 8,
-      description: 'AESO reviews the SASR and determines connection requirements',
-      financialObligations: [],
-      keyDeliverables: ['System Access Service Request (SASR)'],
-      source: 'aeso.ca/grid/connecting-to-the-grid/connection-process/',
-    },
-    // ... stages 2-6 with verified data
-  ],
-} as const;
-
-export const AESO_ISO_FEES = {
-  poolParticipationFee: { amount: 150, gst: true, source: '...' },
-  energyMarketTradingCharge: { perMWh: 0.606, gst: true, source: '...' },
-  clusterPreliminaryFee: {
-    formula: 'lower of ($5,000 + $150*MW) or $25,000',
-    calculate: (mw: number) => Math.min(5000 + 150 * mw, 25000),
-    gst: true, source: '...',
-  },
-  clusterDetailedFee: {
-    formula: 'lower of ($20,000 + $300*MW) or $65,000',
-    calculate: (mw: number) => Math.min(20000 + 300 * mw, 65000),
-    gst: true, source: '...',
-  },
-} as const;
-
-export const AESO_FINANCIAL_SECURITY = {
-  rule: 'ISO Rules Section 103.3',
-  requirement: '2 months of estimated obligations above unsecured credit limit',
-  effectiveDate: '2024-05-02',
-  source: 'aeso.ca/rules-standards-and-tariff/iso-rules/section-103-3-financial-security-requirements/',
-} as const;
+const TH_PER_MW = 1_000_000 / minerEfficiency; // e.g., 66,667 for 15 J/TH
+const hourlyBtcPerMW = (TH_PER_MW / (networkHashrateEH * 1e6)) * 144 * blockReward / 24;
+const hourlyRevenuePerMW = hourlyBtcPerMW * btcPrice;
+const allInEnergyCost = (poolPriceCAD + transmissionAdder) * cadToUsd; // USD/MWh
+const netMargin = hourlyRevenuePerMW - allInEnergyCost;
+const decision = netMargin > 0 ? 'MINE' : 'CURTAIL';
 ```
 
-### Financial Security Calculation Logic:
-The SAS Agreement financial security is calculated by running the existing DTS charge calculator (from `AESO_RATE_DTS_2026`) for the given capacity and multiplying by 2 months. This reuses the verified tariff constants already in the codebase.
-
-### Timeline Visualization:
-Uses existing UI primitives (Card, Badge, Progress) with a horizontal step indicator. Each stage is a clickable card that expands to show deliverables, responsible parties, and financial triggers. The timeline highlights which stage corresponds to the user's target date.
-
+### No New Edge Functions Needed
+All data sources are already available:
+- AESO historical: direct Supabase client query to `aeso_training_data`
+- BTC network: existing `useBitcoinNetworkStats` hook (client-side API calls)
+- Tariff constants: imported from `tariff-rates.ts`
