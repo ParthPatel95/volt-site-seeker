@@ -49,7 +49,8 @@ const VoltScout = () => {
   const isFullScreenModule = location.pathname.startsWith('/app/build') || 
                              location.pathname.startsWith('/app/secure-share') ||
                              location.pathname.startsWith('/app/aeso-market-hub') ||
-                             location.pathname.startsWith('/app/ercot-market-hub');
+                             location.pathname.startsWith('/app/ercot-market-hub') ||
+                             location.pathname.startsWith('/app/inventory');
   
   // Initialize analytics tracking
   useAnalytics();
