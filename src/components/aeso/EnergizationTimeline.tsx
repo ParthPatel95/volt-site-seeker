@@ -1,5 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { format, addWeeks } from 'date-fns';
+import { CapacitySensitivityChart } from './energization-charts/CapacitySensitivityChart';
+import { CashFlowWaterfall } from './energization-charts/CashFlowWaterfall';
+import { GanttTimeline } from './energization-charts/GanttTimeline';
+import { DTSBreakdownDonut } from './energization-charts/DTSBreakdownDonut';
+import { AnnualProjectionTable } from './energization-charts/AnnualProjectionTable';
+import { DFOComparisonChart } from './energization-charts/DFOComparisonChart';
 import { CalendarIcon, ExternalLink, Shield, DollarSign, Clock, ChevronDown, ChevronUp, Info, CheckCircle2, Zap, Building2, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -609,8 +615,34 @@ export function EnergizationTimeline() {
           />
         </div>
 
+        {/* Enhanced Analytics — Capacity Sensitivity & Cash Flow Waterfall */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <CapacitySensitivityChart
+            loadFactor={loadFactor}
+            poolPrice={poolPrice}
+            substationFraction={substationFraction}
+            calculateMonthlyDTS={calculateMonthlyDTS}
+          />
+          <CashFlowWaterfall calculations={calculations} />
+        </div>
+
+        {/* Gantt Chart & DTS Donut */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <GanttTimeline targetDate={targetDate} />
+          <DTSBreakdownDonut monthlyDTS={calculations.monthlyDTS} />
+        </div>
+
+        {/* 5-Year Projection */}
+        <AnnualProjectionTable
+          monthlyDTS={calculations.monthlyDTS}
+          poolParticipation={calculations.poolParticipation}
+        />
+
         {/* Section 5: DFO Cost Comparison */}
         <DFOComparisonSection capacityMW={capacityMW} loadFactor={loadFactor} monthlyDTS={calculations.monthlyDTS} />
+
+        {/* DFO Comparison Bar Chart */}
+        <DFOComparisonChart capacityMW={capacityMW} monthlyMWh={calculations.monthlyDTS.monthlyMWh} />
 
         {/* Section 6: Data Centre Staging Note */}
         <Card className="border-dashed">

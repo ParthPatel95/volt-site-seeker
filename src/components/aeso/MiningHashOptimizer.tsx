@@ -21,6 +21,12 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
 import { ASIC_SPECS, BLOCK_REWARD_BTC, BLOCKS_PER_DAY } from '@/constants/mining-data';
 import { cn } from '@/lib/utils';
+import { ProfitabilityHeatmap } from './mining-charts/ProfitabilityHeatmap';
+import { PriceDurationCurve } from './mining-charts/PriceDurationCurve';
+import { CumulativeProfitChart } from './mining-charts/CumulativeProfitChart';
+import { BreakEvenSensitivity } from './mining-charts/BreakEvenSensitivity';
+import { ASICComparisonTable } from './mining-charts/ASICComparisonTable';
+import { SeasonalAnalysis } from './mining-charts/SeasonalAnalysis';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface HourlyRecord {
@@ -488,6 +494,46 @@ export function MiningHashOptimizer() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* ── Enhanced Analytics: Heatmap, Price Duration, Cumulative ── */}
+            <ProfitabilityHeatmap
+              historicalData={historicalData}
+              hourlyRevenuePerMW_USD={miningEcon.hourlyRevenuePerMW_USD}
+              poolFee={poolFee}
+              cadToUsd={cadToUsd}
+              transmissionAdder={transmissionAdder}
+              capacityMW={capacityMW}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <PriceDurationCurve
+                historicalData={historicalData}
+                breakEvenPoolPriceCAD={miningEcon.breakEvenPoolPriceCAD}
+              />
+              <CumulativeProfitChart monthlyResults={backtestResults.monthlyResults} />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <BreakEvenSensitivity
+                networkHashTH={miningEcon.networkHashTH}
+                blockReward={btcStats.blockReward}
+                minerEfficiency={minerEfficiency}
+                poolFee={poolFee}
+                cadToUsd={cadToUsd}
+                transmissionAdder={transmissionAdder}
+                currentBtcPrice={btcStats.price}
+              />
+              <ASICComparisonTable
+                networkHashTH={miningEcon.networkHashTH}
+                blockReward={btcStats.blockReward}
+                btcPrice={btcStats.price}
+                poolFee={poolFee}
+                cadToUsd={cadToUsd}
+                transmissionAdder={transmissionAdder}
+              />
+            </div>
+
+            <SeasonalAnalysis monthlyResults={backtestResults.monthlyResults} />
 
             {/* ── Section 4: Mine vs Buy Hash ── */}
             {hashPurchasePrice > 0 && (
