@@ -1,80 +1,98 @@
 
 
-# Comprehensive Enhancements for Energization Timeline & Mining Economics
+# Offline-Resilient Image Uploads for Inventory
 
-## Tool 1: Energization Timeline Planner
+## Problem
+When you're at a job site with poor cell signal, inventory image uploads fail silently because the current implementation makes a single upload attempt with no retry, no offline queuing, and no image compression to reduce payload size.
 
-### Enhancement 1A: Capacity Sensitivity Analysis Chart
-Add a Recharts line chart showing how Total Capital-at-Risk scales across capacity levels (10 MW to 200 MW in 10 MW steps). Three lines: Upfront Fees, Refundable Security, and Total. Helps investors instantly see the capital curve and identify optimal facility sizing. Uses existing `calculateMonthlyDTS()` and fee formulas -- no new data sources needed.
+## Solution: Three-Layer Resilience
 
-### Enhancement 1B: Cash Flow Waterfall Chart
-A horizontal waterfall chart (Recharts BarChart) showing the step-by-step build-up of capital requirements: Cluster Preliminary -> Cluster Detailed -> Pool Participation -> DTS Security -> Energy Security -> First Month DTS -> Total. Each bar segment colored differently (non-refundable in amber, refundable in blue, ongoing in green). Makes the financial picture immediately visual for investor decks.
+### Layer 1: Image Compression Before Upload
+Compress photos client-side before uploading. Camera captures are typically 2-5 MB at full resolution. Compressing to 80% quality and capping dimensions at 1280px reduces most images to 100-300 KB -- dramatically improving success on slow connections.
 
-### Enhancement 1C: Timeline Gantt Chart (Visual)
-Replace the current horizontal stage bar with a proper horizontal Gantt-style chart using Recharts. Each stage rendered as a colored horizontal bar proportional to its duration, with the target energization date marked as a vertical line. When a target date is set, the bars are positioned on a real calendar axis. When no date is set, bars show relative week durations.
+### Layer 2: Automatic Retry with Exponential Backoff
+When an upload fails, automatically retry up to 3 times with increasing delays (1s, 3s, 7s). This handles the common case of brief signal drops without user intervention.
 
-### Enhancement 1D: DTS Cost Breakdown Donut Chart
-Add a Recharts PieChart/donut showing the proportional breakdown of monthly DTS charges (Bulk Demand, Regional, POD, Operating Reserve, etc.). Investors can instantly see which cost components dominate.
+### Layer 3: Offline Queue with IndexedDB
+When all retries fail (no signal at all), save the image locally in the browser's IndexedDB storage along with the item metadata. When connectivity returns, a background sync process automatically uploads the queued images. A small badge on the inventory UI shows how many uploads are pending.
 
-### Enhancement 1E: Annual Cost Projection Table
-A 5-year projection table showing Year 1 through Year 5 costs, including: annual DTS charges, annual energy market trading charges, annual pool participation fee, and cumulative total. Uses existing constants -- no assumptions beyond applying current rates forward with a clear disclaimer.
+## What You'll See
 
-### Enhancement 1F: DFO Comparison Bar Chart
-Add a grouped bar chart to the existing DFO Comparison section showing all 4 DFOs side-by-side with stacked bars (Demand, Delivery, Riders) plus a separate bar for total all-in cost. Much more visual than the current card-only layout.
+- **During upload**: A progress indicator showing compression and upload stages
+- **On retry**: A toast saying "Poor connection, retrying upload... (attempt 2/3)"
+- **When offline**: A toast saying "Image saved locally -- will upload when back online" with a green checkmark so you can keep working
+- **Pending queue badge**: A small indicator showing "2 pending uploads" when queued images exist
+- **Auto-sync**: When you regain signal, pending images upload automatically in the background with a success notification
 
----
+## Technical Details
 
-## Tool 2: Mining Hash Optimizer
+### Files to Create
 
-### Enhancement 2A: Profitability Heatmap (Month x Hour)
-Replace the current simplified hourly bar chart with a true Month x Hour-of-Day heatmap grid (Recharts or custom SVG). Each cell colored from red (loss) through white (break-even) to green (profit). The existing `heatmapMap` data is already computed but only aggregated by hour -- expand it to render the full 2D grid. This is the single most requested visualization in mining analytics.
+1. **`src/utils/imageCompression.ts`**
+   - `compressImage(blob, maxWidth=1280, quality=0.8)` -- uses canvas API to resize and compress JPEG
+   - Targets sub-300KB output for typical inventory photos
 
-### Enhancement 2B: Price Duration Curve
-A line chart showing historical AESO pool prices sorted from lowest to highest, with a horizontal line at the break-even price. The intersection point shows what percentage of hours are below break-even (profitable). This is a standard energy market analytics view and reuses existing `historicalData`.
+2. **`src/utils/offlineUploadQueue.ts`**
+   - IndexedDB-backed queue using simple `idb-keyval`-style wrapper (no new dependency -- raw IndexedDB API)
+   - `queueUpload(imageBlob, metadata)` -- stores image + metadata locally
+   - `getPendingUploads()` -- returns count and list
+   - `processQueue()` -- attempts to upload all pending items
+   - `clearCompleted()` -- removes successful uploads from queue
 
-### Enhancement 2C: Cumulative Profit Chart
-A time-series area chart showing cumulative net profit over the backtest period. X-axis: months. Y-axis: cumulative USD. Shows the profit trajectory and whether returns are accelerating or decelerating. Uses existing `monthlyResults` data.
+3. **`src/components/inventory/components/OfflineUploadIndicator.tsx`**
+   - Small badge component showing pending upload count
+   - Listens for `online` browser event to trigger auto-sync
+   - Shows progress when syncing
 
-### Enhancement 2D: Sensitivity Analysis -- Break-Even vs BTC Price
-A line chart showing how the break-even AESO pool price changes across a range of BTC prices ($50K to $200K in $10K steps). Uses the existing break-even formula with BTC price as the variable. Helps answer "if BTC drops to $X, what energy price do I need?"
+### Files to Modify
 
-### Enhancement 2E: Efficiency Comparison Table
-An expanded ASIC comparison showing all miners from `ASIC_SPECS` with calculated metrics for the current BTC conditions: break-even price, daily BTC per MW, daily revenue per MW, and energy cost ratio. Helps users compare miners beyond just J/TH.
+4. **`src/components/inventory/hooks/useImageUpload.ts`**
+   - Add image compression step before upload
+   - Add retry logic with exponential backoff (3 attempts)
+   - On final failure, queue to IndexedDB instead of showing error
+   - Add `pendingCount` to returned state
+   - Add `navigator.onLine` check to skip upload attempt and queue immediately when offline
 
-### Enhancement 2F: Seasonal Pattern Analysis
-Summary cards showing backtest results broken down by season (Winter: Nov-Feb, Summer: Jun-Aug, Shoulder: Mar-May/Sep-Oct). Shows average pool price, profitability %, and optimal strategy per season. Uses existing backtest data grouped differently.
+5. **`src/components/inventory/components/InventoryCameraCapture.tsx`**
+   - Update upload feedback to show compression/retry/queued states
+   - Change "Uploading..." to show current stage
 
----
+6. **`src/components/inventory/components/InventorySmartCapture.tsx`**
+   - Same upload feedback improvements as CameraCapture
 
-## Technical Implementation
+7. **`src/components/inventory/InventoryPage.tsx`** (or equivalent shell)
+   - Add `OfflineUploadIndicator` component to show pending upload badge
 
-### Files Modified:
+### Core Logic (useImageUpload changes)
 
-1. **`src/components/aeso/EnergizationTimeline.tsx`**
-   - Add `CapacitySensitivityChart` sub-component (Recharts LineChart)
-   - Add `CashFlowWaterfall` sub-component (Recharts BarChart)
-   - Add `GanttTimeline` sub-component (Recharts BarChart horizontal)
-   - Add `DTSBreakdownDonut` sub-component (Recharts PieChart)
-   - Add `AnnualProjectionTable` sub-component (Table)
-   - Add `DFOComparisonChart` to existing DFOComparisonSection
-   - Integrate all new sections into the main layout
+```text
+uploadImage(file):
+  1. Compress image (canvas resize + JPEG quality reduction)
+  2. Check navigator.onLine
+     - If offline -> queue to IndexedDB, return placeholder, show toast
+  3. Attempt upload with retry:
+     - Try 1: immediate
+     - Try 2: wait 1s
+     - Try 3: wait 3s
+  4. If all retries fail -> queue to IndexedDB, return placeholder
+  5. On success -> return URL as normal
+```
 
-2. **`src/components/aeso/MiningHashOptimizer.tsx`**
-   - Add `ProfitabilityHeatmap` sub-component (custom grid using divs)
-   - Add `PriceDurationCurve` sub-component (Recharts LineChart)
-   - Add `CumulativeProfitChart` sub-component (Recharts AreaChart)
-   - Add `BreakEvenSensitivity` sub-component (Recharts LineChart)
-   - Add `ASICComparisonTable` sub-component (Table)
-   - Add `SeasonalAnalysis` sub-component (Card grid)
-   - Expand `backtestResults` to include heatmap 2D data and seasonal grouping
+### Auto-Sync Logic
 
-### Data Sources:
-All enhancements use **existing data** already in the codebase:
-- Energization: `AESO_ISO_FEES`, `AESO_RATE_DTS_2026`, `DFO_DISTRIBUTION_RATES`, `calculateMonthlyDTS()`
-- Mining: `historicalData` from `aeso_training_data`, `useBitcoinNetworkStats()`, `ASIC_SPECS`, `AESO_TARIFF_2026`
-- No new API calls, no new database queries, no new edge functions
-- No fabricated or estimated data -- all calculations derived from verified constants
+```text
+- Listen for browser 'online' event
+- On reconnect: call processQueue()
+- For each queued item:
+  - Attempt upload to Supabase storage
+  - On success: update the inventory item's image_url in the database
+  - Remove from IndexedDB queue
+- Show toast: "X photos synced successfully"
+```
 
-### Chart Library:
-All charts use Recharts (already installed). The heatmap uses a custom CSS grid of colored divs since Recharts doesn't have a native heatmap -- this is a common pattern and keeps dependencies minimal.
+### No New Dependencies
+All functionality uses built-in browser APIs:
+- Canvas API for image compression
+- IndexedDB for offline storage
+- `navigator.onLine` and `online`/`offline` events for connectivity detection
 
