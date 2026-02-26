@@ -779,6 +779,28 @@ export function InventoryPage() {
                   toast.error('Failed to analyze item');
                 }
               }}
+              onBulkDelete={async (ids) => {
+                for (const id of ids) {
+                  await deleteItem(id);
+                }
+                toast.success(`Deleted ${ids.length} items`);
+              }}
+              onBulkExport={(selectedItems) => {
+                const csv = [
+                  ['Name', 'SKU', 'Quantity', 'Unit', 'Unit Cost', 'Total Value', 'Location', 'Status', 'Condition'].join(','),
+                  ...selectedItems.map(i =>
+                    [i.name, i.sku || '', i.quantity, i.unit, i.unit_cost, (i.quantity * i.unit_cost).toFixed(2), i.location || '', i.status, i.condition].join(',')
+                  )
+                ].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `inventory-export-${new Date().toISOString().slice(0,10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success(`Exported ${selectedItems.length} items`);
+              }}
             />
           ) : (
             <div className={cn(
