@@ -48,6 +48,7 @@ import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
 import { InventoryGroupManager } from './components/InventoryGroupManager';
 import { InventorySpreadsheet } from './components/InventorySpreadsheet';
+import { useInventoryAIAnalysis } from './hooks/useInventoryAIAnalysis';
 import { MetalsMarketTicker } from './components/MetalsMarketTicker';
 import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
 import { useImageUpload } from './hooks/useImageUpload';
@@ -70,6 +71,7 @@ const TAB_OPTIONS = [
 export function InventoryPage() {
   const isMobile = useIsMobile();
   const { uploadImage } = useImageUpload();
+  const { analyzeImage, isAnalyzing } = useInventoryAIAnalysis();
   const [activeTab, setActiveTab] = useState<InventoryTab>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'spreadsheet'>('spreadsheet');
@@ -739,6 +741,44 @@ export function InventoryPage() {
                 setShowDeleteConfirm(true);
               }}
               onInlineUpdate={handleInlineUpdate}
+              onAnalyze={async (item) => {
+                if (!item.primary_image_url) {
+                  toast.error('No image available to analyze');
+                  return;
+                }
+                try {
+                  const response = await fetch(item.primary_image_url);
+                  const blob = await response.blob();
+                  const reader = new FileReader();
+                  const base64 = await new Promise<string>((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  });
+                  const base64Data = base64.split(',')[1];
+                  const categoryNames = categories.map(c => c.name);
+                  const result = await analyzeImage(base64Data, categoryNames);
+                  if (result) {
+                    const matchedCategory = categories.find(
+                      c => c.name.toLowerCase() === result.category.suggested.toLowerCase()
+                    );
+                    await updateItem({
+                      id: item.id,
+                      name: result.item.name,
+                      description: result.item.description,
+                      sku: result.item.suggestedSku || item.sku,
+                      category_id: matchedCategory?.id || item.category_id,
+                      condition: result.condition,
+                      unit_cost: result.marketValue.lowEstimate,
+                      quantity: result.quantity.count || item.quantity,
+                      unit: result.quantity.unit || item.unit,
+                    });
+                    toast.success(`Analyzed: ${result.item.name}`);
+                  }
+                } catch (err) {
+                  toast.error('Failed to analyze item');
+                }
+              }}
             />
           ) : (
             <div className={cn(
