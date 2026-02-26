@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings, Package } from 'lucide-react';
+import { Loader2, Search, Plus, ScanBarcode, LayoutGrid, List, Download, Settings, Package, Table2 } from 'lucide-react';
 import { useInventoryItems } from './hooks/useInventoryItems';
 import { useInventoryCategories } from './hooks/useInventoryCategories';
 import { useInventoryStats } from './hooks/useInventoryStats';
@@ -47,8 +47,10 @@ import { InventoryExport } from './components/InventoryExport';
 import { InventoryAdjustDialog } from './components/InventoryAdjustDialog';
 import { InventoryScannerSettings, ScannerSettings, defaultScannerSettings } from './components/InventoryScannerSettings';
 import { InventoryGroupManager } from './components/InventoryGroupManager';
+import { InventorySpreadsheet } from './components/InventorySpreadsheet';
 import { MetalsMarketTicker } from './components/MetalsMarketTicker';
 import { useHardwareBarcodeScanner } from './hooks/useHardwareBarcodeScanner';
+import { useImageUpload } from './hooks/useImageUpload';
 import { InventoryItem, InventoryFilters } from './types/inventory.types';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -67,9 +69,10 @@ const TAB_OPTIONS = [
 
 export function InventoryPage() {
   const isMobile = useIsMobile();
+  const { uploadImage } = useImageUpload();
   const [activeTab, setActiveTab] = useState<InventoryTab>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'spreadsheet'>('spreadsheet');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
@@ -194,6 +197,37 @@ export function InventoryPage() {
     createMultipleItems(items);
     setShowAddDialog(false);
     setInitialBarcode('');
+  };
+
+
+
+  const handleQuickSave = async (imageDataUrl: string) => {
+    try {
+      const blob = await fetch(imageDataUrl).then(r => r.blob());
+      const uploadResult = await uploadImage(blob, 'items');
+      const timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      createItem({
+        workspace_id: selectedWorkspaceId,
+        name: `Photo Item — ${timestamp}`,
+        quantity: 1,
+        unit: 'units',
+        min_stock_level: 0,
+        unit_cost: 0,
+        condition: 'new' as const,
+        status: 'in_stock' as const,
+        primary_image_url: uploadResult?.url || '',
+        tags: [],
+        additional_images: [],
+      });
+      setShowAddDialog(false);
+      toast.success('Item saved! Edit details anytime.');
+    } catch {
+      toast.error('Failed to save item');
+    }
+  };
+
+  const handleInlineUpdate = (id: string, updates: Partial<InventoryItem>) => {
+    updateItem({ id, ...updates });
   };
 
   const handleUpdateItem = (updates: Partial<InventoryItem>) => {
@@ -442,6 +476,7 @@ export function InventoryPage() {
           onOpenChange={setShowAddDialog}
           onSubmit={handleAddItem}
           onBatchSubmit={handleBatchAddItems}
+          onQuickSave={handleQuickSave}
           isLoading={isCreating || isCreatingMultiple}
           workspaceId={selectedWorkspaceId}
           categories={categories}
@@ -647,10 +682,20 @@ export function InventoryPage() {
               
               <div className="flex border rounded-lg border-border">
                 <Button
-                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                  variant={viewMode === 'spreadsheet' ? 'secondary' : 'ghost'}
                   size="icon"
                   className="h-9 w-9 rounded-r-none"
+                  onClick={() => setViewMode('spreadsheet')}
+                  title="Spreadsheet view"
+                >
+                  <Table2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-9 w-9 rounded-none border-x border-border"
                   onClick={() => setViewMode('grid')}
+                  title="Grid view"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </Button>
@@ -659,6 +704,7 @@ export function InventoryPage() {
                   size="icon"
                   className="h-9 w-9 rounded-l-none"
                   onClick={() => setViewMode('list')}
+                  title="List view"
                 >
                   <List className="w-4 h-4" />
                 </Button>
@@ -679,6 +725,20 @@ export function InventoryPage() {
               onAddItem={() => setShowAddDialog(true)}
               onScan={() => setShowScanner(true)}
               searchQuery={searchQuery}
+            />
+          ) : viewMode === 'spreadsheet' ? (
+            <InventorySpreadsheet
+              items={items}
+              onItemClick={handleItemClick}
+              onEdit={(item) => {
+                setSelectedItem(item);
+                setShowEditDialog(true);
+              }}
+              onDelete={(item) => {
+                setSelectedItem(item);
+                setShowDeleteConfirm(true);
+              }}
+              onInlineUpdate={handleInlineUpdate}
             />
           ) : (
             <div className={cn(
@@ -745,6 +805,7 @@ export function InventoryPage() {
         onOpenChange={setShowAddDialog}
         onSubmit={handleAddItem}
         onBatchSubmit={handleBatchAddItems}
+        onQuickSave={handleQuickSave}
         isLoading={isCreating || isCreatingMultiple}
         workspaceId={selectedWorkspaceId}
         categories={categories}

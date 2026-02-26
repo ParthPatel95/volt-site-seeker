@@ -33,6 +33,7 @@ interface InventoryAddDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'category'>) => void;
   onBatchSubmit?: (items: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'category'>[]) => void;
+  onQuickSave?: (imageUrl: string) => void;
   categories: InventoryCategory[];
   workspaceId: string;
   isLoading?: boolean;
@@ -55,6 +56,7 @@ export function InventoryAddDialog({
   onOpenChange,
   onSubmit,
   onBatchSubmit,
+  onQuickSave,
   categories,
   workspaceId,
   isLoading = false,
@@ -711,6 +713,7 @@ export function InventoryAddDialog({
         onOpenChange={setShowSmartCapture}
         onResult={handleAIResult}
         onMultipleResults={handleMultipleAIResults}
+        onQuickSave={onQuickSave}
         existingCategories={categories.map(c => c.name)}
       />
     </>
