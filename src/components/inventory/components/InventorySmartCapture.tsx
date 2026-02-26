@@ -32,6 +32,7 @@ interface InventorySmartCaptureProps {
   onOpenChange: (open: boolean) => void;
   onResult: (result: AIAnalysisResult, imageUrl: string) => void;
   onMultipleResults?: (results: AIAnalysisResult[], imageUrl: string) => void;
+  onQuickSave?: (imageUrl: string) => void;
   existingCategories?: string[];
   defaultDemolitionMode?: boolean; // Enable by default for demolition workspaces
 }
@@ -62,6 +63,7 @@ export function InventorySmartCapture({
   onOpenChange,
   onResult,
   onMultipleResults,
+  onQuickSave,
   existingCategories = [],
   defaultDemolitionMode = false,
 }: InventorySmartCaptureProps) {
@@ -523,11 +525,24 @@ export function InventorySmartCapture({
                   <div className="p-4 border-t flex gap-3">
                     <Button variant="outline" onClick={handleRetake} className="flex-1">
                       <RotateCcw className="w-4 h-4 mr-2" />
-                      Start Over
+                      Retake
                     </Button>
+                    {onQuickSave && (
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => {
+                          onQuickSave(capturedImages[0]);
+                          handleClose();
+                        }} 
+                        className="flex-1"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Save as Item
+                      </Button>
+                    )}
                     <Button onClick={handleAnalyze} className="flex-1">
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Analyze
+                      Smart Scan
                     </Button>
                   </div>
                 </motion.div>
