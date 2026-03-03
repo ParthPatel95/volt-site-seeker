@@ -20,7 +20,7 @@ interface AcademyAuthContextType {
   academyUser: AcademyUser | null;
   isLoading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, fullName?: string, company?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string, company?: string) => Promise<{ error: Error | null; needsSignIn?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Pick<AcademyUser, 'full_name' | 'company' | 'job_title'>>) => Promise<{ error: Error | null }>;
@@ -122,7 +122,7 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
     };
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string, company?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, company?: string): Promise<{ error: Error | null; needsSignIn?: boolean }> => {
     try {
       const redirectUrl = `${window.location.origin}/academy`;
 
@@ -172,6 +172,18 @@ export const AcademyAuthProvider: React.FC<{ children: ReactNode }> = ({ childre
           }
         }
 
+        // If no session (email confirmation required), try auto sign-in
+        if (!data.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (signInError) {
+            // Auto sign-in failed (email confirmation enforced on server)
+            return { error: null, needsSignIn: true };
+          }
+        }
       }
 
       return { error: null };

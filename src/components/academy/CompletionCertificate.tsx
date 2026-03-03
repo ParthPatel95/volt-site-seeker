@@ -150,6 +150,14 @@ export const CompletionCertificate: React.FC<CompletionCertificateProps> = ({
                 </p>
               </div>
 
+              {/* Signatory */}
+              <div className="py-4">
+                <p className="text-muted-foreground text-sm mb-1">Issued by</p>
+                <p className="text-lg font-bold text-foreground">WattByte Inc.</p>
+                <div className="mt-2 mx-auto w-32 border-b-2 border-amber-400/50" />
+                <p className="text-xs text-muted-foreground mt-1">Authorized Signatory</p>
+              </div>
+
               {/* Date and ID */}
               <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 text-sm text-muted-foreground">
                 <div>

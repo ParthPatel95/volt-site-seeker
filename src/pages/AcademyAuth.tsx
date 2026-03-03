@@ -56,9 +56,9 @@ const AcademyAuth: React.FC = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, fullName, company);
-        if (error) {
-          let message = error.message;
+        const result = await signUp(email, password, fullName, company);
+        if (result.error) {
+          let message = result.error.message;
           if (message.includes('already registered')) {
             message = 'This email is already registered. Please sign in instead.';
           }
@@ -67,12 +67,19 @@ const AcademyAuth: React.FC = () => {
             description: message,
             variant: 'destructive'
           });
+        } else if (result.needsSignIn) {
+          // Email confirmation required on server, switch to sign-in mode
+          toast({
+            title: 'Account Created!',
+            description: 'Please sign in with your credentials to continue.',
+          });
+          setIsSignUp(false);
+          setPassword('');
         } else {
           toast({
             title: 'Account Created!',
             description: 'Welcome to WattByte Academy. Redirecting...',
           });
-          // Navigate to academy after successful signup
           navigate(returnUrl, { replace: true });
         }
       } else {

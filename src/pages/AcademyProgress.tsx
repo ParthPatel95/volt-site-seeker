@@ -6,6 +6,7 @@ import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { CompletionCertificate } from '@/components/academy/CompletionCertificate';
 import { 
   BookOpen, 
   CheckCircle2, 
@@ -14,7 +15,8 @@ import {
   ArrowRight, 
   GraduationCap,
   BarChart3,
-  Calendar
+  Calendar,
+  Award
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -46,6 +48,9 @@ const AcademyProgress = () => {
   const { user, academyUser } = useAcademyAuth();
   const [moduleProgress, setModuleProgress] = useState<Record<string, ModuleProgress>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [certificateModule, setCertificateModule] = useState<string | null>(null);
+  const [hasAutoShownCert, setHasAutoShownCert] = useState(false);
 
   useEffect(() => {
     document.title = "My Progress | WattByte Academy";
@@ -107,6 +112,19 @@ const AcademyProgress = () => {
     const progress = moduleProgress[m.id];
     return progress && progress.completed_sections >= m.totalSections;
   }).length;
+
+  // Auto-show certificate when all modules are complete
+  useEffect(() => {
+    if (overallProgress === 100 && !hasAutoShownCert && !isLoading) {
+      const certShownKey = `wattbyte_cert_shown_${user?.id}`;
+      if (!localStorage.getItem(certShownKey)) {
+        setShowCertificate(true);
+        setCertificateModule(null);
+        setHasAutoShownCert(true);
+        localStorage.setItem(certShownKey, 'true');
+      }
+    }
+  }, [overallProgress, hasAutoShownCert, isLoading, user?.id]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,6 +207,16 @@ const AcademyProgress = () => {
               <span className="text-sm text-muted-foreground">{completedSections} / {totalSections} sections</span>
             </div>
             <Progress value={overallProgress} className="h-3" />
+            {overallProgress === 100 && (
+              <Button
+                onClick={() => { setShowCertificate(true); setCertificateModule(null); }}
+                className="mt-4 gap-2"
+                variant="outline"
+              >
+                <Award className="w-4 h-4" />
+                View Completion Certificate
+              </Button>
+            )}
           </div>
 
           {/* Module List */}
@@ -238,6 +266,21 @@ const AcademyProgress = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
+                      {isComplete && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="hidden sm:flex gap-1 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCertificateModule(module.title);
+                            setShowCertificate(true);
+                          }}
+                        >
+                          <Award className="w-3 h-3" />
+                          Certificate
+                        </Button>
+                      )}
                       <div className="w-24 hidden sm:block">
                         <Progress value={percentage} className="h-2" />
                       </div>
@@ -262,6 +305,16 @@ const AcademyProgress = () => {
       </main>
       
       <LandingFooter />
+
+      {/* Certificate Modal */}
+      {showCertificate && (
+        <CompletionCertificate
+          moduleName={certificateModule || 'WattByte Academy — Full Curriculum'}
+          completedAt={new Date().toISOString()}
+          userName={academyUser?.full_name || 'Learner'}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
     </div>
   );
 };
