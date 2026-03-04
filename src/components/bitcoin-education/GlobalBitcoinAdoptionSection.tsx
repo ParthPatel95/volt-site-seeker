@@ -34,26 +34,26 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = '' }: { end: number; d
 
 const GlobalBitcoinAdoptionSection: React.FC = () => {
   const governmentHoldings = [
-    { country: 'United States', flag: '🇺🇸', btc: '~213,000', source: 'Seized assets' },
-    { country: 'China', flag: '🇨🇳', btc: '~194,000', source: 'Seized assets' },
+    { country: 'United States', flag: '🇺🇸', btc: '~207,000', source: 'Strategic Bitcoin Reserve (est. March 2025)' },
+    { country: 'China', flag: '🇨🇳', btc: '~194,000', source: 'Seized assets (est.)' },
     { country: 'United Kingdom', flag: '🇬🇧', btc: '~61,000', source: 'Seized assets' },
     { country: 'El Salvador', flag: '🇸🇻', btc: '~6,000', source: 'Purchased' },
-    { country: 'Ukraine', flag: '🇺🇦', btc: '~46,000', source: 'Donations' },
+    { country: 'Ukraine', flag: '🇺🇦', btc: 'N/A', source: 'Crypto donations (~$100M+ mixed crypto)' },
     { country: 'Bhutan', flag: '🇧🇹', btc: '~13,000', source: 'Mining' }
   ];
 
   const corporateHoldings = [
-    { company: 'MicroStrategy', btc: '~528,000', value: '~$54B' },
-    { company: 'Marathon Digital', btc: '~46,000', value: '~$4.7B' },
-    { company: 'Tesla', btc: '~9,700', value: '~$1B' },
-    { company: 'Coinbase', btc: '~9,400', value: '~$960M' },
-    { company: 'Block (Square)', btc: '~8,000', value: '~$820M' }
+    { company: 'Strategy (f.k.a. MicroStrategy)', btc: '~499,000', value: 'BTC-price dependent' },
+    { company: 'Marathon Digital', btc: '~44,800', value: 'BTC-price dependent' },
+    { company: 'Tesla', btc: '~9,720', value: 'BTC-price dependent' },
+    { company: 'Coinbase', btc: '~9,400', value: 'BTC-price dependent' },
+    { company: 'Block (Square)', btc: '~8,000', value: 'BTC-price dependent' }
   ];
 
   const adoptionMilestones = [
-    { metric: 'Bitcoin Holders', value: 560, suffix: 'M+', description: 'People own Bitcoin globally' },
+    { metric: 'Bitcoin Holders', value: 300, suffix: 'M+', description: 'Estimated global holders (est.)' },
     { metric: 'Daily Transactions', value: 400, suffix: 'K+', description: 'On-chain transactions per day' },
-    { metric: 'ETF AUM', value: 120, suffix: 'B+', description: 'Assets in US Bitcoin ETFs' },
+    { metric: 'ETF AUM', value: 110, suffix: 'B+', description: 'Assets in US spot Bitcoin ETFs (varies with price)' },
     { metric: 'Active Addresses', value: 1, suffix: 'M+', description: 'Daily active addresses' }
   ];
 
@@ -193,12 +193,12 @@ const GlobalBitcoinAdoptionSection: React.FC = () => {
             </p>
             <div className="grid md:grid-cols-3 gap-4">
               <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold text-white mb-1">11</div>
+                <div className="text-2xl font-bold text-white mb-1">12+</div>
                 <div className="text-white/70 text-sm">Spot ETFs approved</div>
               </div>
               <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                <div className="text-2xl font-bold text-white mb-1">$120B+</div>
-                <div className="text-white/70 text-sm">Total assets under management</div>
+                <div className="text-2xl font-bold text-white mb-1">$100B+</div>
+                <div className="text-white/70 text-sm">Total AUM (varies with BTC price)</div>
               </div>
               <div className="bg-white/10 rounded-xl p-4 border border-white/20">
                 <div className="text-2xl font-bold text-white mb-1">Record</div>

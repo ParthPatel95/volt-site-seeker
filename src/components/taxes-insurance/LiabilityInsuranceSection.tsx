@@ -1,12 +1,14 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { ShieldCheck, Users, Globe, Lock, DollarSign } from 'lucide-react';
 import { TISectionWrapper, TISectionHeader, TIKeyInsight, TIStatCard } from './shared';
+import DataQualityBadge from '@/components/academy/DataQualityBadge';
 
 const LiabilityInsuranceSection = () => {
   return (
     <TISectionWrapper id="liability-insurance" theme="light">
       <ScrollReveal>
         <TISectionHeader badge="Lesson 9" badgeIcon={ShieldCheck} title="Liability Insurance Coverage" description="Protect against third-party claims, cyber threats, and management liability." accentColor="purple" />
+        <div className="flex justify-center mt-3"><DataQualityBadge level="illustrative" source="Hypothetical 45MW Reference Facility" /></div>
       </ScrollReveal>
       <ScrollReveal delay={50}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">

@@ -241,7 +241,7 @@ const StrategicOperationsMasterclass = () => {
         {/* Last Reviewed Footer */}
         <div className="max-w-4xl mx-auto px-4 pb-8">
           <LastReviewed
-            date="December 2024"
+            date="March 2026"
             reviewer="WattByte Education Team"
             variant="footer"
           />

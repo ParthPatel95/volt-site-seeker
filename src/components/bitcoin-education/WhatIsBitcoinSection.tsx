@@ -21,10 +21,10 @@ const WhatIsBitcoinSection: React.FC = () => {
       title: 'Decentralized',
       description: 'No single entity controls Bitcoin. The network is maintained by thousands of independent nodes spread across every continent, making it resistant to censorship, seizure, and shutdown.',
       details: [
-        'Over 15,000 publicly reachable nodes worldwide',
+        'Over 17,000 publicly reachable nodes worldwide (Bitnodes, 2025)',
         'No CEO, no headquarters, no central point of failure',
         'Changes require broad consensus from miners, developers, and users',
-        'Operates 24/7/365 with 99.98% uptime since 2009'
+        'Operates 24/7/365 with >99.9% uptime since 2009'
       ]
     },
     {
@@ -32,7 +32,7 @@ const WhatIsBitcoinSection: React.FC = () => {
       title: 'Digital Scarcity',
       description: 'Only 21 million Bitcoin will ever exist. This fixed supply is enforced by mathematics, not by any government or institution, making Bitcoin the first truly scarce digital asset.',
       details: [
-        'Current supply: ~19.5 million BTC (93% already mined)',
+        'Current supply: ~19.9 million BTC (~95% already mined)',
         'Final Bitcoin will be mined around year 2140',
         'Supply schedule is completely predictable and verifiable',
         'Cannot be inflated, debased, or altered by any authority'
@@ -56,14 +56,14 @@ const WhatIsBitcoinSection: React.FC = () => {
       icon: Server,
       title: 'Network Decentralization',
       description: 'The Bitcoin network consists of thousands of independently operated nodes. Each node stores a complete copy of the blockchain and independently validates every transaction and block.',
-      stat: '15,000+',
+      stat: '17,000+',
       statLabel: 'Active Nodes'
     },
     {
       icon: Building,
       title: 'Development Decentralization',
       description: 'Bitcoin\'s open-source code is maintained by hundreds of contributors worldwide. No single company or individual controls development. Major changes require years of discussion and voluntary adoption.',
-      stat: '800+',
+      stat: '900+',
       statLabel: 'Contributors'
     },
     {
@@ -76,7 +76,7 @@ const WhatIsBitcoinSection: React.FC = () => {
   ];
 
   const comparisonData = [
-    { attribute: 'Maximum Supply', bitcoin: '21 Million (Fixed Forever)', usd: 'Unlimited (Fed decides)', gold: '~244,000 tons (estimated remaining)' },
+    { attribute: 'Maximum Supply', bitcoin: '21 Million (Fixed Forever)', usd: 'Unlimited (Fed decides)', gold: '~212,000 tons mined; ~55,000 tons reserves (USGS)' },
     { attribute: 'Issuance Control', bitcoin: 'Mathematical Algorithm', usd: 'Federal Reserve', gold: 'Mining Companies' },
     { attribute: 'Verification', bitcoin: 'Anyone with a computer', usd: 'Trust the bank', gold: 'Requires assay testing' },
     { attribute: 'Portability', bitcoin: '12 words in your head', usd: 'Physical cash / bank wires', gold: 'Heavy, expensive to transport' },
