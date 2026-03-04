@@ -2,6 +2,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Zap, Users, Wrench, Building, Thermometer, DollarSign, BarChart3, PieChart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TISectionWrapper, TISectionHeader, TIContentCard, TIKeyInsight, TICallout, TIMetricDisplay } from './shared';
+import DataQualityBadge from '@/components/academy/DataQualityBadge';
 
 const opexCategories = [
   {
@@ -76,10 +77,11 @@ const OperatingExpenseSection = () => {
       {/* OpEx Overview */}
       <ScrollReveal delay={50}>
         <div className="bg-card border border-border rounded-xl p-6 mb-12">
-          <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
             <PieChart className="w-5 h-5" style={{ color: 'hsl(var(--watt-purple))' }} />
             45MW Facility: Annual Operating Expenses (~$20M)
           </h3>
+          <div className="flex justify-start mb-4"><DataQualityBadge level="illustrative" source="Hypothetical 45MW Reference Facility" /></div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {opexCategories.map((item, idx) => (
               <motion.div

@@ -49,7 +49,7 @@ const isoComparison = [
 
 const keyStats = [
   { label: 'Peak Demand (2024)', value: '12,500 MW', description: 'Record set during cold snap' },
-  { label: 'Installed Capacity', value: '~19,500 MW', description: 'Total generation capacity' },
+  { label: 'Installed Capacity', value: '~21,000+ MW', description: 'Total generation capacity (2025 est.)' },
   { label: 'Transmission Lines', value: '26,000+ km', description: 'High-voltage network' },
   { label: 'Market Participants', value: '260+', description: 'Generators, retailers, loads' },
 ];
@@ -266,9 +266,9 @@ export const WhatIsAESOSection = () => {
       {/* Expert Quote */}
       <AESOQuote
         quote="Alberta's deregulated electricity market is unique in North America. The energy-only design, combined with no capacity payments, creates a market where only the most efficient and flexible operators thrive."
-        author="Mike Law"
-        role="President & CEO, AESO"
-        source="AESO 2024 Market Update"
+        author="AESO"
+        role="Alberta Electric System Operator"
+        source="AESO Market Overview (paraphrased)"
         className="mb-12"
       />
 

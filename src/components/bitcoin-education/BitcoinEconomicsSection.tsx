@@ -88,7 +88,7 @@ const BitcoinEconomicsSection: React.FC = () => {
             <div className="bg-muted rounded-2xl p-6 text-center">
               <TrendingUp className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-3" />
               <div className="text-3xl font-bold text-foreground mb-1">
-                ~<AnimatedCounter end={19} suffix=".8M" />
+              ~<AnimatedCounter end={19} suffix=".9M" />
               </div>
               <div className="text-sm text-muted-foreground">Currently Mined</div>
             </div>
@@ -102,7 +102,7 @@ const BitcoinEconomicsSection: React.FC = () => {
             <div className="bg-muted rounded-2xl p-6 text-center">
               <Percent className="w-8 h-8 text-[hsl(var(--watt-bitcoin))] mx-auto mb-3" />
               <div className="text-3xl font-bold text-foreground mb-1">
-                <AnimatedCounter end={94} suffix="%" />
+                <AnimatedCounter end={95} suffix="%" />
               </div>
               <div className="text-sm text-muted-foreground">Already Mined</div>
             </div>
@@ -235,7 +235,7 @@ const BitcoinEconomicsSection: React.FC = () => {
         
         <SectionSummary
           takeaways={[
-            "Bitcoin has a fixed supply of 21 million — approximately 19.5M already mined",
+            "Bitcoin has a fixed supply of 21 million — approximately 19.9M already mined (~95%)",
             "Halving events cut new supply in half every ~210,000 blocks (~4 years)",
             "Historical pattern: significant price appreciation 12-18 months post-halving",
             "Scarcity + growing demand creates long-term value proposition"

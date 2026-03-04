@@ -217,8 +217,8 @@ const BitcoinMiningSection: React.FC = () => {
             </p>
             <div className="grid md:grid-cols-3 gap-4">
               <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
-                <div className="text-3xl font-bold text-white mb-1">5-8¢</div>
-                <div className="text-white/70 text-sm">Optimal electricity rate per kWh</div>
+                <div className="text-3xl font-bold text-white mb-1">3-7¢</div>
+                <div className="text-white/70 text-sm">Competitive electricity rate per kWh</div>
               </div>
               <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
                 <div className="text-3xl font-bold text-white mb-1">Cold</div>
@@ -242,7 +242,7 @@ const BitcoinMiningSection: React.FC = () => {
             "Bitcoin mining uses proof-of-work to secure transactions and mint new coins",
             "Hardware has evolved from CPUs (10 MH/s) to ASICs (400+ TH/s) — a 40 million X improvement",
             "Electricity costs are ~60% of operating expenses, making location crucial",
-            "Optimal mining requires 5-8¢/kWh electricity, cold climate, and stable grid"
+            "Competitive mining post-halving requires 3-7¢/kWh electricity, cold climate, and stable grid"
           ]}
           proTip="The most successful mining operations focus on three things: cheap power, efficient cooling, and grid reliability. WattByte's Alberta location delivers all three."
           nextSteps={[

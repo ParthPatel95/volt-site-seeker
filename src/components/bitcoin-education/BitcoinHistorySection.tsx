@@ -21,7 +21,7 @@ const BitcoinHistorySection: React.FC = () => {
     {
       year: '2010',
       title: 'First Purchase',
-      description: 'Laszlo Hanyecz buys two pizzas for 10,000 BTC (~$41 at the time)',
+      description: 'Laszlo Hanyecz pays 10,000 BTC for two pizzas — the first real-world Bitcoin transaction',
       icon: Pizza,
       color: 'bg-[hsl(var(--watt-success))]'
     },
@@ -130,7 +130,7 @@ const BitcoinHistorySection: React.FC = () => {
             </div>
             <p className="text-muted-foreground">
               May 22nd is celebrated as "Bitcoin Pizza Day" in honor of the first real-world Bitcoin transaction. 
-              Those 10,000 BTC would be worth over <span className="font-bold text-[hsl(var(--watt-bitcoin))]">$1 billion</span> today, 
+              Those 10,000 BTC would be worth <span className="font-bold text-[hsl(var(--watt-bitcoin))]">hundreds of millions of dollars</span> at today's prices, 
               making it the most expensive pizza in history!
             </p>
           </div>

@@ -20,7 +20,7 @@ const MiningSustainabilitySection: React.FC = () => {
     },
     { 
       source: 'Wind', 
-      percentage: 12, 
+      percentage: 11, 
       icon: Wind, 
       color: 'hsl(var(--watt-success))',
       description: 'Growing in Texas (ERCOT) and Northern Europe',
@@ -28,7 +28,7 @@ const MiningSustainabilitySection: React.FC = () => {
     },
     { 
       source: 'Solar', 
-      percentage: 8, 
+      percentage: 9, 
       icon: Sun, 
       color: 'hsl(var(--watt-bitcoin))',
       description: 'Expanding in sunny regions with cheap land',
@@ -36,7 +36,7 @@ const MiningSustainabilitySection: React.FC = () => {
     },
     { 
       source: 'Nuclear', 
-      percentage: 5, 
+      percentage: 9, 
       icon: Zap, 
       color: 'hsl(var(--watt-warning))',
       description: 'Baseload power with zero emissions',
@@ -44,7 +44,7 @@ const MiningSustainabilitySection: React.FC = () => {
     },
     { 
       source: 'Natural Gas', 
-      percentage: 38, 
+      percentage: 36, 
       icon: Flame, 
       color: 'hsl(var(--watt-navy))',
       description: 'Often using stranded or flared gas that would be wasted',
@@ -52,7 +52,7 @@ const MiningSustainabilitySection: React.FC = () => {
     },
     { 
       source: 'Other/Mixed', 
-      percentage: 14, 
+      percentage: 12, 
       icon: Factory, 
       color: 'hsl(var(--muted-foreground))',
       description: 'Grid mix varies by location and time',
@@ -71,7 +71,7 @@ const MiningSustainabilitySection: React.FC = () => {
       title: 'Flared Gas Capture',
       icon: Flame,
       description: 'Oil wells produce associated natural gas that\'s often burned (flared) due to lack of pipeline infrastructure. Bitcoin mining converts this waste into value while reducing methane emissions.',
-      example: 'Texas and North Dakota operations capture gas that would otherwise be burned, reducing emissions by 63% compared to flaring.'
+      example: 'Texas and North Dakota operations capture gas that would otherwise be burned, significantly reducing methane emissions compared to open flaring (World Bank GGFR).'
     },
     {
       title: 'Grid Stabilization',
@@ -98,7 +98,7 @@ const MiningSustainabilitySection: React.FC = () => {
     ]
   };
 
-  const renewablePercentage = 48;
+  const renewablePercentage = 52.4; // Cambridge Centre for Alternative Finance, 2025
 
   return (
     <BitcoinSectionWrapper theme="gradient" id="sustainability">
@@ -119,7 +119,7 @@ const MiningSustainabilitySection: React.FC = () => {
             <div>
               <h3 className="text-2xl font-bold text-white mb-2">Sustainable Energy Mix</h3>
               <p className="text-white/90 text-base leading-relaxed mb-4">
-                According to the Bitcoin Mining Council, approximately half of Bitcoin mining 
+                According to the Cambridge Centre for Alternative Finance (2025), over half of Bitcoin mining 
                 now uses sustainable energy sources.
               </p>
               <div className="flex items-center gap-4">

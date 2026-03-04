@@ -10,7 +10,7 @@ import { DCESectionWrapper, DCESectionHeader, DCEContentCard, DCEKeyInsight, DCE
 const DatacenterEconomicsSection = () => {
   const [facilitySize, setFacilitySize] = useState(50); // MW
   const [powerCost, setPowerCost] = useState(0.05); // $/kWh
-  const [btcPrice, setBtcPrice] = useState(100000);
+  const [btcPrice, setBtcPrice] = useState(85000); // Illustrative default — actual BTC price varies
 
   // CapEx breakdown per MW
   const capexPerMW = {
@@ -39,7 +39,7 @@ const DatacenterEconomicsSection = () => {
 
   // Revenue calculation (simplified)
   const minerEfficiency = 23; // J/TH
-  const networkHashrate = 750; // EH/s
+  const networkHashrate = 850; // EH/s — illustrative default as of Q1 2026
   const blockReward = 3.125;
   const dailyBlocks = 144;
   
@@ -321,7 +321,7 @@ const DatacenterEconomicsSection = () => {
         </div>
         
         <p className="text-xs text-white/50 mt-4">
-          *Simplified model at 23 J/TH efficiency, 750 EH/s network, 95% uptime. Actual results vary.
+          *Illustrative model: 23 J/TH efficiency, 850 EH/s network, 95% uptime. All values are educational estimates — adjust sliders for your scenario. Actual results vary significantly.
         </p>
       </motion.div>
 

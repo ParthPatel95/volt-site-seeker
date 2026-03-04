@@ -105,9 +105,9 @@ const MiningHardwareShowcaseSection = () => {
 
   const selectedMinerData = miners[selectedMiner];
 
-  // Calculate daily metrics (simplified)
-  const btcPrice = 100000; // Placeholder
-  const networkHashrate = 750; // EH/s
+  // Calculate daily metrics (simplified — illustrative defaults, actual values vary)
+  const btcPrice = 85000; // Illustrative default — use live data for real analysis
+  const networkHashrate = 850; // EH/s — illustrative default as of Q1 2026
   const blockReward = 3.125;
   const dailyBTC = (selectedMinerData.hashrate / (networkHashrate * 1e6)) * 144 * blockReward;
   const dailyRevenue = dailyBTC * btcPrice;
@@ -133,7 +133,7 @@ const MiningHardwareShowcaseSection = () => {
         badge="Section 6 • ASIC Technology"
         badgeIcon={Cpu}
         title="Mining Hardware Showcase"
-        description="Compare the latest 2024/2025 ASIC miners powering Bitcoin's 750+ EH/s network hashrate"
+        description="Compare the latest 2024/2025 ASIC miners powering Bitcoin's 800+ EH/s network hashrate"
         theme="light"
       />
 
@@ -347,7 +347,7 @@ const MiningHardwareShowcaseSection = () => {
             </div>
           </div>
           <p className="text-xs text-white/50 mt-3">
-            *Estimated at $100K BTC, 750 EH/s network, 3.125 BTC block reward. Actual results vary with difficulty and price.
+            *Illustrative defaults: $85K BTC, 850 EH/s network, 3.125 BTC block reward. Actual results vary significantly with difficulty, price, and market conditions. Adjust sliders for your scenario.
           </p>
         </div>
       </motion.div>

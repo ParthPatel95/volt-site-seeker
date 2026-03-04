@@ -2,6 +2,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Shield, Building, Zap, AlertTriangle, DollarSign, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TISectionWrapper, TISectionHeader, TIKeyInsight, TIStatCard } from './shared';
+import DataQualityBadge from '@/components/academy/DataQualityBadge';
 
 const coverageTypes = [
   { type: "Property Insurance", coverage: "$80M", premium: "$240K/yr", description: "Equipment and facility replacement value" },
@@ -14,6 +15,7 @@ const PropertyInsuranceSection = () => {
     <TISectionWrapper id="property-insurance" theme="gradient">
       <ScrollReveal>
         <TISectionHeader badge="Lesson 8" badgeIcon={Shield} title="Property & Equipment Insurance" description="Protect your facility and equipment with comprehensive property coverage." accentColor="purple" />
+        <div className="flex justify-center mt-3"><DataQualityBadge level="illustrative" source="Hypothetical 45MW Reference Facility" /></div>
       </ScrollReveal>
       <ScrollReveal delay={50}>
         <div className="grid md:grid-cols-3 gap-4 mb-12">
