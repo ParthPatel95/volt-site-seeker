@@ -91,7 +91,7 @@ export const GlobalUserMenu = () => {
           <GraduationCap className="mr-2 h-4 w-4" />
           Academy Home
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/academy/learning')} className="cursor-pointer">
+        <DropdownMenuItem onClick={() => navigate('/academy/progress')} className="cursor-pointer">
           <BookOpen className="mr-2 h-4 w-4" />
           My Learning
         </DropdownMenuItem>
