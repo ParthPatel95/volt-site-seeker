@@ -38,6 +38,7 @@ import { DashboardBuilder } from '@/components/aeso/DashboardBuilder';
 import ShareDashboard from './ShareDashboard';
 import VoltBuild from './VoltBuild';
 import Inventory from './Inventory';
+import PropertyScraper from './PropertyScraper';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
