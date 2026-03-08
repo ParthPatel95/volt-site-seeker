@@ -76,12 +76,16 @@ Deno.serve(async (req) => {
     console.log('Starting Firecrawl property scan:', { location, property_type, min_power_mw, budget_max });
 
     // Build targeted search queries for mining-suitable properties
+    const ptLabel = property_type || 'industrial';
     const queries = params.search_queries?.length ? params.search_queries : [
-      `industrial property for sale ${location} high power ${property_type || ''} site:loopnet.com OR site:crexi.com`,
-      `heavy industrial warehouse ${location} power infrastructure for sale site:loopnet.com OR site:landsearch.com`,
+      `industrial property for sale ${location} high power capacity ${ptLabel}`,
+      `warehouse data center ${location} heavy power for sale`,
+      `${location} industrial building MW power electrical substation`,
+      `commercial industrial property ${location} loopnet crexi`,
+      `manufacturing facility ${location} for sale power infrastructure`,
     ];
 
-    // Step 1: Search via Firecrawl with scrapeOptions to get markdown in one call
+    // Step 1: Search via Firecrawl with scrapeOptions + waitFor for JS-heavy sites
     console.log('Searching with', queries.length, 'queries in parallel...');
     const searchPromises = queries.map(async (query) => {
       try {
@@ -93,8 +97,12 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             query,
-            limit: 5,
-            scrapeOptions: { formats: ['markdown'] },
+            limit: 8,
+            scrapeOptions: {
+              formats: ['markdown'],
+              waitFor: 5000,
+              onlyMainContent: true,
+            },
           }),
         });
 
@@ -118,11 +126,59 @@ Deno.serve(async (req) => {
     // Deduplicate by URL
     const uniqueResults = Array.from(
       new Map(allResults.map(r => [r.url, r])).values()
-    ).slice(0, 6); // Cap at 6 for speed
+    ).slice(0, 10); // Cap at 10 for broader coverage
 
-    console.log(`Found ${uniqueResults.length} unique results to analyze`);
+    // Step 1b: Fallback scrape for thin results (JS didn't render)
+    const PROPERTY_KEYWORDS = /price|sqft|sq\s*ft|acres?|lease|sale|zoning|industrial|warehouse|power|mw|megawatt|substation|kva|voltage/i;
 
-    if (uniqueResults.length === 0) {
+    for (let i = 0; i < uniqueResults.length; i++) {
+      const r = uniqueResults[i];
+      const md = r.markdown || '';
+      if (md.length < 200 && r.url) {
+        console.log(`Thin content (${md.length} chars) for ${r.url}, attempting direct scrape...`);
+        try {
+          const scrapeResp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url: r.url,
+              formats: ['markdown'],
+              waitFor: 8000,
+              onlyMainContent: true,
+            }),
+          });
+          const scrapeData = await scrapeResp.json();
+          const newMd = scrapeData?.data?.markdown || scrapeData?.markdown || '';
+          if (newMd.length > md.length) {
+            console.log(`Fallback scrape got ${newMd.length} chars for ${r.url}`);
+            uniqueResults[i] = { ...r, markdown: newMd };
+          }
+        } catch (err) {
+          console.warn('Fallback scrape failed for', r.url, err);
+        }
+      }
+    }
+
+    // Filter out results with no property-relevant content
+    const validResults = uniqueResults.filter(r => {
+      const content = r.markdown || r.description || '';
+      return content.length >= 50 && PROPERTY_KEYWORDS.test(content);
+    });
+
+    console.log(`${validResults.length} results passed content validation (of ${uniqueResults.length} unique)`);
+
+    if (validResults.length === 0 && uniqueResults.length > 0) {
+      console.log('All results filtered out — falling back to unfiltered set');
+    }
+
+    const resultsToAnalyze = validResults.length > 0 ? validResults : uniqueResults;
+
+    console.log(`Found ${resultsToAnalyze.length} results to analyze`);
+
+    if (resultsToAnalyze.length === 0) {
       return new Response(JSON.stringify({
         success: true,
         properties_found: 0,
@@ -133,9 +189,7 @@ Deno.serve(async (req) => {
     // Step 2: Extract structured data via OpenAI (parallel)
     const eiaRateCache = new Map<string, number | null>();
 
-    const extractionPromises = uniqueResults
-      .filter(r => (r.markdown || r.description || '').length >= 50)
-      .map(async (result) => {
+    const extractionPromises = resultsToAnalyze.map(async (result) => {
         try {
           const markdown = result.markdown || result.description || '';
           const extractionPrompt = `You are a commercial real estate and power infrastructure analyst. Extract structured property data from this listing content, specifically evaluating suitability for Bitcoin mining / high-performance computing operations.
