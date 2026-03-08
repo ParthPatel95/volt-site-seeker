@@ -1,21 +1,26 @@
 
 
-# Fix: White Page on "My Learning" Dropdown
+## What's Happening
 
-## Problem
-The `GlobalUserMenu` component navigates to `/academy/learning` when clicking "My Learning", but no route exists for that path in `App.tsx`. This results in a blank page.
+You're currently on the **landing page** (`/`). The recent changes were all **backend optimizations** — not a new visible UI feature:
 
-## Solution
-The existing Academy landing page (`/academy`) already serves as the learning hub with module listings and the `ContinueLearningBar`. The simplest fix is to update the "My Learning" link in `GlobalUserMenu.tsx` to point to `/academy` instead of the non-existent `/academy/learning`.
+1. **QueryClient defaults** — prevents refetch storms (invisible improvement)
+2. **Auth consolidation** — reduced duplicate Supabase auth calls to fix "Too Many Requests" errors (invisible improvement)
+3. **Edge function fixes** — added missing action handlers to `corporate-intelligence` function (backend only)
 
-Alternatively, if "My Learning" should show progress, it should point to `/academy/progress` which already exists and shows the progress dashboard.
+These are all under-the-hood fixes. There's no new button or page to see.
 
-## Change
-**`src/components/GlobalUserMenu.tsx`** — Change line 94:
-- From: `navigate('/academy/learning')`  
-- To: `navigate('/academy/progress')`
+## Current Issue
 
-This makes "My Learning" go to the progress dashboard (which shows per-module completion, certificates, etc.), while "Academy Home" already goes to `/academy`.
+Your console shows an **"Approval check timeout"** error from `AuthContext.tsx`, which may be preventing you from logging in and accessing the app at `/app/*`. This is likely caused by the approval check query timing out against Supabase (possibly still rate-limited from the earlier burst).
 
-One file, one line change.
+## Recommended Fix
+
+The approval check in `AuthContext.tsx` has a timeout that's too aggressive or the check itself is failing. I should:
+
+1. **Make the approval check more resilient** — catch timeout errors gracefully and default to allowing access (or showing a retry option) instead of blocking the entire auth flow
+2. **Add a fallback** — if the approval check times out, treat it as "approved" or show the app with a warning banner, rather than showing a blank screen
+
+### Files to modify:
+- `src/contexts/AuthContext.tsx` — make the approval check timeout graceful instead of fatal
 
