@@ -13,6 +13,31 @@ interface SearchParams {
   search_queries?: string[];
 }
 
+// EIA API state code mapping for electricity rates
+async function fetchEIAElectricityRate(stateCode: string, eiaApiKey: string): Promise<number | null> {
+  try {
+    const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${eiaApiKey}&frequency=monthly&data[0]=price&facets[stateid][]=${stateCode}&facets[sectorid][]=IND&sort[0][column]=period&sort[0][direction]=desc&length=1`;
+    
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      console.warn('EIA API returned status:', resp.status);
+      return null;
+    }
+    
+    const data = await resp.json();
+    const price = data?.response?.data?.[0]?.price;
+    
+    if (price && typeof price === 'number') {
+      // EIA returns cents/kWh, convert to $/kWh
+      return price / 100;
+    }
+    return null;
+  } catch (err) {
+    console.warn('EIA rate lookup failed:', err);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -32,6 +57,8 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    const EIA_API_KEY = Deno.env.get('EIA_API_KEY');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -205,10 +232,20 @@ Return ONLY valid JSON, no markdown code fences.`;
           continue;
         }
 
+        // Step 2.5: Enrich with EIA electricity rate
+        let eiaRate: number | null = null;
+        if (EIA_API_KEY && parsed.state) {
+          eiaRate = await fetchEIAElectricityRate(parsed.state, EIA_API_KEY);
+          if (eiaRate) {
+            console.log(`EIA rate for ${parsed.state}: ${(eiaRate * 100).toFixed(2)}¢/kWh`);
+          }
+        }
+
         extractedProperties.push({
           ...parsed,
           listing_url: result.url,
           source_title: result.title,
+          eia_electricity_rate: eiaRate,
         });
       } catch (err) {
         console.error('Extraction error for', result.url, err);
@@ -246,6 +283,7 @@ Return ONLY valid JSON, no markdown code fences.`;
               power_infrastructure: prop.power_infrastructure,
               bitcoin_mining_suitability: prop.bitcoin_mining_suitability,
               source_title: prop.source_title,
+              eia_electricity_rate: prop.eia_electricity_rate,
               scanned_at: new Date().toISOString(),
             },
           }, { onConflict: 'listing_url' });
@@ -268,6 +306,7 @@ Return ONLY valid JSON, no markdown code fences.`;
       total_results_searched: uniqueResults.length,
       properties: extractedProperties,
       queries_used: queries.length,
+      eia_enrichment: !!EIA_API_KEY,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {

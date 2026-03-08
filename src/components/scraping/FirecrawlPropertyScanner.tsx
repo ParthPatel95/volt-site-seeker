@@ -4,10 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Flame, Search, Loader2, Zap, MapPin, DollarSign, Building } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Flame, Search, Loader2, Zap, MapPin, DollarSign, Building, BarChart3, Bell } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PowerInfraAnalysis } from './PowerInfraAnalysis';
+import { PropertySatelliteCard } from './PropertySatelliteCard';
+import { PropertyMiningProjection } from './PropertyMiningProjection';
+import { PropertyComparisonTable } from './PropertyComparisonTable';
+import { ScanWatchlistManager } from './ScanWatchlistManager';
+import { ScanReportPDF } from './ScanReportPDF';
 
 interface FirecrawlPropertyScannerProps {
   onPropertiesFound: (count: number) => void;
@@ -22,6 +28,7 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
   const [budgetMax, setBudgetMax] = useState('');
   const [stage, setStage] = useState<ScanStage>('idle');
   const [results, setResults] = useState<any[]>([]);
+  const [activeView, setActiveView] = useState<'cards' | 'table'>('cards');
   const { toast } = useToast();
 
   const stageLabels: Record<ScanStage, string> = {
@@ -91,7 +98,7 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
             Firecrawl Property Scanner
           </CardTitle>
           <p className="text-sm text-orange-600">
-            AI-powered web scraping across LoopNet, Crexi, LandSearch &amp; more — finds properties with detailed power infrastructure analysis for Bitcoin mining suitability.
+            AI-powered web scraping across LoopNet, Crexi, LandSearch &amp; more — finds properties with detailed power infrastructure analysis, live BTC profitability projections, and satellite mapping.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -171,15 +178,48 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
         </CardContent>
       </Card>
 
+      {/* Watch Alerts */}
+      <ScanWatchlistManager />
+
       {/* Results */}
       {results.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-500" />
-            {results.length} Properties Found
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Zap className="w-5 h-5 text-[hsl(var(--chart-4))]" />
+              {results.length} Properties Found
+            </h3>
+            <div className="flex items-center gap-2">
+              <ScanReportPDF properties={results} location={location} />
+              <div className="flex border border-border rounded-md">
+                <Button
+                  variant={activeView === 'cards' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 rounded-r-none"
+                  onClick={() => setActiveView('cards')}
+                >
+                  Cards
+                </Button>
+                <Button
+                  variant={activeView === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 rounded-l-none"
+                  onClick={() => setActiveView('table')}
+                >
+                  <BarChart3 className="w-3 h-3 mr-1" />
+                  Compare
+                </Button>
+              </div>
+            </div>
+          </div>
 
-          {results.map((prop, idx) => (
+          {/* Comparison table view */}
+          {activeView === 'table' && (
+            <PropertyComparisonTable properties={results} />
+          )}
+
+          {/* Card view */}
+          {activeView === 'cards' && results.map((prop, idx) => (
             <Card key={idx} className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
               <CardContent className="p-5 space-y-4">
                 {/* Header */}
@@ -193,56 +233,63 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
                       {prop.city}, {prop.state} {prop.zip_code || ''}
                     </p>
                   </div>
-                  {prop.bitcoin_mining_suitability?.score && (
-                    <Badge
-                      variant={prop.bitcoin_mining_suitability.score >= 7 ? 'default' : prop.bitcoin_mining_suitability.score >= 4 ? 'secondary' : 'outline'}
-                      className={
-                        prop.bitcoin_mining_suitability.score >= 7
-                          ? 'bg-green-600'
-                          : prop.bitcoin_mining_suitability.score >= 4
-                          ? 'bg-yellow-600'
-                          : ''
-                      }
-                    >
-                      Mining Score: {prop.bitcoin_mining_suitability.score}/10
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {prop.eia_electricity_rate && (
+                      <Badge variant="outline" className="text-xs">
+                        EIA: {(prop.eia_electricity_rate * 100).toFixed(1)}¢/kWh
+                      </Badge>
+                    )}
+                    {prop.bitcoin_mining_suitability?.score && (
+                      <Badge
+                        variant={prop.bitcoin_mining_suitability.score >= 7 ? 'default' : prop.bitcoin_mining_suitability.score >= 4 ? 'secondary' : 'outline'}
+                        className={
+                          prop.bitcoin_mining_suitability.score >= 7
+                            ? 'bg-[hsl(var(--data-positive))]'
+                            : prop.bitcoin_mining_suitability.score >= 4
+                            ? 'bg-[hsl(var(--data-warning))]'
+                            : ''
+                        }
+                      >
+                        Mining Score: {prop.bitcoin_mining_suitability.score}/10
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 {/* Quick stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {prop.asking_price && (
-                    <div className="flex items-center gap-2 p-2 bg-green-50 rounded">
-                      <DollarSign className="w-4 h-4 text-green-600" />
+                    <div className="flex items-center gap-2 p-2 bg-[hsl(var(--data-positive)/0.1)] rounded">
+                      <DollarSign className="w-4 h-4 text-[hsl(var(--data-positive))]" />
                       <div>
-                        <p className="font-bold text-green-700">${(prop.asking_price / 1000000).toFixed(1)}M</p>
+                        <p className="font-bold text-[hsl(var(--data-positive))]">${(prop.asking_price / 1000000).toFixed(1)}M</p>
                         <p className="text-xs text-muted-foreground">Price</p>
                       </div>
                     </div>
                   )}
                   {prop.square_footage && (
-                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                      <Building className="w-4 h-4 text-blue-600" />
+                    <div className="flex items-center gap-2 p-2 bg-[hsl(var(--data-info)/0.1)] rounded">
+                      <Building className="w-4 h-4 text-[hsl(var(--data-info))]" />
                       <div>
-                        <p className="font-bold text-blue-700">{prop.square_footage.toLocaleString()}</p>
+                        <p className="font-bold text-[hsl(var(--data-info))]">{prop.square_footage.toLocaleString()}</p>
                         <p className="text-xs text-muted-foreground">Sq Ft</p>
                       </div>
                     </div>
                   )}
                   {prop.power_infrastructure?.estimated_power_capacity_mw && (
-                    <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded">
-                      <Zap className="w-4 h-4 text-yellow-600" />
+                    <div className="flex items-center gap-2 p-2 bg-[hsl(var(--chart-4)/0.1)] rounded">
+                      <Zap className="w-4 h-4 text-[hsl(var(--chart-4))]" />
                       <div>
-                        <p className="font-bold text-yellow-700">{prop.power_infrastructure.estimated_power_capacity_mw} MW</p>
+                        <p className="font-bold text-[hsl(var(--chart-4))]">{prop.power_infrastructure.estimated_power_capacity_mw} MW</p>
                         <p className="text-xs text-muted-foreground">Power</p>
                       </div>
                     </div>
                   )}
                   {prop.lot_size_acres && (
-                    <div className="flex items-center gap-2 p-2 bg-purple-50 rounded">
-                      <MapPin className="w-4 h-4 text-purple-600" />
+                    <div className="flex items-center gap-2 p-2 bg-[hsl(var(--chart-2)/0.1)] rounded">
+                      <MapPin className="w-4 h-4 text-[hsl(var(--chart-2))]" />
                       <div>
-                        <p className="font-bold text-purple-700">{prop.lot_size_acres}</p>
+                        <p className="font-bold text-[hsl(var(--chart-2))]">{prop.lot_size_acres}</p>
                         <p className="text-xs text-muted-foreground">Acres</p>
                       </div>
                     </div>
@@ -253,6 +300,16 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
                 {prop.description && (
                   <p className="text-sm text-muted-foreground">{prop.description}</p>
                 )}
+
+                {/* Live Mining Projection */}
+                <PropertyMiningProjection
+                  powerCapacityMw={prop.power_infrastructure?.estimated_power_capacity_mw}
+                  electricityRate={prop.eia_electricity_rate || null}
+                  askingPrice={prop.asking_price}
+                />
+
+                {/* Satellite Map + Substations */}
+                <PropertySatelliteCard property={prop} />
 
                 {/* Power Infrastructure Analysis */}
                 {prop.power_infrastructure && (
@@ -265,7 +322,7 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
                     <h5 className="font-semibold text-sm">⛏️ Bitcoin Mining Suitability</h5>
                     {prop.bitcoin_mining_suitability.strengths?.length > 0 && (
                       <div>
-                        <span className="text-xs font-medium text-green-700">Strengths:</span>
+                        <span className="text-xs font-medium text-[hsl(var(--data-positive))]">Strengths:</span>
                         <ul className="list-disc list-inside text-xs text-muted-foreground ml-2">
                           {prop.bitcoin_mining_suitability.strengths.map((s: string, i: number) => (
                             <li key={i}>{s}</li>
@@ -275,7 +332,7 @@ export function FirecrawlPropertyScanner({ onPropertiesFound }: FirecrawlPropert
                     )}
                     {prop.bitcoin_mining_suitability.weaknesses?.length > 0 && (
                       <div>
-                        <span className="text-xs font-medium text-red-700">Weaknesses:</span>
+                        <span className="text-xs font-medium text-[hsl(var(--data-negative))]">Weaknesses:</span>
                         <ul className="list-disc list-inside text-xs text-muted-foreground ml-2">
                           {prop.bitcoin_mining_suitability.weaknesses.map((w: string, i: number) => (
                             <li key={i}>{w}</li>
