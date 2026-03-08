@@ -6447,6 +6447,30 @@ export type Database = {
           },
         ]
       }
+      property_shortlist: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       purchase_orders: {
         Row: {
           amount: number
@@ -6637,6 +6661,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scan_watchlist: {
+        Row: {
+          budget_max: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_scanned_at: string | null
+          location: string
+          min_power_mw: number | null
+          name: string
+          notify_email: boolean | null
+          notify_in_app: boolean | null
+          property_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_max?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_scanned_at?: string | null
+          location: string
+          min_power_mw?: number | null
+          name: string
+          notify_email?: boolean | null
+          notify_in_app?: boolean | null
+          property_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_max?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_scanned_at?: string | null
+          location?: string
+          min_power_mw?: number | null
+          name?: string
+          notify_email?: boolean | null
+          notify_in_app?: boolean | null
+          property_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_watchlist_results: {
+        Row: {
+          created_at: string
+          id: string
+          notified_at: string | null
+          scraped_property_id: string
+          seen_at: string | null
+          watchlist_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          scraped_property_id: string
+          seen_at?: string | null
+          watchlist_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          scraped_property_id?: string
+          seen_at?: string | null
+          watchlist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_watchlist_results_watchlist_id_fkey"
+            columns: ["watchlist_id"]
+            isOneToOne: false
+            referencedRelation: "scan_watchlist"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scrap_metal_market_data: {
         Row: {
