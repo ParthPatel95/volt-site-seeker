@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '@supabase/supabase-js';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -14,31 +14,17 @@ import { GraduationCap, BookOpen, BarChart3, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const GlobalUserMenu = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, signOut } = useAuth();
   const [userInitials, setUserInitials] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserInitials(session.user.id);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserInitials(session.user.id);
-      } else {
-        setUserInitials('');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      fetchUserInitials(user.id);
+    } else {
+      setUserInitials('');
+    }
+  }, [user]);
 
   const fetchUserInitials = async (userId: string) => {
     try {
@@ -65,7 +51,7 @@ export const GlobalUserMenu = () => {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
       toast.success('Signed out successfully');
       navigate('/');
     } catch (error) {
