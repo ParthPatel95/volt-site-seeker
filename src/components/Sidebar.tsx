@@ -70,6 +70,7 @@ const navSections: NavSection[] = [
       { path: '/app/intelligence-hub', icon: Brain, label: 'Intelligence Hub', permission: 'feature.intelligence-hub' },
       { path: '/app/power-infrastructure', icon: Factory, label: 'Power Infrastructure', permission: 'feature.power-infrastructure' },
       { path: '/app/btc-roi-lab', icon: Bitcoin, label: 'Profitability Lab', permission: 'feature.btc-roi-lab' },
+      { path: '/app/property-scraper', icon: Search, label: 'Property Scraper', permission: '' },
     ]
   },
   {
