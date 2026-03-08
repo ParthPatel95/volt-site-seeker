@@ -38,6 +38,7 @@ import { DashboardBuilder } from '@/components/aeso/DashboardBuilder';
 import ShareDashboard from './ShareDashboard';
 import VoltBuild from './VoltBuild';
 import Inventory from './Inventory';
+import PropertyScraper from './PropertyScraper';
 
 const VoltScout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -134,7 +135,8 @@ const VoltScout = () => {
                <Route path="risk-management" element={<RiskManagement />} />
                <Route path="advanced-features" element={<AdvancedFeatures />} />
                <Route path="build" element={<VoltBuild />} />
-               <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory" element={<Inventory />} />
+                <Route path="property-scraper" element={<PropertyScraper />} />
                <Route path="aeso-dashboards" element={<AESODashboards />} />
                <Route path="aeso-dashboard/:id" element={<AESODashboard />} />
                <Route path="aeso-dashboard-builder/:id" element={<DashboardBuilder />} />

@@ -1,26 +1,21 @@
 
 
-# Add Property Scraper to the App
+# Fix: White Page on "My Learning" Dropdown
 
 ## Problem
-The scraping components (`AIPropertyScraper`, `ComprehensiveScraper`, `FirecrawlPropertyScanner`, etc.) exist in `src/components/scraping/` but are **never imported or rendered** anywhere in the app. There's no route, no sidebar link, and no page that uses them -- they're completely orphaned.
+The `GlobalUserMenu` component navigates to `/academy/learning` when clicking "My Learning", but no route exists for that path in `App.tsx`. This results in a blank page.
 
-## Plan
+## Solution
+The existing Academy landing page (`/academy`) already serves as the learning hub with module listings and the `ContinueLearningBar`. The simplest fix is to update the "My Learning" link in `GlobalUserMenu.tsx` to point to `/academy` instead of the non-existent `/academy/learning`.
 
-### 1. Create a Property Scraper page
-Create `src/pages/PropertyScraper.tsx` that combines the existing scraping components into a tabbed interface:
-- **Firecrawl Scanner** tab — `FirecrawlPropertyScanner` (AI-powered search using Firecrawl)
-- **Brokerage Discovery** tab — `AIPropertyScraper` (direct brokerage search)
-- **Comprehensive Scraper** tab — `ComprehensiveScraper` (multi-source scraping)
-- **Free Data Sources** tab — `FreeDataSources` (county records, public data)
+Alternatively, if "My Learning" should show progress, it should point to `/academy/progress` which already exists and shows the progress dashboard.
 
-Include the `ScrapedPropertiesDisplay` component below the tabs to show results.
+## Change
+**`src/components/GlobalUserMenu.tsx`** — Change line 94:
+- From: `navigate('/academy/learning')`  
+- To: `navigate('/academy/progress')`
 
-### 2. Add a route in VoltScout.tsx
-Add `<Route path="property-scraper" element={<PropertyScraper />} />` to the existing routes.
+This makes "My Learning" go to the progress dashboard (which shows per-module completion, certificates, etc.), while "Academy Home" already goes to `/academy`.
 
-### 3. Add sidebar navigation entry
-Add a "Property Scraper" item to the **Analysis** section in `src/components/Sidebar.tsx` with a `Search` icon, linking to `/app/property-scraper`.
-
-This wires up the existing scraping code so it's actually accessible from the UI.
+One file, one line change.
 
