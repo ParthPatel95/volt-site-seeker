@@ -77,13 +77,11 @@ Deno.serve(async (req) => {
 
     // Build targeted search queries for mining-suitable properties
     const queries = params.search_queries?.length ? params.search_queries : [
-      `industrial property for sale ${location} high power capacity near substation site:loopnet.com OR site:crexi.com OR site:landsearch.com`,
-      `warehouse heavy industrial for sale ${location} MW power electrical substation site:loopnet.com OR site:crexi.com`,
-      `data center ready property for sale ${location} high voltage transmission access`,
-      `heavy industrial land ${location} power infrastructure sale ${property_type || 'industrial'}`,
+      `industrial property for sale ${location} high power ${property_type || ''} site:loopnet.com OR site:crexi.com`,
+      `heavy industrial warehouse ${location} power infrastructure for sale site:loopnet.com OR site:landsearch.com`,
     ];
 
-    // Step 1: Search via Firecrawl (parallel)
+    // Step 1: Search via Firecrawl (parallel, NO scraping — just titles/descriptions for speed)
     console.log('Searching with', queries.length, 'queries in parallel...');
     const searchPromises = queries.map(async (query) => {
       try {
@@ -96,7 +94,6 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             query,
             limit: 5,
-            scrapeOptions: { formats: ['markdown'] },
           }),
         });
 
@@ -120,7 +117,7 @@ Deno.serve(async (req) => {
     // Deduplicate by URL
     const uniqueResults = Array.from(
       new Map(allResults.map(r => [r.url, r])).values()
-    ).slice(0, 10); // Cap at 10
+    ).slice(0, 8); // Cap at 8
 
     console.log(`Found ${uniqueResults.length} unique results to analyze`);
 
