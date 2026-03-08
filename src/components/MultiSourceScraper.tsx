@@ -67,8 +67,12 @@ export function MultiSourceScraper() {
         </div>
       </div>
 
-      <Tabs defaultValue="free-data-sources" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="firecrawl-scanner" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="firecrawl-scanner" className="flex items-center">
+            <Flame className="w-4 h-4 mr-2" />
+            Firecrawl Scanner
+          </TabsTrigger>
           <TabsTrigger value="free-data-sources" className="flex items-center">
             <Database className="w-4 h-4 mr-2" />
             Free Data Sources
