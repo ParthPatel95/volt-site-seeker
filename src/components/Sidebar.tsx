@@ -21,7 +21,8 @@ import {
   Settings,
   HelpCircle,
   HardHat,
-  Package
+  Package,
+  Search
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
