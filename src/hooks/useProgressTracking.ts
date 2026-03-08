@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const STORAGE_KEY = 'wattbyte_learning_progress';
@@ -42,7 +42,6 @@ export const useProgressTracking = (moduleId: string, totalSections: number) => 
     };
   });
 
-  // Sync with localStorage on mount and when progress changes
   useEffect(() => {
     const all = getStoredProgress();
     all[moduleId] = progress;
@@ -52,10 +51,8 @@ export const useProgressTracking = (moduleId: string, totalSections: number) => 
   const markSectionComplete = useCallback((sectionId: string) => {
     setProgress((prev) => {
       if (prev.completedSections.includes(sectionId)) return prev;
-      
       const newCompleted = [...prev.completedSections, sectionId];
       const isFullyComplete = newCompleted.length >= totalSections;
-      
       return {
         ...prev,
         completedSections: newCompleted,
@@ -82,10 +79,7 @@ export const useProgressTracking = (moduleId: string, totalSections: number) => 
   }, [progress.completedSections, markSectionComplete, markSectionIncomplete]);
 
   const setLastVisited = useCallback((sectionId: string) => {
-    setProgress((prev) => ({
-      ...prev,
-      lastVisited: sectionId,
-    }));
+    setProgress((prev) => ({ ...prev, lastVisited: sectionId }));
   }, []);
 
   const resetProgress = useCallback(() => {
@@ -123,108 +117,93 @@ export const useProgressTracking = (moduleId: string, totalSections: number) => 
 };
 
 // Utility hook to get progress for all modules (for dashboard)
-// Now uses Supabase when user is authenticated
+// Uses Supabase when user is authenticated, falls back to localStorage
 export const useAllModulesProgress = () => {
   const [allProgress, setAllProgress] = useState<AllProgress>(getStoredProgress);
-  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for authenticated user and fetch from Supabase
   useEffect(() => {
-    const checkAuthAndFetch = async () => {
+    let isMounted = true;
+
+    const fetchProgress = async (userId: string) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          setUserId(session.user.id);
-          
-          // Fetch progress from Supabase
-          const { data: progressData } = await supabase
+        const [{ data: progressData }, { data: startsData }] = await Promise.all([
+          supabase
             .from('academy_progress')
             .select('module_id, section_id, completed_at')
-            .eq('user_id', session.user.id);
-
-          // Fetch module starts
-          const { data: startsData } = await supabase
+            .eq('user_id', userId),
+          supabase
             .from('academy_module_starts')
             .select('module_id, started_at, last_visited_at')
-            .eq('user_id', session.user.id);
+            .eq('user_id', userId),
+        ]);
 
-          // Build AllProgress object from Supabase data
-          const supabaseProgress: AllProgress = {};
-          
-          // Group completions by module
-          progressData?.forEach(p => {
-            if (!supabaseProgress[p.module_id]) {
-              supabaseProgress[p.module_id] = {
-                completedSections: [],
-                lastVisited: null,
-                startedAt: new Date().toISOString(),
-                completedAt: null,
-              };
-            }
-            supabaseProgress[p.module_id].completedSections.push(p.section_id);
-          });
+        const supabaseProgress: AllProgress = {};
 
-          // Add start dates and last visited
-          startsData?.forEach(s => {
-            if (!supabaseProgress[s.module_id]) {
-              supabaseProgress[s.module_id] = {
-                completedSections: [],
-                lastVisited: null,
-                startedAt: s.started_at,
-                completedAt: null,
-              };
-            } else {
-              supabaseProgress[s.module_id].startedAt = s.started_at;
-            }
-            // Extract section from last_visited_at - we track this differently now
-            // For compatibility, we'll use the most recent section completed
-          });
+        progressData?.forEach(p => {
+          if (!supabaseProgress[p.module_id]) {
+            supabaseProgress[p.module_id] = {
+              completedSections: [],
+              lastVisited: null,
+              startedAt: new Date().toISOString(),
+              completedAt: null,
+            };
+          }
+          supabaseProgress[p.module_id].completedSections.push(p.section_id);
+        });
 
-          setAllProgress(supabaseProgress);
-        } else {
-          // Not authenticated, use localStorage
-          setAllProgress(getStoredProgress());
-        }
+        startsData?.forEach(s => {
+          if (!supabaseProgress[s.module_id]) {
+            supabaseProgress[s.module_id] = {
+              completedSections: [],
+              lastVisited: null,
+              startedAt: s.started_at,
+              completedAt: null,
+            };
+          } else {
+            supabaseProgress[s.module_id].startedAt = s.started_at;
+          }
+        });
+
+        if (isMounted) setAllProgress(supabaseProgress);
       } catch (error) {
         console.error('Error fetching progress:', error);
-        setAllProgress(getStoredProgress());
-      } finally {
-        setIsLoading(false);
+        if (isMounted) setAllProgress(getStoredProgress());
       }
     };
 
-    checkAuthAndFetch();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAuthAndFetch();
+    // Use a single getSession call, reuse AuthContext's session via listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (!isMounted) return;
+      if (session?.user) {
+        fetchProgress(session.user.id);
+      } else {
+        setAllProgress(getStoredProgress());
+      }
+      setIsLoading(false);
     });
 
-    // Listen for localStorage changes (for non-auth mode)
+    // Also handle localStorage changes for non-auth mode
     const handleStorageChange = () => {
-      if (!userId) {
-        setAllProgress(getStoredProgress());
-      }
+      setAllProgress(getStoredProgress());
     };
-    
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [userId]);
+  }, []);
 
   const getModuleProgress = useCallback((moduleId: string, totalSections: number) => {
     const moduleProgress = allProgress[moduleId];
     if (!moduleProgress) return { percentage: 0, isStarted: false, isComplete: false };
-    
-    const percentage = totalSections > 0 
+
+    const percentage = totalSections > 0
       ? Math.round((moduleProgress.completedSections.length / totalSections) * 100)
       : 0;
-    
+
     return {
       percentage,
       isStarted: moduleProgress.completedSections.length > 0,
