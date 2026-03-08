@@ -83,11 +83,9 @@ Deno.serve(async (req) => {
       `heavy industrial land ${location} power infrastructure sale ${property_type || 'industrial'}`,
     ];
 
-    // Step 1: Search via Firecrawl
-    console.log('Searching with', queries.length, 'queries...');
-    const allResults: any[] = [];
-
-    for (const query of queries) {
+    // Step 1: Search via Firecrawl (parallel)
+    console.log('Searching with', queries.length, 'queries in parallel...');
+    const searchPromises = queries.map(async (query) => {
       try {
         const searchResp = await fetch('https://api.firecrawl.dev/v1/search', {
           method: 'POST',
@@ -105,14 +103,19 @@ Deno.serve(async (req) => {
         const searchData = await searchResp.json();
         if (searchData.success && searchData.data) {
           console.log(`Query "${query.substring(0, 50)}..." returned ${searchData.data.length} results`);
-          allResults.push(...searchData.data);
+          return searchData.data;
         } else {
           console.warn('Search query failed:', searchData.error || 'unknown error');
+          return [];
         }
       } catch (err) {
         console.error('Search query error:', err);
+        return [];
       }
-    }
+    });
+
+    const searchResults = await Promise.all(searchPromises);
+    const allResults = searchResults.flat();
 
     // Deduplicate by URL
     const uniqueResults = Array.from(
