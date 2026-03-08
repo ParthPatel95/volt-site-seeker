@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AIPropertyScraper } from './scraping/AIPropertyScraper';
 import { ComprehensiveScraper } from './scraping/ComprehensiveScraper';
+import { FirecrawlPropertyScanner } from './scraping/FirecrawlPropertyScanner';
 import { ScrapedPropertiesDisplay } from './scraping/ScrapedPropertiesDisplay';
 import { APIKeySetup } from './scraping/APIKeySetup';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +14,8 @@ import {
   Database, 
   Globe,
   Bot,
-  Zap
+  Zap,
+  Flame
 } from 'lucide-react';
 import { FreeDataSources } from './scraping/FreeDataSources';
 
@@ -65,8 +67,12 @@ export function MultiSourceScraper() {
         </div>
       </div>
 
-      <Tabs defaultValue="free-data-sources" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="firecrawl-scanner" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="firecrawl-scanner" className="flex items-center">
+            <Flame className="w-4 h-4 mr-2" />
+            Firecrawl Scanner
+          </TabsTrigger>
           <TabsTrigger value="free-data-sources" className="flex items-center">
             <Database className="w-4 h-4 mr-2" />
             Free Data Sources
@@ -86,6 +92,10 @@ export function MultiSourceScraper() {
             Source Management
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="firecrawl-scanner" className="space-y-6">
+          <FirecrawlPropertyScanner onPropertiesFound={handlePropertiesFound} />
+        </TabsContent>
 
         <TabsContent value="free-data-sources" className="space-y-6">
           <FreeDataSources onPropertiesFound={handlePropertiesFound} />
