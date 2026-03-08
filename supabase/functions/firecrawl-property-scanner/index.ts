@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       `heavy industrial warehouse ${location} power infrastructure for sale site:loopnet.com OR site:landsearch.com`,
     ];
 
-    // Step 1: Search via Firecrawl (parallel, NO scraping — just titles/descriptions for speed)
+    // Step 1: Search via Firecrawl with scrapeOptions to get markdown in one call
     console.log('Searching with', queries.length, 'queries in parallel...');
     const searchPromises = queries.map(async (query) => {
       try {
@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             query,
             limit: 5,
+            scrapeOptions: { formats: ['markdown'] },
           }),
         });
 
@@ -117,7 +118,7 @@ Deno.serve(async (req) => {
     // Deduplicate by URL
     const uniqueResults = Array.from(
       new Map(allResults.map(r => [r.url, r])).values()
-    ).slice(0, 8); // Cap at 8
+    ).slice(0, 6); // Cap at 6 for speed
 
     console.log(`Found ${uniqueResults.length} unique results to analyze`);
 
@@ -128,34 +129,6 @@ Deno.serve(async (req) => {
         message: 'No listings found matching your criteria. Try broadening your search location or property type.'
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-
-    // Step 1.5: Quick-scrape top results in parallel to get richer content
-    console.log(`Scraping ${uniqueResults.length} result pages in parallel...`);
-    const scrapePromises = uniqueResults.map(async (result) => {
-      try {
-        const scrapeResp = await fetch('https://api.firecrawl.dev/v1/scrape', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: result.url,
-            formats: ['markdown'],
-            onlyMainContent: true,
-            waitFor: 2000,
-          }),
-        });
-        const scrapeData = await scrapeResp.json();
-        if (scrapeData.success && scrapeData.data?.markdown) {
-          result.markdown = scrapeData.data.markdown;
-          console.log(`Scraped ${result.url.substring(0, 60)}... (${scrapeData.data.markdown.length} chars)`);
-        }
-      } catch (err) {
-        console.warn('Scrape failed for', result.url, err);
-      }
-    });
-    await Promise.all(scrapePromises);
 
     // Step 2: Extract structured data via OpenAI (parallel)
     const eiaRateCache = new Map<string, number | null>();
