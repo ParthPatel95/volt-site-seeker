@@ -77,17 +77,13 @@ Deno.serve(async (req) => {
 
     // Build targeted search queries for mining-suitable properties
     const queries = params.search_queries?.length ? params.search_queries : [
-      `industrial property for sale ${location} high power capacity near substation site:loopnet.com OR site:crexi.com OR site:landsearch.com`,
-      `warehouse heavy industrial for sale ${location} MW power electrical substation site:loopnet.com OR site:crexi.com`,
-      `data center ready property for sale ${location} high voltage transmission access`,
-      `heavy industrial land ${location} power infrastructure sale ${property_type || 'industrial'}`,
+      `industrial property for sale ${location} high power ${property_type || ''} site:loopnet.com OR site:crexi.com`,
+      `heavy industrial warehouse ${location} power infrastructure for sale site:loopnet.com OR site:landsearch.com`,
     ];
 
-    // Step 1: Search via Firecrawl
-    console.log('Searching with', queries.length, 'queries...');
-    const allResults: any[] = [];
-
-    for (const query of queries) {
+    // Step 1: Search via Firecrawl (parallel, NO scraping — just titles/descriptions for speed)
+    console.log('Searching with', queries.length, 'queries in parallel...');
+    const searchPromises = queries.map(async (query) => {
       try {
         const searchResp = await fetch('https://api.firecrawl.dev/v1/search', {
           method: 'POST',
@@ -98,26 +94,30 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             query,
             limit: 5,
-            scrapeOptions: { formats: ['markdown'] },
           }),
         });
 
         const searchData = await searchResp.json();
         if (searchData.success && searchData.data) {
           console.log(`Query "${query.substring(0, 50)}..." returned ${searchData.data.length} results`);
-          allResults.push(...searchData.data);
+          return searchData.data;
         } else {
           console.warn('Search query failed:', searchData.error || 'unknown error');
+          return [];
         }
       } catch (err) {
         console.error('Search query error:', err);
+        return [];
       }
-    }
+    });
+
+    const searchResults = await Promise.all(searchPromises);
+    const allResults = searchResults.flat();
 
     // Deduplicate by URL
     const uniqueResults = Array.from(
       new Map(allResults.map(r => [r.url, r])).values()
-    ).slice(0, 10); // Cap at 10
+    ).slice(0, 8); // Cap at 8
 
     console.log(`Found ${uniqueResults.length} unique results to analyze`);
 
@@ -129,21 +129,49 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Step 2: For each result, extract structured data via OpenAI
-    const extractedProperties: any[] = [];
-
-    for (const result of uniqueResults) {
+    // Step 1.5: Quick-scrape top results in parallel to get richer content
+    console.log(`Scraping ${uniqueResults.length} result pages in parallel...`);
+    const scrapePromises = uniqueResults.map(async (result) => {
       try {
-        const markdown = result.markdown || result.description || '';
-        if (markdown.length < 50) continue; // Skip thin results
+        const scrapeResp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: result.url,
+            formats: ['markdown'],
+            onlyMainContent: true,
+            waitFor: 2000,
+          }),
+        });
+        const scrapeData = await scrapeResp.json();
+        if (scrapeData.success && scrapeData.data?.markdown) {
+          result.markdown = scrapeData.data.markdown;
+          console.log(`Scraped ${result.url.substring(0, 60)}... (${scrapeData.data.markdown.length} chars)`);
+        }
+      } catch (err) {
+        console.warn('Scrape failed for', result.url, err);
+      }
+    });
+    await Promise.all(scrapePromises);
 
-        const extractionPrompt = `You are a commercial real estate and power infrastructure analyst. Extract structured property data from this listing content, specifically evaluating suitability for Bitcoin mining / high-performance computing operations.
+    // Step 2: Extract structured data via OpenAI (parallel)
+    const eiaRateCache = new Map<string, number | null>();
+
+    const extractionPromises = uniqueResults
+      .filter(r => (r.markdown || r.description || '').length >= 50)
+      .map(async (result) => {
+        try {
+          const markdown = result.markdown || result.description || '';
+          const extractionPrompt = `You are a commercial real estate and power infrastructure analyst. Extract structured property data from this listing content, specifically evaluating suitability for Bitcoin mining / high-performance computing operations.
 
 LISTING URL: ${result.url}
 LISTING TITLE: ${result.title || 'N/A'}
 
 CONTENT:
-${markdown.substring(0, 6000)}
+${markdown.substring(0, 4000)}
 
 Extract and return a JSON object with these fields. Use null for any field you cannot determine:
 
@@ -162,95 +190,100 @@ Extract and return a JSON object with these fields. Use null for any field you c
   "description": "brief property description (max 200 chars)",
   "power_infrastructure": {
     "estimated_power_capacity_mw": number or null,
-    "voltage_available": "voltage levels mentioned (e.g. 138kV, 69kV, 480V)",
-    "nearest_substation": "name/location of nearest substation if mentioned or inferable",
+    "voltage_available": "voltage levels mentioned",
+    "nearest_substation": "name/location if mentioned",
     "substation_distance_miles": number or null,
     "transmission_access": true/false,
     "utility_provider": "local utility company name",
     "power_application_process": {
-      "utility_contact": "who to contact for power application",
+      "utility_contact": "who to contact",
       "typical_timeline_months": number or null,
-      "required_documents": ["list of typical docs needed"],
-      "estimated_interconnection_cost": "cost estimate or range",
-      "process_steps": ["step 1", "step 2", ...]
+      "required_documents": ["list"],
+      "estimated_interconnection_cost": "cost range",
+      "process_steps": ["step 1", "step 2"]
     },
-    "grid_interconnection_notes": "any notes about connecting to the grid",
-    "cooling_potential": "natural cooling advantages (climate, water access, etc.)",
-    "redundancy_options": "backup power, dual feed, etc."
+    "grid_interconnection_notes": "notes",
+    "cooling_potential": "natural cooling advantages",
+    "redundancy_options": "backup power options"
   },
   "bitcoin_mining_suitability": {
     "score": 1-10,
-    "strengths": ["list of advantages for mining"],
-    "weaknesses": ["list of disadvantages"],
-    "estimated_hashrate_capacity": "rough estimate based on power",
+    "strengths": ["list"],
+    "weaknesses": ["list"],
+    "estimated_hashrate_capacity": "estimate",
     "recommended_setup": "brief recommendation"
   }
 }
 
-IMPORTANT: For the power_application_process, use your knowledge of US utility interconnection processes for the specific state and utility. Include realistic steps like filing an interconnection request, feasibility study, system impact study, facilities study, and construction. Provide the actual utility name for that region.
-
 Return ONLY valid JSON, no markdown code fences.`;
 
-        const openaiResp = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'You are a commercial real estate and power infrastructure expert. Always return valid JSON.' },
-              { role: 'user', content: extractionPrompt }
-            ],
-            temperature: 0.2,
-            max_tokens: 2000,
-          }),
-        });
+          const openaiResp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: 'You are a commercial real estate and power infrastructure expert. Always return valid JSON.' },
+                { role: 'user', content: extractionPrompt }
+              ],
+              temperature: 0.2,
+              max_tokens: 1500,
+            }),
+          });
 
-        const openaiData = await openaiResp.json();
-        const content = openaiData.choices?.[0]?.message?.content;
+          const openaiData = await openaiResp.json();
+          const content = openaiData.choices?.[0]?.message?.content;
 
-        if (!content) {
-          console.warn('Empty OpenAI response for', result.url);
-          continue;
-        }
-
-        // Parse JSON from response (handle markdown fences)
-        let parsed;
-        try {
-          const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          parsed = JSON.parse(cleaned);
-        } catch {
-          console.warn('Failed to parse OpenAI JSON for', result.url);
-          continue;
-        }
-
-        // Only include if we got at least an address or city
-        if (!parsed.address && !parsed.city) {
-          console.warn('No address/city extracted for', result.url);
-          continue;
-        }
-
-        // Step 2.5: Enrich with EIA electricity rate
-        let eiaRate: number | null = null;
-        if (EIA_API_KEY && parsed.state) {
-          eiaRate = await fetchEIAElectricityRate(parsed.state, EIA_API_KEY);
-          if (eiaRate) {
-            console.log(`EIA rate for ${parsed.state}: ${(eiaRate * 100).toFixed(2)}¢/kWh`);
+          if (!content) {
+            console.warn('Empty OpenAI response for', result.url);
+            return null;
           }
-        }
 
-        extractedProperties.push({
-          ...parsed,
-          listing_url: result.url,
-          source_title: result.title,
-          eia_electricity_rate: eiaRate,
-        });
-      } catch (err) {
-        console.error('Extraction error for', result.url, err);
-      }
-    }
+          let parsed;
+          try {
+            const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            parsed = JSON.parse(cleaned);
+          } catch {
+            console.warn('Failed to parse OpenAI JSON for', result.url);
+            return null;
+          }
+
+          if (!parsed.address && !parsed.city) {
+            console.warn('No address/city extracted for', result.url);
+            return null;
+          }
+
+          // EIA rate lookup (cached per state)
+          let eiaRate: number | null = null;
+          if (EIA_API_KEY && parsed.state) {
+            if (eiaRateCache.has(parsed.state)) {
+              eiaRate = eiaRateCache.get(parsed.state)!;
+            } else {
+              eiaRate = await fetchEIAElectricityRate(parsed.state, EIA_API_KEY);
+              eiaRateCache.set(parsed.state, eiaRate);
+              if (eiaRate) {
+                console.log(`EIA rate for ${parsed.state}: ${(eiaRate * 100).toFixed(2)}¢/kWh`);
+              }
+            }
+          }
+
+          return {
+            ...parsed,
+            listing_url: result.url,
+            source_title: result.title,
+            eia_electricity_rate: eiaRate,
+          };
+        } catch (err) {
+          console.error('Extraction error for', result.url, err);
+          return null;
+        }
+      });
+
+    const extractionResults = await Promise.all(extractionPromises);
+    const extractedProperties = extractionResults.filter(Boolean) as any[];
 
     console.log(`Extracted ${extractedProperties.length} valid properties`);
 
