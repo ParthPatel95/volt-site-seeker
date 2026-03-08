@@ -132,21 +132,22 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Step 2: For each result, extract structured data via OpenAI
-    const extractedProperties: any[] = [];
+    // Step 2: Extract structured data via OpenAI (parallel, batches of 5)
+    // First, cache EIA rates per state to avoid duplicate lookups
+    const eiaRateCache = new Map<string, number | null>();
 
-    for (const result of uniqueResults) {
-      try {
-        const markdown = result.markdown || result.description || '';
-        if (markdown.length < 50) continue; // Skip thin results
-
-        const extractionPrompt = `You are a commercial real estate and power infrastructure analyst. Extract structured property data from this listing content, specifically evaluating suitability for Bitcoin mining / high-performance computing operations.
+    const extractionPromises = uniqueResults
+      .filter(r => (r.markdown || r.description || '').length >= 50)
+      .map(async (result) => {
+        try {
+          const markdown = result.markdown || result.description || '';
+          const extractionPrompt = `You are a commercial real estate and power infrastructure analyst. Extract structured property data from this listing content, specifically evaluating suitability for Bitcoin mining / high-performance computing operations.
 
 LISTING URL: ${result.url}
 LISTING TITLE: ${result.title || 'N/A'}
 
 CONTENT:
-${markdown.substring(0, 6000)}
+${markdown.substring(0, 4000)}
 
 Extract and return a JSON object with these fields. Use null for any field you cannot determine:
 
@@ -165,95 +166,100 @@ Extract and return a JSON object with these fields. Use null for any field you c
   "description": "brief property description (max 200 chars)",
   "power_infrastructure": {
     "estimated_power_capacity_mw": number or null,
-    "voltage_available": "voltage levels mentioned (e.g. 138kV, 69kV, 480V)",
-    "nearest_substation": "name/location of nearest substation if mentioned or inferable",
+    "voltage_available": "voltage levels mentioned",
+    "nearest_substation": "name/location if mentioned",
     "substation_distance_miles": number or null,
     "transmission_access": true/false,
     "utility_provider": "local utility company name",
     "power_application_process": {
-      "utility_contact": "who to contact for power application",
+      "utility_contact": "who to contact",
       "typical_timeline_months": number or null,
-      "required_documents": ["list of typical docs needed"],
-      "estimated_interconnection_cost": "cost estimate or range",
-      "process_steps": ["step 1", "step 2", ...]
+      "required_documents": ["list"],
+      "estimated_interconnection_cost": "cost range",
+      "process_steps": ["step 1", "step 2"]
     },
-    "grid_interconnection_notes": "any notes about connecting to the grid",
-    "cooling_potential": "natural cooling advantages (climate, water access, etc.)",
-    "redundancy_options": "backup power, dual feed, etc."
+    "grid_interconnection_notes": "notes",
+    "cooling_potential": "natural cooling advantages",
+    "redundancy_options": "backup power options"
   },
   "bitcoin_mining_suitability": {
     "score": 1-10,
-    "strengths": ["list of advantages for mining"],
-    "weaknesses": ["list of disadvantages"],
-    "estimated_hashrate_capacity": "rough estimate based on power",
+    "strengths": ["list"],
+    "weaknesses": ["list"],
+    "estimated_hashrate_capacity": "estimate",
     "recommended_setup": "brief recommendation"
   }
 }
 
-IMPORTANT: For the power_application_process, use your knowledge of US utility interconnection processes for the specific state and utility. Include realistic steps like filing an interconnection request, feasibility study, system impact study, facilities study, and construction. Provide the actual utility name for that region.
-
 Return ONLY valid JSON, no markdown code fences.`;
 
-        const openaiResp = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'You are a commercial real estate and power infrastructure expert. Always return valid JSON.' },
-              { role: 'user', content: extractionPrompt }
-            ],
-            temperature: 0.2,
-            max_tokens: 2000,
-          }),
-        });
+          const openaiResp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: 'You are a commercial real estate and power infrastructure expert. Always return valid JSON.' },
+                { role: 'user', content: extractionPrompt }
+              ],
+              temperature: 0.2,
+              max_tokens: 1500,
+            }),
+          });
 
-        const openaiData = await openaiResp.json();
-        const content = openaiData.choices?.[0]?.message?.content;
+          const openaiData = await openaiResp.json();
+          const content = openaiData.choices?.[0]?.message?.content;
 
-        if (!content) {
-          console.warn('Empty OpenAI response for', result.url);
-          continue;
-        }
-
-        // Parse JSON from response (handle markdown fences)
-        let parsed;
-        try {
-          const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          parsed = JSON.parse(cleaned);
-        } catch {
-          console.warn('Failed to parse OpenAI JSON for', result.url);
-          continue;
-        }
-
-        // Only include if we got at least an address or city
-        if (!parsed.address && !parsed.city) {
-          console.warn('No address/city extracted for', result.url);
-          continue;
-        }
-
-        // Step 2.5: Enrich with EIA electricity rate
-        let eiaRate: number | null = null;
-        if (EIA_API_KEY && parsed.state) {
-          eiaRate = await fetchEIAElectricityRate(parsed.state, EIA_API_KEY);
-          if (eiaRate) {
-            console.log(`EIA rate for ${parsed.state}: ${(eiaRate * 100).toFixed(2)}¢/kWh`);
+          if (!content) {
+            console.warn('Empty OpenAI response for', result.url);
+            return null;
           }
-        }
 
-        extractedProperties.push({
-          ...parsed,
-          listing_url: result.url,
-          source_title: result.title,
-          eia_electricity_rate: eiaRate,
-        });
-      } catch (err) {
-        console.error('Extraction error for', result.url, err);
-      }
-    }
+          let parsed;
+          try {
+            const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            parsed = JSON.parse(cleaned);
+          } catch {
+            console.warn('Failed to parse OpenAI JSON for', result.url);
+            return null;
+          }
+
+          if (!parsed.address && !parsed.city) {
+            console.warn('No address/city extracted for', result.url);
+            return null;
+          }
+
+          // EIA rate lookup (cached per state)
+          let eiaRate: number | null = null;
+          if (EIA_API_KEY && parsed.state) {
+            if (eiaRateCache.has(parsed.state)) {
+              eiaRate = eiaRateCache.get(parsed.state)!;
+            } else {
+              eiaRate = await fetchEIAElectricityRate(parsed.state, EIA_API_KEY);
+              eiaRateCache.set(parsed.state, eiaRate);
+              if (eiaRate) {
+                console.log(`EIA rate for ${parsed.state}: ${(eiaRate * 100).toFixed(2)}¢/kWh`);
+              }
+            }
+          }
+
+          return {
+            ...parsed,
+            listing_url: result.url,
+            source_title: result.title,
+            eia_electricity_rate: eiaRate,
+          };
+        } catch (err) {
+          console.error('Extraction error for', result.url, err);
+          return null;
+        }
+      });
+
+    const extractionResults = await Promise.all(extractionPromises);
+    const extractedProperties = extractionResults.filter(Boolean) as any[];
 
     console.log(`Extracted ${extractedProperties.length} valid properties`);
 
