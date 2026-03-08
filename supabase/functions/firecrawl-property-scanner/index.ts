@@ -129,8 +129,35 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Step 2: Extract structured data via OpenAI (parallel, batches of 5)
-    // First, cache EIA rates per state to avoid duplicate lookups
+    // Step 1.5: Quick-scrape top results in parallel to get richer content
+    console.log(`Scraping ${uniqueResults.length} result pages in parallel...`);
+    const scrapePromises = uniqueResults.map(async (result) => {
+      try {
+        const scrapeResp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: result.url,
+            formats: ['markdown'],
+            onlyMainContent: true,
+            waitFor: 2000,
+          }),
+        });
+        const scrapeData = await scrapeResp.json();
+        if (scrapeData.success && scrapeData.data?.markdown) {
+          result.markdown = scrapeData.data.markdown;
+          console.log(`Scraped ${result.url.substring(0, 60)}... (${scrapeData.data.markdown.length} chars)`);
+        }
+      } catch (err) {
+        console.warn('Scrape failed for', result.url, err);
+      }
+    });
+    await Promise.all(scrapePromises);
+
+    // Step 2: Extract structured data via OpenAI (parallel)
     const eiaRateCache = new Map<string, number | null>();
 
     const extractionPromises = uniqueResults
