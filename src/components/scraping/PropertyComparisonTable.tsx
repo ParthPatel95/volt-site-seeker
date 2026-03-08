@@ -76,7 +76,10 @@ export function PropertyComparisonTable({ properties }: PropertyComparisonTableP
     if (next.has(id)) {
       next.delete(id);
       // Remove from DB
-      await supabase.from('property_shortlist').delete().eq('property_id', id);
+      const { data: { user: delUser } } = await supabase.auth.getUser();
+      if (delUser) {
+        await supabase.from('property_shortlist').delete().eq('property_id', id).eq('user_id', delUser.id);
+      }
     } else {
       next.add(id);
       // Add to DB
