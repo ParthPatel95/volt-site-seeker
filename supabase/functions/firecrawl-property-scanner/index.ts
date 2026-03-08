@@ -176,9 +176,9 @@ Deno.serve(async (req) => {
 
     const resultsToAnalyze = validResults.length > 0 ? validResults : uniqueResults;
 
-    console.log(`Found ${uniqueResults.length} unique results to analyze`);
+    console.log(`Found ${resultsToAnalyze.length} results to analyze`);
 
-    if (uniqueResults.length === 0) {
+    if (resultsToAnalyze.length === 0) {
       return new Response(JSON.stringify({
         success: true,
         properties_found: 0,
@@ -189,9 +189,7 @@ Deno.serve(async (req) => {
     // Step 2: Extract structured data via OpenAI (parallel)
     const eiaRateCache = new Map<string, number | null>();
 
-    const extractionPromises = uniqueResults
-      .filter(r => (r.markdown || r.description || '').length >= 50)
-      .map(async (result) => {
+    const extractionPromises = resultsToAnalyze.map(async (result) => {
         try {
           const markdown = result.markdown || result.description || '';
           const extractionPrompt = `You are a commercial real estate and power infrastructure analyst. Extract structured property data from this listing content, specifically evaluating suitability for Bitcoin mining / high-performance computing operations.
