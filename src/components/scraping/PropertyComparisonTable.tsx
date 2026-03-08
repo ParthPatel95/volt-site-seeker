@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,22 @@ export function PropertyComparisonTable({ properties }: PropertyComparisonTableP
   const [shortlisted, setShortlisted] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  // Load existing shortlisted items on mount
+  useEffect(() => {
+    const loadShortlist = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('property_shortlist')
+        .select('property_id')
+        .eq('user_id', user.id);
+      if (data && data.length > 0) {
+        setShortlisted(new Set(data.map((r: any) => r.property_id)));
+      }
+    };
+    loadShortlist();
+  }, []);
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -60,7 +76,10 @@ export function PropertyComparisonTable({ properties }: PropertyComparisonTableP
     if (next.has(id)) {
       next.delete(id);
       // Remove from DB
-      await supabase.from('property_shortlist').delete().eq('property_id', id);
+      const { data: { user: delUser } } = await supabase.auth.getUser();
+      if (delUser) {
+        await supabase.from('property_shortlist').delete().eq('property_id', id).eq('user_id', delUser.id);
+      }
     } else {
       next.add(id);
       // Add to DB
