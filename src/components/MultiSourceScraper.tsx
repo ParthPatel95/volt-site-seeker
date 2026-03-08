@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AIPropertyScraper } from './scraping/AIPropertyScraper';
 import { ComprehensiveScraper } from './scraping/ComprehensiveScraper';
+import { FirecrawlPropertyScanner } from './scraping/FirecrawlPropertyScanner';
 import { ScrapedPropertiesDisplay } from './scraping/ScrapedPropertiesDisplay';
 import { APIKeySetup } from './scraping/APIKeySetup';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +14,8 @@ import {
   Database, 
   Globe,
   Bot,
-  Zap
+  Zap,
+  Flame
 } from 'lucide-react';
 import { FreeDataSources } from './scraping/FreeDataSources';
 
