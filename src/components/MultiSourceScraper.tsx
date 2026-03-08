@@ -93,6 +93,10 @@ export function MultiSourceScraper() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="firecrawl-scanner" className="space-y-6">
+          <FirecrawlPropertyScanner onPropertiesFound={handlePropertiesFound} />
+        </TabsContent>
+
         <TabsContent value="free-data-sources" className="space-y-6">
           <FreeDataSources onPropertiesFound={handlePropertiesFound} />
           

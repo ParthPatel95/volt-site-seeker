@@ -304,3 +304,6 @@ verify_jwt = false
 
 [functions.aeso-comprehensive-data-collector]
 verify_jwt = false
+
+[functions.firecrawl-property-scanner]
+verify_jwt = false
