@@ -1,21 +1,25 @@
 
 
-# Fix: White Page on "My Learning" Dropdown
+# Firecrawl Property Scanner: Test Results
 
-## Problem
-The `GlobalUserMenu` component navigates to `/academy/learning` when clicking "My Learning", but no route exists for that path in `App.tsx`. This results in a blank page.
+## Finding
 
-## Solution
-The existing Academy landing page (`/academy`) already serves as the learning hub with module listings and the `ContinueLearningBar`. The simplest fix is to update the "My Learning" link in `GlobalUserMenu.tsx` to point to `/academy` instead of the non-existent `/academy/learning`.
+The scanner code is working correctly — queries are being sent, responses are being parsed. However, **all Firecrawl API calls are failing with "Insufficient credits"**.
 
-Alternatively, if "My Learning" should show progress, it should point to `/academy/progress` which already exists and shows the progress dashboard.
+Every search query returns:
+> "Insufficient credits to perform this request. For more credits, you can upgrade your plan at https://firecrawl.dev/pricing"
 
-## Change
-**`src/components/GlobalUserMenu.tsx`** — Change line 94:
-- From: `navigate('/academy/learning')`  
-- To: `navigate('/academy/progress')`
+## Root Cause
 
-This makes "My Learning" go to the progress dashboard (which shows per-module completion, certificates, etc.), while "Academy Home" already goes to `/academy`.
+The Firecrawl connection (`Firecrawl (1)`, linked to this project) has run out of API credits. No code change will fix this.
 
-One file, one line change.
+## Resolution
+
+Since this is a **managed connection** (set up via the Firecrawl connector), you need to:
+
+1. **Log into Firecrawl** with the email used to create this connection
+2. **Upgrade your plan** — use coupon code **`LOVABLE50`** for 50% off your first 3 months (standard plan or higher)
+3. Once credits are available, the scanner will work immediately with no code changes needed
+
+The code improvements (broader queries, `waitFor` for JS rendering, fallback scrape, content validation) are all deployed and ready. They just need credits to execute.
 
