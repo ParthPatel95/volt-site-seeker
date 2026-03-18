@@ -5,23 +5,9 @@ import { CurriculumSection } from "@/components/academy/CurriculumSection";
 import { AcademyCTASection } from "@/components/academy/AcademyCTASection";
 import { ContinueLearningBar } from "@/components/academy/ContinueLearningBar";
 import { useEffect } from "react";
+import { getModulesForProgress } from "@/constants/curriculum-data";
 
-// Module info for progress tracking
-const academyModules = [
-  { id: "bitcoin", title: "Bitcoin Fundamentals", route: "/bitcoin", totalSections: 12 },
-  { id: "datacenters", title: "Mining Infrastructure", route: "/datacenters", totalSections: 10 },
-  { id: "aeso", title: "Alberta Energy Market", route: "/aeso-101", totalSections: 10 },
-  { id: "hydro", title: "Hydro Cooling Systems", route: "/hydro-datacenters", totalSections: 12 },
-  { id: "electrical", title: "Electrical Infrastructure", route: "/electrical-infrastructure", totalSections: 12 },
-  { id: "noise", title: "Noise Management", route: "/noise-management", totalSections: 10 },
-  { id: "immersion", title: "Immersion Cooling", route: "/immersion-cooling", totalSections: 10 },
-  { id: "mining-economics", title: "Mining Economics", route: "/mining-economics", totalSections: 8 },
-  { id: "operations", title: "Operations & Maintenance", route: "/operations", totalSections: 8 },
-  { id: "strategic-operations", title: "Strategic Operations Masterclass", route: "/strategic-operations", totalSections: 6 },
-  { id: "taxes-insurance", title: "Taxes & Insurance Masterclass", route: "/taxes-insurance", totalSections: 10 },
-  { id: "engineering-permitting", title: "Engineering & Permitting Masterclass", route: "/engineering-permitting", totalSections: 10 },
-  { id: "networking", title: "Networking Masterclass", route: "/networking", totalSections: 10 },
-];
+const academyModules = getModulesForProgress();
 
 const Academy = () => {
   useEffect(() => {
@@ -34,14 +20,8 @@ const Academy = () => {
       
       <main>
         <AcademyHeroSection />
-        
-        {/* Simple continue learning bar for returning users */}
         <ContinueLearningBar modules={academyModules} />
-        
-        {/* Main curriculum browser */}
         <CurriculumSection />
-        
-        {/* Simple CTA */}
         <AcademyCTASection />
       </main>
       
