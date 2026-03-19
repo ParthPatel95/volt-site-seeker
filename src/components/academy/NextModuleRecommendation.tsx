@@ -29,7 +29,7 @@ export const NextModuleRecommendation = ({ moduleId }: NextModuleRecommendationP
             <span className="text-sm font-medium uppercase tracking-wider">Continue Your Learning Path</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            {nextModule ? 'Recommended Next Module' : 'You've Completed the Curriculum!'}
+            {nextModule ? 'Recommended Next Module' : "You've Completed the Curriculum!"}
           </h2>
         </div>
 
