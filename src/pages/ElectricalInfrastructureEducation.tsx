@@ -4,6 +4,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { Zap, Loader2, Globe, Cable, Gauge, ToggleLeft, CircuitBoard, Cpu, Activity, Anchor, ShieldAlert, Layers, Clock } from "lucide-react";
 import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import EducationSectionNav from "@/components/academy/EducationSectionNav";
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from "@/components/academy/KnowledgeCheck";
 import { QuickFlashcard } from "@/components/academy/QuickFlashcard";
 import { ELECTRICAL_QUIZZES } from "@/constants/quiz-data";
