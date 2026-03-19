@@ -116,6 +116,7 @@ const ElectricalInfrastructureEducation = () => {
         <div id="redundancy"><Suspense fallback={<SectionLoader />}><RedundancyArchitecturesSection /></Suspense></div>
       </main>
       
+      <NextModuleRecommendation moduleId="electrical" />
       <LandingFooter />
     </div>
   );

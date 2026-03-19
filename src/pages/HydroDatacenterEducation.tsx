@@ -81,6 +81,7 @@ const HydroDatacenterEducation = () => {
         <Suspense fallback={<SectionLoader />}><div id="noise-management"><HydroNoiseManagementSection /></div></Suspense>
         <Suspense fallback={<SectionLoader />}><HydroCTASection /></Suspense>
       </div>
+      <NextModuleRecommendation moduleId="hydro" />
       <LandingFooter />
       <PageTranslationButton pageId="hydro-datacenters-101" />
     </div>

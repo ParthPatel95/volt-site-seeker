@@ -68,6 +68,7 @@ export default function MiningEconomicsEducation() {
         <Suspense fallback={<SectionLoader />}><MiningEconomicsCTASection /></Suspense>
       </main>
       
+      <NextModuleRecommendation moduleId="mining-economics" />
       <LandingFooter />
     </div>
   );

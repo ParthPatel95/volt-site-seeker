@@ -67,6 +67,7 @@ export default function NetworkingEducation() {
         <Suspense fallback={<SectionLoader />}><NetHardwareSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetCaseStudySection /></Suspense>
       </main>
+      <NextModuleRecommendation moduleId="networking" />
       <LandingFooter />
     </div>
   );

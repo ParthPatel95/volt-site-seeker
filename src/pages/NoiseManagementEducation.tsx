@@ -103,6 +103,7 @@ const NoiseManagementEducation = () => {
         <Suspense fallback={<SectionLoader />}><NoiseCTASection /></Suspense>
       </div>
 
+      <NextModuleRecommendation moduleId="noise" />
       <LandingFooter />
     </div>
   );

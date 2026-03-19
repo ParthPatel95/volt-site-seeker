@@ -173,6 +173,7 @@ const StrategicOperationsMasterclass = () => {
         <div className="max-w-4xl mx-auto px-4 pb-8"><LastReviewed date="March 2026" reviewer="WattByte Education Team" variant="footer" /></div>
       </main>
       
+      <NextModuleRecommendation moduleId="strategic-operations" />
       <LandingFooter />
     </div>
   );

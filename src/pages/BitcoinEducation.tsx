@@ -358,6 +358,8 @@ const BitcoinEducation: React.FC = () => {
         <LandingFooter />
       </div>
 
+      <NextModuleRecommendation moduleId="bitcoin" />
+
       {/* Page Translation Button */}
       <PageTranslationButton pageId="bitcoin-101" />
 

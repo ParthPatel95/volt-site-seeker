@@ -71,6 +71,7 @@ export default function ImmersionCoolingEducation() {
         <Suspense fallback={<SectionLoader />}><ImmersionCTASection /></Suspense>
       </main>
       
+      <NextModuleRecommendation moduleId="immersion" />
       <LandingFooter />
     </div>
   );

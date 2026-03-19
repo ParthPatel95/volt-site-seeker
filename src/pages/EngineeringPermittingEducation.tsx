@@ -69,6 +69,7 @@ export default function EngineeringPermittingEducation() {
         <Suspense fallback={<SectionLoader />}><TimelineCostSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><EPCTASection /></Suspense>
       </main>
+      <NextModuleRecommendation moduleId="engineering-permitting" />
       <LandingFooter />
     </div>
   );

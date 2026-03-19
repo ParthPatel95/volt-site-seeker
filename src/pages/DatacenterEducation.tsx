@@ -63,6 +63,7 @@ const DatacenterEducation = () => {
         <Suspense fallback={<SectionLoader />}><EnhancedCTASection /></Suspense>
       </div>
       
+      <NextModuleRecommendation moduleId="datacenters" />
       <LandingFooter />
       <PageTranslationButton pageId="datacenters-101" />
     </div>

@@ -64,6 +64,7 @@ const OperationsEducation = () => {
         <Suspense fallback={<SectionLoader />}><OperationsCTASection /></Suspense>
       </main>
       
+      <NextModuleRecommendation moduleId="operations" />
       <LandingFooter />
     </div>
   );

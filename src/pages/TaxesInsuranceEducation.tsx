@@ -66,6 +66,7 @@ export default function TaxesInsuranceEducation() {
         <Suspense fallback={<SectionLoader />}><AlbertaCaseStudySection /></Suspense>
         <Suspense fallback={<SectionLoader />}><TaxesInsuranceCTASection /></Suspense>
       </main>
+      <NextModuleRecommendation moduleId="taxes-insurance" />
       <LandingFooter />
     </div>
   );

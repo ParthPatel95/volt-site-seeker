@@ -173,6 +173,7 @@ const AESOEducation = () => {
         </div>
       </main>
 
+      <NextModuleRecommendation moduleId="aeso" />
       <LandingFooter />
 
       {/* Page Translation Button */}
