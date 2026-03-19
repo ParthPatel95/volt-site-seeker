@@ -1,8 +1,12 @@
 import { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { BookOpen, MapPin, Building2, FileCheck, Zap, Scale, CircuitBoard, Volume2, HardHat, Calendar, FileText } from 'lucide-react';
+import { BookOpen, MapPin, Building2, FileCheck, Zap, Scale, CircuitBoard, Volume2, HardHat, Calendar } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { ENGINEERING_PERMITTING_QUIZZES } from '@/constants/quiz-data';
+import { ENGINEERING_PERMITTING_FLASHCARDS } from '@/constants/flashcard-data';
 
 const EPIntroSection = lazy(() => import('@/components/engineering-permitting/EPIntroSection'));
 const RegulatoryLandscapeSection = lazy(() => import('@/components/engineering-permitting/RegulatoryLandscapeSection'));
@@ -35,6 +39,10 @@ const navSections = [
   { id: 'timeline', icon: Calendar, label: 'Timeline & Costs', time: '10 min' },
 ];
 
+const regQuiz = ENGINEERING_PERMITTING_QUIZZES.find(q => q.sectionId === 'regulatory');
+const munQuiz = ENGINEERING_PERMITTING_QUIZZES.find(q => q.sectionId === 'municipal');
+const aesoQuiz = ENGINEERING_PERMITTING_QUIZZES.find(q => q.sectionId === 'aeso');
+
 export default function EngineeringPermittingEducation() {
   return (
     <div className="min-h-screen bg-background">
@@ -42,10 +50,18 @@ export default function EngineeringPermittingEducation() {
       <EducationSectionNav sections={navSections} accentColor="watt-purple" />
       <main className="pt-16">
         <Suspense fallback={<SectionLoader />}><EPIntroSection /></Suspense>
+        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ENGINEERING_PERMITTING_FLASHCARDS} /></div>
+
         <Suspense fallback={<SectionLoader />}><RegulatoryLandscapeSection /></Suspense>
+        {regQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={regQuiz.title} questions={regQuiz.questions} /></div>}
+
         <Suspense fallback={<SectionLoader />}><MunicipalPermitsSection /></Suspense>
+        {munQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={munQuiz.title} questions={munQuiz.questions} /></div>}
+
         <Suspense fallback={<SectionLoader />}><SafetyCodesSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><AESOConnectionSection /></Suspense>
+        {aesoQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={aesoQuiz.title} questions={aesoQuiz.questions} /></div>}
+
         <Suspense fallback={<SectionLoader />}><AUCApprovalSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><ElectricalEngineeringSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><EnvironmentalComplianceSection /></Suspense>

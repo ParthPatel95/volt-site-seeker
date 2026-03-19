@@ -3,6 +3,10 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Droplets, Layers, FlaskConical, Cpu, Container, Thermometer, Zap, DollarSign, Box, Wrench } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { IMMERSION_COOLING_QUIZZES } from '@/constants/quiz-data';
+import { IMMERSION_COOLING_FLASHCARDS } from '@/constants/flashcard-data';
 
 const ImmersionIntroSection = lazy(() => import('@/components/immersion-education/ImmersionIntroSection'));
 const ImmersionTypesSection = lazy(() => import('@/components/immersion-education/ImmersionTypesSection'));
@@ -22,7 +26,6 @@ const SectionLoader = () => (
   </div>
 );
 
-// Navigation sections config
 const navSections = [
   { id: 'intro', icon: Droplets, label: 'Introduction', time: '5 min' },
   { id: 'types', icon: Layers, label: 'Types', time: '6 min' },
@@ -36,58 +39,36 @@ const navSections = [
   { id: 'maintenance', icon: Wrench, label: 'Maintenance', time: '6 min' },
 ];
 
+const fluidQuiz = IMMERSION_COOLING_QUIZZES.find(q => q.sectionId === 'fluids');
+const tankQuiz = IMMERSION_COOLING_QUIZZES.find(q => q.sectionId === 'tank-systems');
+const ocQuiz = IMMERSION_COOLING_QUIZZES.find(q => q.sectionId === 'overclocking');
+
 export default function ImmersionCoolingEducation() {
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
-      
-      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="cyan-500" />
       
       <main className="pt-16">
-        <Suspense fallback={<SectionLoader />}>
-          <ImmersionIntroSection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><ImmersionIntroSection /></Suspense>
+        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={IMMERSION_COOLING_FLASHCARDS} /></div>
         
-        <Suspense fallback={<SectionLoader />}>
-          <ImmersionTypesSection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><ImmersionTypesSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><DielectricFluidsSection /></Suspense>
+        {fluidQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fluidQuiz.title} questions={fluidQuiz.questions} /></div>}
         
-        <Suspense fallback={<SectionLoader />}>
-          <DielectricFluidsSection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><HardwarePrepSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><TankSystemsSection /></Suspense>
+        {tankQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={tankQuiz.title} questions={tankQuiz.questions} /></div>}
         
-        <Suspense fallback={<SectionLoader />}>
-          <HardwarePrepSection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><HeatTransferSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><OverclockingSection /></Suspense>
+        {ocQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={ocQuiz.title} questions={ocQuiz.questions} /></div>}
         
-        <Suspense fallback={<SectionLoader />}>
-          <TankSystemsSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <HeatTransferSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <OverclockingSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <ImmersionEconomicsSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <ImmersionContainersSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <ImmersionMaintenanceSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <ImmersionCTASection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><ImmersionEconomicsSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><ImmersionContainersSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><ImmersionMaintenanceSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><ImmersionCTASection /></Suspense>
       </main>
       
       <LandingFooter />

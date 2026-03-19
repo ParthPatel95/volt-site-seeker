@@ -5,8 +5,11 @@ import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import DatacenterHeroSectionV2 from '@/components/datacenter-education/DatacenterHeroSectionV2';
 import SectionNavigation from '@/components/datacenter-education/SectionNavigation';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { DATACENTER_QUIZZES } from '@/constants/quiz-data';
+import { DATACENTER_FLASHCARDS } from '@/constants/flashcard-data';
 
-// Lazy load all sections for performance
 const EnergySourceSection = lazy(() => import('@/components/datacenter-education/EnergySourceSection'));
 const ElectricalInfrastructureSection = lazy(() => import('@/components/datacenter-education/ElectricalInfrastructureSection'));
 const FacilityDesignSection = lazy(() => import('@/components/datacenter-education/FacilityDesignSection'));
@@ -24,6 +27,10 @@ const SectionLoader = () => (
   </div>
 );
 
+const facilityQuiz = DATACENTER_QUIZZES.find(q => q.sectionId === 'facility-design');
+const coolingQuiz = DATACENTER_QUIZZES.find(q => q.sectionId === 'cooling-systems');
+const hardwareQuiz = DATACENTER_QUIZZES.find(q => q.sectionId === 'hardware');
+
 const DatacenterEducation = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -31,65 +38,32 @@ const DatacenterEducation = () => {
       <LandingNavigation />
       <SectionNavigation />
       
-      {/* Main content */}
       <div>
-        {/* Immersive Hero Section */}
         <DatacenterHeroSectionV2 />
+
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <QuickFlashcard deck={DATACENTER_FLASHCARDS} />
+        </div>
       
-      {/* Section 1: Energy Source to Facility */}
-      <Suspense fallback={<SectionLoader />}>
-        <EnergySourceSection />
-      </Suspense>
-      
-      {/* Section 2: Electrical Infrastructure */}
-      <Suspense fallback={<SectionLoader />}>
-        <ElectricalInfrastructureSection />
-      </Suspense>
-      
-      {/* Section 3: Facility Design & Layout */}
-      <Suspense fallback={<SectionLoader />}>
-        <FacilityDesignSection />
-      </Suspense>
-      
-      {/* Section 4: Airflow & Containment */}
-      <Suspense fallback={<SectionLoader />}>
-        <AirflowContainmentSection />
-      </Suspense>
-      
-      {/* Section 5: Cooling Systems */}
-      <Suspense fallback={<SectionLoader />}>
-        <CoolingSystemsVisualSection />
-      </Suspense>
-      
-      {/* Section 6: Mining Hardware */}
-      <Suspense fallback={<SectionLoader />}>
-        <MiningHardwareShowcaseSection />
-      </Suspense>
-      
-      {/* Section 7: Operations & Monitoring */}
-      <Suspense fallback={<SectionLoader />}>
-        <OperationsMonitoringSection />
-      </Suspense>
-      
-      {/* Section 8: Datacenter Economics */}
-      <Suspense fallback={<SectionLoader />}>
-        <DatacenterEconomicsSection />
-      </Suspense>
-      
-      {/* Section 9: Interactive Facility Tour */}
-      <Suspense fallback={<SectionLoader />}>
-        <InteractiveFacilityTour />
-      </Suspense>
-      
-      {/* CTA Section */}
-      <Suspense fallback={<SectionLoader />}>
-        <EnhancedCTASection />
-      </Suspense>
+        <Suspense fallback={<SectionLoader />}><EnergySourceSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><ElectricalInfrastructureSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><FacilityDesignSection /></Suspense>
+        {facilityQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={facilityQuiz.title} questions={facilityQuiz.questions} /></div>}
+        
+        <Suspense fallback={<SectionLoader />}><AirflowContainmentSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><CoolingSystemsVisualSection /></Suspense>
+        {coolingQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={coolingQuiz.title} questions={coolingQuiz.questions} /></div>}
+        
+        <Suspense fallback={<SectionLoader />}><MiningHardwareShowcaseSection /></Suspense>
+        {hardwareQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={hardwareQuiz.title} questions={hardwareQuiz.questions} /></div>}
+        
+        <Suspense fallback={<SectionLoader />}><OperationsMonitoringSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><DatacenterEconomicsSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><InteractiveFacilityTour /></Suspense>
+        <Suspense fallback={<SectionLoader />}><EnhancedCTASection /></Suspense>
       </div>
       
       <LandingFooter />
-
-      {/* Page Translation Button */}
       <PageTranslationButton pageId="datacenters-101" />
     </div>
   );
