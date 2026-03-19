@@ -3,6 +3,10 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { BookOpen, Globe, Shield, Network, Hash, Server, Lock, Activity, Cpu, MapPin } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { NETWORKING_QUIZZES } from '@/constants/quiz-data';
+import { NETWORKING_FLASHCARDS } from '@/constants/flashcard-data';
 
 const NetIntroSection = lazy(() => import('@/components/networking/NetIntroSection'));
 const NetConnectivitySection = lazy(() => import('@/components/networking/NetConnectivitySection'));
@@ -34,6 +38,10 @@ const navSections = [
   { id: 'case-study', icon: MapPin, label: '45MW Case Study', time: '10 min' },
 ];
 
+const ispQuiz = NETWORKING_QUIZZES.find(q => q.sectionId === 'connectivity');
+const secQuiz = NETWORKING_QUIZZES.find(q => q.sectionId === 'security');
+const redQuiz = NETWORKING_QUIZZES.find(q => q.sectionId === 'redundancy');
+
 export default function NetworkingEducation() {
   return (
     <div className="min-h-screen bg-background">
@@ -41,12 +49,20 @@ export default function NetworkingEducation() {
       <EducationSectionNav sections={navSections} accentColor="watt-purple" />
       <main className="pt-16">
         <Suspense fallback={<SectionLoader />}><NetIntroSection /></Suspense>
+        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={NETWORKING_FLASHCARDS} /></div>
+
         <Suspense fallback={<SectionLoader />}><NetConnectivitySection /></Suspense>
+        {ispQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={ispQuiz.title} questions={ispQuiz.questions} /></div>}
+
         <Suspense fallback={<SectionLoader />}><NetRedundancySection /></Suspense>
+        {redQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={redQuiz.title} questions={redQuiz.questions} /></div>}
+
         <Suspense fallback={<SectionLoader />}><NetTopologySection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetIPManagementSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetPoolConnectivitySection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetSecuritySection /></Suspense>
+        {secQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={secQuiz.title} questions={secQuiz.questions} /></div>}
+
         <Suspense fallback={<SectionLoader />}><NetMonitoringSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetHardwareSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetCaseStudySection /></Suspense>

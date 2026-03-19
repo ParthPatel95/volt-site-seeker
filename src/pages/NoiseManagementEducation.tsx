@@ -5,8 +5,11 @@ import { Volume2, VolumeX, Headphones, Calculator, Shield, Ruler, Layout, Activi
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { NOISE_QUIZZES } from '@/constants/quiz-data';
+import { NOISE_FLASHCARDS } from '@/constants/flashcard-data';
 
-// Lazy load sections for performance
 const NoiseBasicsSection = lazy(() => import('@/components/noise-education/NoiseBasicsSection').then(m => ({ default: m.NoiseBasicsSection })));
 const NoiseSourcesSection = lazy(() => import('@/components/noise-education/NoiseSourcesSection').then(m => ({ default: m.NoiseSourcesSection })));
 const CumulativeNoiseSection = lazy(() => import('@/components/noise-education/CumulativeNoiseSection').then(m => ({ default: m.CumulativeNoiseSection })));
@@ -25,7 +28,6 @@ const SectionLoader = () => (
   </div>
 );
 
-// Navigation sections config
 const navSections = [
   { id: 'fundamentals', label: 'Sound Fundamentals', icon: Volume2, time: '6 min' },
   { id: 'noise-sources', label: 'Noise Sources', icon: Headphones, time: '5 min' },
@@ -39,117 +41,66 @@ const navSections = [
   { id: 'case-study', label: 'Case Study', icon: Building2, time: '8 min' },
 ];
 
+const fundQuiz = NOISE_QUIZZES.find(q => q.sectionId === 'fundamentals');
+const regQuiz = NOISE_QUIZZES.find(q => q.sectionId === 'standards');
+const mitQuiz = NOISE_QUIZZES.find(q => q.sectionId === 'mitigation');
+
 const NoiseManagementEducation = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
       <LandingNavigation />
       
-      {/* Hero Section */}
       <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-br from-watt-navy via-watt-navy to-watt-navy/95 overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
+          <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
         </div>
-
-        {/* Sound Wave Animation */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-20">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="absolute border-2 border-watt-bitcoin/50 rounded-full animate-ping"
-              style={{
-                width: `${100 + i * 60}px`,
-                height: `${100 + i * 60}px`,
-                right: '0',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                animationDelay: `${i * 0.4}s`,
-                animationDuration: '3s',
-              }}
-            />
+            <div key={i} className="absolute border-2 border-watt-bitcoin/50 rounded-full animate-ping" style={{ width: `${100 + i * 60}px`, height: `${100 + i * 60}px`, right: '0', top: '50%', transform: 'translateY(-50%)', animationDelay: `${i * 0.4}s`, animationDuration: '3s' }} />
           ))}
         </div>
-
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal>
             <div className="text-center">
-              <Badge className="bg-watt-bitcoin/20 text-watt-bitcoin border-watt-bitcoin/30 mb-4">
-                WattByte Academy • Module 6
-              </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-                Noise Management
-                <span className="block text-watt-bitcoin">& Mitigation 101</span>
-              </h1>
+              <Badge className="bg-watt-bitcoin/20 text-watt-bitcoin border-watt-bitcoin/30 mb-4">WattByte Academy • Module 6</Badge>
+              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">Noise Management<span className="block text-watt-bitcoin">& Mitigation 101</span></h1>
               <p className="text-xl text-white/70 max-w-3xl mx-auto mb-8">
                 Comprehensive guide to managing sound in Bitcoin mining facilities. 
                 Featuring our <strong className="text-watt-bitcoin">45MW Alberta Heartland</strong> facility 
                 with 30 Bitmain Hydro containers and 1.7km setback as a real-world case study.
               </p>
-
-              {/* Stats */}
               <div className="flex flex-wrap justify-center gap-6 text-white/80 mb-4">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="h-5 w-5 text-watt-bitcoin" />
-                  <span>10 Detailed Sections</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5 text-watt-bitcoin" />
-                  <span>3 Interactive Calculators</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-watt-bitcoin" />
-                  <span>Real Case Study</span>
-                </div>
+                <div className="flex items-center gap-2"><Volume2 className="h-5 w-5 text-watt-bitcoin" /><span>10 Detailed Sections</span></div>
+                <div className="flex items-center gap-2"><Calculator className="h-5 w-5 text-watt-bitcoin" /><span>3 Interactive Calculators</span></div>
+                <div className="flex items-center gap-2"><Building2 className="h-5 w-5 text-watt-bitcoin" /><span>Real Case Study</span></div>
               </div>
-              
-              {/* Total Reading Time */}
-              <Badge className="bg-white/10 text-white/80 border-white/20 text-sm px-4 py-2">
-                ⏱️ ~57 min total reading time
-              </Badge>
+              <Badge className="bg-white/10 text-white/80 border-white/20 text-sm px-4 py-2">⏱️ ~57 min total reading time</Badge>
             </div>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Main Content */}
       <div>
-        <Suspense fallback={<SectionLoader />}>
-          <NoiseBasicsSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <NoiseSourcesSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <CumulativeNoiseSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <RegulatoryStandardsSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <DistanceAttenuationSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <MitigationTechniquesSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <SiteLayoutSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <NoiseMonitoringSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <EnvironmentalImpactSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <AlbertaHeartlandCaseStudy />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <NoiseCTASection />
-        </Suspense>
+        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={NOISE_FLASHCARDS} /></div>
+
+        <Suspense fallback={<SectionLoader />}><NoiseBasicsSection /></Suspense>
+        {fundQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fundQuiz.title} questions={fundQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><NoiseSourcesSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><CumulativeNoiseSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><RegulatoryStandardsSection /></Suspense>
+        {regQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={regQuiz.title} questions={regQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><DistanceAttenuationSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><MitigationTechniquesSection /></Suspense>
+        {mitQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={mitQuiz.title} questions={mitQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><SiteLayoutSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><NoiseMonitoringSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><EnvironmentalImpactSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><AlbertaHeartlandCaseStudy /></Suspense>
+        <Suspense fallback={<SectionLoader />}><NoiseCTASection /></Suspense>
       </div>
 
       <LandingFooter />

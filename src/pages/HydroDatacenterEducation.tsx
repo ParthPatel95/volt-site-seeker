@@ -6,8 +6,11 @@ import HydroHeroSection from '@/components/hydro-education/HydroHeroSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 import { Droplets, Box, Thermometer, MapPin, Layout, Waves, Zap, Shield, HardHat, DollarSign, Flame, Volume2 } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { HYDRO_COOLING_QUIZZES } from '@/constants/quiz-data';
+import { HYDRO_COOLING_FLASHCARDS } from '@/constants/flashcard-data';
 
-// Lazy load all sections for performance
 const HydroAdvantagesSection = lazy(() => import('@/components/hydro-education/HydroAdvantagesSection'));
 const HydroContainerProductsSection = lazy(() => import('@/components/hydro-education/HydroContainerProductsSection'));
 const HydroCoolingMethodsSection = lazy(() => import('@/components/hydro-education/HydroCoolingMethodsSection'));
@@ -28,7 +31,6 @@ const SectionLoader = () => (
   </div>
 );
 
-// Navigation sections config
 const navSections = [
   { id: 'advantages', icon: Droplets, label: 'Advantages', time: '5 min' },
   { id: 'containers', icon: Box, label: 'Containers', time: '7 min' },
@@ -44,111 +46,42 @@ const navSections = [
   { id: 'noise-management', icon: Volume2, label: 'Noise', time: '5 min' },
 ];
 
+const coolingQuiz = HYDRO_COOLING_QUIZZES.find(q => q.sectionId === 'cooling-methods');
+const waterQuiz = HYDRO_COOLING_QUIZZES.find(q => q.sectionId === 'water-systems');
+const econQuiz = HYDRO_COOLING_QUIZZES.find(q => q.sectionId === 'economics');
+
 const HydroDatacenterEducation = () => {
   return (
     <div className="min-h-screen bg-background">
       <SmoothScroll />
       <LandingNavigation />
-      
-      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="blue-500" />
       
-      {/* Main content */}
       <div>
-        {/* Immersive Hero Section */}
         <HydroHeroSection />
-      {/* Section 1: Why Hydro-cooling */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="advantages">
-          <HydroAdvantagesSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 2: Container Products */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="containers">
-          <HydroContainerProductsSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 3: Cooling Methods */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="cooling-methods">
-          <HydroCoolingMethodsSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 4: Site Selection */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="site-selection">
-          <HydroSiteSelectionSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 5: Modular Layout */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="layout">
-          <HydroLayoutSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 6: Water Systems */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="water-systems">
-          <HydroWaterSystemsSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 7: Electrical Infrastructure */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="electrical">
-          <HydroElectricalSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 8: Network & Security */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="network-security">
-          <HydroNetworkSecuritySection />
-        </div>
-      </Suspense>
-      
-      {/* Section 9: Construction & Acceptance */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="construction">
-          <HydroConstructionSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 10: Economics */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="economics">
-          <HydroEconomicsSection />
-        </div>
-      </Suspense>
-      
-      {/* Section 11: Waste Heat Recovery */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="waste-heat">
-          <HydroWasteHeatSection />
-        </div>
-      </Suspense>
+        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={HYDRO_COOLING_FLASHCARDS} /></div>
 
-      {/* Section 12: Noise Management */}
-      <Suspense fallback={<SectionLoader />}>
-        <div id="noise-management">
-          <HydroNoiseManagementSection />
-        </div>
-      </Suspense>
-      
-        {/* CTA Section */}
-        <Suspense fallback={<SectionLoader />}>
-          <HydroCTASection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="advantages"><HydroAdvantagesSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="containers"><HydroContainerProductsSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="cooling-methods"><HydroCoolingMethodsSection /></div></Suspense>
+        {coolingQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={coolingQuiz.title} questions={coolingQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><div id="site-selection"><HydroSiteSelectionSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="layout"><HydroLayoutSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="water-systems"><HydroWaterSystemsSection /></div></Suspense>
+        {waterQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={waterQuiz.title} questions={waterQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><div id="electrical"><HydroElectricalSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="network-security"><HydroNetworkSecuritySection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="construction"><HydroConstructionSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="economics"><HydroEconomicsSection /></div></Suspense>
+        {econQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={econQuiz.title} questions={econQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><div id="waste-heat"><HydroWasteHeatSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><div id="noise-management"><HydroNoiseManagementSection /></div></Suspense>
+        <Suspense fallback={<SectionLoader />}><HydroCTASection /></Suspense>
       </div>
       <LandingFooter />
-
-      {/* Page Translation Button */}
       <PageTranslationButton pageId="hydro-datacenters-101" />
     </div>
   );

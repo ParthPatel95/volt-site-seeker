@@ -3,6 +3,10 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Suspense, lazy, useEffect } from "react";
 import { Settings, Monitor, Wrench, Search, TrendingUp, Users, ShieldCheck, FileText } from "lucide-react";
 import EducationSectionNav from "@/components/academy/EducationSectionNav";
+import { KnowledgeCheck } from "@/components/academy/KnowledgeCheck";
+import { QuickFlashcard } from "@/components/academy/QuickFlashcard";
+import { OPERATIONS_QUIZZES } from "@/constants/quiz-data";
+import { OPERATIONS_FLASHCARDS } from "@/constants/flashcard-data";
 
 const OperationsIntroSection = lazy(() => import("@/components/operations/OperationsIntroSection").then(m => ({ default: m.OperationsIntroSection })));
 const MonitoringSystemsSection = lazy(() => import("@/components/operations/MonitoringSystemsSection").then(m => ({ default: m.MonitoringSystemsSection })));
@@ -20,7 +24,6 @@ const SectionLoader = () => (
   </div>
 );
 
-// Navigation sections config with updated reading times
 const navSections = [
   { id: 'intro', icon: Settings, label: 'Introduction', time: '6 min' },
   { id: 'monitoring', icon: Monitor, label: 'Monitoring', time: '8 min' },
@@ -32,52 +35,33 @@ const navSections = [
   { id: 'documentation', icon: FileText, label: 'Documentation', time: '6 min' },
 ];
 
-// Total estimated reading time
-const totalReadingTime = navSections.reduce((acc, section) => {
-  const minutes = parseInt(section.time);
-  return acc + minutes;
-}, 0);
+const monitoringQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'monitoring');
+const maintenanceQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'preventive-maintenance');
 
 const OperationsEducation = () => {
-  useEffect(() => {
-    document.title = "Operations & Maintenance 101 | WattByte Academy";
-  }, []);
+  useEffect(() => { document.title = "Operations & Maintenance 101 | WattByte Academy"; }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <LandingNavigation />
-      
-      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
       <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
       
       <main>
-        <Suspense fallback={<SectionLoader />}>
-          <OperationsIntroSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <MonitoringSystemsSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <PreventiveMaintenanceSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <TroubleshootingSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <PerformanceOptimizationSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <TeamStructureSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <SafetyProtocolsSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <DocumentationSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <OperationsCTASection />
-        </Suspense>
+        <Suspense fallback={<SectionLoader />}><OperationsIntroSection /></Suspense>
+        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={OPERATIONS_FLASHCARDS} /></div>
+
+        <Suspense fallback={<SectionLoader />}><MonitoringSystemsSection /></Suspense>
+        {monitoringQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={monitoringQuiz.title} questions={monitoringQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><PreventiveMaintenanceSection /></Suspense>
+        {maintenanceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={maintenanceQuiz.title} questions={maintenanceQuiz.questions} /></div>}
+
+        <Suspense fallback={<SectionLoader />}><TroubleshootingSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><PerformanceOptimizationSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><TeamStructureSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><SafetyProtocolsSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><DocumentationSection /></Suspense>
+        <Suspense fallback={<SectionLoader />}><OperationsCTASection /></Suspense>
       </main>
       
       <LandingFooter />
