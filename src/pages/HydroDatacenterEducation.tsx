@@ -6,6 +6,7 @@ import HydroHeroSection from '@/components/hydro-education/HydroHeroSection';
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 import { Droplets, Box, Thermometer, MapPin, Layout, Waves, Zap, Shield, HardHat, DollarSign, Flame, Volume2 } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { HYDRO_COOLING_QUIZZES } from '@/constants/quiz-data';
@@ -81,6 +82,7 @@ const HydroDatacenterEducation = () => {
         <Suspense fallback={<SectionLoader />}><div id="noise-management"><HydroNoiseManagementSection /></div></Suspense>
         <Suspense fallback={<SectionLoader />}><HydroCTASection /></Suspense>
       </div>
+      <NextModuleRecommendation moduleId="hydro" />
       <LandingFooter />
       <PageTranslationButton pageId="hydro-datacenters-101" />
     </div>

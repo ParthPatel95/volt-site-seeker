@@ -5,6 +5,7 @@ import { Volume2, VolumeX, Headphones, Calculator, Shield, Ruler, Layout, Activi
 import { Badge } from '@/components/ui/badge';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { NOISE_QUIZZES } from '@/constants/quiz-data';
@@ -103,6 +104,7 @@ const NoiseManagementEducation = () => {
         <Suspense fallback={<SectionLoader />}><NoiseCTASection /></Suspense>
       </div>
 
+      <NextModuleRecommendation moduleId="noise" />
       <LandingFooter />
     </div>
   );

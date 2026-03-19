@@ -1,4 +1,5 @@
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { AESOHeroSection } from '@/components/aeso-education/AESOHeroSection';
 import { WhatIsAESOSection } from '@/components/aeso-education/WhatIsAESOSection';
@@ -173,6 +174,7 @@ const AESOEducation = () => {
         </div>
       </main>
 
+      <NextModuleRecommendation moduleId="aeso" />
       <LandingFooter />
 
       {/* Page Translation Button */}

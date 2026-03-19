@@ -3,6 +3,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { BookOpen, MapPin, Building2, Calculator, DollarSign, Bitcoin, Gift, Shield, ShieldCheck, FileText } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { TAXES_INSURANCE_QUIZZES } from '@/constants/quiz-data';
@@ -66,6 +67,7 @@ export default function TaxesInsuranceEducation() {
         <Suspense fallback={<SectionLoader />}><AlbertaCaseStudySection /></Suspense>
         <Suspense fallback={<SectionLoader />}><TaxesInsuranceCTASection /></Suspense>
       </main>
+      <NextModuleRecommendation moduleId="taxes-insurance" />
       <LandingFooter />
     </div>
   );

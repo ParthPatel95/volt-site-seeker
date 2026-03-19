@@ -3,6 +3,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Droplets, Layers, FlaskConical, Cpu, Container, Thermometer, Zap, DollarSign, Box, Wrench } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { IMMERSION_COOLING_QUIZZES } from '@/constants/quiz-data';
@@ -71,6 +72,7 @@ export default function ImmersionCoolingEducation() {
         <Suspense fallback={<SectionLoader />}><ImmersionCTASection /></Suspense>
       </main>
       
+      <NextModuleRecommendation moduleId="immersion" />
       <LandingFooter />
     </div>
   );

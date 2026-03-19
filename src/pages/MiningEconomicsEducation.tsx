@@ -3,6 +3,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { BookOpen, DollarSign, BarChart3, Calculator, TrendingUp, Cpu, Activity, Lightbulb } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { MINING_ECONOMICS_QUIZZES } from '@/constants/quiz-data';
@@ -68,6 +69,7 @@ export default function MiningEconomicsEducation() {
         <Suspense fallback={<SectionLoader />}><MiningEconomicsCTASection /></Suspense>
       </main>
       
+      <NextModuleRecommendation moduleId="mining-economics" />
       <LandingFooter />
     </div>
   );

@@ -3,6 +3,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { BookOpen, MapPin, Building2, FileCheck, Zap, Scale, CircuitBoard, Volume2, HardHat, Calendar } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ENGINEERING_PERMITTING_QUIZZES } from '@/constants/quiz-data';
@@ -69,6 +70,7 @@ export default function EngineeringPermittingEducation() {
         <Suspense fallback={<SectionLoader />}><TimelineCostSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><EPCTASection /></Suspense>
       </main>
+      <NextModuleRecommendation moduleId="engineering-permitting" />
       <LandingFooter />
     </div>
   );

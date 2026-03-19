@@ -3,6 +3,7 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { BookOpen, Globe, Shield, Network, Hash, Server, Lock, Activity, Cpu, MapPin } from 'lucide-react';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { NETWORKING_QUIZZES } from '@/constants/quiz-data';
@@ -67,6 +68,7 @@ export default function NetworkingEducation() {
         <Suspense fallback={<SectionLoader />}><NetHardwareSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><NetCaseStudySection /></Suspense>
       </main>
+      <NextModuleRecommendation moduleId="networking" />
       <LandingFooter />
     </div>
   );
