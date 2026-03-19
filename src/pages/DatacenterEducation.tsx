@@ -7,6 +7,7 @@ import SectionNavigation from '@/components/datacenter-education/SectionNavigati
 import { PageTranslationButton } from '@/components/translation/PageTranslationButton';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { DATACENTER_QUIZZES } from '@/constants/quiz-data';
 import { DATACENTER_FLASHCARDS } from '@/constants/flashcard-data';
 

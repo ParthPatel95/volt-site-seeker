@@ -5,6 +5,7 @@ import { SectionDivider } from "@/components/landing/SectionDivider";
 import { SmoothScroll } from "@/components/landing/ScrollAnimations";
 import LastReviewed from "@/components/academy/LastReviewed";
 import EducationSectionNav from "@/components/academy/EducationSectionNav";
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { useEffect, lazy, Suspense } from "react";
 import { StrategicFoundationsIntro } from "@/components/masterclass/StrategicFoundationsIntro";
 import { StrategicJourneyDiagram } from "@/components/masterclass/StrategicJourneyDiagram";

@@ -13,6 +13,7 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { BITCOIN_QUIZZES } from '@/constants/quiz-data';
 import { BITCOIN_FLASHCARDS } from '@/constants/flashcard-data';
 import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 
 // Section navigation config
 const bitcoinSections = [

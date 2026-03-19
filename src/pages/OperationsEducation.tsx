@@ -3,6 +3,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Suspense, lazy, useEffect } from "react";
 import { Settings, Monitor, Wrench, Search, TrendingUp, Users, ShieldCheck, FileText } from "lucide-react";
 import EducationSectionNav from "@/components/academy/EducationSectionNav";
+import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
 import { KnowledgeCheck } from "@/components/academy/KnowledgeCheck";
 import { QuickFlashcard } from "@/components/academy/QuickFlashcard";
 import { OPERATIONS_QUIZZES } from "@/constants/quiz-data";
