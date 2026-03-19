@@ -1,61 +1,44 @@
 
 
-# Add Interactive Quizzes & Flashcards to All Academy Modules
+# Add "Next Module" Recommendation Component
 
-## Current State
-- **Have quizzes + flashcards**: Bitcoin Fundamentals (8 quiz sets, 20 flashcards), AESO/Alberta Energy (10 quiz sets, 25 flashcards)
-- **Have flashcards only**: Electrical Infrastructure (8 flashcards, no quizzes)
-- **Have nothing**: Mining Economics, Mining Infrastructure (Datacenter), Hydro Cooling, Immersion Cooling, Operations & Maintenance, Noise Management, Strategic Operations Masterclass, Taxes & Insurance, Engineering & Permitting, Networking — **10 modules with no quizzes or flashcards**
+## Overview
+Create a reusable `NextModuleRecommendation` component that uses the centralized curriculum data to suggest the next module in the learning path. Place it at the bottom of each module page (before the footer).
 
-## Plan
+## Component Design
 
-### 1. Add quiz data for all 11 missing modules (`src/constants/quiz-data.ts`)
+**New file: `src/components/academy/NextModuleRecommendation.tsx`**
 
-Add 3-5 quiz questions per module, each with 4 multiple-choice options and explanations:
+A self-contained component that accepts the current module ID as a prop. It:
+1. Looks up the current module in `ACADEMY_CURRICULUM`
+2. Finds the next module in array order (the learning path sequence)
+3. If at the last module, suggests returning to the Academy landing page
+4. Shows the next module's icon, title, description, difficulty badge, estimated time, and a "Continue Learning" link
+5. Also shows a secondary suggestion (the module after next, if available) for variety
 
-| Module | Quiz Sets (3-5 questions each) |
-|--------|-------------------------------|
-| Mining Economics | Revenue Drivers, Cost Structure, Break-Even Analysis |
-| Mining Infrastructure | Facility Design, Cooling Systems, Hardware |
-| Electrical Infrastructure | Fundamentals, Transformers, Safety |
-| Hydro Cooling | System Design, Components, Efficiency |
-| Immersion Cooling | Fluid Types, System Design, Benefits |
-| Operations & Maintenance | Monitoring, Maintenance Schedules, KPIs |
-| Noise Management | Regulations, Mitigation, Measurement |
-| Taxes & Insurance | Tax Treatment, Insurance Types, Compliance |
-| Engineering & Permitting | Permitting Process, Site Requirements, Environmental |
-| Networking | ISP Selection, Redundancy, Security |
-| Strategic Operations | Site Selection, Risk Management, Scaling |
+Visual design: A card section with a gradient accent border, matching the institutional style. Uses theme-aware colors (`text-foreground`, `bg-card`, `border-border`).
 
-### 2. Add flashcard data for 10 missing modules (`src/constants/flashcard-data.ts`)
+## Integration (13 module pages)
 
-Add 8-10 flashcards per module covering key terminology (Electrical Infrastructure already has flashcards).
+Add `<NextModuleRecommendation moduleId="..." />` before `<LandingFooter />` in each page:
 
-### 3. Add quiz + flashcard components to each module page
+| Page | Module ID |
+|------|-----------|
+| BitcoinEducation | `bitcoin` |
+| AESOEducation | `aeso` |
+| MiningEconomicsEducation | `mining-economics` |
+| DatacenterEducation | `datacenters` |
+| ElectricalInfrastructureEducation | `electrical` |
+| HydroDatacenterEducation | `hydro` |
+| ImmersionCoolingEducation | `immersion` |
+| OperationsEducation | `operations` |
+| NoiseManagementEducation | `noise` |
+| StrategicOperationsMasterclass | `strategic-operations` |
+| TaxesInsuranceEducation | `taxes-insurance` |
+| EngineeringPermittingEducation | `engineering-permitting` |
+| NetworkingEducation | `networking` |
 
-For each of the 11 module pages, add:
-- Import `KnowledgeCheck`, `QuickFlashcard`, and the module's quiz/flashcard data
-- Place a `QuickFlashcard` deck near the top (after intro section)
-- Place `KnowledgeCheck` components after relevant content sections
-
-### Files to modify
-
-**Data files:**
-- `src/constants/quiz-data.ts` — Add ~35 quiz sets for 11 modules (~120 questions total)
-- `src/constants/flashcard-data.ts` — Add ~100 flashcards across 10 new decks
-
-**Module pages (11 files):**
-- `src/pages/MiningEconomicsEducation.tsx`
-- `src/pages/DatacenterEducation.tsx`
-- `src/pages/ElectricalInfrastructureEducation.tsx`
-- `src/pages/HydroDatacenterEducation.tsx`
-- `src/pages/ImmersionCoolingEducation.tsx`
-- `src/pages/OperationsEducation.tsx`
-- `src/pages/NoiseManagementEducation.tsx`
-- `src/pages/TaxesInsuranceEducation.tsx`
-- `src/pages/EngineeringPermittingEducation.tsx`
-- `src/pages/NetworkingEducation.tsx`
-- `src/pages/StrategicOperationsMasterclass.tsx`
-
-Each page gets the same pattern: import quiz/flashcard data, add `QuickFlashcard` after intro, add `KnowledgeCheck` after 2-3 key content sections.
+## Files
+- **Create**: `src/components/academy/NextModuleRecommendation.tsx`
+- **Modify**: 13 module page files (one-line import + one-line component placement each)
 
