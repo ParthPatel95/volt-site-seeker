@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CompletionCertificate } from '@/components/academy/CompletionCertificate';
 import { Card, CardContent } from '@/components/ui/card';
+import { COURSE_THUMBNAILS } from '@/assets/thumbnails';
 import {
   BookOpen,
   CheckCircle2,
