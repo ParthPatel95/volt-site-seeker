@@ -939,6 +939,60 @@ export const OPERATIONS_QUIZZES: QuizSet[] = [
       },
     ],
   },
+  {
+    sectionId: 'troubleshooting',
+    title: 'Troubleshooting',
+    questions: [
+      {
+        id: 'ops-ts-1',
+        question: 'What is the first step when a miner shows zero hash rate?',
+        options: ['Replace the miner immediately', 'Check power supply, network connectivity, and control board LEDs', 'Restart the entire facility', 'Contact the manufacturer'],
+        correctIndex: 1,
+        explanation: 'Systematic troubleshooting starts with checking basic power and connectivity indicators before escalating to hardware replacement.',
+      },
+      {
+        id: 'ops-ts-2',
+        question: 'What does a high reject rate (>5%) from a mining pool typically indicate?',
+        options: ['Pool is overloaded', 'Miner hardware failure', 'Network latency, outdated firmware, or misconfigured pool settings', 'BTC price is too low'],
+        correctIndex: 2,
+        explanation: 'High reject rates usually stem from network latency causing stale shares, outdated firmware, or incorrect pool URL/worker configuration.',
+      },
+      {
+        id: 'ops-ts-3',
+        question: 'What is thermal throttling and how do you identify it?',
+        options: ['A cooling system brand', 'Automatic hash rate reduction when chip temperature exceeds safe limits, visible as lower-than-rated performance', 'A type of power surge', 'Network congestion'],
+        correctIndex: 1,
+        explanation: 'Thermal throttling reduces hash rate to prevent chip damage. It appears as consistent under-performance with chip temps near 90-105°C.',
+      },
+    ],
+  },
+  {
+    sectionId: 'safety',
+    title: 'Safety Protocols',
+    questions: [
+      {
+        id: 'ops-safety-1',
+        question: 'What is the maximum safe noise exposure time at 85 dBA without hearing protection?',
+        options: ['1 hour', '4 hours', '8 hours', '24 hours'],
+        correctIndex: 2,
+        explanation: 'OSHA permissible exposure limit at 85 dBA is 8 hours. Mining facilities at 80-95 dBA require hearing protection for extended work.',
+      },
+      {
+        id: 'ops-safety-2',
+        question: 'What should be included in a mining facility emergency action plan?',
+        options: ['Only fire exits', 'Evacuation routes, electrical isolation procedures, emergency contacts, and assembly points', 'Only first aid kits', 'Only security cameras'],
+        correctIndex: 1,
+        explanation: 'A comprehensive EAP includes evacuation routes, electrical emergency shutoff procedures, emergency contacts, assembly points, and first aid locations.',
+      },
+      {
+        id: 'ops-safety-3',
+        question: 'Why must non-electrical staff never open electrical panels?',
+        options: ['Company policy only', 'Risk of arc flash, electrocution, and equipment damage without proper training and PPE', 'The panels are locked', 'It voids the warranty'],
+        correctIndex: 1,
+        explanation: 'Energized electrical panels pose arc flash and electrocution hazards. Only qualified electrical personnel with proper PPE should access them.',
+      },
+    ],
+  },
 ];
 
 // Noise Management Quiz Data
