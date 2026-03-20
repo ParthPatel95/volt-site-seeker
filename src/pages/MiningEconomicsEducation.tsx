@@ -24,24 +24,28 @@ const profitabilityQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'pr
 
 const MINING_ECONOMICS_MISTAKES = [
   {
-    mistake: 'Ignoring difficulty growth in projections',
+    title: 'Ignoring Difficulty Growth',
+    description: 'Using static difficulty in multi-month financial projections.',
     consequence: 'Revenue projections become wildly optimistic within months, leading to negative ROI surprises.',
-    fix: 'Model at least 3-5% monthly difficulty growth in all financial projections. Use historical difficulty data to stress-test assumptions.',
+    prevention: 'Model at least 3-5% monthly difficulty growth. Use historical data to stress-test assumptions.',
   },
   {
-    mistake: 'Undersizing electrical infrastructure',
-    consequence: 'Limits future expansion and may require costly retrofits. Transformers and switchgear are long-lead items.',
-    fix: 'Size your electrical infrastructure for 120-150% of initial capacity to allow for growth without major capital expenditure.',
+    title: 'Undersizing Electrical Infrastructure',
+    description: 'Sizing transformers and switchgear only for initial deployment capacity.',
+    consequence: 'Limits future expansion and requires costly retrofits. Transformers are long-lead items.',
+    prevention: 'Size electrical infrastructure for 120-150% of initial capacity to allow growth.',
   },
   {
-    mistake: 'Not accounting for halving events',
-    consequence: 'Block rewards drop 50% roughly every 4 years. Miners who don\'t plan for this face sudden revenue cliffs.',
-    fix: 'Build halving dates into all multi-year financial models. Ensure your cost basis allows profitability at half the current block reward.',
+    title: 'Ignoring Halving Events',
+    description: 'Not accounting for the ~4-year block reward halving cycle in projections.',
+    consequence: 'Block rewards drop 50%. Miners who don\'t plan face sudden revenue cliffs.',
+    prevention: 'Build halving dates into all multi-year models. Ensure profitability at half the current reward.',
   },
   {
-    mistake: 'Using spot electricity rates for long-term projections',
-    consequence: 'Energy costs can swing 30-50% seasonally. Spot-based models give false confidence in margins.',
-    fix: 'Negotiate fixed-rate or indexed power purchase agreements (PPAs). Model scenarios with 20-30% energy cost increases.',
+    title: 'Using Spot Electricity Rates',
+    description: 'Basing long-term projections on current spot energy prices.',
+    consequence: 'Energy costs can swing 30-50% seasonally. Spot-based models give false confidence.',
+    prevention: 'Negotiate fixed-rate PPAs. Model scenarios with 20-30% energy cost increases.',
   },
 ];
 

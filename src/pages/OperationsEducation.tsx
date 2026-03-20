@@ -8,6 +8,8 @@ import { ProcessFlowchart } from '@/components/academy/ProcessFlowchart';
 import { OrderingExercise } from '@/components/academy/OrderingExercise';
 import { OPERATIONS_QUIZZES } from '@/constants/quiz-data';
 import { OPERATIONS_FLASHCARDS } from '@/constants/flashcard-data';
+import { Bell, Filter, Search, Wrench, FileCheck } from 'lucide-react';
+import type { FlowStep } from '@/components/academy/ProcessFlowchart';
 
 const OperationsIntroSection = lazy(() => import('@/components/operations/OperationsIntroSection').then(m => ({ default: m.OperationsIntroSection })));
 const MonitoringSystemsSection = lazy(() => import('@/components/operations/MonitoringSystemsSection').then(m => ({ default: m.MonitoringSystemsSection })));
@@ -24,12 +26,12 @@ const maintenanceQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'preventive
 const troubleshootingQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'troubleshooting');
 const safetyQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'safety');
 
-const TROUBLESHOOTING_STEPS = [
-  { label: 'Alert Triggered', description: 'Monitoring system detects anomaly (hashrate drop, temp spike, network issue)', status: 'complete' as const },
-  { label: 'Triage & Classify', description: 'Determine severity (P1-P4) and affected scope (single miner, rack, row, facility)', status: 'complete' as const },
-  { label: 'Isolate the Problem', description: 'Check logs, sensor data, and network status to narrow root cause', status: 'active' as const },
-  { label: 'Apply Fix', description: 'Execute remediation — restart, replace hardware, adjust config, or escalate', status: 'pending' as const },
-  { label: 'Verify & Document', description: 'Confirm resolution, update runbook, and file incident report', status: 'pending' as const },
+const TROUBLESHOOTING_STEPS: FlowStep[] = [
+  { title: 'Alert Triggered', description: 'Monitoring system detects anomaly (hashrate drop, temp spike)', icon: Bell, status: 'complete' },
+  { title: 'Triage & Classify', description: 'Determine severity (P1-P4) and affected scope', icon: Filter, status: 'complete' },
+  { title: 'Isolate the Problem', description: 'Check logs, sensor data, and network status to narrow root cause', icon: Search, status: 'active' },
+  { title: 'Apply Fix', description: 'Execute remediation — restart, replace hardware, or escalate', icon: Wrench, status: 'upcoming' },
+  { title: 'Verify & Document', description: 'Confirm resolution, update runbook, and file incident report', icon: FileCheck, status: 'upcoming' },
 ];
 
 const ALERT_RESPONSE_ORDER = [
@@ -44,19 +46,22 @@ const ALERT_RESPONSE_ORDER = [
 
 const OPERATIONS_MISTAKES = [
   {
-    mistake: 'Skipping preventive maintenance schedules',
-    consequence: 'Unplanned downtime increases 3-5x. A single failed fan can take out an entire rack if thermal protection triggers.',
-    fix: 'Implement a strict calendar-based PM schedule. Track compliance rate — target 95%+ adherence.',
+    title: 'Skipping Preventive Maintenance',
+    description: 'Deferring scheduled maintenance to avoid downtime or save costs.',
+    consequence: 'Unplanned downtime increases 3-5x. A single failed fan can take out an entire rack.',
+    prevention: 'Implement strict calendar-based PM schedule. Track compliance rate — target 95%+ adherence.',
   },
   {
-    mistake: 'No monitoring alert escalation path',
-    consequence: 'Critical alerts get lost in noise. A P1 outage can go unnoticed for hours during off-shifts.',
-    fix: 'Define clear escalation tiers with automatic notification. P1 alerts should page on-call within 5 minutes.',
+    title: 'No Alert Escalation Path',
+    description: 'All alerts go to a single channel without priority routing.',
+    consequence: 'Critical alerts get lost in noise. P1 outages can go unnoticed for hours.',
+    prevention: 'Define clear escalation tiers with automatic notification. P1 alerts should page on-call within 5 minutes.',
   },
   {
-    mistake: 'Running without environmental monitoring',
-    consequence: 'Temperature and humidity drift can reduce hardware lifespan by 30-50% and cause intermittent failures.',
-    fix: 'Deploy temperature, humidity, and airflow sensors at every row. Set alerts at 35°C intake and 45°C exhaust.',
+    title: 'Missing Environmental Monitoring',
+    description: 'Running without temperature, humidity, or airflow sensors at every row.',
+    consequence: 'Temperature drift can reduce hardware lifespan by 30-50% and cause intermittent failures.',
+    prevention: 'Deploy sensors at every row. Set alerts at 35°C intake and 45°C exhaust.',
   },
 ];
 
@@ -88,7 +93,7 @@ const OperationsEducation = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <OrderingExercise title="Order the Alert Response Steps" description="Arrange these incident response steps in the correct order." items={ALERT_RESPONSE_ORDER} />
+        <OrderingExercise title="Order the Alert Response Steps" instruction="Arrange these incident response steps in the correct order." items={ALERT_RESPONSE_ORDER} />
       </div>
 
       <div id="optimization"><Suspense fallback={<SectionLoader />}><PerformanceOptimizationSection /></Suspense></div>

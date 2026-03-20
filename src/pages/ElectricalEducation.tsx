@@ -7,6 +7,8 @@ import { ProcessFlowchart } from '@/components/academy/ProcessFlowchart';
 import { OrderingExercise } from '@/components/academy/OrderingExercise';
 import { ELECTRICAL_QUIZZES } from '@/constants/quiz-data';
 import { ELECTRICAL_FLASHCARDS } from '@/constants/flashcard-data';
+import { Zap, Building2, ArrowDownToLine, ShieldCheck, Cpu, PlugZap } from 'lucide-react';
+import type { FlowStep } from '@/components/academy/ProcessFlowchart';
 
 const ElectricalIntroSection = lazy(() => import('@/components/electrical/ElectricalIntroSection'));
 const GridConnectionSection = lazy(() => import('@/components/electrical/GridConnectionSection'));
@@ -25,13 +27,13 @@ const fundamentalsQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'fundament
 const transformersQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'transformers');
 const arcFlashQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'arc-flash');
 
-const VOLTAGE_STEPDOWN_STEPS = [
-  { label: 'Utility Grid (69–240 kV)', description: 'High-voltage transmission from the grid to your facility interconnection point', status: 'complete' as const },
-  { label: 'Main Substation', description: 'Utility metering, protective relaying, and main disconnect switches', status: 'complete' as const },
-  { label: 'Step-Down Transformer (25 kV → 600V)', description: 'Oil-filled or dry-type transformers reduce voltage for distribution', status: 'active' as const },
-  { label: 'Main Switchgear (600V)', description: 'Circuit breakers, bus bars, and protective devices for load distribution', status: 'pending' as const },
-  { label: 'Power Distribution Units (PDUs)', description: 'Final voltage regulation and circuit protection before miner connections', status: 'pending' as const },
-  { label: 'Mining Hardware (120–240V)', description: 'Individual ASIC miners receive clean, regulated power at operating voltage', status: 'pending' as const },
+const VOLTAGE_STEPDOWN_STEPS: FlowStep[] = [
+  { title: 'Utility Grid (69–240 kV)', description: 'High-voltage transmission from the grid to your facility', icon: Zap, status: 'complete' },
+  { title: 'Main Substation', description: 'Utility metering, protective relaying, and main disconnect', icon: Building2, status: 'complete' },
+  { title: 'Step-Down Transformer', description: 'Oil-filled or dry-type transformers reduce voltage (25kV → 600V)', icon: ArrowDownToLine, status: 'active' },
+  { title: 'Main Switchgear (600V)', description: 'Circuit breakers, bus bars, and protective devices', icon: ShieldCheck, status: 'upcoming' },
+  { title: 'Power Distribution Units', description: 'Final voltage regulation and circuit protection', icon: PlugZap, status: 'upcoming' },
+  { title: 'Mining Hardware (120–240V)', description: 'Individual ASIC miners receive clean, regulated power', icon: Cpu, status: 'upcoming' },
 ];
 
 const VOLTAGE_CHAIN_ORDER = [
@@ -80,7 +82,7 @@ const ElectricalEducation = () => {
       <div id="redundancy"><Suspense fallback={<SectionLoader />}><RedundancySection /></Suspense></div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <OrderingExercise title="Order the Voltage Step-Down Chain" description="Arrange the electrical infrastructure components from highest to lowest voltage." items={VOLTAGE_CHAIN_ORDER} />
+        <OrderingExercise title="Order the Voltage Step-Down Chain" instruction="Arrange the electrical infrastructure components from highest to lowest voltage." items={VOLTAGE_CHAIN_ORDER} />
       </div>
 
       <div id="module-exam" className="max-w-4xl mx-auto px-4 py-8">
