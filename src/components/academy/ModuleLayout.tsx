@@ -2,16 +2,17 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, CheckCircle2, Circle, BookOpen, 
-  Clock, ArrowLeft, Menu, X, GraduationCap
+  Clock, ArrowLeft, Menu, X, GraduationCap, Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAcademyProgress } from '@/hooks/useAcademyProgress';
-import { ACADEMY_CURRICULUM, type CurriculumModule, type Lesson } from '@/constants/curriculum-data';
+import { ACADEMY_CURRICULUM, DIFFICULTY_BADGES, type CurriculumModule, type Lesson } from '@/constants/curriculum-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
+import { COURSE_THUMBNAILS } from '@/assets/thumbnails';
 
 interface LessonSection {
   id: string; // anchor
