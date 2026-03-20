@@ -200,8 +200,8 @@ const AcademyProgress = () => {
                   Welcome back, {academyUser?.full_name?.split(' ')[0] || 'Learner'}
                 </motion.h1>
                 <p className="text-muted-foreground">
-                  {overallProgress === 100
-                    ? '🎉 You've completed the entire curriculum!'
+                {overallProgress === 100
+                    ? "🎉 You've completed the entire curriculum!"
                     : nextModule
                     ? `Continue learning — pick up where you left off`
                     : 'Start your learning journey today'}
