@@ -19,6 +19,8 @@ const TaxesInsuranceCTASection = lazy(() => import('@/components/taxes-insurance
 
 const cryptoQuiz = TAXES_INSURANCE_QUIZZES.find(q => q.sectionId === 'crypto-tax');
 const insuranceQuiz = TAXES_INSURANCE_QUIZZES.find(q => q.sectionId === 'property-insurance');
+const capexQuiz = TAXES_INSURANCE_QUIZZES.find(q => q.sectionId === 'capex');
+const liabilityQuiz = TAXES_INSURANCE_QUIZZES.find(q => q.sectionId === 'liability-insurance');
 
 const SectionLoader = () => (
   <div className="py-20 flex items-center justify-center">
@@ -35,6 +37,8 @@ export default function TaxesInsuranceEducation() {
       <div id="jurisdictions"><Suspense fallback={<SectionLoader />}><TaxJurisdictionSection /></Suspense></div>
       <div id="corporate-structure"><Suspense fallback={<SectionLoader />}><CorporateTaxStructureSection /></Suspense></div>
       <div id="capex"><Suspense fallback={<SectionLoader />}><CapitalExpenseSection /></Suspense></div>
+      {capexQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={capexQuiz.title} questions={capexQuiz.questions} /></div>}
+
       <div id="opex"><Suspense fallback={<SectionLoader />}><OperatingExpenseSection /></Suspense></div>
       <div id="crypto-tax"><Suspense fallback={<SectionLoader />}><CryptoTaxTreatmentSection /></Suspense></div>
       {cryptoQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={cryptoQuiz.title} questions={cryptoQuiz.questions} /></div>}
@@ -44,6 +48,8 @@ export default function TaxesInsuranceEducation() {
       {insuranceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={insuranceQuiz.title} questions={insuranceQuiz.questions} /></div>}
 
       <div id="liability-insurance"><Suspense fallback={<SectionLoader />}><LiabilityInsuranceSection /></Suspense></div>
+      {liabilityQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={liabilityQuiz.title} questions={liabilityQuiz.questions} /></div>}
+
       <div id="case-study"><Suspense fallback={<SectionLoader />}><AlbertaCaseStudySection /></Suspense></div>
       <Suspense fallback={<SectionLoader />}><TaxesInsuranceCTASection /></Suspense>
     </ModuleLayout>

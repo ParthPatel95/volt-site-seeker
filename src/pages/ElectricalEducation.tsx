@@ -18,6 +18,10 @@ const GroundingSection = lazy(() => import('@/components/electrical/GroundingSec
 const ArcFlashSection = lazy(() => import('@/components/electrical/ArcFlashSection'));
 const RedundancySection = lazy(() => import('@/components/electrical/RedundancySection'));
 
+const fundamentalsQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'fundamentals');
+const transformersQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'transformers');
+const arcFlashQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'arc-flash');
+
 const SectionLoader = () => (
   <div className="flex items-center justify-center py-20">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -30,9 +34,13 @@ const ElectricalEducation = () => {
       <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ELECTRICAL_FLASHCARDS} /></div>
 
       <div id="fundamentals"><Suspense fallback={<SectionLoader />}><ElectricalIntroSection /></Suspense></div>
+      {fundamentalsQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fundamentalsQuiz.title} questions={fundamentalsQuiz.questions} /></div>}
+
       <div id="grid-connection"><Suspense fallback={<SectionLoader />}><GridConnectionSection /></Suspense></div>
       <div id="high-voltage"><Suspense fallback={<SectionLoader />}><HighVoltageSection /></Suspense></div>
       <div id="transformers"><Suspense fallback={<SectionLoader />}><TransformersSection /></Suspense></div>
+      {transformersQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={transformersQuiz.title} questions={transformersQuiz.questions} /></div>}
+
       <div id="switchgear"><Suspense fallback={<SectionLoader />}><SwitchgearSection /></Suspense></div>
       <div id="low-voltage"><Suspense fallback={<SectionLoader />}><LowVoltageSection /></Suspense></div>
       <div id="pdu"><Suspense fallback={<SectionLoader />}><PDUSection /></Suspense></div>
@@ -40,6 +48,8 @@ const ElectricalEducation = () => {
       <div id="power-quality"><Suspense fallback={<SectionLoader />}><PowerQualitySection /></Suspense></div>
       <div id="grounding"><Suspense fallback={<SectionLoader />}><GroundingSection /></Suspense></div>
       <div id="arc-flash"><Suspense fallback={<SectionLoader />}><ArcFlashSection /></Suspense></div>
+      {arcFlashQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={arcFlashQuiz.title} questions={arcFlashQuiz.questions} /></div>}
+
       <div id="redundancy"><Suspense fallback={<SectionLoader />}><RedundancySection /></Suspense></div>
     </ModuleLayout>
   );

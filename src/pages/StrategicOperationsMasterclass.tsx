@@ -35,7 +35,9 @@ const Glossary = lazy(() => import('@/components/academy/Glossary'));
 
 const siteQuiz = STRATEGIC_OPERATIONS_QUIZZES.find(q => q.sectionId === 'track-1');
 const riskQuiz = STRATEGIC_OPERATIONS_QUIZZES.find(q => q.sectionId === 'track-2');
+const executionQuiz = STRATEGIC_OPERATIONS_QUIZZES.find(q => q.sectionId === 'track-3');
 const scaleQuiz = STRATEGIC_OPERATIONS_QUIZZES.find(q => q.sectionId === 'track-4');
+const capitalQuiz = STRATEGIC_OPERATIONS_QUIZZES.find(q => q.sectionId === 'track-5');
 
 const SectionLoader = () => (
   <div className="py-20 flex items-center justify-center">
@@ -106,6 +108,7 @@ const StrategicOperationsMasterclass = () => {
         <Suspense fallback={<SectionLoader />}><PartnershipModelsSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><MergersAcquisitionsSection /></Suspense>
       </div>
+      {capitalQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={capitalQuiz.title} questions={capitalQuiz.questions} /></div>}
 
       <MasterclassCTASection />
     </ModuleLayout>

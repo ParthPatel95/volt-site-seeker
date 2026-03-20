@@ -18,6 +18,7 @@ const MiningEconomicsCTASection = lazy(() => import('@/components/mining-economi
 const revenueQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'revenue-drivers');
 const costQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'cost-structure');
 const breakEvenQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'break-even');
+const profitabilityQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'profitability');
 
 const SectionLoader = () => (
   <div className="py-20 flex items-center justify-center">
@@ -38,6 +39,8 @@ export default function MiningEconomicsEducation() {
       {costQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={costQuiz.title} questions={costQuiz.questions} /></div>}
 
       <div id="profitability"><Suspense fallback={<SectionLoader />}><ProfitabilityAnalysisSection /></Suspense></div>
+      {profitabilityQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={profitabilityQuiz.title} questions={profitabilityQuiz.questions} /></div>}
+
       <div id="breakeven"><Suspense fallback={<SectionLoader />}><BreakEvenAnalysisSection /></Suspense></div>
       {breakEvenQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={breakEvenQuiz.title} questions={breakEvenQuiz.questions} /></div>}
 
