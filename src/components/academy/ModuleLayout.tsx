@@ -2,16 +2,17 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, CheckCircle2, Circle, BookOpen, 
-  Clock, ArrowLeft, Menu, X, GraduationCap
+  Clock, ArrowLeft, Menu, X, GraduationCap, Play
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAcademyProgress } from '@/hooks/useAcademyProgress';
-import { ACADEMY_CURRICULUM, type CurriculumModule, type Lesson } from '@/constants/curriculum-data';
+import { ACADEMY_CURRICULUM, DIFFICULTY_BADGES, type CurriculumModule, type Lesson } from '@/constants/curriculum-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
+import { COURSE_THUMBNAILS } from '@/assets/thumbnails';
 
 interface LessonSection {
   id: string; // anchor
@@ -309,6 +310,75 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
             </div>
           </div>
         </header>
+
+        {/* Hero banner with thumbnail */}
+        <div className="relative h-48 sm:h-56 overflow-hidden">
+          {COURSE_THUMBNAILS[moduleId] ? (
+            <img
+              src={COURSE_THUMBNAILS[moduleId]}
+              alt={module.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {module.difficulty && DIFFICULTY_BADGES[module.difficulty] && (
+                  <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', DIFFICULTY_BADGES[module.difficulty].bg, DIFFICULTY_BADGES[module.difficulty].text)}>
+                    {module.difficulty}
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <BookOpen className="w-3 h-3" />
+                  {module.lessons.length} lessons
+                </span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {module.estimatedMinutes}m
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{module.title}</h1>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{module.description}</p>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Video placeholder */}
+        <div className="px-4 sm:px-8 py-6 border-b border-border">
+          <div
+            className="relative rounded-xl overflow-hidden bg-muted aspect-video max-w-3xl mx-auto cursor-pointer group border border-border"
+          >
+            {COURSE_THUMBNAILS[moduleId] ? (
+              <img
+                src={COURSE_THUMBNAILS[moduleId]}
+                alt={`${module.title} overview`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20" />
+            )}
+            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 group-hover:scale-110 transition-all duration-200">
+                <Play className="w-7 h-7 text-white ml-1" fill="white" />
+              </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+              <p className="text-white text-sm font-medium">Module Overview</p>
+              <span className="text-white/60 text-xs px-1.5 py-0.5 rounded bg-white/20 mt-1 inline-block">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Page content */}
         <main ref={contentRef} className="pb-20">
