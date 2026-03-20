@@ -89,6 +89,7 @@ const StrategicOperationsMasterclass = () => {
         <Suspense fallback={<SectionLoader />}><InsuranceSection /></Suspense>
         <Suspense fallback={<SectionLoader />}><CrisisManagementSection /></Suspense>
       </div>
+      {executionQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={executionQuiz.title} questions={executionQuiz.questions} /></div>}
 
       <div id="track-4">
         <div className="bg-primary/10 py-4"><div className="container mx-auto px-4"><h2 className="text-2xl font-bold text-foreground">Track 4: Scaling Your Operation</h2><p className="text-muted-foreground">Capacity planning, multi-site strategy, and portfolio management</p></div></div>
