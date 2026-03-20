@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
+import { ACADEMY_CURRICULUM } from '@/data/academyCurriculum';
 
 // Floating Particle Component
 const FloatingParticle = ({ delay, size, left, duration }: { delay: number; size: number; left: string; duration: number }) => (
