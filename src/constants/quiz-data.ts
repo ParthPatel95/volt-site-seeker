@@ -1129,6 +1129,60 @@ export const TAXES_INSURANCE_QUIZZES: QuizSet[] = [
       },
     ],
   },
+  {
+    sectionId: 'capex',
+    title: 'Capital Expense Tax Treatment',
+    questions: [
+      {
+        id: 'tax-capex-1',
+        question: 'What CCA class do ASIC miners typically fall under in Canada?',
+        options: ['Class 8 (20%)', 'Class 10 (30%)', 'Class 50 (55%)', 'Class 43 (30%)'],
+        correctIndex: 2,
+        explanation: 'ASIC miners are classified as Class 50 computer equipment with a 55% declining balance CCA rate.',
+      },
+      {
+        id: 'tax-capex-2',
+        question: 'What is the Accelerated Investment Incentive for CCA?',
+        options: ['A loan program', 'Enhanced first-year CCA deduction allowing 1.5x the normal rate in year one', 'A grant for startups', 'A provincial rebate'],
+        correctIndex: 1,
+        explanation: 'The Accelerated Investment Incentive allows businesses to claim 1.5 times the normal CCA rate in the first year an asset is put in use.',
+      },
+      {
+        id: 'tax-capex-3',
+        question: 'How should electrical infrastructure (transformers, switchgear) be classified for CCA?',
+        options: ['Same as miners (Class 50)', 'Class 1 (4%) as building components', 'Class 8 (20%) as equipment', 'Not depreciable'],
+        correctIndex: 2,
+        explanation: 'Electrical equipment like transformers and switchgear is typically Class 8 (20%) unless permanently attached to a building.',
+      },
+    ],
+  },
+  {
+    sectionId: 'liability-insurance',
+    title: 'Liability & Specialty Insurance',
+    questions: [
+      {
+        id: 'tax-li-1',
+        question: 'What does D&O (Directors & Officers) insurance protect against?',
+        options: ['Equipment damage', 'Personal liability of company leaders for business decisions and actions', 'Employee theft', 'Natural disasters'],
+        correctIndex: 1,
+        explanation: 'D&O insurance protects directors and officers from personal liability in lawsuits related to their management decisions.',
+      },
+      {
+        id: 'tax-li-2',
+        question: 'Why is environmental liability insurance important for mining facilities?',
+        options: ['It is legally required everywhere', 'To cover cleanup costs from potential spills (coolant, transformer oil) or contamination', 'Only for aesthetics', 'It is not important'],
+        correctIndex: 1,
+        explanation: 'Mining facilities use transformer oils and cooling fluids that could contaminate soil or water if spilled, creating environmental remediation obligations.',
+      },
+      {
+        id: 'tax-li-3',
+        question: 'What is a key consideration when selecting cyber insurance for a mining operation?',
+        options: ['Color of the policy document', 'Coverage for hash rate theft, firmware attacks, and pool payment redirection', 'Only email phishing', 'Number of employees'],
+        correctIndex: 1,
+        explanation: 'Crypto mining faces unique cyber risks including hash rate theft via management interface hijacking and firmware-level attacks.',
+      },
+    ],
+  },
 ];
 
 // Engineering & Permitting Quiz Data
