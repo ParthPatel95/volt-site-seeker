@@ -1,44 +1,47 @@
 
 
-# Add "Next Module" Recommendation Component
+# Academy Feature — Comprehensive Test Results
 
-## Overview
-Create a reusable `NextModuleRecommendation` component that uses the centralized curriculum data to suggest the next module in the learning path. Place it at the bottom of each module page (before the footer).
+## Test Summary
 
-## Component Design
+I tested the Academy feature across the catalog page, auth flow, search, filters, Learning Path view, and progress dashboard. Here are the findings:
 
-**New file: `src/components/academy/NextModuleRecommendation.tsx`**
+---
 
-A self-contained component that accepts the current module ID as a prop. It:
-1. Looks up the current module in `ACADEMY_CURRICULUM`
-2. Finds the next module in array order (the learning path sequence)
-3. If at the last module, suggests returning to the Academy landing page
-4. Shows the next module's icon, title, description, difficulty badge, estimated time, and a "Continue Learning" link
-5. Also shows a secondary suggestion (the module after next, if available) for variety
+## Passing
 
-Visual design: A card section with a gradient accent border, matching the institutional style. Uses theme-aware colors (`text-foreground`, `bg-card`, `border-border`).
+1. **Catalog page (`/academy`)** — Loads correctly with hero section, animated counters (13 Courses, 128 Lessons, 11+ Hours, Free), search bar, and category filters
+2. **Course cards** — All 13 modules render with real thumbnails, category badges, difficulty labels, lesson counts, and estimated time
+3. **Search** — Typing "bitcoin" correctly filters to courses matching title/description/lessons (Bitcoin Fundamentals + Bitcoin-mentioning modules)
+4. **Category filter pills** — All 5 categories (All, Fundamentals, Operations, Advanced, Masterclass) with correct counts
+5. **View toggle** — Switches between "Courses" grid and "Learning Path" timeline view
+6. **Auth guard** — Clicking "Start Course" correctly redirects unauthenticated users to `/academy/auth`
+7. **Auth page** — Polished sign-in/sign-up form with "Welcome Back" header, benefits list, and floating particles
+8. **Progress dashboard** — `/academy/progress` correctly redirects to auth when not logged in
+9. **Learning Path view** — Code is correct with 4 phases rendering module entries with progress indicators
 
-## Integration (13 module pages)
+---
 
-Add `<NextModuleRecommendation moduleId="..." />` before `<LandingFooter />` in each page:
+## Issues Found
 
-| Page | Module ID |
-|------|-----------|
-| BitcoinEducation | `bitcoin` |
-| AESOEducation | `aeso` |
-| MiningEconomicsEducation | `mining-economics` |
-| DatacenterEducation | `datacenters` |
-| ElectricalInfrastructureEducation | `electrical` |
-| HydroDatacenterEducation | `hydro` |
-| ImmersionCoolingEducation | `immersion` |
-| OperationsEducation | `operations` |
-| NoiseManagementEducation | `noise` |
-| StrategicOperationsMasterclass | `strategic-operations` |
-| TaxesInsuranceEducation | `taxes-insurance` |
-| EngineeringPermittingEducation | `engineering-permitting` |
-| NetworkingEducation | `networking` |
+### Bug 1: Hardcoded stats on Auth page (Medium)
+- **Location**: `src/pages/AcademyAuth.tsx`, lines 235-241
+- **Problem**: Auth page shows "10 Modules" and "98 Lessons" — these are hardcoded values from before the curriculum expanded to 13 modules and 128 lessons
+- **Fix**: Import `ACADEMY_CURRICULUM` and dynamically calculate the counts
 
-## Files
-- **Create**: `src/components/academy/NextModuleRecommendation.tsx`
-- **Modify**: 13 module page files (one-line import + one-line component placement each)
+### Bug 2: Copyright year outdated (Low)
+- **Location**: Footer shows "© 2025" but current date is March 2026
+- **Fix**: Use `new Date().getFullYear()` or update to 2026
+
+---
+
+## Proposed Fixes
+
+### File: `src/pages/AcademyAuth.tsx`
+- Import `ACADEMY_CURRICULUM` from curriculum data
+- Replace hardcoded `10` with `ACADEMY_CURRICULUM.length`
+- Replace hardcoded `98` with `ACADEMY_CURRICULUM.reduce((sum, m) => sum + m.lessons.length, 0)`
+
+### No code changes needed for:
+- Catalog, search, filters, auth guard, course cards — all working correctly
 
