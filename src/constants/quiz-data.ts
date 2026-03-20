@@ -583,6 +583,33 @@ export const MINING_ECONOMICS_QUIZZES: QuizSet[] = [
       },
     ],
   },
+  {
+    sectionId: 'profitability',
+    title: 'Profitability Analysis',
+    questions: [
+      {
+        id: 'me-prof-1',
+        question: 'What is the most important efficiency metric when evaluating mining hardware?',
+        options: ['Price per unit', 'Joules per Terahash (J/TH)', 'Hash rate alone', 'Physical weight'],
+        correctIndex: 1,
+        explanation: 'J/TH measures energy efficiency - lower J/TH means less electricity per hash, directly improving profitability at any given power cost.',
+      },
+      {
+        id: 'me-prof-2',
+        question: 'How does network difficulty growth affect individual miner profitability?',
+        options: ['No effect', 'Reduces BTC earned per TH as more miners compete for the same block rewards', 'Increases revenue', 'Only affects pool operators'],
+        correctIndex: 1,
+        explanation: 'Rising difficulty means your share of total network hashrate shrinks, reducing BTC earned per TH/s unless you add more capacity.',
+      },
+      {
+        id: 'me-prof-3',
+        question: 'What is a curtailment strategy in mining economics?',
+        options: ['Selling miners', 'Temporarily shutting down mining when electricity costs exceed mining revenue', 'Overclocking hardware', 'Switching cryptocurrencies'],
+        correctIndex: 1,
+        explanation: 'Curtailment means powering down miners during high electricity price periods to avoid operating at a loss, preserving margins.',
+      },
+    ],
+  },
 ];
 
 // Mining Infrastructure (Datacenter) Quiz Data
