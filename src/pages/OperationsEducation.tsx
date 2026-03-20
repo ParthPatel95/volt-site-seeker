@@ -17,6 +17,8 @@ const OperationsCTASection = lazy(() => import('@/components/operations/Operatio
 
 const monitoringQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'monitoring');
 const maintenanceQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'preventive-maintenance');
+const troubleshootingQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'troubleshooting');
+const safetyQuiz = OPERATIONS_QUIZZES.find(q => q.sectionId === 'safety');
 
 const SectionLoader = () => (
   <div className="py-20 flex items-center justify-center">
@@ -37,9 +39,13 @@ const OperationsEducation = () => {
       {maintenanceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={maintenanceQuiz.title} questions={maintenanceQuiz.questions} /></div>}
 
       <div id="troubleshooting"><Suspense fallback={<SectionLoader />}><TroubleshootingSection /></Suspense></div>
+      {troubleshootingQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={troubleshootingQuiz.title} questions={troubleshootingQuiz.questions} /></div>}
+
       <div id="optimization"><Suspense fallback={<SectionLoader />}><PerformanceOptimizationSection /></Suspense></div>
       <div id="team"><Suspense fallback={<SectionLoader />}><TeamStructureSection /></Suspense></div>
       <div id="safety"><Suspense fallback={<SectionLoader />}><SafetyProtocolsSection /></Suspense></div>
+      {safetyQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={safetyQuiz.title} questions={safetyQuiz.questions} /></div>}
+
       <div id="documentation"><Suspense fallback={<SectionLoader />}><DocumentationSection /></Suspense></div>
       <Suspense fallback={<SectionLoader />}><OperationsCTASection /></Suspense>
     </ModuleLayout>

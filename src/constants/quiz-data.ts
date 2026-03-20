@@ -583,6 +583,33 @@ export const MINING_ECONOMICS_QUIZZES: QuizSet[] = [
       },
     ],
   },
+  {
+    sectionId: 'profitability',
+    title: 'Profitability Analysis',
+    questions: [
+      {
+        id: 'me-prof-1',
+        question: 'What is the most important efficiency metric when evaluating mining hardware?',
+        options: ['Price per unit', 'Joules per Terahash (J/TH)', 'Hash rate alone', 'Physical weight'],
+        correctIndex: 1,
+        explanation: 'J/TH measures energy efficiency - lower J/TH means less electricity per hash, directly improving profitability at any given power cost.',
+      },
+      {
+        id: 'me-prof-2',
+        question: 'How does network difficulty growth affect individual miner profitability?',
+        options: ['No effect', 'Reduces BTC earned per TH as more miners compete for the same block rewards', 'Increases revenue', 'Only affects pool operators'],
+        correctIndex: 1,
+        explanation: 'Rising difficulty means your share of total network hashrate shrinks, reducing BTC earned per TH/s unless you add more capacity.',
+      },
+      {
+        id: 'me-prof-3',
+        question: 'What is a curtailment strategy in mining economics?',
+        options: ['Selling miners', 'Temporarily shutting down mining when electricity costs exceed mining revenue', 'Overclocking hardware', 'Switching cryptocurrencies'],
+        correctIndex: 1,
+        explanation: 'Curtailment means powering down miners during high electricity price periods to avoid operating at a loss, preserving margins.',
+      },
+    ],
+  },
 ];
 
 // Mining Infrastructure (Datacenter) Quiz Data
@@ -939,6 +966,60 @@ export const OPERATIONS_QUIZZES: QuizSet[] = [
       },
     ],
   },
+  {
+    sectionId: 'troubleshooting',
+    title: 'Troubleshooting',
+    questions: [
+      {
+        id: 'ops-ts-1',
+        question: 'What is the first step when a miner shows zero hash rate?',
+        options: ['Replace the miner immediately', 'Check power supply, network connectivity, and control board LEDs', 'Restart the entire facility', 'Contact the manufacturer'],
+        correctIndex: 1,
+        explanation: 'Systematic troubleshooting starts with checking basic power and connectivity indicators before escalating to hardware replacement.',
+      },
+      {
+        id: 'ops-ts-2',
+        question: 'What does a high reject rate (>5%) from a mining pool typically indicate?',
+        options: ['Pool is overloaded', 'Miner hardware failure', 'Network latency, outdated firmware, or misconfigured pool settings', 'BTC price is too low'],
+        correctIndex: 2,
+        explanation: 'High reject rates usually stem from network latency causing stale shares, outdated firmware, or incorrect pool URL/worker configuration.',
+      },
+      {
+        id: 'ops-ts-3',
+        question: 'What is thermal throttling and how do you identify it?',
+        options: ['A cooling system brand', 'Automatic hash rate reduction when chip temperature exceeds safe limits, visible as lower-than-rated performance', 'A type of power surge', 'Network congestion'],
+        correctIndex: 1,
+        explanation: 'Thermal throttling reduces hash rate to prevent chip damage. It appears as consistent under-performance with chip temps near 90-105°C.',
+      },
+    ],
+  },
+  {
+    sectionId: 'safety',
+    title: 'Safety Protocols',
+    questions: [
+      {
+        id: 'ops-safety-1',
+        question: 'What is the maximum safe noise exposure time at 85 dBA without hearing protection?',
+        options: ['1 hour', '4 hours', '8 hours', '24 hours'],
+        correctIndex: 2,
+        explanation: 'OSHA permissible exposure limit at 85 dBA is 8 hours. Mining facilities at 80-95 dBA require hearing protection for extended work.',
+      },
+      {
+        id: 'ops-safety-2',
+        question: 'What should be included in a mining facility emergency action plan?',
+        options: ['Only fire exits', 'Evacuation routes, electrical isolation procedures, emergency contacts, and assembly points', 'Only first aid kits', 'Only security cameras'],
+        correctIndex: 1,
+        explanation: 'A comprehensive EAP includes evacuation routes, electrical emergency shutoff procedures, emergency contacts, assembly points, and first aid locations.',
+      },
+      {
+        id: 'ops-safety-3',
+        question: 'Why must non-electrical staff never open electrical panels?',
+        options: ['Company policy only', 'Risk of arc flash, electrocution, and equipment damage without proper training and PPE', 'The panels are locked', 'It voids the warranty'],
+        correctIndex: 1,
+        explanation: 'Energized electrical panels pose arc flash and electrocution hazards. Only qualified electrical personnel with proper PPE should access them.',
+      },
+    ],
+  },
 ];
 
 // Noise Management Quiz Data
@@ -1072,6 +1153,60 @@ export const TAXES_INSURANCE_QUIZZES: QuizSet[] = [
         options: ['It is cheaper', 'Because rapid depreciation means ACV payout may not cover replacement of essential equipment', 'Replacement cost is always lower', 'There is no difference'],
         correctIndex: 1,
         explanation: 'ASIC miners depreciate quickly. ACV policies pay depreciated value, which may not cover buying replacement hardware at current market prices.',
+      },
+    ],
+  },
+  {
+    sectionId: 'capex',
+    title: 'Capital Expense Tax Treatment',
+    questions: [
+      {
+        id: 'tax-capex-1',
+        question: 'What CCA class do ASIC miners typically fall under in Canada?',
+        options: ['Class 8 (20%)', 'Class 10 (30%)', 'Class 50 (55%)', 'Class 43 (30%)'],
+        correctIndex: 2,
+        explanation: 'ASIC miners are classified as Class 50 computer equipment with a 55% declining balance CCA rate.',
+      },
+      {
+        id: 'tax-capex-2',
+        question: 'What is the Accelerated Investment Incentive for CCA?',
+        options: ['A loan program', 'Enhanced first-year CCA deduction allowing 1.5x the normal rate in year one', 'A grant for startups', 'A provincial rebate'],
+        correctIndex: 1,
+        explanation: 'The Accelerated Investment Incentive allows businesses to claim 1.5 times the normal CCA rate in the first year an asset is put in use.',
+      },
+      {
+        id: 'tax-capex-3',
+        question: 'How should electrical infrastructure (transformers, switchgear) be classified for CCA?',
+        options: ['Same as miners (Class 50)', 'Class 1 (4%) as building components', 'Class 8 (20%) as equipment', 'Not depreciable'],
+        correctIndex: 2,
+        explanation: 'Electrical equipment like transformers and switchgear is typically Class 8 (20%) unless permanently attached to a building.',
+      },
+    ],
+  },
+  {
+    sectionId: 'liability-insurance',
+    title: 'Liability & Specialty Insurance',
+    questions: [
+      {
+        id: 'tax-li-1',
+        question: 'What does D&O (Directors & Officers) insurance protect against?',
+        options: ['Equipment damage', 'Personal liability of company leaders for business decisions and actions', 'Employee theft', 'Natural disasters'],
+        correctIndex: 1,
+        explanation: 'D&O insurance protects directors and officers from personal liability in lawsuits related to their management decisions.',
+      },
+      {
+        id: 'tax-li-2',
+        question: 'Why is environmental liability insurance important for mining facilities?',
+        options: ['It is legally required everywhere', 'To cover cleanup costs from potential spills (coolant, transformer oil) or contamination', 'Only for aesthetics', 'It is not important'],
+        correctIndex: 1,
+        explanation: 'Mining facilities use transformer oils and cooling fluids that could contaminate soil or water if spilled, creating environmental remediation obligations.',
+      },
+      {
+        id: 'tax-li-3',
+        question: 'What is a key consideration when selecting cyber insurance for a mining operation?',
+        options: ['Color of the policy document', 'Coverage for hash rate theft, firmware attacks, and pool payment redirection', 'Only email phishing', 'Number of employees'],
+        correctIndex: 1,
+        explanation: 'Crypto mining faces unique cyber risks including hash rate theft via management interface hijacking and firmware-level attacks.',
       },
     ],
   },
@@ -1306,6 +1441,53 @@ export const STRATEGIC_OPERATIONS_QUIZZES: QuizSet[] = [
         options: ['Mining software', 'Organizational complexity, capital requirements, and regulatory obligations', 'Bitcoin protocol', 'Miner manufacturer options'],
         correctIndex: 1,
         explanation: 'Scaling 10x requires proportionally more complex organization, significantly more capital, and often triggers additional regulatory requirements.',
+      },
+    ],
+  },
+  {
+    sectionId: 'track-3',
+    title: 'Project Execution',
+    questions: [
+      {
+        id: 'strat-pe-1',
+        question: 'What is the typical timeline from site selection to first hash for a greenfield mining facility?',
+        options: ['2-4 weeks', '2-4 months', '6-12 months', '3-5 years'],
+        correctIndex: 2,
+        explanation: 'Greenfield deployments typically take 6-12 months including permitting, grid connection, construction, and commissioning.',
+      },
+      {
+        id: 'strat-pe-2',
+        question: 'What is the biggest project execution risk for a new mining facility?',
+        options: ['Miner manufacturer delays', 'Grid connection delays and unexpected infrastructure upgrade costs', 'Staffing challenges', 'Internet installation'],
+        correctIndex: 1,
+        explanation: 'Grid connection timelines (6-18 months) and unexpected customer contribution costs for transmission upgrades are the top execution risks.',
+      },
+      {
+        id: 'strat-pe-3',
+        question: 'What should a crisis management plan include for a mining operation?',
+        options: ['Only fire procedures', 'Escalation matrix, communication protocols, backup procedures, and recovery time objectives', 'Insurance documents only', 'Marketing strategy'],
+        correctIndex: 1,
+        explanation: 'A comprehensive crisis plan covers escalation chains, communication to stakeholders, backup power/internet procedures, and defined recovery targets.',
+      },
+    ],
+  },
+  {
+    sectionId: 'track-5',
+    title: 'Capital & Growth',
+    questions: [
+      {
+        id: 'strat-cg-1',
+        question: 'What financial metric do most mining investors focus on?',
+        options: ['Revenue per employee', 'Cost per Bitcoin mined vs current BTC price (margin)', 'Social media followers', 'Number of miners'],
+        correctIndex: 1,
+        explanation: 'Investors focus on all-in cost per BTC relative to market price, as this determines operating margins and cash flow sustainability.',
+      },
+      {
+        id: 'strat-cg-2',
+        question: 'What is a common exit strategy for Bitcoin mining operations?',
+        options: ['Abandoning the site', 'Selling to a larger operator, converting to HPC/AI hosting, or going public via IPO', 'Giving equipment away', 'Moving to another country'],
+        correctIndex: 1,
+        explanation: 'Common exits include M&A by larger miners, pivoting infrastructure to HPC/AI workloads, or accessing public markets via IPO or SPAC.',
       },
     ],
   },

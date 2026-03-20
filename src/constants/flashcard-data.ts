@@ -425,6 +425,10 @@ export const MINING_ECONOMICS_FLASHCARDS: FlashcardDeck = {
     { id: 'me-fc-6', term: 'Curtailment', definition: 'Voluntarily reducing mining load during high electricity prices to avoid losses.', example: 'Shutting down when pool price exceeds $150/MWh in Alberta.', category: 'Strategy' },
     { id: 'me-fc-7', term: 'Hash Rate', definition: 'The total computational power a miner or network contributes, measured in TH/s, PH/s, or EH/s.', example: 'Bitcoin network: ~700 EH/s (2026). Single S21: 200 TH/s.', category: 'Metrics' },
     { id: 'me-fc-8', term: 'Block Subsidy', definition: 'Newly minted BTC awarded to the miner who finds a valid block. Halves every 210,000 blocks.', example: 'Post-2024: 3.125 BTC per block (~$200K at $65K/BTC).', category: 'Revenue' },
+    { id: 'me-fc-9', term: 'Transaction Fees', definition: 'Fees paid by users to include transactions in a block, an increasingly important revenue source post-halving.', example: 'Transaction fees can spike to 20-50% of block reward during high-demand periods.', category: 'Revenue' },
+    { id: 'me-fc-10', term: 'Power Cost Ratio', definition: 'Percentage of mining revenue consumed by electricity costs, the key operating margin indicator.', example: 'At $0.05/kWh a ratio of 60% is typical; above 80% signals danger.', category: 'Profitability' },
+    { id: 'me-fc-11', term: 'Mining Pool', definition: 'A group of miners combining hashrate to find blocks more frequently and sharing rewards proportionally.', example: 'Pools charge 1-3% fees. Larger pools find blocks more regularly.', category: 'Operations' },
+    { id: 'me-fc-12', term: 'Hosting Fee', definition: 'All-in cost charged by hosting providers covering power, cooling, space, and management per kWh or per TH.', example: 'Typical hosting: $0.065-0.085/kWh all-in including management.', category: 'Cost' },
   ],
 };
 
