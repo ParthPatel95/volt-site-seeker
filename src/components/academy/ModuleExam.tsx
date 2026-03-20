@@ -74,7 +74,7 @@ export const ModuleExam: React.FC<ModuleExamProps> = ({
       setShowResult(false);
     } else {
       setIsComplete(true);
-      const finalCorrect = correctCount + (isCorrect ? 0 : 0);
+      const finalCorrect = correctCount;
       onComplete?.(finalCorrect / questions.length >= passingScore / 100, finalCorrect, questions.length);
     }
   };
