@@ -368,13 +368,23 @@ const AcademyProgress = () => {
                       onClick={() => navigate(module.route)}
                     >
                       {/* Card Thumbnail */}
-                      <div className={cn('h-28 bg-gradient-to-br relative', gradientClass)}>
-                        <div className="absolute inset-0 bg-black/20" />
+                      <div className="h-28 relative overflow-hidden">
+                        {COURSE_THUMBNAILS[module.id] ? (
+                          <img
+                            src={COURSE_THUMBNAILS[module.id]}
+                            alt={module.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className={cn('w-full h-full bg-gradient-to-br', gradientClass)} />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/20" />
                         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                          <span className="text-xs font-medium text-white/90 bg-black/30 px-2 py-1 rounded">
+                          <span className="text-xs font-medium text-white/90 bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
                             Phase {module.phase}
                           </span>
-                          <span className={cn('text-xs font-medium px-2 py-1 rounded', 'bg-white/20 text-white')}>
+                          <span className="text-xs font-medium px-2 py-1 rounded bg-black/30 backdrop-blur-sm text-white">
                             {module.difficulty}
                           </span>
                         </div>
