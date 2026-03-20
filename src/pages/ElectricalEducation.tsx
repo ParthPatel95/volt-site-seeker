@@ -1,10 +1,10 @@
-import React, { Suspense, lazy } from 'react';
-import { LandingNavigation } from '@/components/landing/LandingNavigation';
-import { LandingFooter } from '@/components/landing/LandingFooter';
-import { Zap, Globe, Cable, CircuitBoard, ToggleLeft, Battery, Server, Cpu, Activity, Anchor, AlertTriangle, Shield } from 'lucide-react';
-import EducationSectionNav from '@/components/academy/EducationSectionNav';
+import { lazy, Suspense } from 'react';
+import { ModuleLayout } from '@/components/academy/ModuleLayout';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { ELECTRICAL_QUIZZES } from '@/constants/quiz-data';
+import { ELECTRICAL_FLASHCARDS } from '@/constants/flashcard-data';
 
-// Lazy load sections for performance
 const ElectricalIntroSection = lazy(() => import('@/components/electrical/ElectricalIntroSection'));
 const GridConnectionSection = lazy(() => import('@/components/electrical/GridConnectionSection'));
 const HighVoltageSection = lazy(() => import('@/components/electrical/HighVoltageSection'));
@@ -20,86 +20,28 @@ const RedundancySection = lazy(() => import('@/components/electrical/RedundancyS
 
 const SectionLoader = () => (
   <div className="flex items-center justify-center py-20">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-watt-bitcoin"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
   </div>
 );
 
-// Navigation sections config
-const navSections = [
-  { id: 'intro', icon: Zap, label: 'Introduction', time: '5 min' },
-  { id: 'grid-connection', icon: Globe, label: 'Grid Connection', time: '7 min' },
-  { id: 'high-voltage', icon: Cable, label: 'High Voltage', time: '8 min' },
-  { id: 'transformers', icon: CircuitBoard, label: 'Transformers', time: '7 min' },
-  { id: 'switchgear', icon: ToggleLeft, label: 'Switchgear', time: '6 min' },
-  { id: 'low-voltage', icon: Battery, label: 'Low Voltage', time: '6 min' },
-  { id: 'pdu', icon: Server, label: 'PDU', time: '5 min' },
-  { id: 'mining-power', icon: Cpu, label: 'Mining Power', time: '6 min' },
-  { id: 'power-quality', icon: Activity, label: 'Power Quality', time: '6 min' },
-  { id: 'grounding', icon: Anchor, label: 'Grounding', time: '5 min' },
-  { id: 'arc-flash', icon: AlertTriangle, label: 'Arc Flash', time: '6 min' },
-  { id: 'redundancy', icon: Shield, label: 'Redundancy', time: '5 min' },
-];
-
 const ElectricalEducation = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <LandingNavigation />
-      
-      {/* Section Navigation - hidden on mobile, toggleable on desktop */}
-      <EducationSectionNav sections={navSections} accentColor="watt-bitcoin" />
-      
-      <main>
-        <Suspense fallback={<SectionLoader />}>
-          <ElectricalIntroSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <GridConnectionSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <HighVoltageSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <TransformersSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <SwitchgearSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <LowVoltageSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <PDUSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <MiningPowerSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <PowerQualitySection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <GroundingSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <ArcFlashSection />
-        </Suspense>
-        
-        <Suspense fallback={<SectionLoader />}>
-          <RedundancySection />
-        </Suspense>
-      </main>
+    <ModuleLayout moduleId="electrical">
+      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ELECTRICAL_FLASHCARDS} /></div>
 
-      <LandingFooter />
-    </div>
+      <div id="fundamentals"><Suspense fallback={<SectionLoader />}><ElectricalIntroSection /></Suspense></div>
+      <div id="grid-connection"><Suspense fallback={<SectionLoader />}><GridConnectionSection /></Suspense></div>
+      <div id="high-voltage"><Suspense fallback={<SectionLoader />}><HighVoltageSection /></Suspense></div>
+      <div id="transformers"><Suspense fallback={<SectionLoader />}><TransformersSection /></Suspense></div>
+      <div id="switchgear"><Suspense fallback={<SectionLoader />}><SwitchgearSection /></Suspense></div>
+      <div id="low-voltage"><Suspense fallback={<SectionLoader />}><LowVoltageSection /></Suspense></div>
+      <div id="pdu"><Suspense fallback={<SectionLoader />}><PDUSection /></Suspense></div>
+      <div id="mining-power"><Suspense fallback={<SectionLoader />}><MiningPowerSection /></Suspense></div>
+      <div id="power-quality"><Suspense fallback={<SectionLoader />}><PowerQualitySection /></Suspense></div>
+      <div id="grounding"><Suspense fallback={<SectionLoader />}><GroundingSection /></Suspense></div>
+      <div id="arc-flash"><Suspense fallback={<SectionLoader />}><ArcFlashSection /></Suspense></div>
+      <div id="redundancy"><Suspense fallback={<SectionLoader />}><RedundancySection /></Suspense></div>
+    </ModuleLayout>
   );
 };
 

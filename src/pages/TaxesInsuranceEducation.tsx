@@ -1,9 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { LandingNavigation } from '@/components/landing/LandingNavigation';
-import { LandingFooter } from '@/components/landing/LandingFooter';
-import { BookOpen, MapPin, Building2, Calculator, DollarSign, Bitcoin, Gift, Shield, ShieldCheck, FileText } from 'lucide-react';
-import EducationSectionNav from '@/components/academy/EducationSectionNav';
-import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
+import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { TAXES_INSURANCE_QUIZZES } from '@/constants/quiz-data';
@@ -21,54 +17,35 @@ const LiabilityInsuranceSection = lazy(() => import('@/components/taxes-insuranc
 const AlbertaCaseStudySection = lazy(() => import('@/components/taxes-insurance/AlbertaCaseStudySection'));
 const TaxesInsuranceCTASection = lazy(() => import('@/components/taxes-insurance/TaxesInsuranceCTASection'));
 
-const SectionLoader = () => (
-  <div className="py-20 flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-[hsl(var(--watt-purple))] border-t-transparent rounded-full animate-spin" />
-  </div>
-);
-
-const navSections = [
-  { id: 'intro', icon: BookOpen, label: 'Introduction', time: '5 min' },
-  { id: 'jurisdictions', icon: MapPin, label: 'Jurisdictions', time: '8 min' },
-  { id: 'corporate-structure', icon: Building2, label: 'Corporate Structure', time: '7 min' },
-  { id: 'capex', icon: Calculator, label: 'Capital Expenses', time: '8 min' },
-  { id: 'opex', icon: DollarSign, label: 'Operating Expenses', time: '6 min' },
-  { id: 'crypto-tax', icon: Bitcoin, label: 'Crypto Tax', time: '10 min' },
-  { id: 'incentives', icon: Gift, label: 'Incentives', time: '8 min' },
-  { id: 'property-insurance', icon: Shield, label: 'Property Insurance', time: '7 min' },
-  { id: 'liability-insurance', icon: ShieldCheck, label: 'Liability', time: '7 min' },
-  { id: 'case-study', icon: FileText, label: 'Case Study', time: '9 min' },
-];
-
 const cryptoQuiz = TAXES_INSURANCE_QUIZZES.find(q => q.sectionId === 'crypto-tax');
 const insuranceQuiz = TAXES_INSURANCE_QUIZZES.find(q => q.sectionId === 'property-insurance');
 
+const SectionLoader = () => (
+  <div className="py-20 flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
 export default function TaxesInsuranceEducation() {
   return (
-    <div className="min-h-screen bg-background">
-      <LandingNavigation />
-      <EducationSectionNav sections={navSections} accentColor="watt-purple" />
-      <main className="pt-16">
-        <Suspense fallback={<SectionLoader />}><TaxesInsuranceIntroSection /></Suspense>
-        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={TAXES_INSURANCE_FLASHCARDS} /></div>
+    <ModuleLayout moduleId="taxes-insurance">
+      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={TAXES_INSURANCE_FLASHCARDS} /></div>
 
-        <Suspense fallback={<SectionLoader />}><TaxJurisdictionSection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><CorporateTaxStructureSection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><CapitalExpenseSection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><OperatingExpenseSection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><CryptoTaxTreatmentSection /></Suspense>
-        {cryptoQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={cryptoQuiz.title} questions={cryptoQuiz.questions} /></div>}
+      <div id="intro"><Suspense fallback={<SectionLoader />}><TaxesInsuranceIntroSection /></Suspense></div>
+      <div id="jurisdictions"><Suspense fallback={<SectionLoader />}><TaxJurisdictionSection /></Suspense></div>
+      <div id="corporate-structure"><Suspense fallback={<SectionLoader />}><CorporateTaxStructureSection /></Suspense></div>
+      <div id="capex"><Suspense fallback={<SectionLoader />}><CapitalExpenseSection /></Suspense></div>
+      <div id="opex"><Suspense fallback={<SectionLoader />}><OperatingExpenseSection /></Suspense></div>
+      <div id="crypto-tax"><Suspense fallback={<SectionLoader />}><CryptoTaxTreatmentSection /></Suspense></div>
+      {cryptoQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={cryptoQuiz.title} questions={cryptoQuiz.questions} /></div>}
 
-        <Suspense fallback={<SectionLoader />}><IncentivesCreditsSection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><PropertyInsuranceSection /></Suspense>
-        {insuranceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={insuranceQuiz.title} questions={insuranceQuiz.questions} /></div>}
+      <div id="incentives"><Suspense fallback={<SectionLoader />}><IncentivesCreditsSection /></Suspense></div>
+      <div id="property-insurance"><Suspense fallback={<SectionLoader />}><PropertyInsuranceSection /></Suspense></div>
+      {insuranceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={insuranceQuiz.title} questions={insuranceQuiz.questions} /></div>}
 
-        <Suspense fallback={<SectionLoader />}><LiabilityInsuranceSection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><AlbertaCaseStudySection /></Suspense>
-        <Suspense fallback={<SectionLoader />}><TaxesInsuranceCTASection /></Suspense>
-      </main>
-      <NextModuleRecommendation moduleId="taxes-insurance" />
-      <LandingFooter />
-    </div>
+      <div id="liability-insurance"><Suspense fallback={<SectionLoader />}><LiabilityInsuranceSection /></Suspense></div>
+      <div id="case-study"><Suspense fallback={<SectionLoader />}><AlbertaCaseStudySection /></Suspense></div>
+      <Suspense fallback={<SectionLoader />}><TaxesInsuranceCTASection /></Suspense>
+    </ModuleLayout>
   );
 }

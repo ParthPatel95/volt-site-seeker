@@ -1,125 +1,57 @@
-import { LandingNavigation } from "@/components/landing/LandingNavigation";
-import { LandingFooter } from "@/components/landing/LandingFooter";
-import { useEffect, lazy, Suspense } from "react";
-import { Zap, Loader2, Globe, Cable, Gauge, ToggleLeft, CircuitBoard, Cpu, Activity, Anchor, ShieldAlert, Layers, Clock } from "lucide-react";
-import { ScrollReveal } from "@/components/landing/ScrollAnimations";
-import EducationSectionNav from "@/components/academy/EducationSectionNav";
-import { NextModuleRecommendation } from '@/components/academy/NextModuleRecommendation';
-import { KnowledgeCheck } from "@/components/academy/KnowledgeCheck";
-import { QuickFlashcard } from "@/components/academy/QuickFlashcard";
-import { ELECTRICAL_QUIZZES } from "@/constants/quiz-data";
-import { ELECTRICAL_FLASHCARDS } from "@/constants/flashcard-data";
+import { lazy, Suspense } from 'react';
+import { ModuleLayout } from '@/components/academy/ModuleLayout';
+import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
+import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { ELECTRICAL_QUIZZES } from '@/constants/quiz-data';
+import { ELECTRICAL_FLASHCARDS } from '@/constants/flashcard-data';
 
-const ElectricalFundamentalsSection = lazy(() => import("@/components/electrical-education/ElectricalFundamentalsSection"));
-const UtilityGridConnectionSection = lazy(() => import("@/components/electrical-education/UtilityGridConnectionSection"));
-const HighVoltageTransmissionSection = lazy(() => import("@/components/electrical-education/HighVoltageTransmissionSection"));
-const PowerTransformersSection = lazy(() => import("@/components/electrical-education/PowerTransformersSection"));
-const MediumVoltageSwitchgearSection = lazy(() => import("@/components/electrical-education/MediumVoltageSwitchgearSection"));
-const LowVoltageDistributionSection = lazy(() => import("@/components/electrical-education/LowVoltageDistributionSection"));
-const PowerDistributionUnitsSection = lazy(() => import("@/components/electrical-education/PowerDistributionUnitsSection"));
-const MiningEquipmentPowerSection = lazy(() => import("@/components/electrical-education/MiningEquipmentPowerSection"));
-const PowerQualitySection = lazy(() => import("@/components/electrical-education/PowerQualitySection"));
-const GroundingBondingSection = lazy(() => import("@/components/electrical-education/GroundingBondingSection"));
-const ArcFlashSafetySection = lazy(() => import("@/components/electrical-education/ArcFlashSafetySection"));
-const RedundancyArchitecturesSection = lazy(() => import("@/components/electrical-education/RedundancyArchitecturesSection"));
-
-const SectionLoader = () => (
-  <div className="flex items-center justify-center py-24">
-    <Loader2 className="w-8 h-8 animate-spin text-watt-bitcoin" />
-  </div>
-);
-
-const navigationSections = [
-  { id: 'fundamentals', icon: Zap, label: 'Fundamentals', time: '8 min' },
-  { id: 'grid-connection', icon: Globe, label: 'Grid Connection', time: '6 min' },
-  { id: 'high-voltage', icon: Cable, label: 'High Voltage', time: '7 min' },
-  { id: 'transformers', icon: Gauge, label: 'Transformers', time: '8 min' },
-  { id: 'switchgear', icon: ToggleLeft, label: 'Switchgear', time: '6 min' },
-  { id: 'low-voltage', icon: CircuitBoard, label: 'Low Voltage', time: '5 min' },
-  { id: 'pdus', icon: Cpu, label: 'PDUs', time: '6 min' },
-  { id: 'mining-power', icon: Zap, label: 'Mining Power', time: '7 min' },
-  { id: 'power-quality', icon: Activity, label: 'Power Quality', time: '6 min' },
-  { id: 'grounding', icon: Anchor, label: 'Grounding', time: '5 min' },
-  { id: 'arc-flash', icon: ShieldAlert, label: 'Arc Flash', time: '6 min' },
-  { id: 'redundancy', icon: Layers, label: 'Redundancy', time: '7 min' },
-];
+const ElectricalFundamentalsSection = lazy(() => import('@/components/electrical-education/ElectricalFundamentalsSection'));
+const UtilityGridConnectionSection = lazy(() => import('@/components/electrical-education/UtilityGridConnectionSection'));
+const HighVoltageTransmissionSection = lazy(() => import('@/components/electrical-education/HighVoltageTransmissionSection'));
+const PowerTransformersSection = lazy(() => import('@/components/electrical-education/PowerTransformersSection'));
+const MediumVoltageSwitchgearSection = lazy(() => import('@/components/electrical-education/MediumVoltageSwitchgearSection'));
+const LowVoltageDistributionSection = lazy(() => import('@/components/electrical-education/LowVoltageDistributionSection'));
+const PowerDistributionUnitsSection = lazy(() => import('@/components/electrical-education/PowerDistributionUnitsSection'));
+const MiningEquipmentPowerSection = lazy(() => import('@/components/electrical-education/MiningEquipmentPowerSection'));
+const PowerQualitySection = lazy(() => import('@/components/electrical-education/PowerQualitySection'));
+const GroundingBondingSection = lazy(() => import('@/components/electrical-education/GroundingBondingSection'));
+const ArcFlashSafetySection = lazy(() => import('@/components/electrical-education/ArcFlashSafetySection'));
+const RedundancyArchitecturesSection = lazy(() => import('@/components/electrical-education/RedundancyArchitecturesSection'));
 
 const fundQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'fundamentals');
 const txQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'transformers');
 const afQuiz = ELECTRICAL_QUIZZES.find(q => q.sectionId === 'arc-flash');
 
+const SectionLoader = () => (
+  <div className="flex items-center justify-center py-24">
+    <div className="w-8 h-8 animate-spin border-2 border-primary border-t-transparent rounded-full" />
+  </div>
+);
+
 const ElectricalInfrastructureEducation = () => {
-  useEffect(() => { document.title = "Electrical Infrastructure 101 | WattByte Academy"; }, []);
-  const totalTime = navigationSections.reduce((acc, s) => acc + parseInt(s.time || '0'), 0);
-
   return (
-    <div className="min-h-screen bg-background">
-      <LandingNavigation />
-      <EducationSectionNav sections={navigationSections} accentColor="watt-bitcoin" />
-      
-      <main>
-        <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-watt-navy to-watt-navy/95 overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
-          </div>
-          <div className="absolute inset-0 overflow-hidden">
-            <svg className="absolute w-full h-full opacity-20" viewBox="0 0 1200 600">
-              <path d="M0,300 L200,300 L250,250 L400,250 L450,300 L600,300 L650,350 L800,350 L850,300 L1000,300 L1050,250 L1200,250" stroke="currentColor" strokeWidth="2" fill="none" className="text-watt-bitcoin animate-pulse" />
-              <path d="M0,400 L150,400 L200,350 L350,350 L400,400 L550,400 L600,450 L750,450 L800,400 L950,400 L1000,350 L1200,350" stroke="currentColor" strokeWidth="2" fill="none" className="text-watt-success animate-pulse" style={{ animationDelay: '0.5s' }} />
-            </svg>
-          </div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <ScrollReveal>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-watt-bitcoin/20 border border-watt-bitcoin/30 text-watt-bitcoin mb-6">
-                <Zap className="w-4 h-4" /><span className="text-sm font-medium">WattByte Academy</span>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal delay={100}>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Electrical Infrastructure<span className="block text-watt-bitcoin">101</span></h1>
-            </ScrollReveal>
-            <ScrollReveal delay={200}>
-              <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">A comprehensive deep-dive into every aspect of Bitcoin datacenter electrical systems. From grid connection to miner power supplies, learn the engineering behind industrial-scale mining operations.</p>
-            </ScrollReveal>
-            <ScrollReveal delay={300}>
-              <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60 mb-8">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10"><span className="w-2 h-2 rounded-full bg-watt-bitcoin" /><span>12 Detailed Sections</span></div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10"><span className="w-2 h-2 rounded-full bg-watt-success" /><span>Interactive Calculators</span></div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10"><span className="w-2 h-2 rounded-full bg-watt-coinbase" /><span>Engineer-Grade Content</span></div>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal delay={400}>
-              <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-white/70">
-                <Clock className="w-4 h-4" /><span className="text-sm">Estimated reading time: <strong className="text-white">{totalTime} minutes</strong></span>
-              </div>
-            </ScrollReveal>
-          </div>
-        </section>
+    <ModuleLayout moduleId="electrical">
+      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ELECTRICAL_FLASHCARDS} /></div>
 
-        <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ELECTRICAL_FLASHCARDS} /></div>
+      <div id="fundamentals"><Suspense fallback={<SectionLoader />}><ElectricalFundamentalsSection /></Suspense></div>
+      {fundQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fundQuiz.title} questions={fundQuiz.questions} /></div>}
 
-        <div id="fundamentals"><Suspense fallback={<SectionLoader />}><ElectricalFundamentalsSection /></Suspense></div>
-        {fundQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fundQuiz.title} questions={fundQuiz.questions} /></div>}
-        
-        <div id="grid-connection"><Suspense fallback={<SectionLoader />}><UtilityGridConnectionSection /></Suspense></div>
-        <div id="high-voltage"><Suspense fallback={<SectionLoader />}><HighVoltageTransmissionSection /></Suspense></div>
-        <div id="transformers"><Suspense fallback={<SectionLoader />}><PowerTransformersSection /></Suspense></div>
-        {txQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={txQuiz.title} questions={txQuiz.questions} /></div>}
+      <div id="grid-connection"><Suspense fallback={<SectionLoader />}><UtilityGridConnectionSection /></Suspense></div>
+      <div id="high-voltage"><Suspense fallback={<SectionLoader />}><HighVoltageTransmissionSection /></Suspense></div>
+      <div id="transformers"><Suspense fallback={<SectionLoader />}><PowerTransformersSection /></Suspense></div>
+      {txQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={txQuiz.title} questions={txQuiz.questions} /></div>}
 
-        <div id="switchgear"><Suspense fallback={<SectionLoader />}><MediumVoltageSwitchgearSection /></Suspense></div>
-        <div id="low-voltage"><Suspense fallback={<SectionLoader />}><LowVoltageDistributionSection /></Suspense></div>
-        <div id="pdus"><Suspense fallback={<SectionLoader />}><PowerDistributionUnitsSection /></Suspense></div>
-        <div id="mining-power"><Suspense fallback={<SectionLoader />}><MiningEquipmentPowerSection /></Suspense></div>
-        <div id="power-quality"><Suspense fallback={<SectionLoader />}><PowerQualitySection /></Suspense></div>
-        <div id="grounding"><Suspense fallback={<SectionLoader />}><GroundingBondingSection /></Suspense></div>
-        <div id="arc-flash"><Suspense fallback={<SectionLoader />}><ArcFlashSafetySection /></Suspense></div>
-        {afQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={afQuiz.title} questions={afQuiz.questions} /></div>}
+      <div id="switchgear"><Suspense fallback={<SectionLoader />}><MediumVoltageSwitchgearSection /></Suspense></div>
+      <div id="low-voltage"><Suspense fallback={<SectionLoader />}><LowVoltageDistributionSection /></Suspense></div>
+      <div id="pdus"><Suspense fallback={<SectionLoader />}><PowerDistributionUnitsSection /></Suspense></div>
+      <div id="mining-power"><Suspense fallback={<SectionLoader />}><MiningEquipmentPowerSection /></Suspense></div>
+      <div id="power-quality"><Suspense fallback={<SectionLoader />}><PowerQualitySection /></Suspense></div>
+      <div id="grounding"><Suspense fallback={<SectionLoader />}><GroundingBondingSection /></Suspense></div>
+      <div id="arc-flash"><Suspense fallback={<SectionLoader />}><ArcFlashSafetySection /></Suspense></div>
+      {afQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={afQuiz.title} questions={afQuiz.questions} /></div>}
 
-        <div id="redundancy"><Suspense fallback={<SectionLoader />}><RedundancyArchitecturesSection /></Suspense></div>
-      </main>
-      
-      <NextModuleRecommendation moduleId="electrical" />
-      <LandingFooter />
-    </div>
+      <div id="redundancy"><Suspense fallback={<SectionLoader />}><RedundancyArchitecturesSection /></Suspense></div>
+    </ModuleLayout>
   );
 };
 
