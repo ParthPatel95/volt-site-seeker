@@ -3,13 +3,11 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { AcademyHeroSection } from "@/components/academy/AcademyHeroSection";
 import { CurriculumSection } from "@/components/academy/CurriculumSection";
 import { AcademyCTASection } from "@/components/academy/AcademyCTASection";
-import { ContinueLearningBar } from "@/components/academy/ContinueLearningBar";
-import { useEffect } from "react";
-import { getModulesForProgress } from "@/constants/curriculum-data";
-
-const academyModules = getModulesForProgress();
+import { useEffect, useState } from "react";
 
 const Academy = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     document.title = "WattByte Academy | Bitcoin Mining & Energy Education";
   }, []);
@@ -19,9 +17,11 @@ const Academy = () => {
       <LandingNavigation />
       
       <main>
-        <AcademyHeroSection />
-        <ContinueLearningBar modules={academyModules} />
-        <CurriculumSection />
+        <AcademyHeroSection 
+          searchQuery={searchQuery} 
+          onSearchChange={setSearchQuery} 
+        />
+        <CurriculumSection searchQuery={searchQuery} />
         <AcademyCTASection />
       </main>
       

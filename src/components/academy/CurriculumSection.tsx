@@ -1,221 +1,110 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, BookOpen, CheckCircle2, Search, Clock, ArrowRight, LayoutGrid, Route } from "lucide-react";
+import { LayoutGrid, Route, BookOpen, CheckCircle2, ArrowRight, Clock, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAllModulesProgress } from "@/hooks/useProgressTracking";
-import { useAcademyAuth } from "@/contexts/AcademyAuthContext";
-import { motion, AnimatePresence } from "framer-motion";
-import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+import { CourseCard } from "./CourseCard";
 import {
   ACADEMY_CURRICULUM,
   CURRICULUM_CATEGORIES,
   LEARNING_PHASES,
   DIFFICULTY_BADGES,
   type CurriculumModule,
-  type Lesson,
 } from "@/constants/curriculum-data";
 
-const ModuleCard = ({ module, index }: { module: CurriculumModule; index: number }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+// My Learning Section (shown when user has progress)
+const MyLearningSection = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { academyUser } = useAcademyAuth();
-  const { getModuleProgress, allProgress } = useAllModulesProgress();
-  
-  const progress = getModuleProgress(module.id, module.lessons.length);
-  const moduleProgress = allProgress[module.id];
-  const completedSections = moduleProgress?.completedSections || [];
-  const diffBadge = DIFFICULTY_BADGES[module.difficulty];
+  const { allProgress, getModuleProgress } = useAllModulesProgress();
 
-  const handleLessonClick = (lesson: Lesson) => {
-    if (lesson.anchor) {
-      navigate(`${module.route}#${lesson.anchor}`);
-    } else {
-      navigate(module.route);
-    }
-  };
+  const inProgress = useMemo(() => {
+    return ACADEMY_CURRICULUM
+      .map(m => ({ module: m, progress: getModuleProgress(m.id, m.lessons.length) }))
+      .filter(({ progress }) => progress.isStarted && !progress.isComplete)
+      .slice(0, 3);
+  }, [allProgress, getModuleProgress]);
 
-  const handleStartModule = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(module.route);
-  };
+  const completedCount = useMemo(() => {
+    return ACADEMY_CURRICULUM.filter(m => getModuleProgress(m.id, m.lessons.length).isComplete).length;
+  }, [allProgress, getModuleProgress]);
+
+  if (inProgress.length === 0 && completedCount === 0) return null;
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
-      className={cn(
-        "border border-border rounded-xl overflow-hidden bg-card",
-        progress.isComplete && "ring-2 ring-green-500/20"
-      )}
-    >
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div className="flex items-start gap-3">
-            <div className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-              progress.isComplete ? "bg-green-500/10" : "bg-primary/10"
-            )}>
-              <module.icon className={cn(
-                "w-5 h-5",
-                progress.isComplete ? "text-green-600" : "text-primary"
-              )} />
+    <section className="py-8 border-b border-border bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="w-4.5 h-4.5 text-primary" />
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-foreground">{module.title}</h3>
-                {progress.isComplete && (
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">{module.description}</p>
+              <h2 className="text-lg font-semibold text-foreground">My Learning</h2>
+              <p className="text-sm text-muted-foreground">
+                {completedCount} of {ACADEMY_CURRICULUM.length} courses completed
+              </p>
             </div>
           </div>
-        </div>
-
-        {/* Meta row */}
-        <div className="flex items-center gap-3 text-sm mb-4 flex-wrap">
-          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", diffBadge.bg, diffBadge.text)}>
-            {module.difficulty}
-          </span>
-          <span className="text-muted-foreground">{module.lessons.length} lessons</span>
-          <span className="text-muted-foreground flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            ~{module.estimatedMinutes} min
-          </span>
-          {progress.isStarted && !progress.isComplete && (
-            <span className="text-primary font-medium">{progress.percentage}% complete</span>
+          {completedCount > 0 && (
+            <div className="hidden sm:flex items-center gap-2">
+              <Progress value={(completedCount / ACADEMY_CURRICULUM.length) * 100} className="w-32 h-2" />
+              <span className="text-sm text-muted-foreground font-medium">
+                {Math.round((completedCount / ACADEMY_CURRICULUM.length) * 100)}%
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Prerequisites */}
-        {module.prerequisites && module.prerequisites.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-            <span className="font-medium">Requires:</span>
-            {module.prerequisites.map(prereqId => {
-              const prereq = ACADEMY_CURRICULUM.find(m => m.id === prereqId);
-              return prereq ? (
-                <span key={prereqId} className="px-2 py-0.5 rounded bg-muted text-muted-foreground">
-                  {prereq.title}
-                </span>
-              ) : null;
-            })}
+        {inProgress.length > 0 && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {inProgress.map(({ module, progress }) => (
+              <motion.div
+                key={module.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:shadow-md transition-all cursor-pointer"
+                onClick={() => navigate(module.route)}
+              >
+                <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <module.icon className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-foreground text-sm truncate">{module.title}</h3>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Progress value={progress.percentage} className="flex-1 h-1.5" />
+                    <span className="text-xs text-muted-foreground shrink-0">{progress.percentage}%</span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </motion.div>
+            ))}
           </div>
         )}
-
-        {/* Progress bar */}
-        {progress.isStarted && (
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-4">
-            <motion.div 
-              className={cn(
-                "h-full rounded-full",
-                progress.isComplete ? "bg-green-500" : "bg-primary"
-              )}
-              initial={{ width: 0 }}
-              animate={{ width: `${progress.percentage}%` }}
-            />
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-1"
-          >
-            <BookOpen className="w-4 h-4" />
-            {isExpanded ? "Hide" : "View"} Lessons
-            <ChevronDown className={cn(
-              "w-4 h-4 transition-transform",
-              isExpanded && "rotate-180"
-            )} />
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleStartModule}
-          >
-            {progress.isComplete ? "Review" : progress.isStarted ? "Continue" : "Start"}
-          </Button>
-        </div>
       </div>
-
-      {/* Lessons List */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="border-t border-border bg-muted/30">
-              {module.lessons.map((lesson, lessonIndex) => {
-                const isCompleted = completedSections.includes(lesson.anchor || lesson.title);
-                return (
-                  <button
-                    key={lesson.title}
-                    onClick={() => handleLessonClick(lesson)}
-                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-b-0"
-                  >
-                    <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
-                      isCompleted 
-                        ? "bg-green-500/10 text-green-600" 
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {isCompleted ? (
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                      ) : (
-                        lessonIndex + 1
-                      )}
-                    </div>
-                    <span className={cn(
-                      "text-sm",
-                      isCompleted ? "text-muted-foreground" : "text-foreground"
-                    )}>
-                      {lesson.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+    </section>
   );
 };
 
-// Learning Path Phase Component
+// Learning Path Phase
 const LearningPathPhase = ({ phase, modules }: { phase: typeof LEARNING_PHASES[number]; modules: CurriculumModule[] }) => {
   const navigate = useNavigate();
   const { getModuleProgress } = useAllModulesProgress();
 
-  const phaseMinutes = modules.reduce((sum, m) => sum + m.estimatedMinutes, 0);
-  const phaseLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
-
   return (
     <div className="relative">
-      {/* Phase Header */}
       <div className="flex items-center gap-4 mb-6">
         <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg shrink-0">
           {phase.phase}
         </div>
         <div>
           <h3 className="text-lg font-bold text-foreground">{phase.title}</h3>
-          <p className="text-sm text-muted-foreground">
-            {phase.description} · {modules.length} modules · {phaseLessons} lessons · ~{Math.round(phaseMinutes / 60)}h
-          </p>
+          <p className="text-sm text-muted-foreground">{phase.description}</p>
         </div>
       </div>
 
-      {/* Phase Modules */}
       <div className="ml-5 pl-9 border-l-2 border-border space-y-4 pb-8">
         {modules.map((module) => {
           const progress = getModuleProgress(module.id, module.lessons.length);
@@ -232,14 +121,11 @@ const LearningPathPhase = ({ phase, modules }: { phase: typeof LEARNING_PHASES[n
               )}
               onClick={() => navigate(module.route)}
             >
-              {/* Connector dot */}
               <div className={cn(
                 "absolute -left-[calc(2.25rem+1px)] top-5 w-3 h-3 rounded-full border-2",
-                progress.isComplete
-                  ? "bg-green-500 border-green-500"
-                  : progress.isStarted
-                    ? "bg-primary border-primary"
-                    : "bg-background border-border"
+                progress.isComplete ? "bg-green-500 border-green-500"
+                  : progress.isStarted ? "bg-primary border-primary"
+                  : "bg-background border-border"
               )} />
 
               <div className="flex items-center justify-between gap-3">
@@ -248,10 +134,7 @@ const LearningPathPhase = ({ phase, modules }: { phase: typeof LEARNING_PHASES[n
                     "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
                     progress.isComplete ? "bg-green-500/10" : "bg-primary/10"
                   )}>
-                    <module.icon className={cn(
-                      "w-4 h-4",
-                      progress.isComplete ? "text-green-600" : "text-primary"
-                    )} />
+                    <module.icon className={cn("w-4 h-4", progress.isComplete ? "text-green-600" : "text-primary")} />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -282,15 +165,19 @@ const LearningPathPhase = ({ phase, modules }: { phase: typeof LEARNING_PHASES[n
   );
 };
 
-export const CurriculumSection = () => {
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'path'>('grid');
+interface CurriculumSectionProps {
+  searchQuery?: string;
+}
+
+export const CurriculumSection = ({ searchQuery = "" }: CurriculumSectionProps) => {
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "path">("grid");
+  const { getModuleProgress } = useAllModulesProgress();
 
   const filteredModules = useMemo(() => {
     return ACADEMY_CURRICULUM.filter(module => {
-      const matchesCategory = activeCategory === 'all' || module.category === activeCategory;
-      const matchesSearch = searchQuery === '' || 
+      const matchesCategory = activeCategory === "all" || module.category === activeCategory;
+      const matchesSearch = searchQuery === "" ||
         module.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         module.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         module.lessons.some(l => l.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -298,77 +185,61 @@ export const CurriculumSection = () => {
     });
   }, [activeCategory, searchQuery]);
 
-  const isPathView = viewMode === 'path' && activeCategory === 'all' && searchQuery === '';
+  const isPathView = viewMode === "path" && activeCategory === "all" && searchQuery === "";
 
   return (
-    <section id="curriculum" className="py-16 bg-background">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-foreground mb-3">
-            Browse All Modules
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            {ACADEMY_CURRICULUM.length} modules covering everything from Bitcoin basics to advanced operations. 
-            All content is free — sign up to track your progress.
-          </p>
-        </div>
+    <>
+      <MyLearningSection />
 
-        {/* Filters */}
-        <div className="flex flex-col gap-4 mb-8 max-w-5xl mx-auto">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search modules or lessons..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+      <section id="curriculum" className="py-12 bg-background">
+        <div className="container mx-auto px-4">
+          {/* Section header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Explore Courses</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {ACADEMY_CURRICULUM.length} courses · All free · Sign up to track progress
+              </p>
             </div>
 
             {/* View toggle */}
-            <div className="flex gap-1 border border-border rounded-lg p-1">
+            <div className="flex gap-1 border border-border rounded-lg p-1 self-start">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('grid')}
-                className="gap-1.5"
+                onClick={() => setViewMode("grid")}
+                className="gap-1.5 h-8"
               >
-                <LayoutGrid className="w-4 h-4" />
-                Grid
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Courses
               </Button>
               <Button
-                variant={viewMode === 'path' ? 'default' : 'ghost'}
+                variant={viewMode === "path" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('path')}
-                className="gap-1.5"
+                onClick={() => setViewMode("path")}
+                className="gap-1.5 h-8"
               >
-                <Route className="w-4 h-4" />
+                <Route className="w-3.5 h-3.5" />
                 Learning Path
               </Button>
             </div>
           </div>
 
-          {/* Category tabs (hide in path view) */}
+          {/* Category pills */}
           {!isPathView && (
-            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-8 scrollbar-none">
               {CURRICULUM_CATEGORIES.map((cat) => (
                 <Button
                   key={cat.key}
                   variant={activeCategory === cat.key ? "default" : "outline"}
                   size="sm"
                   onClick={() => setActiveCategory(cat.key)}
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap rounded-full h-8"
                 >
                   {cat.label}
                   <span className={cn(
-                    "ml-1.5 px-1.5 py-0.5 rounded text-xs",
-                    activeCategory === cat.key 
-                      ? "bg-primary-foreground/20" 
-                      : "bg-muted"
+                    "ml-1.5 px-1.5 py-0.5 rounded-full text-xs",
+                    activeCategory === cat.key ? "bg-primary-foreground/20" : "bg-muted"
                   )}>
                     {cat.count}
                   </span>
@@ -376,38 +247,44 @@ export const CurriculumSection = () => {
               ))}
             </div>
           )}
-        </div>
 
-        {/* Content */}
-        {isPathView ? (
-          <div className="max-w-3xl mx-auto">
-            {LEARNING_PHASES.map((phase) => {
-              const phaseModules = ACADEMY_CURRICULUM.filter(m => m.phase === phase.phase);
-              return <LearningPathPhase key={phase.phase} phase={phase} modules={phaseModules} />;
-            })}
-          </div>
-        ) : (
-          <>
-            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-              {filteredModules.map((module, index) => (
-                <ModuleCard key={module.id} module={module} index={index} />
-              ))}
+          {/* Content */}
+          {isPathView ? (
+            <div className="max-w-3xl mx-auto">
+              {LEARNING_PHASES.map((phase) => {
+                const phaseModules = ACADEMY_CURRICULUM.filter(m => m.phase === phase.phase);
+                return <LearningPathPhase key={phase.phase} phase={phase} modules={phaseModules} />;
+              })}
             </div>
-
-            {filteredModules.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No modules found matching your search.</p>
-                <Button
-                  variant="link"
-                  onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
-                >
-                  Clear filters
-                </Button>
+          ) : (
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredModules.map((module, index) => (
+                  <CourseCard
+                    key={module.id}
+                    module={module}
+                    progress={getModuleProgress(module.id, module.lessons.length)}
+                    index={index}
+                  />
+                ))}
               </div>
-            )}
-          </>
-        )}
-      </div>
-    </section>
+
+              {filteredModules.length === 0 && (
+                <div className="text-center py-16">
+                  <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">No courses found matching your search.</p>
+                  <Button
+                    variant="link"
+                    onClick={() => setActiveCategory("all")}
+                  >
+                    Clear filters
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+    </>
   );
 };
