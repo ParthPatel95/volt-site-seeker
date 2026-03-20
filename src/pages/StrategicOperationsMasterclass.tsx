@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useMemo } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { StrategicFoundationsIntro } from '@/components/masterclass/StrategicFoundationsIntro';
@@ -8,6 +8,7 @@ import { PortfolioRiskDashboard } from '@/components/masterclass/PortfolioRiskDa
 import { MasterclassCTASection } from '@/components/masterclass/MasterclassCTASection';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { ModuleExam } from '@/components/academy/ModuleExam';
 import { STRATEGIC_OPERATIONS_QUIZZES } from '@/constants/quiz-data';
 import { STRATEGIC_OPERATIONS_FLASHCARDS } from '@/constants/flashcard-data';
 
@@ -47,6 +48,7 @@ const SectionLoader = () => (
 
 const StrategicOperationsMasterclass = () => {
   useEffect(() => { document.title = "Strategic Operations Masterclass | WattByte Academy"; }, []);
+  const examQuestions = useMemo(() => STRATEGIC_OPERATIONS_QUIZZES.flatMap(q => q.questions), []);
 
   return (
     <ModuleLayout moduleId="strategic-operations">
@@ -109,6 +111,10 @@ const StrategicOperationsMasterclass = () => {
         <Suspense fallback={<SectionLoader />}><MergersAcquisitionsSection /></Suspense>
       </div>
       {capitalQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={capitalQuiz.title} questions={capitalQuiz.questions} /></div>}
+
+      <div id="module-exam" className="max-w-4xl mx-auto px-4 py-8">
+        <ModuleExam title="Strategic Operations Final Exam" questions={examQuestions} moduleId="strategic-operations" />
+      </div>
 
       <MasterclassCTASection />
     </ModuleLayout>

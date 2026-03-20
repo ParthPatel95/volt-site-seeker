@@ -1,7 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { ModuleExam } from '@/components/academy/ModuleExam';
+import { CommonMistakes } from '@/components/academy/CommonMistakes';
 import { MINING_ECONOMICS_QUIZZES } from '@/constants/quiz-data';
 import { MINING_ECONOMICS_FLASHCARDS } from '@/constants/flashcard-data';
 
@@ -20,6 +22,33 @@ const costQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'cost-struct
 const breakEvenQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'break-even');
 const profitabilityQuiz = MINING_ECONOMICS_QUIZZES.find(q => q.sectionId === 'profitability');
 
+const MINING_ECONOMICS_MISTAKES = [
+  {
+    title: 'Ignoring Difficulty Growth',
+    description: 'Using static difficulty in multi-month financial projections.',
+    consequence: 'Revenue projections become wildly optimistic within months, leading to negative ROI surprises.',
+    prevention: 'Model at least 3-5% monthly difficulty growth. Use historical data to stress-test assumptions.',
+  },
+  {
+    title: 'Undersizing Electrical Infrastructure',
+    description: 'Sizing transformers and switchgear only for initial deployment capacity.',
+    consequence: 'Limits future expansion and requires costly retrofits. Transformers are long-lead items.',
+    prevention: 'Size electrical infrastructure for 120-150% of initial capacity to allow growth.',
+  },
+  {
+    title: 'Ignoring Halving Events',
+    description: 'Not accounting for the ~4-year block reward halving cycle in projections.',
+    consequence: 'Block rewards drop 50%. Miners who don\'t plan face sudden revenue cliffs.',
+    prevention: 'Build halving dates into all multi-year models. Ensure profitability at half the current reward.',
+  },
+  {
+    title: 'Using Spot Electricity Rates',
+    description: 'Basing long-term projections on current spot energy prices.',
+    consequence: 'Energy costs can swing 30-50% seasonally. Spot-based models give false confidence.',
+    prevention: 'Negotiate fixed-rate PPAs. Model scenarios with 20-30% energy cost increases.',
+  },
+];
+
 const SectionLoader = () => (
   <div className="py-20 flex items-center justify-center">
     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -27,6 +56,8 @@ const SectionLoader = () => (
 );
 
 export default function MiningEconomicsEducation() {
+  const examQuestions = useMemo(() => MINING_ECONOMICS_QUIZZES.flatMap(q => q.questions), []);
+
   return (
     <ModuleLayout moduleId="mining-economics">
       <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={MINING_ECONOMICS_FLASHCARDS} /></div>
@@ -47,6 +78,15 @@ export default function MiningEconomicsEducation() {
       <div id="hardware-roi"><Suspense fallback={<SectionLoader />}><HardwareROISection /></Suspense></div>
       <div id="difficulty"><Suspense fallback={<SectionLoader />}><DifficultyAdjustmentSection /></Suspense></div>
       <div id="strategy"><Suspense fallback={<SectionLoader />}><StrategicDecisionsSection /></Suspense></div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <CommonMistakes title="Common Mining Economics Mistakes" mistakes={MINING_ECONOMICS_MISTAKES} />
+      </div>
+
+      <div id="module-exam" className="max-w-4xl mx-auto px-4 py-8">
+        <ModuleExam title="Mining Economics Final Exam" questions={examQuestions} moduleId="mining-economics" />
+      </div>
+
       <Suspense fallback={<SectionLoader />}><MiningEconomicsCTASection /></Suspense>
     </ModuleLayout>
   );

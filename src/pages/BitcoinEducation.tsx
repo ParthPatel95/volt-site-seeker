@@ -1,7 +1,8 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useMemo } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { ModuleExam } from '@/components/academy/ModuleExam';
 import { BITCOIN_QUIZZES } from '@/constants/quiz-data';
 import { BITCOIN_FLASHCARDS } from '@/constants/flashcard-data';
 
@@ -30,6 +31,8 @@ const SectionLoader = () => (
 );
 
 const BitcoinEducation: React.FC = () => {
+  const examQuestions = useMemo(() => BITCOIN_QUIZZES.flatMap(q => q.questions), []);
+
   return (
     <ModuleLayout moduleId="bitcoin">
       <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={BITCOIN_FLASHCARDS} /></div>
@@ -77,6 +80,11 @@ const BitcoinEducation: React.FC = () => {
       <div id="benefits"><Suspense fallback={<SectionLoader />}><BitcoinBenefitsSection /></Suspense></div>
       <div id="adoption"><Suspense fallback={<SectionLoader />}><GlobalBitcoinAdoptionSection /></Suspense></div>
       <div id="future"><Suspense fallback={<SectionLoader />}><BitcoinFutureSection /></Suspense></div>
+
+      <div id="module-exam" className="max-w-4xl mx-auto px-4 py-8">
+        <ModuleExam title="Bitcoin Fundamentals Final Exam" questions={examQuestions} moduleId="bitcoin" />
+      </div>
+
       <Suspense fallback={<SectionLoader />}><BitcoinCTASection /></Suspense>
     </ModuleLayout>
   );
