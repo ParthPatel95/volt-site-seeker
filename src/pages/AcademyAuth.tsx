@@ -233,11 +233,11 @@ const AcademyAuth: React.FC = () => {
               className="flex justify-center lg:justify-start gap-8 mt-10"
             >
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">10</div>
+                <div className="text-2xl font-bold text-white">{ACADEMY_CURRICULUM.length}</div>
                 <div className="text-sm text-white/50">Modules</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">98</div>
+                <div className="text-2xl font-bold text-white">{ACADEMY_CURRICULUM.reduce((sum, m) => sum + m.lessons.length, 0)}</div>
                 <div className="text-sm text-white/50">Lessons</div>
               </div>
               <div className="text-center">
