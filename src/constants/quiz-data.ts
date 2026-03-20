@@ -1444,4 +1444,51 @@ export const STRATEGIC_OPERATIONS_QUIZZES: QuizSet[] = [
       },
     ],
   },
+  {
+    sectionId: 'track-3',
+    title: 'Project Execution',
+    questions: [
+      {
+        id: 'strat-pe-1',
+        question: 'What is the typical timeline from site selection to first hash for a greenfield mining facility?',
+        options: ['2-4 weeks', '2-4 months', '6-12 months', '3-5 years'],
+        correctIndex: 2,
+        explanation: 'Greenfield deployments typically take 6-12 months including permitting, grid connection, construction, and commissioning.',
+      },
+      {
+        id: 'strat-pe-2',
+        question: 'What is the biggest project execution risk for a new mining facility?',
+        options: ['Miner manufacturer delays', 'Grid connection delays and unexpected infrastructure upgrade costs', 'Staffing challenges', 'Internet installation'],
+        correctIndex: 1,
+        explanation: 'Grid connection timelines (6-18 months) and unexpected customer contribution costs for transmission upgrades are the top execution risks.',
+      },
+      {
+        id: 'strat-pe-3',
+        question: 'What should a crisis management plan include for a mining operation?',
+        options: ['Only fire procedures', 'Escalation matrix, communication protocols, backup procedures, and recovery time objectives', 'Insurance documents only', 'Marketing strategy'],
+        correctIndex: 1,
+        explanation: 'A comprehensive crisis plan covers escalation chains, communication to stakeholders, backup power/internet procedures, and defined recovery targets.',
+      },
+    ],
+  },
+  {
+    sectionId: 'track-5',
+    title: 'Capital & Growth',
+    questions: [
+      {
+        id: 'strat-cg-1',
+        question: 'What financial metric do most mining investors focus on?',
+        options: ['Revenue per employee', 'Cost per Bitcoin mined vs current BTC price (margin)', 'Social media followers', 'Number of miners'],
+        correctIndex: 1,
+        explanation: 'Investors focus on all-in cost per BTC relative to market price, as this determines operating margins and cash flow sustainability.',
+      },
+      {
+        id: 'strat-cg-2',
+        question: 'What is a common exit strategy for Bitcoin mining operations?',
+        options: ['Abandoning the site', 'Selling to a larger operator, converting to HPC/AI hosting, or going public via IPO', 'Giving equipment away', 'Moving to another country'],
+        correctIndex: 1,
+        explanation: 'Common exits include M&A by larger miners, pivoting infrastructure to HPC/AI workloads, or accessing public markets via IPO or SPAC.',
+      },
+    ],
+  },
 ];
