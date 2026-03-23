@@ -63,6 +63,9 @@ const BitcoinEducation: React.FC = () => {
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets') && (
         <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title="Check Your Understanding: Bitcoin Wallets" questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets')!.questions} /></div>
       )}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Hardware wallets remain the gold standard for securing mining operation treasury holdings. Multi-signature setups with geographically distributed keys are standard practice for operations holding more than 10 BTC." source="Industry Best Practice" />
+      </div>
 
       <div id="mining"><Suspense fallback={<SectionLoader />}><BitcoinMiningSection /></Suspense></div>
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'mining') && (
