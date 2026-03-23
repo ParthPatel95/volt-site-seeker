@@ -5,6 +5,7 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
 import { ProcessFlowchart } from '@/components/academy/ProcessFlowchart';
 import { OrderingExercise } from '@/components/academy/OrderingExercise';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { ELECTRICAL_QUIZZES } from '@/constants/quiz-data';
 import { ELECTRICAL_FLASHCARDS } from '@/constants/flashcard-data';
 import { Zap, Building2, ArrowDownToLine, ShieldCheck, Cpu, PlugZap } from 'lucide-react';
@@ -65,6 +66,9 @@ const ElectricalEducation = () => {
       <div id="high-voltage"><Suspense fallback={<SectionLoader />}><HighVoltageSection /></Suspense></div>
       <div id="transformers"><Suspense fallback={<SectionLoader />}><TransformersSection /></Suspense></div>
       {transformersQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={transformersQuiz.title} questions={transformersQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Always size transformers for 120-150% of initial deployment capacity. Transformers are long-lead items (12-18 months) and the most expensive single component to retrofit." source="Electrical Engineering Best Practice" />
+      </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <ProcessFlowchart title="Voltage Step-Down Path" steps={VOLTAGE_STEPDOWN_STEPS} variant="vertical" />

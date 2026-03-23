@@ -3,6 +3,7 @@ import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { BITCOIN_QUIZZES } from '@/constants/quiz-data';
 import { BITCOIN_FLASHCARDS } from '@/constants/flashcard-data';
 
@@ -62,6 +63,9 @@ const BitcoinEducation: React.FC = () => {
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets') && (
         <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title="Check Your Understanding: Bitcoin Wallets" questions={BITCOIN_QUIZZES.find(q => q.sectionId === 'wallets')!.questions} /></div>
       )}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Hardware wallets remain the gold standard for securing mining operation treasury holdings. Multi-signature setups with geographically distributed keys are standard practice for operations holding more than 10 BTC." source="Industry Best Practice" />
+      </div>
 
       <div id="mining"><Suspense fallback={<SectionLoader />}><BitcoinMiningSection /></Suspense></div>
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'mining') && (
@@ -71,6 +75,9 @@ const BitcoinEducation: React.FC = () => {
       <div id="cooling"><Suspense fallback={<SectionLoader />}><DatacenterCoolingSection /></Suspense></div>
       <div id="pools"><Suspense fallback={<SectionLoader />}><MiningPoolsSection /></Suspense></div>
       <div id="sustainability"><Suspense fallback={<SectionLoader />}><MiningSustainabilitySection /></Suspense></div>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Over 52% of Bitcoin mining now uses sustainable energy sources globally. Operations co-locating with stranded natural gas or hydroelectric facilities consistently achieve the lowest energy costs." source="Bitcoin Mining Council, 2025" />
+      </div>
 
       <div id="economics"><Suspense fallback={<SectionLoader />}><BitcoinEconomicsSection /></Suspense></div>
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'economics') && (

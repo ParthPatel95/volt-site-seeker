@@ -4,6 +4,7 @@ import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
 import { CommonMistakes } from '@/components/academy/CommonMistakes';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { MINING_ECONOMICS_QUIZZES } from '@/constants/quiz-data';
 import { MINING_ECONOMICS_FLASHCARDS } from '@/constants/flashcard-data';
 
@@ -68,6 +69,9 @@ export default function MiningEconomicsEducation() {
 
       <div id="costs"><Suspense fallback={<SectionLoader />}><CostStructureSection /></Suspense></div>
       {costQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={costQuiz.title} questions={costQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Electricity typically represents 60-80% of ongoing operating costs. Operators who secure fixed-rate Power Purchase Agreements (PPAs) gain predictable margins that spot-rate buyers cannot match." source="Industry Analysis" />
+      </div>
 
       <div id="profitability"><Suspense fallback={<SectionLoader />}><ProfitabilityAnalysisSection /></Suspense></div>
       {profitabilityQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={profitabilityQuiz.title} questions={profitabilityQuiz.questions} /></div>}
@@ -77,6 +81,9 @@ export default function MiningEconomicsEducation() {
 
       <div id="hardware-roi"><Suspense fallback={<SectionLoader />}><HardwareROISection /></Suspense></div>
       <div id="difficulty"><Suspense fallback={<SectionLoader />}><DifficultyAdjustmentSection /></Suspense></div>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Difficulty has historically increased an average of 3-5% per month during bull markets. Successful operators model worst-case difficulty growth when evaluating hardware purchases." source="Historical Network Data" />
+      </div>
       <div id="strategy"><Suspense fallback={<SectionLoader />}><StrategicDecisionsSection /></Suspense></div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">

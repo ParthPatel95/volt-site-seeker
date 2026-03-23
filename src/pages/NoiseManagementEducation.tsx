@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { NOISE_QUIZZES } from '@/constants/quiz-data';
 import { NOISE_FLASHCARDS } from '@/constants/flashcard-data';
 
@@ -43,6 +44,9 @@ const NoiseManagementEducation = () => {
       <div id="distance"><Suspense fallback={<SectionLoader />}><DistanceAttenuationSection /></Suspense></div>
       <div id="mitigation"><Suspense fallback={<SectionLoader />}><MitigationTechniquesSection /></Suspense></div>
       {mitQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={mitQuiz.title} questions={mitQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Sound walls combined with directional exhaust orientation can reduce perceived noise at the property line by 15-20 dBA. This is often the difference between passing and failing Alberta PSL limits." source="Acoustic Engineering Practice" />
+      </div>
 
       <div id="site-layout"><Suspense fallback={<SectionLoader />}><SiteLayoutSection /></Suspense></div>
       <div id="monitoring"><Suspense fallback={<SectionLoader />}><NoiseMonitoringSection /></Suspense></div>

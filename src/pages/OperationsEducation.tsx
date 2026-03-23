@@ -6,6 +6,7 @@ import { ModuleExam } from '@/components/academy/ModuleExam';
 import { CommonMistakes } from '@/components/academy/CommonMistakes';
 import { ProcessFlowchart } from '@/components/academy/ProcessFlowchart';
 import { OrderingExercise } from '@/components/academy/OrderingExercise';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { OPERATIONS_QUIZZES } from '@/constants/quiz-data';
 import { OPERATIONS_FLASHCARDS } from '@/constants/flashcard-data';
 import { Bell, Filter, Search, Wrench, FileCheck } from 'lucide-react';
@@ -84,6 +85,9 @@ const OperationsEducation = () => {
 
       <div id="maintenance"><Suspense fallback={<SectionLoader />}><PreventiveMaintenanceSection /></Suspense></div>
       {maintenanceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={maintenanceQuiz.title} questions={maintenanceQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Staggering preventive maintenance by rack row rather than doing facility-wide shutdowns reduces peak downtime by up to 40% while maintaining the same maintenance coverage." source="Large-Scale Facility Operations" />
+      </div>
 
       <div id="troubleshooting"><Suspense fallback={<SectionLoader />}><TroubleshootingSection /></Suspense></div>
       {troubleshootingQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={troubleshootingQuiz.title} questions={troubleshootingQuiz.questions} /></div>}
