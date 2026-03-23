@@ -4,6 +4,7 @@ import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
 import { CommonMistakes } from '@/components/academy/CommonMistakes';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { MINING_ECONOMICS_QUIZZES } from '@/constants/quiz-data';
 import { MINING_ECONOMICS_FLASHCARDS } from '@/constants/flashcard-data';
 
