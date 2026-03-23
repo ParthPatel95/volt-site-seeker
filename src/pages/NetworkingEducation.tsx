@@ -38,6 +38,9 @@ export default function NetworkingEducation() {
 
       <div id="redundancy"><Suspense fallback={<SectionLoader />}><NetRedundancySection /></Suspense></div>
       {redQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={redQuiz.title} questions={redQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="In rural Alberta, always negotiate SLA penalties into your ISP contract. Dual-ISP redundancy with automatic failover is the minimum standard for any operation above 5MW." source="Rural Infrastructure Experience" />
+      </div>
 
       <div id="topology"><Suspense fallback={<SectionLoader />}><NetTopologySection /></Suspense></div>
       <div id="ip-management"><Suspense fallback={<SectionLoader />}><NetIPManagementSection /></Suspense></div>
