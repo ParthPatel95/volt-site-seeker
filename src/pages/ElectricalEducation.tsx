@@ -66,6 +66,9 @@ const ElectricalEducation = () => {
       <div id="high-voltage"><Suspense fallback={<SectionLoader />}><HighVoltageSection /></Suspense></div>
       <div id="transformers"><Suspense fallback={<SectionLoader />}><TransformersSection /></Suspense></div>
       {transformersQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={transformersQuiz.title} questions={transformersQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Always size transformers for 120-150% of initial deployment capacity. Transformers are long-lead items (12-18 months) and the most expensive single component to retrofit." source="Electrical Engineering Best Practice" />
+      </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <ProcessFlowchart title="Voltage Step-Down Path" steps={VOLTAGE_STEPDOWN_STEPS} variant="vertical" />

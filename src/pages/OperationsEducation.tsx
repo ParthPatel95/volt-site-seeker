@@ -85,6 +85,9 @@ const OperationsEducation = () => {
 
       <div id="maintenance"><Suspense fallback={<SectionLoader />}><PreventiveMaintenanceSection /></Suspense></div>
       {maintenanceQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={maintenanceQuiz.title} questions={maintenanceQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Staggering preventive maintenance by rack row rather than doing facility-wide shutdowns reduces peak downtime by up to 40% while maintaining the same maintenance coverage." source="Large-Scale Facility Operations" />
+      </div>
 
       <div id="troubleshooting"><Suspense fallback={<SectionLoader />}><TroubleshootingSection /></Suspense></div>
       {troubleshootingQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={troubleshootingQuiz.title} questions={troubleshootingQuiz.questions} /></div>}

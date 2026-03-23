@@ -45,6 +45,9 @@ export default function EngineeringPermittingEducation() {
       {aesoQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={aesoQuiz.title} questions={aesoQuiz.questions} /></div>}
 
       <div id="auc"><Suspense fallback={<SectionLoader />}><AUCApprovalSection /></Suspense></div>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="AUC approval timelines can range from 3-12 months depending on facility size and environmental impact. Starting the application process before finalizing site purchase is a common strategy to reduce total project timeline." source="Alberta Regulatory Experience" />
+      </div>
       <div id="electrical"><Suspense fallback={<SectionLoader />}><ElectricalEngineeringSection /></Suspense></div>
       <div id="environmental"><Suspense fallback={<SectionLoader />}><EnvironmentalComplianceSection /></Suspense></div>
       <div id="site"><Suspense fallback={<SectionLoader />}><SiteEngineeringSection /></Suspense></div>

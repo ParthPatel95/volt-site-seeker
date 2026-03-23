@@ -75,6 +75,9 @@ const BitcoinEducation: React.FC = () => {
       <div id="cooling"><Suspense fallback={<SectionLoader />}><DatacenterCoolingSection /></Suspense></div>
       <div id="pools"><Suspense fallback={<SectionLoader />}><MiningPoolsSection /></Suspense></div>
       <div id="sustainability"><Suspense fallback={<SectionLoader />}><MiningSustainabilitySection /></Suspense></div>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Over 52% of Bitcoin mining now uses sustainable energy sources globally. Operations co-locating with stranded natural gas or hydroelectric facilities consistently achieve the lowest energy costs." source="Bitcoin Mining Council, 2025" />
+      </div>
 
       <div id="economics"><Suspense fallback={<SectionLoader />}><BitcoinEconomicsSection /></Suspense></div>
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'economics') && (

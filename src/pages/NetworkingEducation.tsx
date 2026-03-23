@@ -47,6 +47,9 @@ export default function NetworkingEducation() {
       <div id="pool-connectivity"><Suspense fallback={<SectionLoader />}><NetPoolConnectivitySection /></Suspense></div>
       <div id="security"><Suspense fallback={<SectionLoader />}><NetSecuritySection /></Suspense></div>
       {secQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={secQuiz.title} questions={secQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Mining pools use Stratum V2 protocol which encrypts the connection between miners and the pool. Without it, man-in-the-middle attacks can redirect hashrate to an attacker's address." source="Mining Pool Security" />
+      </div>
 
       <div id="monitoring"><Suspense fallback={<SectionLoader />}><NetMonitoringSection /></Suspense></div>
       <div id="hardware"><Suspense fallback={<SectionLoader />}><NetHardwareSection /></Suspense></div>

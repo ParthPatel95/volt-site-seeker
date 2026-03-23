@@ -81,6 +81,9 @@ export default function MiningEconomicsEducation() {
 
       <div id="hardware-roi"><Suspense fallback={<SectionLoader />}><HardwareROISection /></Suspense></div>
       <div id="difficulty"><Suspense fallback={<SectionLoader />}><DifficultyAdjustmentSection /></Suspense></div>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Difficulty has historically increased an average of 3-5% per month during bull markets. Successful operators model worst-case difficulty growth when evaluating hardware purchases." source="Historical Network Data" />
+      </div>
       <div id="strategy"><Suspense fallback={<SectionLoader />}><StrategicDecisionsSection /></Suspense></div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
