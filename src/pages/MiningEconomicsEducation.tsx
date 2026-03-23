@@ -69,6 +69,9 @@ export default function MiningEconomicsEducation() {
 
       <div id="costs"><Suspense fallback={<SectionLoader />}><CostStructureSection /></Suspense></div>
       {costQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={costQuiz.title} questions={costQuiz.questions} /></div>}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <RealWorldInsight insight="Electricity typically represents 60-80% of ongoing operating costs. Operators who secure fixed-rate Power Purchase Agreements (PPAs) gain predictable margins that spot-rate buyers cannot match." source="Industry Analysis" />
+      </div>
 
       <div id="profitability"><Suspense fallback={<SectionLoader />}><ProfitabilityAnalysisSection /></Suspense></div>
       {profitabilityQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={profitabilityQuiz.title} questions={profitabilityQuiz.questions} /></div>}
