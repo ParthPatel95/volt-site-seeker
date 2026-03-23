@@ -6,6 +6,7 @@ import { ModuleExam } from '@/components/academy/ModuleExam';
 import { CommonMistakes } from '@/components/academy/CommonMistakes';
 import { ProcessFlowchart } from '@/components/academy/ProcessFlowchart';
 import { OrderingExercise } from '@/components/academy/OrderingExercise';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { OPERATIONS_QUIZZES } from '@/constants/quiz-data';
 import { OPERATIONS_FLASHCARDS } from '@/constants/flashcard-data';
 import { Bell, Filter, Search, Wrench, FileCheck } from 'lucide-react';
