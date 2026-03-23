@@ -5,6 +5,7 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
 import { ProcessFlowchart } from '@/components/academy/ProcessFlowchart';
 import { OrderingExercise } from '@/components/academy/OrderingExercise';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { ELECTRICAL_QUIZZES } from '@/constants/quiz-data';
 import { ELECTRICAL_FLASHCARDS } from '@/constants/flashcard-data';
 import { Zap, Building2, ArrowDownToLine, ShieldCheck, Cpu, PlugZap } from 'lucide-react';
