@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { NOISE_QUIZZES } from '@/constants/quiz-data';
 import { NOISE_FLASHCARDS } from '@/constants/flashcard-data';
 
