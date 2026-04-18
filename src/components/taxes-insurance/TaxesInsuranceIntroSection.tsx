@@ -3,6 +3,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Receipt, Building2, Shield, Calculator, DollarSign, FileText, BookOpen, Target, Clock, Lightbulb, MapPin, Scale } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { TISectionWrapper, TISectionHeader, TIProcessFlow, TIKeyInsight } from './shared';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const AnimatedNumber = ({ value, prefix = '', suffix = '' }: { value: string; prefix?: string; suffix?: string }) => {
   const ref = useRef(null);

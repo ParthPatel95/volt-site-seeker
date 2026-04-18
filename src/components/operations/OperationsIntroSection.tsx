@@ -2,6 +2,7 @@ import { ScrollReveal } from "@/components/landing/ScrollAnimations";
 import { Settings, Clock, Shield, TrendingUp } from "lucide-react";
 import { LearningObjectives } from "@/components/electrical-education/LearningObjectives";
 import { SectionSummary } from "@/components/electrical-education/SectionSummary";
+import { PlainEnglishIntro } from "@/components/academy/PlainEnglishIntro";
 
 const keyPrinciples = [
   {
