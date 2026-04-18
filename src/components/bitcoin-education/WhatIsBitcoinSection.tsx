@@ -13,6 +13,7 @@ import {
   BitcoinQuote
 } from './shared';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const WhatIsBitcoinSection: React.FC = () => {
   const corePillars = [
@@ -94,6 +95,17 @@ const WhatIsBitcoinSection: React.FC = () => {
         title="What Is Bitcoin?"
         description="Bitcoin is a revolutionary form of money: digital, decentralized, and designed to give individuals true ownership of their wealth without relying on banks, governments, or any other intermediary."
       />
+
+      {/* Plain-English hook for absolute beginners */}
+      <ScrollReveal direction="up">
+        <div className="mb-8">
+          <PlainEnglishIntro
+            whyItMatters="Once you understand that Bitcoin is just a shared, tamper-proof spreadsheet maintained by thousands of computers, every later concept — wallets, mining, halvings — clicks into place."
+          >
+            Imagine money that lives on the internet instead of in a bank — a shared notebook of every payment, kept identical on thousands of computers around the world, where no single person, company, or government can change the rules. That's Bitcoin.
+          </PlainEnglishIntro>
+        </div>
+      </ScrollReveal>
 
       {/* Opening Context */}
       <ScrollReveal direction="up">
