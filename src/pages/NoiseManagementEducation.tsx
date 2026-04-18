@@ -5,6 +5,8 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { NOISE_QUIZZES } from '@/constants/quiz-data';
 import { NOISE_FLASHCARDS } from '@/constants/flashcard-data';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
+import { NOISE_KEY_TERMS } from '@/constants/academy-glossary';
 
 const NoiseBasicsSection = lazy(() => import('@/components/noise-education/NoiseBasicsSection').then(m => ({ default: m.NoiseBasicsSection })));
 const NoiseSourcesSection = lazy(() => import('@/components/noise-education/NoiseSourcesSection').then(m => ({ default: m.NoiseSourcesSection })));
@@ -31,7 +33,10 @@ const SectionLoader = () => (
 const NoiseManagementEducation = () => {
   return (
     <ModuleLayout moduleId="noise">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={NOISE_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={NOISE_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Noise Management" terms={NOISE_KEY_TERMS} />
+      </div>
 
       <div id="fundamentals"><Suspense fallback={<SectionLoader />}><NoiseBasicsSection /></Suspense></div>
       {fundQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fundQuiz.title} questions={fundQuiz.questions} /></div>}

@@ -4,6 +4,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import LearningObjectives from '@/components/academy/LearningObjectives';
 import SectionSummary from '@/components/academy/SectionSummary';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const learningObjectives = [
   "Understand sound as a pressure wave and its key properties",

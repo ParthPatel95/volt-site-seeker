@@ -3,6 +3,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Receipt, Building2, Shield, Calculator, DollarSign, FileText, BookOpen, Target, Clock, Lightbulb, MapPin, Scale } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { TISectionWrapper, TISectionHeader, TIProcessFlow, TIKeyInsight } from './shared';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const AnimatedNumber = ({ value, prefix = '', suffix = '' }: { value: string; prefix?: string; suffix?: string }) => {
   const ref = useRef(null);
@@ -57,6 +58,15 @@ const TaxesInsuranceIntroSection = () => {
           theme="dark"
           accentColor="purple"
         />
+      </ScrollReveal>
+
+      <ScrollReveal delay={25}>
+        <PlainEnglishIntro
+          theme="dark"
+          whyItMatters="A good tax structure can move 10–20% of net income. A bad insurance policy can wipe out the whole company after one fire. Both decisions are made early and live with you for years."
+        >
+          Mining isn't just an electricity business — it's also a <em>capital</em>, <em>tax</em>, and <em>risk</em> business. Every miner you buy is a depreciating asset. Every coin you mine is taxable income the second it hits your wallet. And every megawatt of equipment is one fault away from a claim. This module gives you the language to talk to accountants, lenders, and underwriters without getting steamrolled.
+        </PlainEnglishIntro>
       </ScrollReveal>
 
       {/* Learning Objectives */}

@@ -3,6 +3,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { FileCheck, Building2, Zap, Scale, Clock, Target, MapPin, HardHat, BookOpen, Calendar, DollarSign, AlertTriangle } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { EPSectionWrapper, EPSectionHeader, EPProcessFlow, EPKeyInsight } from './shared';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const AnimatedNumber = ({ value, prefix = '', suffix = '' }: { value: string; prefix?: string; suffix?: string }) => {
   const ref = useRef(null);
@@ -57,6 +58,15 @@ const EPIntroSection = () => {
           theme="dark"
           accentColor="purple"
         />
+      </ScrollReveal>
+
+      <ScrollReveal delay={25}>
+        <PlainEnglishIntro
+          theme="dark"
+          whyItMatters="Permitting timelines decide your build schedule. A missed approval can push energization back 6–12 months — at 45MW, that's tens of millions in lost revenue."
+        >
+          Before you can plug in a single miner, a stack of governments and regulators have to say "yes": the county wants a development permit, the building inspector wants stamped drawings, the utility wants a connection study, and the provincial regulator wants an environmental review. This module walks the entire approval gauntlet for a 45MW Alberta site, in the order it actually happens.
+        </PlainEnglishIntro>
       </ScrollReveal>
 
       {/* Learning Objectives */}

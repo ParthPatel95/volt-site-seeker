@@ -5,6 +5,8 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { ENGINEERING_PERMITTING_QUIZZES } from '@/constants/quiz-data';
 import { ENGINEERING_PERMITTING_FLASHCARDS } from '@/constants/flashcard-data';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
+import { ENGINEERING_PERMITTING_KEY_TERMS } from '@/constants/academy-glossary';
 
 const EPIntroSection = lazy(() => import('@/components/engineering-permitting/EPIntroSection'));
 const RegulatoryLandscapeSection = lazy(() => import('@/components/engineering-permitting/RegulatoryLandscapeSection'));
@@ -31,7 +33,10 @@ const SectionLoader = () => (
 export default function EngineeringPermittingEducation() {
   return (
     <ModuleLayout moduleId="engineering-permitting">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ENGINEERING_PERMITTING_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={ENGINEERING_PERMITTING_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Engineering & Permitting" terms={ENGINEERING_PERMITTING_KEY_TERMS} />
+      </div>
 
       <div id="intro"><Suspense fallback={<SectionLoader />}><EPIntroSection /></Suspense></div>
       <div id="regulatory"><Suspense fallback={<SectionLoader />}><RegulatoryLandscapeSection /></Suspense></div>

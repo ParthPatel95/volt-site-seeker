@@ -9,6 +9,8 @@ import { OrderingExercise } from '@/components/academy/OrderingExercise';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { OPERATIONS_QUIZZES } from '@/constants/quiz-data';
 import { OPERATIONS_FLASHCARDS } from '@/constants/flashcard-data';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
+import { OPERATIONS_KEY_TERMS } from '@/constants/academy-glossary';
 import { Bell, Filter, Search, Wrench, FileCheck } from 'lucide-react';
 import type { FlowStep } from '@/components/academy/ProcessFlowchart';
 
@@ -77,7 +79,10 @@ const OperationsEducation = () => {
 
   return (
     <ModuleLayout moduleId="operations">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={OPERATIONS_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={OPERATIONS_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Operations" terms={OPERATIONS_KEY_TERMS} />
+      </div>
 
       <div id="intro"><Suspense fallback={<SectionLoader />}><OperationsIntroSection /></Suspense></div>
       <div id="monitoring"><Suspense fallback={<SectionLoader />}><MonitoringSystemsSection /></Suspense></div>
