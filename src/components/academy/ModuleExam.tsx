@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Clock, CheckCircle2, XCircle, ChevronRight, RotateCcw, Trophy, AlertTriangle } from 'lucide-react';
+import { Award, Clock, CheckCircle2, XCircle, ChevronRight, RotateCcw, Trophy, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { QuizQuestion } from '@/constants/quiz-data';
+import { useGamification } from '@/hooks/useGamification';
+import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { ACADEMY_CURRICULUM } from '@/constants/curriculum-data';
+import { toast } from 'sonner';
 
 interface ModuleExamProps {
   title: string;
