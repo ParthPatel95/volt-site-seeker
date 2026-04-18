@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Clock, CheckCircle2, XCircle, ChevronRight, RotateCcw, Trophy, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Award, Clock, CheckCircle2, XCircle, ChevronRight, RotateCcw, Trophy, AlertTriangle, ExternalLink, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { QuizQuestion } from '@/constants/quiz-data';
@@ -8,6 +8,7 @@ import { useGamification } from '@/hooks/useGamification';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ACADEMY_CURRICULUM } from '@/constants/curriculum-data';
+import { downloadCertificatePdf } from '@/lib/certificate-download';
 import { toast } from 'sonner';
 
 interface ModuleExamProps {
@@ -237,14 +238,27 @@ export const ModuleExam: React.FC<ModuleExamProps> = ({
               Retake Exam
             </button>
             {passed && certId && (
-              <Link
-                to={`/verify/${certId}`}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-              >
-                <Award className="w-4 h-4" />
-                View Certificate
-                <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
+              <>
+                <button
+                  onClick={() => {
+                    const moduleTitle = ACADEMY_CURRICULUM.find(m => m.id === moduleId)?.title || title;
+                    const safe = moduleTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    downloadCertificatePdf(certId, `wattbyte-${safe}`);
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </button>
+                <Link
+                  to={`/verify/${certId}`}
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg hover:bg-muted/50 transition-colors text-foreground font-medium"
+                >
+                  <Award className="w-4 h-4" />
+                  View Certificate
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </>
             )}
           </div>
         </div>
