@@ -7,6 +7,7 @@ import { Zap, Calculator, Activity, Gauge, Info } from "lucide-react";
 import { LearningObjectives } from "./LearningObjectives";
 import { SectionSummary } from "./SectionSummary";
 import { AnimatedSingleLineDiagram } from "./AnimatedSingleLineDiagram";
+import { PlainEnglishIntro } from "@/components/academy/PlainEnglishIntro";
 
 const learningObjectives = [
   "Apply Ohm's Law (V = I × R) to calculate voltage, current, and resistance in mining scenarios",
@@ -64,6 +65,12 @@ const ElectricalFundamentalsSection = () => {
               These fundamentals form the foundation for all electrical engineering decisions.
             </p>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={25}>
+          <PlainEnglishIntro whyItMatters="Get the fundamentals wrong and you either melt cables, trip breakers, or pay for cable that's twice as thick as it needs to be.">
+            Electricity behaves a lot like water in a pipe. <strong>Voltage</strong> is the pressure pushing it, <strong>current</strong> is how much is flowing, and <strong>power</strong> is the actual work it does at the other end. Almost every electrical decision in a mine — wire size, transformer rating, breaker choice — comes back to one relationship: <em>Power = Voltage × Current</em>.
+          </PlainEnglishIntro>
         </ScrollReveal>
 
         {/* Learning Objectives */}

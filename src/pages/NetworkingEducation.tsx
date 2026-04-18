@@ -3,8 +3,10 @@ import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { NETWORKING_QUIZZES } from '@/constants/quiz-data';
 import { NETWORKING_FLASHCARDS } from '@/constants/flashcard-data';
+import { NETWORKING_KEY_TERMS } from '@/constants/academy-glossary';
 
 const NetIntroSection = lazy(() => import('@/components/networking/NetIntroSection'));
 const NetConnectivitySection = lazy(() => import('@/components/networking/NetConnectivitySection'));
@@ -30,7 +32,10 @@ const SectionLoader = () => (
 export default function NetworkingEducation() {
   return (
     <ModuleLayout moduleId="networking">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={NETWORKING_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={NETWORKING_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Networking" terms={NETWORKING_KEY_TERMS} />
+      </div>
 
       <div id="intro"><Suspense fallback={<SectionLoader />}><NetIntroSection /></Suspense></div>
       <div id="connectivity"><Suspense fallback={<SectionLoader />}><NetConnectivitySection /></Suspense></div>

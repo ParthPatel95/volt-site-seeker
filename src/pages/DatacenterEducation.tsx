@@ -4,6 +4,8 @@ import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ComparisonMatrix } from '@/components/academy/ComparisonMatrix';
 import { DecisionTree } from '@/components/academy/DecisionTree';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
+import { DATACENTER_KEY_TERMS } from '@/constants/academy-glossary';
 import { DATACENTER_QUIZZES } from '@/constants/quiz-data';
 import { DATACENTER_FLASHCARDS } from '@/constants/flashcard-data';
 import { Building2, Container, Warehouse } from 'lucide-react';
@@ -100,7 +102,10 @@ const SectionLoader = () => (
 const DatacenterEducation = () => {
   return (
     <ModuleLayout moduleId="datacenters">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={DATACENTER_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={DATACENTER_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Datacenters" terms={DATACENTER_KEY_TERMS} />
+      </div>
 
       <div id="power-journey"><Suspense fallback={<SectionLoader />}><EnergySourceSection /></Suspense></div>
       <div id="electrical"><Suspense fallback={<SectionLoader />}><ElectricalInfrastructureSection /></Suspense></div>

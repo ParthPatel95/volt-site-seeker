@@ -3,6 +3,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Network, Wifi, Shield, Server, Clock, Target, MapPin, BookOpen, Calendar, DollarSign, AlertTriangle, Gauge, Globe } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { NetSectionWrapper, NetSectionHeader, NetProcessFlow, NetKeyInsight } from './shared';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const AnimatedNumber = ({ value, prefix = '', suffix = '' }: { value: string; prefix?: string; suffix?: string }) => {
   const ref = useRef(null);
@@ -57,6 +58,15 @@ const NetIntroSection = () => {
           theme="dark"
           accentColor="purple"
         />
+      </ScrollReveal>
+
+      <ScrollReveal delay={25}>
+        <PlainEnglishIntro
+          theme="dark"
+          whyItMatters="Every minute your network is down, your miners stop earning. On a 45MW site, that's about $35–$80 of revenue gone per minute."
+        >
+          A Bitcoin mine doesn't need a fast internet connection — it needs a connection that <em>never</em> stops. Each miner only sends a tiny bit of data (about a text message every few seconds), but if that data can't reach the pool, you don't get paid.
+        </PlainEnglishIntro>
       </ScrollReveal>
 
       {/* Learning Objectives */}

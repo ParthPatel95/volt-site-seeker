@@ -63,6 +63,43 @@ export const BITCOIN_KEY_TERMS: KeyTerm[] = [
   },
 ];
 
+export const DATACENTER_KEY_TERMS: KeyTerm[] = [
+  { term: 'Datacenter', tag: 'Facility', definition: 'A purpose-built building (or container) that houses many computers, the power to run them, and the cooling to keep them from melting.' },
+  { term: 'MW (Megawatt)', tag: 'Power', definition: 'One million watts. A 45MW site can run roughly 13,000 modern Bitcoin miners at full tilt.' },
+  { term: 'PUE (Power Usage Effectiveness)', tag: 'Efficiency', definition: 'Total facility power ÷ power that reaches the miners. 1.0 is perfect; 1.05–1.15 is typical for a well-built Bitcoin site.' },
+  { term: 'Substation', tag: 'Electrical', definition: 'The place where the utility hands you high-voltage electricity and you step it down to something your equipment can use.' },
+  { term: 'Containment', tag: 'Cooling', definition: 'Physical barriers (curtains, doors, end caps) that stop hot exhaust air from mixing with cold intake air. The single biggest free win in air cooling.' },
+  { term: 'Hot aisle / cold aisle', tag: 'Cooling', definition: 'The standard layout where miners face each other across a "cold" aisle (intake) and exhaust into a shared "hot" aisle.' },
+  { term: 'Container / Modular', tag: 'Build', definition: 'A pre-fabricated mining pod, typically 1–3MW, that ships on a truck and is online in weeks instead of months.' },
+  { term: 'Retrofit', tag: 'Build', definition: 'Converting an existing warehouse or industrial building into a mining facility — cheaper and faster than ground-up construction.' },
+  { term: 'CapEx vs OpEx', tag: 'Finance', definition: 'CapEx = the upfront build cost. OpEx = the ongoing cost to run it (mostly power). Both decide whether the site makes money.' },
+];
+
+export const ELECTRICAL_KEY_TERMS: KeyTerm[] = [
+  { term: 'Voltage (V)', tag: 'Basics', definition: 'Electrical "pressure" — how hard electricity is being pushed through a wire. Higher voltage = more push.' },
+  { term: 'Current (A, amps)', tag: 'Basics', definition: 'How much electricity is actually flowing. Like water flow rate through a pipe.' },
+  { term: 'Power (W, watts)', tag: 'Basics', definition: 'Voltage × current. The actual work being done — what you pay for and what runs the miners.' },
+  { term: 'Three-phase power', tag: 'AC', definition: 'Industrial electricity delivered on three wires offset in time. Carries ~73% more power than single-phase using the same conductors.' },
+  { term: 'Transformer', tag: 'Equipment', definition: 'A device that changes voltage up or down. The grid uses them to step 138kV down to the 480V or 415V miners actually use.' },
+  { term: 'Switchgear', tag: 'Equipment', definition: 'The big metal cabinets full of breakers and switches that route power and shut things off when something goes wrong.' },
+  { term: 'PDU (Power Distribution Unit)', tag: 'Equipment', definition: 'The "power strip" that delivers electricity to a row or rack of miners and meters how much each uses.' },
+  { term: 'Arc flash', tag: 'Safety', definition: 'A violent electrical explosion that can occur when high-energy equipment faults. Reason electricians wear thick PPE near switchgear.' },
+  { term: 'Grounding / bonding', tag: 'Safety', definition: 'Wiring all metal back to the earth so a fault current goes safely to ground instead of through a person or equipment.' },
+  { term: '2N / N+1 redundancy', tag: 'Reliability', definition: 'N = what you need. N+1 = one spare. 2N = a full duplicate system. More redundancy = less downtime, more cost.' },
+];
+
+export const NETWORKING_KEY_TERMS: KeyTerm[] = [
+  { term: 'Bandwidth', tag: 'Internet', definition: 'How much data your connection can carry per second. Mining is unusual: each miner only needs ~10–20 MB per day.' },
+  { term: 'Latency', tag: 'Internet', definition: 'Round-trip delay to the mining pool. Every extra 100ms costs about 0.1% of your shares.' },
+  { term: 'ISP (Internet Service Provider)', tag: 'Internet', definition: 'The company that brings internet to your site. Rural sites often need two — one primary, one backup.' },
+  { term: 'Stratum / Stratum V2', tag: 'Mining', definition: 'The protocol miners use to talk to a pool. V2 adds encryption so attackers can\'t hijack your hashrate.' },
+  { term: 'VLAN', tag: 'Network', definition: 'A "virtual" network inside one physical switch. Lets you keep miner traffic, management traffic, and office traffic separated.' },
+  { term: 'Switch', tag: 'Hardware', definition: 'The box that connects all your miners together inside the building and to the uplink.' },
+  { term: 'Firewall', tag: 'Security', definition: 'A filter between your network and the internet that blocks anything you didn\'t explicitly allow.' },
+  { term: 'BGP / multi-homing', tag: 'Resilience', definition: 'Running two ISPs at once so traffic automatically fails over if one goes down. Critical above ~5MW.' },
+  { term: 'Stale share', tag: 'Mining', definition: 'A share submitted to the pool too late to count. Caused by latency, packet loss, or pool problems — directly lowers revenue.' },
+];
+
 export const MINING_ECONOMICS_KEY_TERMS: KeyTerm[] = [
   {
     term: 'Hashrate (TH/s)',
