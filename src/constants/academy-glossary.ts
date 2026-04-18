@@ -156,3 +156,27 @@ export const MINING_ECONOMICS_KEY_TERMS: KeyTerm[] = [
       'CapEx is the upfront spend (hardware, build-out). OpEx is the ongoing spend (power, labor, maintenance). Both drive ROI.',
   },
 ];
+
+export const HYDRO_COOLING_KEY_TERMS: KeyTerm[] = [
+  { term: 'Hydro cooling', tag: 'Cooling', definition: 'Using water (or a water/glycol mix) running through pipes and cold plates to carry heat away from miners — far more efficient than air.' },
+  { term: 'Cold plate', tag: 'Hardware', definition: 'A flat metal block bolted directly to a hot chip. Coolant flows through it and absorbs the heat in a single pass.' },
+  { term: 'CDU (Coolant Distribution Unit)', tag: 'Equipment', definition: 'The "pump room in a box" that pushes coolant around the loop, controls flow and temperature, and isolates the miners from the building loop.' },
+  { term: 'Dry cooler', tag: 'Heat Rejection', definition: 'A big outdoor radiator with fans that dumps heat from the coolant into the air. Uses no water — ideal for cold climates like Alberta.' },
+  { term: 'Cooling tower', tag: 'Heat Rejection', definition: 'A tower that evaporates a small amount of water to reject heat. More efficient than dry coolers in hot weather but consumes water.' },
+  { term: 'Approach temperature', tag: 'Performance', definition: 'How close your coolant gets to the outside air temperature. A 5°C approach on a 10°C day means 15°C coolant — directly drives miner efficiency.' },
+  { term: 'Glycol', tag: 'Fluid', definition: 'Antifreeze added to water to keep the loop from freezing in winter. Typical mix is 30–40% propylene glycol for Canadian sites.' },
+  { term: 'Hydro container', tag: 'Build', definition: 'A pre-plumbed mining pod with cold plates, manifolds, and a CDU built in. Just connect power, coolant, and network.' },
+  { term: 'Waste heat recovery', tag: 'Revenue', definition: 'Selling or using the warm water coming out of the miners — for greenhouses, district heating, fish farms, or drying crops.' },
+];
+
+export const IMMERSION_COOLING_KEY_TERMS: KeyTerm[] = [
+  { term: 'Immersion cooling', tag: 'Cooling', definition: 'Submerging miners directly in a special non-conductive liquid that absorbs heat. The fluid is "electrically invisible" — your motherboard runs underwater without shorting.' },
+  { term: 'Single-phase immersion', tag: 'Type', definition: 'The fluid stays liquid the whole time. Pumps push it through a heat exchanger. Simpler and more common.' },
+  { term: 'Two-phase immersion', tag: 'Type', definition: 'The fluid actually boils on the chips and condenses on a coil above. Extremely efficient but uses expensive engineered fluids.' },
+  { term: 'Dielectric fluid', tag: 'Fluid', definition: 'A liquid that doesn\'t conduct electricity. Common types: synthetic hydrocarbons, mineral oil, or engineered fluorocarbons.' },
+  { term: 'Tank', tag: 'Equipment', definition: 'The sealed bath that holds the fluid and miners. Comes in horizontal (rack-style) or vertical configurations.' },
+  { term: 'Hardware prep', tag: 'Process', definition: 'Removing fans, replacing thermal paste, and stripping stickers before submerging. Skipping this is the #1 cause of immersion failures.' },
+  { term: 'Overclocking', tag: 'Performance', definition: 'Pushing miners beyond factory clock speeds. Immersion makes this safe because heat is removed instantly — typical 15–30% hashrate gain.' },
+  { term: 'Fluid degradation', tag: 'Maintenance', definition: 'Over time the fluid picks up contaminants and breaks down. Quality fluids last 5–10 years; cheap ones may need replacement in 2–3.' },
+  { term: 'PUE (immersion)', tag: 'Efficiency', definition: 'Immersion typically achieves PUE of 1.02–1.05 vs 1.10–1.20 for air. That extra 5–15% goes straight to mining.' },
+];
