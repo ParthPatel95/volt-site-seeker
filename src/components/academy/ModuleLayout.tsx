@@ -18,6 +18,8 @@ import { BookmarkButton } from './BookmarkButton';
 import { NotesPanel } from './NotesPanel';
 import { XPStreakBadge } from './XPStreakBadge';
 import { Printer } from 'lucide-react';
+import { useGamification } from '@/hooks/useGamification';
+import { toast } from 'sonner';
 
 interface LessonSection {
   id: string; // anchor
@@ -97,12 +99,19 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
     }
   };
 
+  const { awardXp } = useGamification();
+
   const handleMarkComplete = () => {
     if (activeLesson) {
       if (completedSections.includes(activeLesson)) {
         markSectionIncomplete(activeLesson);
       } else {
         markSectionComplete(activeLesson);
+        awardXp('section_complete', { module_id: moduleId, section_id: activeLesson }).then((res) => {
+          if (res?.leveledUp) {
+            toast.success(`Level ${res.newLevel} unlocked! 🎉`, { description: `+${res.xpGained} XP` });
+          }
+        }).catch(() => {});
       }
     }
   };
