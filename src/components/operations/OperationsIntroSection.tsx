@@ -60,6 +60,14 @@ export const OperationsIntroSection = () => {
           </div>
         </ScrollReveal>
 
+        <ScrollReveal delay={25}>
+          <div className="max-w-3xl mx-auto mb-10">
+            <PlainEnglishIntro whyItMatters="Two sites with identical hardware and power can have wildly different profits — operations is the difference. The 95% uptime site loses to the 99% uptime site every single month.">
+              Building a mining facility is a one-time event. <em>Running</em> it is what actually makes money — every day, for years. Operations is the boring discipline of watching dashboards, fixing things before they break, swapping fans, updating firmware, and writing down what worked so the next person doesn't have to figure it out from scratch.
+            </PlainEnglishIntro>
+          </div>
+        </ScrollReveal>
+
         <ScrollReveal delay={50}>
           <div className="mb-12">
           <LearningObjectives 

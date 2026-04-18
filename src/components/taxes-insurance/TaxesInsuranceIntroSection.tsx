@@ -60,6 +60,15 @@ const TaxesInsuranceIntroSection = () => {
         />
       </ScrollReveal>
 
+      <ScrollReveal delay={25}>
+        <PlainEnglishIntro
+          theme="dark"
+          whyItMatters="A good tax structure can move 10–20% of net income. A bad insurance policy can wipe out the whole company after one fire. Both decisions are made early and live with you for years."
+        >
+          Mining isn't just an electricity business — it's also a <em>capital</em>, <em>tax</em>, and <em>risk</em> business. Every miner you buy is a depreciating asset. Every coin you mine is taxable income the second it hits your wallet. And every megawatt of equipment is one fault away from a claim. This module gives you the language to talk to accountants, lenders, and underwriters without getting steamrolled.
+        </PlainEnglishIntro>
+      </ScrollReveal>
+
       {/* Learning Objectives */}
       <ScrollReveal delay={50}>
         <div className="mb-12">
