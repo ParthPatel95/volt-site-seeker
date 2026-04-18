@@ -141,6 +141,23 @@ export const useAcademyAdmin = () => {
       }));
 
       setModuleStats(moduleStatsArray);
+
+      // Leaderboard from gamification
+      const { data: gamData } = await supabase
+        .from('academy_gamification')
+        .select('user_id, xp, level, current_streak')
+        .order('xp', { ascending: false })
+        .limit(20);
+
+      const userMap = new Map(learnersWithProgress.map(l => [l.user_id, l]));
+      setLeaderboard((gamData || []).map((g: any) => ({
+        user_id: g.user_id,
+        full_name: userMap.get(g.user_id)?.full_name ?? null,
+        email: userMap.get(g.user_id)?.email ?? 'unknown',
+        xp: g.xp,
+        level: g.level,
+        current_streak: g.current_streak,
+      })));
     } catch (err) {
       console.error('Error fetching admin data:', err);
       setError(err as Error);
@@ -181,6 +198,7 @@ export const useAcademyAdmin = () => {
     learners,
     stats,
     moduleStats,
+    leaderboard,
     isLoading,
     error,
     refetch: fetchAdminData,
