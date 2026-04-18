@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { HYDRO_COOLING_QUIZZES } from '@/constants/quiz-data';
 import { HYDRO_COOLING_FLASHCARDS } from '@/constants/flashcard-data';
+import { HYDRO_COOLING_KEY_TERMS } from '@/constants/academy-glossary';
 
 const HydroAdvantagesSection = lazy(() => import('@/components/hydro-education/HydroAdvantagesSection'));
 const HydroContainerProductsSection = lazy(() => import('@/components/hydro-education/HydroContainerProductsSection'));

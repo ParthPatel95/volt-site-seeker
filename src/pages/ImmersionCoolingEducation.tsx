@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { IMMERSION_COOLING_QUIZZES } from '@/constants/quiz-data';
 import { IMMERSION_COOLING_FLASHCARDS } from '@/constants/flashcard-data';
+import { IMMERSION_COOLING_KEY_TERMS } from '@/constants/academy-glossary';
 
 const ImmersionIntroSection = lazy(() => import('@/components/immersion-education/ImmersionIntroSection'));
 const ImmersionTypesSection = lazy(() => import('@/components/immersion-education/ImmersionTypesSection'));
