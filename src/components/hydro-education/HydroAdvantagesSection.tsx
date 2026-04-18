@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import LearningObjectives from './LearningObjectives';
 import SectionSummary from './SectionSummary';
 import InteractivePUEComparison from './InteractivePUEComparison';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const advantages = [
   {
@@ -112,6 +113,14 @@ const HydroAdvantagesSection = () => {
           ]}
           estimatedTime="8 min"
         />
+
+        <ScrollReveal delay={50}>
+          <div className="max-w-3xl mx-auto mb-12">
+            <PlainEnglishIntro whyItMatters="A 5–15% efficiency gain on a 45MW site is millions of dollars per year. Cooling is where most of that win lives.">
+              Air cooling works the way your laptop fan does: blow cold air past hot chips and hope. Hydro cooling pipes a water/glycol mix straight to a metal plate touching each chip — heat has nowhere to hide, and you can dump it outside through a simple radiator. Quieter, denser, and far more efficient.
+            </PlainEnglishIntro>
+          </div>
+        </ScrollReveal>
 
         {/* Advantages Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">

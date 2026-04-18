@@ -1,5 +1,6 @@
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { Droplets, Thermometer, Zap, Volume2 } from 'lucide-react';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const benefits = [
   {

@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { HYDRO_COOLING_QUIZZES } from '@/constants/quiz-data';
 import { HYDRO_COOLING_FLASHCARDS } from '@/constants/flashcard-data';
+import { HYDRO_COOLING_KEY_TERMS } from '@/constants/academy-glossary';
 
 const HydroAdvantagesSection = lazy(() => import('@/components/hydro-education/HydroAdvantagesSection'));
 const HydroContainerProductsSection = lazy(() => import('@/components/hydro-education/HydroContainerProductsSection'));
@@ -32,7 +34,10 @@ const SectionLoader = () => (
 const HydroDatacenterEducation = () => {
   return (
     <ModuleLayout moduleId="hydro">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={HYDRO_COOLING_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={HYDRO_COOLING_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Hydro Cooling" terms={HYDRO_COOLING_KEY_TERMS} />
+      </div>
 
       <div id="advantages"><Suspense fallback={<SectionLoader />}><HydroAdvantagesSection /></Suspense></div>
       <div id="containers"><Suspense fallback={<SectionLoader />}><HydroContainerProductsSection /></Suspense></div>
