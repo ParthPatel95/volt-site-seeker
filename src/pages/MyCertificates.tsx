@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
-import { Award, ArrowLeft, ExternalLink, Linkedin, Bookmark as BookmarkIcon } from 'lucide-react';
+import { Award, ArrowLeft, ExternalLink, Linkedin, Bookmark as BookmarkIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { ACADEMY_CURRICULUM } from '@/constants/curriculum-data';
+import { downloadCertificatePdf } from '@/lib/certificate-download';
 
 interface Cert {
   id: string;
@@ -69,13 +70,23 @@ const MyCertificates = () => {
                     <p className="text-xs text-muted-foreground">
                       Issued {new Date(c.issued_at).toLocaleDateString()}
                     </p>
-                    <div className="flex gap-2">
-                      <Button asChild variant="outline" size="sm" className="gap-1.5 flex-1">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => {
+                          const safe = (c.module_title || 'certificate').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                          downloadCertificatePdf(c.id, `wattbyte-${safe}`);
+                        }}
+                      >
+                        <Download className="w-3.5 h-3.5" /> PDF
+                      </Button>
+                      <Button asChild variant="outline" size="sm" className="gap-1.5">
                         <Link to={`/verify/${c.id}`}>
                           <ExternalLink className="w-3.5 h-3.5" /> View
                         </Link>
                       </Button>
-                      <Button asChild size="sm" className="gap-1.5 flex-1">
+                      <Button asChild variant="outline" size="sm" className="gap-1.5">
                         <a
                           href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(verifyUrl)}`}
                           target="_blank"
