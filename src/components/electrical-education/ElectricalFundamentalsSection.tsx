@@ -7,6 +7,7 @@ import { Zap, Calculator, Activity, Gauge, Info } from "lucide-react";
 import { LearningObjectives } from "./LearningObjectives";
 import { SectionSummary } from "./SectionSummary";
 import { AnimatedSingleLineDiagram } from "./AnimatedSingleLineDiagram";
+import { PlainEnglishIntro } from "@/components/academy/PlainEnglishIntro";
 
 const learningObjectives = [
   "Apply Ohm's Law (V = I × R) to calculate voltage, current, and resistance in mining scenarios",

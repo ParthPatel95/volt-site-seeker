@@ -21,6 +21,7 @@ import {
   SourceCitation
 } from './shared';
 import { ElectricalPrimer } from './primers';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 // Import AI-generated 3D images
 import electricalUtilityFeed from '@/assets/electrical-utility-feed.jpg';
