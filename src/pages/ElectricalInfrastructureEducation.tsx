@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react';
 import { ModuleLayout } from '@/components/academy/ModuleLayout';
 import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { ELECTRICAL_QUIZZES } from '@/constants/quiz-data';
 import { ELECTRICAL_FLASHCARDS } from '@/constants/flashcard-data';
+import { ELECTRICAL_KEY_TERMS } from '@/constants/academy-glossary';
 
 const ElectricalFundamentalsSection = lazy(() => import('@/components/electrical-education/ElectricalFundamentalsSection'));
 const UtilityGridConnectionSection = lazy(() => import('@/components/electrical-education/UtilityGridConnectionSection'));
@@ -31,7 +33,10 @@ const SectionLoader = () => (
 const ElectricalInfrastructureEducation = () => {
   return (
     <ModuleLayout moduleId="electrical">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={ELECTRICAL_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={ELECTRICAL_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Electrical Infrastructure" terms={ELECTRICAL_KEY_TERMS} />
+      </div>
 
       <div id="fundamentals"><Suspense fallback={<SectionLoader />}><ElectricalFundamentalsSection /></Suspense></div>
       {fundQuiz && <div className="max-w-4xl mx-auto px-4 py-8"><KnowledgeCheck title={fundQuiz.title} questions={fundQuiz.questions} /></div>}
