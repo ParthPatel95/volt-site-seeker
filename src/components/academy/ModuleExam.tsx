@@ -37,11 +37,58 @@ export const ModuleExam: React.FC<ModuleExamProps> = ({
   const [isComplete, setIsComplete] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(timeLimit || 0);
   const [answers, setAnswers] = useState<(number | null)[]>(new Array(questions.length).fill(null));
+  const [certId, setCertId] = useState<string | null>(null);
+  const [issuingCert, setIssuingCert] = useState(false);
+
+  const { user, academyUser } = useAcademyAuth();
+  const { awardXp } = useGamification();
 
   const currentQuestion = questions[currentIndex];
   const isCorrect = selectedAnswer === currentQuestion?.correctIndex;
   const scorePercentage = Math.round((correctCount / questions.length) * 100);
   const passed = scorePercentage >= passingScore;
+
+  // Award XP + issue certificate when exam completes successfully
+  useEffect(() => {
+    if (!isComplete || !user || !passed || certId || issuingCert) return;
+    setIssuingCert(true);
+    (async () => {
+      try {
+        await awardXp('exam_pass', { module_id: moduleId, xp: 100 + scorePercentage });
+        const moduleTitle = ACADEMY_CURRICULUM.find(m => m.id === moduleId)?.title || title;
+        const recipientName = academyUser?.full_name || user.email || 'Academy Learner';
+        const { data: existing } = await supabase
+          .from('academy_certificates')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('module_id', moduleId)
+          .maybeSingle();
+        if (existing?.id) {
+          setCertId(existing.id);
+        } else {
+          const { data: inserted } = await supabase
+            .from('academy_certificates')
+            .insert({
+              user_id: user.id,
+              module_id: moduleId,
+              module_title: moduleTitle,
+              recipient_name: recipientName,
+              exam_score: scorePercentage,
+            })
+            .select('id')
+            .single();
+          if (inserted?.id) {
+            setCertId(inserted.id);
+            toast.success('Certificate issued! 🎓', { description: `+${100 + scorePercentage} XP earned` });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to issue certificate:', err);
+      } finally {
+        setIssuingCert(false);
+      }
+    })();
+  }, [isComplete, passed, user, moduleId, certId, issuingCert, awardXp, academyUser, scorePercentage, title]);
 
   // Timer
   useEffect(() => {
@@ -181,7 +228,7 @@ export const ModuleExam: React.FC<ModuleExamProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3">
             <button
               onClick={handleReset}
               className="inline-flex items-center gap-2 px-6 py-3 border border-border rounded-lg hover:bg-muted/50 transition-colors text-foreground"
@@ -189,6 +236,16 @@ export const ModuleExam: React.FC<ModuleExamProps> = ({
               <RotateCcw className="w-4 h-4" />
               Retake Exam
             </button>
+            {passed && certId && (
+              <Link
+                to={`/verify/${certId}`}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                <Award className="w-4 h-4" />
+                View Certificate
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
         </div>
       </div>
