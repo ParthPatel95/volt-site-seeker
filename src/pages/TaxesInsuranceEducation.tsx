@@ -5,6 +5,8 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
 import { TAXES_INSURANCE_QUIZZES } from '@/constants/quiz-data';
 import { TAXES_INSURANCE_FLASHCARDS } from '@/constants/flashcard-data';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
+import { TAXES_INSURANCE_KEY_TERMS } from '@/constants/academy-glossary';
 
 const TaxesInsuranceIntroSection = lazy(() => import('@/components/taxes-insurance/TaxesInsuranceIntroSection'));
 const TaxJurisdictionSection = lazy(() => import('@/components/taxes-insurance/TaxJurisdictionSection'));
@@ -32,7 +34,10 @@ const SectionLoader = () => (
 export default function TaxesInsuranceEducation() {
   return (
     <ModuleLayout moduleId="taxes-insurance">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={TAXES_INSURANCE_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={TAXES_INSURANCE_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Taxes & Insurance" terms={TAXES_INSURANCE_KEY_TERMS} />
+      </div>
 
       <div id="intro"><Suspense fallback={<SectionLoader />}><TaxesInsuranceIntroSection /></Suspense></div>
       <div id="jurisdictions"><Suspense fallback={<SectionLoader />}><TaxJurisdictionSection /></Suspense></div>

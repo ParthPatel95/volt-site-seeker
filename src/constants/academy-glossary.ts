@@ -180,3 +180,51 @@ export const IMMERSION_COOLING_KEY_TERMS: KeyTerm[] = [
   { term: 'Fluid degradation', tag: 'Maintenance', definition: 'Over time the fluid picks up contaminants and breaks down. Quality fluids last 5–10 years; cheap ones may need replacement in 2–3.' },
   { term: 'PUE (immersion)', tag: 'Efficiency', definition: 'Immersion typically achieves PUE of 1.02–1.05 vs 1.10–1.20 for air. That extra 5–15% goes straight to mining.' },
 ];
+
+export const OPERATIONS_KEY_TERMS: KeyTerm[] = [
+  { term: 'NOC (Network Operations Center)', tag: 'Monitoring', definition: 'The 24/7 control room that watches every miner, alarm, and KPI. On a 45MW site this is one or two people staring at dashboards.' },
+  { term: 'KPI', tag: 'Metrics', definition: 'Key Performance Indicator — the few numbers that actually decide whether the site is healthy: uptime %, hashrate %, J/TH, $/MWh.' },
+  { term: 'Uptime', tag: 'Metrics', definition: 'Percent of time miners are actually hashing. Industry-good is >98%; <95% means something is structurally wrong.' },
+  { term: 'MTTR (Mean Time To Repair)', tag: 'Maintenance', definition: 'Average minutes from a miner failing to it being back online. Great teams hit <30 min on common faults.' },
+  { term: 'Curtailment', tag: 'Operations', definition: 'Voluntarily turning miners off when power is too expensive or the grid asks you to. A revenue strategy, not a problem.' },
+  { term: 'Firmware', tag: 'Software', definition: 'The miner\'s onboard software. Custom firmware (Braiins, LuxOS, Vnish) can lift efficiency 5–15% over stock.' },
+  { term: 'Stale share rate', tag: 'Network', definition: 'Percentage of work submitted too late to count. >1% usually means a network or pool problem worth fixing today.' },
+  { term: 'Preventive maintenance', tag: 'Maintenance', definition: 'Scheduled cleaning, fan swaps, and inspections done <em>before</em> failure. Cheaper than firefighting broken miners.' },
+  { term: 'Runbook', tag: 'Process', definition: 'A written, step-by-step procedure for handling an incident. The difference between a 10-minute outage and a 4-hour one.' },
+];
+
+export const ENGINEERING_PERMITTING_KEY_TERMS: KeyTerm[] = [
+  { term: 'AESO', tag: 'Alberta', definition: 'Alberta Electric System Operator — the entity that runs the provincial grid and approves any large new connection.' },
+  { term: 'AUC', tag: 'Alberta', definition: 'Alberta Utilities Commission — the regulator that ultimately approves large electrical infrastructure (substations, transmission).' },
+  { term: 'Interconnection study', tag: 'Process', definition: 'A formal AESO/utility analysis to confirm the grid can accept your load. Required for anything above ~5MW; takes 12–24 months.' },
+  { term: 'Development permit', tag: 'Permits', definition: 'Municipal approval to use the land for your intended purpose. The first permit you need from the county or city.' },
+  { term: 'Building permit', tag: 'Permits', definition: 'Approval that your structure meets the building code. Comes after the development permit.' },
+  { term: 'CEC (Canadian Electrical Code)', tag: 'Standards', definition: 'The national rulebook for how electrical work must be installed. Every wire, breaker, and ground in your facility is judged against it.' },
+  { term: 'PEng / Stamped drawings', tag: 'Engineering', definition: 'Drawings reviewed and sealed by a Professional Engineer — legally required for any meaningful electrical or structural design.' },
+  { term: 'Single-Line Diagram (SLD)', tag: 'Engineering', definition: 'The "subway map" of the electrical system showing every transformer, breaker, and bus on one page.' },
+  { term: 'Environmental review', tag: 'Permits', definition: 'Assessment of impact on land, water, wildlife, and noise. Scope varies wildly by site (greenfield vs brownfield).' },
+];
+
+export const NOISE_KEY_TERMS: KeyTerm[] = [
+  { term: 'dB (decibel)', tag: 'Basics', definition: 'A logarithmic measure of loudness. +10 dB = 10× the sound energy and roughly twice as loud to your ear.' },
+  { term: 'dBA', tag: 'Basics', definition: 'Decibels weighted to match human hearing. Almost all noise regulations are written in dBA.' },
+  { term: 'Ambient noise', tag: 'Measurement', definition: 'The background sound level at a property line before your facility exists. Regulations usually limit how much you can add to it.' },
+  { term: 'Receptor', tag: 'Regulation', definition: 'The nearest neighbour, house, or sensitive land use that your noise impacts. Distances to receptors drive the whole design.' },
+  { term: 'Inverse-square law', tag: 'Physics', definition: 'Sound drops about 6 dB every time you double the distance from a point source. Doubling setback is one of the cheapest mitigations.' },
+  { term: 'Sound wall / barrier', tag: 'Mitigation', definition: 'A solid wall placed between miners and a receptor. A well-built barrier can cut perceived noise by 10–15 dB.' },
+  { term: 'Cumulative noise', tag: 'Math', definition: 'Adding multiple sources together. Two identical 80 dB sources = 83 dB, not 160 dB. Logarithms matter.' },
+  { term: 'Tonal noise', tag: 'Regulation', definition: 'A noise with a clear pitch (like a fan whine). Regulators often penalize it with a +5 dB adjustment because humans find it more annoying.' },
+  { term: 'Noise model', tag: 'Process', definition: 'Software simulation (CadnaA, SoundPLAN) that predicts dB levels at each receptor before construction. Required for most permits.' },
+];
+
+export const TAXES_INSURANCE_KEY_TERMS: KeyTerm[] = [
+  { term: 'CapEx depreciation', tag: 'Tax', definition: 'Spreading the cost of buying miners and infrastructure across multiple tax years instead of expensing it all at once.' },
+  { term: 'CCA (Capital Cost Allowance)', tag: 'Canada Tax', definition: 'Canada\'s version of depreciation. ASIC miners typically fall into Class 50 (55% declining balance).' },
+  { term: 'GST/HST input tax credits', tag: 'Canada Tax', definition: 'Recovering the sales tax you paid on equipment purchases. Big number on a $50M build.' },
+  { term: 'SR&ED', tag: 'Canada Tax', definition: 'Scientific Research & Experimental Development credits. Some firmware and cooling R&D may qualify — talk to a specialist.' },
+  { term: 'Mined coin valuation', tag: 'Crypto Tax', definition: 'In Canada and the US, freshly mined BTC is income at the fair market value the moment it\'s received — not when you sell it.' },
+  { term: 'Property insurance', tag: 'Insurance', definition: 'Covers physical damage to building, transformers, and miners. Usually mandatory for any lender.' },
+  { term: 'Business interruption', tag: 'Insurance', definition: 'Replaces lost revenue when an insured event takes you offline. Critical because a 2-week outage on 45MW = millions in lost mining income.' },
+  { term: 'D&O insurance', tag: 'Insurance', definition: 'Directors & Officers — protects executives personally if the company is sued.' },
+  { term: 'Cyber insurance', tag: 'Insurance', definition: 'Covers ransomware, wallet theft, and data breaches. Underwriters will demand 2FA, segmented networks, and offline keys.' },
+];
