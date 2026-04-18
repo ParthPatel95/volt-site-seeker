@@ -172,3 +172,15 @@
     display: none !important;
   }
 }
+
+/* Academy lesson print styles */
+@media print {
+  .print\:hidden { display: none !important; }
+  aside, [role="dialog"], .fixed { display: none !important; }
+  main { padding: 0 !important; margin: 0 !important; }
+  .bg-card, .bg-muted, .bg-background { background: white !important; }
+  .text-muted-foreground { color: #555 !important; }
+  a { color: black !important; text-decoration: underline; }
+  h1, h2, h3 { page-break-after: avoid; }
+  img, .rounded-xl { page-break-inside: avoid; }
+}
