@@ -13,6 +13,11 @@ import { ACADEMY_CURRICULUM, DIFFICULTY_BADGES, type CurriculumModule, type Less
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COURSE_THUMBNAILS } from '@/assets/thumbnails';
+import { ReadingProgressBar } from './ReadingProgressBar';
+import { BookmarkButton } from './BookmarkButton';
+import { NotesPanel } from './NotesPanel';
+import { XPStreakBadge } from './XPStreakBadge';
+import { Printer } from 'lucide-react';
 
 interface LessonSection {
   id: string; // anchor
