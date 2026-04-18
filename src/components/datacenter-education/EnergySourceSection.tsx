@@ -457,6 +457,13 @@ const EnergySourceSection = () => {
         description="How Bitcoin mining facilities connect to the electrical grid and secure competitive power rates"
       />
 
+      <PlainEnglishIntro
+        whyItMatters="Power cost is the #1 driver of mining profitability — a $0.02/kWh difference can decide whether a 45MW site makes or loses millions a year."
+        className="max-w-4xl mx-auto mb-8"
+      >
+        Before electricity reaches a single miner, it travels a long road: from a power plant or wind farm, across high-voltage transmission lines, through several transformers that step the voltage <em>down</em>, and finally into your facility. Each step costs money and adds risk — and where you tap into that road decides what you pay per kilowatt-hour for the next decade.
+      </PlainEnglishIntro>
+
       {/* Physics Primer Callout */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
