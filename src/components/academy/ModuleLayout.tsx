@@ -222,6 +222,7 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <ReadingProgressBar />
       {/* Desktop sidebar */}
       {!isMobile && (
         <AnimatePresence>
@@ -302,10 +303,24 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
             )}
           </nav>
 
-          {/* Progress pill */}
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            <span className="text-[10px] text-muted-foreground hidden sm:inline">
-              {completedSections.length}/{module.lessons.length} done
+          {/* Actions + Progress */}
+          <div className="ml-auto flex items-center gap-1 shrink-0">
+            <XPStreakBadge className="mr-2" />
+            <BookmarkButton
+              moduleId={moduleId}
+              sectionId={activeLesson || null}
+              label={module.lessons.find(l => l.anchor === activeLesson)?.title}
+            />
+            <NotesPanel moduleId={moduleId} activeSectionId={activeLesson || ''} />
+            <button
+              onClick={() => window.print()}
+              className="p-1.5 rounded-md hover:bg-muted transition-colors hidden sm:inline-flex"
+              title="Print this lesson"
+            >
+              <Printer className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline ml-2">
+              {completedSections.length}/{module.lessons.length}
             </span>
             <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden hidden sm:block">
               <div
