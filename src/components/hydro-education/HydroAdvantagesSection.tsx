@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import LearningObjectives from './LearningObjectives';
 import SectionSummary from './SectionSummary';
 import InteractivePUEComparison from './InteractivePUEComparison';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const advantages = [
   {

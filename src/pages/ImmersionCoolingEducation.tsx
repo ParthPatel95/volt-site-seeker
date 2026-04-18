@@ -32,7 +32,10 @@ const SectionLoader = () => (
 export default function ImmersionCoolingEducation() {
   return (
     <ModuleLayout moduleId="immersion">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={IMMERSION_COOLING_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <QuickFlashcard deck={IMMERSION_COOLING_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Immersion Cooling" terms={IMMERSION_COOLING_KEY_TERMS} />
+      </div>
 
       <div id="introduction"><Suspense fallback={<SectionLoader />}><ImmersionIntroSection /></Suspense></div>
       <div id="types"><Suspense fallback={<SectionLoader />}><ImmersionTypesSection /></Suspense></div>
