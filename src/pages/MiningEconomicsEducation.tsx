@@ -5,8 +5,10 @@ import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
 import { CommonMistakes } from '@/components/academy/CommonMistakes';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { MINING_ECONOMICS_QUIZZES } from '@/constants/quiz-data';
 import { MINING_ECONOMICS_FLASHCARDS } from '@/constants/flashcard-data';
+import { MINING_ECONOMICS_KEY_TERMS } from '@/constants/academy-glossary';
 
 const MiningEconomicsIntroSection = lazy(() => import('@/components/mining-economics/MiningEconomicsIntroSection'));
 const RevenueDriversSection = lazy(() => import('@/components/mining-economics/RevenueDriversSection'));
@@ -61,7 +63,10 @@ export default function MiningEconomicsEducation() {
 
   return (
     <ModuleLayout moduleId="mining-economics">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={MINING_ECONOMICS_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+        <QuickFlashcard deck={MINING_ECONOMICS_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Mining Economics" terms={MINING_ECONOMICS_KEY_TERMS} />
+      </div>
 
       <div id="intro"><Suspense fallback={<SectionLoader />}><MiningEconomicsIntroSection /></Suspense></div>
       <div id="revenue"><Suspense fallback={<SectionLoader />}><RevenueDriversSection /></Suspense></div>
