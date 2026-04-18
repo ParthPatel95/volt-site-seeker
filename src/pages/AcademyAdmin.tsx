@@ -38,7 +38,7 @@ const MODULE_NAMES: Record<string, string> = {
 
 const AcademyAdmin: React.FC = () => {
   const { isAdmin, isLoading: authLoading } = useAcademyAuth();
-  const { learners, stats, moduleStats, isLoading, exportLearnerData, refetch } = useAcademyAdmin();
+  const { learners, stats, moduleStats, leaderboard, isLoading, exportLearnerData, refetch } = useAcademyAdmin();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState('');
 
@@ -189,6 +189,34 @@ const AcademyAdmin: React.FC = () => {
                 </p>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Leaderboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle>XP Leaderboard</CardTitle>
+            <CardDescription>Top 20 learners by XP earned</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {leaderboard.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6">No XP earned yet</p>
+            ) : (
+              <ol className="space-y-2">
+                {leaderboard.map((entry, idx) => (
+                  <li key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-sm font-bold w-6 text-muted-foreground">#{idx + 1}</span>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{entry.full_name || entry.email}</p>
+                        <p className="text-xs text-muted-foreground">Level {entry.level} · 🔥 {entry.current_streak}d</p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">{entry.xp} XP</Badge>
+                  </li>
+                ))}
+              </ol>
+            )}
           </CardContent>
         </Card>
 

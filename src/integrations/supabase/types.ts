@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          module_id: string
+          section_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          module_id: string
+          section_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          module_id?: string
+          section_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_certificates: {
+        Row: {
+          exam_score: number | null
+          id: string
+          issued_at: string
+          module_id: string
+          module_title: string
+          recipient_name: string
+          user_id: string
+        }
+        Insert: {
+          exam_score?: number | null
+          id?: string
+          issued_at?: string
+          module_id: string
+          module_title: string
+          recipient_name: string
+          user_id: string
+        }
+        Update: {
+          exam_score?: number | null
+          id?: string
+          issued_at?: string
+          module_id?: string
+          module_title?: string
+          recipient_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       academy_email_verification_tokens: {
         Row: {
           created_at: string
@@ -44,6 +101,39 @@ export type Database = {
         }
         Relationships: []
       }
+      academy_gamification: {
+        Row: {
+          created_at: string
+          current_streak: number
+          last_activity_date: string | null
+          level: number
+          longest_streak: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          last_activity_date?: string | null
+          level?: number
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          last_activity_date?: string | null
+          level?: number
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
       academy_module_starts: {
         Row: {
           id: string
@@ -64,6 +154,36 @@ export type Database = {
           last_visited_at?: string | null
           module_id?: string
           started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          module_id: string
+          section_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          module_id: string
+          section_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          module_id?: string
+          section_id?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -185,6 +305,36 @@ export type Database = {
           job_title?: string | null
           last_activity_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      academy_xp_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          module_id: string | null
+          section_id: string | null
+          user_id: string
+          xp_awarded: number
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          module_id?: string | null
+          section_id?: string | null
+          user_id: string
+          xp_awarded: number
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          module_id?: string | null
+          section_id?: string | null
+          user_id?: string
+          xp_awarded?: number
         }
         Relationships: []
       }

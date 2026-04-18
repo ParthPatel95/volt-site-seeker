@@ -13,6 +13,13 @@ import { ACADEMY_CURRICULUM, DIFFICULTY_BADGES, type CurriculumModule, type Less
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COURSE_THUMBNAILS } from '@/assets/thumbnails';
+import { ReadingProgressBar } from './ReadingProgressBar';
+import { BookmarkButton } from './BookmarkButton';
+import { NotesPanel } from './NotesPanel';
+import { XPStreakBadge } from './XPStreakBadge';
+import { Printer } from 'lucide-react';
+import { useGamification } from '@/hooks/useGamification';
+import { toast } from 'sonner';
 
 interface LessonSection {
   id: string; // anchor
@@ -92,12 +99,19 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
     }
   };
 
+  const { awardXp } = useGamification();
+
   const handleMarkComplete = () => {
     if (activeLesson) {
       if (completedSections.includes(activeLesson)) {
         markSectionIncomplete(activeLesson);
       } else {
         markSectionComplete(activeLesson);
+        awardXp('section_complete', { module_id: moduleId, section_id: activeLesson }).then((res) => {
+          if (res?.leveledUp) {
+            toast.success(`Level ${res.newLevel} unlocked! 🎉`, { description: `+${res.xpGained} XP` });
+          }
+        }).catch(() => {});
       }
     }
   };
@@ -217,6 +231,7 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <ReadingProgressBar />
       {/* Desktop sidebar */}
       {!isMobile && (
         <AnimatePresence>
@@ -297,10 +312,24 @@ export const ModuleLayout = ({ moduleId, children }: ModuleLayoutProps) => {
             )}
           </nav>
 
-          {/* Progress pill */}
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            <span className="text-[10px] text-muted-foreground hidden sm:inline">
-              {completedSections.length}/{module.lessons.length} done
+          {/* Actions + Progress */}
+          <div className="ml-auto flex items-center gap-1 shrink-0">
+            <XPStreakBadge className="mr-2" />
+            <BookmarkButton
+              moduleId={moduleId}
+              sectionId={activeLesson || null}
+              label={module.lessons.find(l => l.anchor === activeLesson)?.title}
+            />
+            <NotesPanel moduleId={moduleId} activeSectionId={activeLesson || ''} />
+            <button
+              onClick={() => window.print()}
+              className="p-1.5 rounded-md hover:bg-muted transition-colors hidden sm:inline-flex"
+              title="Print this lesson"
+            >
+              <Printer className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline ml-2">
+              {completedSections.length}/{module.lessons.length}
             </span>
             <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden hidden sm:block">
               <div

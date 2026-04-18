@@ -36,6 +36,8 @@ import AcademyProgress from "./pages/AcademyProgress";
 import Academy from "./pages/Academy";
 import AcademyAuth from "./pages/AcademyAuth";
 import AcademyAdmin from "./pages/AcademyAdmin";
+import VerifyCertificate from "./pages/VerifyCertificate";
+import MyCertificates from "./pages/MyCertificates";
 import { AcademyAuthGuard } from "./components/academy/AcademyAuthGuard";
 
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -101,6 +103,8 @@ const App = () => (
                 <Route path="/academy/progress" element={<AcademyAuthProvider><AcademyAuthGuard><AcademyProgress /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/academy/auth" element={<AcademyAuthProvider><AcademyAuth /></AcademyAuthProvider>} />
                 <Route path="/academy/admin" element={<AcademyAuthProvider><AcademyAdmin /></AcademyAuthProvider>} />
+                <Route path="/academy/me" element={<AcademyAuthProvider><MyCertificates /></AcademyAuthProvider>} />
+                <Route path="/verify/:certId" element={<VerifyCertificate />} />
                 <Route path="/bitcoin" element={<AcademyAuthProvider><AcademyAuthGuard><BitcoinEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/datacenters" element={<AcademyAuthProvider><AcademyAuthGuard><DatacenterEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/aeso-101" element={<AcademyAuthProvider><AcademyAuthGuard><AESOEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
