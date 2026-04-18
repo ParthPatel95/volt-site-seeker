@@ -3,6 +3,7 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { TrendingUp, Bitcoin, Zap, Calculator, DollarSign, BarChart3, BookOpen, Target, Clock, Lightbulb } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { MECSectionWrapper, MECSectionHeader, MECProcessFlow, MECKeyInsight } from './shared';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
 
 const AnimatedNumber = ({ value, prefix = '', suffix = '' }: { value: string; prefix?: string; suffix?: string }) => {
   const ref = useRef(null);
@@ -79,7 +80,17 @@ const MiningEconomicsIntroSection = () => {
         />
       </ScrollReveal>
 
-      {/* Learning Objectives */}
+      {/* Plain-English hook */}
+      <ScrollReveal delay={25}>
+        <div className="mb-12">
+          <PlainEnglishIntro
+            theme="dark"
+            whyItMatters="Most failed mines didn't lose to bad luck — they lost because they bought hardware before doing this math. Get the equation right and the rest of the module is just refining each input."
+          >
+            Bitcoin mining is, at its core, a simple business: you spend money on electricity and hardware, and you earn bitcoin in return. Whether you make a profit comes down to one equation — how much bitcoin you mine, what it sells for, and what it costs you to keep the machines running.
+          </PlainEnglishIntro>
+        </div>
+      </ScrollReveal>
       <ScrollReveal delay={50}>
         <div className="mb-12">
           <h3 className="text-lg font-semibold text-white/80 mb-4 text-center">What You'll Learn</h3>

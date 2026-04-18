@@ -4,8 +4,10 @@ import { KnowledgeCheck } from '@/components/academy/KnowledgeCheck';
 import { QuickFlashcard } from '@/components/academy/QuickFlashcard';
 import { ModuleExam } from '@/components/academy/ModuleExam';
 import { RealWorldInsight } from '@/components/academy/RealWorldInsight';
+import { KeyTermsGlossary } from '@/components/academy/KeyTermsGlossary';
 import { BITCOIN_QUIZZES } from '@/constants/quiz-data';
 import { BITCOIN_FLASHCARDS } from '@/constants/flashcard-data';
+import { BITCOIN_KEY_TERMS } from '@/constants/academy-glossary';
 
 const WhatIsBitcoinSection = lazy(() => import('@/components/bitcoin-education/WhatIsBitcoinSection'));
 const BitcoinHistorySection = lazy(() => import('@/components/bitcoin-education/BitcoinHistorySection'));
@@ -36,7 +38,10 @@ const BitcoinEducation: React.FC = () => {
 
   return (
     <ModuleLayout moduleId="bitcoin">
-      <div className="max-w-4xl mx-auto px-4 py-8"><QuickFlashcard deck={BITCOIN_FLASHCARDS} /></div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+        <QuickFlashcard deck={BITCOIN_FLASHCARDS} />
+        <KeyTermsGlossary moduleTitle="Bitcoin Fundamentals" terms={BITCOIN_KEY_TERMS} />
+      </div>
 
       <div id="what-is-bitcoin"><Suspense fallback={<SectionLoader />}><WhatIsBitcoinSection /></Suspense></div>
       {BITCOIN_QUIZZES.find(q => q.sectionId === 'what-is-bitcoin') && (

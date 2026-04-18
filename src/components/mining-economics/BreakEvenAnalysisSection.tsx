@@ -4,6 +4,8 @@ import { Target, Zap, Bitcoin, AlertCircle, Info, Calculator, TrendingUp } from 
 import ProgressiveDisclosure from '@/components/academy/ProgressiveDisclosure';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MECSectionWrapper, MECSectionHeader, MECContentCard, MECKeyInsight, MECDeepDive, MECCallout } from './shared';
+import { PlainEnglishIntro } from '@/components/academy/PlainEnglishIntro';
+import { WorkedExample } from '@/components/academy/WorkedExample';
 import { motion } from 'framer-motion';
 
 const BreakEvenAnalysisSection = () => {
@@ -37,6 +39,38 @@ const BreakEvenAnalysisSection = () => {
 
   const basicContent = (
     <div className="space-y-6">
+      <PlainEnglishIntro
+        whyItMatters="If you don't know your break-even rate, you can't tell whether a power contract or a hardware purchase will make money — you're guessing."
+      >
+        Your break-even electricity rate is the highest price you can pay for power and still come out flat at the end of the day. Pay less, you profit. Pay more, every kilowatt-hour costs you money.
+      </PlainEnglishIntro>
+
+      <WorkedExample
+        title="Calculating break-even electricity rate"
+        formula="Break-even $/kWh = (BTC mined per TH/day × BTC price) ÷ (kWh used per TH/day)"
+        steps={[
+          {
+            label: 'BTC mined per TH per day',
+            math: '(1 ÷ (750 EH/s × 1,000,000 TH/EH)) × 144 blocks × 3.125 BTC ≈ 0.0000006 BTC',
+            note: 'At a network hashrate of 750 EH/s and the post-2024 block reward of 3.125 BTC.',
+          },
+          {
+            label: 'Daily revenue per TH at $100,000/BTC',
+            math: '0.0000006 × $100,000 ≈ $0.060 per TH per day',
+          },
+          {
+            label: 'Daily energy used per TH (S21 at 17.5 J/TH)',
+            math: '17.5 J/TH × 24 h ÷ 1000 ≈ 0.42 kWh per TH per day',
+          },
+          {
+            label: 'Break-even rate',
+            math: '$0.060 ÷ 0.42 kWh ≈ $0.143 per kWh',
+          },
+        ]}
+        result="≈ $0.143 / kWh at $100K BTC on a 17.5 J/TH miner"
+        takeaway="Cut BTC price in half or run a 34 J/TH miner instead, and the same math gives a break-even rate near $0.035 / kWh — which is why efficiency and power price decide who survives a bear market."
+      />
+
       <MECContentCard variant="default">
         <h4 className="font-bold text-foreground mb-3 text-lg">What is Break-Even?</h4>
         <p className="text-muted-foreground mb-6 leading-relaxed">
