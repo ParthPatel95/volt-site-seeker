@@ -28,11 +28,21 @@ interface AdminStats {
   totalSectionsCompleted: number;
 }
 
+interface LeaderboardEntry {
+  user_id: string;
+  full_name: string | null;
+  email: string;
+  xp: number;
+  level: number;
+  current_streak: number;
+}
+
 export const useAcademyAdmin = () => {
   const { isAdmin } = useAcademyAuth();
   const [learners, setLearners] = useState<AcademyLearner[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [moduleStats, setModuleStats] = useState<ModuleStats[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
