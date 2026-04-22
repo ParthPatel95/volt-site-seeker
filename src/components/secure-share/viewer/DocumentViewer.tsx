@@ -1074,7 +1074,7 @@ export function DocumentViewer({
                     }}
                   >
                     <Document
-                      file={documentUrl}
+                      file={pdfDocumentProxy ? { _transport: pdfDocumentProxy._transport } as any : documentUrl}
                       options={documentOptions}
                       onLoadSuccess={onDocumentLoadSuccess}
                       onLoadError={(error) => {
