@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { buildCorsHeaders } from "../_shared/cors.ts";
 
 interface ValidateRequest {
   token: string;
@@ -13,15 +9,56 @@ interface ValidateRequest {
   viewerEmail?: string;
 }
 
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function constantTimeEquals(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+async function legacySha256Hex(password: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  if (stored.startsWith('pbkdf2$')) {
+    const [, iterStr, saltB64, hashB64] = stored.split('$');
+    const iterations = Number(iterStr);
+    if (!Number.isFinite(iterations) || iterations < 1) return false;
+    const salt = base64ToBytes(saltB64);
+    const expected = base64ToBytes(hashB64);
+    const baseKey = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(password),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits']
+    );
+    const bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+      baseKey,
+      expected.length * 8
+    );
+    return constantTimeEquals(new Uint8Array(bits), expected);
+  }
+  // Backward compat: legacy unsalted SHA-256 hex
+  const candidate = await legacySha256Hex(password);
+  const a = new TextEncoder().encode(candidate);
+  const b = new TextEncoder().encode(stored);
+  return constantTimeEquals(a, b);
 }
 
 serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -115,8 +152,8 @@ serve(async (req) => {
         });
       }
 
-      const providedHash = await hashPassword(body.password);
-      if (providedHash !== report.password_hash) {
+      const ok = await verifyPassword(body.password, report.password_hash);
+      if (!ok) {
         return new Response(JSON.stringify({
           valid: false,
           requiresPassword: true,
@@ -184,10 +221,10 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('[Validate AESO Share] Error:', error);
+    console.error('[Validate AESO Share] Error:', error instanceof Error ? error.message : 'unknown');
     return new Response(JSON.stringify({
       valid: false,
-      error: error.message
+      error: 'Internal error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

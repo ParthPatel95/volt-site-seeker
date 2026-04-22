@@ -556,9 +556,17 @@ export default function SharedAESOReport() {
       {/* Report Content */}
       <div className="container mx-auto px-4 py-6">
         {report?.reportHtml ? (
-          <div 
-            className="bg-card rounded-lg shadow-lg overflow-hidden"
-            dangerouslySetInnerHTML={{ __html: report.reportHtml }}
+          // Sandboxed: the report HTML is user-supplied at share-creation time
+          // and may contain arbitrary markup. The iframe sandbox attribute (no
+          // allow-* flags) blocks script execution, form submission, popups,
+          // and same-origin access, neutralising any embedded XSS payload.
+          <iframe
+            title={report.title || 'Shared AESO report'}
+            srcDoc={report.reportHtml}
+            sandbox=""
+            referrerPolicy="no-referrer"
+            className="bg-card rounded-lg shadow-lg w-full"
+            style={{ minHeight: '80vh', border: 0 }}
           />
         ) : report ? (
           <Card>

@@ -12,6 +12,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts';
 import type { FacilityParams, TariffOverrides, AnnualSummary, MonthlyResult } from '@/hooks/usePowerModelCalculator';
+import { renderInlineMarkdown } from '@/utils/safeHtml';
 
 interface Props {
   params: FacilityParams;
@@ -656,7 +657,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
                       <div className="space-y-2">
                         {summarySection.items.map((item, j) => (
                           <p key={j} className="text-sm leading-relaxed text-muted-foreground"
-                             dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
+                             dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(item) }} />
                         ))}
                       </div>
                     </div>
@@ -683,7 +684,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
                           <div key={j} className="flex items-start gap-2 group">
                             <div className="w-1.5 h-1.5 rounded-full bg-current opacity-30 mt-2 shrink-0" />
                             <p className="text-xs leading-relaxed text-muted-foreground group-hover:text-foreground transition-colors"
-                               dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
+                               dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(item) }} />
                           </div>
                         ))}
                       </div>
@@ -705,7 +706,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
                     <div className="space-y-1.5">
                       {recommendationSection.items.map((item, j) => (
                         <p key={j} className="text-xs leading-relaxed text-muted-foreground"
-                           dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
+                           dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(item) }} />
                       ))}
                     </div>
                   </div>
