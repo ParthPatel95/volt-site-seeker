@@ -146,60 +146,11 @@ export function DocumentViewer({
   // PDFs, images, Office documents, and text files support translation
   const supportsTranslation = isPdf || isImage || isOffice || isText;
 
-  // Pre-load PDF to initialize state before Document component renders
-  useEffect(() => {
-    if (!isPdf || !documentUrl || useNativePdfViewer) return;
-    
-    let isCancelled = false;
-    
-    const preloadPdf = async () => {
-      try {
-        console.log('[DocumentViewer] Pre-loading PDF:', documentUrl.substring(0, 100));
-        
-        const loadingTask = pdfjs.getDocument({
-          url: documentUrl,
-          withCredentials: false,
-          isEvalSupported: false,
-          disableRange: false,
-          disableStream: false,
-          cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
-          cMapPacked: true,
-        });
-        
-        const pdf = await loadingTask.promise;
-        
-        if (isCancelled) {
-          console.log('[DocumentViewer] Pre-load cancelled, destroying PDF');
-          pdf.destroy().catch(() => {});
-          return;
-        }
-        
-        console.log('[DocumentViewer] Pre-load success, pages:', pdf.numPages);
-        setNumPages(pdf.numPages);
-        setDocumentLoaded(true);
-        setPdfDocumentProxy(pdf);
-        pdfProxyRef.current = pdf;
-        loadErrorCountRef.current = 0; // Reset error count on success
-      } catch (error) {
-        console.error('[DocumentViewer] Pre-load failed:', error);
-        
-        if (isCancelled) return;
-        
-        // Fall back to native viewer after 3 consecutive errors
-        loadErrorCountRef.current += 1;
-        if (loadErrorCountRef.current >= 3) {
-          console.log('[DocumentViewer] Too many errors, falling back to native viewer');
-          setUseNativePdfViewer(true);
-        }
-      }
-    };
-    
-    preloadPdf();
-    
-    return () => {
-      isCancelled = true;
-    };
-  }, [isPdf, documentUrl, useNativePdfViewer]);
+  // NOTE: Removed duplicate pdfjs.getDocument() pre-load.
+  // The <Document> component below already loads the PDF; doing it twice
+  // doubled the network bytes and significantly delayed first-page render.
+  // The PDFDocumentProxy needed for translation is captured in
+  // onDocumentLoadSuccess (see below).
 
   // Comprehensive cleanup on unmount - prevents crashes when navigating back
   useEffect(() => {
@@ -1074,7 +1025,7 @@ export function DocumentViewer({
                     }}
                   >
                     <Document
-                      file={pdfDocumentProxy ? { _transport: pdfDocumentProxy._transport } as any : documentUrl}
+                      file={documentUrl}
                       options={documentOptions}
                       onLoadSuccess={onDocumentLoadSuccess}
                       onLoadError={(error) => {
