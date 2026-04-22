@@ -16,7 +16,7 @@ import { PdfErrorBoundary } from './PdfErrorBoundary';
 // Configure PDF.js worker - use CDN to avoid bundling 1.9MB worker file
 // This reduces build output size and speeds up deployment
 if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
   console.log('[PDF.js] Worker initialized via CDN');
 }
 
@@ -121,7 +121,7 @@ export function DocumentViewer({
   const documentOptions = useMemo(() => ({
     disableRange: false,
     disableStream: false,
-    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
     cMapPacked: true,
     withCredentials: false,  // Critical for CORS with Supabase signed URLs
     isEvalSupported: false,  // Security - disable eval in PDF.js
@@ -162,7 +162,7 @@ export function DocumentViewer({
           isEvalSupported: false,
           disableRange: false,
           disableStream: false,
-          cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+          cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
           cMapPacked: true,
         });
         
