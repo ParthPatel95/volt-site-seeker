@@ -15,16 +15,31 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     // Disable gzip size reporting to speed up builds and reduce log output
     reportCompressedSize: false,
-    // Increase chunk size warning limit to reduce warning spam
-    chunkSizeWarningLimit: 2000,
+    // Flag any single chunk over ~1 MB so we notice new bloat; heavy libs
+    // are split out via manualChunks below.
+    chunkSizeWarningLimit: 1200,
     // Ensure content-hash based filenames for proper cache invalidation
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]'
-      }
-    }
+        assetFileNames: 'assets/[name].[hash].[ext]',
+        // Split heavy libraries into their own chunks so the main bundle
+        // stays small and these only load when a page actually imports
+        // them (via dynamic import or a route that uses them).
+        manualChunks: {
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-mapbox': ['mapbox-gl'],
+          'vendor-pdf': ['pdfjs-dist', 'react-pdf', 'jspdf', 'pdf-lib', 'html2canvas'],
+          'vendor-ocr': ['tesseract.js'],
+          'vendor-charts': ['recharts'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          // @huggingface/transformers is only referenced by dead code
+          // (BackgroundRemovalProcessor has no call sites) — tree-shaken
+          // away in production, so not listed here.
+        },
+      },
+    },
   },
   plugins: [
     react(),
@@ -63,8 +78,10 @@ export default defineConfig(({ command, mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Increase limit to handle large bundles (default is 2MB)
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+        // TODO: drop to 3 MB once App.tsx routes are lazy-loaded (currently
+        // 29 pages are statically imported, producing a ~5 MB main chunk).
+        // See DEPRECATED.md / QA backlog item "route-level lazy loading".
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB
         // Ensure new service workers take control immediately
         skipWaiting: true,
         clientsClaim: true,

@@ -5,11 +5,7 @@ import { performEnhancedGoogleMapsSearch } from './google-search.ts'
 import { performMLImageAnalysis } from './image-analysis.ts'
 import { validateSubstations, removeDuplicatesAndSort } from './validation.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
+import { corsHeaders } from "../_shared/cors.ts";
 const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 

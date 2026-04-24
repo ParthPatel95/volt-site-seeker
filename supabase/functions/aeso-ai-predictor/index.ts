@@ -1,10 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
+import { corsHeaders } from "../_shared/cors.ts";
 interface AIAnalysis {
   predicted_prices: { hour: number; price: number; confidence: number; reasoning: string }[];
   market_regime: 'stable' | 'volatile' | 'spike_risk' | 'low';

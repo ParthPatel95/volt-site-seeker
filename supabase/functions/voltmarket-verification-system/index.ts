@@ -1,10 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
+import { corsHeaders } from "../_shared/cors.ts";
 interface VerificationRequest {
   verificationType: 'identity' | 'company' | 'financial' | 'accredited_investor'
   submissionData: Record<string, any>

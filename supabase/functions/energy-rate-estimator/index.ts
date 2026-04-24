@@ -4,11 +4,7 @@ import { EnergyRateInput } from './types.ts';
 import { calculateEnergyRates } from './rate-calculator.ts';
 import { exportCSV, exportPDF } from './export-handlers.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
+import { corsHeaders } from "../_shared/cors.ts";
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

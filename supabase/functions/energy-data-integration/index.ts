@@ -1,9 +1,5 @@
 // Energy Data Integration Edge Function - Optimized with Caching
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
+import { corsHeaders } from "../_shared/cors.ts";
 // ========== SERVER-SIDE RESPONSE CACHE ==========
 // Increased cache TTL to reduce API calls and prevent boot errors from cold starts
 let cachedResponse: { data: EnergyDataResponse; timestamp: number } | null = null;
