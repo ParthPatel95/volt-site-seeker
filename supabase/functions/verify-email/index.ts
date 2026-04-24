@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
+// Verification tokens are crypto.randomUUID() values generated in the
+// send-verification-email function. Validate the caller-supplied token
+// against that exact shape before hitting the database so that malformed
+// input is rejected cheaply and cannot be used for query probing.
+const UUID_V4_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 serve(async (req) => {
   try {
     const supabaseClient = createClient(
@@ -11,7 +18,7 @@ serve(async (req) => {
     const url = new URL(req.url);
     const token = url.searchParams.get('token');
 
-    if (!token) {
+    if (!token || !UUID_V4_RE.test(token)) {
       return new Response(
         `<!DOCTYPE html>
         <html>

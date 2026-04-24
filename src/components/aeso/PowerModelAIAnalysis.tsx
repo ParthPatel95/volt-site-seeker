@@ -12,6 +12,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts';
 import type { FacilityParams, TariffOverrides, AnnualSummary, MonthlyResult } from '@/hooks/usePowerModelCalculator';
+import { renderInlineMarkdown } from '@/utils/safeHtml';
 
 interface Props {
   params: FacilityParams;
@@ -465,6 +466,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
 
@@ -472,6 +474,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
     if (!annual) return;
     setLoading(true);
     setAnalysis(null);
+    setErrorMessage(null);
     setLoadingStage(0);
 
     const stageTimers: NodeJS.Timeout[] = [];
@@ -502,13 +505,16 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setAnalysis(data.response);
-    } catch (err: any) {
-      const msg = err.message || 'Unknown error';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
       if (msg.includes('Rate limit') || msg.includes('429')) {
+        setErrorMessage('Rate limited — please wait a moment and try again.');
         toast({ title: 'Rate limited', description: 'Please wait a moment and try again.', variant: 'destructive' });
       } else if (msg.includes('credits') || msg.includes('402')) {
+        setErrorMessage('AI credits exhausted. Add credits to continue using AI analysis.');
         toast({ title: 'AI credits exhausted', description: 'Add credits to continue using AI analysis.', variant: 'destructive' });
       } else {
+        setErrorMessage(msg);
         toast({ title: 'Analysis failed', description: msg, variant: 'destructive' });
       }
     } finally {
@@ -622,6 +628,22 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
           </div>
         )}
 
+        {/* Error */}
+        {!loading && errorMessage && (
+          <div className="py-8">
+            <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
+              <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">Analysis failed</p>
+                <p className="text-xs text-muted-foreground mt-1 break-words">{errorMessage}</p>
+                <Button onClick={generateAnalysis} size="sm" variant="outline" className="mt-3 h-7 text-xs">
+                  <Sparkles className="w-3 h-3 mr-1" />Retry
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results */}
         {analysis && parsedSections.length > 0 && (
           <div className="space-y-5">
@@ -656,7 +678,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
                       <div className="space-y-2">
                         {summarySection.items.map((item, j) => (
                           <p key={j} className="text-sm leading-relaxed text-muted-foreground"
-                             dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
+                             dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(item) }} />
                         ))}
                       </div>
                     </div>
@@ -683,7 +705,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
                           <div key={j} className="flex items-start gap-2 group">
                             <div className="w-1.5 h-1.5 rounded-full bg-current opacity-30 mt-2 shrink-0" />
                             <p className="text-xs leading-relaxed text-muted-foreground group-hover:text-foreground transition-colors"
-                               dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
+                               dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(item) }} />
                           </div>
                         ))}
                       </div>
@@ -705,7 +727,7 @@ export function PowerModelAIAnalysis({ params, tariffOverrides, annual, monthly,
                     <div className="space-y-1.5">
                       {recommendationSection.items.map((item, j) => (
                         <p key={j} className="text-xs leading-relaxed text-muted-foreground"
-                           dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
+                           dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(item) }} />
                       ))}
                     </div>
                   </div>

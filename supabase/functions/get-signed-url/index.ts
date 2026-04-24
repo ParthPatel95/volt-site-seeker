@@ -1,15 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition",
-  "Cache-Control": "no-cache, no-store, must-revalidate",
-  "Pragma": "no-cache",
-  "Expires": "0"
-};
-
+import { corsHeaders } from "../_shared/cors.ts";
 interface BatchPathRequest {
   storagePath: string;
   isVideo?: boolean;
@@ -134,11 +125,9 @@ async function handleBatchRequest(paths: BatchPathRequest[], bucket?: string): P
     }),
     {
       status: 200,
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
+        ...corsHeaders,
         "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
         "Cache-Control": "public, max-age=300"
       },
@@ -217,11 +206,9 @@ async function handleSingleRequest(body: any): Promise<Response> {
         }),
         {
           status: 200,
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
+            ...corsHeaders,
             "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
             "Cache-Control": "public, max-age=300"
           },

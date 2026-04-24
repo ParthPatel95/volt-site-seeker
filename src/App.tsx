@@ -103,7 +103,7 @@ const App = () => (
                 <Route path="/academy/progress" element={<AcademyAuthProvider><AcademyAuthGuard><AcademyProgress /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/academy/auth" element={<AcademyAuthProvider><AcademyAuth /></AcademyAuthProvider>} />
                 <Route path="/academy/admin" element={<AcademyAuthProvider><AcademyAdmin /></AcademyAuthProvider>} />
-                <Route path="/academy/me" element={<AcademyAuthProvider><MyCertificates /></AcademyAuthProvider>} />
+                <Route path="/academy/me" element={<AcademyAuthProvider><AcademyAuthGuard><MyCertificates /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/verify/:certId" element={<VerifyCertificate />} />
                 <Route path="/bitcoin" element={<AcademyAuthProvider><AcademyAuthGuard><BitcoinEducation /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/datacenters" element={<AcademyAuthProvider><AcademyAuthGuard><DatacenterEducation /></AcademyAuthGuard></AcademyAuthProvider>} />

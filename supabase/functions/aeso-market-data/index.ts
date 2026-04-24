@@ -1,12 +1,7 @@
 // AESO Market Data - Hardened edge function with cold-start resilience
 // Uses Deno.serve (native) instead of remote imports to prevent BOOT_ERROR
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
-};
-
+import { corsHeaders } from "../_shared/cors.ts";
 // In-memory cache for cold-start resilience
 let cachedResponse: { data: any; timestamp: number } | null = null;
 const CACHE_TTL_MS = 90_000; // 90 seconds

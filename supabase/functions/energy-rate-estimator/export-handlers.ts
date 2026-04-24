@@ -1,10 +1,6 @@
 
 import { EnergyRateResults, EnergyRateInput } from './types.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../_shared/cors.ts';
 
 export async function exportCSV(results: EnergyRateResults, input: EnergyRateInput): Promise<Response> {
   console.log('Exporting detailed CSV with real rate breakdown...');

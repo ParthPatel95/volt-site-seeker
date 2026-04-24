@@ -1,10 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
+import { corsHeaders } from "../_shared/cors.ts";
 // Helper: Extract text from PDF using Gemini Vision
 async function extractTextFromPdfWithVision(documentUrl: string, pageNumber: number, apiKey: string): Promise<string> {
   console.log('[translate-document] Extracting text from PDF via Gemini Vision:', { documentUrl: documentUrl.substring(0, 100), pageNumber });

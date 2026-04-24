@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAcademyAuth } from '@/contexts/AcademyAuthContext';
 import { Award, ArrowLeft, ExternalLink, Linkedin, Bookmark as BookmarkIcon, Download } from 'lucide-react';
@@ -17,8 +17,9 @@ interface Cert {
 }
 
 const MyCertificates = () => {
-  const { user, isLoading } = useAcademyAuth();
-  const navigate = useNavigate();
+  // Route is wrapped in <AcademyAuthGuard> in App.tsx, so `user` is guaranteed
+  // to be non-null by the time this component renders.
+  const { user } = useAcademyAuth();
   const [certs, setCerts] = useState<Cert[]>([]);
   const { bookmarks } = useBookmarks();
 
@@ -28,11 +29,8 @@ const MyCertificates = () => {
     if (!user) return;
     supabase.from('academy_certificates').select('*').eq('user_id', user.id)
       .order('issued_at', { ascending: false })
-      .then(({ data }) => setCerts((data as any) || []));
+      .then(({ data }) => setCerts((data as unknown as Cert[]) || []));
   }, [user]);
-
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
-  if (!user) { navigate('/academy/auth'); return null; }
 
   const moduleById = (id: string) => ACADEMY_CURRICULUM.find(m => m.id === id);
 

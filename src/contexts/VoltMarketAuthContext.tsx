@@ -87,35 +87,25 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
 
       if (error) {
         console.error('Profile creation error:', error);
-        // If RLS error, try creating via edge function
+        // If RLS rejects the direct insert (e.g. session just established),
+        // fall back to the edge function which runs under service role.
         if (error.message.includes('row-level security')) {
-          try {
-            const response = await fetch(`https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/create-voltmarket-profile`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE`,
-              },
-              body: JSON.stringify({
-                user_id: userId,
+          const { data: edgeData, error: edgeError } = await supabase.functions.invoke(
+            'create-voltmarket-profile',
+            {
+              body: {
                 role: userData.role,
                 seller_type: userData.seller_type,
                 company_name: userData.company_name,
                 phone_number: userData.phone_number,
-              }),
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              return { error: new Error(errorData.error || 'Failed to create profile via edge function') };
+              },
             }
-
-            const profileData = await response.json();
-            return { data: profileData, error: null };
-          } catch (edgeFunctionError) {
-            console.error('Edge function error:', edgeFunctionError);
-            return { error: edgeFunctionError as Error };
+          );
+          if (edgeError) {
+            console.error('Edge function error:', edgeError);
+            return { error: edgeError as Error };
           }
+          return { data: edgeData, error: null };
         }
         return { error };
       }
@@ -129,8 +119,10 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
 
   useEffect(() => {
     let mounted = true;
+    // Track the current profile fetch so a stale fetch from a prior session
+    // can't overwrite state from a newer one.
+    let fetchToken = 0;
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -138,19 +130,18 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          // Use setTimeout to avoid potential recursive calls
-          setTimeout(async () => {
-            if (mounted) {
-              const profileData = await fetchProfile(session.user.id);
-              if (mounted) {
-                setProfile(profileData);
-                setLoading(false);
-              }
-            }
-          }, 0);
+          const myToken = ++fetchToken;
+          // Defer to next microtask to avoid re-entrant Supabase client calls.
+          Promise.resolve().then(async () => {
+            const profileData = await fetchProfile(session.user.id);
+            if (!mounted || myToken !== fetchToken) return;
+            setProfile(profileData);
+            setLoading(false);
+          });
         } else {
+          fetchToken++;
           if (mounted) {
             setProfile(null);
             setLoading(false);
@@ -240,23 +231,15 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
 
         // Send custom verification email
         try {
-          const response = await fetch(`https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/send-verification-email`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE`,
-            },
-            body: JSON.stringify({
+          const { error: emailError } = await supabase.functions.invoke('send-verification-email', {
+            body: {
               email: data.user.email,
               user_id: data.user.id,
-              is_resend: false
-            }),
+              is_resend: false,
+            },
           });
-
-          if (!response.ok) {
-            console.error('Failed to send verification email');
-          } else {
-            console.log('Verification email sent successfully');
+          if (emailError) {
+            console.error('Failed to send verification email:', emailError);
           }
         } catch (emailError) {
           console.error('Error sending verification email:', emailError);
@@ -344,24 +327,16 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
     if (!user?.email || !user?.id) return { error: new Error('No user found') };
 
     try {
-      const response = await fetch(`https://ktgosplhknmnyagxrgbe.supabase.co/functions/v1/send-verification-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0Z29zcGxoa25tbnlhZ3hyZ2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2OTkzMDUsImV4cCI6MjA2NTI3NTMwNX0.KVs7C_7PHARS-JddBgARWFpDZE6yCeMTLgZhu2UKACE`,
-        },
-        body: JSON.stringify({
+      const { error } = await supabase.functions.invoke('send-verification-email', {
+        body: {
           email: user.email,
           user_id: user.id,
-          is_resend: true
-        }),
+          is_resend: true,
+        },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return { error: new Error(errorData.error || 'Failed to send verification email') };
+      if (error) {
+        return { error: error as Error };
       }
-
       return { error: null };
     } catch (err) {
       console.error('Error resending verification email:', err);

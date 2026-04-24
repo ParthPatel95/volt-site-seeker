@@ -1,16 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from "../_shared/cors.ts"
 
 // Store active connections
 const connections = new Map<string, WebSocket>()
 const userConnections = new Map<string, string>() // userId -> connectionId
 
 Deno.serve((req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -22,9 +17,11 @@ Deno.serve((req) => {
 
   const { socket, response } = Deno.upgradeWebSocket(req)
   const connectionId = crypto.randomUUID()
+  // userId is only ever set from a verified JWT below; never from a
+  // client-supplied value. Previously clients could spoof identity by sending
+  // any userId/senderId they wanted.
   let userId: string | null = null
 
-  // Create Supabase client
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -38,52 +35,67 @@ Deno.serve((req) => {
   socket.onmessage = async (event) => {
     try {
       const data = JSON.parse(event.data)
-      console.log('Received message:', data)
 
       switch (data.type) {
-        case 'auth':
-          // Authenticate user and store connection
-          userId = data.userId
-          if (userId) {
-            userConnections.set(userId, connectionId)
-            socket.send(JSON.stringify({
-              type: 'auth_success',
-              message: 'Authenticated successfully'
-            }))
+        case 'auth': {
+          // Verify a supplied Supabase access token instead of trusting
+          // data.userId. Client must send { type: 'auth', token: <access_jwt> }.
+          const token: string | undefined = data?.token
+          if (!token || typeof token !== 'string') {
+            socket.send(JSON.stringify({ type: 'error', message: 'Missing token' }))
+            return
           }
+          const { data: userResult, error: authError } = await supabase.auth.getUser(token)
+          if (authError || !userResult?.user) {
+            socket.send(JSON.stringify({ type: 'error', message: 'Invalid token' }))
+            return
+          }
+          userId = userResult.user.id
+          // Replace any previous connection for this user to avoid stale
+          // mappings (e.g. duplicate tabs).
+          const prevConnId = userConnections.get(userId)
+          if (prevConnId && prevConnId !== connectionId) {
+            connections.get(prevConnId)?.close()
+            connections.delete(prevConnId)
+          }
+          userConnections.set(userId, connectionId)
+          socket.send(JSON.stringify({ type: 'auth_success', userId }))
           break
+        }
 
-        case 'send_message':
+        case 'send_message': {
           if (!userId) {
-            socket.send(JSON.stringify({
-              type: 'error',
-              message: 'Not authenticated'
-            }))
+            socket.send(JSON.stringify({ type: 'error', message: 'Not authenticated' }))
+            return
+          }
+          if (!data.listingId || !data.recipientId || typeof data.message !== 'string') {
+            socket.send(JSON.stringify({ type: 'error', message: 'Invalid payload' }))
+            return
+          }
+          if (data.message.length === 0 || data.message.length > 5000) {
+            socket.send(JSON.stringify({ type: 'error', message: 'Message length out of range' }))
             return
           }
 
-          // Save message to database
+          // sender_id is ALWAYS the authenticated user; ignore any
+          // client-supplied senderId.
           const { data: message, error } = await supabase
             .from('voltmarket_messages')
             .insert({
               listing_id: data.listingId,
-              sender_id: data.senderId,
+              sender_id: userId,
               recipient_id: data.recipientId,
-              message: data.message
+              message: data.message,
             })
             .select()
             .single()
 
-          if (error) {
-            console.error('Error saving message:', error)
-            socket.send(JSON.stringify({
-              type: 'error',
-              message: 'Failed to send message'
-            }))
+          if (error || !message) {
+            console.error('Error saving message:', error?.message)
+            socket.send(JSON.stringify({ type: 'error', message: 'Failed to send message' }))
             return
           }
 
-          // Update conversation timestamp
           if (message.conversation_id) {
             await supabase
               .from('voltmarket_conversations')
@@ -91,7 +103,6 @@ Deno.serve((req) => {
               .eq('id', message.conversation_id)
           }
 
-          // Broadcast message to both sender and recipient
           const messageData = {
             type: 'new_message',
             message: {
@@ -101,34 +112,29 @@ Deno.serve((req) => {
               recipient_id: message.recipient_id,
               message: message.message,
               created_at: message.created_at,
-              is_read: message.is_read
-            }
+              is_read: message.is_read,
+            },
           }
 
-          // Send to sender
-          const senderConnectionId = userConnections.get(data.senderId)
+          const senderConnectionId = userConnections.get(userId)
           if (senderConnectionId && connections.has(senderConnectionId)) {
             connections.get(senderConnectionId)?.send(JSON.stringify(messageData))
           }
-
-          // Send to recipient
           const recipientConnectionId = userConnections.get(data.recipientId)
           if (recipientConnectionId && connections.has(recipientConnectionId)) {
             connections.get(recipientConnectionId)?.send(JSON.stringify(messageData))
           }
           break
+        }
 
-        case 'mark_read':
+        case 'mark_read': {
           if (!userId) return
-
-          // Mark message as read
           await supabase
             .from('voltmarket_messages')
             .update({ is_read: true })
             .eq('id', data.messageId)
             .eq('recipient_id', userId)
 
-          // Notify sender that message was read
           const { data: readMessage } = await supabase
             .from('voltmarket_messages')
             .select('sender_id')
@@ -140,54 +146,54 @@ Deno.serve((req) => {
             if (senderConnId && connections.has(senderConnId)) {
               connections.get(senderConnId)?.send(JSON.stringify({
                 type: 'message_read',
-                messageId: data.messageId
+                messageId: data.messageId,
               }))
             }
           }
           break
+        }
 
-        case 'typing':
+        case 'typing': {
           if (!userId) return
-
-          // Broadcast typing indicator to recipient
           const typingRecipientConnId = userConnections.get(data.recipientId)
           if (typingRecipientConnId && connections.has(typingRecipientConnId)) {
             connections.get(typingRecipientConnId)?.send(JSON.stringify({
               type: 'typing',
               senderId: userId,
-              isTyping: data.isTyping
+              isTyping: data.isTyping,
             }))
           }
           break
+        }
 
         default:
           console.log('Unknown message type:', data.type)
       }
     } catch (error) {
-      console.error('Error processing message:', error)
-      socket.send(JSON.stringify({
-        type: 'error',
-        message: 'Invalid message format'
-      }))
+      console.error('Error processing message:', error instanceof Error ? error.message : 'unknown')
+      try {
+        socket.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }))
+      } catch {
+        /* socket may already be closed */
+      }
+    }
+  }
+
+  const cleanup = () => {
+    connections.delete(connectionId)
+    if (userId && userConnections.get(userId) === connectionId) {
+      userConnections.delete(userId)
     }
   }
 
   socket.onclose = () => {
     console.log(`WebSocket connection closed: ${connectionId}`)
-    connections.delete(connectionId)
-    
-    // Remove user connection mapping
-    if (userId) {
-      userConnections.delete(userId)
-    }
+    cleanup()
   }
 
   socket.onerror = (error) => {
     console.error('WebSocket error:', error)
-    connections.delete(connectionId)
-    if (userId) {
-      userConnections.delete(userId)
-    }
+    cleanup()
   }
 
   return response

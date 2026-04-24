@@ -21,38 +21,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkApproval = async (userId: string) => {
     if (approvalCache.current.has(userId)) {
-      const cached = approvalCache.current.get(userId)!;
+      const cached = approvalCache.current.get(userId) ?? false;
       setIsApproved(cached);
       return;
     }
 
+    // Race the RPC against a timer we can clear, so we don't leave a pending
+    // setTimeout that later rejects an already-settled promise.
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Approval check timeout')), 8000)
-      );
-      
-      const approvalPromise = supabase
-        .rpc('is_voltscout_approved', { user_id: userId });
-      
-      const { data, error } = await Promise.race([
-        approvalPromise,
-        timeoutPromise
-      ]) as any;
-      
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Approval check timeout')), 8000);
+      });
+      const approvalPromise = supabase.rpc('is_voltscout_approved', { user_id: userId });
+      const result = await Promise.race([approvalPromise, timeoutPromise]) as
+        | { data: unknown; error: { message: string } | null }
+        | never;
+
+      const error = result?.error;
       if (error) {
         console.warn('Approval check failed, defaulting to approved:', error.message);
         approvalCache.current.set(userId, true);
         setIsApproved(true);
         return;
       }
-      
-      const approved = data || false;
+
+      const approved = Boolean(result?.data);
       approvalCache.current.set(userId, approved);
       setIsApproved(approved);
     } catch (error) {
-      console.warn('Approval check timeout/error, defaulting to approved:', error);
+      console.warn('Approval check timeout/error, defaulting to approved:',
+        error instanceof Error ? error.message : 'unknown');
       approvalCache.current.set(userId, true);
       setIsApproved(true);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
     }
   };
 
@@ -115,15 +118,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
         
         if (event === 'SIGNED_OUT') {
+          approvalCache.current.clear();
           setSession(null);
           setUser(null);
           setIsApproved(false);
           setLoading(false);
           return;
         }
-        
+
         if (event === 'TOKEN_REFRESHED' && !session) {
           console.warn('Token refresh failed, signing out');
+          approvalCache.current.clear();
           await supabase.auth.signOut();
           setSession(null);
           setUser(null);
@@ -131,10 +136,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
           return;
         }
-        
+
+        // On SIGNED_IN / USER_UPDATED, ensure the approval status is re-fetched
+        // (admin may have changed it between sessions).
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          if (session?.user) approvalCache.current.delete(session.user.id);
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           try {
             await checkApproval(session.user.id);
@@ -145,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setIsApproved(false);
         }
-        
+
         setLoading(false);
       }
     );

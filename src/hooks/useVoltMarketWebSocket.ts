@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WebSocketMessage {
   type: string;
@@ -33,16 +34,21 @@ export const useVoltMarketWebSocket = (): UseWebSocketReturn => {
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
-      ws.onopen = () => {
+      ws.onopen = async () => {
         console.log('WebSocket connected');
         setIsConnected(true);
         setReconnectAttempts(0);
-        
-        // Authenticate with the server
-        ws.send(JSON.stringify({
-          type: 'auth',
-          userId: profile.id
-        }));
+
+        // Authenticate with the server using the current Supabase access
+        // token. The server verifies the JWT and derives userId from it;
+        // we do not send userId from the client anymore.
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) {
+          ws.close(4001, 'No session');
+          return;
+        }
+        ws.send(JSON.stringify({ type: 'auth', token: accessToken }));
       };
 
       ws.onmessage = (event) => {
@@ -105,12 +111,13 @@ export const useVoltMarketWebSocket = (): UseWebSocketReturn => {
       return;
     }
 
+    // senderId is derived server-side from the authenticated session; do not
+    // send it from the client.
     wsRef.current.send(JSON.stringify({
       type: 'send_message',
-      senderId: profile.id,
       recipientId,
       listingId,
-      message
+      message,
     }));
   }, [isConnected, profile?.id]);
 
