@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, CheckCircle2, Mail } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const schema = z.object({
@@ -75,7 +75,7 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
       setSuccess(true);
       toast({ title: 'Inquiry received', description: 'Our advisory team will reach out within one business day.' });
     } catch (e: any) {
-      toast({ title: 'Submission failed', description: e?.message ?? 'Please email advisory@wattbyte.com directly.', variant: 'destructive' });
+      toast({ title: 'Submission failed', description: e?.message ?? 'Please try again in a moment.', variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -95,10 +95,7 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
           <div className="bg-card border border-border rounded-2xl p-10 text-center">
             <CheckCircle2 className="w-14 h-14 text-watt-success mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-foreground mb-2">Inquiry received</h3>
-            <p className="text-muted-foreground mb-6">Thanks — our advisory team will reach out shortly. For urgent matters, email us directly.</p>
-            <Button asChild variant="outline">
-              <a href="mailto:advisory@wattbyte.com" className="gap-2"><Mail className="w-4 h-4" /> advisory@wattbyte.com</a>
-            </Button>
+            <p className="text-muted-foreground">Thanks — our advisory team will review your request and reach out within one business day.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="bg-card border border-border rounded-2xl p-6 md:p-8 space-y-5">
@@ -180,7 +177,7 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
             <Button type="submit" size="lg" disabled={submitting} className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white font-semibold">
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit inquiry'}
             </Button>
-            <p className="text-xs text-muted-foreground text-center">Or email us directly: <a href="mailto:advisory@wattbyte.com" className="text-watt-bitcoin hover:underline">advisory@wattbyte.com</a></p>
+            <p className="text-xs text-muted-foreground text-center">We typically respond within one business day.</p>
           </form>
         )}
       </div>
