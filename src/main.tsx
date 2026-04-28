@@ -35,7 +35,9 @@ const rootElement = document.getElementById("root");
 const cachedVersion = window.localStorage.getItem('wattbyte_app_version');
 if (isVersionOutdated(cachedVersion)) {
   window.localStorage.setItem('wattbyte_app_version', APP_VERSION);
-  if (cachedVersion && 'serviceWorker' in navigator) {
+  const host = window.location.hostname;
+  const canRefreshServiceWorker = cachedVersion && 'serviceWorker' in navigator && !host.includes('lovableproject.com');
+  if (canRefreshServiceWorker) {
     navigator.serviceWorker.getRegistrations()
       .then((registrations) => registrations.forEach((registration) => registration.update()))
       .catch((error) => console.warn('[PWA] Cache update check failed:', error));
