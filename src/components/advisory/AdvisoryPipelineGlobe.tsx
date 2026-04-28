@@ -10,13 +10,21 @@ import { X, MapPin } from 'lucide-react';
 
 const RADIUS = 2;
 
+// Convert lat/lng to a position on a textured sphere using the canonical
+// three.js mapping for an equirectangular Earth texture (mrdoob earth_atmos_2048).
+// With this mapping, lng=0 (Greenwich) sits on -X, lng=+90 (Asia) on +Z,
+// lng=-90 (Americas) on -Z, and lng=180 (Pacific) on +X.
+// Convert lat/lng to a sphere position aligned with the mrdoob earth_atmos
+// equirectangular texture as wrapped by three.js SphereGeometry default UVs:
+//   lng = -180  -> +X        lng = 0  -> -X (Greenwich / Africa-Europe)
+//   lng =  -90  -> -Z (Americas)   lng = +90 -> +Z (Asia)
 const latLngToVec3 = (lat: number, lng: number, r: number) => {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lng + 180) * (Math.PI / 180);
+  const latRad = lat * (Math.PI / 180);
+  const lngRad = lng * (Math.PI / 180);
   return new THREE.Vector3(
-    -(r * Math.sin(phi) * Math.cos(theta)),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta),
+    -r * Math.cos(latRad) * Math.cos(lngRad),
+     r * Math.sin(latRad),
+     r * Math.cos(latRad) * Math.sin(lngRad),
   );
 };
 
@@ -31,7 +39,7 @@ const atmosphereVertex = `
 const atmosphereFragment = `
   varying vec3 vNormal;
   void main() {
-    float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.2);
+    float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 1.9);
     gl_FragColor = vec4(0.23, 0.56, 1.0, 1.0) * intensity;
   }
 `;
@@ -52,13 +60,51 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
     bumpMap.anisotropy = 4;
   }, [dayMap, bumpMap, cloudsMap]);
 
-  useFrame(() => {
-    if (groupRef.current && !paused) groupRef.current.rotation.y += 0.0008;
+  // Tour through HQ + each pipeline site. We rotate the globe group so OrbitControls still works.
+  const tourStops = useMemo(() => {
+    const stops = [
+      { lat: HQ.lat, lng: HQ.lng },
+      ...PIPELINE_PROJECTS.map(p => ({ lat: p.lat, lng: p.lng })),
+    ];
+    return stops.map(s => {
+      // Direction from globe center to the site (in local sphere space, unit length)
+      const v = latLngToVec3(s.lat, s.lng, 1).normalize();
+      // Quaternion that rotates `v` to face +Z (toward camera). With a slight downward
+      // tilt so northern sites don't sit at the very top of the globe.
+      const target = new THREE.Vector3(0, -0.18, 1).normalize();
+      const q = new THREE.Quaternion().setFromUnitVectors(v, target);
+      return q;
+    });
+  }, []);
+
+  const tourState = useRef({ index: 0, holdUntil: 0, lastAdvance: 0 });
+
+  useFrame(({ clock }) => {
     if (cloudsRef.current && !paused) cloudsRef.current.rotation.y += 0.00035;
+    if (!groupRef.current || paused) return;
+    const t = clock.getElapsedTime();
+    const target = tourStops[tourState.current.index];
+    // Slerp toward current target stop (faster)
+    groupRef.current.quaternion.slerp(target, 0.06);
+    const angle = groupRef.current.quaternion.angleTo(target);
+    // Advance when close enough, OR after a max-time fallback so we never get stuck
+    const elapsedSinceAdvance = t - tourState.current.lastAdvance;
+    const reached = angle < 0.05;
+    if (reached && tourState.current.holdUntil === 0) {
+      tourState.current.holdUntil = t + 2.2;
+    }
+    const shouldAdvance =
+      (tourState.current.holdUntil > 0 && t >= tourState.current.holdUntil) ||
+      elapsedSinceAdvance > 6.5; // hard fallback
+    if (shouldAdvance) {
+      tourState.current.index = (tourState.current.index + 1) % tourStops.length;
+      tourState.current.holdUntil = 0;
+      tourState.current.lastAdvance = t;
+    }
   });
 
   return (
-    <group ref={groupRef} rotation={[0, 0, 23.4 * Math.PI / 180]}>
+    <group ref={groupRef}>
       {/* Earth surface — photorealistic */}
       <mesh>
         <sphereGeometry args={[RADIUS, 64, 64]} />
@@ -105,12 +151,12 @@ const HQMarker: React.FC = () => {
   return (
     <group position={pos}>
       <mesh>
-        <sphereGeometry args={[0.06, 16, 16]} />
+        <sphereGeometry args={[0.05, 16, 16]} />
         <meshBasicMaterial color="#F7931A" />
       </mesh>
       <mesh>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshBasicMaterial color="#F7931A" transparent opacity={0.25} />
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshBasicMaterial color="#F7931A" transparent opacity={0.18} />
       </mesh>
     </group>
   );
@@ -120,7 +166,7 @@ const ProjectMarker: React.FC<{ project: PipelineProject }> = ({ project }) => {
   const pos = latLngToVec3(project.lat, project.lng, RADIUS * 1.025);
   const ringRef = useRef<THREE.Mesh>(null);
   const color = ENERGY_TYPE_COLORS[project.energyType].hex;
-  const size = 0.04 + Math.min(project.capacityMw / 600, 0.08);
+  const size = 0.035 + Math.min(project.capacityMw / 1000, 0.04);
 
   useFrame(({ clock }) => {
     if (ringRef.current) {
@@ -168,9 +214,10 @@ const Arc: React.FC<{ project: PipelineProject }> = ({ project }) => {
 
 const Scene: React.FC<{ paused: boolean }> = ({ paused }) => (
   <>
-    <ambientLight intensity={0.35} color="#1a2540" />
-    <directionalLight position={[5, 3, 5]} intensity={1.4} color="#ffffff" />
-    <directionalLight position={[-6, -2, -4]} intensity={0.18} color="#F7931A" />
+    <ambientLight intensity={0.45} color="#2a3550" />
+    <directionalLight position={[5, 3, 5]} intensity={1.7} color="#fff5e6" />
+    <directionalLight position={[-5, 1, -3]} intensity={0.25} color="#6aa9ff" />
+    <directionalLight position={[-6, -2, -4]} intensity={0.12} color="#F7931A" />
     <Stars radius={60} depth={25} count={600} factor={3} saturation={0} fade speed={0.3} />
     <Earth paused={paused} />
     <OrbitControls enablePan={false} enableZoom autoRotate={false} minDistance={3.5} maxDistance={8} />
@@ -193,11 +240,13 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   const selected = PIPELINE_PROJECTS.find(p => p.id === selectedId) ?? null;
 
   return (
-    <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <Canvas camera={{ position: [0, 0, 5.5], fov: 45 }} dpr={[1, 1.5]}>
+    <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]">
+      <Canvas
+        camera={{ position: [0, 0, 5.5], fov: 45 }}
+        dpr={[1, 1.5]}
+        onPointerEnter={() => setPaused(true)}
+        onPointerLeave={() => setPaused(false)}
+      >
         <Suspense fallback={null}>
           <Scene paused={paused} />
         </Suspense>
