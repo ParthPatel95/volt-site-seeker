@@ -43,6 +43,7 @@ import { AcademyAuthGuard } from "./components/academy/AcademyAuthGuard";
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Advisory = lazy(() => import('./pages/Advisory'));
 import SharedAESOReport from './pages/SharedAESOReport';
 import ComprehensiveTest from "./pages/ComprehensiveTest";
 import ComprehensiveFeaturesTest from "./pages/ComprehensiveFeaturesTest";
@@ -99,6 +100,13 @@ const App = () => (
                   </LazyErrorBoundary>
                 } />
                 <Route path="/hosting" element={<Hosting />} />
+                <Route path="/advisory" element={
+                  <LazyErrorBoundary componentName="Advisory">
+                    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><SectionLoader message="Loading Advisory..." /></div>}>
+                      <Advisory />
+                    </Suspense>
+                  </LazyErrorBoundary>
+                } />
                 <Route path="/academy" element={<AcademyAuthProvider><Academy /></AcademyAuthProvider>} />
                 <Route path="/academy/progress" element={<AcademyAuthProvider><AcademyAuthGuard><AcademyProgress /></AcademyAuthGuard></AcademyAuthProvider>} />
                 <Route path="/academy/auth" element={<AcademyAuthProvider><AcademyAuth /></AcademyAuthProvider>} />

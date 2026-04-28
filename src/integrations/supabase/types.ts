@@ -3338,6 +3338,60 @@ export type Database = {
           },
         ]
       }
+      consulting_inquiries: {
+        Row: {
+          client_type: string
+          company: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          project_description: string | null
+          role: string | null
+          source: string
+          status: string
+          target_capacity_mw: number | null
+          target_geography: string | null
+          timeline: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_type: string
+          company: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          project_description?: string | null
+          role?: string | null
+          source?: string
+          status?: string
+          target_capacity_mw?: number | null
+          target_geography?: string | null
+          timeline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_type?: string
+          company?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          project_description?: string | null
+          role?: string | null
+          source?: string
+          status?: string
+          target_capacity_mw?: number | null
+          target_geography?: string | null
+          timeline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contract_awards: {
         Row: {
           awarded_amount: number
