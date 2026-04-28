@@ -77,23 +77,29 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
     });
   }, []);
 
-  const tourState = useRef({ index: 0, holdUntil: 0 });
+  const tourState = useRef({ index: 0, holdUntil: 0, lastAdvance: 0 });
 
   useFrame(({ clock }) => {
     if (cloudsRef.current && !paused) cloudsRef.current.rotation.y += 0.00035;
     if (!groupRef.current || paused) return;
     const t = clock.getElapsedTime();
     const target = tourStops[tourState.current.index];
-    // Slerp toward current target stop
-    groupRef.current.quaternion.slerp(target, 0.025);
-    // Once close enough, hold for 2.5s then advance
+    // Slerp toward current target stop (faster)
+    groupRef.current.quaternion.slerp(target, 0.06);
     const angle = groupRef.current.quaternion.angleTo(target);
-    if (angle < 0.02) {
-      if (tourState.current.holdUntil === 0) tourState.current.holdUntil = t + 2.5;
-      if (t >= tourState.current.holdUntil) {
-        tourState.current.index = (tourState.current.index + 1) % tourStops.length;
-        tourState.current.holdUntil = 0;
-      }
+    // Advance when close enough, OR after a max-time fallback so we never get stuck
+    const elapsedSinceAdvance = t - tourState.current.lastAdvance;
+    const reached = angle < 0.05;
+    if (reached && tourState.current.holdUntil === 0) {
+      tourState.current.holdUntil = t + 2.2;
+    }
+    const shouldAdvance =
+      (tourState.current.holdUntil > 0 && t >= tourState.current.holdUntil) ||
+      elapsedSinceAdvance > 6.5; // hard fallback
+    if (shouldAdvance) {
+      tourState.current.index = (tourState.current.index + 1) % tourStops.length;
+      tourState.current.holdUntil = 0;
+      tourState.current.lastAdvance = t;
     }
   });
 
@@ -234,11 +240,13 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   const selected = PIPELINE_PROJECTS.find(p => p.id === selectedId) ?? null;
 
   return (
-    <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <Canvas camera={{ position: [0, 0, 5.5], fov: 45 }} dpr={[1, 1.5]}>
+    <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]">
+      <Canvas
+        camera={{ position: [0, 0, 5.5], fov: 45 }}
+        dpr={[1, 1.5]}
+        onPointerEnter={() => setPaused(true)}
+        onPointerLeave={() => setPaused(false)}
+      >
         <Suspense fallback={null}>
           <Scene paused={paused} />
         </Suspense>
