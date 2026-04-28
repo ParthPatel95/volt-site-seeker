@@ -18,9 +18,9 @@ const latLngToVec3 = (lat: number, lng: number, r: number) => {
   const latRad = lat * (Math.PI / 180);
   const lngRad = lng * (Math.PI / 180);
   return new THREE.Vector3(
-    -r * Math.cos(latRad) * Math.cos(lngRad),
+     r * Math.cos(latRad) * Math.cos(lngRad),
      r * Math.sin(latRad),
-     r * Math.cos(latRad) * Math.sin(lngRad),
+    -r * Math.cos(latRad) * Math.sin(lngRad),
   );
 };
 
