@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SectionDivider } from '@/components/landing/SectionDivider';
@@ -8,12 +8,28 @@ import { AdvisoryMarketContext } from '@/components/advisory/AdvisoryMarketConte
 import { AdvisoryServices } from '@/components/advisory/AdvisoryServices';
 import { AdvisoryProcess } from '@/components/advisory/AdvisoryProcess';
 import { AdvisoryDifferentiators } from '@/components/advisory/AdvisoryDifferentiators';
-import { AdvisoryPipelineGlobe } from '@/components/advisory/AdvisoryPipelineGlobe';
 import { PipelineFlowStrip } from '@/components/advisory/PipelineFlowStrip';
-import { AdvisoryCaseStudies } from '@/components/advisory/AdvisoryCaseStudies';
-import { AdvisoryFAQ } from '@/components/advisory/AdvisoryFAQ';
 import { AdvisoryInquiryForm } from '@/components/advisory/AdvisoryInquiryForm';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+
+const AdvisoryPipelineGlobe = lazy(() =>
+  import('@/components/advisory/AdvisoryPipelineGlobe').then(m => ({ default: m.AdvisoryPipelineGlobe }))
+);
+const AdvisoryCaseStudies = lazy(() =>
+  import('@/components/advisory/AdvisoryCaseStudies').then(m => ({ default: m.AdvisoryCaseStudies }))
+);
+const AdvisoryFAQ = lazy(() =>
+  import('@/components/advisory/AdvisoryFAQ').then(m => ({ default: m.AdvisoryFAQ }))
+);
+
+const GlobePlaceholder: React.FC = () => (
+  <div className="w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))] flex items-center justify-center">
+    <div className="text-center text-white/60">
+      <div className="w-12 h-12 rounded-full border-2 border-watt-bitcoin/40 border-t-watt-bitcoin animate-spin mx-auto mb-3" />
+      <div className="text-sm">Loading interactive globe…</div>
+    </div>
+  </div>
+);
 
 const Advisory: React.FC = () => {
   const formRef = useRef<HTMLDivElement>(null);
@@ -88,7 +104,9 @@ const Advisory: React.FC = () => {
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
-              <AdvisoryPipelineGlobe />
+              <Suspense fallback={<GlobePlaceholder />}>
+                <AdvisoryPipelineGlobe />
+              </Suspense>
             </ScrollReveal>
             <div className="mt-8">
               <PipelineFlowStrip />
@@ -97,10 +115,14 @@ const Advisory: React.FC = () => {
         </section>
 
         <SectionDivider color="cyan" />
-        <AdvisoryCaseStudies />
+        <Suspense fallback={<div className="py-24" />}>
+          <AdvisoryCaseStudies />
+        </Suspense>
 
         <SectionDivider color="purple" />
-        <AdvisoryFAQ />
+        <Suspense fallback={<div className="py-24" />}>
+          <AdvisoryFAQ />
+        </Suspense>
 
         <AdvisoryInquiryForm ref={formRef} />
       </main>
