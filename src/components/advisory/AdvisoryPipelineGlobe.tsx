@@ -14,13 +14,17 @@ const RADIUS = 2;
 // three.js mapping for an equirectangular Earth texture (mrdoob earth_atmos_2048).
 // With this mapping, lng=0 (Greenwich) sits on -X, lng=+90 (Asia) on +Z,
 // lng=-90 (Americas) on -Z, and lng=180 (Pacific) on +X.
+// Convert lat/lng to a sphere position aligned with the mrdoob earth_atmos
+// equirectangular texture as wrapped by three.js SphereGeometry default UVs:
+//   lng = -180  -> +X        lng = 0  -> -X (Greenwich / Africa-Europe)
+//   lng =  -90  -> -Z (Americas)   lng = +90 -> +Z (Asia)
 const latLngToVec3 = (lat: number, lng: number, r: number) => {
   const latRad = lat * (Math.PI / 180);
   const lngRad = lng * (Math.PI / 180);
   return new THREE.Vector3(
-     r * Math.cos(latRad) * Math.cos(lngRad),
+    -r * Math.cos(latRad) * Math.cos(lngRad),
      r * Math.sin(latRad),
-    -r * Math.cos(latRad) * Math.sin(lngRad),
+     r * Math.cos(latRad) * Math.sin(lngRad),
   );
 };
 
