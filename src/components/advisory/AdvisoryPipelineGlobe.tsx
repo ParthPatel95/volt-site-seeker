@@ -105,15 +105,14 @@ const Arc: React.FC<{ project: PipelineProject }> = ({ project }) => {
   mid.normalize().multiplyScalar(RADIUS + dist * 0.4);
   const curve = useMemo(() => new THREE.QuadraticBezierCurve3(start, mid, end), [project.id]);
   const points = useMemo(() => curve.getPoints(40), [curve]);
-  const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
   const color = ENERGY_TYPE_COLORS[project.energyType].hex;
+  const lineObject = useMemo(() => {
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.55 });
+    return new THREE.Line(geometry, material);
+  }, [points, color]);
 
-  return (
-    <line>
-      <primitive object={geometry} attach="geometry" />
-      <lineBasicMaterial color={color} transparent opacity={0.55} />
-    </line>
-  );
+  return <primitive object={lineObject} />;
 };
 
 const Scene: React.FC<{ paused: boolean }> = ({ paused }) => (
