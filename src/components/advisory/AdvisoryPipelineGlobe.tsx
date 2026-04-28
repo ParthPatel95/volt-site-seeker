@@ -10,17 +10,17 @@ import { X, MapPin } from 'lucide-react';
 
 const RADIUS = 2;
 
-// Convert lat/lng to a position on a sphere whose equirectangular texture
-// is mapped by three.js SphereGeometry default UVs. This orientation places
-// lng=0 (prime meridian) at +Z (toward camera at start), lng=+90 at +X,
-// and lng=-90 at -X — matching the mrdoob earth_atmos_2048 texture.
+// Convert lat/lng to a position on a textured sphere using the canonical
+// three.js mapping for an equirectangular Earth texture (mrdoob earth_atmos_2048).
+// With this mapping, lng=0 (Greenwich) sits on -X, lng=+90 (Asia) on +Z,
+// lng=-90 (Americas) on -Z, and lng=180 (Pacific) on +X.
 const latLngToVec3 = (lat: number, lng: number, r: number) => {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = -lng * (Math.PI / 180);
+  const latRad = lat * (Math.PI / 180);
+  const lngRad = lng * (Math.PI / 180);
   return new THREE.Vector3(
-    r * Math.sin(phi) * Math.cos(theta),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta),
+    -r * Math.cos(latRad) * Math.cos(lngRad),
+     r * Math.sin(latRad),
+     r * Math.cos(latRad) * Math.sin(lngRad),
   );
 };
 
