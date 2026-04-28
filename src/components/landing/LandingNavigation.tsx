@@ -58,7 +58,7 @@ export const LandingNavigation = () => {
           variant="ghost" 
           size="sm"
           onClick={() => navigate('/academy')}
-          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden xl:flex items-center gap-1.5"
         >
           <GraduationCap className="h-4 w-4" />
           Academy
@@ -67,7 +67,7 @@ export const LandingNavigation = () => {
           variant="ghost" 
           size="sm"
           onClick={() => navigate('/advisory')}
-          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden md:flex items-center gap-1.5"
         >
           <Briefcase className="h-4 w-4" />
           Advisory
@@ -76,7 +76,7 @@ export const LandingNavigation = () => {
           variant="ghost" 
           size="sm"
           onClick={() => navigate('/hosting')}
-          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden xl:flex items-center gap-1.5"
         >
           <Zap className="h-4 w-4" />
           Hosting
