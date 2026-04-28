@@ -1,11 +1,11 @@
 import React from 'react';
-import { Compass, Microscope, Drafting, Power } from 'lucide-react';
+import { Compass, Microscope, Ruler, Power } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const steps = [
   { icon: Compass,   week: 'Week 1–2',  title: 'Discovery',  desc: 'Define load profile, geography, timeline, capex envelope, and energy strategy.' },
   { icon: Microscope, week: 'Week 2–8',  title: 'Diligence',  desc: 'Source candidate sites, run interconnection + permitting + economics on each.' },
-  { icon: Drafting,  week: 'Week 6–14', title: 'Design',     desc: 'Lock in site, finalize PPA/utility terms, engineer substation + MEP, secure permits.' },
+  { icon: Ruler,  week: 'Week 6–14', title: 'Design',     desc: 'Lock in site, finalize PPA/utility terms, engineer substation + MEP, secure permits.' },
   { icon: Power,     week: 'Month 4–18', title: 'Energize',   desc: 'Construction oversight, commissioning, and operations handoff to your team.' },
 ];
 
