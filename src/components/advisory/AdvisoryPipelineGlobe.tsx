@@ -10,11 +10,15 @@ import { X, MapPin } from 'lucide-react';
 
 const RADIUS = 2;
 
+// Convert lat/lng to a position on a sphere whose equirectangular texture
+// is mapped by three.js SphereGeometry default UVs. This orientation places
+// lng=0 (prime meridian) at +Z (toward camera at start), lng=+90 at +X,
+// and lng=-90 at -X — matching the mrdoob earth_atmos_2048 texture.
 const latLngToVec3 = (lat: number, lng: number, r: number) => {
   const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lng + 180) * (Math.PI / 180);
+  const theta = -lng * (Math.PI / 180);
   return new THREE.Vector3(
-    -(r * Math.sin(phi) * Math.cos(theta)),
+    r * Math.sin(phi) * Math.cos(theta),
     r * Math.cos(phi),
     r * Math.sin(phi) * Math.sin(theta),
   );
@@ -31,7 +35,7 @@ const atmosphereVertex = `
 const atmosphereFragment = `
   varying vec3 vNormal;
   void main() {
-    float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.2);
+    float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 1.9);
     gl_FragColor = vec4(0.23, 0.56, 1.0, 1.0) * intensity;
   }
 `;
@@ -52,13 +56,45 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
     bumpMap.anisotropy = 4;
   }, [dayMap, bumpMap, cloudsMap]);
 
-  useFrame(() => {
-    if (groupRef.current && !paused) groupRef.current.rotation.y += 0.0008;
+  // Tour through HQ + each pipeline site. We rotate the globe group so OrbitControls still works.
+  const tourStops = useMemo(() => {
+    const stops = [
+      { lat: HQ.lat, lng: HQ.lng },
+      ...PIPELINE_PROJECTS.map(p => ({ lat: p.lat, lng: p.lng })),
+    ];
+    return stops.map(s => {
+      // Direction from globe center to the site (in local sphere space, unit length)
+      const v = latLngToVec3(s.lat, s.lng, 1).normalize();
+      // Quaternion that rotates `v` to face +Z (toward camera). With a slight downward
+      // tilt so northern sites don't sit at the very top of the globe.
+      const target = new THREE.Vector3(0, -0.18, 1).normalize();
+      const q = new THREE.Quaternion().setFromUnitVectors(v, target);
+      return q;
+    });
+  }, []);
+
+  const tourState = useRef({ index: 0, holdUntil: 0 });
+
+  useFrame(({ clock }) => {
     if (cloudsRef.current && !paused) cloudsRef.current.rotation.y += 0.00035;
+    if (!groupRef.current || paused) return;
+    const t = clock.getElapsedTime();
+    const target = tourStops[tourState.current.index];
+    // Slerp toward current target stop
+    groupRef.current.quaternion.slerp(target, 0.025);
+    // Once close enough, hold for 2.5s then advance
+    const angle = groupRef.current.quaternion.angleTo(target);
+    if (angle < 0.02) {
+      if (tourState.current.holdUntil === 0) tourState.current.holdUntil = t + 2.5;
+      if (t >= tourState.current.holdUntil) {
+        tourState.current.index = (tourState.current.index + 1) % tourStops.length;
+        tourState.current.holdUntil = 0;
+      }
+    }
   });
 
   return (
-    <group ref={groupRef} rotation={[0, 0, 23.4 * Math.PI / 180]}>
+    <group ref={groupRef}>
       {/* Earth surface — photorealistic */}
       <mesh>
         <sphereGeometry args={[RADIUS, 64, 64]} />
@@ -105,12 +141,12 @@ const HQMarker: React.FC = () => {
   return (
     <group position={pos}>
       <mesh>
-        <sphereGeometry args={[0.06, 16, 16]} />
+        <sphereGeometry args={[0.05, 16, 16]} />
         <meshBasicMaterial color="#F7931A" />
       </mesh>
       <mesh>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshBasicMaterial color="#F7931A" transparent opacity={0.25} />
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshBasicMaterial color="#F7931A" transparent opacity={0.18} />
       </mesh>
     </group>
   );
@@ -120,7 +156,7 @@ const ProjectMarker: React.FC<{ project: PipelineProject }> = ({ project }) => {
   const pos = latLngToVec3(project.lat, project.lng, RADIUS * 1.025);
   const ringRef = useRef<THREE.Mesh>(null);
   const color = ENERGY_TYPE_COLORS[project.energyType].hex;
-  const size = 0.04 + Math.min(project.capacityMw / 600, 0.08);
+  const size = 0.035 + Math.min(project.capacityMw / 1000, 0.04);
 
   useFrame(({ clock }) => {
     if (ringRef.current) {
@@ -168,9 +204,10 @@ const Arc: React.FC<{ project: PipelineProject }> = ({ project }) => {
 
 const Scene: React.FC<{ paused: boolean }> = ({ paused }) => (
   <>
-    <ambientLight intensity={0.35} color="#1a2540" />
-    <directionalLight position={[5, 3, 5]} intensity={1.4} color="#ffffff" />
-    <directionalLight position={[-6, -2, -4]} intensity={0.18} color="#F7931A" />
+    <ambientLight intensity={0.45} color="#2a3550" />
+    <directionalLight position={[5, 3, 5]} intensity={1.7} color="#fff5e6" />
+    <directionalLight position={[-5, 1, -3]} intensity={0.25} color="#6aa9ff" />
+    <directionalLight position={[-6, -2, -4]} intensity={0.12} color="#F7931A" />
     <Stars radius={60} depth={25} count={600} factor={3} saturation={0} fade speed={0.3} />
     <Earth paused={paused} />
     <OrbitControls enablePan={false} enableZoom autoRotate={false} minDistance={3.5} maxDistance={8} />
