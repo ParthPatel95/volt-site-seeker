@@ -286,6 +286,9 @@ export function AdminSettings() {
         </p>
       </div>
 
+      {/* Consulting / Advisory Inquiries */}
+      <ConsultingInquiries />
+
       {/* Access Requests Management */}
       <Card>
         <CardHeader>
