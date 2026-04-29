@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, Suspense } from 'react';
+import React, { useRef, useState, useMemo, Suspense, useEffect } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,22 +10,113 @@ import { X, MapPin } from 'lucide-react';
 
 const RADIUS = 2;
 
-// Convert lat/lng to a position on a textured sphere using the canonical
-// three.js mapping for an equirectangular Earth texture (mrdoob earth_atmos_2048).
-// With this mapping, lng=0 (Greenwich) sits on -X, lng=+90 (Asia) on +Z,
-// lng=-90 (Americas) on -Z, and lng=180 (Pacific) on +X.
-// Convert lat/lng to a sphere position aligned with the mrdoob earth_atmos
-// equirectangular texture as wrapped by three.js SphereGeometry default UVs:
-//   lng = -180  -> +X        lng = 0  -> -X (Greenwich / Africa-Europe)
-//   lng =  -90  -> -Z (Americas)   lng = +90 -> +Z (Asia)
+// Auto-calibrated longitude offset (degrees). Set by calibrateLongitudeOffset()
+// after the day-map texture loads. Default 0 matches the canonical three.js
+// SphereGeometry equirectangular UV mapping; calibration corrects for any
+// horizontal shift in the actual texture asset we are using.
+let LNG_OFFSET_DEG = 0;
+
 const latLngToVec3 = (lat: number, lng: number, r: number) => {
   const latRad = lat * (Math.PI / 180);
-  const lngRad = lng * (Math.PI / 180);
+  const lngRad = (lng + LNG_OFFSET_DEG) * (Math.PI / 180);
   return new THREE.Vector3(
     -r * Math.cos(latRad) * Math.cos(lngRad),
      r * Math.sin(latRad),
      r * Math.cos(latRad) * Math.sin(lngRad),
   );
+};
+
+// ---- Texture calibration -------------------------------------------------
+// Sample the day-map texture at known land/ocean reference points and pick
+// the longitude offset (in degrees) that best matches expected land/ocean
+// brightness. Land in NASA Blue Marble is bright/warm, deep ocean is dark blue.
+type RefPoint = { name: string; lat: number; lng: number; isLand: boolean };
+const CALIBRATION_REFS: RefPoint[] = [
+  { name: 'London',         lat:  51.5,  lng:   -0.1, isLand: true  },
+  { name: 'New York',       lat:  40.7,  lng:  -74.0, isLand: true  },
+  { name: 'Sahara',         lat:  23.0,  lng:   13.0, isLand: true  },
+  { name: 'Tokyo',          lat:  35.7,  lng:  139.7, isLand: true  },
+  { name: 'Sydney',         lat: -33.9,  lng:  151.2, isLand: true  },
+  { name: 'Mid-Atlantic',   lat:   0.0,  lng:  -30.0, isLand: false },
+  { name: 'Mid-Pacific',    lat:   0.0,  lng: -150.0, isLand: false },
+  { name: 'South Indian',   lat: -40.0,  lng:   80.0, isLand: false },
+];
+
+// Score a "land-likeness" of an RGB pixel from NASA Blue Marble.
+// Land is bright with R/G dominance; deep ocean is dark with strong B.
+const landScore = (r: number, g: number, b: number) => {
+  const lum = (r + g + b) / 3;
+  const blueDominance = b - (r + g) / 2;
+  // Higher = more land-like
+  return lum / 255 - Math.max(0, blueDominance) / 128;
+};
+
+const calibrateLongitudeOffset = (tex: THREE.Texture): number => {
+  const img = tex.image as HTMLImageElement | HTMLCanvasElement | ImageBitmap;
+  if (!img) return 0;
+  const w = (img as HTMLImageElement).naturalWidth || (img as HTMLCanvasElement).width || 1024;
+  const h = (img as HTMLImageElement).naturalHeight || (img as HTMLCanvasElement).height || 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return 0;
+  try {
+    ctx.drawImage(img as CanvasImageSource, 0, 0, w, h);
+  } catch {
+    return 0; // CORS-tainted; bail
+  }
+
+  // Sample helper: given lat/lng + candidate offset, return land score.
+  const sampleAt = (lat: number, lng: number, offsetDeg: number) => {
+    // Three.js default sphere UV: u = 0 at lng=+180, u=0.5 at lng=0, u=1 at lng=-180.
+    // We want a mapping such that latLngToVec3 lands on the correct UV.
+    // The on-screen position of (lat,lng) is determined by (lng + offset);
+    // so to read the texture pixel that WILL appear there, use the same shift.
+    let shifted = ((lng + offsetDeg + 540) % 360) - 180; // wrap to [-180,180]
+    const u = (180 - shifted) / 360;       // matches three.js default mapping
+    const v = (90 - lat) / 180;
+    const x = Math.max(0, Math.min(w - 1, Math.floor(u * w)));
+    const y = Math.max(0, Math.min(h - 1, Math.floor(v * h)));
+    // Average a small 3x3 patch to reduce coastline noise
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const px = ctx.getImageData(
+          Math.max(0, Math.min(w - 1, x + dx)),
+          Math.max(0, Math.min(h - 1, y + dy)),
+          1, 1,
+        ).data;
+        r += px[0]; g += px[1]; b += px[2]; n++;
+      }
+    }
+    return landScore(r / n, g / n, b / n);
+  };
+
+  // Try offsets in 5° steps; pick the one that maximizes correctness.
+  let best = { offset: 0, score: -Infinity };
+  for (let off = -180; off < 180; off += 5) {
+    let score = 0;
+    for (const ref of CALIBRATION_REFS) {
+      const s = sampleAt(ref.lat, ref.lng, off);
+      score += ref.isLand ? s : -s;
+    }
+    if (score > best.score) best = { offset: off, score };
+  }
+  // Refine with 1° steps around the winner
+  const coarse = best.offset;
+  for (let off = coarse - 5; off <= coarse + 5; off += 1) {
+    let score = 0;
+    for (const ref of CALIBRATION_REFS) {
+      const s = sampleAt(ref.lat, ref.lng, off);
+      score += ref.isLand ? s : -s;
+    }
+    if (score > best.score) best = { offset: off, score };
+  }
+  // Normalize to [-180, 180]
+  const norm = ((best.offset + 540) % 360) - 180;
+  // eslint-disable-next-line no-console
+  console.info(`[Globe] Auto-calibrated longitude offset: ${norm}° (score=${best.score.toFixed(2)})`);
+  return norm;
 };
 
 // Atmosphere shader: fresnel rim glow, additive blended on a back-side sphere
@@ -47,6 +138,7 @@ const atmosphereFragment = `
 const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
   const groupRef = useRef<THREE.Group>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
+  const [calVersion, setCalVersion] = useState(0);
 
   // Real photographic Earth textures (served from /public, same origin)
   const [dayMap, bumpMap, cloudsMap] = useLoader(THREE.TextureLoader, [
@@ -59,6 +151,16 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
     [dayMap, cloudsMap].forEach(t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; });
     bumpMap.anisotropy = 4;
   }, [dayMap, bumpMap, cloudsMap]);
+
+  // Auto-calibrate the longitude offset from the loaded day-map texture.
+  useEffect(() => {
+    if (!dayMap?.image) return;
+    const offset = calibrateLongitudeOffset(dayMap);
+    if (offset !== LNG_OFFSET_DEG) {
+      LNG_OFFSET_DEG = offset;
+      setCalVersion(v => v + 1); // force markers/arcs/tour to recompute
+    }
+  }, [dayMap]);
 
   // Tour through HQ + each pipeline site. We rotate the globe group so OrbitControls still works.
   const tourStops = useMemo(() => {
@@ -75,7 +177,7 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
       const q = new THREE.Quaternion().setFromUnitVectors(v, target);
       return q;
     });
-  }, []);
+  }, [calVersion]);
 
   const tourState = useRef({ index: 0, holdUntil: 0, lastAdvance: 0 });
 
@@ -134,13 +236,13 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
         />
       </mesh>
       {/* HQ marker */}
-      <HQMarker />
+      <HQMarker key={`hq-${calVersion}`} />
       {/* Project markers + arcs */}
       {PIPELINE_PROJECTS.map((p) => (
-        <ProjectMarker key={p.id} project={p} />
+        <ProjectMarker key={`${p.id}-${calVersion}`} project={p} />
       ))}
       {PIPELINE_PROJECTS.map((p) => (
-        <Arc key={`arc-${p.id}`} project={p} />
+        <Arc key={`arc-${p.id}-${calVersion}`} project={p} />
       ))}
     </group>
   );
