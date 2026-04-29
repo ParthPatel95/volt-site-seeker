@@ -153,13 +153,23 @@ const Earth: React.FC<EarthProps> = ({ paused, flyTo, pickMode, onPickPoint }) =
     bumpMap.anisotropy = 4;
   }, [dayMap, bumpMap, cloudsMap]);
 
-  // Auto-calibrate the longitude offset from the loaded day-map texture.
+  // The Earth texture we ship is a standard equirectangular Blue Marble
+  // (u=0 at lng=-180°, u=0.5 at lng=0°), which is exactly the convention
+  // `latLngToVec3` is derived from — so no offset is needed. We still run
+  // calibration in dev for diagnostics but never let it move markers, since
+  // a brightness-based heuristic isn't precise enough to shift real sites.
   useEffect(() => {
     if (!dayMap?.image) return;
-    const offset = calibrateLongitudeOffset(dayMap);
-    if (offset !== getLngOffset()) {
-      setLngOffset(offset);
-      setCalVersion(v => v + 1); // force markers/arcs/tour to recompute
+    if (getLngOffset() !== 0) {
+      setLngOffset(0);
+      setCalVersion(v => v + 1);
+    }
+    if (import.meta.env.DEV) {
+      try {
+        const diagnostic = calibrateLongitudeOffset(dayMap);
+        // eslint-disable-next-line no-console
+        console.info(`[Globe] Texture diagnostic offset (not applied): ${diagnostic}°`);
+      } catch {/* ignore */}
     }
   }, [dayMap]);
 
