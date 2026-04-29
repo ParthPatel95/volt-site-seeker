@@ -29,6 +29,21 @@ export const latLngToVec3 = (lat: number, lng: number, r: number): THREE.Vector3
 };
 
 /**
+ * Inverse of `latLngToVec3`. Accepts any vector (it will be normalized) in
+ * the same coordinate frame the markers live in (i.e. local to the globe
+ * group). Returns geographic lat/lng in degrees, with the calibrated
+ * longitude offset removed so the result matches the source data.
+ */
+export const vec3ToLatLng = (v: THREE.Vector3): { lat: number; lng: number } => {
+  const n = v.clone().normalize();
+  const lat = Math.asin(Math.max(-1, Math.min(1, n.y))) * (180 / Math.PI);
+  let lng = Math.atan2(n.z, -n.x) * (180 / Math.PI) - LNG_OFFSET_DEG;
+  // Wrap to [-180, 180]
+  lng = ((lng + 540) % 360) - 180;
+  return { lat, lng };
+};
+
+/**
  * Quaternion that, when applied to the globe group, brings (lat, lng) to
  * face the camera at +Z (with a small downward tilt so northern sites don't
  * sit at the very top of the frame).
