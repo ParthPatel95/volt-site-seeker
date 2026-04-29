@@ -7,24 +7,15 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X, MapPin } from 'lucide-react';
+import {
+  GLOBE_RADIUS,
+  latLngToVec3,
+  tourQuaternionFor,
+  getLngOffset,
+  setLngOffset,
+} from './globeProjection';
 
-const RADIUS = 2;
-
-// Auto-calibrated longitude offset (degrees). Set by calibrateLongitudeOffset()
-// after the day-map texture loads. Default 0 matches the canonical three.js
-// SphereGeometry equirectangular UV mapping; calibration corrects for any
-// horizontal shift in the actual texture asset we are using.
-let LNG_OFFSET_DEG = 0;
-
-const latLngToVec3 = (lat: number, lng: number, r: number) => {
-  const latRad = lat * (Math.PI / 180);
-  const lngRad = (lng + LNG_OFFSET_DEG) * (Math.PI / 180);
-  return new THREE.Vector3(
-    -r * Math.cos(latRad) * Math.cos(lngRad),
-     r * Math.sin(latRad),
-     r * Math.cos(latRad) * Math.sin(lngRad),
-  );
-};
+const RADIUS = GLOBE_RADIUS;
 
 // ---- Texture calibration -------------------------------------------------
 // Sample the day-map texture at known land/ocean reference points and pick
@@ -156,8 +147,8 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
   useEffect(() => {
     if (!dayMap?.image) return;
     const offset = calibrateLongitudeOffset(dayMap);
-    if (offset !== LNG_OFFSET_DEG) {
-      LNG_OFFSET_DEG = offset;
+    if (offset !== getLngOffset()) {
+      setLngOffset(offset);
       setCalVersion(v => v + 1); // force markers/arcs/tour to recompute
     }
   }, [dayMap]);
@@ -168,15 +159,7 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
       { lat: HQ.lat, lng: HQ.lng },
       ...PIPELINE_PROJECTS.map(p => ({ lat: p.lat, lng: p.lng })),
     ];
-    return stops.map(s => {
-      // Direction from globe center to the site (in local sphere space, unit length)
-      const v = latLngToVec3(s.lat, s.lng, 1).normalize();
-      // Quaternion that rotates `v` to face +Z (toward camera). With a slight downward
-      // tilt so northern sites don't sit at the very top of the globe.
-      const target = new THREE.Vector3(0, -0.18, 1).normalize();
-      const q = new THREE.Quaternion().setFromUnitVectors(v, target);
-      return q;
-    });
+    return stops.map(s => tourQuaternionFor(s.lat, s.lng));
   }, [calVersion]);
 
   const tourState = useRef({ index: 0, holdUntil: 0, lastAdvance: 0 });
