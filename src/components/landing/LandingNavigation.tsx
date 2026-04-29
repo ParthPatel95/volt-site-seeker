@@ -14,7 +14,6 @@ const PRIMARY_LINKS: PrimaryLink[] = [
   { to: '/advisory', label: 'Advisory', icon: Briefcase },
   { to: '/academy', label: 'Academy', icon: GraduationCap },
   { to: '/hosting', label: 'Hosting', icon: Zap },
-  { to: '/about', label: 'About', icon: Users },
 ];
 
 export const LandingNavigation = () => {
@@ -84,21 +83,22 @@ export const LandingNavigation = () => {
         </Link>
 
         {/* Desktop primary nav */}
-        <div className="hidden lg:flex items-center gap-1 rounded-full border border-border/60 bg-secondary/40 px-1 py-1">
-          {PRIMARY_LINKS.map(({ to, label, icon: Icon }) => {
+        <div className="hidden lg:flex items-center gap-8">
+          {PRIMARY_LINKS.map(({ to, label }) => {
             const active = isActive(to);
             return (
               <button
                 key={to}
                 onClick={() => navigate(to)}
                 className={cn(
-                  'group relative flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'relative text-sm font-medium tracking-tight transition-colors duration-150 py-1.5',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
+                  'after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-[2px] after:bg-primary after:origin-left after:transition-transform after:duration-200',
                   active
-                    ? 'bg-background text-foreground shadow-subtle'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                    ? 'text-foreground after:scale-x-100'
+                    : 'text-muted-foreground hover:text-foreground after:scale-x-0 hover:after:scale-x-100'
                 )}
               >
-                <Icon className={cn('h-4 w-4', active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')} />
                 {label}
               </button>
             );
