@@ -40,6 +40,35 @@ describe('globeProjection', () => {
     expect(v.length()).toBeCloseTo(GLOBE_RADIUS, 6);
   });
 
+  // Canonical axis pin-down: locks the projection convention so a future
+  // refactor cannot silently flip a sign and shift every marker.
+  it('places (0°, 0°) at +X (Greenwich on equator)', () => {
+    const v = latLngToVec3(0, 0, 1);
+    expect(v.x).toBeCloseTo(1, 6);
+    expect(v.y).toBeCloseTo(0, 6);
+    expect(v.z).toBeCloseTo(0, 6);
+  });
+
+  it('places (0°, 90°E) at -Z and (0°, 90°W) at +Z', () => {
+    const east = latLngToVec3(0, 90, 1);
+    expect(east.x).toBeCloseTo(0, 6);
+    expect(east.z).toBeCloseTo(-1, 6);
+    const west = latLngToVec3(0, -90, 1);
+    expect(west.x).toBeCloseTo(0, 6);
+    expect(west.z).toBeCloseTo(1, 6);
+  });
+
+  it('places the North Pole at +Y', () => {
+    const v = latLngToVec3(90, 0, 1);
+    expect(v.y).toBeCloseTo(1, 6);
+  });
+
+  it('places (0°, 180°) at -X (antimeridian)', () => {
+    const v = latLngToVec3(0, 180, 1);
+    expect(v.x).toBeCloseTo(-1, 6);
+    expect(v.z).toBeCloseTo(0, 6);
+  });
+
   it('centers Calgary HQ when its tour stop is applied', () => {
     const landed = project(HQ.lat, HQ.lng);
     expect(landed.x).toBeCloseTo(TOUR_TARGET.x, 5);
@@ -84,13 +113,10 @@ describe('globeProjection', () => {
     expect(radialAlignment).toBeCloseTo(1, 6);
   });
 
-  it('vec3ToLatLng round-trips Calgary, Texas, and Newfoundland', () => {
+  it('vec3ToLatLng round-trips every pipeline site (incl. Calgary, Texas, Newfoundland)', () => {
     const points = [
       { lat: HQ.lat, lng: HQ.lng },
-      ...['usa-texas', 'canada-newfoundland'].map(id => {
-        const p = PIPELINE_PROJECTS.find(x => x.id === id)!;
-        return { lat: p.lat, lng: p.lng };
-      }),
+      ...PIPELINE_PROJECTS.map(p => ({ lat: p.lat, lng: p.lng })),
     ];
     for (const p of points) {
       const v = latLngToVec3(p.lat, p.lng, GLOBE_RADIUS);
