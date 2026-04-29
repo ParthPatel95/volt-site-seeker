@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo, Suspense, useEffect } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { PIPELINE_PROJECTS, HQ, ENERGY_TYPE_COLORS, type PipelineProject } from '@/data/advisory-pipeline';
@@ -126,7 +126,9 @@ const atmosphereFragment = `
   }
 `;
 
-const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
+type FlyTarget = { lat: number; lng: number; id: string } | null;
+
+const Earth: React.FC<{ paused: boolean; flyTo: FlyTarget }> = ({ paused, flyTo }) => {
   const groupRef = useRef<THREE.Group>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   const [calVersion, setCalVersion] = useState(0);
@@ -164,9 +166,82 @@ const Earth: React.FC<{ paused: boolean }> = ({ paused }) => {
 
   const tourState = useRef({ index: 0, holdUntil: 0, lastAdvance: 0 });
 
+  // Fly-to animation state. When `flyTo` is set we ease the group to the
+  // site's quaternion with a cubic ease-out and dolly the camera slightly
+  // closer; on release we ease back. Lighting lives at the scene level so
+  // it never moves with the globe.
+  const FLY_DURATION = 1.4; // seconds
+  const CAMERA_HOME = 5.5;
+  const CAMERA_FOCUSED = 4.2;
+  const flyState = useRef<{
+    activeId: string | null;
+    fromQ: THREE.Quaternion;
+    toQ: THREE.Quaternion;
+    fromCamZ: number;
+    toCamZ: number;
+    startedAt: number;
+    holding: boolean;
+  }>({
+    activeId: null,
+    fromQ: new THREE.Quaternion(),
+    toQ: new THREE.Quaternion(),
+    fromCamZ: CAMERA_HOME,
+    toCamZ: CAMERA_HOME,
+    startedAt: 0,
+    holding: false,
+  });
+
+  const { camera } = useThree();
+
+  // Kick off / cancel a fly-to whenever the selected site changes.
+  useEffect(() => {
+    if (!groupRef.current) return;
+    const fs = flyState.current;
+    if (flyTo) {
+      fs.activeId = flyTo.id;
+      fs.fromQ = groupRef.current.quaternion.clone();
+      fs.toQ = tourQuaternionFor(flyTo.lat, flyTo.lng);
+      fs.fromCamZ = camera.position.z;
+      fs.toCamZ = CAMERA_FOCUSED;
+      fs.startedAt = performance.now() / 1000;
+      fs.holding = false;
+    } else if (fs.activeId) {
+      // Released: ease camera back to home, leave rotation where it is so
+      // the tour can resume from the current orientation without a jump.
+      fs.activeId = null;
+      fs.fromQ = groupRef.current.quaternion.clone();
+      fs.toQ = groupRef.current.quaternion.clone();
+      fs.fromCamZ = camera.position.z;
+      fs.toCamZ = CAMERA_HOME;
+      fs.startedAt = performance.now() / 1000;
+      fs.holding = false;
+    }
+  }, [flyTo, camera]);
+
+  // Cubic ease-out for a smooth, decelerating fly-in.
+  const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
+
   useFrame(({ clock }) => {
     if (cloudsRef.current && !paused) cloudsRef.current.rotation.y += 0.00035;
-    if (!groupRef.current || paused) return;
+    if (!groupRef.current) return;
+
+    const fs = flyState.current;
+    const now = performance.now() / 1000;
+
+    // Fly-to mode (selected site) — overrides the tour entirely.
+    if (fs.activeId || fs.toCamZ !== camera.position.z) {
+      const elapsed = now - fs.startedAt;
+      const k = Math.min(1, elapsed / FLY_DURATION);
+      const eased = easeOutCubic(k);
+      const q = fs.fromQ.clone().slerp(fs.toQ, eased);
+      groupRef.current.quaternion.copy(q);
+      camera.position.z = fs.fromCamZ + (fs.toCamZ - fs.fromCamZ) * eased;
+      if (k >= 1) fs.holding = true;
+      return; // freeze the tour while flying / focused
+    }
+
+    if (paused) return;
+
     const t = clock.getElapsedTime();
     const target = tourStops[tourState.current.index];
     // Slerp toward current target stop (faster)
@@ -297,15 +372,22 @@ const Arc: React.FC<{ project: PipelineProject }> = ({ project }) => {
   return <primitive object={lineObject} />;
 };
 
-const Scene: React.FC<{ paused: boolean }> = ({ paused }) => (
+const Scene: React.FC<{ paused: boolean; flyTo: FlyTarget }> = ({ paused, flyTo }) => (
   <>
     <ambientLight intensity={0.45} color="#2a3550" />
     <directionalLight position={[5, 3, 5]} intensity={1.7} color="#fff5e6" />
     <directionalLight position={[-5, 1, -3]} intensity={0.25} color="#6aa9ff" />
     <directionalLight position={[-6, -2, -4]} intensity={0.12} color="#F7931A" />
     <Stars radius={60} depth={25} count={600} factor={3} saturation={0} fade speed={0.3} />
-    <Earth paused={paused} />
-    <OrbitControls enablePan={false} enableZoom autoRotate={false} minDistance={3.5} maxDistance={8} />
+    <Earth paused={paused} flyTo={flyTo} />
+    <OrbitControls
+      enablePan={false}
+      enableZoom={!flyTo}
+      enableRotate={!flyTo}
+      autoRotate={false}
+      minDistance={3.5}
+      maxDistance={8}
+    />
   </>
 );
 
@@ -325,6 +407,9 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   }, []);
 
   const selected = PIPELINE_PROJECTS.find(p => p.id === selectedId) ?? null;
+  const flyTo: FlyTarget = selected
+    ? { id: selected.id, lat: selected.lat, lng: selected.lng }
+    : null;
 
   return (
     <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]">
@@ -333,7 +418,7 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
         dpr={[1, 1.5]}
       >
         <Suspense fallback={null}>
-          <Scene paused={paused} />
+          <Scene paused={paused || !!flyTo} flyTo={flyTo} />
         </Suspense>
       </Canvas>
 
