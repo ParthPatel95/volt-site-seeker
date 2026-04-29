@@ -86,16 +86,17 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
       <div className="max-w-3xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Start a conversation</h2>
-            <p className="text-lg text-muted-foreground">Tell us about your project. We'll respond within one business day.</p>
+            <div className="text-xs uppercase tracking-widest text-watt-bitcoin font-semibold mb-3">Talk to the team</div>
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Brief us on your project</h2>
+            <p className="text-lg text-muted-foreground">A senior advisor — not a BDR — replies within one business day with concrete next steps.</p>
           </div>
         </ScrollReveal>
 
         {success ? (
           <div className="bg-card border border-border rounded-2xl p-10 text-center">
             <CheckCircle2 className="w-14 h-14 text-watt-success mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-foreground mb-2">Inquiry received</h3>
-            <p className="text-muted-foreground">Thanks — our advisory team will review your request and reach out within one business day.</p>
+            <h3 className="text-2xl font-bold text-foreground mb-2">Brief received</h3>
+            <p className="text-muted-foreground">A senior advisor will review your project and reach out within one business day. If it's urgent, mention "urgent" in a follow-up email to <span className="text-foreground font-medium">advisory@wattbyte.com</span>.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="bg-card border border-border rounded-2xl p-6 md:p-8 space-y-5">
@@ -177,7 +178,7 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
             <Button type="submit" size="lg" disabled={submitting} className="w-full bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white font-semibold">
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit inquiry'}
             </Button>
-            <p className="text-xs text-muted-foreground text-center">We typically respond within one business day.</p>
+            <p className="text-xs text-muted-foreground text-center">By submitting, you agree to be contacted by the WattByte Advisory team. We never share your details with third parties.</p>
           </form>
         )}
       </div>
