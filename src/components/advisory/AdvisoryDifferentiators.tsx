@@ -3,11 +3,31 @@ import { Wrench, BarChart3, Database, HardHat, Award } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const items = [
-  { icon: Wrench,    title: 'Operator-led', desc: 'We run our own 135 MW Alberta build. Our advice survives contact with the utility, the GC, and the AHJ.' },
-  { icon: BarChart3, title: 'VoltScout intelligence', desc: 'Proprietary platform tracking AESO, ERCOT, MISO, PJM, and global queues in real time. Decisions backed by data, not vibes.' },
-  { icon: Database,  title: 'Live market data', desc: 'AESO pool prices, ERCOT LMPs, weather correlations, and 12CP analytics — the same tools we use on our own portfolio.' },
-  { icon: HardHat,   title: 'In-house engineering', desc: 'Substation, MEP, and ASIC/HPC integration expertise. Optional EPC handoff after the advisory phase.' },
-  { icon: Award,     title: 'GW-scale track record', desc: 'From 0 to 1.4 GW global pipeline in under three years across six countries. We know which deals close.' },
+  {
+    icon: Wrench,
+    title: 'Operator-led, not slideware',
+    desc: 'We are mid-build on our own 135 MW Alberta Heartland site. Our advice survives contact with the utility, the GC, and the AHJ — because it has to.',
+  },
+  {
+    icon: Award,
+    title: 'Institutional discipline',
+    desc: 'Chaired by Jay Hao (former CEO, OKX; semiconductor & infra capital lineage). We underwrite to the standards capital partners actually fund — not founder optimism.',
+  },
+  {
+    icon: BarChart3,
+    title: 'VoltScout intelligence stack',
+    desc: 'In-house platform tracking AESO, ERCOT, MISO, PJM, and global interconnection queues in real time. Every recommendation has a data trail.',
+  },
+  {
+    icon: Database,
+    title: 'Live energy economics',
+    desc: 'AESO pool prices, ERCOT LMPs, weather correlations, 12CP analytics, and PPA hedging models — the same engine we use on our own portfolio.',
+  },
+  {
+    icon: HardHat,
+    title: 'Engineering & EPC under one roof',
+    desc: 'Substation, MEP, and ASIC/HPC integration in-house. Take the diligence package to your EPC, or let us deliver it turnkey. Your call.',
+  },
 ];
 
 export const AdvisoryDifferentiators: React.FC = () => (
