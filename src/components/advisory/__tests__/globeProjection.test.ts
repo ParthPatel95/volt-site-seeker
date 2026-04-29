@@ -5,6 +5,7 @@ import {
   tourQuaternionFor,
   setLngOffset,
   GLOBE_RADIUS,
+  vec3ToLatLng,
 } from '../globeProjection';
 import { HQ, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
@@ -81,5 +82,21 @@ describe('globeProjection', () => {
     const radialAlignment = rotatedSurface.clone().normalize()
       .dot(rotatedMarker.clone().normalize());
     expect(radialAlignment).toBeCloseTo(1, 6);
+  });
+
+  it('vec3ToLatLng round-trips Calgary, Texas, and Newfoundland', () => {
+    const points = [
+      { lat: HQ.lat, lng: HQ.lng },
+      ...['usa-texas', 'canada-newfoundland'].map(id => {
+        const p = PIPELINE_PROJECTS.find(x => x.id === id)!;
+        return { lat: p.lat, lng: p.lng };
+      }),
+    ];
+    for (const p of points) {
+      const v = latLngToVec3(p.lat, p.lng, GLOBE_RADIUS);
+      const back = vec3ToLatLng(v);
+      expect(back.lat).toBeCloseTo(p.lat, 4);
+      expect(back.lng).toBeCloseTo(p.lng, 4);
+    }
   });
 });
