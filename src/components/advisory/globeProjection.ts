@@ -13,18 +13,49 @@ import * as THREE from 'three';
  */
 export const GLOBE_RADIUS = 2;
 
+/**
+ * Longitude offset (degrees) used to align marker placement with whatever
+ * equirectangular texture is loaded onto the Earth mesh. The default of 0
+ * matches a standard NASA-style day map where u=0 is the antimeridian
+ * (lng = -180°) and u=0.5 is Greenwich (lng = 0°), which is exactly the
+ * convention three.js's SphereGeometry produces.
+ *
+ * If a texture is shifted, set this once via `setLngOffset` so projection
+ * (markers), inverse projection (pick readout) and tour rotations all stay
+ * locked together.
+ */
 let LNG_OFFSET_DEG = 0;
 export const getLngOffset = () => LNG_OFFSET_DEG;
 export const setLngOffset = (deg: number) => { LNG_OFFSET_DEG = deg; };
 
-/** Lat/lng (degrees) → 3D position on a sphere of radius `r`. */
+/**
+ * Lat/lng (degrees) → 3D position on a sphere of radius `r`.
+ *
+ * Derived directly from three.js's SphereGeometry parametric form so that
+ * the point we compute lands on the exact same texel the texture paints.
+ *
+ *   three.js vertex(u, v) =
+ *     ( -cos(2πu)·sin(πv),  cos(πv),  sin(2πu)·sin(πv) )
+ *
+ * Standard equirectangular Earth maps use u = (lng + 180) / 360 and
+ * v = (90 - lat) / 180. Substituting collapses to:
+ *
+ *     x =  cos(lat)·cos(lng)
+ *     y =  sin(lat)
+ *     z = -cos(lat)·sin(lng)
+ *
+ * This puts (0°, 0°) at +X (Gulf of Guinea, Greenwich on equator),
+ * (0°, 90°E) at -Z, and the North Pole at +Y — matching the Blue Marble
+ * orientation we ship.
+ */
 export const latLngToVec3 = (lat: number, lng: number, r: number): THREE.Vector3 => {
   const latRad = lat * (Math.PI / 180);
   const lngRad = (lng + LNG_OFFSET_DEG) * (Math.PI / 180);
+  const cosLat = Math.cos(latRad);
   return new THREE.Vector3(
-    -r * Math.cos(latRad) * Math.cos(lngRad),
+     r * cosLat * Math.cos(lngRad),
      r * Math.sin(latRad),
-     r * Math.cos(latRad) * Math.sin(lngRad),
+    -r * cosLat * Math.sin(lngRad),
   );
 };
 
@@ -37,7 +68,9 @@ export const latLngToVec3 = (lat: number, lng: number, r: number): THREE.Vector3
 export const vec3ToLatLng = (v: THREE.Vector3): { lat: number; lng: number } => {
   const n = v.clone().normalize();
   const lat = Math.asin(Math.max(-1, Math.min(1, n.y))) * (180 / Math.PI);
-  let lng = Math.atan2(n.z, -n.x) * (180 / Math.PI) - LNG_OFFSET_DEG;
+  // Inverse of latLngToVec3: lng = atan2(-z, x) (because z = -cos·sin(lng)
+  // and x = cos·cos(lng)), then strip the calibrated offset.
+  let lng = Math.atan2(-n.z, n.x) * (180 / Math.PI) - LNG_OFFSET_DEG;
   // Wrap to [-180, 180]
   lng = ((lng + 540) % 360) - 180;
   return { lat, lng };
