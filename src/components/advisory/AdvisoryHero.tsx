@@ -20,16 +20,16 @@ export const AdvisoryHero: React.FC<Props> = ({ onContact, onPipeline }) => (
             <span className="text-sm font-medium text-[hsl(var(--watt-bitcoin))]">Introducing WattByte Advisory</span>
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-6">
-            <span className="block">Powered Land.</span>
+            <span className="block">Megawatts on a deadline.</span>
             <span className="block bg-gradient-to-r from-watt-bitcoin to-amber-300 bg-clip-text text-transparent">
-              Engineered Outcomes.
+              Delivered, not pitched.
             </span>
           </h1>
           <p className="text-lg md:text-2xl text-white/80 max-w-3xl mx-auto mb-4 leading-relaxed">
-            The operator-led advisor helping AI/HPC, Bitcoin mining, and inference clients turn megawatts into compute.
+            WattByte Advisory turns powered land into operating compute for AI/HPC hyperscalers, Bitcoin miners, and inference clouds — with the discipline of an institutional infrastructure company and the speed of an operator.
           </p>
           <p className="text-base md:text-lg text-white/55 max-w-2xl mx-auto mb-10">
-            From off-market site sourcing to interconnection, permitting, and turnkey energization — we run our own infrastructure, so we know yours.
+            Off-market site sourcing, interconnection diligence, energy procurement, and turnkey energization — engineered by a team that runs its own 1,400+ MW pipeline.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="xl" onClick={onContact} className="bg-watt-bitcoin hover:bg-watt-bitcoin/90 text-white font-semibold gap-2">
@@ -38,6 +38,13 @@ export const AdvisoryHero: React.FC<Props> = ({ onContact, onPipeline }) => (
             <Button size="xl" variant="ghost-dark" onClick={onPipeline} className="font-semibold gap-2">
               Explore our pipeline <ArrowRight className="w-5 h-5" />
             </Button>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs md:text-sm text-white/60 font-mono uppercase tracking-wider">
+            <span><span className="text-watt-bitcoin font-semibold">1,429 MW</span> global pipeline</span>
+            <span className="hidden sm:inline text-white/30">·</span>
+            <span><span className="text-watt-bitcoin font-semibold">4</span> countries delivered</span>
+            <span className="hidden sm:inline text-white/30">·</span>
+            <span>Operator-led since <span className="text-watt-bitcoin font-semibold">2019</span></span>
           </div>
         </div>
       </ScrollReveal>

@@ -3,10 +3,10 @@ import { Compass, Microscope, Ruler, Power } from 'lucide-react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 const steps = [
-  { icon: Compass,   week: 'Week 1–2',  title: 'Discovery',  desc: 'Define load profile, geography, timeline, capex envelope, and energy strategy.' },
-  { icon: Microscope, week: 'Week 2–8',  title: 'Diligence',  desc: 'Source candidate sites, run interconnection + permitting + economics on each.' },
-  { icon: Ruler,  week: 'Week 6–14', title: 'Design',     desc: 'Lock in site, finalize PPA/utility terms, engineer substation + MEP, secure permits.' },
-  { icon: Power,     week: 'Month 4–18', title: 'Energize',   desc: 'Construction oversight, commissioning, and operations handoff to your team.' },
+  { icon: Compass,    week: 'Week 1–2',   title: 'Discovery',  desc: 'Lock in load profile, geography, capex envelope, and energy strategy. You leave week 2 with a written engagement scope.' },
+  { icon: Microscope, week: 'Week 3–8',   title: 'Diligence',  desc: 'Source candidate sites, run interconnection + permitting + economics on each. Output: a ranked, defensible shortlist.' },
+  { icon: Ruler,      week: 'Week 8–16',  title: 'Design',     desc: 'Select site, finalize PPA and utility terms, engineer substation + MEP, secure long-lead permits.' },
+  { icon: Power,      week: 'Month 5–18', title: 'Energize',   desc: 'Construction oversight, commissioning, and clean operations handoff — directly or through our EPC arm.' },
 ];
 
 export const AdvisoryProcess: React.FC = () => (
@@ -15,7 +15,7 @@ export const AdvisoryProcess: React.FC = () => (
       <ScrollReveal>
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">How we engage</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">A four-phase process designed to compress the typical 36-month cycle into 12–18.</p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">A four-phase process built to compress the typical 36-month cycle into 12–18 — without skipping the diligence that institutional capital requires.</p>
         </div>
       </ScrollReveal>
       <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6">

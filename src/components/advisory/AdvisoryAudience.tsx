@@ -7,22 +7,37 @@ const audiences = [
     icon: Cpu,
     title: 'AI / HPC Hyperscalers & Neoclouds',
     range: '50 – 500 MW campuses',
-    desc: 'Liquid-cooled, high-density GPU clusters with 2026–2028 energization. We unlock contiguous powered land at sub-queue timelines.',
-    bullets: ['Tier III+ topology guidance', 'Direct utility & ISO/RTO engagement', 'Water + fiber + substation diligence'],
+    pain: 'Multi-year interconnection queues are missing your 2026–2028 training schedule.',
+    answer: 'We route you to queue-cleared, contiguous land with utility load letters already in motion.',
+    bullets: [
+      'Validated 50–500 MW parcels surfaced in 30 days',
+      'Direct ISO/RTO + utility engagement, not warm intros',
+      'Liquid-cooling, water, fiber & substation diligence done in-house',
+    ],
   },
   {
     icon: Bitcoin,
     title: 'Bitcoin Miners',
     range: 'Sub-7¢/kWh hosting-grade',
-    desc: 'ASIC-ready power topology, PPA structuring, demand-response stacking. Built by an operator that runs miners at scale.',
-    bullets: ['Curtailment & ancillary revenue modeling', 'S21 / M60 / M70 fleet integration', 'Behind-the-meter & on-grid options'],
+    pain: 'Hashprice volatility punishes anyone paying retail energy without ancillary stacking.',
+    answer: 'We engineer all-in delivered power below 7¢/kWh with curtailment and demand-response baked in.',
+    bullets: [
+      'PPA structuring + ERCOT/AESO ancillary revenue modeling',
+      'S21 / M60 / M70 fleet integration and retrofit guidance',
+      'Behind-the-meter, on-grid, and flare-gas pathways',
+    ],
   },
   {
     icon: Zap,
     title: 'Inference & Training Startups',
     range: '1 – 20 MW modular pods',
-    desc: 'Fast-track sub-12-month energization for emerging GPU clouds. Modular skids, pre-validated sites, fixed-fee delivery.',
-    bullets: ['Pre-engineered modular MEP', 'Off-market 5–20 MW Tier II sites', 'Capex-light colo + lease structures'],
+    pain: 'Hyperscale colos won\'t talk to you under 50 MW, and 24-month build cycles kill your runway.',
+    answer: 'Pre-engineered modular pods on pre-validated sites, energized in 9–14 months at fixed fees.',
+    bullets: [
+      'Off-market 5–20 MW Tier II sites with cleared interconnection',
+      'Pre-engineered modular MEP and rack-ready white space',
+      'Capex-light colo, lease, or build-to-suit structures',
+    ],
   },
 ];
 
@@ -33,7 +48,7 @@ export const AdvisoryAudience: React.FC = () => (
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Who we serve</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Three client segments, one common need: powered land delivered on a timeline that matches their compute roadmap.
+            Three buyer profiles. One bottleneck: power delivered on a timeline that actually matches their compute roadmap.
           </p>
         </div>
       </ScrollReveal>
@@ -46,7 +61,14 @@ export const AdvisoryAudience: React.FC = () => (
               </div>
               <h3 className="text-xl font-bold text-foreground mb-1">{a.title}</h3>
               <div className="text-xs font-mono text-watt-bitcoin uppercase tracking-wider mb-3">{a.range}</div>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{a.desc}</p>
+              <div className="space-y-2 mb-4">
+                <p className="text-sm text-foreground/70 leading-relaxed">
+                  <span className="font-semibold text-foreground/90">The pain:</span> {a.pain}
+                </p>
+                <p className="text-sm text-foreground/70 leading-relaxed">
+                  <span className="font-semibold text-watt-bitcoin">Our answer:</span> {a.answer}
+                </p>
+              </div>
               <ul className="space-y-1.5">
                 {a.bullets.map(b => (
                   <li key={b} className="text-sm text-foreground/80 flex items-start gap-2">

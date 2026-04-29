@@ -12,8 +12,9 @@ export const AdvisoryCaseStudies: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Featured pipeline</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">A snapshot of sites we are advising on, building, or operating today.</p>
+            <div className="text-xs uppercase tracking-widest text-watt-bitcoin font-semibold mb-3">Featured engagements</div>
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Real sites. Real megawatts.</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">A snapshot of three engagements we are actively advising on, building, or operating today — anchored by our own 135 MW Alberta Heartland build.</p>
           </div>
         </ScrollReveal>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

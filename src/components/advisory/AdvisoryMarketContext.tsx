@@ -5,21 +5,21 @@ import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 const stats = [
   {
     icon: TrendingUp,
-    value: '2.3×',
-    label: 'AI datacenter electricity demand by 2030',
-    source: 'IEA, Energy & AI 2025',
+    value: '~945 TWh',
+    label: 'Projected global datacenter electricity demand by 2030, more than double 2024',
+    source: 'IEA, Energy and AI (2025)',
   },
   {
     icon: Clock,
-    value: '4–7 yrs',
-    label: 'Average interconnection queue (PJM, ERCOT, MISO)',
-    source: 'LBNL, Queued Up 2024',
+    value: '~5 yrs',
+    label: 'Median time from interconnection request to commercial operation in U.S. ISOs',
+    source: 'Berkeley Lab, Queued Up (2024)',
   },
   {
     icon: AlertTriangle,
-    value: '> 2.6 TW',
-    label: 'Generation projects stuck in U.S. queues',
-    source: 'Berkeley Lab, 2024',
+    value: '~2.6 TW',
+    label: 'Generation and storage capacity stuck in active U.S. interconnection queues',
+    source: 'Berkeley Lab, Queued Up (2024)',
   },
 ];
 
@@ -32,8 +32,11 @@ export const AdvisoryMarketContext: React.FC = () => (
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">
             The bottleneck isn't compute. It's <span className="text-watt-bitcoin">power</span>.
           </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            AI training clusters, inference farms, and Bitcoin operations are bidding for the same scarce resource: large-block, dispatchable, near-term electrons. Grid queues are years long, utilities are pausing new large-load applications, and the winners will be those with off-market site networks and operator credibility.
+          <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+            AI training clusters, inference farms, and Bitcoin operations are bidding for the same scarce resource: large-block, dispatchable, near-term electrons. Grid queues run years deep, major utilities have paused new large-load studies, and incumbents are quietly locking in the remaining headroom.
+          </p>
+          <p className="text-base text-foreground/70 leading-relaxed">
+            <span className="font-semibold text-foreground">Why now:</span> the AI capex cycle is front-loaded into 2026–2028. Whoever controls energized sites in that window controls the model-training calendar — and the unit economics that follow.
           </p>
         </div>
       </ScrollReveal>
