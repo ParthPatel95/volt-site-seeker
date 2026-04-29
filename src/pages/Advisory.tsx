@@ -12,8 +12,8 @@ import { PipelineFlowStrip } from '@/components/advisory/PipelineFlowStrip';
 import { AdvisoryInquiryForm } from '@/components/advisory/AdvisoryInquiryForm';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
-const AdvisoryPipelineGlobe = lazy(() =>
-  import('@/components/advisory/AdvisoryPipelineGlobe').then(m => ({ default: m.AdvisoryPipelineGlobe }))
+const AdvisoryPipelineMap = lazy(() =>
+  import('@/components/advisory/AdvisoryPipelineMap').then(m => ({ default: m.AdvisoryPipelineMap }))
 );
 const AdvisoryCaseStudies = lazy(() =>
   import('@/components/advisory/AdvisoryCaseStudies').then(m => ({ default: m.AdvisoryCaseStudies }))
@@ -22,11 +22,11 @@ const AdvisoryFAQ = lazy(() =>
   import('@/components/advisory/AdvisoryFAQ').then(m => ({ default: m.AdvisoryFAQ }))
 );
 
-const GlobePlaceholder: React.FC = () => (
-  <div className="w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))] flex items-center justify-center">
+const MapPlaceholder: React.FC = () => (
+  <div className="w-full h-[420px] sm:h-[500px] md:h-[600px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))] flex items-center justify-center">
     <div className="text-center text-white/60">
       <div className="w-12 h-12 rounded-full border-2 border-watt-bitcoin/40 border-t-watt-bitcoin animate-spin mx-auto mb-3" />
-      <div className="text-sm">Loading interactive globe…</div>
+      <div className="text-sm">Loading pipeline map…</div>
     </div>
   </div>
 );
@@ -104,8 +104,8 @@ const Advisory: React.FC = () => {
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
-              <Suspense fallback={<GlobePlaceholder />}>
-                <AdvisoryPipelineGlobe />
+              <Suspense fallback={<MapPlaceholder />}>
+                <AdvisoryPipelineMap />
               </Suspense>
             </ScrollReveal>
             <div className="mt-8">
