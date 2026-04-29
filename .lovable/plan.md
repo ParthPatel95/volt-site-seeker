@@ -1,44 +1,32 @@
 ## Goal
 
-Redesign `LandingNavigation` to look more professional, ensure full responsiveness across all breakpoints, and reorder primary links so **Advisory comes before Academy** (desktop and mobile).
+Replace the pill-style centered nav with a clean **Coinbase Institutional**-style inline link bar. Keep WattByte branding intact. Reduce primary links to **Advisory, Academy, Hosting** only — no About, no Learn dropdown additions, no new links.
 
-## Design direction
+## Design
 
-Institutional aesthetic (Apple × Coinbase): deep navy, Bitcoin-orange accents, generous spacing, refined typography, subtle motion.
+- **Brand (left)**: Unchanged — `EnhancedLogo` + "Watt₿yte" wordmark + "Infrastructure Company" tagline. Same sizes.
+- **Primary nav (center-right, lg+)**: Plain text links, no pill container, no background, no icons.
+  - Order: **Advisory · Academy · Hosting**
+  - Idle: `text-muted-foreground`, `font-medium`, `text-sm`
+  - Hover: `text-foreground` + 1px underline animating in from left (using `after:` pseudo with `scale-x-0 → scale-x-100`, primary-orange color)
+  - Active route: `text-foreground` + persistent underline in primary orange
+  - Spacing: `gap-8` between links, generous breathing room
+- **CTAs (right)**: Unchanged behavior — `VoltScout` (filled primary orange) + `GridBazaar` (outline). Slightly tighter sizing.
+- **Mobile (<lg)**: Hamburger sheet, primary section shows only Advisory / Academy / Hosting (drop About row). Learn and Company sections in the sheet remain unchanged.
+- **Scroll behavior**: Keep subtle border + shadow appearing after 8px scroll.
 
-- **Two-row → one-row at lg+**: brand left, primary nav center, CTAs right.
-- **Brand**: keep `EnhancedLogo` + "WattByte" wordmark with the inline Bitcoin glyph; tighten the tagline to a single muted line.
-- **Primary nav (lg+)**: inline pill links with icon + label — order: **Advisory · Academy · Hosting · About**. Active route gets an underline indicator + foreground color; idle links use `text-muted-foreground` with `hover:text-foreground hover:bg-secondary` (matches our hover-readability rule).
-- **CTAs**: split visual weight — `VoltScout` becomes primary filled (Bitcoin orange), `GridBazaar` becomes outline/ghost. Both shrink labels into icon-only buttons with tooltips below `md`.
-- **Subtle polish**: scroll-shadow (border + shadow appears after 8px scroll), 200ms ease transitions, focus-visible rings using `--ring`.
-- **Auth**: `GlobalUserMenu` stays right-most when signed in.
+## Visual reference
 
-## Responsive behavior
-
-| Breakpoint | Layout |
-|---|---|
-| `< sm` (≤640) | Logo (compact) · VoltScout pill · hamburger. GridBazaar moves into sheet. |
-| `sm`–`md` | Add GridBazaar as outline button; primary links stay in sheet. |
-| `lg` (≥1024) | Show inline primary nav (Advisory, Academy, Hosting, About); hamburger hidden. |
-| `xl+` | Full spacing, full tagline visible. |
-
-Current code hides Academy/Hosting until `xl` and keeps a partially-visible Advisory at all sizes — we'll unify so all three primary links appear together at `lg`, eliminating the awkward middle states.
-
-## Mobile sheet refresh
-
-- Reorder top section to **Advisory → Academy → Hosting**.
-- Slightly larger touch targets (min-h 44px), section dividers instead of just spacing.
-- Keep existing Learn / Company groupings unchanged in content; refine type scale and add a small caret/active state.
-- Footer CTAs: VoltScout (filled primary) + GridBazaar (outline) — match desktop weighting.
+```text
+[Logo  Watt₿yte               Advisory   Academy   Hosting        VoltScout  GridBazaar]
+       Infrastructure Company             ─────                      (filled)  (outline)
+                                         (active = orange underline)
+```
 
 ## Files to change
 
-- `src/components/landing/LandingNavigation.tsx` — full redesign (single file, no API surface change).
-
-No new dependencies. No design-token changes — uses existing `--primary`, `--secondary`, `--muted`, `--border`, `--ring`.
+- `src/components/landing/LandingNavigation.tsx` — replace pill container with inline underline links; remove About from `PRIMARY_LINKS`; remove icons from desktop links; sync mobile sheet primary section.
 
 ## Out of scope
 
-- Logged-in app shell navigation (separate component).
-- Footer redesign.
-- Adding new routes — only reordering and styling existing links.
+- No new dependencies, no token changes, no Learn/Company section edits, no auth/CTA logic changes.
