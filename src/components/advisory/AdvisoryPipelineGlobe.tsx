@@ -6,7 +6,7 @@ import { PIPELINE_PROJECTS, HQ, ENERGY_TYPE_COLORS, type PipelineProject } from 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MapPin } from 'lucide-react';
+import { X, MapPin, Play, Pause } from 'lucide-react';
 import {
   GLOBE_RADIUS,
   latLngToVec3,
@@ -310,7 +310,9 @@ const Scene: React.FC<{ paused: boolean }> = ({ paused }) => (
 );
 
 export const AdvisoryPipelineGlobe: React.FC = () => {
-  const [paused, setPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const [manualPaused, setManualPaused] = useState(false);
+  const paused = hoverPaused || manualPaused;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -329,16 +331,18 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
       <Canvas
         camera={{ position: [0, 0, 5.5], fov: 45 }}
         dpr={[1, 1.5]}
-        onPointerEnter={() => setPaused(true)}
-        onPointerLeave={() => setPaused(false)}
       >
         <Suspense fallback={null}>
           <Scene paused={paused} />
         </Suspense>
       </Canvas>
 
-      {/* Legend */}
-      <div className="absolute top-4 left-4 bg-background/90 backdrop-blur border border-border rounded-lg p-3 text-xs space-y-1.5 max-w-[180px]">
+      {/* Legend — hovering here pauses the tour so users can read */}
+      <div
+        className="absolute top-4 left-4 bg-background/90 backdrop-blur border border-border rounded-lg p-3 text-xs space-y-1.5 max-w-[180px]"
+        onPointerEnter={() => setHoverPaused(true)}
+        onPointerLeave={() => setHoverPaused(false)}
+      >
         <div className="font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
           <MapPin className="w-3.5 h-3.5" /> Energy mix
         </div>
@@ -353,9 +357,31 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
         </div>
       </div>
 
+      {/* Play / Pause control */}
+      <div
+        className="absolute top-4 right-4"
+        onPointerEnter={() => setHoverPaused(true)}
+        onPointerLeave={() => setHoverPaused(false)}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setManualPaused(p => !p)}
+          className="bg-background/90 backdrop-blur border border-border gap-1.5"
+          aria-label={manualPaused ? 'Play tour' : 'Pause tour'}
+        >
+          {manualPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+          <span className="text-xs">{manualPaused ? 'Play' : 'Pause'}</span>
+        </Button>
+      </div>
+
       {/* Selected project panel */}
       {selected && (
-        <Card className="absolute bottom-4 right-4 left-4 md:left-auto md:w-80 p-4 bg-background/95 backdrop-blur border-border shadow-xl">
+        <Card
+          className="absolute bottom-4 right-4 left-4 md:left-auto md:w-80 p-4 bg-background/95 backdrop-blur border-border shadow-xl"
+          onPointerEnter={() => setHoverPaused(true)}
+          onPointerLeave={() => setHoverPaused(false)}
+        >
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
