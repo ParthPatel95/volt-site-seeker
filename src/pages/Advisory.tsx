@@ -39,13 +39,13 @@ const Advisory: React.FC = () => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   useEffect(() => {
-    document.title = 'Powered Land Advisory for AI, HPC & Bitcoin | WattByte';
+    document.title = 'WattByte Advisory — Powered Land for AI, HPC & Bitcoin';
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!el) { el = document.createElement('meta'); el.name = name; document.head.appendChild(el); }
       el.content = content;
     };
-    setMeta('description', 'WattByte Advisory helps AI/HPC, Bitcoin mining, and inference clients source, validate, and energize powered land. Operator-led consulting backed by a 1,429 MW global pipeline.');
+    setMeta('description', 'Operator-led advisory turning powered land into operating MW for AI/HPC, Bitcoin miners, and inference clouds. 1,429 MW pipeline, in-house EPC, institutional discipline.');
 
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
@@ -98,9 +98,9 @@ const Advisory: React.FC = () => {
           <div className="max-w-7xl mx-auto px-6">
             <ScrollReveal>
               <div className="text-center mb-10">
-                <div className="text-xs uppercase tracking-widest text-watt-bitcoin font-semibold mb-3">Live pipeline</div>
-                <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">A global powered-land network</h2>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Explore the sites we are advising on, building, or operating. Click a marker to inspect.</p>
+              <div className="text-xs uppercase tracking-widest text-watt-bitcoin font-semibold mb-3">Live pipeline</div>
+                <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">Live, advised, or operating</h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">1,429 MW across four countries — every site below is one we are actively advising on, building, or running. Click a marker to inspect.</p>
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
