@@ -6,7 +6,7 @@ import { PIPELINE_PROJECTS, HQ, ENERGY_TYPE_COLORS, type PipelineProject } from 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MapPin, Play, Pause } from 'lucide-react';
+import { X, MapPin, Play, Pause, Bug } from 'lucide-react';
 import {
   GLOBE_RADIUS,
   latLngToVec3,
@@ -396,6 +396,7 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   const [manualPaused, setManualPaused] = useState(false);
   const paused = hoverPaused || manualPaused;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [debug, setDebug] = useState(false);
 
   React.useEffect(() => {
     const handler = (e: Event) => {
@@ -410,6 +411,29 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   const flyTo: FlyTarget = selected
     ? { id: selected.id, lat: selected.lat, lng: selected.lng }
     : null;
+
+  // Computed coordinates for the debug overlay (HQ + every pipeline site).
+  // Re-derived from the same projection used by the markers themselves so
+  // the readout always matches what's rendered.
+  const debugRows = useMemo(() => {
+    const fmt = (n: number) => n.toFixed(3);
+    const rows = [
+      { id: 'hq', name: HQ.name, lat: HQ.lat, lng: HQ.lng, vec: latLngToVec3(HQ.lat, HQ.lng, RADIUS * 1.025) },
+      ...PIPELINE_PROJECTS.map(p => ({
+        id: p.id,
+        name: p.location,
+        lat: p.lat,
+        lng: p.lng,
+        vec: latLngToVec3(p.lat, p.lng, RADIUS * 1.025),
+      })),
+    ];
+    return rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      latStr: `${fmt(r.lat)}°, ${fmt(r.lng)}°`,
+      vecStr: `(${fmt(r.vec.x)}, ${fmt(r.vec.y)}, ${fmt(r.vec.z)})`,
+    }));
+  }, [debug, selectedId]); // selectedId so it refreshes when calibration shifts on first load
 
   return (
     <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]">
@@ -444,7 +468,7 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
 
       {/* Play / Pause control */}
       <div
-        className="absolute top-4 right-4"
+        className="absolute top-4 right-4 flex gap-2"
         onPointerEnter={() => setHoverPaused(true)}
         onPointerLeave={() => setHoverPaused(false)}
       >
@@ -458,7 +482,46 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
           {manualPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
           <span className="text-xs">{manualPaused ? 'Play' : 'Pause'}</span>
         </Button>
+        <Button
+          variant={debug ? 'default' : 'secondary'}
+          size="sm"
+          onClick={() => setDebug(d => !d)}
+          className="bg-background/90 backdrop-blur border border-border gap-1.5"
+          aria-label={debug ? 'Hide debug coordinates' : 'Show debug coordinates'}
+          aria-pressed={debug}
+        >
+          <Bug className="w-3.5 h-3.5" />
+          <span className="text-xs">Debug</span>
+        </Button>
       </div>
+
+      {/* Debug overlay — lat/lng + computed 3D coordinates per site */}
+      {debug && (
+        <div
+          className="absolute bottom-4 left-4 max-h-[60%] w-[280px] overflow-y-auto bg-background/95 backdrop-blur border border-border rounded-lg p-3 text-[10px] font-mono shadow-xl"
+          onPointerEnter={() => setHoverPaused(true)}
+          onPointerLeave={() => setHoverPaused(false)}
+        >
+          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-border">
+            <div className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
+              <Bug className="w-3.5 h-3.5" /> Globe debug
+            </div>
+            <span className="text-muted-foreground text-[10px]">{debugRows.length} sites</span>
+          </div>
+          <div className="space-y-1.5">
+            {debugRows.map(r => (
+              <div key={r.id} className="space-y-0.5">
+                <div className="text-foreground font-semibold">{r.name}</div>
+                <div className="text-muted-foreground">lat/lng: {r.latStr}</div>
+                <div className="text-muted-foreground">xyz: {r.vecStr}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 pt-1.5 border-t border-border text-muted-foreground text-[9px]">
+            Radius {(RADIUS * 1.025).toFixed(3)} · lng offset {getLngOffset()}°
+          </div>
+        </div>
+      )}
 
       {/* Selected project panel */}
       {selected && (
