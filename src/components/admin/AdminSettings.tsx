@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Settings, Users, Check, X, Clock, RefreshCw, UserPlus, Shield, UserMinus, Mail, Trash2, Save } from 'lucide-react';
+import { ConsultingInquiries } from './ConsultingInquiries';
 
 interface AccessRequest {
   id: string;
