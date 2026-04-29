@@ -6,13 +6,14 @@ import { PIPELINE_PROJECTS, HQ, ENERGY_TYPE_COLORS, type PipelineProject } from 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MapPin, Play, Pause, Bug } from 'lucide-react';
+import { X, MapPin, Play, Pause, Bug, Crosshair } from 'lucide-react';
 import {
   GLOBE_RADIUS,
   latLngToVec3,
   tourQuaternionFor,
   getLngOffset,
   setLngOffset,
+  vec3ToLatLng,
 } from './globeProjection';
 
 const RADIUS = GLOBE_RADIUS;
@@ -128,7 +129,14 @@ const atmosphereFragment = `
 
 type FlyTarget = { lat: number; lng: number; id: string } | null;
 
-const Earth: React.FC<{ paused: boolean; flyTo: FlyTarget }> = ({ paused, flyTo }) => {
+type EarthProps = {
+  paused: boolean;
+  flyTo: FlyTarget;
+  pickMode: boolean;
+  onPickPoint?: (localUnit: THREE.Vector3) => void;
+};
+
+const Earth: React.FC<EarthProps> = ({ paused, flyTo, pickMode, onPickPoint }) => {
   const groupRef = useRef<THREE.Group>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   const [calVersion, setCalVersion] = useState(0);
@@ -266,7 +274,16 @@ const Earth: React.FC<{ paused: boolean; flyTo: FlyTarget }> = ({ paused, flyTo 
   return (
     <group ref={groupRef}>
       {/* Earth surface — photorealistic */}
-      <mesh>
+      <mesh
+        onClick={(e) => {
+          if (!pickMode || !onPickPoint || !groupRef.current) return;
+          e.stopPropagation();
+          // Convert the world-space hit point into the globe group's local
+          // frame so the picked direction is independent of tour rotation.
+          const local = groupRef.current.worldToLocal(e.point.clone()).normalize();
+          onPickPoint(local);
+        }}
+      >
         <sphereGeometry args={[RADIUS, 64, 64]} />
         <meshPhongMaterial
           map={dayMap}
@@ -372,14 +389,15 @@ const Arc: React.FC<{ project: PipelineProject }> = ({ project }) => {
   return <primitive object={lineObject} />;
 };
 
-const Scene: React.FC<{ paused: boolean; flyTo: FlyTarget }> = ({ paused, flyTo }) => (
+type SceneProps = EarthProps;
+const Scene: React.FC<SceneProps> = ({ paused, flyTo, pickMode, onPickPoint }) => (
   <>
     <ambientLight intensity={0.45} color="#2a3550" />
     <directionalLight position={[5, 3, 5]} intensity={1.7} color="#fff5e6" />
     <directionalLight position={[-5, 1, -3]} intensity={0.25} color="#6aa9ff" />
     <directionalLight position={[-6, -2, -4]} intensity={0.12} color="#F7931A" />
     <Stars radius={60} depth={25} count={600} factor={3} saturation={0} fade speed={0.3} />
-    <Earth paused={paused} flyTo={flyTo} />
+    <Earth paused={paused} flyTo={flyTo} pickMode={pickMode} onPickPoint={onPickPoint} />
     <OrbitControls
       enablePan={false}
       enableZoom={!flyTo}
@@ -397,6 +415,51 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   const paused = hoverPaused || manualPaused;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [debug, setDebug] = useState(false);
+  const [pickMode, setPickMode] = useState(false);
+  const [pick, setPick] = useState<{
+    clickLat: number;
+    clickLng: number;
+    clickVec: THREE.Vector3;
+    nearestId: string;
+    nearestName: string;
+    nearestLat: number;
+    nearestLng: number;
+    nearestVec: THREE.Vector3;
+    greatCircleDeg: number;
+  } | null>(null);
+
+  // All known marker positions as unit vectors for nearest-neighbor search.
+  const markerCatalog = useMemo(() => {
+    return [
+      { id: 'hq', name: HQ.name, lat: HQ.lat, lng: HQ.lng, unit: latLngToVec3(HQ.lat, HQ.lng, 1) },
+      ...PIPELINE_PROJECTS.map(p => ({
+        id: p.id, name: p.location, lat: p.lat, lng: p.lng,
+        unit: latLngToVec3(p.lat, p.lng, 1),
+      })),
+    ];
+  }, []);
+
+  const handlePickPoint = (localUnit: THREE.Vector3) => {
+    const { lat: clickLat, lng: clickLng } = vec3ToLatLng(localUnit);
+    let best = markerCatalog[0];
+    let bestDot = -Infinity;
+    for (const m of markerCatalog) {
+      const d = m.unit.dot(localUnit);
+      if (d > bestDot) { bestDot = d; best = m; }
+    }
+    const greatCircleDeg = Math.acos(Math.max(-1, Math.min(1, bestDot))) * (180 / Math.PI);
+    setPick({
+      clickLat,
+      clickLng,
+      clickVec: localUnit.clone().multiplyScalar(RADIUS * 1.025),
+      nearestId: best.id,
+      nearestName: best.name,
+      nearestLat: best.lat,
+      nearestLng: best.lng,
+      nearestVec: latLngToVec3(best.lat, best.lng, RADIUS * 1.025),
+      greatCircleDeg,
+    });
+  };
 
   React.useEffect(() => {
     const handler = (e: Event) => {
@@ -436,13 +499,21 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
   }, [debug, selectedId]); // selectedId so it refreshes when calibration shifts on first load
 
   return (
-    <div className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]">
+    <div
+      className="relative w-full h-[520px] md:h-[620px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]"
+      style={pickMode ? { cursor: 'crosshair' } : undefined}
+    >
       <Canvas
         camera={{ position: [0, 0, 5.5], fov: 45 }}
         dpr={[1, 1.5]}
       >
         <Suspense fallback={null}>
-          <Scene paused={paused || !!flyTo} flyTo={flyTo} />
+          <Scene
+            paused={paused || !!flyTo}
+            flyTo={flyTo}
+            pickMode={pickMode}
+            onPickPoint={handlePickPoint}
+          />
         </Suspense>
       </Canvas>
 
@@ -493,7 +564,69 @@ export const AdvisoryPipelineGlobe: React.FC = () => {
           <Bug className="w-3.5 h-3.5" />
           <span className="text-xs">Debug</span>
         </Button>
+        <Button
+          variant={pickMode ? 'default' : 'secondary'}
+          size="sm"
+          onClick={() => setPickMode(p => !p)}
+          className="bg-background/90 backdrop-blur border border-border gap-1.5"
+          aria-label={pickMode ? 'Disable pick mode' : 'Enable pick mode'}
+          aria-pressed={pickMode}
+        >
+          <Crosshair className="w-3.5 h-3.5" />
+          <span className="text-xs">Pick</span>
+        </Button>
       </div>
+
+      {/* Pick-mode readout */}
+      {pickMode && (
+        <div
+          className="absolute bottom-4 left-4 w-[280px] bg-background/95 backdrop-blur border border-border rounded-lg p-3 text-[10px] font-mono shadow-xl"
+          style={debug ? { bottom: 'auto', top: '4.5rem' } : undefined}
+          onPointerEnter={() => setHoverPaused(true)}
+          onPointerLeave={() => setHoverPaused(false)}
+        >
+          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-border">
+            <div className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
+              <Crosshair className="w-3.5 h-3.5" /> Pick mode
+            </div>
+            {pick && (
+              <button
+                onClick={() => setPick(null)}
+                className="text-muted-foreground hover:text-foreground text-[10px]"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {!pick ? (
+            <div className="text-muted-foreground">Click anywhere on the globe to find the nearest site.</div>
+          ) : (
+            <div className="space-y-2">
+              <div className="space-y-0.5">
+                <div className="text-foreground font-semibold">Click point</div>
+                <div className="text-muted-foreground">
+                  lat/lng: {pick.clickLat.toFixed(3)}°, {pick.clickLng.toFixed(3)}°
+                </div>
+                <div className="text-muted-foreground">
+                  xyz: ({pick.clickVec.x.toFixed(3)}, {pick.clickVec.y.toFixed(3)}, {pick.clickVec.z.toFixed(3)})
+                </div>
+              </div>
+              <div className="space-y-0.5 pt-1.5 border-t border-border">
+                <div className="text-foreground font-semibold">Nearest: {pick.nearestName}</div>
+                <div className="text-muted-foreground">
+                  lat/lng: {pick.nearestLat.toFixed(3)}°, {pick.nearestLng.toFixed(3)}°
+                </div>
+                <div className="text-muted-foreground">
+                  xyz: ({pick.nearestVec.x.toFixed(3)}, {pick.nearestVec.y.toFixed(3)}, {pick.nearestVec.z.toFixed(3)})
+                </div>
+                <div className="text-muted-foreground">
+                  arc distance: {pick.greatCircleDeg.toFixed(2)}°
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Debug overlay — lat/lng + computed 3D coordinates per site */}
       {debug && (
