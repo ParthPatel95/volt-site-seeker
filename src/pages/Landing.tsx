@@ -5,6 +5,9 @@ import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
+import { LiveOperationsTicker } from '@/components/landing/LiveOperationsTicker';
+import { ByTheNumbersBand } from '@/components/landing/ByTheNumbersBand';
+import { LeadershipStrip } from '@/components/landing/LeadershipStrip';
 
 // Lazy load heavy sections
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
@@ -47,7 +50,8 @@ const Landing: React.FC = () => {
           {/* Hero Section */}
           <OptimizedHeroSection />
 
-          <SectionDivider color="cyan" />
+          {/* Live operations data — proves the lights are on */}
+          <LiveOperationsTicker />
 
           {/* Problem & Solution Section */}
           <section aria-label="Problem and Solution" className="relative">
@@ -56,7 +60,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="purple" />
+          <SectionDivider />
 
           {/* Alberta Facility Hub */}
           <section aria-label="Alberta Facility" className="relative">
@@ -65,7 +69,8 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="yellow" />
+          {/* By the Numbers — institutional weight band */}
+          <ByTheNumbersBand />
 
           {/* Investment Thesis Section */}
           <section aria-label="Investment Thesis" className="relative">
@@ -74,7 +79,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="cyan" />
+          <SectionDivider />
 
           {/* Development Pipeline Section */}
           <section aria-label="Development Pipeline" className="relative">
@@ -83,7 +88,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="purple" />
+          <SectionDivider />
 
           {/* Live Energy Markets Section */}
           <section aria-label="Live Energy Markets" className="relative">
@@ -92,7 +97,12 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="yellow" />
+          <SectionDivider />
+
+          {/* Leadership credibility strip */}
+          <LeadershipStrip />
+
+          <SectionDivider />
 
           {/* VoltScout Intelligence Hub */}
           <section aria-label="VoltScout Platform" className="relative">
@@ -101,7 +111,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="cyan" />
+          <SectionDivider />
 
           {/* Academy Section */}
           <section aria-label="WattByte Academy" className="relative">

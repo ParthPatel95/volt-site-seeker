@@ -1,20 +1,19 @@
 
 interface SectionDividerProps {
+  /** Kept for backwards compatibility; ignored in the institutional variant. */
   color?: 'blue' | 'green' | 'yellow' | 'purple' | 'cyan';
 }
 
-export const SectionDivider = ({ color = 'blue' }: SectionDividerProps) => {
-  const colorClasses = {
-    blue: 'from-transparent via-watt-trust/20 to-transparent',
-    green: 'from-transparent via-watt-success/20 to-transparent',
-    yellow: 'from-transparent via-watt-bitcoin/20 to-transparent',
-    purple: 'from-transparent via-watt-trust/20 to-transparent',
-    cyan: 'from-transparent via-watt-trust/20 to-transparent'
-  };
-
+/**
+ * Neutral hairline divider — institutional, not playful.
+ * Uses the design system `--border` token so it adapts to theme.
+ */
+export const SectionDivider = (_props: SectionDividerProps) => {
   return (
-    <div className="relative my-4">
-      <div className={`absolute inset-0 bg-gradient-to-r ${colorClasses[color]} h-px`} />
+    <div className="relative">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="h-px bg-border/60" />
+      </div>
     </div>
   );
 };
