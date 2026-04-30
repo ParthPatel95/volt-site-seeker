@@ -32,10 +32,10 @@ const Cell: React.FC<{
 );
 
 export const LiveOperationsTicker: React.FC = () => {
-  const { pricing, loadData, isLoading } = useAESOData();
-  const { stats: btc, isLoading: btcLoading } = useBitcoinNetworkStats();
+  const { pricing, loadData, loading } = useAESOData();
+  const { stats: btc, loading: btcLoading } = useBitcoinNetworkStats();
 
-  const aesoLive = !!pricing && !isLoading;
+  const aesoLive = !!pricing && !loading;
   const btcLive = !!btc && !btcLoading && btc.dataSource !== 'fallback';
 
   const poolPrice = pricing ? `$${pricing.current_price.toFixed(2)}/MWh` : '—';
