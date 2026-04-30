@@ -1,4 +1,4 @@
-import { Bitcoin, Mail, Linkedin, Instagram, MapPin } from 'lucide-react';
+import { Bitcoin, Mail, Linkedin, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EnhancedLogo } from '../EnhancedLogo';
 
@@ -19,23 +19,6 @@ export const LandingFooter = () => {
             <p className="text-muted-foreground text-sm mb-4 max-w-md">
               Turning power into profit through intelligent infrastructure investment
             </p>
-            {/* Operational status — institutional signal */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className="relative inline-flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-watt-success opacity-75 animate-ping" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-watt-success" />
-              </span>
-              <span className="text-xs font-medium text-foreground">All systems operational</span>
-              <span className="text-xs text-muted-foreground">· AESO market participant</span>
-            </div>
-            {/* Registered office */}
-            <div className="flex items-start gap-2 mb-4 text-xs text-muted-foreground">
-              <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <span>
-                WattByte Infrastructure Company<br />
-                Calgary, Alberta, Canada
-              </span>
-            </div>
             <div className="flex items-center space-x-4">
               <a href="https://www.instagram.com/wattbyte/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                 <Instagram className="w-5 h-5" />
@@ -119,7 +102,7 @@ export const LandingFooter = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-xs text-muted-foreground">
-            © 2026 WattByte Infrastructure Company. All rights reserved.
+            © {new Date().getFullYear()} WattByte Infrastructure Company. All rights reserved.
           </p>
           <div className="flex items-center space-x-6">
             <Link to="/privacy" className="text-xs text-muted-foreground hover:text-primary transition-colors">
