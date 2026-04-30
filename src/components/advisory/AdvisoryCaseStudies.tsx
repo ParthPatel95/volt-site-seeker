@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 import { PIPELINE_PROJECTS, ENERGY_TYPE_COLORS } from '@/data/advisory-pipeline';
+import { PIPELINE_IMAGES } from '@/data/pipeline-images';
 import { Badge } from '@/components/ui/badge';
 
 const featured = ['alberta-heartland', 'uganda-jinja', 'usa-texas'];
@@ -22,7 +23,7 @@ export const AdvisoryCaseStudies: React.FC = () => {
             <ScrollReveal key={p.id} delay={i * 0.1}>
               <div className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-elegant transition-all h-full flex flex-col">
                 <div className="aspect-video relative overflow-hidden">
-                  <img src={p.image} alt={p.location} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <img src={PIPELINE_IMAGES[p.imageKey]} alt={p.location} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
                     <span className="text-2xl">{p.flagEmoji}</span>

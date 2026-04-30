@@ -1,20 +1,18 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Briefcase, ArrowRight, Sparkles } from 'lucide-react';
-import { ScrollReveal } from '@/components/landing/ScrollAnimations';
 
 interface Props { onContact: () => void; onPipeline: () => void; }
 
 export const AdvisoryHero: React.FC<Props> = ({ onContact, onPipeline }) => (
   <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 bg-gradient-to-br from-[hsl(var(--watt-navy))] via-[hsl(var(--watt-navy)/0.95)] to-[hsl(var(--watt-navy)/0.85)] overflow-hidden">
     {/* Grid pattern */}
-    <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+    <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
     {/* Glow */}
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[hsl(var(--watt-bitcoin)/0.08)] rounded-full blur-3xl" />
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[hsl(var(--watt-bitcoin)/0.08)] rounded-full blur-3xl pointer-events-none" />
 
     <div className="max-w-6xl mx-auto px-6 relative z-10">
-      <ScrollReveal>
-        <div className="text-center">
+      <div className="text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[hsl(var(--watt-bitcoin)/0.12)] border border-[hsl(var(--watt-bitcoin)/0.25)] rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-[hsl(var(--watt-bitcoin))]" />
             <span className="text-sm font-medium text-[hsl(var(--watt-bitcoin))]">Introducing WattByte Advisory</span>
@@ -46,8 +44,7 @@ export const AdvisoryHero: React.FC<Props> = ({ onContact, onPipeline }) => (
             <span className="hidden sm:inline text-white/30">·</span>
             <span>Operator-led since <span className="text-watt-bitcoin font-semibold">2019</span></span>
           </div>
-        </div>
-      </ScrollReveal>
+      </div>
     </div>
   </section>
 );
