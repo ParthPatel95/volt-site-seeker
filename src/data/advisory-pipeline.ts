@@ -1,11 +1,11 @@
-import jinjaImage from '@/assets/pipeline/jinja-uganda-hydro.jpg';
-import texasImage from '@/assets/pipeline/texas-natgas.jpg';
-import nepalImage from '@/assets/pipeline/nepal-mix.jpg';
-import bhutanImage from '@/assets/pipeline/bhutan-hydro.jpg';
-import indiaImage from '@/assets/pipeline/india-solar-hydro.jpg';
-import newfoundlandImage from '@/assets/pipeline/newfoundland-canada-hybrid.jpg';
-
 export type PipelineEnergyType = 'Hydro' | 'Natgas' | 'Hybrid' | 'Mix' | 'Solar';
+export type PipelineImageKey =
+  | 'jinja'
+  | 'texas'
+  | 'nepal'
+  | 'bhutan'
+  | 'india'
+  | 'newfoundland';
 export type PipelineStatus = 'Operating' | 'Under Development' | 'Diligence';
 
 export interface PipelineProject {
@@ -19,7 +19,7 @@ export interface PipelineProject {
   energyType: PipelineEnergyType;
   description: string;
   status: PipelineStatus;
-  image: string;
+  imageKey: PipelineImageKey;
 }
 
 export const HQ = { name: 'Calgary HQ', lat: 51.0447, lng: -114.0719 };
@@ -36,7 +36,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Hybrid',
     description: 'Flagship Alberta facility — transmission-connected, ASIC + HPC ready.',
     status: 'Under Development',
-    image: newfoundlandImage,
+    imageKey: 'newfoundland',
   },
   {
     id: 'uganda-jinja',
@@ -49,7 +49,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Hydro',
     description: 'Run-of-river hydro on the Nile with direct grid interconnection.',
     status: 'Diligence',
-    image: jinjaImage,
+    imageKey: 'jinja',
   },
   {
     id: 'usa-texas',
@@ -62,7 +62,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Natgas',
     description: 'On-grid + self-gen natural gas hybrid. ERCOT interconnection.',
     status: 'Diligence',
-    image: texasImage,
+    imageKey: 'texas',
   },
   {
     id: 'nepal',
@@ -75,7 +75,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Mix',
     description: 'Himalayan grid-connected mixed renewable infrastructure.',
     status: 'Diligence',
-    image: nepalImage,
+    imageKey: 'nepal',
   },
   {
     id: 'bhutan',
@@ -88,7 +88,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Hydro',
     description: 'Large-scale mountain hydro with stranded surplus capacity.',
     status: 'Diligence',
-    image: bhutanImage,
+    imageKey: 'bhutan',
   },
   {
     id: 'india',
@@ -101,7 +101,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Solar',
     description: 'Behind-the-meter solar + hydro hybrid system.',
     status: 'Diligence',
-    image: indiaImage,
+    imageKey: 'india',
   },
   {
     id: 'canada-newfoundland',
@@ -114,7 +114,7 @@ export const PIPELINE_PROJECTS: PipelineProject[] = [
     energyType: 'Hybrid',
     description: 'Coastal wind + hydro hybrid on Canada Atlantic edge.',
     status: 'Diligence',
-    image: newfoundlandImage,
+    imageKey: 'newfoundland',
   },
 ];
 
