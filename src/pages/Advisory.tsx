@@ -3,14 +3,16 @@ import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { AdvisoryHero } from '@/components/advisory/AdvisoryHero';
-import { AdvisoryAudience } from '@/components/advisory/AdvisoryAudience';
-import { AdvisoryMarketContext } from '@/components/advisory/AdvisoryMarketContext';
-import { AdvisoryServices } from '@/components/advisory/AdvisoryServices';
-import { AdvisoryProcess } from '@/components/advisory/AdvisoryProcess';
-import { AdvisoryDifferentiators } from '@/components/advisory/AdvisoryDifferentiators';
-import { PipelineFlowStrip } from '@/components/advisory/PipelineFlowStrip';
 import { AdvisoryInquiryForm } from '@/components/advisory/AdvisoryInquiryForm';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
+import { SectionLoader } from '@/components/LazyErrorBoundary';
+
+const AdvisoryAudience = lazy(() => import('@/components/advisory/AdvisoryAudience').then(m => ({ default: m.AdvisoryAudience })));
+const AdvisoryMarketContext = lazy(() => import('@/components/advisory/AdvisoryMarketContext').then(m => ({ default: m.AdvisoryMarketContext })));
+const AdvisoryServices = lazy(() => import('@/components/advisory/AdvisoryServices').then(m => ({ default: m.AdvisoryServices })));
+const AdvisoryProcess = lazy(() => import('@/components/advisory/AdvisoryProcess').then(m => ({ default: m.AdvisoryProcess })));
+const AdvisoryDifferentiators = lazy(() => import('@/components/advisory/AdvisoryDifferentiators').then(m => ({ default: m.AdvisoryDifferentiators })));
+const PipelineFlowStrip = lazy(() => import('@/components/advisory/PipelineFlowStrip').then(m => ({ default: m.PipelineFlowStrip })));
 
 const AdvisoryPipelineMap = lazy(() =>
   import('@/components/advisory/AdvisoryPipelineMap').then(m => ({ default: m.AdvisoryPipelineMap }))
@@ -77,19 +79,19 @@ const Advisory: React.FC = () => {
         <AdvisoryHero onContact={() => scrollTo(formRef)} onPipeline={() => scrollTo(pipelineRef)} />
 
         <SectionDivider color="cyan" />
-        <AdvisoryAudience />
+        <Suspense fallback={<SectionLoader />}><AdvisoryAudience /></Suspense>
 
         <SectionDivider color="purple" />
-        <AdvisoryMarketContext />
+        <Suspense fallback={<SectionLoader />}><AdvisoryMarketContext /></Suspense>
 
         <SectionDivider color="yellow" />
-        <AdvisoryServices />
+        <Suspense fallback={<SectionLoader />}><AdvisoryServices /></Suspense>
 
         <SectionDivider color="cyan" />
-        <AdvisoryProcess />
+        <Suspense fallback={<SectionLoader />}><AdvisoryProcess /></Suspense>
 
         <SectionDivider color="purple" />
-        <AdvisoryDifferentiators />
+        <Suspense fallback={<SectionLoader />}><AdvisoryDifferentiators /></Suspense>
 
         <SectionDivider color="yellow" />
 
@@ -109,7 +111,7 @@ const Advisory: React.FC = () => {
               </Suspense>
             </ScrollReveal>
             <div className="mt-8">
-              <PipelineFlowStrip />
+              <Suspense fallback={<SectionLoader />}><PipelineFlowStrip /></Suspense>
             </div>
           </div>
         </section>
