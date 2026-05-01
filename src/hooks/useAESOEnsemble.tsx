@@ -143,17 +143,26 @@ const generateClientSidePredictions = async (): Promise<EnsemblePrediction[]> =>
   return predictions;
 };
 
+export type PredictionSource = 'api' | 'client_fallback';
+
 export const useAESOEnsemble = () => {
   const [loading, setLoading] = useState(false);
   const [predictions, setPredictions] = useState<EnsemblePrediction[]>([]);
+  // `source` tells callers whether the predictions came from the trained
+  // ensemble edge function (`api`) or from the seeded stochastic fallback
+  // we run client-side when the API fails (`client_fallback`). The market
+  // tab uses this to render an "Estimated predictions" warning so users
+  // don't read the chart as a real model output.
+  const [source, setSource] = useState<PredictionSource | null>(null);
+  const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const { toast } = useToast();
 
   const generateEnsemblePredictions = async (hoursAhead: number = 24) => {
     setLoading(true);
-    
+
     try {
       console.log(`[useAESOEnsemble] Generating ensemble predictions for ${hoursAhead} hours ahead...`);
-      
+
       const { data, error } = await supabase.functions.invoke('aeso-ensemble-predictor', {
         body: { hoursAhead }
       });
@@ -164,51 +173,60 @@ export const useAESOEnsemble = () => {
       }
 
       if (data?.success && data?.predictions?.length > 0) {
-        // Check if predictions are fresh (within last hour)
         const firstPred = data.predictions[0];
         const predTime = new Date(firstPred.target_timestamp);
         const now = new Date();
         const hoursOld = (now.getTime() - predTime.getTime()) / 3600000;
-        
+
         if (hoursOld > 24) {
           console.warn(`[useAESOEnsemble] API predictions are ${hoursOld.toFixed(1)} hours old, using fallback`);
           throw new Error('Stale predictions');
         }
-        
+
         setPredictions(data.predictions);
+        setSource('api');
+        setGeneratedAt(new Date());
         console.log('[useAESOEnsemble] Fresh API predictions:', data.predictions.length);
         console.log('[useAESOEnsemble] Model weights used:', data.weights_used);
-        
+
         toast({
           title: "AI Predictions Updated",
           description: `Generated ${data.predictions.length} predictions`,
           variant: "default"
         });
-        
-        return data;
+
+        return { ...data, source: 'api' as const };
       } else {
         throw new Error(data?.error || 'No predictions returned');
       }
-      
     } catch (error) {
       console.warn('[useAESOEnsemble] API failed, using client-side fallback:', error);
-      
-      // Fallback to client-side predictions
+
       try {
         const fallbackPredictions = await generateClientSidePredictions();
         if (fallbackPredictions.length > 0) {
           setPredictions(fallbackPredictions);
+          setSource('client_fallback');
+          setGeneratedAt(new Date());
           toast({
-            title: "AI Predictions (Simplified)",
-            description: `Generated ${fallbackPredictions.length} predictions using local model`,
+            // Surface the degraded source explicitly in the toast so the
+            // user knows the chart is a heuristic, not the trained model.
+            title: "Showing simplified predictions",
+            description: `Trained model unavailable — using a local heuristic for the next ${fallbackPredictions.length} hours.`,
             variant: "default"
           });
-          return { success: true, predictions: fallbackPredictions, message: 'Client-side predictions' };
+          return {
+            success: true,
+            predictions: fallbackPredictions,
+            message: 'Client-side predictions',
+            source: 'client_fallback' as const,
+          };
         }
       } catch (fallbackError) {
         console.error('[useAESOEnsemble] Fallback also failed:', fallbackError);
       }
-      
+
+      setSource(null);
       toast({
         title: "Prediction Generation Failed",
         description: "Could not generate AI predictions. Please try again.",
@@ -223,6 +241,8 @@ export const useAESOEnsemble = () => {
   return {
     generateEnsemblePredictions,
     loading,
-    predictions
+    predictions,
+    source,
+    generatedAt,
   };
 };

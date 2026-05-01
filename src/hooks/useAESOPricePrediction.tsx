@@ -23,6 +23,9 @@ export interface PricePrediction {
 
 export interface ModelPerformance {
   modelVersion: string;
+  /** ISO timestamp from aeso_model_performance.evaluation_date — used by the
+   *  Predictions tab to render a "Model trained" freshness badge. */
+  evaluationDate?: string | null;
   mae: number;
   rmse: number;
   mape: number;
@@ -169,6 +172,7 @@ export const useAESOPricePrediction = () => {
       if (data) {
         setModelPerformance({
           modelVersion: data.model_version,
+          evaluationDate: data.evaluation_date ?? data.created_at ?? null,
           mae: data.mae || 0,
           rmse: data.rmse || 0,
           mape: data.mape || 0,

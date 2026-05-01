@@ -13,18 +13,20 @@ interface CachedData {
 }
 
 // Helper to get cached data
-function getCachedTenYearData(uptimePercentage: number): any | null {
+function getCachedTenYearData(uptimePercentage: number):
+  | { data: any; isStale: boolean; timestamp: number }
+  | null {
   try {
     const cached = localStorage.getItem(CACHE_KEY_TEN_YEAR);
     if (!cached) return null;
-    
+
     const parsed: CachedData = JSON.parse(cached);
     const isExpired = Date.now() - parsed.timestamp > CACHE_TTL_MS;
     const isSameUptime = parsed.uptimePercentage === uptimePercentage;
-    
+
     // Return cached data even if expired (will refresh in background)
     if (isSameUptime) {
-      return { data: parsed.data, isStale: isExpired };
+      return { data: parsed.data, isStale: isExpired, timestamp: parsed.timestamp };
     }
     return null;
   } catch {
@@ -126,6 +128,10 @@ export function useAESOHistoricalPricing() {
   const [loadingHistoricalTenYear, setLoadingHistoricalTenYear] = useState(false);
   const [loadingCustomPeriod, setLoadingCustomPeriod] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false); // True when refreshing stale cache
+  // Tracks when any of the historical datasets above was last successfully
+  // fetched from the upstream `aeso-historical-pricing` edge function. The
+  // Analytics tab uses this for the <DataFreshnessBadge>.
+  const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Hydrate from localStorage on mount
@@ -134,6 +140,9 @@ export function useAESOHistoricalPricing() {
     if (cached?.data) {
       console.log('[useAESOHistoricalPricing] Hydrating from localStorage cache');
       setHistoricalTenYearData(cached.data);
+      // Use the cache's original fetch time so the freshness badge
+      // accurately reflects how old the displayed data really is.
+      setLastFetchedAt(new Date(cached.timestamp).toISOString());
     }
   }, []);
 
@@ -150,6 +159,7 @@ export function useAESOHistoricalPricing() {
         throw new Error(data.error);
       } else {
         setDailyData(data);
+        setLastFetchedAt(new Date().toISOString());
         
         toast({
           title: "Daily data loaded",
@@ -182,6 +192,7 @@ export function useAESOHistoricalPricing() {
         throw new Error(data.error);
       } else {
         setMonthlyData(data);
+        setLastFetchedAt(new Date().toISOString());
         
         toast({
           title: "Monthly data loaded",
@@ -214,6 +225,7 @@ export function useAESOHistoricalPricing() {
         throw new Error(data.error);
       } else {
         setYearlyData(data);
+        setLastFetchedAt(new Date().toISOString());
         
         toast({
           title: "Yearly data loaded",
@@ -285,13 +297,15 @@ export function useAESOHistoricalPricing() {
       // Fresh cache hit - no need to fetch
       console.log('[fetchHistoricalTenYearData] Fresh cache hit, skipping fetch');
       setHistoricalTenYearData(cached.data);
+      setLastFetchedAt(new Date(cached.timestamp).toISOString());
       return;
     }
-    
+
     if (cached?.data && cached.isStale) {
       // Stale cache - show data immediately, refresh in background
       console.log('[fetchHistoricalTenYearData] Stale cache, showing cached data and refreshing');
       setHistoricalTenYearData(cached.data);
+      setLastFetchedAt(new Date(cached.timestamp).toISOString());
       setIsRefreshing(true);
     } else {
       // No cache - show loading spinner
@@ -314,6 +328,7 @@ export function useAESOHistoricalPricing() {
       } else {
         console.log('8-year historical data received:', data);
         setHistoricalTenYearData(data);
+        setLastFetchedAt(new Date().toISOString());
         cacheTenYearData(data, uptimePercentage);
         
         // Only show toast on background refresh, not initial load
@@ -369,6 +384,7 @@ export function useAESOHistoricalPricing() {
         throw new Error(data.error);
       } else {
         setCustomPeriodData(data);
+        setLastFetchedAt(new Date().toISOString());
         const dataPoints = data.rawHourlyData?.length || data.chartData?.length || 0;
         console.log(`Custom period data loaded: ${dataPoints} data points`);
         console.log('Data structure:', {
@@ -410,6 +426,7 @@ export function useAESOHistoricalPricing() {
     loadingHistoricalTenYear,
     loadingCustomPeriod,
     isRefreshing, // New: true when refreshing stale cache in background
+    lastFetchedAt,
     fetchDailyData,
     fetchMonthlyData,
     fetchYearlyData,

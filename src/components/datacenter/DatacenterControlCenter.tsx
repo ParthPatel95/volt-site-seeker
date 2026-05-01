@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useMinerController } from '@/hooks/useMinerController';
 import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 import { MinerFleetManager } from './MinerFleetManager';
 import { ShutdownRulesPanel } from './ShutdownRulesPanel';
 import { AutomationStatusPanel } from './AutomationStatusPanel';
@@ -229,9 +230,21 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
                 <Gauge className="w-5 h-5" />
                 AI Decision Engine
               </CardTitle>
-              <Badge variant={evaluating ? "outline" : "secondary"}>
-                {evaluating ? "Evaluating..." : "Last updated: " + new Date(latestDecision.timestamp).toLocaleTimeString()}
-              </Badge>
+              {evaluating ? (
+                <Badge variant="outline">Evaluating…</Badge>
+              ) : (
+                // Replaces the bare "Last updated" timestamp so users can
+                // see at a glance whether the automation decision still
+                // reflects current market conditions. Live = decided in
+                // the last 5 min; stale past that, outdated past 30 min.
+                <DataFreshnessBadge
+                  updatedAt={latestDecision.timestamp}
+                  source="datacenter-automation-engine"
+                  label="Last automation decision"
+                  liveThresholdSec={5 * 60}
+                  staleThresholdSec={30 * 60}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>

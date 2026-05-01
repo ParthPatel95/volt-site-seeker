@@ -2,8 +2,12 @@ import { useState, useEffect } from 'react';
 
 interface ExchangeRateData {
   rate: number;
-  lastUpdated: string;
-  source: string;
+  /** ISO timestamp of the most recent successful upstream fetch, or null if
+   *  we have never had a live rate for this session (the rate is the
+   *  hardcoded fallback). Consumers should pass this into <DataFreshnessBadge>
+   *  so a stale rate is visually distinguishable from a fresh one. */
+  lastUpdated: string | null;
+  source: 'open.er-api.com' | 'fallback' | 'fallback_estimated' | 'default';
 }
 
 // Hardcoded CAD to USD rate - updated periodically
@@ -13,8 +17,10 @@ const FALLBACK_RATE = 0.73;
 export function useExchangeRate() {
   const [exchangeRate, setExchangeRate] = useState<ExchangeRateData>({
     rate: FALLBACK_RATE,
-    lastUpdated: new Date().toISOString(),
-    source: 'default'
+    // Null until first successful fetch — prevents <DataFreshnessBadge> from
+    // labelling the hardcoded fallback as "Live · 0s ago" on cold start.
+    lastUpdated: null,
+    source: 'default',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,37 +28,40 @@ export function useExchangeRate() {
   const fetchExchangeRate = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Try Open Exchange Rates (CORS-friendly, no auth for base rates)
       const response = await fetch('https://open.er-api.com/v6/latest/CAD', {
         signal: AbortSignal.timeout(5000) // 5 second timeout
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch exchange rate');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.rates && data.rates.USD) {
         setExchangeRate({
           rate: data.rates.USD,
           lastUpdated: new Date().toISOString(),
-          source: 'open.er-api.com'
+          source: 'open.er-api.com',
         });
         return;
       }
-      
+
       throw new Error('Invalid exchange rate data');
     } catch (err) {
       console.warn('Exchange rate fetch failed, using fallback:', err);
       setError('Using fallback rate');
-      // Keep existing rate or use fallback
+      // Preserve the previous successful `lastUpdated` (if any) so
+      // <DataFreshnessBadge> reflects the *actual* rate age, not the time
+      // the failure occurred. Source is suffixed with `_estimated` so the
+      // badge switches to its amber "Estimated" tone.
       setExchangeRate(prev => ({
         rate: prev?.rate || FALLBACK_RATE,
-        lastUpdated: new Date().toISOString(),
-        source: 'fallback'
+        lastUpdated: prev?.lastUpdated ?? null,
+        source: 'fallback_estimated',
       }));
     } finally {
       setLoading(false);

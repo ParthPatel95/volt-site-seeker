@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  TrendingUp,
+  TrendingDown,
   Minus,
   BarChart3
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useCurrency } from '@/hooks/useCurrency';
 import { cn } from '@/lib/utils';
 
 interface HeroPriceCardProps {
@@ -35,6 +36,7 @@ export function HeroPriceCard({
   uptimeData,
   loading
 }: HeroPriceCardProps) {
+  const currency = useCurrency();
   const [displayPrice, setDisplayPrice] = useState(currentPrice);
   const [isFlashing, setIsFlashing] = useState(false);
 
@@ -128,18 +130,19 @@ export function HeroPriceCard({
           </Badge>
         </div>
 
-        {/* Main Price Display */}
+        {/* Main Price Display — converts CAD→USD via the active currency
+            context so the headline number tracks the hub's CAD/USD toggle. */}
         <div className="flex flex-col items-center justify-center py-4">
           <div className="flex items-baseline gap-1">
-            <span className="text-lg font-medium text-muted-foreground">$</span>
+            <span className="text-lg font-medium text-muted-foreground">{currency.symbol}</span>
             <span className={cn(
               "text-5xl sm:text-6xl font-bold font-mono tracking-tight text-foreground transition-transform duration-150",
               isFlashing && "scale-[1.02]"
             )}>
-              {displayPrice.toFixed(2)}
+              {currency.convert(displayPrice).toFixed(2)}
             </span>
           </div>
-          <span className="text-sm text-muted-foreground mt-2 font-medium">CAD / MWh</span>
+          <span className="text-sm text-muted-foreground mt-2 font-medium">{currency.currency} / MWh</span>
           
           {/* Hourly Change */}
           <div className={cn(

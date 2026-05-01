@@ -41,6 +41,8 @@ interface MarketDataTabProps {
   enhancedLoading: boolean;
   ensembleLoading: boolean;
   ensemblePredictions: any[];
+  ensembleSource: 'api' | 'client_fallback' | null;
+  ensembleGeneratedAt: Date | null;
   handleRefreshAll: () => void;
   generateEnsemblePredictions: (hours: number) => void;
   windSolarForecast: any;
@@ -76,6 +78,7 @@ export function MarketDataTab({
   operatingReserve, interchange, energyStorage, marketAnalytics,
   currentPrice, hasValidPrice, priceTimestamp, uptimeData, priceCeilings,
   loading, enhancedLoading, ensembleLoading, ensemblePredictions,
+  ensembleSource, ensembleGeneratedAt,
   handleRefreshAll, generateEnsemblePredictions,
   windSolarForecast, alerts, assetOutages, onDismissAlert, onClearAll,
 }: MarketDataTabProps) {
@@ -249,6 +252,34 @@ export function MarketDataTab({
 
       {/* Mining & Energy Analytics - full width */}
       <MiningEnergyAnalytics currentAesoPrice={currentPrice} />
+
+      {/* Predictions header: surface model provenance + freshness so the
+          chart isn't read as a real-model output when we're on the local
+          fallback (see useAESOEnsemble — `client_fallback` is a seeded
+          stochastic heuristic, not the trained ensemble model). */}
+      {(ensembleSource || ensembleGeneratedAt) && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            AI predictions ({ensembleSource === 'client_fallback' ? 'local heuristic' : 'trained ensemble'})
+          </span>
+          <DataFreshnessBadge
+            updatedAt={ensembleGeneratedAt}
+            source={ensembleSource === 'client_fallback' ? 'client_fallback_estimated' : 'aeso-ensemble-predictor'}
+            label="Prediction model run"
+          />
+        </div>
+      )}
+
+      {ensembleSource === 'client_fallback' && (
+        <Alert className="border-amber-500/40 bg-amber-500/10 text-foreground">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-sm">
+            <span className="font-medium">Using local fallback predictions.</span>{' '}
+            The trained ensemble model is unavailable, so the forecast below is a heuristic
+            derived from recent prices. Confidence intervals are wider than usual.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <TradingViewChart
         data={historicalPrices?.prices || []}

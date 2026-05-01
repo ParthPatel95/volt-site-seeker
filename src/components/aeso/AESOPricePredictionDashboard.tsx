@@ -13,6 +13,7 @@ import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
@@ -77,16 +78,29 @@ export const AESOPricePredictionDashboard = () => {
               </p>
             </div>
             
-            <Select value={horizon} onValueChange={setHorizon}>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="6h">6 Hours</SelectItem>
-                <SelectItem value="24h">24 Hours</SelectItem>
-                <SelectItem value="7d">7 Days</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              {modelPerformance?.evaluationDate && (
+                <DataFreshnessBadge
+                  updatedAt={modelPerformance.evaluationDate}
+                  source={`aeso-ml-trainer (${modelPerformance.modelVersion ?? 'unknown'})`}
+                  label="Model trained"
+                  // Trained-model staleness windows differ from real-time
+                  // pricing: under 24h is fresh, under 7d is acceptable.
+                  liveThresholdSec={24 * 3600}
+                  staleThresholdSec={7 * 24 * 3600}
+                />
+              )}
+              <Select value={horizon} onValueChange={setHorizon}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6h">6 Hours</SelectItem>
+                  <SelectItem value="24h">24 Hours</SelectItem>
+                  <SelectItem value="7d">7 Days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Action Buttons */}

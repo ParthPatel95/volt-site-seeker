@@ -18,6 +18,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { supabase } from '@/integrations/supabase/client';
 import { useBitcoinNetworkStats } from '@/hooks/useBitcoinNetworkStats';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 import { AESO_TARIFF_2026 } from '@/constants/tariff-rates';
 import { ASIC_SPECS, BLOCK_REWARD_BTC, BLOCKS_PER_DAY } from '@/constants/mining-data';
 import { cn } from '@/lib/utils';
@@ -652,7 +653,16 @@ export function MiningHashOptimizer() {
               <Badge variant="outline">Live from Coinbase — BTC Price</Badge>
               <Badge variant="outline">Historical from AESO — {historicalData.length.toLocaleString()} hourly pool prices</Badge>
               <Badge variant="outline">Verified 2026-015T — DTS Transmission Adder ${transmissionAdder}/MWh</Badge>
-              <Badge variant="outline">CAD/USD: {cadToUsd.toFixed(4)} ({exchangeRate.source})</Badge>
+              <Badge variant="outline">CAD/USD: {cadToUsd.toFixed(4)}</Badge>
+              <DataFreshnessBadge
+                updatedAt={exchangeRate.lastUpdated}
+                source={exchangeRate.source}
+                label="CAD/USD rate"
+                // Exchange rates change slowly; live = within 24h, stale to 7d.
+                liveThresholdSec={24 * 3600}
+                staleThresholdSec={7 * 24 * 3600}
+                size="compact"
+              />
             </div>
             <p className="text-xs text-muted-foreground mt-3">
               Backtest applies current Bitcoin network conditions to historical energy prices.
