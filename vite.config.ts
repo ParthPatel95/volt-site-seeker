@@ -78,10 +78,16 @@ export default defineConfig(({ command, mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // TODO: drop to 3 MB once App.tsx routes are lazy-loaded (currently
-        // 29 pages are statically imported, producing a ~5 MB main chunk).
-        // See DEPRECATED.md / QA backlog item "route-level lazy loading".
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB
+        // App.tsx is now route-level lazy-loaded (Phase F), so the main
+        // shell is ~632 KB instead of ~5 MB. The heaviest lazy chunk —
+        // the `/app` (VoltScout) bundle — is intentionally excluded from
+        // precaching via `globIgnores` so we don't blow through mobile
+        // storage on first install. It's still fetched on demand when
+        // the user navigates to /app. Other chunks (vendor-mapbox,
+        // vendor-pdf, vendor-charts) precache fine under the 4 MB
+        // ceiling and let the home page work offline.
+        globIgnores: ['**/VoltScout-*.js', '**/VoltScout.*.js'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB
         // Ensure new service workers take control immediately
         skipWaiting: true,
         clientsClaim: true,
