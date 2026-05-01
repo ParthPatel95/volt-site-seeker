@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 
@@ -23,10 +23,17 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 );
 
 describe('useCurrency', () => {
+  beforeEach(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('aeso-hub-currency');
+    }
+  });
+
   it('defaults to CAD and pass-through convert', () => {
     const { result } = renderHook(() => useCurrency(), { wrapper });
     expect(result.current.currency).toBe('CAD');
     expect(result.current.convert(100)).toBe(100);
+    expect(result.current.convertFromUSD(100)).toBeCloseTo(100 / 0.75, 5);
   });
 
   it('switches to USD via toggle and applies the rate', () => {
@@ -34,8 +41,19 @@ describe('useCurrency', () => {
     act(() => result.current.toggle());
     expect(result.current.currency).toBe('USD');
     expect(result.current.convert(100)).toBeCloseTo(75, 5);
+    expect(result.current.convertFromUSD(100)).toBe(100);
     expect(result.current.format(100, { fractionDigits: 2, suffix: '/MWh' }))
       .toBe('$75.00/MWh USD');
+  });
+
+  it('honours the initialCurrency prop when localStorage is empty', () => {
+    const usdWrapper = ({ children }: { children: ReactNode }) => (
+      <CurrencyProvider initialCurrency="USD">{children}</CurrencyProvider>
+    );
+    const { result } = renderHook(() => useCurrency(), { wrapper: usdWrapper });
+    expect(result.current.currency).toBe('USD');
+    expect(result.current.convert(100)).toBeCloseTo(75, 5);
+    expect(result.current.convertFromUSD(40)).toBe(40);
   });
 
   it('honours setCurrency for direct selection', () => {

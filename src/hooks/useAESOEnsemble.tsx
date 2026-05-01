@@ -145,6 +145,15 @@ const generateClientSidePredictions = async (): Promise<EnsemblePrediction[]> =>
 
 export type PredictionSource = 'api' | 'client_fallback';
 
+/** Mirrors the `data_freshness` block now returned by
+ *  `aeso-ensemble-predictor` — exposes how old the underlying training
+ *  data was at predict time so the UI can show a matching caveat. */
+export interface EnsembleDataFreshness {
+  newest_data_at: string | null;
+  data_age_minutes: number | null;
+  stale: boolean;
+}
+
 export const useAESOEnsemble = () => {
   const [loading, setLoading] = useState(false);
   const [predictions, setPredictions] = useState<EnsemblePrediction[]>([]);
@@ -155,6 +164,7 @@ export const useAESOEnsemble = () => {
   // don't read the chart as a real model output.
   const [source, setSource] = useState<PredictionSource | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
+  const [dataFreshness, setDataFreshness] = useState<EnsembleDataFreshness | null>(null);
   const { toast } = useToast();
 
   const generateEnsemblePredictions = async (hoursAhead: number = 24) => {
@@ -186,6 +196,7 @@ export const useAESOEnsemble = () => {
         setPredictions(data.predictions);
         setSource('api');
         setGeneratedAt(new Date());
+        setDataFreshness((data.data_freshness as EnsembleDataFreshness) ?? null);
         console.log('[useAESOEnsemble] Fresh API predictions:', data.predictions.length);
         console.log('[useAESOEnsemble] Model weights used:', data.weights_used);
 
@@ -208,6 +219,10 @@ export const useAESOEnsemble = () => {
           setPredictions(fallbackPredictions);
           setSource('client_fallback');
           setGeneratedAt(new Date());
+          // Client fallback reads the same `aeso_training_data` table, so
+          // we don't have a separate freshness story — leave it null and
+          // the UI will simply skip the data-age caveat.
+          setDataFreshness(null);
           toast({
             // Surface the degraded source explicitly in the toast so the
             // user knows the chart is a heuristic, not the trained model.
@@ -244,5 +259,6 @@ export const useAESOEnsemble = () => {
     predictions,
     source,
     generatedAt,
+    dataFreshness,
   };
 };

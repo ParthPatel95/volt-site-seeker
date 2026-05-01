@@ -43,6 +43,11 @@ interface MarketDataTabProps {
   ensemblePredictions: any[];
   ensembleSource: 'api' | 'client_fallback' | null;
   ensembleGeneratedAt: Date | null;
+  ensembleDataFreshness: {
+    newest_data_at: string | null;
+    data_age_minutes: number | null;
+    stale: boolean;
+  } | null;
   handleRefreshAll: () => void;
   generateEnsemblePredictions: (hours: number) => void;
   windSolarForecast: any;
@@ -78,7 +83,7 @@ export function MarketDataTab({
   operatingReserve, interchange, energyStorage, marketAnalytics,
   currentPrice, hasValidPrice, priceTimestamp, uptimeData, priceCeilings,
   loading, enhancedLoading, ensembleLoading, ensemblePredictions,
-  ensembleSource, ensembleGeneratedAt,
+  ensembleSource, ensembleGeneratedAt, ensembleDataFreshness,
   handleRefreshAll, generateEnsemblePredictions,
   windSolarForecast, alerts, assetOutages, onDismissAlert, onClearAll,
 }: MarketDataTabProps) {
@@ -256,17 +261,31 @@ export function MarketDataTab({
       {/* Predictions header: surface model provenance + freshness so the
           chart isn't read as a real-model output when we're on the local
           fallback (see useAESOEnsemble — `client_fallback` is a seeded
-          stochastic heuristic, not the trained ensemble model). */}
+          stochastic heuristic, not the trained ensemble model).
+          For trained-ensemble runs we show the *underlying-data* age
+          (from the predictor's data_freshness payload) rather than the
+          client-side generation time, since the latter just reflects when
+          the user pressed refresh and is misleading. */}
       {(ensembleSource || ensembleGeneratedAt) && (
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             AI predictions ({ensembleSource === 'client_fallback' ? 'local heuristic' : 'trained ensemble'})
           </span>
-          <DataFreshnessBadge
-            updatedAt={ensembleGeneratedAt}
-            source={ensembleSource === 'client_fallback' ? 'client_fallback_estimated' : 'aeso-ensemble-predictor'}
-            label="Prediction model run"
-          />
+          {ensembleSource === 'api' && ensembleDataFreshness?.newest_data_at ? (
+            <DataFreshnessBadge
+              updatedAt={ensembleDataFreshness.newest_data_at}
+              source="aeso-ensemble-predictor"
+              label="Underlying market data"
+              liveThresholdSec={5 * 60}
+              staleThresholdSec={30 * 60}
+            />
+          ) : (
+            <DataFreshnessBadge
+              updatedAt={ensembleGeneratedAt}
+              source={ensembleSource === 'client_fallback' ? 'client_fallback_estimated' : 'aeso-ensemble-predictor'}
+              label="Prediction model run"
+            />
+          )}
         </div>
       )}
 
@@ -277,6 +296,18 @@ export function MarketDataTab({
             <span className="font-medium">Using local fallback predictions.</span>{' '}
             The trained ensemble model is unavailable, so the forecast below is a heuristic
             derived from recent prices. Confidence intervals are wider than usual.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {ensembleSource === 'api' && ensembleDataFreshness?.stale && ensembleDataFreshness.data_age_minutes != null && (
+        <Alert className="border-amber-500/40 bg-amber-500/10 text-foreground">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-sm">
+            <span className="font-medium">Forecast uses stale data.</span>{' '}
+            The most recent training row the model could read is{' '}
+            <span className="font-medium text-foreground">{ensembleDataFreshness.data_age_minutes} min old</span>
+            {' '}— the predictions reflect older market conditions, not the current pool price.
           </AlertDescription>
         </Alert>
       )}

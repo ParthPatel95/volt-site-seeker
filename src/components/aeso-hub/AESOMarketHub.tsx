@@ -44,6 +44,7 @@ export function AESOMarketHub() {
     predictions: ensemblePredictions,
     source: ensembleSource,
     generatedAt: ensembleGeneratedAt,
+    dataFreshness: ensembleDataFreshness,
   } = useAESOEnsemble();
   const { exchangeRate, convertToUSD } = useExchangeRate();
   const { rules: datacenterRules } = useDatacenterAutomation();
@@ -113,6 +114,7 @@ export function AESOMarketHub() {
             loading={loading} enhancedLoading={enhancedLoading}
             ensembleLoading={ensembleLoading} ensemblePredictions={ensemblePredictions || []}
             ensembleSource={ensembleSource} ensembleGeneratedAt={ensembleGeneratedAt}
+            ensembleDataFreshness={ensembleDataFreshness}
             handleRefreshAll={handleRefreshAll} generateEnsemblePredictions={generateEnsemblePredictions}
             windSolarForecast={windSolarForecast}
             alerts={alerts} assetOutages={assetOutages}

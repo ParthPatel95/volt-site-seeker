@@ -131,11 +131,32 @@ Deno.serve(async (req) => {
     console.log(`✅ Ensemble prediction complete (${duration}s)`);
     console.log(`📊 Generated ${ensemblePredictions.length} ensemble predictions`);
 
+    // Underlying-data freshness — the ensemble learns from `recentData`
+    // above, so its honesty is bounded by how fresh that data is. We
+    // surface the newest row's age in the response so the UI can render a
+    // matching freshness badge / caveat ("based on data N min old")
+    // without each consumer re-querying the DB.
+    let dataFreshness: {
+      newest_data_at: string | null;
+      data_age_minutes: number | null;
+      stale: boolean;
+    } = { newest_data_at: null, data_age_minutes: null, stale: true };
+    const newest = recentData[0]?.timestamp;
+    if (newest) {
+      const ageMin = Math.round((Date.now() - new Date(newest).getTime()) / 60000);
+      dataFreshness = {
+        newest_data_at: newest,
+        data_age_minutes: ageMin,
+        stale: ageMin > 30,
+      };
+    }
+
     return new Response(JSON.stringify({
       success: true,
       duration_seconds: parseFloat(duration),
       predictions: ensemblePredictions,
       weights_used: weights,
+      data_freshness: dataFreshness,
       message: `Generated ${ensemblePredictions.length} ensemble predictions`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

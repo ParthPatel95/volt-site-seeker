@@ -10,8 +10,13 @@ export interface CurrencyContextValue {
   setCurrency: (next: CurrencyCode) => void;
   /** Toggles between CAD and USD. */
   toggle: () => void;
-  /** Converts a CAD amount to the active currency. Pass-through when CAD. */
+  /** Converts a CAD-denominated amount to the active currency.
+   *  Pass-through when active currency is CAD. */
   convert: (cadAmount: number) => number;
+  /** Converts a USD-denominated amount to the active currency.
+   *  Use this for markets that publish prices natively in USD
+   *  (ERCOT, MISO, CAISO, NYISO, PJM, SPP). Pass-through when USD. */
+  convertFromUSD: (usdAmount: number) => number;
   /** "$" symbol for the active currency. */
   symbol: string;
   /** Formats `cadAmount` as a string with the active currency's symbol. */
@@ -28,18 +33,31 @@ const DEFAULT_CURRENCY: CurrencyCode = 'CAD';
 
 const CurrencyContext = createContext<CurrencyContextValue | undefined>(undefined);
 
-function readPersistedCurrency(): CurrencyCode {
-  if (typeof window === 'undefined') return DEFAULT_CURRENCY;
+function readPersistedCurrency(fallback: CurrencyCode): CurrencyCode {
+  if (typeof window === 'undefined') return fallback;
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === 'USD' || v === 'CAD' ? v : DEFAULT_CURRENCY;
+    return v === 'USD' || v === 'CAD' ? v : fallback;
   } catch {
-    return DEFAULT_CURRENCY;
+    return fallback;
   }
 }
 
-export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<CurrencyCode>(readPersistedCurrency);
+interface CurrencyProviderProps {
+  children: ReactNode;
+  /**
+   * The currency to use when nothing is stored in localStorage yet. Hubs
+   * with native CAD pricing (AESO) leave this at the default of CAD; the
+   * cross-market Dashboard, which has historically rendered every ISO in
+   * USD, passes `'USD'` so the previous behaviour is preserved on first
+   * visit. The user can still toggle, and that choice is persisted across
+   * pages from then on.
+   */
+  initialCurrency?: CurrencyCode;
+}
+
+export function CurrencyProvider({ children, initialCurrency = DEFAULT_CURRENCY }: CurrencyProviderProps) {
+  const [currency, setCurrencyState] = useState<CurrencyCode>(() => readPersistedCurrency(initialCurrency));
   const { exchangeRate } = useExchangeRate();
 
   useEffect(() => {
@@ -57,6 +75,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CurrencyContextValue>(() => {
     const rate = exchangeRate.rate;
     const convert = (cad: number) => (currency === 'USD' ? cad * rate : cad);
+    const convertFromUSD = (usd: number) => (currency === 'CAD' && rate > 0 ? usd / rate : usd);
     const symbol = '$';
     const format = (cad: number, options?: { fractionDigits?: number; suffix?: string }) => {
       const digits = options?.fractionDigits ?? 2;
@@ -73,6 +92,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       setCurrency,
       toggle,
       convert,
+      convertFromUSD,
       symbol,
       format,
       rate,
@@ -96,6 +116,7 @@ export function useCurrency(): CurrencyContextValue {
     setCurrency: () => undefined,
     toggle: () => undefined,
     convert: (cad) => cad,
+    convertFromUSD: (usd) => usd,
     symbol: '$',
     format: (cad, options) => `$${(cad ?? 0).toLocaleString(undefined, {
       minimumFractionDigits: options?.fractionDigits ?? 2,
