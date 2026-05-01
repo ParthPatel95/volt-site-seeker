@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 import { LiveConnectionStatus } from '@/components/aeso/LiveConnectionStatus';
 import { PriceTicker } from '@/components/aeso/PriceTicker';
 import { HeroPriceCard } from '@/components/aeso/HeroPriceCard';
@@ -101,12 +104,43 @@ export function MarketDataTab({
       )}
 
       {/* ═══════════════════ ZONE 1: Price & Status ═══════════════════ */}
-      <LiveConnectionStatus
-        lastUpdated={priceTimestamp}
-        onRefresh={handleRefreshAll}
-        isRefreshing={loading}
-        dataSource="AESO Market Data"
-      />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <LiveConnectionStatus
+          lastUpdated={priceTimestamp}
+          onRefresh={handleRefreshAll}
+          isRefreshing={loading}
+          dataSource="AESO Market Data"
+        />
+        <DataFreshnessBadge
+          updatedAt={priceTimestamp}
+          source={pricing?.source ?? (hasValidPrice ? 'aeso' : null)}
+          label="AESO pool price"
+        />
+      </div>
+
+      {/* If the upstream feed returned a synthesized estimate (source ends
+          with `_estimated`) or no live data at all, surface that explicitly
+          so the numbers below are interpreted correctly. */}
+      {pricing && typeof pricing.source === 'string' && pricing.source.toLowerCase().endsWith('_estimated') && (
+        <Alert className="border-amber-500/40 bg-amber-500/10 text-foreground">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-sm">
+            <span className="font-medium">Estimated pricing.</span>{' '}
+            Live AESO pool price is unavailable; the values shown are a fallback estimate
+            derived from reserve margin and generation mix, not a measurement.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!hasValidPrice && !loading && (
+        <Alert className="border-muted bg-muted/40 text-foreground">
+          <Info className="h-4 w-4 text-muted-foreground" />
+          <AlertDescription className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Pool price unavailable.</span>{' '}
+            The AESO pricing feed did not return data for this refresh. Use Refresh to retry.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <PriceTicker
         currentPrice={currentPrice}
@@ -156,11 +190,12 @@ export function MarketDataTab({
                 <CardTitle className="text-sm font-semibold">Generation Mix</CardTitle>
               </div>
               <div className="flex items-center gap-2">
-                {generationMix.timestamp && (
-                  <Badge variant="outline" className="text-[10px]">
-                    {new Date(generationMix.timestamp).toLocaleTimeString()}
-                  </Badge>
-                )}
+                <DataFreshnessBadge
+                  updatedAt={generationMix.timestamp}
+                  source={generationMix.source ?? 'aeso'}
+                  label="Generation mix"
+                  size="compact"
+                />
                 <span className="font-medium text-xs text-foreground">
                   {(generationMix.total_generation_mw / 1000).toFixed(1)} GW
                   {' · '}
@@ -241,14 +276,18 @@ export function MarketDataTab({
 
       <AESOHistoricalAverages />
 
-      {/* Outages - collapsible */}
-      {(hasOutages || hasAlerts) && (
+      {/* Outages - collapsible. Gated strictly on hasOutages: the AESO public
+          API does not expose asset-outage data, so until an authenticated
+          feed is wired up assetOutages is always null (see
+          useAESOEnhancedData.tsx → getAssetOutages). Alerts have their own
+          banner above and should not pull the outages panel into view. */}
+      {hasOutages && (
         <Collapsible open={showOutages} onOpenChange={setShowOutages}>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" className="w-full justify-between text-muted-foreground">
               <span className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                Asset Outages {hasOutages && `(${assetOutages.length})`}
+                Asset Outages ({assetOutages.length})
               </span>
               <ChevronDown className={`w-4 h-4 transition-transform ${showOutages ? 'rotate-180' : ''}`} />
             </Button>
