@@ -43,9 +43,21 @@ export interface ModelPerformance {
   };
 }
 
+/**
+ * Mirrors the `data_freshness` block returned by `aeso-optimized-predictor`
+ * (and `aeso-predict-realtime`). Lets the dashboard show a "based on data
+ * N min old" caveat when underlying training data is stale at predict time.
+ */
+export interface PredictionDataFreshness {
+  newest_data_at: string | null;
+  data_age_minutes: number | null;
+  stale: boolean;
+}
+
 export const useAESOPricePrediction = () => {
   const [predictions, setPredictions] = useState<PricePrediction[]>([]);
   const [modelPerformance, setModelPerformance] = useState<ModelPerformance | null>(null);
+  const [dataFreshness, setDataFreshness] = useState<PredictionDataFreshness | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const { toast } = useToast();
@@ -66,11 +78,12 @@ export const useAESOPricePrediction = () => {
 
       if (data?.success) {
         setPredictions(data.predictions);
-        
-        const perfMsg = data.performance 
+        setDataFreshness((data.data_freshness as PredictionDataFreshness) ?? null);
+
+        const perfMsg = data.performance
           ? ` (${data.performance.cache_hit_rate_percent}% cached, ${data.performance.total_duration_ms}ms)`
           : '';
-        
+
         toast({
           title: "Predictions Generated",
           description: `${data.predictions.length} price predictions for the next ${horizon}${perfMsg}`,
@@ -820,6 +833,7 @@ export const useAESOPricePrediction = () => {
   return {
     predictions,
     modelPerformance,
+    dataFreshness,
     loading,
     currentStep,
     fetchPredictions,
