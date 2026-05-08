@@ -797,7 +797,7 @@ export function AESOHistoricalPricing() {
       point.datetime.getTime() === startOpportunity.datetime.getTime()
     );
     
-    let duration = minDuration;
+    const duration = minDuration;
     let consecutiveHighPriceHours = 0;
     
     // Look ahead for consecutive high prices

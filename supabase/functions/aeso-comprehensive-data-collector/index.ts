@@ -613,7 +613,7 @@ Deno.serve(async (req) => {
   }
 
   // ---- Phase 3: Store market snapshot ----
-  let totalOutage = null, plannedOutage = null, forcedOutage = null;
+  const totalOutage = null, plannedOutage = null, forcedOutage = null;
   let meritDepth = null, marginalFuel = null, meritSnapshot = null;
   if (meritResult) {
     const mo = meritResult.data?.return || meritResult.data;

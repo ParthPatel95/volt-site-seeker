@@ -131,7 +131,7 @@ async function handleSubmitVerification(req: Request, supabase: any, userId: str
   }
 
   // Create upload URLs for documents if provided
-  let documentUploadUrls = []
+  const documentUploadUrls = []
   if (verificationData.documents && verificationData.documents.length > 0) {
     for (const doc of verificationData.documents) {
       const filename = `verification-${verification.id}-${Date.now()}-${doc.filename}`

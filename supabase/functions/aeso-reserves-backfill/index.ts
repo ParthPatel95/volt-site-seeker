@@ -73,7 +73,7 @@ serve(async (req) => {
                        Deno.env.get('AESO_SUB_KEY');
 
     let apiRecordsFetched = 0;
-    let apiErrors: string[] = [];
+    const apiErrors: string[] = [];
 
     if (aesoApiKey && mode === 'backfill') {
       console.log('Attempting AESO Operating Reserve API backfill...');

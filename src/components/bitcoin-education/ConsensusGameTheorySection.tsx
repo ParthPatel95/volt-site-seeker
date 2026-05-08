@@ -28,7 +28,7 @@ const ConsensusGameTheorySection = () => {
     const p = 1 - q / 100;
     const qRatio = (q / 100) / p;
     let probability = 1;
-    let lambda = z * qRatio;
+    const lambda = z * qRatio;
     let sum = 1;
     for (let k = 0; k <= z; k++) {
       const poisson = Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);

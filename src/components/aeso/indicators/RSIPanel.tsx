@@ -24,8 +24,8 @@ function calculateRSI(prices: number[], period: number = 14): (number | null)[] 
     return prices.map(() => null);
   }
 
-  let gains: number[] = [];
-  let losses: number[] = [];
+  const gains: number[] = [];
+  const losses: number[] = [];
 
   for (let i = 1; i < prices.length; i++) {
     const change = prices[i] - prices[i - 1];

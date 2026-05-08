@@ -20,7 +20,7 @@ export async function scrapePublicAuctions(request: FreeDataRequest): Promise<Sc
       }
     ];
 
-    let allProperties = [];
+    const allProperties = [];
     
     for (const site of sites) {
       try {

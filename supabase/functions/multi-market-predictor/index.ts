@@ -103,7 +103,7 @@ serve(async (req) => {
 
     if (predError) throw predError;
 
-    let result: any = {
+    const result: any = {
       success: true,
       market: market,
       market_name: marketConfig.name,

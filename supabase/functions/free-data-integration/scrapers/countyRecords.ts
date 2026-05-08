@@ -1073,9 +1073,9 @@ export async function fetchCountyRecords(request: FreeDataRequest): Promise<Scra
   const { state, county, city } = normalizeLocation(request.location);
   console.log('Normalized location:', { state, county, city });
   
-  let allProperties: PropertyData[] = [];
-  let successfulSources: string[] = [];
-  let failedSources: string[] = [];
+  const allProperties: PropertyData[] = [];
+  const successfulSources: string[] = [];
+  const failedSources: string[] = [];
   
   // Special handling for Alberta - try AltaLink first for transmission data
   if (state === 'Alberta' || state === 'AB') {

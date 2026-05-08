@@ -497,7 +497,7 @@ function predictSeasonal(record: any, model: any): number {
 
 function optimizeWeightsForSMAPE(metaFeatures: any[]) {
   // Gradient descent to optimize ensemble weights for sMAPE
-  let weights = { gb: 0.3, ridge: 0.2, lstm: 0.25, quantile: 0.15, seasonal: 0.1 };
+  const weights = { gb: 0.3, ridge: 0.2, lstm: 0.25, quantile: 0.15, seasonal: 0.1 };
   const learningRate = 0.01;
   const iterations = 100;
 

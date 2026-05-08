@@ -254,7 +254,7 @@ export function DocumentsTab() {
   const filteredDocuments = useMemo(() => {
     if (!documents) return [];
 
-    let filtered = documents.filter(doc => {
+    const filtered = documents.filter(doc => {
       // Search filter
       const matchesSearch = doc.file_name.toLowerCase().includes(searchQuery.toLowerCase());
       

@@ -74,7 +74,7 @@ export const GenerationDataUploader: React.FC = () => {
 
   const processFile = async (file: File, currentStats: UploadStats): Promise<UploadStats> => {
     return new Promise((resolve) => {
-      let rowBuffer: Record<string, unknown>[] = [];
+      const rowBuffer: Record<string, unknown>[] = [];
       let fileRowCount = 0;
       
       Papa.parse(file, {
