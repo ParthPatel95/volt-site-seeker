@@ -49,9 +49,9 @@ export const useVoltMarketReviews = () => {
         .single();
 
       if (error) throw error;
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (error) {
-      return { data: null, error };
+      return { data: null as any, error };
     } finally {
       setLoading(false);
     }
@@ -69,9 +69,9 @@ export const useVoltMarketReviews = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (error) {
-      return { data: null, error };
+      return { data: null as any, error };
     }
   };
 
@@ -104,7 +104,7 @@ export const useVoltMarketReviews = () => {
         error: null 
       };
     } catch (error) {
-      return { data: null, error };
+      return { data: null as any, error };
     }
   };
 

@@ -59,6 +59,7 @@ import { useEnergyCredits, CreditSettings, defaultCreditSettings } from '@/hooks
 import { CreditSettingsPanel } from './CreditSettingsPanel';
 import { CreditSummaryCard } from './CreditSummaryCard';
 import { AESOCurtailmentAnalysis } from './AESOCurtailmentAnalysis';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 
 const OVERVIEW_CREDIT_SETTINGS_KEY = 'aeso-overview-credit-settings';
 
@@ -82,7 +83,8 @@ export function AESOHistoricalPricing() {
     fetchYearlyData,
     analyzePeakShutdown,
     fetchHistoricalTenYearData,
-    fetchCustomPeriodData
+    fetchCustomPeriodData,
+    lastFetchedAt: historicalLastFetchedAt,
   } = useAESOHistoricalPricing();
 
   const { toast } = useToast();
@@ -719,7 +721,7 @@ export function AESOHistoricalPricing() {
   const optimizeShutdownSchedule = (hourlyData: any[], maxShutdownHours: number, constraints: any, baseline: any) => {
     // Sort by price premium over rolling baseline
     const priceOpportunities = hourlyData.map(point => {
-      const rollingBaseline = baseline.rollingData.find(r => 
+      const rollingBaseline = baseline.rollingData.find((r: any) =>
         Math.abs(r.datetime.getTime() - point.datetime.getTime()) < 3600000 // within 1 hour
       );
       const baselinePrice = rollingBaseline ? rollingBaseline.average : baseline.average;
@@ -801,7 +803,7 @@ export function AESOHistoricalPricing() {
     // Look ahead for consecutive high prices
     for (let i = startIndex; i < Math.min(startIndex + 12, hourlyData.length); i++) {
       const point = hourlyData[i];
-      const rollingBaseline = baseline.rollingData.find(r => 
+      const rollingBaseline = baseline.rollingData.find((r: any) =>
         Math.abs(r.datetime.getTime() - point.datetime.getTime()) < 3600000
       );
       const baselinePrice = rollingBaseline ? rollingBaseline.average : baseline.average;
@@ -1156,7 +1158,7 @@ export function AESOHistoricalPricing() {
         if (duration >= effectiveMinDuration) {
           console.log(`Creating event: ${currentHour.date} ${currentHour.hour}:00, duration: ${duration}h`);
           const avgSpikePrice = totalSpikeCost / Math.min(duration, j - i);
-          const baselinePrice = baseline.rollingData.find(r => 
+          const baselinePrice = baseline.rollingData.find((r: any) =>
             Math.abs(r.datetime.getTime() - currentHour.datetime.getTime()) < 3600000
           )?.average || baseline.average;
 
@@ -1290,9 +1292,20 @@ export function AESOHistoricalPricing() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             Historical Pricing Analysis
+            {historicalLastFetchedAt && (
+              <DataFreshnessBadge
+                updatedAt={historicalLastFetchedAt}
+                source="aeso-historical-pricing"
+                label="AESO historical pool prices"
+                // Historical data is OK to be older — live = within 6h, stale to 7d.
+                liveThresholdSec={6 * 3600}
+                staleThresholdSec={7 * 24 * 3600}
+                size="compact"
+              />
+            )}
           </h2>
           <p className="text-sm text-muted-foreground">
             Advanced pricing analytics and peak shutdown optimization tools
@@ -2132,7 +2145,7 @@ export function AESOHistoricalPricing() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {currentAnalysis.events.map((event, index) => (
+                                {currentAnalysis.events.map((event: any, index: number) => (
                                   <tr key={index} className="border-b hover:bg-muted/50">
                                     <td className="p-2 font-medium">{event.date}</td>
                                     <td className="p-2">{event.time || '—'}</td>

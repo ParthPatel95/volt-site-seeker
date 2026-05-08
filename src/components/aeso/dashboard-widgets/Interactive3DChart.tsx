@@ -51,7 +51,7 @@ export function Interactive3DChart({ config }: Interactive3DChartProps) {
     return `hsl(${hue}, 70%, 50%)`;
   };
 
-  const chartData = data?.map(d => ({
+  const chartData = data?.map((d: any) => ({
     x: d[xAxis],
     y: d[yAxis],
     z: d[zAxis],

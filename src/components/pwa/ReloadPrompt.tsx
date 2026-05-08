@@ -15,7 +15,7 @@ import { RefreshCw } from 'lucide-react';
  * - Automatically reloads after 2 seconds (no user action needed)
  * - Falls back to manual reload button if auto-reload fails
  */
-export function ReloadPrompt() {
+export function ReloadPrompt(): JSX.Element | null {
   const reloadAttempted = useRef(false);
   
   const {

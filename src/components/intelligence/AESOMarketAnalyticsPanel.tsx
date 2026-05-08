@@ -93,7 +93,7 @@ export function AESOMarketAnalyticsPanel({ marketAnalytics, historicalPrices, lo
 
   const getHistoricalData = () => {
     if (historicalPrices?.prices?.length > 0) {
-      return historicalPrices.prices.slice(-24).map(price => ({
+      return historicalPrices.prices.slice(-24).map((price: any) => ({
         time: new Date(price.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         price: price.pool_price,
         forecast: price.forecast_pool_price

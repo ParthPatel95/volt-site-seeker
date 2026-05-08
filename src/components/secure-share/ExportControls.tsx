@@ -55,7 +55,7 @@ export function ExportControls({ data, dateRange }: ExportControlsProps) {
     // Combine headers and rows
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map((row: any[]) => row.map((cell: any) => `"${cell}"`).join(','))
     ].join('\n');
 
     // Create and download file

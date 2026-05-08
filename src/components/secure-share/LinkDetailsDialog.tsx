@@ -199,12 +199,12 @@ export function LinkDetailsDialog({
     }
     if (link.bundle_id && bundleDocuments) {
       const items = bundleDocuments.map((bd: any) => bd.secure_documents).filter(Boolean);
-      return { folderCount: 0, fileCount: items.length, totalCount: items.length, folders: [], files: items };
+      return { folderCount: 0, fileCount: items.length, totalCount: items.length, folders: [] as any[], files: items };
     }
     if (link.document_id && link.secure_documents) {
-      return { folderCount: 0, fileCount: 1, totalCount: 1, folders: [], files: [link.secure_documents] };
+      return { folderCount: 0, fileCount: 1, totalCount: 1, folders: [] as any[], files: [link.secure_documents] };
     }
-    return { folderCount: 0, fileCount: 0, totalCount: 0, folders: [], files: [] };
+    return { folderCount: 0, fileCount: 0, totalCount: 0, folders: [] as any[], files: [] as any[] };
   };
   const contentsInfo = getContentsInfo();
 

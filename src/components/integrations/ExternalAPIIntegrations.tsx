@@ -199,7 +199,7 @@ export function ExternalAPIIntegrations() {
   };
 
   const toggleIntegration = async (integrationId: string, enabled: boolean) => {
-    setIntegrations(prev => prev.map(integration => 
+    setIntegrations((prev: any) => prev.map((integration: any) =>
       integration.id === integrationId 
         ? { ...integration, isEnabled: enabled, status: enabled ? 'connected' : 'disconnected' }
         : integration
@@ -217,7 +217,7 @@ export function ExternalAPIIntegrations() {
       // Simulate API sync
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      setIntegrations(prev => prev.map(integration => 
+      setIntegrations((prev: any) => prev.map((integration: any) =>
         integration.id === integrationId 
           ? { 
               ...integration, 
@@ -246,7 +246,7 @@ export function ExternalAPIIntegrations() {
   const configureIntegration = async (integrationId: string, config: any) => {
     setLoading(true);
     try {
-      setIntegrations(prev => prev.map(integration => 
+      setIntegrations((prev: any) => prev.map((integration: any) =>
         integration.id === integrationId 
           ? { ...integration, config, status: 'connected' }
           : integration
@@ -420,7 +420,7 @@ export function ExternalAPIIntegrations() {
                       type="password"
                       placeholder="Enter API key..."
                       value={configForm.apiKey || ''}
-                      onChange={(e) => setConfigForm(prev => ({ ...prev, apiKey: e.target.value }))}
+                      onChange={(e) => setConfigForm((prev: any) => ({ ...prev, apiKey: e.target.value }))}
                     />
                   </div>
                 )}
@@ -432,7 +432,7 @@ export function ExternalAPIIntegrations() {
                       id="refresh-interval"
                       type="number"
                       value={configForm.refreshInterval || 15}
-                      onChange={(e) => setConfigForm(prev => ({ ...prev, refreshInterval: parseInt(e.target.value) }))}
+                      onChange={(e) => setConfigForm((prev: any) => ({ ...prev, refreshInterval: parseInt(e.target.value) }))}
                     />
                   </div>
                 )}
@@ -443,7 +443,7 @@ export function ExternalAPIIntegrations() {
                     <select 
                       className="w-full p-2 border rounded"
                       value={configForm.alertThreshold || 'medium'}
-                      onChange={(e) => setConfigForm(prev => ({ ...prev, alertThreshold: e.target.value }))}
+                      onChange={(e) => setConfigForm((prev: any) => ({ ...prev, alertThreshold: e.target.value }))}
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
