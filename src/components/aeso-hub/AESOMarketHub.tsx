@@ -5,6 +5,7 @@ import { useAESOMarketData } from '@/hooks/useAESOMarketData';
 import { useAESOEnsemble } from '@/hooks/useAESOEnsemble';
 import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { CurrencyProvider } from '@/hooks/useCurrency';
 import { AESOHubLayout } from './layout/AESOHubLayout';
 import type { AESOHubView } from './layout/AESOHubLayout';
 
@@ -37,7 +38,14 @@ export function AESOMarketHub() {
     loading: marketLoading, refetch: refetchMarket
   } = useAESOMarketData();
 
-  const { generateEnsemblePredictions, loading: ensembleLoading, predictions: ensemblePredictions } = useAESOEnsemble();
+  const {
+    generateEnsemblePredictions,
+    loading: ensembleLoading,
+    predictions: ensemblePredictions,
+    source: ensembleSource,
+    generatedAt: ensembleGeneratedAt,
+    dataFreshness: ensembleDataFreshness,
+  } = useAESOEnsemble();
   const { exchangeRate, convertToUSD } = useExchangeRate();
   const { rules: datacenterRules } = useDatacenterAutomation();
 
@@ -93,6 +101,7 @@ export function AESOMarketHub() {
   }, [datacenterRules]);
 
   return (
+    <CurrencyProvider>
     <AESOHubLayout currentView={activeTab} onViewChange={setActiveTab}>
       <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         {activeTab === 'market' && (
@@ -104,6 +113,8 @@ export function AESOMarketHub() {
             uptimeData={uptimeData} priceCeilings={priceCeilings}
             loading={loading} enhancedLoading={enhancedLoading}
             ensembleLoading={ensembleLoading} ensemblePredictions={ensemblePredictions || []}
+            ensembleSource={ensembleSource} ensembleGeneratedAt={ensembleGeneratedAt}
+            ensembleDataFreshness={ensembleDataFreshness}
             handleRefreshAll={handleRefreshAll} generateEnsemblePredictions={generateEnsemblePredictions}
             windSolarForecast={windSolarForecast}
             alerts={alerts} assetOutages={assetOutages}
@@ -119,5 +130,6 @@ export function AESOMarketHub() {
         {activeTab === 'settings' && <SettingsTab />}
       </div>
     </AESOHubLayout>
+    </CurrencyProvider>
   );
 }

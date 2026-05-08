@@ -1,9 +1,16 @@
 // Energy Data Integration Edge Function - Optimized with Caching
 import { corsHeaders } from "../_shared/cors.ts";
 // ========== SERVER-SIDE RESPONSE CACHE ==========
-// Increased cache TTL to reduce API calls and prevent boot errors from cold starts
+// Module-scoped (warm-instance) cache. Reduced from 120s -> 30s because in
+// volatile ISO markets pool price can swing >$10/MWh inside the previous
+// window, leaving the dashboard showing a stale "live" number for up to
+// two minutes. 30s preserves most of the cold-start protection while
+// keeping prices closer to real-time.
+//
+// Callers can also append `?fresh=1` to bypass the cache entirely (used by
+// the hub's manual refresh button).
 let cachedResponse: { data: EnergyDataResponse; timestamp: number } | null = null;
-const CACHE_TTL_MS = 120 * 1000; // 120 seconds - increased to reduce cold starts
+const CACHE_TTL_MS = 30 * 1000;
 const BOOT_TIME = Date.now();
 console.log(`[BOOT] Edge function initialized at ${new Date().toISOString()}`);
 
@@ -1967,7 +1974,10 @@ Deno.serve(async (req) => {
     }
 
     // ========== CHECK CACHE FIRST ==========
-    if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL_MS) {
+    // `?fresh=1` bypasses the cache — exposed to the client through a
+    // manual refresh control so users can force a live re-fetch on demand.
+    const bypassCache = url.searchParams.get('fresh') === '1';
+    if (!bypassCache && cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL_MS) {
       const cacheAge = Math.round((Date.now() - cachedResponse.timestamp) / 1000);
       console.log(`✅ Returning cached response (age: ${cacheAge}s)`);
       return new Response(JSON.stringify(cachedResponse.data), {

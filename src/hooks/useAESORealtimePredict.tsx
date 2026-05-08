@@ -31,18 +31,31 @@ interface ModelInfo {
   };
 }
 
+/**
+ * Mirrors the `data_freshness` block now returned by `aeso-predict-realtime`.
+ * Lets the UI render a "based on data N min old" caveat when the underlying
+ * `aeso_training_data` rows are stale at prediction time.
+ */
+export interface DataFreshness {
+  newest_data_at: string | null;
+  data_age_minutes: number | null;
+  refreshed_during_request: boolean;
+  stale: boolean;
+}
+
 export const useAESORealtimePredict = () => {
   const [loading, setLoading] = useState(false);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+  const [dataFreshness, setDataFreshness] = useState<DataFreshness | null>(null);
   const { toast } = useToast();
 
   const generatePredictions = async (hoursAhead: number = 24) => {
     setLoading(true);
-    
+
     try {
       console.log(`🔮 Requesting real-time predictions for ${hoursAhead} hours ahead...`);
-      
+
       const { data, error } = await supabase.functions.invoke('aeso-predict-realtime', {
         body: { hoursAhead }
       });
@@ -60,8 +73,9 @@ export const useAESORealtimePredict = () => {
       if (data?.success) {
         setPredictions(data.predictions);
         setModelInfo(data.model_info);
-        
-        const avgConfidence = data.predictions.reduce((sum: number, p: Prediction) => 
+        setDataFreshness((data.data_freshness as DataFreshness) ?? null);
+
+        const avgConfidence = data.predictions.reduce((sum: number, p: Prediction) =>
           sum + (p.confidence_level === 'high' ? 100 : p.confidence_level === 'medium' ? 66 : 33), 0
         ) / data.predictions.length;
 
@@ -70,13 +84,13 @@ export const useAESORealtimePredict = () => {
           description: `${data.predictions.length} predictions with ${avgConfidence.toFixed(0)}% avg confidence`,
           variant: "default"
         });
-        
+
         console.log('Real-time predictions:', data);
         return data;
       } else {
         throw new Error(data?.error || 'Unknown error occurred');
       }
-      
+
     } catch (error) {
       console.error('Real-time prediction error:', error);
       toast({
@@ -94,6 +108,7 @@ export const useAESORealtimePredict = () => {
     generatePredictions,
     loading,
     predictions,
-    modelInfo
+    modelInfo,
+    dataFreshness,
   };
 };
