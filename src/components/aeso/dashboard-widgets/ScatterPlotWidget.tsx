@@ -40,11 +40,11 @@ export function ScatterPlotWidget({ config }: ScatterPlotWidgetProps) {
     
     // Calculate correlation coefficient
     const n = points.length;
-    const sumX = points.reduce((sum, p) => sum + p.x, 0);
-    const sumY = points.reduce((sum, p) => sum + p.y, 0);
-    const sumXY = points.reduce((sum, p) => sum + p.x * p.y, 0);
-    const sumX2 = points.reduce((sum, p) => sum + p.x * p.x, 0);
-    const sumY2 = points.reduce((sum, p) => sum + p.y * p.y, 0);
+    const sumX = points.reduce((sum: number, p: { x: number; y: number }) => sum + p.x, 0);
+    const sumY = points.reduce((sum: number, p: { x: number; y: number }) => sum + p.y, 0);
+    const sumXY = points.reduce((sum: number, p: { x: number; y: number }) => sum + p.x * p.y, 0);
+    const sumX2 = points.reduce((sum: number, p: { x: number; y: number }) => sum + p.x * p.x, 0);
+    const sumY2 = points.reduce((sum: number, p: { x: number; y: number }) => sum + p.y * p.y, 0);
     
     const correlation = (n * sumXY - sumX * sumY) / 
       Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
@@ -52,8 +52,8 @@ export function ScatterPlotWidget({ config }: ScatterPlotWidgetProps) {
     // Calculate trendline
     const meanX = sumX / n;
     const meanY = sumY / n;
-    const slope = points.reduce((sum, p) => sum + (p.x - meanX) * (p.y - meanY), 0) /
-                  points.reduce((sum, p) => sum + Math.pow(p.x - meanX, 2), 0);
+    const slope = points.reduce((sum: number, p: { x: number; y: number }) => sum + (p.x - meanX) * (p.y - meanY), 0) /
+                  points.reduce((sum: number, p: { x: number; y: number }) => sum + Math.pow(p.x - meanX, 2), 0);
     const intercept = meanY - slope * meanX;
     
     return { points, correlation, slope, intercept };
@@ -122,8 +122,8 @@ export function ScatterPlotWidget({ config }: ScatterPlotWidgetProps) {
   }
 
   const { points, correlation, slope, intercept } = scatterData;
-  const minX = Math.min(...points.map(p => p.x));
-  const maxX = Math.max(...points.map(p => p.x));
+  const minX = Math.min(...points.map((p: { x: number; y: number }) => p.x));
+  const maxX = Math.max(...points.map((p: { x: number; y: number }) => p.x));
 
   return (
     <Card className="h-full flex flex-col">
@@ -192,7 +192,7 @@ export function ScatterPlotWidget({ config }: ScatterPlotWidgetProps) {
             />
             
             <Scatter data={points} fill={getColor(correlation)}>
-              {points.map((entry, index) => (
+              {points.map((entry: any, index: number) => (
                 <Cell 
                   key={index} 
                   fill={getColor(correlation)}

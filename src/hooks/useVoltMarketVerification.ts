@@ -56,9 +56,9 @@ export const useVoltMarketVerification = () => {
         .single();
 
       if (error) throw error;
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (error) {
-      return { data: null, error };
+      return { data: null as unknown, error };
     } finally {
       setLoading(false);
     }
@@ -75,9 +75,9 @@ export const useVoltMarketVerification = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (error) {
-      return { data: null, error };
+      return { data: null as unknown, error };
     }
   };
 

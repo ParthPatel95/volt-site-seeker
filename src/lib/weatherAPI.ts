@@ -557,14 +557,14 @@ export function calculateWeatherStatistics(weatherData: WeatherData[]) {
 
   return {
     temperatureStats: validTemps.length > 0 ? {
-      average: validTemps.reduce((sum, temp) => sum + temp, 0) / validTemps.length,
+      average: validTemps.reduce((sum: number, temp: number) => sum + temp, 0) / validTemps.length,
       minimum: Math.min(...validTemps),
       maximum: Math.max(...validTemps),
       dataPoints: validTemps.length
     } : null,
     precipitationStats: validPrecip.length > 0 ? {
-      total: validPrecip.reduce((sum, precip) => sum + precip, 0),
-      average: validPrecip.reduce((sum, precip) => sum + precip, 0) / validPrecip.length,
+      total: validPrecip.reduce((sum: number, precip: number) => sum + precip, 0),
+      average: validPrecip.reduce((sum: number, precip: number) => sum + precip, 0) / validPrecip.length,
       maximum: Math.max(...validPrecip),
       daysWithPrecipitation: validPrecip.filter(p => p > 0).length,
       dataPoints: validPrecip.length
@@ -748,9 +748,9 @@ export async function checkDataAvailability(stationId: string, granularity: 'dai
       hasRecentData: false,
       recentDataCount: 0,
       monthlyDataCount: 0,
-      lastRecordDate: null,
+      lastRecordDate: null as Date | null,
       mostRecentPossible: getMostRecentDataDate(),
-      dataLatency: null,
+      dataLatency: null as number | null,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
@@ -830,17 +830,17 @@ export function aggregateWeatherData(weatherData: WeatherData[], period: 'daily'
   // Calculate aggregated values for each period
   return Array.from(grouped.values()).map(group => {
     const avgTemp = group.temperatures.length > 0 ? 
-      group.temperatures.reduce((sum, temp) => sum + temp, 0) / group.temperatures.length : null;
+      group.temperatures.reduce((sum: number, temp: number) => sum + temp, 0) / group.temperatures.length : null;
     const maxTemp = group.maxTemperatures.length > 0 ? Math.max(...group.maxTemperatures) : 
       (group.temperatures.length > 0 ? Math.max(...group.temperatures) : null);
     const minTemp = group.minTemperatures.length > 0 ? Math.min(...group.minTemperatures) : 
       (group.temperatures.length > 0 ? Math.min(...group.temperatures) : null);
     const totalPrecip = group.precipitations.length > 0 ? 
-      group.precipitations.reduce((sum, precip) => sum + precip, 0) : null;
+      group.precipitations.reduce((sum: number, precip: number) => sum + precip, 0) : null;
     const avgWindSpeed = group.windSpeeds.length > 0 ? 
-      group.windSpeeds.reduce((sum, speed) => sum + speed, 0) / group.windSpeeds.length : null;
+      group.windSpeeds.reduce((sum: number, speed: number) => sum + speed, 0) / group.windSpeeds.length : null;
     const avgHumidity = group.humidities.length > 0 ? 
-      group.humidities.reduce((sum, humidity) => sum + humidity, 0) / group.humidities.length : null;
+      group.humidities.reduce((sum: number, humidity: number) => sum + humidity, 0) / group.humidities.length : null;
 
     return {
       period: group.period,

@@ -113,7 +113,7 @@ export function BackendTestRunner() {
       if (error) throw new Error(`Feature check failed: ${error.message}`);
       
       const hasFeatures = data && data.length > 0;
-      const featureCount = hasFeatures ? Object.keys(data[0]).filter(k => data[0][k] !== null).length : 0;
+      const featureCount = hasFeatures ? Object.keys(data[0]).filter((k: string) => (data[0] as Record<string, unknown>)[k] !== null).length : 0;
       
       return {
         status: hasFeatures ? 'passed' : 'warning',
@@ -177,11 +177,11 @@ export function BackendTestRunner() {
       const start = Date.now();
       
       // Test with NULL data
-      const mockData = { chartData: null };
+      const mockData: { chartData: unknown[] | null } = { chartData: null };
       const result1 = !mockData.chartData || !Array.isArray(mockData.chartData);
-      
+
       // Test with empty array
-      const mockData2 = { chartData: [] };
+      const mockData2: { chartData: unknown[] } = { chartData: [] };
       const result2 = mockData2.chartData.length === 0;
       
       // Test with valid data

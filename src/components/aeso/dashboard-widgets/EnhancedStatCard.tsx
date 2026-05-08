@@ -23,14 +23,14 @@ export function EnhancedStatCard({ config }: EnhancedStatCardProps) {
   const statistics = useMemo(() => {
     if (!sparklineData.length) return null;
     
-    const values = sparklineData.map(d => d.value);
+    const values = sparklineData.map((d: any) => d.value);
     const current = values[values.length - 1];
     const previous = values[values.length - 2] || current;
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
+    const avg = values.reduce((sum: number, v: number) => sum + v, 0) / values.length;
     const change = ((current - previous) / previous) * 100;
-    const trend = values.slice(-5).reduce((sum, v, i, arr) => {
+    const trend = values.slice(-5).reduce((sum: number, v: number, i: number, arr: number[]) => {
       if (i === 0) return 0;
       return sum + (v - arr[i - 1]);
     }, 0);

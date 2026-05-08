@@ -89,9 +89,9 @@ export function AdvancedChartWidget({ config }: AdvancedChartWidgetProps) {
     if (!values.length) return null;
     
     const sorted = [...values].sort((a, b) => a - b);
-    const sum = values.reduce((acc, v) => acc + v, 0);
+    const sum = values.reduce((acc: number, v: number) => acc + v, 0);
     const mean = sum / values.length;
-    const variance = values.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / values.length;
+    const variance = values.reduce((acc: number, v: number) => acc + Math.pow(v - mean, 2), 0) / values.length;
     const stdDev = Math.sqrt(variance);
     
     return {

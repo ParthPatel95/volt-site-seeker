@@ -70,7 +70,7 @@ export const VoltMarketVerificationCenter: React.FC = () => {
     if (error) {
       console.error('Error fetching verifications:', error);
     } else {
-      setVerifications(data || []);
+      setVerifications((data as any[]) || []);
     }
   };
 

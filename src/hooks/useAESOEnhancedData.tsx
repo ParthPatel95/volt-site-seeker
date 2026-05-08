@@ -269,7 +269,7 @@ export function useAESOEnhancedData() {
     return null;
   };
 
-  const getAssetOutages = async () => {
+  const getAssetOutages = async (): Promise<null> => {
     // NOTE: AESO asset outage data requires authentication and is not in public API
     // No fake data - return null when real data not available
     setAssetOutages(null);

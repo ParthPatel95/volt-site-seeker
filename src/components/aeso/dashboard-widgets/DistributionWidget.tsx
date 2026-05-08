@@ -33,9 +33,9 @@ export function DistributionWidget({ config }: DistributionWidgetProps) {
     // Calculate statistics
     const sorted = [...values].sort((a, b) => a - b);
     const n = values.length;
-    const sum = values.reduce((acc, v) => acc + v, 0);
+    const sum = values.reduce((acc: number, v: number) => acc + v, 0);
     const mean = sum / n;
-    const variance = values.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / n;
+    const variance = values.reduce((acc: number, v: number) => acc + Math.pow(v - mean, 2), 0) / n;
     const stdDev = Math.sqrt(variance);
     const median = sorted[Math.floor(n / 2)];
     const q1 = sorted[Math.floor(n * 0.25)];
@@ -56,7 +56,7 @@ export function DistributionWidget({ config }: DistributionWidgetProps) {
       percentage: 0,
     }));
     
-    values.forEach(v => {
+    values.forEach((v: number) => {
       const binIndex = Math.min(Math.floor((v - min) / binWidth), binCount - 1);
       bins[binIndex].count++;
     });

@@ -123,7 +123,7 @@ export const ParallaxElement = ({
   );
 };
 
-export const SmoothScroll = () => {
+export const SmoothScroll = (): null => {
   useEffect(() => {
     const smoothScrollLinks = document.querySelectorAll('a[href^="#"]');
     

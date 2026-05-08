@@ -105,12 +105,12 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
             console.error('Edge function error:', edgeError);
             return { error: edgeError as Error };
           }
-          return { data: edgeData, error: null };
+          return { data: edgeData, error: null as Error | null };
         }
         return { error };
       }
 
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (err) {
       console.error('Unexpected profile creation error:', err);
       return { error: err as Error };
@@ -247,7 +247,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         }
       }
 
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (err) {
       console.error('Unexpected signup error:', err);
       return { error: err as Error };
@@ -316,7 +316,7 @@ export const VoltMarketAuthProvider: React.FC<{ children: React.ReactNode }> = (
         }, 100);
       }
 
-      return { data, error: null };
+      return { data, error: null as Error | null };
     } catch (err) {
       console.error('Unexpected profile update error:', err);
       return { data: null, error: err as Error };

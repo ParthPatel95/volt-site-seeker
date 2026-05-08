@@ -10,7 +10,7 @@ vi.mock('@/hooks/useExchangeRate', () => ({
       source: 'open.er-api.com',
     },
     loading: false,
-    error: null,
+    error: null as string | null,
     convertToUSD: (cad: number) => cad * 0.75,
     refetch: () => Promise.resolve(),
   }),

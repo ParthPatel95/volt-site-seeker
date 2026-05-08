@@ -721,7 +721,7 @@ export function AESOHistoricalPricing() {
   const optimizeShutdownSchedule = (hourlyData: any[], maxShutdownHours: number, constraints: any, baseline: any) => {
     // Sort by price premium over rolling baseline
     const priceOpportunities = hourlyData.map(point => {
-      const rollingBaseline = baseline.rollingData.find(r => 
+      const rollingBaseline = baseline.rollingData.find((r: any) =>
         Math.abs(r.datetime.getTime() - point.datetime.getTime()) < 3600000 // within 1 hour
       );
       const baselinePrice = rollingBaseline ? rollingBaseline.average : baseline.average;
@@ -803,7 +803,7 @@ export function AESOHistoricalPricing() {
     // Look ahead for consecutive high prices
     for (let i = startIndex; i < Math.min(startIndex + 12, hourlyData.length); i++) {
       const point = hourlyData[i];
-      const rollingBaseline = baseline.rollingData.find(r => 
+      const rollingBaseline = baseline.rollingData.find((r: any) =>
         Math.abs(r.datetime.getTime() - point.datetime.getTime()) < 3600000
       );
       const baselinePrice = rollingBaseline ? rollingBaseline.average : baseline.average;
@@ -1158,7 +1158,7 @@ export function AESOHistoricalPricing() {
         if (duration >= effectiveMinDuration) {
           console.log(`Creating event: ${currentHour.date} ${currentHour.hour}:00, duration: ${duration}h`);
           const avgSpikePrice = totalSpikeCost / Math.min(duration, j - i);
-          const baselinePrice = baseline.rollingData.find(r => 
+          const baselinePrice = baseline.rollingData.find((r: any) =>
             Math.abs(r.datetime.getTime() - currentHour.datetime.getTime()) < 3600000
           )?.average || baseline.average;
 
@@ -2145,7 +2145,7 @@ export function AESOHistoricalPricing() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {currentAnalysis.events.map((event, index) => (
+                                {currentAnalysis.events.map((event: any, index: number) => (
                                   <tr key={index} className="border-b hover:bg-muted/50">
                                     <td className="p-2 font-medium">{event.date}</td>
                                     <td className="p-2">{event.time || '—'}</td>

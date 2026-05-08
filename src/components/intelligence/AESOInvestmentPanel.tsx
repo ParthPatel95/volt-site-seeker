@@ -49,7 +49,7 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
     if (marketAnalytics?.market_stress_score !== undefined && marketAnalytics.market_stress_score < 50) score += 20;
     
     // Opportunity factors (30 points)
-    const highPriorityOpps = marketAnalytics?.investment_opportunities?.filter(op => op?.priority === 'high').length || 0;
+    const highPriorityOpps = marketAnalytics?.investment_opportunities?.filter((op: any) => op?.priority === 'high').length || 0;
     score += Math.min(30, highPriorityOpps * 10);
     
     // Risk factors (-20 points max)
@@ -126,7 +126,7 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
                 <div className="flex justify-between">
                   <span>Opportunities</span>
                   <span className="font-mono">
-                    +{Math.min(30, (marketAnalytics?.investment_opportunities?.filter(op => op.priority === 'high').length || 0) * 10)}/30
+                    +{Math.min(30, (marketAnalytics?.investment_opportunities?.filter((op: any) => op.priority === 'high').length || 0) * 10)}/30
                   </span>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export function AESOInvestmentPanel({ marketAnalytics, historicalPrices, loading
               <div className="mt-4 p-4 bg-green-50 rounded-lg">
                 <h4 className="font-semibold text-sm mb-2 text-green-800">Timing Recommendation</h4>
                 <p className="text-sm text-green-700">
-                  {marketAnalytics.market_timing_signals.some(s => s.type.includes('buy')) ?
+                  {marketAnalytics.market_timing_signals.some((s: any) => s.type.includes('buy')) ?
                     'Current market conditions favor new investments with strong fundamentals supporting entry.' :
                     'Monitor market conditions closely for optimal entry timing opportunities.'
                   }
