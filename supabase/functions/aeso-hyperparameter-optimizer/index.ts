@@ -199,8 +199,8 @@ async function evaluateHyperparameters(data: any[], hyperparams: any) {
     const validationSet = data.slice(validationStart, validationEnd);
 
     // Simple gradient boosting simulation
-    let predictions: number[] = [];
-    let actuals: number[] = [];
+    const predictions: number[] = [];
+    const actuals: number[] = [];
 
     for (const point of validationSet) {
       // Simplified prediction using weighted features

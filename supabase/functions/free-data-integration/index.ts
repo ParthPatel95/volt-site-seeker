@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
     const request: FreeDataRequest = await req.json();
     console.log('Free data integration request:', request);
 
-    let allProperties: PropertyData[] = [];
-    let messages: string[] = [];
+    const allProperties: PropertyData[] = [];
+    const messages: string[] = [];
 
     // Enhanced County Records (including AltaLink for Alberta)
     try {

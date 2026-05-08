@@ -148,7 +148,7 @@ async function parseDocx(data: Uint8Array): Promise<string> {
     const xmlContent = await docFile.async('string');
 
     // Convert DOCX XML into readable plain text
-    let text = xmlContent
+    const text = xmlContent
       // New paragraph
       .replace(/<w:p[^>]*>/g, '\n')
       // Line breaks and tabs

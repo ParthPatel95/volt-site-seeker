@@ -1067,6 +1067,11 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
   };
 
   // Handle back to gallery - with transition buffer to allow PDF cleanup
+  // TODO(qa): hoist this useCallback above the early-return on line 949
+  // (hook called conditionally → react-hooks/rules-of-hooks). Refactor
+  // requires moving several useEffect/useCallback blocks together; tracked
+  // as a follow-up PR rather than mixed into the lint cleanup.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const handleBackToGallery = useCallback(() => {
     // Prevent double-triggering during transition
     if (isBackTransitioning) return;

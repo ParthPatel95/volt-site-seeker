@@ -189,5 +189,6 @@ export default {
 			}
 		}
 	},
+	// eslint-disable-next-line @typescript-eslint/no-require-imports -- Tailwind config is loaded by PostCSS via CommonJS, ESM import not supported here
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;

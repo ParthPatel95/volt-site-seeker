@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     console.log(`Fetching SMP for chunk: ${startStr} to ${endStr}`);
 
     // Fetch SMP from AESO API
-    let smpByHour: Record<string, number> = {};
+    const smpByHour: Record<string, number> = {};
     let source = 'unknown';
 
     // Try SMP Report API first (has dedicated hourly SMP)

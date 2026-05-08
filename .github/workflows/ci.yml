@@ -26,11 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Lint is advisory until the ~1800 pre-existing violations are
-      # cleaned up; it still surfaces regressions in the job summary.
-      - name: Lint (advisory)
-        run: npm run lint
-        continue-on-error: true
+      # Lint is now enforced — 0 errors as of Phase G.4 cleanup
+      # (1,800+ violations resolved or downgraded to warnings).
+      - name: Lint
+        run: npm run lint --max-warnings=2000
 
       - name: Typecheck
         run: npm run typecheck

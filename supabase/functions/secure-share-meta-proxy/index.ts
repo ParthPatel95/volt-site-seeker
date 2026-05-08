@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     // Try to fetch share details for better meta tags
     let shareTitle = 'WattByte Infrastructure Company - Secure Document Sharing';
     let shareDescription = 'View shared documents from WattByte Infrastructure Company';
-    let shareImage = `${url.origin}/og-image.png`;
+    const shareImage = `${url.origin}/og-image.png`;
 
     try {
       // Fetch share details

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AESOHubSidebar, AESOHubView } from './AESOHubSidebar';
+import { CurrencyToggle } from '../CurrencyToggle';
 
 const VIEW_LABELS: Record<AESOHubView, string> = {
   market: 'Market Overview',
@@ -50,7 +51,7 @@ export function AESOHubLayout({ children, currentView, onViewChange }: AESOHubLa
         onMobileClose={() => setIsMobileMenuOpen(false)}
       />
 
-      <main className="flex-1 overflow-hidden flex flex-col min-w-0">
+      <main className="flex-1 overflow-hidden flex flex-col min-w-0 relative">
         {isMobile && (
           <header className="lg:hidden sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
             <div className="flex items-center gap-3 px-4 py-3">
@@ -61,17 +62,26 @@ export function AESOHubLayout({ children, currentView, onViewChange }: AESOHubLa
               >
                 <Menu className="w-5 h-5 text-foreground" />
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="p-1.5 rounded-lg bg-primary/10">
                   <MapPin className="w-4 h-4 text-primary" />
                 </div>
-                <div>
-                  <span className="font-semibold text-foreground">{VIEW_LABELS[currentView]}</span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-foreground truncate block">{VIEW_LABELS[currentView]}</span>
                   <p className="text-xs text-muted-foreground">AESO Market Hub</p>
                 </div>
               </div>
+              <CurrencyToggle />
             </div>
           </header>
+        )}
+
+        {!isMobile && (
+          // Floating CAD/USD switch — minimally invasive; sits above the
+          // tab content without intruding on the layout's existing rhythm.
+          <div className="absolute top-4 right-4 z-30">
+            <CurrencyToggle />
+          </div>
         )}
 
         <div className="flex-1 overflow-y-auto">

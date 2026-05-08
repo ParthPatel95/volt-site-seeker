@@ -69,7 +69,7 @@ export function DocumentUploadDialog({
       if (!user) throw new Error('Not authenticated');
 
       // If uploading a folder, create folder structure first
-      let folderMap = new Map<string, string>(); // path -> folder_id
+      const folderMap = new Map<string, string>(); // path -> folder_id
       
       if (uploadMode === 'folder' && files.length > 0) {
         // Extract unique folder paths from all files
@@ -263,11 +263,12 @@ export function DocumentUploadDialog({
                 accept="*/*"
                 className="flex-1"
                 multiple={uploadMode === 'folder'}
-                {...(uploadMode === 'folder' ? { 
-                  // @ts-ignore - webkitdirectory is non-standard but supported
-                  webkitdirectory: '', 
-                  directory: '' 
-                } : {})}
+                // webkitdirectory / directory are non-standard but supported
+                // by all major browsers for folder pickers; cast to bypass
+                // the React types that don't model them.
+                {...(uploadMode === 'folder'
+                  ? ({ webkitdirectory: '', directory: '' } as Record<string, string>)
+                  : {})}
               />
               {files.length > 0 && (
                 <Button

@@ -50,7 +50,7 @@ export function OperatingStrategySimulator() {
     for (const strat of strategies) {
       let operatingHours = 0;
       let totalRevenue = 0;
-      let validPrices: number[] = [];
+      const validPrices: number[] = [];
 
       historicalData.forEach((record) => {
         const price = record.pool_price;

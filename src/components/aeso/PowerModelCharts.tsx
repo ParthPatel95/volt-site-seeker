@@ -37,7 +37,10 @@ const fmtFull = (v: number) => `$${v.toLocaleString(undefined, { maximumFraction
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export function PowerModelCharts({ monthly, breakeven, hourlyPrices, hourlyData, hostingRateCAD }: Props) {
-  if (!monthly.length) return null;
+  // The early-return guard must come AFTER all hooks. We compute every
+  // memoised value unconditionally and return null at the end if there is
+  // no data to render. (Previous order called useMemo conditionally and
+  // tripped react-hooks/rules-of-hooks.)
 
   // === Cost Overview KPIs ===
   const costKPIs = useMemo(() => {
@@ -197,6 +200,9 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices, hourlyData,
       bg: 'bg-muted/50',
     },
   ];
+
+  // Empty-state guard placed AFTER all hooks (see comment at top).
+  if (!monthly.length) return null;
 
   return (
     <div className="space-y-4">

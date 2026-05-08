@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
       console.log(`  Indicators: ${spikeDetection.indicators.join(', ') || 'none'}`);
       
       // Select regime-specific model or fallback to main model
-      let selectedModel = regimeModels[selectedRegime];
+      const selectedModel = regimeModels[selectedRegime];
       let modelCorrelations = featureCorrelations;
       let modelStats = featureStats;
       let modelParams_xgb = xgboostParams;

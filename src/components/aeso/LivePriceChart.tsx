@@ -243,7 +243,7 @@ export function LivePriceChart({
           if (entry.value === undefined || entry.value === null) return null;
           
           let label = '';
-          let color = entry.color;
+          const color = entry.color;
           
           switch (entry.dataKey) {
             case 'actual':

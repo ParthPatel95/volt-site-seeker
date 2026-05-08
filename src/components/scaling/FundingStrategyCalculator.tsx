@@ -21,7 +21,7 @@ export const FundingStrategyCalculator = () => {
     let seniorDebt = 0;
     let mezzanine = 0;
     let equipmentFinancing = 0;
-    let equity = equityAvailable;
+    const equity = equityAvailable;
     let newEquity = 0;
 
     // Equipment financing typically 30-40% of capital for mining

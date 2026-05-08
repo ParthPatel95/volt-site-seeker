@@ -24,8 +24,7 @@ const fmtPct = (v: number) => {
 const fmt = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
 
 export function PowerModelSensitivity({ baseCost, params, monthly }: Props) {
-  if (!monthly.length || baseCost === 0) return null;
-
+  // Hooks must run unconditionally; the empty-state guard moves below.
   const analysis = useMemo(() => {
     // Simple linear scaling for sensitivity — recalculates proportionally
     // This is an approximation; actual re-run would need hourly data
@@ -76,6 +75,9 @@ export function PowerModelSensitivity({ baseCost, params, monthly }: Props) {
       },
     ];
   }, [baseCost, params, monthly]);
+
+  // Empty-state guard placed AFTER all hooks.
+  if (!monthly.length || baseCost === 0) return null;
 
   return (
     <Card>

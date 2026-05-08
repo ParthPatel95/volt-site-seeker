@@ -62,8 +62,8 @@ const CoolingMethodRecommender = () => {
   const recommendations = useMemo(() => {
     return coolingMethods.map(method => {
       let score = 0;
-      let reasons: string[] = [];
-      let warnings: string[] = [];
+      const reasons: string[] = [];
+      const warnings: string[] = [];
 
       // Temperature scoring
       if (avgTemperature <= method.requirements.maxTemp) {

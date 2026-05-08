@@ -61,35 +61,21 @@ interface AESOCurtailmentAnalysisProps {
 
 const PRESET_THRESHOLDS = [50, 60, 75, 100, 150, 200];
 
-export function AESOCurtailmentAnalysis({ 
-  rawHourlyData, 
-  loading, 
+export function AESOCurtailmentAnalysis({
+  rawHourlyData,
+  loading,
   timePeriodLabel,
   isHistoricalView = false
 }: AESOCurtailmentAnalysisProps) {
-  
-  // Show message for historical view (no hourly data available)
-  if (isHistoricalView) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <AlertOctagon className="w-12 h-12 mx-auto mb-3 text-amber-500" />
-          <h3 className="font-semibold text-lg mb-2">Historical View Not Supported</h3>
-          <p className="text-muted-foreground mb-4">
-            Curtailment analysis requires hourly price data. The 8-year historical view only contains yearly summaries.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Switch to 30-day, 90-day, or 12-month view to analyze price curtailment events with hourly granularity.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // All hooks must run unconditionally on every render — keep them above
+  // the historical-view early return so React's hook order stays stable
+  // when the component re-renders with isHistoricalView=true.
   const { formatCurrency } = useCurrencyConversion();
   const [priceThreshold, setPriceThreshold] = useState<number>(60);
   const [customThreshold, setCustomThreshold] = useState<string>('60');
 
   // Analyze curtailment events based on threshold
+  // (kept above the historical-view early return to keep hook order stable)
   const { events, summary } = useMemo(() => {
     if (!rawHourlyData || rawHourlyData.length === 0) {
       return { events: [], summary: null };
@@ -188,6 +174,25 @@ export function AESOCurtailmentAnalysis({
 
     return { events: sortedEvents, summary };
   }, [rawHourlyData, priceThreshold]);
+
+  // Show message for historical view (no hourly data available). Placed
+  // AFTER all hooks so hook order stays stable across renders.
+  if (isHistoricalView) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <AlertOctagon className="w-12 h-12 mx-auto mb-3 text-amber-500" />
+          <h3 className="font-semibold text-lg mb-2">Historical View Not Supported</h3>
+          <p className="text-muted-foreground mb-4">
+            Curtailment analysis requires hourly price data. The 8-year historical view only contains yearly summaries.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Switch to 30-day, 90-day, or 12-month view to analyze price curtailment events with hourly granularity.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleThresholdChange = (value: string) => {
     setCustomThreshold(value);

@@ -22,7 +22,7 @@ export function VoltBuildTimeline({
   // Calculate timeline bounds
   const { startDate, endDate, totalDays, monthMarkers } = useMemo(() => {
     const now = new Date();
-    let minDate = projectStartDate ? new Date(projectStartDate) : now;
+    const minDate = projectStartDate ? new Date(projectStartDate) : now;
     let maxDate = projectEndDate ? new Date(projectEndDate) : addDays(now, 180);
 
     // Ensure minimum 30 day span

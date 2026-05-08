@@ -54,7 +54,7 @@ serve(async (req) => {
     };
 
     // Fetch real network data from mempool.space
-    let networkStats = {
+    const networkStats = {
       difficulty: 110e12,  // ~110T difficulty
       hashrate: 800e18,    // ~800 EH/s
       blockReward: 3.125,  // Post-April 2024 halving

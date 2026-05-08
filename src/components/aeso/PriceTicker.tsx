@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface PriceDataPoint {
   timestamp?: string;
@@ -18,15 +19,16 @@ interface PriceTickerProps {
   loading?: boolean;
 }
 
-export function PriceTicker({ 
-  currentPrice, 
-  previousPrice = 0, 
-  data, 
-  highPrice, 
-  lowPrice, 
+export function PriceTicker({
+  currentPrice,
+  previousPrice = 0,
+  data,
+  highPrice,
+  lowPrice,
   averagePrice,
-  loading 
+  loading
 }: PriceTickerProps) {
+  const currency = useCurrency();
   const [displayPrice, setDisplayPrice] = useState(currentPrice);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -124,20 +126,21 @@ export function PriceTicker({
             <span className={`text-xl font-bold tabular-nums transition-colors duration-200 ${
               isAnimating ? 'text-primary' : 'text-foreground'
             }`}>
-              ${displayPrice.toFixed(2)}
+              {currency.symbol}{currency.convert(displayPrice).toFixed(2)}
             </span>
-            <span className="text-xs text-muted-foreground">CAD/MWh</span>
+            <span className="text-xs text-muted-foreground">{currency.currency}/MWh</span>
           </div>
         </div>
 
-        {/* Change Section */}
+        {/* Change Section — note: change is shown as a delta in the active
+            currency, so the percentage is unit-independent. */}
         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md flex-shrink-0 ${
           isNeutral ? 'bg-muted/50' :
           isPositive ? 'bg-red-500/10' : 'bg-green-500/10'
         }`}>
           <span className={getTrendColor()}>{getTrendIcon()}</span>
           <span className={`text-sm font-semibold tabular-nums ${getTrendColor()}`}>
-            {isPositive ? '+' : ''}{change.toFixed(2)}
+            {isPositive ? '+' : ''}{currency.convert(change).toFixed(2)}
           </span>
           <span className={`text-xs ${getTrendColor()}`}>
             ({isPositive ? '+' : ''}{changePercent.toFixed(1)}%)
@@ -166,21 +169,21 @@ export function PriceTicker({
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">H:</span>
             <span className="text-sm font-semibold text-red-600 dark:text-red-400 tabular-nums">
-              ${highPrice.toFixed(2)}
+              {currency.symbol}{currency.convert(highPrice).toFixed(2)}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">L:</span>
             <span className="text-sm font-semibold text-green-600 dark:text-green-400 tabular-nums">
-              ${lowPrice.toFixed(2)}
+              {currency.symbol}{currency.convert(lowPrice).toFixed(2)}
             </span>
           </div>
           
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">Avg:</span>
             <span className="text-sm font-semibold text-foreground tabular-nums">
-              ${averagePrice.toFixed(2)}
+              {currency.symbol}{currency.convert(averagePrice).toFixed(2)}
             </span>
           </div>
 

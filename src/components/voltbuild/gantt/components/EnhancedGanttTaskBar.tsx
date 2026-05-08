@@ -64,13 +64,14 @@ export function EnhancedGanttTaskBar({
   const isCritical = criticalPathTasks.has(task.id);
   const isMilestoneTask = isMilestone(task);
 
-  // Calculate position and dimensions
-  if (!task.estimated_start_date || !task.estimated_end_date) {
-    return null;
-  }
+  // We can't early-return here because there are useCallback hooks below;
+  // doing so would call hooks conditionally on subsequent renders and trip
+  // react-hooks/rules-of-hooks. Compute a `hasDates` flag and gate the
+  // actual render at the bottom of the function instead.
+  const hasDates = !!(task.estimated_start_date && task.estimated_end_date);
 
-  const baseLeft = getPositionForDate(task.estimated_start_date, startDate, endDate, totalWidth);
-  const baseWidth = getWidthForRange(task.estimated_start_date, task.estimated_end_date, startDate, endDate, totalWidth);
+  const baseLeft = hasDates ? getPositionForDate(task.estimated_start_date!, startDate, endDate, totalWidth) : 0;
+  const baseWidth = hasDates ? getWidthForRange(task.estimated_start_date!, task.estimated_end_date!, startDate, endDate, totalWidth) : 0;
   
   const left = dragMode ? baseLeft + dragOffset.left : baseLeft;
   const width = dragMode ? baseWidth + dragOffset.width : baseWidth;
@@ -165,6 +166,9 @@ export function EnhancedGanttTaskBar({
     // Reset the flag after click is processed
     hasDraggedRef.current = false;
   }, [selectTask, task, onClick]);
+
+  // Render-gate moved here from above so hooks always run.
+  if (!hasDates) return null;
 
   // Milestone rendering (diamond shape with enhanced styling)
   if (isMilestoneTask) {

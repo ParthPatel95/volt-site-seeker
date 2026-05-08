@@ -11,7 +11,7 @@ export const calculateRateEstimation = async (result: FinderResult, searchRegion
 
     // Use real data if available, otherwise use default rates
     let baseRate = searchRegion === 'texas' ? 0.045 : 0.065;
-    let demandCharge = searchRegion === 'texas' ? 15 : 18;
+    const demandCharge = searchRegion === 'texas' ? 15 : 18;
     
     if (data?.success) {
       if (searchRegion === 'texas' && data.ercot?.pricing) {
@@ -62,7 +62,7 @@ export const calculateRateEstimation = async (result: FinderResult, searchRegion
 
 export const consolidateAllSources = async (regulatory: any, satellite: any, google: any, database: any[]) => {
   const allResults: FinderResult[] = [];
-  let stats: SearchStats = {
+  const stats: SearchStats = {
     total_found: 0,
     regulatory_sources: 0,
     satellite_detections: 0,

@@ -22,7 +22,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
-import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { CurrencyProvider, useCurrency } from '@/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/aeso-hub/CurrencyToggle';
 import { ResponsivePageContainer, ResponsiveSection } from '@/components/ResponsiveContainer';
 import { DataSourceBadge } from '@/components/energy/DataSourceBadge';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -30,15 +31,25 @@ import { MarketSummaryBar } from '@/components/ui/market-summary-bar';
 import { MetricCard } from '@/components/ui/metric-card';
 import { cn } from '@/lib/utils';
 
-export const Dashboard = () => {
+// Cross-market dashboard. Wraps everything in a CurrencyProvider that
+// defaults to USD (the long-standing UX) so the toggle is opt-in for users
+// who'd rather see CAD across the board. Persistence is shared with the
+// AESO Hub via localStorage so a user's currency choice carries over.
+export const Dashboard = () => (
+  <CurrencyProvider initialCurrency="USD">
+    <DashboardInner />
+  </CurrencyProvider>
+);
+
+const DashboardInner = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  const { 
-    ercotPricing, 
-    ercotLoad, 
+  const {
+    ercotPricing,
+    ercotLoad,
     ercotGeneration,
-    aesoPricing, 
-    aesoLoad, 
+    aesoPricing,
+    aesoLoad,
     aesoGeneration,
     misoPricing,
     misoLoad,
@@ -63,23 +74,26 @@ export const Dashboard = () => {
     refreshData: refreshDataHook
   } = useOptimizedDashboard();
 
-  const { convertToUSD } = useExchangeRate();
+  const currency = useCurrency();
 
   const refreshData = async () => {
     setLastUpdated(new Date());
     await refreshDataHook();
   };
 
-  // Build market summary data
+  // Build market summary data. US ISOs publish prices natively in USD
+  // (so they need convertFromUSD when the display currency is CAD), while
+  // AESO/IESO publish in CAD (so they need convert when the display
+  // currency is USD).
   const marketSummary = [
-    { id: 'ERCOT', name: 'ERCOT', shortName: 'ERCOT', price: ercotPricing?.current_price ?? null, change: parseFloat(marketMetrics.ercotTrend?.percentage) || undefined, isLoading },
-    { id: 'MISO', name: 'MISO', shortName: 'MISO', price: misoPricing?.current_price ?? null, change: parseFloat(marketMetrics.misoTrend?.percentage) || undefined, isLoading },
-    { id: 'CAISO', name: 'CAISO', shortName: 'CAISO', price: caisoPricing?.current_price ?? null, change: parseFloat(marketMetrics.caisoTrend?.percentage) || undefined, isLoading },
-    { id: 'NYISO', name: 'NYISO', shortName: 'NYISO', price: nyisoPricing?.current_price ?? null, change: parseFloat(marketMetrics.nyisoTrend?.percentage) || undefined, isLoading },
-    { id: 'PJM', name: 'PJM', shortName: 'PJM', price: pjmPricing?.current_price ?? null, change: parseFloat(marketMetrics.pjmTrend?.percentage) || undefined, isLoading },
-    { id: 'SPP', name: 'SPP', shortName: 'SPP', price: sppPricing?.current_price ?? null, change: parseFloat(marketMetrics.sppTrend?.percentage) || undefined, isLoading },
-    { id: 'AESO', name: 'AESO', shortName: 'AESO', price: aesoPricing ? convertToUSD(aesoPricing.current_price) : null, change: parseFloat(marketMetrics.aesoTrend?.percentage) || undefined, isLoading },
-    { id: 'IESO', name: 'IESO', shortName: 'IESO', price: iesoPricing ? convertToUSD(iesoPricing.current_price) : null, change: parseFloat(marketMetrics.iesoTrend?.percentage) || undefined, isLoading },
+    { id: 'ERCOT', name: 'ERCOT', shortName: 'ERCOT', price: ercotPricing ? currency.convertFromUSD(ercotPricing.current_price) : null, change: parseFloat(marketMetrics.ercotTrend?.percentage) || undefined, isLoading },
+    { id: 'MISO', name: 'MISO', shortName: 'MISO', price: misoPricing ? currency.convertFromUSD(misoPricing.current_price) : null, change: parseFloat(marketMetrics.misoTrend?.percentage) || undefined, isLoading },
+    { id: 'CAISO', name: 'CAISO', shortName: 'CAISO', price: caisoPricing ? currency.convertFromUSD(caisoPricing.current_price) : null, change: parseFloat(marketMetrics.caisoTrend?.percentage) || undefined, isLoading },
+    { id: 'NYISO', name: 'NYISO', shortName: 'NYISO', price: nyisoPricing ? currency.convertFromUSD(nyisoPricing.current_price) : null, change: parseFloat(marketMetrics.nyisoTrend?.percentage) || undefined, isLoading },
+    { id: 'PJM', name: 'PJM', shortName: 'PJM', price: pjmPricing ? currency.convertFromUSD(pjmPricing.current_price) : null, change: parseFloat(marketMetrics.pjmTrend?.percentage) || undefined, isLoading },
+    { id: 'SPP', name: 'SPP', shortName: 'SPP', price: sppPricing ? currency.convertFromUSD(sppPricing.current_price) : null, change: parseFloat(marketMetrics.sppTrend?.percentage) || undefined, isLoading },
+    { id: 'AESO', name: 'AESO', shortName: 'AESO', price: aesoPricing ? currency.convert(aesoPricing.current_price) : null, change: parseFloat(marketMetrics.aesoTrend?.percentage) || undefined, isLoading },
+    { id: 'IESO', name: 'IESO', shortName: 'IESO', price: iesoPricing ? currency.convert(iesoPricing.current_price) : null, change: parseFloat(marketMetrics.iesoTrend?.percentage) || undefined, isLoading },
   ];
 
   // Loading skeleton
@@ -121,6 +135,7 @@ export const Dashboard = () => {
           lastUpdated={lastUpdated}
           isRefreshing={isLoading}
           onRefresh={refreshData}
+          actions={<CurrencyToggle />}
         />
 
         {/* Market Summary Bar */}
@@ -228,8 +243,7 @@ export const Dashboard = () => {
               trend={marketMetrics.aesoTrend}
               accentColor="var(--market-aeso)"
               isLoading={isLoading}
-              isCad={true}
-              convertToUSD={convertToUSD}
+              priceCurrency="CAD"
             />
 
             {/* IESO Card */}
@@ -242,8 +256,7 @@ export const Dashboard = () => {
               trend={marketMetrics.iesoTrend}
               accentColor="var(--market-ieso)"
               isLoading={isLoading}
-              isCad={true}
-              convertToUSD={convertToUSD}
+              priceCurrency="CAD"
             />
           </div>
         </section>
@@ -262,8 +275,10 @@ interface MarketDetailCardProps {
   trend: any;
   accentColor: string;
   isLoading: boolean;
-  isCad?: boolean;
-  convertToUSD?: (value: number) => number;
+  /** Native currency the upstream feed publishes prices in. US ISOs are
+   *  USD; AESO and IESO are CAD. The card uses this together with the
+   *  active display currency to decide which conversion to apply. */
+  priceCurrency?: 'USD' | 'CAD';
 }
 
 function MarketDetailCard({
@@ -275,12 +290,18 @@ function MarketDetailCard({
   trend,
   accentColor,
   isLoading,
-  isCad = false,
-  convertToUSD
+  priceCurrency = 'USD',
 }: MarketDetailCardProps) {
-  const displayPrice = isCad && convertToUSD && pricing 
-    ? convertToUSD(pricing.current_price) 
-    : pricing?.current_price;
+  const currency = useCurrency();
+  const convertToActive = (val: number) =>
+    priceCurrency === 'CAD' ? currency.convert(val) : currency.convertFromUSD(val);
+
+  const displayPrice = pricing ? convertToActive(pricing.current_price) : undefined;
+  const displayPeak = pricing?.peak_price != null ? convertToActive(pricing.peak_price) : undefined;
+  // When the active display currency differs from the source, show the
+  // raw native-currency value as a small caption so the user can still
+  // see the underlying number.
+  const showSecondary = currency.currency !== priceCurrency;
 
   return (
     <Card className="relative overflow-hidden border border-border hover:shadow-md-soft transition-all duration-200 group">
@@ -315,21 +336,22 @@ function MarketDetailCard({
         {pricing ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Current Price</p>
+              <p className="text-xs text-muted-foreground font-medium mb-1">Current Price ({currency.currency})</p>
               <p className="text-xl font-semibold tabular-nums text-foreground">
                 ${displayPrice?.toFixed(2)}
               </p>
-              {isCad && (
+              {showSecondary && (
                 <p className="text-xs text-muted-foreground">
-                  CA${pricing.current_price.toFixed(2)}
+                  {priceCurrency === 'CAD' ? 'CA$' : '$'}
+                  {pricing.current_price.toFixed(2)} {priceCurrency}
                 </p>
               )}
               <p className="text-[10px] text-muted-foreground mt-0.5">per MWh</p>
             </div>
             <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Peak Price</p>
+              <p className="text-xs text-muted-foreground font-medium mb-1">Peak Price ({currency.currency})</p>
               <p className="text-xl font-semibold tabular-nums text-data-negative">
-                ${pricing.peak_price?.toFixed(2) || '—'}
+                ${displayPeak?.toFixed(2) ?? '—'}
               </p>
               {trend && (
                 <div className={cn(

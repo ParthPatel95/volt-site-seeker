@@ -33,7 +33,7 @@ serve(async (req) => {
     }
 
     let totalRecordsInserted = 0;
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
 
     // Process in monthly chunks to avoid timeouts
     while (currentDate < endDate) {
