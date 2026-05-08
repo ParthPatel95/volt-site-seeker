@@ -59,6 +59,7 @@ import { useEnergyCredits, CreditSettings, defaultCreditSettings } from '@/hooks
 import { CreditSettingsPanel } from './CreditSettingsPanel';
 import { CreditSummaryCard } from './CreditSummaryCard';
 import { AESOCurtailmentAnalysis } from './AESOCurtailmentAnalysis';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 
 const OVERVIEW_CREDIT_SETTINGS_KEY = 'aeso-overview-credit-settings';
 
@@ -82,7 +83,8 @@ export function AESOHistoricalPricing() {
     fetchYearlyData,
     analyzePeakShutdown,
     fetchHistoricalTenYearData,
-    fetchCustomPeriodData
+    fetchCustomPeriodData,
+    lastFetchedAt: historicalLastFetchedAt,
   } = useAESOHistoricalPricing();
 
   const { toast } = useToast();
@@ -1290,9 +1292,20 @@ export function AESOHistoricalPricing() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
             <TrendingUp className="w-5 h-5 text-blue-600" />
             Historical Pricing Analysis
+            {historicalLastFetchedAt && (
+              <DataFreshnessBadge
+                updatedAt={historicalLastFetchedAt}
+                source="aeso-historical-pricing"
+                label="AESO historical pool prices"
+                // Historical data is OK to be older — live = within 6h, stale to 7d.
+                liveThresholdSec={6 * 3600}
+                staleThresholdSec={7 * 24 * 3600}
+                size="compact"
+              />
+            )}
           </h2>
           <p className="text-sm text-muted-foreground">
             Advanced pricing analytics and peak shutdown optimization tools

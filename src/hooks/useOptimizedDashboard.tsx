@@ -1,29 +1,13 @@
 import { useMemo } from 'react';
 import { useUnifiedEnergyData } from '@/hooks/useUnifiedEnergyData';
 
-// Helper to synthesize AESO pricing from load/generation data if missing
-const synthesizeAESOPricing = (aesoData: any) => {
-  if (aesoData?.pricing) return aesoData.pricing;
-  
-  const ld = aesoData?.loadData || {};
-  const gm = aesoData?.generationMix || {};
-  const reserve = typeof ld.reserve_margin === 'number' ? ld.reserve_margin : 12.5;
-  const renewPct = typeof gm.renewable_percentage === 'number' ? gm.renewable_percentage : 20;
-  const base = 55;
-  let estimate = base + (12.5 - reserve) * 2 - (renewPct - 25) * 0.3;
-  if (!Number.isFinite(estimate)) estimate = base;
-  estimate = Math.max(5, Math.min(250, Math.round(estimate * 100) / 100));
-  
-  return {
-    current_price: estimate,
-    average_price: Math.round((estimate * 0.95) * 100) / 100,
-    peak_price: Math.round((estimate * 1.8) * 100) / 100,
-    off_peak_price: Math.round((estimate * 0.6) * 100) / 100,
-    market_conditions: 'estimated',
-    timestamp: new Date().toISOString(),
-    source: 'aeso_estimated'
-  };
-};
+// AESO pricing is now passed through verbatim from `energy-data-integration`.
+// The previous fallback that synthesized a price from reserve margin /
+// renewable share has been removed: it returned a plausible-looking number
+// labelled `source: 'aeso_estimated'`, but the hub UI rendered it
+// indistinguishably from a live measurement, masking upstream outages from
+// the user. Consumers must handle `aesoPricing == null` and surface an
+// "unavailable" state via <DataFreshnessBadge>.
 
 export const useOptimizedDashboard = () => {
   const { data, isLoading, refetch } = useUnifiedEnergyData();
@@ -43,7 +27,7 @@ export const useOptimizedDashboard = () => {
   const ercotLoad = ercotData?.loadData;
   const ercotGeneration = ercotData?.generationMix;
 
-  const aesoPricing = synthesizeAESOPricing(aesoData);
+  const aesoPricing = aesoData?.pricing ?? null;
   const aesoLoad = aesoData?.loadData;
   const aesoGeneration = aesoData?.generationMix;
 

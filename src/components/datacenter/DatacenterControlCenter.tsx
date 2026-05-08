@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { useMinerController } from '@/hooks/useMinerController';
 import { useDatacenterAutomation } from '@/hooks/useDatacenterAutomation';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
+import { useCurrency } from '@/hooks/useCurrency';
 import { MinerFleetManager } from './MinerFleetManager';
 import { ShutdownRulesPanel } from './ShutdownRulesPanel';
 import { AutomationStatusPanel } from './AutomationStatusPanel';
@@ -34,11 +36,16 @@ interface DatacenterControlCenterProps {
 
 export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }: DatacenterControlCenterProps) {
   const [activeTab, setActiveTab] = useState('status');
-  
-  const { 
-    miners, 
-    loading: minerLoading, 
-    stats, 
+  // Pricing/savings on this panel are CAD-native (AESO pool price, CAD
+  // ceilings stored in price_ceiling_cad). When the active display
+  // currency is USD, every render below converts via currency.convert.
+  const currency = useCurrency();
+  const fmtCAD = (cad: number) => `${currency.symbol}${currency.convert(cad).toFixed(2)}`;
+
+  const {
+    miners,
+    loading: minerLoading,
+    stats,
     fetchMiners,
     sleepMiners,
     wakeupMiners
@@ -149,18 +156,19 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
                   "text-2xl font-bold",
                   isCeilingBreached ? "text-destructive" : isNearCeiling ? "text-yellow-500" : "text-foreground"
                 )}>
-                  CA${currentPrice.toFixed(2)}
+                  {fmtCAD(currentPrice)}
                 </span>
                 <span className="text-sm text-muted-foreground mb-1">
-                  / {activeRule ? `CA$${activeRule.price_ceiling_cad}` : 'No ceiling'}
+                  / {activeRule ? fmtCAD(activeRule.price_ceiling_cad) : 'No ceiling'}
                 </span>
+                <span className="text-[10px] text-muted-foreground mb-1.5">{currency.currency}</span>
               </div>
               {activeRule && (
                 <div className="flex items-center gap-2 text-xs">
                   <span className={cn(
                     ceilingBuffer > 50 ? "text-green-500" : ceilingBuffer > 20 ? "text-yellow-500" : "text-destructive"
                   )}>
-                    Buffer: CA${ceilingBuffer.toFixed(2)}
+                    Buffer: {fmtCAD(ceilingBuffer)} {currency.currency}
                   </span>
                 </div>
               )}
@@ -229,9 +237,21 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
                 <Gauge className="w-5 h-5" />
                 AI Decision Engine
               </CardTitle>
-              <Badge variant={evaluating ? "outline" : "secondary"}>
-                {evaluating ? "Evaluating..." : "Last updated: " + new Date(latestDecision.timestamp).toLocaleTimeString()}
-              </Badge>
+              {evaluating ? (
+                <Badge variant="outline">Evaluating…</Badge>
+              ) : (
+                // Replaces the bare "Last updated" timestamp so users can
+                // see at a glance whether the automation decision still
+                // reflects current market conditions. Live = decided in
+                // the last 5 min; stale past that, outdated past 30 min.
+                <DataFreshnessBadge
+                  updatedAt={latestDecision.timestamp}
+                  source="datacenter-automation-engine"
+                  label="Last automation decision"
+                  liveThresholdSec={5 * 60}
+                  staleThresholdSec={30 * 60}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -261,7 +281,7 @@ export function DatacenterControlCenter({ currentPrice = 0, predictedPrice = 0 }
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Est. Savings</p>
-                <p className="text-lg font-bold text-green-500">CA${latestDecision.estimated_savings.toFixed(2)}/hr</p>
+                <p className="text-lg font-bold text-green-500">{fmtCAD(latestDecision.estimated_savings)}/hr {currency.currency}</p>
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-3 border-t pt-3">{latestDecision.reason}</p>

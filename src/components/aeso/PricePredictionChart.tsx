@@ -3,6 +3,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from 'date-fns';
 import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import { PricePrediction } from '@/hooks/useAESOPricePrediction';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Area,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+} from 'recharts';
 
 interface PricePredictionChartProps {
   predictions: PricePrediction[];
@@ -27,6 +38,20 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
     lower: pred.confidenceLower,
     upper: pred.confidenceUpper,
     confidence: pred.confidenceScore * 100
+  }));
+
+  // Recharts wants a flat series. We compute `bandHeight` as upper - lower
+  // and stack two areas: a transparent base (the lower bound) plus the
+  // band height filled with our confidence colour. This is the standard
+  // Recharts pattern for shaded confidence bands.
+  const chartData = predictions.map(p => ({
+    t: new Date(p.timestamp).getTime(),
+    label: format(new Date(p.timestamp), 'HH:mm'),
+    price: p.price,
+    lower: p.confidenceLower,
+    upper: p.confidenceUpper,
+    bandBase: p.confidenceLower,
+    bandHeight: Math.max(0, p.confidenceUpper - p.confidenceLower),
   }));
 
   // Calculate insights
@@ -90,6 +115,63 @@ export const PricePredictionChart = ({ predictions, currentPrice }: PricePredict
             </span>
           </div>
         )}
+
+        {/* Confidence-band chart. The shaded region is the model's
+            confidence interval (typically the 95% CI); the line is the
+            point forecast. Without this band a row of point estimates can
+            look more precise than the model is. */}
+        <div className="mb-6 h-64 -mx-2 sm:mx-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="aiBand" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+              <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={24} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} width={48} />
+              <Tooltip
+                contentStyle={{
+                  background: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: 6,
+                  fontSize: 12,
+                }}
+                formatter={(value: number, name: string) => {
+                  if (name === 'lower' || name === 'upper') return [`$${value.toFixed(2)}/MWh`, name === 'lower' ? 'CI low' : 'CI high'];
+                  if (name === 'price') return [`$${value.toFixed(2)}/MWh`, 'Forecast'];
+                  return [value, name];
+                }}
+                labelFormatter={(label, payload) => {
+                  const d = payload?.[0]?.payload as { t?: number } | undefined;
+                  return d?.t ? format(new Date(d.t), 'MMM dd HH:mm') : label;
+                }}
+              />
+              {/* Stacked invisible base + visible band so the upper bound = base + height. */}
+              <Area type="monotone" dataKey="bandBase" stackId="ci" stroke="none" fill="transparent" />
+              <Area type="monotone" dataKey="bandHeight" stackId="ci" stroke="none" fill="url(#aiBand)" name="Confidence band" />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+                name="Forecast"
+              />
+              {currentPrice !== undefined && (
+                <ReferenceLine
+                  y={currentPrice}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeDasharray="4 4"
+                  label={{ value: `Current $${currentPrice.toFixed(0)}`, position: 'insideBottomRight', fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                />
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
 
         {/* Table */}
         <div className="rounded-lg border">

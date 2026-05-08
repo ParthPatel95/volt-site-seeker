@@ -13,14 +13,16 @@ import { AESOPredictionAnalytics } from './AESOPredictionAnalytics';
 import { useAESOData } from '@/hooks/useAESOData';
 import { useToast } from '@/hooks/use-toast';
 import { ResponsivePageContainer } from '@/components/ResponsiveContainer';
+import { DataFreshnessBadge } from '@/components/ui/data-freshness-badge';
 
 export const AESOPricePredictionDashboard = () => {
   const [horizon, setHorizon] = useState('24h');
-  const { 
-    predictions, 
-    modelPerformance, 
+  const {
+    predictions,
+    modelPerformance,
+    dataFreshness,
     loading,
-    fetchPredictions, 
+    fetchPredictions,
     fetchModelPerformance
   } = useAESOPricePrediction();
   const { pricing } = useAESOData();
@@ -77,16 +79,29 @@ export const AESOPricePredictionDashboard = () => {
               </p>
             </div>
             
-            <Select value={horizon} onValueChange={setHorizon}>
-              <SelectTrigger className="w-full sm:w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="6h">6 Hours</SelectItem>
-                <SelectItem value="24h">24 Hours</SelectItem>
-                <SelectItem value="7d">7 Days</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              {modelPerformance?.evaluationDate && (
+                <DataFreshnessBadge
+                  updatedAt={modelPerformance.evaluationDate}
+                  source={`aeso-ml-trainer (${modelPerformance.modelVersion ?? 'unknown'})`}
+                  label="Model trained"
+                  // Trained-model staleness windows differ from real-time
+                  // pricing: under 24h is fresh, under 7d is acceptable.
+                  liveThresholdSec={24 * 3600}
+                  staleThresholdSec={7 * 24 * 3600}
+                />
+              )}
+              <Select value={horizon} onValueChange={setHorizon}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6h">6 Hours</SelectItem>
+                  <SelectItem value="24h">24 Hours</SelectItem>
+                  <SelectItem value="7d">7 Days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -113,6 +128,35 @@ export const AESOPricePredictionDashboard = () => {
         {/* Smart Alerts */}
         {predictions.length > 0 && (
           <PricePredictionAlerts predictions={predictions} />
+        )}
+
+        {/* Underlying-data freshness — predictions are only as fresh as
+            the most recent `aeso_training_data` row. When that row is
+            >30 min old we surface an explicit caveat above the chart so
+            users know the forecast is built on stale features. */}
+        {dataFreshness?.stale && dataFreshness.data_age_minutes != null && (
+          <Card className="bg-amber-500/5 border-amber-500/30">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0 text-xs sm:text-sm">
+                  <h4 className="font-semibold mb-1 text-foreground">Forecast based on stale data</h4>
+                  <p className="text-muted-foreground">
+                    The most recent market data the model could read is{' '}
+                    <span className="font-medium text-foreground">
+                      {dataFreshness.data_age_minutes} min old
+                    </span>
+                    . The data collector may be lagging — predictions reflect
+                    market conditions from
+                    {dataFreshness.newest_data_at && (
+                      <> {' '}{new Date(dataFreshness.newest_data_at).toLocaleString()}</>
+                    )}
+                    , not now.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Info Banners */}

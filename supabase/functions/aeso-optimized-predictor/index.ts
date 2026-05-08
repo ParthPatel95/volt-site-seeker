@@ -150,6 +150,33 @@ serve(async (req) => {
 
     console.log('📈 Performance Metrics:', performanceMetrics);
 
+    // Underlying-data freshness — let the UI render a "based on data N min
+    // old" caveat alongside the prediction chart. We read the newest row
+    // from the same `aeso_training_data` source the inner predictor uses.
+    let dataFreshness: {
+      newest_data_at: string | null;
+      data_age_minutes: number | null;
+      stale: boolean;
+    } = { newest_data_at: null, data_age_minutes: null, stale: true };
+    try {
+      const { data: latest } = await supabase
+        .from('aeso_training_data')
+        .select('timestamp')
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latest?.timestamp) {
+        const ageMin = Math.round((Date.now() - new Date(latest.timestamp).getTime()) / 60000);
+        dataFreshness = {
+          newest_data_at: latest.timestamp,
+          data_age_minutes: ageMin,
+          stale: ageMin > 30,
+        };
+      }
+    } catch (freshnessErr) {
+      console.warn('Could not compute data freshness:', freshnessErr);
+    }
+
     // Step 6: Log performance to tracking table
     await supabase
       .from('aeso_prediction_performance')
@@ -172,6 +199,7 @@ serve(async (req) => {
       success: true,
       predictions: allPredictions,
       performance: performanceMetrics,
+      data_freshness: dataFreshness,
       optimization: {
         cache_enabled: !forceRefresh,
         cache_ttl_minutes: CACHE_TTL_MINUTES,

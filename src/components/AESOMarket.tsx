@@ -20,15 +20,28 @@ import {
   Shield
 } from 'lucide-react';
 import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
+import { CurrencyProvider, useCurrency } from '@/hooks/useCurrency';
+import { CurrencyToggle } from '@/components/aeso-hub/CurrencyToggle';
 
 export function AESOMarket() {
-  const { 
-    aesoPricing: pricing, 
-    aesoLoad: loadData, 
-    aesoGeneration: generationMix, 
-    isLoading: loading, 
-    refreshData 
+  return (
+    <CurrencyProvider>
+      <AESOMarketInner />
+    </CurrencyProvider>
+  );
+}
+
+function AESOMarketInner() {
+  const {
+    aesoPricing: pricing,
+    aesoLoad: loadData,
+    aesoGeneration: generationMix,
+    isLoading: loading,
+    refreshData
   } = useOptimizedDashboard();
+  const currency = useCurrency();
+  const formatPrice = (cad: number) =>
+    `${currency.currency === 'CAD' ? 'CA' : ''}${currency.symbol}${currency.convert(cad).toFixed(2)}`;
 
   const handleRefreshAll = () => {
     refreshData();
@@ -88,14 +101,17 @@ export function AESOMarket() {
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground break-words">Live Alberta Electric System Operator market data</p>
         </div>
-        <Button 
-          onClick={handleRefreshAll}
-          disabled={loading}
-          className="bg-gradient-to-r from-red-600 to-red-700 flex-shrink-0 w-full sm:w-auto"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          <span className="sm:inline">Refresh All Data</span>
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+          <CurrencyToggle />
+          <Button
+            onClick={handleRefreshAll}
+            disabled={loading}
+            className="bg-gradient-to-r from-red-600 to-red-700 flex-1 sm:flex-initial"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <span className="sm:inline">Refresh All Data</span>
+          </Button>
+        </div>
       </div>
 
       {/* Real-time Market Overview */}
@@ -107,7 +123,7 @@ export function AESOMarket() {
           </CardHeader>
           <CardContent>
             <div className="text-lg sm:text-xl lg:text-2xl font-bold break-all">
-              {hasValidPrice ? `CA$${currentPrice.toFixed(2)}` : 'Loading...'}
+              {hasValidPrice ? formatPrice(currentPrice) : 'Loading...'}
             </div>
             <p className="text-xs text-blue-200 break-all">per MWh</p>
           </CardContent>
@@ -175,7 +191,7 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Current Price</p>
                   <div className="space-y-1">
                     <p className="text-lg sm:text-xl lg:text-2xl font-bold break-all leading-tight">
-                      {hasValidPrice ? `CA$${currentPrice.toFixed(2)}/MWh` : 'Loading...'}
+                      {hasValidPrice ? `${formatPrice(currentPrice)}/MWh` : 'Loading...'}
                     </p>
                   </div>
                   <Badge variant={(hasValidPrice && currentPrice > 60) ? 'destructive' : 'default'} className="text-xs">
@@ -186,7 +202,7 @@ export function AESOMarket() {
                   <p className="text-sm text-muted-foreground">Average Price</p>
                   <div className="space-y-1">
                     <p className="text-base sm:text-lg lg:text-xl font-semibold break-all leading-tight">
-                      {pricing?.average_price ? `CA$${pricing.average_price.toFixed(2)}/MWh` : '—'}
+                      {pricing?.average_price ? `${formatPrice(pricing.average_price)}/MWh` : '—'}
                     </p>
                   </div>
                 </div>

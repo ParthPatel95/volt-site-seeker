@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useVoltMarketAuth } from '@/contexts/VoltMarketAuthContext';
-import { 
-  Bell, 
-  MessageSquare, 
-  DollarSign, 
-  User, 
-  Shield, 
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Bell,
+  MessageSquare,
+  DollarSign,
+  User,
+  Shield,
   TrendingUp,
   Settings,
   Check,
@@ -19,9 +20,29 @@ import {
   Clock
 } from 'lucide-react';
 
+// Source-of-truth notification types come from the
+// `voltmarket_notifications.type` CHECK constraint:
+//   'new_listing' | 'price_change' | 'message' | 'loi_received'
+//   | 'loi_response' | 'document_shared' | 'verification_update' | 'system'
+// We render any of those, plus a few legacy ad-hoc display types
+// ('transaction' / 'listing' / 'review') that may exist from earlier
+// hand-rolled inserts.
+type DBNotificationType =
+  | 'new_listing'
+  | 'price_change'
+  | 'message'
+  | 'loi_received'
+  | 'loi_response'
+  | 'document_shared'
+  | 'verification_update'
+  | 'system'
+  | 'transaction'
+  | 'listing'
+  | 'review';
+
 interface Notification {
   id: string;
-  type: 'message' | 'transaction' | 'verification' | 'listing' | 'review';
+  type: DBNotificationType;
   title: string;
   message: string;
   read: boolean;
@@ -30,35 +51,16 @@ interface Notification {
 }
 
 export const VoltMarketNotificationCenter: React.FC = () => {
-  const { profile } = useVoltMarketAuth();
+  const { profile, user } = useVoltMarketAuth();
   const { toast } = useToast();
-  
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'message',
-      title: 'New Message',
-      message: 'John from Solar Corp sent you a message about your Texas listing',
-      read: false,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: '2',
-      type: 'verification',
-      title: 'Verification Approved',
-      message: 'Your business license verification has been approved',
-      read: false,
-      created_at: new Date(Date.now() - 3600000).toISOString()
-    },
-    {
-      id: '3',
-      type: 'listing',
-      title: 'Listing Interest',
-      message: '3 users have viewed your Arizona hosting listing in the last 24 hours',
-      read: true,
-      created_at: new Date(Date.now() - 86400000).toISOString()
-    }
-  ]);
+
+  // Notifications come from `voltmarket_notifications`. RLS scopes them to
+  // the authenticated user, so we just select all and order by recency.
+  // Previously this state was hardcoded with three fake demo rows ("John
+  // from Solar Corp"...), which meant real LOI/message/verification
+  // notifications were invisible to every user.
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [settings, setSettings] = useState({
     new_messages: true,
@@ -91,22 +93,120 @@ export const VoltMarketNotificationCenter: React.FC = () => {
     }
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => prev.map(n => 
+  // Fetch real notifications from voltmarket_notifications. Effect is
+  // keyed on the authenticated user's id so it re-runs on sign-in/out.
+  useEffect(() => {
+    if (!user?.id) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchNotifications = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('voltmarket_notifications')
+        .select('id, type, title, message, is_read, created_at, data')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (cancelled) return;
+      if (error) {
+        console.error('Failed to load notifications:', error.message);
+        setNotifications([]);
+      } else {
+        setNotifications(
+          (data ?? []).map((row: any) => ({
+            id: row.id,
+            type: row.type,
+            title: row.title,
+            message: row.message,
+            read: !!row.is_read,
+            created_at: row.created_at,
+            action_url: row.data?.action_url,
+          }))
+        );
+      }
+      setLoading(false);
+    };
+
+    void fetchNotifications();
+
+    // Realtime: refresh on any insert/update for this user.
+    const channel = supabase
+      .channel(`voltmarket_notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'voltmarket_notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          void fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  const markAsRead = async (notificationId: string) => {
+    // Optimistic update so the badge count updates instantly.
+    setNotifications(prev => prev.map(n =>
       n.id === notificationId ? { ...n, read: true } : n
     ));
+    const { error } = await supabase
+      .from('voltmarket_notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId);
+    if (error) {
+      console.error('Failed to mark notification read:', error.message);
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+    const previous = notifications;
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    const { error } = await supabase
+      .from('voltmarket_notifications')
+      .update({ is_read: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false);
+    if (error) {
+      console.error('Failed to mark all read:', error.message);
+      setNotifications(previous);
+      toast({
+        title: 'Could not mark all as read',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
     toast({
-      title: "All notifications marked as read",
-      description: "Your notification list has been cleared"
+      title: 'All notifications marked as read',
+      description: 'Your notification list has been cleared',
     });
   };
 
-  const deleteNotification = (notificationId: string) => {
+  const deleteNotification = async (notificationId: string) => {
+    const previous = notifications;
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    const { error } = await supabase
+      .from('voltmarket_notifications')
+      .delete()
+      .eq('id', notificationId);
+    if (error) {
+      console.error('Failed to delete notification:', error.message);
+      setNotifications(previous);
+    }
   };
 
   const formatTimeAgo = (dateString: string) => {

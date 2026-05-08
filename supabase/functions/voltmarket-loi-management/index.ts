@@ -95,10 +95,23 @@ Deno.serve(async (req) => {
 async function handleCreateLOI(req: Request, supabase: any, userId: string) {
   const loiData: LOIRequest = await req.json()
 
+  // Validate offer amount before hitting the DB. Enforce sane bounds so a
+  // buyer can't submit $0, a negative number, or an absurd $999B value
+  // that breaks downstream toLocaleString / FX displays. Cap at $1B since
+  // the marketplace targets infrastructure deals well under that.
+  const offerAmount = Number(loiData.offerAmount)
+  if (!Number.isFinite(offerAmount) || offerAmount <= 0 || offerAmount > 1_000_000_000) {
+    throw new Error('Invalid offer amount: must be a positive number ≤ $1,000,000,000')
+  }
+  // Reject sub-cent precision — marketplace prices are in whole cents.
+  if (Math.round(offerAmount * 100) !== offerAmount * 100) {
+    throw new Error('Invalid offer amount: more than two decimal places')
+  }
+
   // Verify listing exists and get seller info
   const { data: listing, error: listingError } = await supabase
     .from('voltmarket_listings')
-    .select('id, created_by, title, asking_price')
+    .select('id, seller_id, title, asking_price')
     .eq('id', loiData.listingId)
     .single()
 
@@ -106,8 +119,15 @@ async function handleCreateLOI(req: Request, supabase: any, userId: string) {
     throw new Error('Listing not found')
   }
 
-  if (listing.created_by === userId) {
+  if (listing.seller_id === userId) {
     throw new Error('Cannot submit LOI for your own listing')
+  }
+
+  // Optional sanity bound: reject offers absurdly above asking price.
+  // 5x the asking price catches typos / unit errors while leaving room
+  // for legitimate above-ask bidding wars.
+  if (typeof listing.asking_price === 'number' && listing.asking_price > 0 && offerAmount > listing.asking_price * 5) {
+    throw new Error('Offer is more than 5x the asking price; please review and resubmit')
   }
 
   // Create LOI
@@ -116,8 +136,8 @@ async function handleCreateLOI(req: Request, supabase: any, userId: string) {
     .insert({
       listing_id: loiData.listingId,
       buyer_id: userId,
-      seller_id: listing.created_by,
-      offer_amount: loiData.offerAmount,
+      seller_id: listing.seller_id,
+      offer_amount: offerAmount,
       earnest_money: loiData.earnestMoney,
       closing_timeline_days: loiData.closingTimelineDays,
       contingencies: loiData.contingencies,
@@ -136,20 +156,20 @@ async function handleCreateLOI(req: Request, supabase: any, userId: string) {
   await supabase
     .from('voltmarket_notifications')
     .insert({
-      user_id: listing.created_by,
+      user_id: listing.seller_id,
       type: 'loi_received',
       title: 'New Letter of Intent Received',
-      message: `You have received a LOI for ${listing.title} with an offer of $${loiData.offerAmount.toLocaleString()}`,
+      message: `You have received a LOI for ${listing.title} with an offer of $${offerAmount.toLocaleString()}`,
       data: {
         loi_id: loi.id,
         listing_id: loiData.listingId,
-        offer_amount: loiData.offerAmount
+        offer_amount: offerAmount
       }
     })
 
   // Start background process to send email notification
   // Send notification email asynchronously
-  sendLOINotificationEmail(supabase, listing.created_by, loi, listing).catch(console.error)
+  sendLOINotificationEmail(supabase, listing.seller_id, loi, listing).catch(console.error)
 
   return new Response(
     JSON.stringify({ 
@@ -168,7 +188,7 @@ async function handleRespondToLOI(req: Request, supabase: any, userId: string) {
     .from('voltmarket_lois')
     .select(`
       *,
-      listing:voltmarket_listings(title, created_by),
+      listing:voltmarket_listings(title, seller_id),
       buyer:voltmarket_profiles!buyer_id(company_name)
     `)
     .eq('id', responseData.loiId)
@@ -453,13 +473,50 @@ async function sendLOIResponseNotificationEmail(supabase: any, userId: string, l
   }
 }
 
-async function handleUpdateLOI(loiId: string, req: Request, supabase: any, userId: string) {
-  const updateData = await req.json()
+// Whitelist of fields a buyer is allowed to mutate on a pending LOI.
+// Previously the function passed `req.json()` straight to `.update(...)`,
+// letting a buyer change `seller_id`, `status`, `buyer_id`, or any other
+// column — a confused-deputy / privilege escalation. Locking the surface
+// down to terms-only fields.
+const LOI_BUYER_UPDATABLE_FIELDS = new Set<string>([
+  'offer_amount',
+  'earnest_money',
+  'closing_timeline_days',
+  'contingencies',
+  'terms_and_conditions',
+  'message',
+  'expires_at',
+])
 
-  // Only buyer can update pending LOIs
+async function handleUpdateLOI(loiId: string, req: Request, supabase: any, userId: string) {
+  const rawUpdate = await req.json()
+  if (rawUpdate == null || typeof rawUpdate !== 'object') {
+    throw new Error('Invalid request body')
+  }
+
+  // Filter to whitelisted fields only.
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(rawUpdate)) {
+    if (LOI_BUYER_UPDATABLE_FIELDS.has(key)) sanitized[key] = value
+  }
+
+  // Re-validate the offer amount if the buyer is trying to change it.
+  if ('offer_amount' in sanitized) {
+    const v = Number(sanitized.offer_amount)
+    if (!Number.isFinite(v) || v <= 0 || v > 1_000_000_000 || Math.round(v * 100) !== v * 100) {
+      throw new Error('Invalid offer amount on update')
+    }
+    sanitized.offer_amount = v
+  }
+
+  if (Object.keys(sanitized).length === 0) {
+    throw new Error('No updatable fields provided')
+  }
+
+  // Only buyer can update pending LOIs.
   const { data: loi, error } = await supabase
     .from('voltmarket_lois')
-    .update(updateData)
+    .update(sanitized)
     .eq('id', loiId)
     .eq('buyer_id', userId)
     .eq('status', 'pending')
