@@ -105,6 +105,41 @@ export const VoltMarketEditListing: React.FC = () => {
   const handleSave = async () => {
     if (!listing || !profile?.id) return;
 
+    // Validate numeric fields before persisting. Previously these were
+    // parseFloat'd in the inputs and sent through unchecked, so users
+    // could end up saving negative prices, NaN, infinities, or
+    // sub-cent precision. Enforce a sane envelope here.
+    const validateMoney = (label: string, value: number | undefined | null) => {
+      if (value == null) return;
+      if (!Number.isFinite(value) || value < 0 || value > 1_000_000_000) {
+        throw new Error(`${label} must be between $0 and $1,000,000,000`);
+      }
+      if (Math.round(value * 100) !== value * 100) {
+        throw new Error(`${label} must have at most two decimal places`);
+      }
+    };
+    const validateNonNegative = (label: string, value: number | undefined | null) => {
+      if (value == null) return;
+      if (!Number.isFinite(value) || value < 0 || value > 1_000_000_000) {
+        throw new Error(`${label} must be a non-negative finite number`);
+      }
+    };
+    try {
+      validateMoney('Asking price', listing.asking_price);
+      validateMoney('Lease rate', listing.lease_rate);
+      validateMoney('Power rate per kW', listing.power_rate_per_kw);
+      validateNonNegative('Power capacity (MW)', listing.power_capacity_mw);
+      validateNonNegative('Available power (MW)', listing.available_power_mw);
+      validateNonNegative('Square footage', listing.square_footage);
+    } catch (validationError) {
+      toast({
+        title: 'Invalid listing data',
+        description: validationError instanceof Error ? validationError.message : 'Validation failed',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase

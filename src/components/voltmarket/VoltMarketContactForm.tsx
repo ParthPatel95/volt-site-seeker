@@ -61,6 +61,28 @@ export const VoltMarketContactForm: React.FC<VoltMarketContactFormProps> = ({
 
     setSubmitting(true);
     try {
+      // Resolve the listing owner from the listings table at submit time
+      // rather than trusting the `listingOwnerId` prop. The previous code
+      // sent whatever id the client passed straight to the DB, which let
+      // a tampered client deliver a contact message to an arbitrary user
+      // (confused-deputy). Mismatch → reject.
+      // voltmarket_listings.seller_id references voltmarket_profiles.user_id,
+      // i.e. it IS the seller's auth.users.id.
+      const { data: listingRow, error: lookupError } = await supabase
+        .from('voltmarket_listings')
+        .select('id, seller_id')
+        .eq('id', listingId)
+        .maybeSingle();
+
+      if (lookupError || !listingRow) {
+        throw lookupError ?? new Error('Listing not found');
+      }
+      if (listingOwnerId && listingRow.seller_id !== listingOwnerId) {
+        // Client-supplied id disagrees with the source of truth — almost
+        // certainly tampering or a stale listing reference. Refuse.
+        throw new Error('Listing owner mismatch — please reload the listing and try again');
+      }
+
       const { error } = await supabase
         .from('voltmarket_contact_messages')
         .insert({
@@ -69,7 +91,7 @@ export const VoltMarketContactForm: React.FC<VoltMarketContactFormProps> = ({
           sender_email: formData.email,
           sender_phone: formData.phone || null,
           message: formData.message,
-          listing_owner_id: listingOwnerId
+          listing_owner_id: listingRow.seller_id,
         });
 
       if (error) throw error;
