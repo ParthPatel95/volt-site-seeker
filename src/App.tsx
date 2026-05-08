@@ -55,6 +55,7 @@ const NetworkingEducation = lazy(() => import('./pages/NetworkingEducation'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Advisory = lazy(() => import('./pages/Advisory'));
 
 const SharedAESOReport = lazy(() => import('./pages/SharedAESOReport'));
 const ComprehensiveTest = lazy(() => import('./pages/ComprehensiveTest'));
@@ -101,6 +102,7 @@ const App = () => (
                     <Route path="/terms" element={<TermsOfService />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/hosting" element={<Hosting />} />
+                    <Route path="/advisory" element={<Advisory />} />
 
                     <Route path="/academy" element={<AcademyAuthProvider><Academy /></AcademyAuthProvider>} />
                     <Route path="/academy/progress" element={<AcademyAuthProvider><AcademyAuthGuard><AcademyProgress /></AcademyAuthGuard></AcademyAuthProvider>} />

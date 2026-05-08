@@ -1,64 +1,44 @@
+# Advisory page — load performance pass
 
+The Advisory page feels slow because the **hero render is blocked by ~1MB of below-the-fold assets** that get pulled in synchronously, and most sections render eagerly. Three concrete fixes, no content changes.
 
-# Academy Content Refinement: Novice-to-Expert Pedagogy Pass
+## 1. Stop pulling pipeline JPEGs into the hero bundle
 
-## Goal
-Rewrite Academy lesson content across all 13 modules so a complete novice can read top-to-bottom and emerge genuinely expert-level. Today's content is dense, jargon-forward, and assumes background knowledge. We'll restructure it pedagogically without changing the page architecture.
+`src/data/advisory-pipeline.ts` does six top-level `import` statements of JPEGs (jinja, texas, nepal, bhutan, india, newfoundland — ~850KB combined). Anything that touches `PIPELINE_PROJECTS` (including the hero stat strip / `PipelineFlowStrip`) drags every image into the initial chunk, even though only the case-studies section actually displays them.
 
-## Diagnostic (what's wrong today)
-After auditing pages like `BitcoinEducation`, `ImmersionCoolingEducation`, `NetworkingEducation`, `ElectricalInfrastructureEducation`, and `EngineeringPermittingEducation`:
-- **No "explain like I'm new" intros.** Sections jump straight to specs (e.g., "Stratum V2 protocol encrypts…") with no plain-language framing.
-- **Jargon is undefined on first use.** Terms like dielectric, switchgear, AESO, hashrate, PUE, arc flash appear without definitions.
-- **No analogies.** Abstract electrical/thermodynamic concepts lack the everyday comparisons that make them stick.
-- **Missing "why does this matter."** Facts are listed, but the business/operational consequence is implicit.
-- **Worked examples are sparse.** Numbers appear (e.g., "15 J/TH") without showing the math that produces them.
-- **No vocabulary scaffolding.** Each module reintroduces terms the learner just met in the prior module.
+Fix:
+- Remove the `import` statements at the top of `advisory-pipeline.ts`.
+- Replace the `image` field with the public-relative path string (e.g. `'/src/assets/pipeline/jinja-uganda-hydro.jpg'`) **or** keep typed image keys and resolve them only inside `AdvisoryCaseStudies.tsx` via a small lookup that does the imports there.
+- Result: hero + map chunk drops by ~850KB.
 
-## Pedagogical Framework (applied to every section)
-Each refined section follows this 5-beat structure:
-1. **Plain-English hook** — one sentence a 12-year-old understands
-2. **Why it matters** — business/operational stakes in 1–2 lines
-3. **Core explanation** — the existing technical content, but with jargon defined inline on first use
-4. **Worked example or analogy** — concrete numbers or a real-world comparison
-5. **Common pitfall / expert tip** — what trips people up (often already covered by RealWorldInsight/CommonMistakes)
+## 2. Lazy-load the 73KB world-land-path
 
-## Scope (13 modules)
-Bitcoin, Mining Economics, Datacenters, Hydro Cooling, Immersion Cooling, Air Cooling, Electrical Infrastructure, Networking, Engineering & Permitting, Operations, Noise Management, Taxes & Insurance, Security & Compliance.
+`src/components/advisory/world-land-path.ts` is a single 73KB string. It is already only used by `AdvisoryPipelineMap`, but because that map is `React.lazy`'d in `Advisory.tsx`, this is fine — verify nothing else imports it. (Quick `rg` check in implementation.) If clean, no action; if leaked, remove the leak.
 
-For each module:
-- Rewrite the **intro section** with a "Start here" plain-language overview
-- Add a **"Key Terms" callout** at the top of each module (5–10 terms defined simply)
-- Refine **every section's opening paragraph** to follow the 5-beat structure
-- Add **worked examples** to any section with numbers (J/TH, kW, kVA, PUE, dB, $/MWh, etc.)
-- Add **analogies** to abstract sections (transformers = water pressure, dielectric fluid = "electrically invisible" oil, etc.)
-- Insert **"Beginner → Expert" progression markers** so learners see how concepts build
+## 3. Lazy-render more sections + add `loading="lazy"` to images
 
-## Deliverables
-1. **New shared component**: `<KeyTermsGlossary terms={[...]} />` — collapsible chip-style term/definition list, placed at the top of each module under the flashcard
-2. **New shared component**: `<PlainEnglishIntro>` — a styled callout for the "explain like I'm new" hook at the start of each section
-3. **New shared component**: `<WorkedExample title formula steps result />` — boxed math walkthrough
-4. **Content rewrites** across ~130 section components (the `*Section.tsx` files under `src/components/<module>/`)
-5. **Module-level glossary data** in `src/constants/academy-glossary.ts` (one keyed entry per module)
+In `src/pages/Advisory.tsx`:
+- Convert `AdvisoryAudience`, `AdvisoryMarketContext`, `AdvisoryServices`, `AdvisoryProcess`, `AdvisoryDifferentiators` from static imports to `React.lazy` + `Suspense` with a lightweight fallback (reuse `SectionLoader` from `LazyErrorBoundary`). Hero stays eager.
+- Wrap each lazy section in an IntersectionObserver-style mount (reuse the `LazyLegalSection` pattern, or a small inline version) so they only mount when scrolled near.
+- Confirm `loading="lazy"` and `decoding="async"` on every `<img>` in `AdvisoryCaseStudies` and `PipelineProjectCard` (already partially done — verify).
 
-## Execution Plan (phased — too large for one pass)
+## 4. Trim hero work
 
-Because this touches ~130 files, I'll execute in 4 phases. After each phase you review and approve before I continue.
+- `AdvisoryHero` uses a 700px blurred glow + dotted radial-gradient overlay. Keep, but add `will-change: auto` (no extra GPU layer) and ensure the gradient div has `pointer-events-none` (it does). No structural change.
+- Remove the redundant `ScrollReveal` wrapping the hero — the hero is above the fold, the reveal animation just delays paint by ~300ms. Render the hero content directly.
 
-- **Phase 1 — Foundations + Bitcoin + Mining Economics** (highest learner traffic; sets the template)
-  - Build the 3 shared components
-  - Create glossary data file
-  - Refine all sections in Bitcoin and Mining Economics modules
-- **Phase 2 — Infrastructure modules**: Datacenters, Electrical, Networking
-- **Phase 3 — Cooling modules**: Hydro, Immersion, Air
-- **Phase 4 — Operational modules**: Engineering & Permitting, Operations, Noise, Taxes & Insurance, Security & Compliance
+## Technical details (for engineering)
 
-## Constraints honored
-- No changes to page-level architecture, routing, auth, or quiz/exam logic
-- All facts preserved; only wording, structure, and scaffolding change
-- No fabricated statistics — if a number isn't already in the codebase or a verified source, we won't invent one
-- Visual consistency requirement preserved (same section wrappers, same theme tokens)
-- Tailwind static-class rule honored
+Files touched:
+- `src/data/advisory-pipeline.ts` — drop image `import`s; expose either string paths or a separate `pipelineImages.ts` consumed only by `AdvisoryCaseStudies.tsx` / `PipelineProjectCard.tsx`.
+- `src/components/advisory/AdvisoryCaseStudies.tsx`, `PipelineProjectCard.tsx` — resolve images locally; ensure `loading="lazy" decoding="async"`.
+- `src/pages/Advisory.tsx` — convert 5 sections to `React.lazy`, add `Suspense` fallbacks, and (optionally) wrap each in a tiny `<InView>` mount-on-visible component.
+- `src/components/advisory/AdvisoryHero.tsx` — drop the outer `ScrollReveal` wrapper.
 
-## What I need from you to start
-Approve the plan and I'll begin Phase 1 (shared components + Bitcoin + Mining Economics). I'll pause at the end of Phase 1 for your review of the new pedagogical style before rolling it across the remaining modules.
+Verification:
+- Run dev build, open Advisory, confirm initial JS chunk for `Advisory` route shrinks (target: −800KB+).
+- Browser performance profile: TTI / LCP on Advisory should drop noticeably; scroll-in of below-fold sections should not jank.
 
+Out of scope:
+- No copy, design, or feature changes.
+- Admin `ConsultingInquiries` untouched.

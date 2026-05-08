@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Bitcoin, GraduationCap, Menu, Server, Zap, Droplets, Users, TrendingUp, CircuitBoard, Volume2, Waves } from 'lucide-react';
+import { Bitcoin, GraduationCap, Menu, Server, Zap, Droplets, Users, TrendingUp, CircuitBoard, Volume2, Waves, Briefcase } from 'lucide-react';
 import { EnhancedLogo } from '../EnhancedLogo';
 import { GlobalUserMenu } from '@/components/GlobalUserMenu';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,7 +58,7 @@ export const LandingNavigation = () => {
           variant="ghost" 
           size="sm"
           onClick={() => navigate('/academy')}
-          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden xl:flex items-center gap-1.5"
         >
           <GraduationCap className="h-4 w-4" />
           Academy
@@ -66,8 +66,17 @@ export const LandingNavigation = () => {
         <Button 
           variant="ghost" 
           size="sm"
+          onClick={() => navigate('/advisory')}
+          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold flex items-center gap-1.5"
+        >
+          <Briefcase className="h-4 w-4" />
+          <span className="hidden sm:inline">Advisory</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
           onClick={() => navigate('/hosting')}
-          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden lg:flex items-center gap-1.5"
+          className="text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 font-semibold hidden xl:flex items-center gap-1.5"
         >
           <Zap className="h-4 w-4" />
           Hosting
@@ -126,6 +135,13 @@ export const LandingNavigation = () => {
               <div className="flex-1 overflow-y-auto py-4">
                 {/* Main Links */}
                 <div className="px-4 space-y-1">
+                  <button
+                    onClick={() => handleNavigate('/advisory')}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-primary/10 hover:text-primary transition-colors text-left font-medium"
+                  >
+                    <Briefcase className="h-5 w-5" />
+                    Advisory
+                  </button>
                   <button
                     onClick={() => handleNavigate('/academy')}
                     className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-foreground hover:bg-primary/10 hover:text-primary transition-colors text-left font-medium"
