@@ -163,6 +163,9 @@ export function EnhancedGanttTaskBar({
     hasDraggedRef.current = false;
   }, [selectTask, task, onClick]);
 
+  // Bail out after hooks if we don't have valid dates
+  if (!hasDates) return null;
+
   // Milestone rendering (diamond shape with enhanced styling)
   if (isMilestoneTask) {
     return (
