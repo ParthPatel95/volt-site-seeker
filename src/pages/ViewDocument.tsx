@@ -1082,29 +1082,6 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     setViewMode('viewer');
   };
 
-  // Handle back to gallery - with transition buffer to allow PDF cleanup
-  const handleBackToGallery = useCallback(() => {
-    // Prevent double-triggering during transition
-    if (isBackTransitioning) return;
-    
-    setIsBackTransitioning(true);
-    
-    // Small delay to allow DocumentViewer cleanup before unmounting
-    backTransitionRef.current = setTimeout(() => {
-      if (!isMountedRef.current) return;
-      
-      setViewMode('gallery');
-      setIsBackTransitioning(false);
-      
-      // Restore scroll position after a brief delay for DOM updates
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current && isMountedRef.current) {
-          scrollContainerRef.current.scrollTop = scrollPosition;
-        }
-      });
-    }, 150);
-  }, [isBackTransitioning, scrollPosition]);
-
   // Full-screen document viewer
   if (viewMode === 'viewer' && selectedDocument) {
     return (
