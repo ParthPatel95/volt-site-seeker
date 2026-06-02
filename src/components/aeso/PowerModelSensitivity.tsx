@@ -24,9 +24,8 @@ const fmtPct = (v: number) => {
 const fmt = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
 
 export function PowerModelSensitivity({ baseCost, params, monthly }: Props) {
-  if (!monthly.length || baseCost === 0) return null;
-
   const analysis = useMemo(() => {
+    if (!monthly.length || baseCost === 0) return [];
     // Simple linear scaling for sensitivity — recalculates proportionally
     // This is an approximation; actual re-run would need hourly data
     const totalMWh = monthly.reduce((s, m) => s + m.mwh, 0);
@@ -76,6 +75,8 @@ export function PowerModelSensitivity({ baseCost, params, monthly }: Props) {
       },
     ];
   }, [baseCost, params, monthly]);
+
+  if (!monthly.length || baseCost === 0) return null;
 
   return (
     <Card>
