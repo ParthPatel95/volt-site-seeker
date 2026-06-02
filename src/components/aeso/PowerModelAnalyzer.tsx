@@ -40,7 +40,46 @@ export function PowerModelAnalyzer() {
   const [hourlyData, setHourlyData] = useState<HourlyRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
-  const [selectedYear, setSelectedYear] = useState(2025);
+  // Dynamic date range loader. Persists last selection to localStorage.
+  type RangePreset = '7d' | '30d' | '90d' | '12m' | 'ytd' | 'y2023' | 'y2024' | 'y2025' | 'y2026' | 'custom';
+  const todayISO = () => new Date().toISOString().slice(0, 10);
+  const addDaysISO = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+  const addMonthsISO = (months: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString().slice(0, 10);
+  };
+  const computeRange = (preset: RangePreset, customStart?: string, customEnd?: string) => {
+    const today = todayISO();
+    switch (preset) {
+      case '7d':   return { start: addDaysISO(-7),   end: today, label: 'Last 7 days' };
+      case '30d':  return { start: addDaysISO(-30),  end: today, label: 'Last 30 days' };
+      case '90d':  return { start: addDaysISO(-90),  end: today, label: 'Last 90 days' };
+      case '12m':  return { start: addMonthsISO(-12), end: today, label: 'Last 12 months' };
+      case 'ytd':  return { start: `${new Date().getFullYear()}-01-01`, end: today, label: 'Year to date' };
+      case 'y2023': return { start: '2023-01-01', end: '2023-12-31', label: '2023' };
+      case 'y2024': return { start: '2024-01-01', end: '2024-12-31', label: '2024' };
+      case 'y2025': return { start: '2025-01-01', end: '2025-12-31', label: '2025' };
+      case 'y2026': return { start: '2026-01-01', end: '2026-12-31', label: '2026' };
+      case 'custom': return { start: customStart || addDaysISO(-30), end: customEnd || today, label: 'Custom range' };
+    }
+  };
+  const stored = typeof window !== 'undefined' ? localStorage.getItem('pm.range') : null;
+  const storedParsed = stored ? (() => { try { return JSON.parse(stored); } catch { return null; } })() : null;
+  const [rangePreset, setRangePreset] = useState<RangePreset>(storedParsed?.preset ?? '12m');
+  const [customStart, setCustomStart] = useState<string>(storedParsed?.customStart ?? addDaysISO(-30));
+  const [customEnd, setCustomEnd] = useState<string>(storedParsed?.customEnd ?? todayISO());
+  const activeRange = useMemo(() => computeRange(rangePreset, customStart, customEnd), [rangePreset, customStart, customEnd]);
+  const selectedYear = useMemo(() => new Date(activeRange.end).getFullYear(), [activeRange.end]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('pm.range', JSON.stringify({ preset: rangePreset, customStart, customEnd }));
+    } catch {}
+  }, [rangePreset, customStart, customEnd]);
   const [analyticsTab, setAnalyticsTab] = useState('cost-analysis');
   const [configOpen, setConfigOpen] = useState(true);
   const [autoTriggerAI, setAutoTriggerAI] = useState(false);
@@ -94,8 +133,11 @@ export function PowerModelAnalyzer() {
     setLoading(true);
     setLoadProgress(10);
     try {
-      const startDate = `${selectedYear}-01-01`;
-      const endDate = `${selectedYear}-12-31T23:59:59`;
+      const startDate = activeRange.start;
+      const endDate = `${activeRange.end}T23:59:59`;
+      // Expected hourly records over the requested span
+      const spanMs = new Date(endDate).getTime() - new Date(startDate).getTime();
+      const expectedRecords = Math.max(24, Math.round(spanMs / (1000 * 60 * 60)));
       
       let allData: Array<{ timestamp: string; pool_price: number; ail_mw: number | null }> = [];
       let offset = 0;
@@ -114,8 +156,7 @@ export function PowerModelAnalyzer() {
         if (error) throw error;
         if (!data || data.length === 0) break;
         allData = allData.concat(data);
-        // Estimate progress (assume ~9000 records for a full year)
-        setLoadProgress(Math.min(90, 10 + (allData.length / 9000) * 80));
+        setLoadProgress(Math.min(90, 10 + (allData.length / expectedRecords) * 80));
         if (data.length < batchSize) break;
         offset += batchSize;
       }
@@ -125,14 +166,14 @@ export function PowerModelAnalyzer() {
       setHourlyData(records);
       setLoadProgress(100);
       setAutoTriggerAI(true); // Auto-trigger AI analysis
-      toast({ title: `Loaded ${records.length} records`, description: `From database for ${selectedYear}` });
+      toast({ title: `Loaded ${records.length.toLocaleString()} records`, description: `${activeRange.label} · ${activeRange.start} → ${activeRange.end}` });
     } catch (err: any) {
       toast({ title: 'Failed to load data', description: err.message, variant: 'destructive' });
     } finally {
       setLoading(false);
       setTimeout(() => setLoadProgress(0), 500);
     }
-  }, [selectedYear, toast]);
+  }, [activeRange, toast]);
 
   const updateParam = (key: keyof FacilityParams, value: string) => {
     const num = parseFloat(value);
@@ -310,9 +351,53 @@ export function PowerModelAnalyzer() {
                       <TabsTrigger value="upload" className="flex-1 text-xs"><Upload className="w-3 h-3 mr-1" />CSV Upload</TabsTrigger>
                     </TabsList>
                     <TabsContent value="database" className="space-y-2 mt-2">
-                      <div>
-                        <Label className="text-xs">Year</Label>
-                        <Input type="number" value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value) || 2025)} className="h-8 text-sm" />
+                      <div className="space-y-2">
+                        <Label className="text-xs">Date Range</Label>
+                        <Select value={rangePreset} onValueChange={(v) => setRangePreset(v as RangePreset)}>
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="7d">Last 7 days</SelectItem>
+                            <SelectItem value="30d">Last 30 days</SelectItem>
+                            <SelectItem value="90d">Last 90 days</SelectItem>
+                            <SelectItem value="12m">Last 12 months</SelectItem>
+                            <SelectItem value="ytd">Year to date</SelectItem>
+                            <SelectItem value="y2026">Full year 2026</SelectItem>
+                            <SelectItem value="y2025">Full year 2025</SelectItem>
+                            <SelectItem value="y2024">Full year 2024</SelectItem>
+                            <SelectItem value="y2023">Full year 2023</SelectItem>
+                            <SelectItem value="custom">Custom range…</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {rangePreset === 'custom' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">Start</Label>
+                              <Input
+                                type="date"
+                                value={customStart}
+                                max={customEnd || todayISO()}
+                                onChange={e => setCustomStart(e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">End</Label>
+                              <Input
+                                type="date"
+                                value={customEnd}
+                                min={customStart}
+                                max={todayISO()}
+                                onChange={e => setCustomEnd(e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <p className="text-[10px] text-muted-foreground">
+                          {activeRange.start} → {activeRange.end}
+                        </p>
                       </div>
                       <Button onClick={loadFromDatabase} disabled={loading} size="sm" className="w-full">
                         {loading ? 'Loading...' : 'Load from Database'}
