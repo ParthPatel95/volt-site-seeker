@@ -37,10 +37,15 @@ const fmtFull = (v: number) => `$${v.toLocaleString(undefined, { maximumFraction
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export function PowerModelCharts({ monthly, breakeven, hourlyPrices, hourlyData, hostingRateCAD }: Props) {
-  if (!monthly.length) return null;
-
   // === Cost Overview KPIs ===
   const costKPIs = useMemo(() => {
+    if (!monthly.length) {
+      return {
+        avgMonthly: 0, maxMonth: '', maxCost: 0,
+        minMonth: '', minCost: 0,
+        volatilityLabel: 'Low', volatilityColor: 'text-emerald-500', cv: 0, deltas: [] as number[],
+      };
+    }
     const costs = monthly.map(m => m.totalAmountDue);
     const avgMonthly = costs.reduce((s, c) => s + c, 0) / costs.length;
     const maxIdx = costs.indexOf(Math.max(...costs));
@@ -165,6 +170,8 @@ export function PowerModelCharts({ monthly, breakeven, hourlyPrices, hourlyData,
     }
     return { cells, maxProfit };
   }, [hourlyData, hostingRateCAD]);
+
+  if (!monthly.length) return null;
 
   const kpiCards = [
     {
