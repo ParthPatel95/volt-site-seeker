@@ -142,6 +142,9 @@ export function GanttTaskBar({
     hasDraggedRef.current = false;
   }, [selectTask, task, onClick]);
 
+  // Bail out after hooks if we don't have valid dates
+  if (!hasDates) return null;
+
   // Milestone rendering (diamond shape)
   if (isMilestoneTask) {
     return (
