@@ -946,6 +946,22 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     new Set([folderContents?.rootFolder?.id ?? ''])
   );
 
+  // Hoisted above early return to keep hook order stable
+  const handleBackToGallery = useCallback(() => {
+    if (isBackTransitioning) return;
+    setIsBackTransitioning(true);
+    backTransitionRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      setViewMode('gallery');
+      setIsBackTransitioning(false);
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current && isMountedRef.current) {
+          scrollContainerRef.current.scrollTop = scrollPosition;
+        }
+      });
+    }, 150);
+  }, [isBackTransitioning, scrollPosition]);
+
   if (!folderContents || !folderContents.rootFolder) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -1065,29 +1081,6 @@ function FolderViewer({ token, linkData, folderContents, viewerData }: FolderVie
     setSelectedDocument(doc);
     setViewMode('viewer');
   };
-
-  // Handle back to gallery - with transition buffer to allow PDF cleanup
-  const handleBackToGallery = useCallback(() => {
-    // Prevent double-triggering during transition
-    if (isBackTransitioning) return;
-    
-    setIsBackTransitioning(true);
-    
-    // Small delay to allow DocumentViewer cleanup before unmounting
-    backTransitionRef.current = setTimeout(() => {
-      if (!isMountedRef.current) return;
-      
-      setViewMode('gallery');
-      setIsBackTransitioning(false);
-      
-      // Restore scroll position after a brief delay for DOM updates
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current && isMountedRef.current) {
-          scrollContainerRef.current.scrollTop = scrollPosition;
-        }
-      });
-    }, 150);
-  }, [isBackTransitioning, scrollPosition]);
 
   // Full-screen document viewer
   if (viewMode === 'viewer' && selectedDocument) {
