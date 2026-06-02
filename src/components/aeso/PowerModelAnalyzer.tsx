@@ -447,7 +447,7 @@ export function PowerModelAnalyzer() {
                   <DropdownMenuItem onClick={() => exportPowerModelCSV(monthly, annual, params, params.cadUsdRate, params.contractedCapacityMW)}>
                     <FileSpreadsheet className="w-3.5 h-3.5 mr-2" />Export CSV
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => exportPowerModelPDF()}>
+                  <DropdownMenuItem onClick={() => exportPowerModelPDF(monthly, annual, params, params.contractedCapacityMW, breakeven)}>
                     <Download className="w-3.5 h-3.5 mr-2" />Export PDF
                   </DropdownMenuItem>
                 </DropdownMenuContent>
