@@ -64,13 +64,10 @@ export function EnhancedGanttTaskBar({
   const isCritical = criticalPathTasks.has(task.id);
   const isMilestoneTask = isMilestone(task);
 
-  // Calculate position and dimensions
-  if (!task.estimated_start_date || !task.estimated_end_date) {
-    return null;
-  }
-
-  const baseLeft = getPositionForDate(task.estimated_start_date, startDate, endDate, totalWidth);
-  const baseWidth = getWidthForRange(task.estimated_start_date, task.estimated_end_date, startDate, endDate, totalWidth);
+  // Calculate position and dimensions (guarded — hooks below need stable order)
+  const hasDates = !!(task.estimated_start_date && task.estimated_end_date);
+  const baseLeft = hasDates ? getPositionForDate(task.estimated_start_date, startDate, endDate, totalWidth) : 0;
+  const baseWidth = hasDates ? getWidthForRange(task.estimated_start_date!, task.estimated_end_date!, startDate, endDate, totalWidth) : 0;
   
   const left = dragMode ? baseLeft + dragOffset.left : baseLeft;
   const width = dragMode ? baseWidth + dragOffset.width : baseWidth;
