@@ -1,44 +1,45 @@
-# Advisory page — load performance pass
+## Full QA & Fix Plan
 
-The Advisory page feels slow because the **hero render is blocked by ~1MB of below-the-fold assets** that get pulled in synchronously, and most sections render eagerly. Three concrete fixes, no content changes.
+Goal: audit every major surface of the app, produce a prioritized issue report, then fix everything found (small to structural). Given scope, this runs in waves so you get visible progress and can stop at any wave.
 
-## 1. Stop pulling pipeline JPEGs into the hero bundle
+### Wave 1 — Automated sweep (no UI clicks needed)
+1. **Static health**: TypeScript compile, ESLint, dependency audit, dead imports.
+2. **Build output**: confirm production build succeeds, flag bundle bloat (>500KB chunks).
+3. **Edge function inventory**: list all ~90 functions, check recent logs for errors in the last 7 days, flag failing ones.
+4. **Database**: run Supabase linter; check RLS coverage on every public table; flag missing GRANTs.
+5. **Routes**: enumerate all routes from `nav-items.tsx` and `App.tsx`, verify every route resolves to a mounted component.
 
-`src/data/advisory-pipeline.ts` does six top-level `import` statements of JPEGs (jinja, texas, nepal, bhutan, india, newfoundland — ~850KB combined). Anything that touches `PIPELINE_PROJECTS` (including the hero stat strip / `PipelineFlowStrip`) drags every image into the initial chunk, even though only the case-studies section actually displays them.
+### Wave 2 — Public-facing pages (browser QA)
+Pages: `/`, `/advisory`, `/hosting`, `/about`, `/academy` + 10 education pages, `/auth`, `/forgot-password`.
+For each: load, screenshot, check console errors, network 4xx/5xx, broken images, broken internal links, mobile viewport (390px), form submission where safe (advisory inquiry).
 
-Fix:
-- Remove the `import` statements at the top of `advisory-pipeline.ts`.
-- Replace the `image` field with the public-relative path string (e.g. `'/src/assets/pipeline/jinja-uganda-hydro.jpg'`) **or** keep typed image keys and resolve them only inside `AdvisoryCaseStudies.tsx` via a small lookup that does the imports there.
-- Result: hero + map chunk drops by ~850KB.
+### Wave 3 — Authenticated app (browser QA, requires you logged in)
+Pages: VoltScout dashboard, Intelligence Hub, AESO Market Hub (all sub-tabs incl. 12CP, Power Model, ML), Inventory, Secure Share, VoltMarket, VoltBuild, Admin.
+For each: load, console/network check, verify live data renders (AESO pool price, BTC stats, etc.), test one read action per tab, skip destructive actions unless trivially reversible.
 
-## 2. Lazy-load the 73KB world-land-path
+### Wave 4 — Critical flows end-to-end
+- Auth: signup → email verify → login → logout
+- Advisory inquiry form → admin view shows it
+- Secure Share: create link → open as guest → view doc
+- AESO report: generate → share link works
+- Academy: enroll → complete module → certificate
 
-`src/components/advisory/world-land-path.ts` is a single 73KB string. It is already only used by `AdvisoryPipelineMap`, but because that map is `React.lazy`'d in `Advisory.tsx`, this is fine — verify nothing else imports it. (Quick `rg` check in implementation.) If clean, no action; if leaked, remove the leak.
+### Wave 5 — Fixes
+Triage findings into:
+- **P0** (broken core flow, data loss risk, console errors blocking pages) → fix immediately
+- **P1** (degraded UX, broken non-core feature, missing data) → fix in same wave
+- **P2** (cosmetic, copy, minor a11y) → batch-fix at end
+- **P3** (nice-to-have) → list in final report, ask before fixing
 
-## 3. Lazy-render more sections + add `loading="lazy"` to images
+Bump `APP_VERSION` once at the end so users get the patched build.
 
-In `src/pages/Advisory.tsx`:
-- Convert `AdvisoryAudience`, `AdvisoryMarketContext`, `AdvisoryServices`, `AdvisoryProcess`, `AdvisoryDifferentiators` from static imports to `React.lazy` + `Suspense` with a lightweight fallback (reuse `SectionLoader` from `LazyErrorBoundary`). Hero stays eager.
-- Wrap each lazy section in an IntersectionObserver-style mount (reuse the `LazyLegalSection` pattern, or a small inline version) so they only mount when scrolled near.
-- Confirm `loading="lazy"` and `decoding="async"` on every `<img>` in `AdvisoryCaseStudies` and `PipelineProjectCard` (already partially done — verify).
+### Deliverable
+A single QA report posted in chat at the end of each wave with: file/route, severity, what's wrong, what I did about it (fixed / deferred / needs your input).
 
-## 4. Trim hero work
+### Technical notes
+- I'll need you logged in to the preview for Wave 3 & 4 — the browser session shares your Supabase session.
+- I won't trigger destructive actions (deletes, payments, real emails to third parties) without asking.
+- Estimated tool calls: ~150–250. I'll batch parallel reads aggressively.
 
-- `AdvisoryHero` uses a 700px blurred glow + dotted radial-gradient overlay. Keep, but add `will-change: auto` (no extra GPU layer) and ensure the gradient div has `pointer-events-none` (it does). No structural change.
-- Remove the redundant `ScrollReveal` wrapping the hero — the hero is above the fold, the reveal animation just delays paint by ~300ms. Render the hero content directly.
-
-## Technical details (for engineering)
-
-Files touched:
-- `src/data/advisory-pipeline.ts` — drop image `import`s; expose either string paths or a separate `pipelineImages.ts` consumed only by `AdvisoryCaseStudies.tsx` / `PipelineProjectCard.tsx`.
-- `src/components/advisory/AdvisoryCaseStudies.tsx`, `PipelineProjectCard.tsx` — resolve images locally; ensure `loading="lazy" decoding="async"`.
-- `src/pages/Advisory.tsx` — convert 5 sections to `React.lazy`, add `Suspense` fallbacks, and (optionally) wrap each in a tiny `<InView>` mount-on-visible component.
-- `src/components/advisory/AdvisoryHero.tsx` — drop the outer `ScrollReveal` wrapper.
-
-Verification:
-- Run dev build, open Advisory, confirm initial JS chunk for `Advisory` route shrinks (target: −800KB+).
-- Browser performance profile: TTI / LCP on Advisory should drop noticeably; scroll-in of below-fold sections should not jank.
-
-Out of scope:
-- No copy, design, or feature changes.
-- Admin `ConsultingInquiries` untouched.
+### What I need from you
+Just confirm and (when we hit Wave 3) make sure you're logged into the preview as an admin so I can reach the admin tabs.
