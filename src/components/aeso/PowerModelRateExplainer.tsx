@@ -142,6 +142,56 @@ export function PowerModelRateExplainer() {
                     = 12 × 45 MW × $11,164 = <strong className="text-foreground">${(12 * 45 * dts.bulkSystem.coincidentDemand).toLocaleString()}/year</strong>
                   </div>
                 </div>
+
+                {/* How DTS scales with MW and uptime */}
+                <div className="bg-muted/30 border border-border rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-2">How DTS Charges Scale with MW & Uptime</h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    DTS is <strong>not a flat number</strong>. Each component has a different billing determinant. Increasing
+                    contracted MW raises every demand-based component proportionally; running more hours raises every
+                    energy-based component proportionally. Only the POD substation fee is truly fixed.
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-3 text-xs">
+                    <div className="space-y-1.5">
+                      <div className="font-semibold text-foreground uppercase tracking-wider text-[10px]">Fixed (independent of MW & uptime)</div>
+                      <div className="flex justify-between"><span>POD Substation</span><span className="font-mono">${dts.pointOfDelivery.substation.toLocaleString()}/mo</span></div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="font-semibold text-foreground uppercase tracking-wider text-[10px]">Scales with MW (independent of uptime)</div>
+                      <div className="flex justify-between"><span>Bulk Coincident (12CP) <em className="text-muted-foreground">— avoidable</em></span><span className="font-mono">${dts.bulkSystem.coincidentDemand.toLocaleString()}/MW·mo</span></div>
+                      <div className="flex justify-between"><span>Regional Billing Capacity</span><span className="font-mono">${dts.regionalSystem.billingCapacity.toLocaleString()}/MW·mo</span></div>
+                      <div className="flex justify-between"><span>POD Tiered Demand</span><span className="font-mono">tiered $/MW·mo</span></div>
+                      <div className="flex justify-between"><span>System Support</span><span className="font-mono">${dts.systemSupport.highestDemand}/MW·mo</span></div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="font-semibold text-foreground uppercase tracking-wider text-[10px]">Scales with energy (MW × uptime hrs)</div>
+                      <div className="flex justify-between"><span>Bulk Metered Energy</span><span className="font-mono">${dts.bulkSystem.meteredEnergy.toFixed(2)}/MWh</span></div>
+                      <div className="flex justify-between"><span>Regional Metered Energy</span><span className="font-mono">${dts.regionalSystem.meteredEnergy.toFixed(2)}/MWh</span></div>
+                      <div className="flex justify-between"><span>TCR</span><span className="font-mono">${dts.tcr.meteredEnergy.toFixed(3)}/MWh</span></div>
+                      <div className="flex justify-between"><span>Voltage Control</span><span className="font-mono">${dts.voltageControl.meteredEnergy.toFixed(2)}/MWh</span></div>
+                      <div className="flex justify-between"><span>Rider F</span><span className="font-mono">${dts.riderF.meteredEnergy.toFixed(2)}/MWh</span></div>
+                      <div className="flex justify-between"><span>Retailer Fee</span><span className="font-mono">${dts.retailerFee.meteredEnergy.toFixed(2)}/MWh</span></div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="font-semibold text-foreground uppercase tracking-wider text-[10px]">Scales with energy AND pool price</div>
+                      <div className="flex justify-between"><span>Operating Reserve</span><span className="font-mono">{dts.operatingReserve.ratePercent}% of pool $</span></div>
+                      <div className="font-semibold text-foreground uppercase tracking-wider text-[10px] pt-2">Applied last</div>
+                      <div className="flex justify-between"><span>GST</span><span className="font-mono">{(dts.gst * 100).toFixed(0)}% of subtotal</span></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-[11px] text-muted-foreground space-y-1">
+                    <div>
+                      <strong className="text-foreground">Verified against:</strong>{' '}
+                      <SourceLink href="https://www.aeso.ca/assets/Information-Documents/2026-015T-Appendix-1-Bill-Estimator.xlsx" label="AESO 2026‑015T Appendix 1 Bill Estimator" />
+                      {' · last verified Feb 2026.'}
+                    </div>
+                    <div>
+                      The Power Model calculator multiplies each component by its billing determinant on every run, so changing the Contracted Capacity (MW) or Target Uptime (%) inputs above immediately re-prices the bill — no rate is hard-coded as a flat monthly total.
+                    </div>
+                  </div>
+                </div>
               </AccordionContent>
             </AccordionItem>
 
