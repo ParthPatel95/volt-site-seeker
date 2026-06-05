@@ -373,6 +373,27 @@ export async function exportPowerModelPDF(
   });
 
   // ===== Footer on every page =====
+  // ===== Chart pages (screenshot capture) =====
+  if (chartOptions?.resultsElementId) {
+    try {
+      const tabValues = chartOptions.tabValues
+        ? chartOptions.tabValues.map((v) => ({
+            value: v,
+            label: v.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          }))
+        : undefined;
+      await appendPowerModelChartPages(doc, pageW, pageH, margin, {
+        resultsElementId: chartOptions.resultsElementId,
+        tabValues,
+        setActiveTab: chartOptions.setActiveTab,
+        originalTab: chartOptions.originalTab,
+      });
+    } catch (err) {
+      console.warn('[PowerModelPDF] Chart capture failed:', err);
+    }
+  }
+
+  // ===== Footer on every page (added LAST so chart pages are numbered too) =====
   const pageCount = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
