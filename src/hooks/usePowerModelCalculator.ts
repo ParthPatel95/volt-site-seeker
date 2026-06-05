@@ -374,9 +374,10 @@ export function usePowerModelCalculator(
       // 12CP charge: real operators don't perfectly forecast AESO peaks.
       // Apply (1 - successRate) of the full coincident demand charge to reflect
       // missed peaks. Default 85% success ⇒ pay 15% of the full 12CP charge.
-      const successRate = Math.min(1, Math.max(0,
-        params.peakAvoidanceSuccessRate ?? 0.85
-      ));
+      // In 'none' (24×7) mode, always pay the full 12CP charge — no curtailment.
+      const successRate = params.curtailmentStrategy === 'none'
+        ? 0
+        : Math.min(1, Math.max(0, params.peakAvoidanceSuccessRate ?? 0.85));
       const bulkCoincidentDemand = bulkCoincidentRate * cap * (1 - successRate);
       const bulkMeteredEnergy = mwh * bulkERate;
       const regionalBillingCapacity = cap * regCapRate;
