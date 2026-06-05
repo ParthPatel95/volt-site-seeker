@@ -351,6 +351,7 @@ export function usePowerModelCalculator(
 
       const runningHours = finalRunning.length;
       let poolEnergyTotal = 0;
+      let poolEnergyAtActualPrice = 0; // always uses real pool price (for OR pass-through)
       let runningPoolPriceSum = 0;
 
       for (const rec of finalRunning) {
@@ -358,6 +359,7 @@ export function usePowerModelCalculator(
         // With fixed price contract, energy cost uses fixed rate, not pool price
         const effectivePrice = isFixedPrice ? params.fixedPriceCAD : rec.poolPrice;
         poolEnergyTotal += effectivePrice * mwh;
+        poolEnergyAtActualPrice += rec.poolPrice * mwh;
         runningPoolPriceSum += rec.poolPrice;
       }
 
@@ -366,13 +368,21 @@ export function usePowerModelCalculator(
       const kwh = mwh * 1000;
       const avgPoolRunning = runningHours > 0 ? runningPoolPriceSum / runningHours : 0;
 
-      const bulkCoincidentDemand = 0;
+      // 12CP charge: real operators don't perfectly forecast AESO peaks.
+      // Apply (1 - successRate) of the full coincident demand charge to reflect
+      // missed peaks. Default 85% success ⇒ pay 15% of the full 12CP charge.
+      const successRate = Math.min(1, Math.max(0,
+        params.peakAvoidanceSuccessRate ?? 0.85
+      ));
+      const bulkCoincidentDemand = bulkCoincidentRate * cap * (1 - successRate);
       const bulkMeteredEnergy = mwh * bulkERate;
       const regionalBillingCapacity = cap * regCapRate;
       const regionalMeteredEnergy = mwh * regERate;
       const podSubstation = podSubRate * subFrac;
       const podTiered = calculatePODTieredCharge(cap, subFrac, tariffOverrides?.podTiers);
-      const operatingReserve = poolEnergyTotal * orRate;
+      // Operating Reserve is a regulated AESO pass-through on the *actual*
+      // pool price, regardless of whether the load has a fixed-price PPA.
+      const operatingReserve = poolEnergyAtActualPrice * orRate;
       const tcr = mwh * tcrRate;
       const voltageControl = mwh * vcRate;
       const systemSupport = cap * ssRate;
