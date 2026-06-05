@@ -159,15 +159,12 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
         <CardContent className="p-0">
           <div className="relative">
             <div className="flex items-center divide-x divide-border overflow-x-auto">
-            <StatItem icon={<Zap className="w-3.5 h-3.5 text-emerald-500" />} label="Consumption" value={`${(annual.totalMWh / 1000).toFixed(0)} GWh`} sub={`${annual.totalMWh.toLocaleString()} MWh`} />
-            <StatItem icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Uptime" value={`${annual.avgUptimePercent.toFixed(1)}%`} sub={`${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`} />
-            {totalShutdownHours !== undefined && (
+            <StatItem icon={<Zap className="w-3.5 h-3.5 text-emerald-500" />} label="Consumption" value={`${(annual.totalMWh / 1000).toFixed(1)} GWh`} sub={`${annual.totalMWh.toLocaleString()} MWh delivered`} />
+            <StatItem icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Uptime" value={`${annual.avgUptimePercent.toFixed(isContinuous ? 2 : 1)}%`} sub={`${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`} />
+            {totalShutdownHours !== undefined && totalShutdownHours > 0 && !isContinuous && (
               <StatItem icon={<PowerOff className="w-3.5 h-3.5 text-red-500" />} label="Curtailed" value={`${totalShutdownHours.toLocaleString()} hrs`} sub={`Saved: CA$${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`} />
             )}
-            {hostingRateCAD ? (
-              <StatItem icon={<BarChart3 className="w-3.5 h-3.5 text-purple-500" />} label="Breakeven" value={`CA$${breakeven.toFixed(0)}/MWh`} sub={`US$${usd(breakeven).toFixed(0)}/MWh`} />
-            ) : null}
-            {(fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? (
+            {(fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined && !isContinuous) ? (
               <StatItem icon={<PiggyBank className="w-3.5 h-3.5 text-emerald-500" />} label="Curtail Savings" value={`CA${fmtM(curtailmentSavings)}`} sub={`vs fixed $${fixedPriceCAD}/MWh`} highlight={curtailmentSavings >= 0} />
             ) : null}
             {isFixedPrice && annual.totalOverContractCredits > 0 ? (
