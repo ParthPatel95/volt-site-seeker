@@ -14,7 +14,6 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LazyErrorBoundary, SectionLoader } from "./components/LazyErrorBoundary";
 import { InstallPrompt } from "./components/pwa/InstallPrompt";
-import { ReloadPrompt } from "./components/pwa/ReloadPrompt";
 import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
@@ -60,12 +59,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const isPreviewHost = () => {
-  if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  return host.includes('localhost') || host.includes('lovable.app') || host.includes('lovableproject.com') || host.includes('preview');
-};
 
 const App = () => (
 <ErrorBoundary>
@@ -164,7 +157,6 @@ const App = () => (
                 } />
               </Routes>
               <InstallPrompt />
-              {!isPreviewHost() && <ReloadPrompt />}
             </BrowserRouter>
           </TooltipProvider>
         </PermissionsProvider>
