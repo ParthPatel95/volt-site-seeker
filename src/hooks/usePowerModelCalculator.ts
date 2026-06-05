@@ -12,6 +12,13 @@ export interface FacilityParams {
   targetUptimePercent: number;
   curtailmentStrategy: CurtailmentStrategy;
   fixedPriceCAD: number;
+  /**
+   * Peak-forecast success rate (0-1). Real operators cannot perfectly predict
+   * the AESO monthly system peak hour; industry experience puts forecast
+   * accuracy at ~80-90%. The model applies (1 - successRate) of the full
+   * bulk coincident demand charge to reflect missed peaks. Default 0.85.
+   */
+  peakAvoidanceSuccessRate?: number;
 }
 
 export interface TariffOverrides {
