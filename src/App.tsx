@@ -61,6 +61,12 @@ const queryClient = new QueryClient({
   },
 });
 
+const isPreviewHost = () => {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host.includes('localhost') || host.includes('lovable.app') || host.includes('lovableproject.com') || host.includes('preview');
+};
+
 const App = () => (
 <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -158,7 +164,7 @@ const App = () => (
                 } />
               </Routes>
               <InstallPrompt />
-              <ReloadPrompt />
+              {!isPreviewHost() && <ReloadPrompt />}
             </BrowserRouter>
           </TooltipProvider>
         </PermissionsProvider>
