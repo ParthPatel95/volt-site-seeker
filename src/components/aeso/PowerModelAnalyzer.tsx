@@ -514,13 +514,15 @@ export function PowerModelAnalyzer() {
             </div>
           </div>
 
-          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
+          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} curtailmentStrategy={params.curtailmentStrategy} />
 
           {/* AI Analysis - Promoted out of tabs */}
           <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} autoTrigger={autoTriggerAI} />
 
           {/* Strategy Comparison + Cost Progression */}
-          <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />
+          {params.curtailmentStrategy !== 'none' && (
+            <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />
+          )}
           <PowerModelCostProgression annual={annual} cadUsdRate={params.cadUsdRate} fixedPriceCAD={params.fixedPriceCAD} />
 
           {/* All-In Price Scenario Builder */}
