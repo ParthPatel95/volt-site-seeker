@@ -262,6 +262,33 @@ export function PowerModelAnalyzer() {
                   </div>
                   <div>
                     <div className="flex items-center gap-1">
+                      <Label className="text-xs">12CP Forecast Success (%)</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>How often you correctly forecast and curtail through the AESO monthly system peak. Industry experience: 80–90%. Missed peaks pay the full Bulk Coincident Demand charge for that month.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="0"
+                      max="100"
+                      value={Math.round((params.peakAvoidanceSuccessRate ?? 0.85) * 100)}
+                      onChange={e => {
+                        const v = parseFloat(e.target.value);
+                        if (!isNaN(v)) setParams(p => ({ ...p, peakAvoidanceSuccessRate: Math.min(1, Math.max(0, v / 100)) }));
+                      }}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1">
                       <Label className="text-xs">Curtailment Strategy</Label>
                       <TooltipProvider>
                         <Tooltip>
