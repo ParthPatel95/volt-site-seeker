@@ -113,9 +113,12 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                   </div>
                   <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Net Margin</span>
                 </div>
-                <div className={`flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded ${netMargin >= 0 ? 'bg-white/20' : 'bg-white/20'}`}>
-                  {netMargin >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                  {Math.abs(marginPct).toFixed(1)}%
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded bg-white/20">
+                    {netMargin >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                    {Math.abs(marginPct).toFixed(1)}%
+                  </div>
+                  <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Annual hosting revenue (Hosting Rate × kWh delivered) minus Total Annual Cost. Percent is margin ÷ revenue.</p></TooltipContent></Tooltip></TooltipProvider>
                 </div>
               </div>
               <p className="text-3xl font-bold tracking-tight">CA{fmtM(netMargin)}</p>
@@ -137,12 +140,13 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                   </div>
                   <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Breakeven Price</span>
                 </div>
+                <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Pool price (CA$/MWh) above which marginal cost of running exceeds hosting revenue. Used by curtailment modes to decide when to shut down.</p></TooltipContent></Tooltip></TooltipProvider>
               </div>
               <p className="text-3xl font-bold tracking-tight">CA${breakeven.toFixed(0)}<span className="text-lg font-normal text-white/60">/MWh</span></p>
               <p className="text-sm text-white/60 mt-1">US${usd(breakeven).toFixed(0)}/MWh</p>
               <div className="mt-3 pt-3 border-t border-white/10">
                 <div className="text-[10px] text-white/50">
-                  Curtail when pool price exceeds this threshold
+                  {isContinuous ? '24×7 mode: shown for reference only — no curtailment is applied.' : 'Curtail when pool price exceeds this threshold.'}
                 </div>
               </div>
             </CardContent>
