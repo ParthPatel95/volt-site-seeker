@@ -33,12 +33,19 @@ function AppWithLoader() {
 const rootElement = document.getElementById("root");
 
 const cachedVersion = window.localStorage.getItem('wattbyte_app_version');
+const host = window.location.hostname;
+const isLovablePreview = host.includes('lovableproject.com') || host.includes('lovable.app') || host.includes('preview');
+
+if (isLovablePreview && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .catch((error) => console.warn('[PWA] Preview service worker cleanup failed:', error));
+}
+
 if (isCurrentBundleStale(cachedVersion)) {
   window.localStorage.setItem('wattbyte_app_version', APP_VERSION);
 } else if (isVersionOutdated(cachedVersion)) {
   window.localStorage.setItem('wattbyte_app_version', APP_VERSION);
-  const host = window.location.hostname;
-  const isLovablePreview = host.includes('lovableproject.com') || host.includes('lovable.app') || host.includes('preview');
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations()
       .then(async (registrations) => {
