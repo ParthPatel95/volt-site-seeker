@@ -52,15 +52,14 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                 </div>
                 <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Total Annual Cost</span>
               </div>
+              <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Sum of all monthly invoices: AESO Rate DTS transmission + Energy ({isFixedPrice ? 'fixed contract' : 'pool'}) + FortisAlberta Rate 65 distribution + GST. {isContinuous ? 'Includes the full 12CP Bulk Coincident Demand charge every month (no avoidance).' : 'The Bulk Coincident Demand charge is weighted by your 12CP forecast-success rate.'}</p></TooltipContent></Tooltip></TooltipProvider>
             </div>
             <p className="text-3xl font-bold tracking-tight">CA{fmtM(annual.totalAmountDue)}</p>
             <p className="text-sm text-white/60 mt-1">US{fmtM(usd(annual.totalAmountDue))}</p>
             {/* Monthly mini trend */}
             <div className="mt-3 pt-3 border-t border-white/10">
-              <div className="flex items-center gap-1 text-[10px] text-white/50">
-                <span>{(annual.totalAmountDue / 12 / 1000).toFixed(0)}k avg/mo</span>
-                <span className="mx-1">·</span>
-                <span>{annual.totalMWh.toLocaleString()} MWh consumed</span>
+              <div className="text-[10px] text-white/50">
+                ${(annual.totalAmountDue / 12 / 1000).toFixed(0)}k average monthly invoice
               </div>
             </div>
           </CardContent>
@@ -76,11 +75,12 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                 </div>
                 <span className="text-xs font-medium text-white/70 uppercase tracking-wider">All-in Rate</span>
               </div>
+              <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Total Annual Cost ÷ kWh delivered. Energy bar shows the {isFixedPrice ? 'fixed contract' : 'pool'} energy share; Adders include all transmission, distribution, riders, and GST.</p></TooltipContent></Tooltip></TooltipProvider>
             </div>
             <p className="text-3xl font-bold tracking-tight">{totalCentsPerKwh.toFixed(2)}¢<span className="text-lg font-normal text-white/60">/kWh</span></p>
             <p className="text-sm text-white/60 mt-1">{(totalCentsPerKwh * cadUsdRate).toFixed(2)}¢/kWh USD</p>
             {/* After credits effective rate (fixed price only) */}
-            {isFixedPrice && annual.totalOverContractCredits > 0 && (
+            {isFixedPrice && annual.totalOverContractCredits > 0 && hasValidEffectiveRate && (
               <p className="text-sm font-semibold text-emerald-300 mt-1">
                 <ArrowDown className="w-3 h-3 inline mr-1" />
                 After Credits: {(annual.effectivePerKwhCAD * 100).toFixed(2)}¢/kWh
