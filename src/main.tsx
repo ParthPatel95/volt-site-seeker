@@ -41,11 +41,12 @@ if (isCurrentBundleStale(cachedVersion)) {
   const isLovablePreview = host.includes('lovableproject.com') || host.includes('lovable.app') || host.includes('preview');
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations()
-      .then((registrations) => {
+      .then(async (registrations) => {
         if (isLovablePreview) {
-          return Promise.all(registrations.map((registration) => registration.unregister()));
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+          return;
         }
-        return Promise.all(registrations.map((registration) => registration.update()));
+        await Promise.all(registrations.map((registration) => registration.update()));
       })
       .then(() => {
         if (cachedVersion && !window.location.search.includes('__fresh=')) {
