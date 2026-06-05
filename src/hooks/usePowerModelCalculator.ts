@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { AESO_RATE_DTS_2026, FORTISALBERTA_RATE_65_2026, DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
-export type CurtailmentStrategy = '12cp-priority' | 'cost-optimized';
+export type CurtailmentStrategy = '12cp-priority' | 'cost-optimized' | 'none';
 
 export interface FacilityParams {
   contractedCapacityMW: number;
@@ -257,7 +257,10 @@ export function usePowerModelCalculator(
         return isFixedPrice ? Math.max(0, rec.poolPrice - params.fixedPriceCAD) * cap : 0;
       };
 
-      if (isFixedPrice || params.curtailmentStrategy === '12cp-priority') {
+      if (params.curtailmentStrategy === 'none') {
+        // === 24×7 AI HOSTING: no curtailment, full 12CP exposure ===
+        finalRunning = records;
+      } else if (isFixedPrice || params.curtailmentStrategy === '12cp-priority') {
         // === Step 1: Curtail the single highest peak hour for 12CP ===
         let budgetRemaining = maxDowntimeHours;
 
