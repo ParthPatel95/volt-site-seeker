@@ -93,6 +93,7 @@ export function PowerModelAnalyzer() {
     targetUptimePercent: 95,
     curtailmentStrategy: '12cp-priority',
     fixedPriceCAD: 0,
+    peakAvoidanceSuccessRate: 0.85,
   });
   const [tariffOverrides, setTariffOverrides] = useState<TariffOverrides>({});
 
