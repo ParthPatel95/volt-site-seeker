@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, type Root } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { APP_VERSION, isCurrentBundleStale, isVersionOutdated } from './constants/app-version';
@@ -10,6 +10,7 @@ declare global {
     __hideAppLoader?: () => void;
     __showAppError?: () => void;
     __appMounted?: boolean;
+    __wattbyteRoot?: Root;
   }
 }
 
@@ -67,7 +68,9 @@ if (isCurrentBundleStale(cachedVersion)) {
 }
 
 if (rootElement) {
-  createRoot(rootElement).render(
+  const root = window.__wattbyteRoot ?? createRoot(rootElement);
+  window.__wattbyteRoot = root;
+  root.render(
     <React.StrictMode>
       <AppWithLoader />
     </React.StrictMode>
