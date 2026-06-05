@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff, ArrowDown, ArrowUp } from 'lucide-react';
+import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff, ArrowDown, ArrowUp, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -12,24 +13,29 @@ interface Props {
   curtailmentSavings?: number;
   fixedPriceCAD?: number;
   cadUsdRate?: number;
+  curtailmentStrategy?: string;
 }
 
-export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD, cadUsdRate = 0.7334 }: Props) {
+export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD, cadUsdRate = 0.7334, curtailmentStrategy }: Props) {
   if (!annual) return null;
 
   const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
   const netMargin = annualRevenue - annual.totalAmountDue;
   const marginPct = annualRevenue > 0 ? (netMargin / annualRevenue) * 100 : 0;
   const isFixedPrice = (fixedPriceCAD ?? 0) > 0;
+  const isContinuous = curtailmentStrategy === 'none';
 
   const usd = (cad: number) => cad * cadUsdRate;
   const fmtM = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
 
-  // Energy vs Adders split for all-in rate
-  const energyCentsPerKwh = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
+  // Energy vs Adders split for all-in rate. Clamp so adders can't go negative
+  // when short windows or rounding produce energy > total.
   const totalCentsPerKwh = annual.avgPerKwhCAD * 100;
-  const addersCentsPerKwh = totalCentsPerKwh - energyCentsPerKwh;
+  const rawEnergyCents = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
+  const energyCentsPerKwh = Math.min(rawEnergyCents, totalCentsPerKwh);
+  const addersCentsPerKwh = Math.max(0, totalCentsPerKwh - energyCentsPerKwh);
   const energyPct = totalCentsPerKwh > 0 ? (energyCentsPerKwh / totalCentsPerKwh) * 100 : 0;
+  const hasValidEffectiveRate = annual.effectivePerKwhCAD > 0 && annual.effectivePerKwhCAD < annual.avgPerKwhCAD;
 
 
   return (
