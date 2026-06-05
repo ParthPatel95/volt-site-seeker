@@ -17,6 +17,8 @@ import { RefreshCw } from 'lucide-react';
  */
 export function ReloadPrompt() {
   const reloadAttempted = useRef(false);
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isPreview = host.includes('localhost') || host.includes('lovable.app') || host.includes('lovableproject.com') || host.includes('preview');
   
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -51,8 +53,7 @@ export function ReloadPrompt() {
       reloadAttempted.current = true;
       
       // Only auto-reload on production domains, not preview/dev
-      const host = window.location.hostname;
-      const isProduction = !host.includes('localhost') && !host.includes('lovable.app') && !host.includes('preview');
+        const isProduction = !isPreview;
       
       if (!isProduction) {
         console.log('[PWA] New content available (skipping auto-reload in dev/preview)');
@@ -96,6 +97,8 @@ export function ReloadPrompt() {
       };
     }
   }, [needRefresh, setNeedRefresh, updateServiceWorker]);
+
+  if (isPreview) return null;
 
   // This component doesn't render anything visible
   // The toast notifications handle the UI
