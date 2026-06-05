@@ -198,13 +198,21 @@ export function usePowerModelCalculator(
     const fortisVol = r(tariffOverrides?.fortisVolumetricCentsKwh, FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH);
     const gstRate = r(tariffOverrides?.gstRate, AESO_RATE_DTS_2026.gst);
 
+    // Group by (year, month) so each calendar month is unique even when the
+    // dataset spans multiple years. The numeric key (year*12 + month) sorts
+    // chronologically and serves as the MonthlyResult.monthIndex.
     const monthGroups = new Map<number, HourlyRecord[]>();
+    const yearSet = new Set<number>();
     for (const rec of hourlyData) {
       const d = new Date(rec.date);
-      const key = d.getMonth();
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      yearSet.add(y);
+      const key = y * 12 + m;
       if (!monthGroups.has(key)) monthGroups.set(key, []);
       monthGroups.get(key)!.push(rec);
     }
+    const multiYear = yearSet.size > 1;
 
     const monthly: MonthlyResult[] = [];
     const allShutdownRecords: ShutdownRecord[] = [];
@@ -213,6 +221,8 @@ export function usePowerModelCalculator(
     const bulkCoincidentRate = r(tariffOverrides?.bulkCoincidentDemand, AESO_RATE_DTS_2026.bulkSystem.coincidentDemand);
 
     for (const [monthIdx, records] of monthGroups) {
+      const yearOfBucket = Math.floor(monthIdx / 12);
+      const calendarMonth = monthIdx % 12;
       const totalHours = records.length;
       // Budget-based curtailment: uptime target is a FLOOR (minimum guaranteed)
       const maxDowntimeHours = Math.floor(totalHours * (1 - targetUptime / 100));
@@ -378,12 +388,19 @@ export function usePowerModelCalculator(
       const perKwhUSD = perKwhCAD * params.cadUsdRate;
 
       // Calculate curtailment savings for this month from shutdown records
-      const monthShutdowns = allShutdownRecords.filter(sr => new Date(sr.date).getMonth() === monthIdx);
+      const monthShutdowns = allShutdownRecords.filter(sr => {
+        const sd = new Date(sr.date);
+        return sd.getFullYear() === yearOfBucket && sd.getMonth() === calendarMonth;
+      });
       const monthShutdownSavings = monthShutdowns.reduce((s, sr) => s + sr.curtailmentSavings, 0);
       const monthOverContractCredits = monthShutdowns.reduce((s, sr) => s + sr.overContractCredit, 0);
 
       monthly.push({
-        month: MONTH_NAMES[monthIdx], monthIndex: monthIdx, totalHours, runningHours, curtailedHours,
+        month: multiYear
+          ? `${MONTH_NAMES[calendarMonth]} ${yearOfBucket}`
+          : MONTH_NAMES[calendarMonth],
+        monthIndex: monthIdx,
+        totalHours, runningHours, curtailedHours,
         curtailed12CP, curtailedPrice, curtailedOverlap, curtailedUptimeCap,
         uptimePercent: totalHours > 0 ? (runningHours / totalHours) * 100 : 0,
         mwh, kwh, avgPoolPriceRunning: avgPoolRunning,

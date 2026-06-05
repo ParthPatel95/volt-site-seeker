@@ -1,6 +1,24 @@
 import type { HourlyRecord } from '@/hooks/usePowerModelCalculator';
 
 /**
+ * Deduplicate hourly records by full timestamp (date + hour-ending).
+ * Later occurrences win (assumes input is in any order; the last write
+ * for a given (date, he) key is kept). This prevents the same calendar
+ * hour from being counted multiple times when the source data set has
+ * overlapping ingests, multiple year imports, or duplicate cron rows.
+ */
+export function dedupeHourly(records: HourlyRecord[]): HourlyRecord[] {
+  const map = new Map<string, HourlyRecord>();
+  for (const r of records) {
+    map.set(`${r.date}-${r.he}`, r);
+  }
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.date === b.date) return a.he - b.he;
+    return a.date < b.date ? -1 : 1;
+  });
+}
+
+/**
  * Parse CSV text (from the Power Model spreadsheet export) into HourlyRecord[].
  * Expected columns: Date, HE, Pool $/MWh, AIL MW
  */
@@ -23,7 +41,7 @@ export function parsePowerModelCSV(csvText: string): HourlyRecord[] {
     }
   }
 
-  return records;
+  return dedupeHourly(records);
 }
 
 /**
@@ -32,7 +50,7 @@ export function parsePowerModelCSV(csvText: string): HourlyRecord[] {
 export function convertTrainingDataToHourly(
   data: Array<{ timestamp: string; pool_price: number; ail_mw: number | null }>
 ): HourlyRecord[] {
-  return data
+  const mapped = data
     .filter(d => d.ail_mw != null)
     .map(d => {
       const dt = new Date(d.timestamp);
@@ -43,4 +61,5 @@ export function convertTrainingDataToHourly(
         ailMW: d.ail_mw!,
       };
     });
+  return dedupeHourly(mapped);
 }
