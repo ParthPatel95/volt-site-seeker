@@ -244,6 +244,47 @@ export function PowerModelAnalyzer() {
                 <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-muted/20">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Facility Parameters</h3>
                   <p className="text-[10px] text-muted-foreground">{DEFAULT_FACILITY_PARAMS.podName}</p>
+                  {/* Operating Mode */}
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Operating Mode</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p><strong>24×7 AI Hosting:</strong> No curtailment. Pays full 12CP charge every month. Required for AI/HPC tenants needing 99.99% uptime.</p>
+                            <p className="mt-1"><strong>12CP Priority:</strong> Avoids the monthly system peak hour first, then curtails high-price hours within the downtime budget.</p>
+                            <p className="mt-1"><strong>Cost Optimized:</strong> Ranks every hour by dollar value (12CP charge vs energy spread) and curtails the most valuable hours within the downtime budget.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Select
+                      value={params.curtailmentStrategy}
+                      onValueChange={(v) => setParams(p => ({
+                        ...p,
+                        curtailmentStrategy: v as CurtailmentStrategy,
+                        // 24×7 mode forces continuous operation
+                        targetUptimePercent: v === 'none' ? 99.99 : (p.targetUptimePercent >= 99.99 ? 95 : p.targetUptimePercent),
+                      }))}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">24×7 AI Hosting (no curtailment)</SelectItem>
+                        <SelectItem value="12cp-priority">12CP Priority</SelectItem>
+                        <SelectItem value="cost-optimized">Cost Optimized</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {params.curtailmentStrategy === 'none' && (
+                      <p className="mt-1.5 text-[10px] text-muted-foreground leading-relaxed">
+                        AI/HPC tenants require continuous power. Model pays the full Bulk Coincident Demand charge every month and skips all energy-price curtailment.
+                      </p>
+                    )}
+                  </div>
                   <div>
                     <Label className="text-xs">Contracted Capacity (MW)</Label>
                     <Input type="number" value={params.contractedCapacityMW} onChange={e => updateParam('contractedCapacityMW', e.target.value)} className="h-8 text-sm" />
@@ -252,6 +293,8 @@ export function PowerModelAnalyzer() {
                     <Label className="text-xs">Substation Fraction</Label>
                     <Input type="number" step="0.1" value={params.substationFraction} onChange={e => updateParam('substationFraction', e.target.value)} className="h-8 text-sm" />
                   </div>
+                  {params.curtailmentStrategy !== 'none' && (
+                  <>
                   <div>
                     <Label className="text-xs">12CP Avoidance Window (hrs/month)</Label>
                     <Input type="number" value={params.twelveCP_AvoidanceHours} onChange={e => updateParam('twelveCP_AvoidanceHours', e.target.value)} className="h-8 text-sm" />
@@ -287,31 +330,8 @@ export function PowerModelAnalyzer() {
                       className="h-8 text-sm"
                     />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Curtailment Strategy</Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p><strong>12CP Priority:</strong> Always avoids peak demand hours first.</p>
-                            <p className="mt-1"><strong>Cost Optimized:</strong> Compares dollar value of each curtailment decision.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <Select value={params.curtailmentStrategy} onValueChange={(v) => setParams(p => ({ ...p, curtailmentStrategy: v as CurtailmentStrategy }))}>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="12cp-priority">12CP Priority</SelectItem>
-                        <SelectItem value="cost-optimized">Cost Optimized</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  </>
+                  )}
                 </div>
 
                 {/* Revenue Parameters */}
@@ -494,13 +514,15 @@ export function PowerModelAnalyzer() {
             </div>
           </div>
 
-          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} />
+          <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} curtailmentStrategy={params.curtailmentStrategy} />
 
           {/* AI Analysis - Promoted out of tabs */}
           <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} autoTrigger={autoTriggerAI} />
 
           {/* Strategy Comparison + Cost Progression */}
-          <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />
+          {params.curtailmentStrategy !== 'none' && (
+            <PowerModelStrategyComparison annual={annual} cadUsdRate={params.cadUsdRate} />
+          )}
           <PowerModelCostProgression annual={annual} cadUsdRate={params.cadUsdRate} fixedPriceCAD={params.fixedPriceCAD} />
 
           {/* All-In Price Scenario Builder */}

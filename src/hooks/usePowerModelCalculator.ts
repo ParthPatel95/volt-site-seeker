@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { AESO_RATE_DTS_2026, FORTISALBERTA_RATE_65_2026, DEFAULT_FACILITY_PARAMS } from '@/constants/tariff-rates';
 
-export type CurtailmentStrategy = '12cp-priority' | 'cost-optimized';
+export type CurtailmentStrategy = '12cp-priority' | 'cost-optimized' | 'none';
 
 export interface FacilityParams {
   contractedCapacityMW: number;
@@ -257,7 +257,10 @@ export function usePowerModelCalculator(
         return isFixedPrice ? Math.max(0, rec.poolPrice - params.fixedPriceCAD) * cap : 0;
       };
 
-      if (isFixedPrice || params.curtailmentStrategy === '12cp-priority') {
+      if (params.curtailmentStrategy === 'none') {
+        // === 24×7 AI HOSTING: no curtailment, full 12CP exposure ===
+        finalRunning = records;
+      } else if (isFixedPrice || params.curtailmentStrategy === '12cp-priority') {
         // === Step 1: Curtail the single highest peak hour for 12CP ===
         let budgetRemaining = maxDowntimeHours;
 
@@ -371,9 +374,10 @@ export function usePowerModelCalculator(
       // 12CP charge: real operators don't perfectly forecast AESO peaks.
       // Apply (1 - successRate) of the full coincident demand charge to reflect
       // missed peaks. Default 85% success ⇒ pay 15% of the full 12CP charge.
-      const successRate = Math.min(1, Math.max(0,
-        params.peakAvoidanceSuccessRate ?? 0.85
-      ));
+      // In 'none' (24×7) mode, always pay the full 12CP charge — no curtailment.
+      const successRate = params.curtailmentStrategy === 'none'
+        ? 0
+        : Math.min(1, Math.max(0, params.peakAvoidanceSuccessRate ?? 0.85));
       const bulkCoincidentDemand = bulkCoincidentRate * cap * (1 - successRate);
       const bulkMeteredEnergy = mwh * bulkERate;
       const regionalBillingCapacity = cap * regCapRate;

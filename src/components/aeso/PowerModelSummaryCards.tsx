@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff, ArrowDown, ArrowUp } from 'lucide-react';
+import { DollarSign, Clock, Zap, TrendingUp, BarChart3, Banknote, PiggyBank, PowerOff, ArrowDown, ArrowUp, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
 
 interface Props {
@@ -12,24 +13,29 @@ interface Props {
   curtailmentSavings?: number;
   fixedPriceCAD?: number;
   cadUsdRate?: number;
+  curtailmentStrategy?: string;
 }
 
-export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD, cadUsdRate = 0.7334 }: Props) {
+export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, totalShutdownHours, totalShutdownSavings, curtailmentSavings, fixedPriceCAD, cadUsdRate = 0.7334, curtailmentStrategy }: Props) {
   if (!annual) return null;
 
   const annualRevenue = hostingRateCAD ? annual.totalKWh * hostingRateCAD : 0;
   const netMargin = annualRevenue - annual.totalAmountDue;
   const marginPct = annualRevenue > 0 ? (netMargin / annualRevenue) * 100 : 0;
   const isFixedPrice = (fixedPriceCAD ?? 0) > 0;
+  const isContinuous = curtailmentStrategy === 'none';
 
   const usd = (cad: number) => cad * cadUsdRate;
   const fmtM = (v: number) => `$${(v / 1_000_000).toFixed(2)}M`;
 
-  // Energy vs Adders split for all-in rate
-  const energyCentsPerKwh = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
+  // Energy vs Adders split for all-in rate. Clamp so adders can't go negative
+  // when short windows or rounding produce energy > total.
   const totalCentsPerKwh = annual.avgPerKwhCAD * 100;
-  const addersCentsPerKwh = totalCentsPerKwh - energyCentsPerKwh;
+  const rawEnergyCents = annual.totalKWh > 0 ? (annual.totalPoolEnergy / annual.totalKWh) * 100 : 0;
+  const energyCentsPerKwh = Math.min(rawEnergyCents, totalCentsPerKwh);
+  const addersCentsPerKwh = Math.max(0, totalCentsPerKwh - energyCentsPerKwh);
   const energyPct = totalCentsPerKwh > 0 ? (energyCentsPerKwh / totalCentsPerKwh) * 100 : 0;
+  const hasValidEffectiveRate = annual.effectivePerKwhCAD > 0 && annual.effectivePerKwhCAD < annual.avgPerKwhCAD;
 
 
   return (
@@ -46,15 +52,14 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                 </div>
                 <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Total Annual Cost</span>
               </div>
+              <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Sum of all monthly invoices: AESO Rate DTS transmission + Energy ({isFixedPrice ? 'fixed contract' : 'pool'}) + FortisAlberta Rate 65 distribution + GST. {isContinuous ? 'Includes the full 12CP Bulk Coincident Demand charge every month (no avoidance).' : 'The Bulk Coincident Demand charge is weighted by your 12CP forecast-success rate.'}</p></TooltipContent></Tooltip></TooltipProvider>
             </div>
             <p className="text-3xl font-bold tracking-tight">CA{fmtM(annual.totalAmountDue)}</p>
             <p className="text-sm text-white/60 mt-1">US{fmtM(usd(annual.totalAmountDue))}</p>
             {/* Monthly mini trend */}
             <div className="mt-3 pt-3 border-t border-white/10">
-              <div className="flex items-center gap-1 text-[10px] text-white/50">
-                <span>{(annual.totalAmountDue / 12 / 1000).toFixed(0)}k avg/mo</span>
-                <span className="mx-1">·</span>
-                <span>{annual.totalMWh.toLocaleString()} MWh consumed</span>
+              <div className="text-[10px] text-white/50">
+                ${(annual.totalAmountDue / 12 / 1000).toFixed(0)}k average monthly invoice
               </div>
             </div>
           </CardContent>
@@ -70,11 +75,12 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                 </div>
                 <span className="text-xs font-medium text-white/70 uppercase tracking-wider">All-in Rate</span>
               </div>
+              <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Total Annual Cost ÷ kWh delivered. Energy bar shows the {isFixedPrice ? 'fixed contract' : 'pool'} energy share; Adders include all transmission, distribution, riders, and GST.</p></TooltipContent></Tooltip></TooltipProvider>
             </div>
             <p className="text-3xl font-bold tracking-tight">{totalCentsPerKwh.toFixed(2)}¢<span className="text-lg font-normal text-white/60">/kWh</span></p>
             <p className="text-sm text-white/60 mt-1">{(totalCentsPerKwh * cadUsdRate).toFixed(2)}¢/kWh USD</p>
             {/* After credits effective rate (fixed price only) */}
-            {isFixedPrice && annual.totalOverContractCredits > 0 && (
+            {isFixedPrice && annual.totalOverContractCredits > 0 && hasValidEffectiveRate && (
               <p className="text-sm font-semibold text-emerald-300 mt-1">
                 <ArrowDown className="w-3 h-3 inline mr-1" />
                 After Credits: {(annual.effectivePerKwhCAD * 100).toFixed(2)}¢/kWh
@@ -107,9 +113,12 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                   </div>
                   <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Net Margin</span>
                 </div>
-                <div className={`flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded ${netMargin >= 0 ? 'bg-white/20' : 'bg-white/20'}`}>
-                  {netMargin >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                  {Math.abs(marginPct).toFixed(1)}%
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded bg-white/20">
+                    {netMargin >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                    {Math.abs(marginPct).toFixed(1)}%
+                  </div>
+                  <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Annual hosting revenue (Hosting Rate × kWh delivered) minus Total Annual Cost. Percent is margin ÷ revenue.</p></TooltipContent></Tooltip></TooltipProvider>
                 </div>
               </div>
               <p className="text-3xl font-bold tracking-tight">CA{fmtM(netMargin)}</p>
@@ -131,12 +140,13 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
                   </div>
                   <span className="text-xs font-medium text-white/70 uppercase tracking-wider">Breakeven Price</span>
                 </div>
+                <TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" aria-label="info"><HelpCircle className="w-3.5 h-3.5 text-white/50" /></button></TooltipTrigger><TooltipContent className="max-w-xs"><p>Pool price (CA$/MWh) above which marginal cost of running exceeds hosting revenue. Used by curtailment modes to decide when to shut down.</p></TooltipContent></Tooltip></TooltipProvider>
               </div>
               <p className="text-3xl font-bold tracking-tight">CA${breakeven.toFixed(0)}<span className="text-lg font-normal text-white/60">/MWh</span></p>
               <p className="text-sm text-white/60 mt-1">US${usd(breakeven).toFixed(0)}/MWh</p>
               <div className="mt-3 pt-3 border-t border-white/10">
                 <div className="text-[10px] text-white/50">
-                  Curtail when pool price exceeds this threshold
+                  {isContinuous ? '24×7 mode: shown for reference only — no curtailment is applied.' : 'Curtail when pool price exceeds this threshold.'}
                 </div>
               </div>
             </CardContent>
@@ -149,15 +159,12 @@ export function PowerModelSummaryCards({ annual, breakeven, hostingRateCAD, tota
         <CardContent className="p-0">
           <div className="relative">
             <div className="flex items-center divide-x divide-border overflow-x-auto">
-            <StatItem icon={<Zap className="w-3.5 h-3.5 text-emerald-500" />} label="Consumption" value={`${(annual.totalMWh / 1000).toFixed(0)} GWh`} sub={`${annual.totalMWh.toLocaleString()} MWh`} />
-            <StatItem icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Uptime" value={`${annual.avgUptimePercent.toFixed(1)}%`} sub={`${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`} />
-            {totalShutdownHours !== undefined && (
+            <StatItem icon={<Zap className="w-3.5 h-3.5 text-emerald-500" />} label="Consumption" value={`${(annual.totalMWh / 1000).toFixed(1)} GWh`} sub={`${annual.totalMWh.toLocaleString()} MWh delivered`} />
+            <StatItem icon={<Clock className="w-3.5 h-3.5 text-amber-500" />} label="Uptime" value={`${annual.avgUptimePercent.toFixed(isContinuous ? 2 : 1)}%`} sub={`${annual.totalRunningHours.toLocaleString()} / ${annual.totalHours.toLocaleString()} hrs`} />
+            {totalShutdownHours !== undefined && totalShutdownHours > 0 && !isContinuous && (
               <StatItem icon={<PowerOff className="w-3.5 h-3.5 text-red-500" />} label="Curtailed" value={`${totalShutdownHours.toLocaleString()} hrs`} sub={`Saved: CA$${((totalShutdownSavings || 0) / 1000).toFixed(0)}k`} />
             )}
-            {hostingRateCAD ? (
-              <StatItem icon={<BarChart3 className="w-3.5 h-3.5 text-purple-500" />} label="Breakeven" value={`CA$${breakeven.toFixed(0)}/MWh`} sub={`US$${usd(breakeven).toFixed(0)}/MWh`} />
-            ) : null}
-            {(fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined) ? (
+            {(fixedPriceCAD && fixedPriceCAD > 0 && curtailmentSavings !== undefined && !isContinuous) ? (
               <StatItem icon={<PiggyBank className="w-3.5 h-3.5 text-emerald-500" />} label="Curtail Savings" value={`CA${fmtM(curtailmentSavings)}`} sub={`vs fixed $${fixedPriceCAD}/MWh`} highlight={curtailmentSavings >= 0} />
             ) : null}
             {isFixedPrice && annual.totalOverContractCredits > 0 ? (
