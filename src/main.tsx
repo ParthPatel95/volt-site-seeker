@@ -44,7 +44,11 @@ if (isLovablePreview && 'serviceWorker' in navigator) {
 }
 
 if (isCurrentBundleStale(cachedVersion)) {
-  window.localStorage.setItem('wattbyte_app_version', APP_VERSION);
+  if (!window.location.search.includes('__fresh=')) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('__fresh', cachedVersion ?? APP_VERSION);
+    window.location.replace(url.toString());
+  }
 } else if (isVersionOutdated(cachedVersion)) {
   window.localStorage.setItem('wattbyte_app_version', APP_VERSION);
   if ('serviceWorker' in navigator) {
