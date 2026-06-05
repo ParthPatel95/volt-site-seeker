@@ -1,73 +1,46 @@
-## 1. Dynamic date range loader for Power Model
+## Goal
 
-**File:** `src/components/aeso/PowerModelAnalyzer.tsx`
+Add an automated end-to-end test that fails when the deployed app serves a stale Power Model bundle or leaks legacy PWA/Workbox cache scripts into the HTML.
 
-Replace the single "Year" number input with a more flexible date selector:
+## What the test verifies
 
-- **Preset chips:** `Last 7 days`, `Last 30 days`, `Last 90 days`, `Last 12 months`, `Year to date`, `Custom`, plus existing year shortcuts (2023, 2024, 2025, 2026).
-- **Custom range:** two `<Input type="date">` fields (start / end) shown when `Custom` is selected, validated so `start ≤ end` and clamped to today.
-- Internally swap `selectedYear: number` → `dateRange: { start: Date; end: Date; label: string }`. The Supabase query stays the same shape (`gte('timestamp', start).lte('timestamp', end)`), just driven by the new range.
-- Update the progress estimate: derive expected record count from `(end − start) / 1h` instead of the hard-coded ~9000/year.
-- Update the toast and any downstream copy ("Loaded N records from <label>") and pass the start year to `PowerModelWeatherDrivers` so that component keeps working (it still wants a year — pass `end.getFullYear()`).
-- Persist last-used range in `localStorage` so reloads remember it.
+1. **Latest app version is live** — fetch the running app and confirm `APP_VERSION` from `src/constants/app-version.ts` is what the page actually exposes.
+2. **Power Model route loads cleanly** — navigate to the AESO Market Hub Power Model tab, wait for the analyzer to render, and assert a marker that only exists in the current version (e.g. the `peakAvoidanceSuccessRate` UI field added in the latest PowerModelAnalyzer).
+3. **No stale PWA/cache assets are served** — assert the served HTML and network traffic do not include:
+   - `<script>` tags referencing `registerSW`, `virtual:pwa-register`, or `workbox-window`
+   - requests to legacy precache buckets (`workbox-`, `precache-v`, `runtime-`)
+   - the old `DEPLOY_VERSION` inline script or `beforeinstallprompt` shim block previously embedded in `index.html`
+4. **Service worker hygiene** — confirm `/sw.js` and `/service-worker.js` respond with the kill-switch worker (contains `self.registration.unregister`) rather than a Workbox precache manifest.
 
-No DB or edge-function changes.
+## Implementation
 
-## 2. DTS charge verification + uptime / MW behaviour
+- New file: `e2e/power-model-freshness.spec.ts` using the existing `playwright-fixture.ts` (`test`, `expect`).
+- Expose the current version to the page for assertion: read `APP_VERSION` directly from `src/constants/app-version.ts` in the test via a static import so the spec is the single source of truth, then compare to `window.__APP_VERSION__`. To make that available without business logic changes, add a tiny `<meta name="app-version" content={APP_VERSION}>` injection (frontend-only) in `index.html` via a small `src/main.tsx` side effect that writes `document.documentElement.dataset.appVersion = APP_VERSION`. Test reads `html[data-app-version]`.
+- Network assertions use `page.on('request')` to collect URLs, then filter for forbidden substrings.
+- HTML assertions use `await page.content()` and regex checks for forbidden script patterns.
+- SW assertions use `page.request.get('/sw.js')` and assert body contains `unregister(` and does NOT contain `workbox` precache manifest markers like `__WB_MANIFEST`.
 
-Two parts: (a) audit numbers, (b) make the calculator's MW/uptime sensitivity visible and correct.
+## Test structure
 
-### 2a. Audit numbers in `src/constants/tariff-rates.ts`
-
-Confirm every line in `AESO_RATE_DTS_2026` against AESO's 2026‑015T Bill Estimator + the Rate DTS tariff sheet. The current file already cites that source; I'll re-check each value (Bulk coincident $10,927/MW·mo, Bulk metered $1.23/MWh, Regional billing capacity $2,987/MW·mo, Regional metered $0.93/MWh, POD substation $15,562/mo, POD tiers 5,122 / 3,037 / 2,033 / 1,252, OR 8.13 %, TCR $0.131/MWh, Voltage $0.15/MWh, System Support $50/MW·mo, Rider F $1.26/MWh, GST 5 %). If any value has shifted in the latest AESO posting, update the constant and bump `lastVerified`. No structural change unless a rate moved.
-
-Add a short "Verified against" note + direct PDF link to the 2026‑015T Bill Estimator next to the rates in `PowerModelRateExplainer.tsx` so the source is one click away.
-
-### 2b. Make MW / uptime dependence explicit
-
-The DTS bill is **not** a flat number — it scales with both contracted MW and uptime. Today the calculator already does this correctly inside `usePowerModelCalculator.ts`, but the UI does not surface it. I'll:
-
-- Add a small "How DTS scales" panel in `PowerModelRateExplainer.tsx` documenting which components are MW-driven vs energy-driven vs fixed:
-
-  ```text
-  Fixed (independent of MW & uptime):
-    • POD substation                  $15,562 / month
-
-  Scales with contracted/billed MW (independent of uptime):
-    • Bulk coincident demand (12CP)   $10,927 / MW·mo  ← avoidable
-    • Regional billing capacity       $2,987  / MW·mo
-    • POD tiered demand               tiered $/MW·mo
-    • System Support (highest demand) $50     / MW·mo
-
-  Scales with metered energy (MW × uptime hours):
-    • Bulk metered energy             $1.23  / MWh
-    • Regional metered energy         $0.93  / MWh
-    • TCR                             $0.131 / MWh
-    • Voltage control                 $0.15  / MWh
-    • Rider F                         $1.26  / MWh
-    • Retailer fee                    $0.25  / MWh
-
-  Scales with energy AND pool price:
-    • Operating Reserve               8.13 % of pool energy cost
-
-  Applied to subtotal:
-    • GST                             5 %
-  ```
-
-- Add a tiny "sensitivity preview" inside the explainer that recomputes the monthly DTS bill at the user's currently selected MW and uptime (pulled from `usePowerModelCalculator`'s inputs), so they can see how the number moves. No new math — reuse the existing calculator output.
-
-- Sanity-check `usePowerModelCalculator.ts` to make sure: (i) demand components multiply by `contractedCapacityMW` (or billed MW where 12CP applies), (ii) energy components multiply by actual MWh = `MW × hours_online`, (iii) the 12CP avoidance hours reduce only `bulkSystem.coincidentDemand`, not the rest. Fix any miswiring found (none expected based on the read so far, but I'll verify line-by-line).
-
-## Out of scope
-
-- No change to edge functions, RLS, or DB schema.
-- No change to FortisAlberta Rate 65 numbers (those were verified in a prior pass).
-- No change to the Power Model's calculation engine beyond bug fixes uncovered during the 2b audit.
+```text
+e2e/power-model-freshness.spec.ts
+  ├── test: "serves current APP_VERSION on /"
+  ├── test: "Power Model tab renders latest analyzer fields"
+  ├── test: "index.html contains no legacy PWA/Workbox scripts"
+  └── test: "/sw.js and /service-worker.js are kill-switch workers"
+```
 
 ## Files touched
 
-- `src/components/aeso/PowerModelAnalyzer.tsx` (date range UI)
-- `src/components/aeso/PowerModelRateExplainer.tsx` (scaling panel + verification link)
-- `src/constants/tariff-rates.ts` (only if a rate moved)
-- `src/hooks/usePowerModelCalculator.ts` (only if audit finds a miswiring)
-- `src/constants/app-version.ts` (bump)
+- Add `e2e/power-model-freshness.spec.ts`
+- Tiny edit to `src/main.tsx` to set `document.documentElement.dataset.appVersion` (so tests have a stable hook; no business logic change)
+
+## How it runs
+
+- Locally: `bunx playwright test e2e/power-model-freshness.spec.ts`
+- CI: existing `playwright.config.ts` picks it up from `e2e/` automatically; no workflow changes needed unless you want it added to `.github/workflows/ci.yml` as a separate job (let me know and I'll wire it in).
+
+## Open questions
+
+1. Should the test run against the **preview URL** (`https://id-preview--…lovable.app`), the **published URL** (`wattbyte.com`), or only the local dev server? Default in the plan: local dev server via Playwright's `baseURL`, matching the existing fixture.
+2. Do you want this added to the GitHub Actions CI job, or run on-demand only?

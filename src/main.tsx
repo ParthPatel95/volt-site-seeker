@@ -2,6 +2,11 @@ import React, { useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { APP_VERSION } from './constants/app-version';
+
+if (typeof document !== 'undefined') {
+  document.documentElement.dataset.appVersion = APP_VERSION;
+}
 
 // Declare global function types
 declare global {
