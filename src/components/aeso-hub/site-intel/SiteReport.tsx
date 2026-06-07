@@ -118,9 +118,27 @@ export function SiteReport({ report }: Props) {
 
       <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
         <FiberScoreCard score={report.fiber.score} />
+        <div className="flex flex-wrap items-end gap-4 mb-3">
+          <div className="space-y-1">
+            <Label className="text-xs flex items-center gap-1"><Filter className="w-3 h-3" /> Carriers</Label>
+            <ToggleGroup type="multiple" value={selectedCarriers} onValueChange={setSelectedCarriers}>
+              {allCarriers.map(c => (
+                <ToggleGroupItem key={c} value={c} className="text-xs px-2 py-1 h-7">{c}</ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+          <div className="space-y-1 w-28">
+            <Label className="text-xs">Max latency: {maxLatency} ms</Label>
+            <Slider value={[maxLatency]} onValueChange={([v]) => setMaxLatency(v)} min={1} max={60} step={1} />
+          </div>
+          <div className="space-y-1 w-28">
+            <Label className="text-xs">Min route diversity: {minRouteDiversity}</Label>
+            <Slider value={[minRouteDiversity]} onValueChange={([v]) => setMinRouteDiversity(Math.min(v, maxHubDiversity))} min={1} max={maxHubDiversity} step={1} />
+          </div>
+        </div>
         <p className="text-xs font-semibold mt-4 mb-2">Top routes (ranked)</p>
         <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency', 'Score']}
-          rows={report.fiber.top_routes.map(r => [
+          rows={filteredRoutes.map(r => [
             <Badge key="r" variant="outline">{r.rank}</Badge>, <strong key="c">{r.carrier}</strong>, r.pop, r.pop_city,
             `${r.site_to_pop_km} km`, r.hub, r.latency_ms != null ? `${r.latency_ms} ms` : '—',
             <Badge key="s" variant="secondary">{r.composite}</Badge>,
