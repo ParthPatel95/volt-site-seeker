@@ -56,6 +56,17 @@ export interface SiteReport {
   generated_at: string;
   location: { lat: number; lng: number; label: string | null };
   fiber: {
+    score: {
+      total: number;
+      grade: 'A' | 'B' | 'C' | 'D' | 'F';
+      breakdown: Record<'proximity' | 'carrier_diversity' | 'route_diversity' | 'latency', {
+        score: number; max: number; detail: string;
+      }>;
+    };
+    top_routes: Array<{
+      rank: number; carrier: string; pop: string; pop_city: string;
+      site_to_pop_km: number; hub: string; latency_ms: number | null; composite: number;
+    }>;
     nearest_pops: CarrierPop[];
     nearest_long_haul_routes: LineFeature[];
     peering_hubs: { code: string; name: string; lat: number; lng: number }[];

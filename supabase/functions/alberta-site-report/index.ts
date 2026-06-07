@@ -118,6 +118,83 @@ Deno.serve(async (req) => {
     const nearestWater = nearestPoints(water.data ?? [], lat, lng, 3);
     const nearestParks = nearestPoints(parks.data ?? [], lat, lng, 3);
 
+    // -------- Fiber Connectivity Score (0-100) --------
+    // Sub-scores:
+    //   Proximity (35): nearest POP distance (≤2 km = full, ≥75 km = 0)
+    //   Carrier diversity (25): unique carriers within 50 km (4+ = full)
+    //   Route diversity (20): unique long-haul routes within 25 km of site (3+ = full)
+    //   Latency (20): best YYC/YEG one-way latency (≤2 ms = full, ≥25 ms = 0)
+    const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+    const lerp = (v: number, lo: number, hi: number) => clamp01((hi - v) / (hi - lo));
+
+    const nearestPopDist = nearestPops[0]?.distance_km ?? 999;
+    const proximityScore = lerp(nearestPopDist, 2, 75) * 35;
+
+    const carriersWithin50 = new Set(
+      (pops.data ?? [])
+        .map((p: any) => ({ ...p, d: hav(lat, lng, p.lat, p.lng) }))
+        .filter((p: any) => p.d <= 50)
+        .map((p: any) => p.carrier),
+    );
+    const diversityScore = Math.min(carriersWithin50.size, 4) / 4 * 25;
+
+    const routesWithin25 = (fiber.data ?? [])
+      .map((r: any) => ({
+        ...r,
+        d: distanceToSegmentKm(lat, lng, r.start_lat, r.start_lng, r.end_lat, r.end_lng),
+      }))
+      .filter((r: any) => r.d <= 25);
+    const uniqueRouteKeys = new Set(routesWithin25.map((r: any) => `${r.carrier}|${r.route_name ?? r.id}`));
+    const routeDiversityScore = Math.min(uniqueRouteKeys.size, 3) / 3 * 20;
+
+    const bestLocalLatency = Math.min(
+      ...nearestPops
+        .flatMap(p => [p.latency_to_yyc_ms, p.latency_to_yeg_ms])
+        .filter((v: any): v is number => typeof v === 'number'),
+      99,
+    );
+    const latencyScore = lerp(bestLocalLatency, 2, 25) * 20;
+
+    const total = proximityScore + diversityScore + routeDiversityScore + latencyScore;
+    const grade = total >= 85 ? 'A' : total >= 70 ? 'B' : total >= 55 ? 'C' : total >= 40 ? 'D' : 'F';
+    const fiber_score = {
+      total: Math.round(total),
+      grade,
+      breakdown: {
+        proximity: { score: Math.round(proximityScore), max: 35, detail: `Nearest POP ${nearestPopDist.toFixed(1)} km` },
+        carrier_diversity: { score: Math.round(diversityScore), max: 25, detail: `${carriersWithin50.size} unique carriers within 50 km` },
+        route_diversity: { score: Math.round(routeDiversityScore), max: 20, detail: `${uniqueRouteKeys.size} long-haul routes within 25 km` },
+        latency: { score: Math.round(latencyScore), max: 20, detail: bestLocalLatency < 99 ? `Best ${bestLocalLatency} ms to YYC/YEG` : 'No published latency' },
+      },
+    };
+
+    // -------- Top Routes ranking --------
+    // Score each POP × peering-hub combo by latency, then site→POP distance.
+    const routeRanking: Array<{
+      rank: number; carrier: string; pop: string; pop_city: string;
+      site_to_pop_km: number; hub: string; latency_ms: number | null;
+      composite: number;
+    }> = [];
+    for (const p of nearestPops) {
+      for (const h of PEER_HUBS) {
+        const key = `latency_to_${h.code.toLowerCase()}_ms` as keyof typeof p;
+        const latency = (p as any)[key] as number | null;
+        if (latency == null) continue;
+        // Composite: lower latency + closer POP = higher score
+        const latPart = lerp(latency, 1, 60) * 70;
+        const distPart = lerp(p.distance_km ?? 999, 2, 75) * 30;
+        routeRanking.push({
+          rank: 0, carrier: p.carrier, pop: p.facility_name, pop_city: p.city,
+          site_to_pop_km: Math.round((p.distance_km ?? 0) * 10) / 10,
+          hub: h.name, latency_ms: latency,
+          composite: Math.round(latPart + distPart),
+        });
+      }
+    }
+    routeRanking.sort((a, b) => b.composite - a.composite);
+    routeRanking.forEach((r, i) => { r.rank = i + 1; });
+    const top_routes = routeRanking.slice(0, 8);
+
     // Substations: use existing substations table where lat/lng present
     const { data: subs } = await admin.from('substations').select('id,name,city,state,latitude,longitude,voltage_level,utility_owner');
     const subsAlberta = (subs ?? [])
@@ -136,6 +213,8 @@ Deno.serve(async (req) => {
       generated_at: new Date().toISOString(),
       location: { lat, lng, label: label ?? null },
       fiber: {
+        score: fiber_score,
+        top_routes,
         nearest_pops: nearestPops,
         nearest_long_haul_routes: nearestFiber,
         peering_hubs: PEER_HUBS,

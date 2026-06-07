@@ -76,6 +76,15 @@ export function SiteReport({ report }: Props) {
       </div>
 
       <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
+        <FiberScoreCard score={report.fiber.score} />
+        <p className="text-xs font-semibold mt-4 mb-2">Top routes (ranked)</p>
+        <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency', 'Score']}
+          rows={report.fiber.top_routes.map(r => [
+            <Badge key="r" variant="outline">{r.rank}</Badge>, <strong key="c">{r.carrier}</strong>, r.pop, r.pop_city,
+            `${r.site_to_pop_km} km`, r.hub, r.latency_ms != null ? `${r.latency_ms} ms` : '—',
+            <Badge key="s" variant="secondary">{r.composite}</Badge>,
+          ])} />
+        <p className="text-xs font-semibold mt-4 mb-2">Nearest POPs</p>
         <Table headers={['Carrier', 'Facility', 'City', 'Distance', 'Services', 'YYC ms', 'YEG ms', 'SEA ms', 'ORD ms', 'Source']}
           rows={report.fiber.nearest_pops.map(p => [
             <strong key="c">{p.carrier}</strong>, p.facility_name, p.city, fmtKm(p.distance_km),
@@ -158,5 +167,40 @@ function Table({ headers, rows }: { headers: string[]; rows: (React.ReactNode)[]
         </tbody>
       </table>
     </div>
+  );
+}
+
+function FiberScoreCard({ score }: { score: SiteReportT['fiber']['score'] }) {
+  const gradeColor: Record<string, string> = {
+    A: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
+    B: 'bg-lime-500/15 text-lime-700 border-lime-500/30',
+    C: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+    D: 'bg-orange-500/15 text-orange-700 border-orange-500/30',
+    F: 'bg-destructive/15 text-destructive border-destructive/30',
+  };
+  const entries = Object.entries(score.breakdown) as [string, { score: number; max: number; detail: string }][];
+  return (
+    <Card className="p-4 bg-muted/40 border-dashed">
+      <div className="flex items-center gap-4">
+        <div className={`rounded-lg border px-4 py-2 text-center ${gradeColor[score.grade]}`}>
+          <div className="text-3xl font-bold leading-none">{score.total}</div>
+          <div className="text-xs mt-0.5">Grade {score.grade}</div>
+        </div>
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
+          {entries.map(([k, v]) => (
+            <div key={k} className="text-xs">
+              <div className="flex items-center justify-between">
+                <span className="capitalize text-muted-foreground">{k.replace('_', ' ')}</span>
+                <span className="font-mono">{v.score}/{v.max}</span>
+              </div>
+              <div className="h-1.5 bg-secondary rounded mt-1 overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${(v.score / v.max) * 100}%` }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1 truncate" title={v.detail}>{v.detail}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
   );
 }
