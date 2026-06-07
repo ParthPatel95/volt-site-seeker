@@ -1,8 +1,12 @@
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Label } from '@/components/ui/label';
+import { Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink, Filter } from 'lucide-react';
 import type { SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -17,6 +21,43 @@ interface Props {
 }
 
 export function SiteReport({ report }: Props) {
+  const topRoutes = report.fiber.top_routes;
+  const allCarriers = useMemo(() => [...new Set(topRoutes.map(r => r.carrier))], [topRoutes]);
+
+  const [selectedCarriers, setSelectedCarriers] = useState<string[]>(allCarriers);
+  const [maxLatency, setMaxLatency] = useState<number>(60);
+  const [minRouteDiversity, setMinRouteDiversity] = useState<number>(1);
+
+  useEffect(() => {
+    setSelectedCarriers(allCarriers);
+    setMaxLatency(60);
+    setMinRouteDiversity(1);
+  }, [allCarriers]);
+
+  const hubCarrierDiversity = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const r of topRoutes) {
+      if (!map.has(r.hub)) map.set(r.hub, new Set());
+      map.get(r.hub)!.add(r.carrier);
+    }
+    const diversityMap = new Map<string, number>();
+    for (const [hub, set] of map) {
+      diversityMap.set(hub, set.size);
+    }
+    return diversityMap;
+  }, [topRoutes]);
+
+  const maxHubDiversity = useMemo(() => Math.max(1, ...hubCarrierDiversity.values()), [hubCarrierDiversity]);
+
+  const filteredRoutes = useMemo(() => {
+    return topRoutes.filter(r => {
+      if (!selectedCarriers.includes(r.carrier)) return false;
+      if (r.latency_ms != null && r.latency_ms > maxLatency) return false;
+      if ((hubCarrierDiversity.get(r.hub) ?? 0) < minRouteDiversity) return false;
+      return true;
+    });
+  }, [topRoutes, selectedCarriers, maxLatency, minRouteDiversity, hubCarrierDiversity]);
+
   const handlePdf = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -77,9 +118,27 @@ export function SiteReport({ report }: Props) {
 
       <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
         <FiberScoreCard score={report.fiber.score} />
+        <div className="flex flex-wrap items-end gap-4 mb-3">
+          <div className="space-y-1">
+            <Label className="text-xs flex items-center gap-1"><Filter className="w-3 h-3" /> Carriers</Label>
+            <ToggleGroup type="multiple" value={selectedCarriers} onValueChange={setSelectedCarriers}>
+              {allCarriers.map(c => (
+                <ToggleGroupItem key={c} value={c} className="text-xs px-2 py-1 h-7">{c}</ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+          <div className="space-y-1 w-28">
+            <Label className="text-xs">Max latency: {maxLatency} ms</Label>
+            <Slider value={[maxLatency]} onValueChange={([v]) => setMaxLatency(v)} min={1} max={60} step={1} />
+          </div>
+          <div className="space-y-1 w-28">
+            <Label className="text-xs">Min route diversity: {minRouteDiversity}</Label>
+            <Slider value={[minRouteDiversity]} onValueChange={([v]) => setMinRouteDiversity(Math.min(v, maxHubDiversity))} min={1} max={maxHubDiversity} step={1} />
+          </div>
+        </div>
         <p className="text-xs font-semibold mt-4 mb-2">Top routes (ranked)</p>
         <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency', 'Score']}
-          rows={report.fiber.top_routes.map(r => [
+          rows={filteredRoutes.map(r => [
             <Badge key="r" variant="outline">{r.rank}</Badge>, <strong key="c">{r.carrier}</strong>, r.pop, r.pop_city,
             `${r.site_to_pop_km} km`, r.hub, r.latency_ms != null ? `${r.latency_ms} ms` : '—',
             <Badge key="s" variant="secondary">{r.composite}</Badge>,
