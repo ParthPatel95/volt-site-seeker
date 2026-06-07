@@ -1,8 +1,12 @@
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Label } from '@/components/ui/label';
+import { Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink, Filter } from 'lucide-react';
 import type { SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
