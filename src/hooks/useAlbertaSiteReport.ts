@@ -55,6 +55,12 @@ export interface PointFeature {
 export interface SiteReport {
   generated_at: string;
   location: { lat: number; lng: number; label: string | null };
+  hyperscaler_score: {
+    total: number;
+    grade: 'A' | 'B' | 'C' | 'D' | 'F';
+    breakdown: Record<'fiber'|'power'|'climate'|'water'|'risk'|'sustainability'|'logistics', { score: number; max: number; detail: string }>;
+  };
+  methodology: Record<string, any>;
   fiber: {
     score: {
       total: number;
@@ -69,6 +75,8 @@ export interface SiteReport {
     }>;
     nearest_pops: CarrierPop[];
     nearest_long_haul_routes: LineFeature[];
+    nearest_ixps: Array<{ id: string; name: string; city: string; lat: number; lng: number; participant_count: number | null; peak_traffic_gbps: number | null; source_url: string | null; distance_km?: number }>;
+    cloud_reach: Array<{ provider: string; region_code: string; region_name: string; distance_km: number; modeled_latency_ms_one_way: number; source_url: string | null }>;
     peering_hubs: { code: string; name: string; lat: number; lng: number }[];
   };
   transmission: {
@@ -78,9 +86,46 @@ export interface SiteReport {
   gas_and_water: {
     nearest_gas_pipelines: LineFeature[];
     nearest_water_sources: PointFeature[];
+    nearest_water_licences: Array<{ id: string; licensee: string; source_water_body: string; lat: number; lng: number; licensed_m3_per_year: number | null; purpose: string | null; sub_basin: string | null; allocation_status: string | null; source_url: string | null; distance_km?: number }>;
+  };
+  climate: null | {
+    station_name: string; station_id: string;
+    mean_annual_dry_bulb_c: number | null;
+    ashrae_04_design_db_c: number | null;
+    ashrae_1_design_db_c: number | null;
+    ashrae_04_mcwb_c: number | null;
+    free_cooling_hours_below_18c: number | null;
+    free_cooling_hours_below_10c: number | null;
+    evap_hours_above_24c: number | null;
+    ashrae_climate_zone: string | null;
+    source_url: string | null;
+    source_publisher: string | null;
+    source_as_of: string | null;
+  };
+  risk: null | {
+    region_name: string;
+    seismic_pga_g: number | null; seismic_sa02_g: number | null;
+    seismic_rating: string | null; wildfire_rating: string | null;
+    flood_rating: string | null; tornado_rating: string | null;
+    source_url: string | null; source_publisher: string | null;
+  };
+  sustainability: {
+    generation_mix: Record<string, { mw: number; count: number }>;
+    renewable_share_pct: number;
+    nearby_generation: Array<{ id: string; asset_name: string; fuel_type: string; capacity_mw: number; operator: string | null; status: string; lat: number; lng: number; ppa_available: boolean; source_url: string | null; distance_km?: number }>;
+    ppa_candidates: any[];
+  };
+  jurisdiction: null | {
+    municipality: string;
+    non_residential_mill_rate: number | null;
+    machinery_equipment_mill_rate: number | null;
+    incentive_summary: string | null;
+    source_url: string | null; source_publisher: string | null;
   };
   logistics: {
     nearest_industrial_parks: PointFeature[];
+    nearest_logistics_assets: Array<{ id: string; asset_type: string; name: string; operator: string | null; lat: number; lng: number; notes: string | null; source_url: string | null; distance_km?: number }>;
+    nearest_population_centres: Array<{ id: string; name: string; population_2021: number; labour_force_2021: number | null; trades_workers_estimate: number | null; source_url: string | null; distance_km?: number }>;
     drive_times: { hub: string; code: string; distance_km: number; drive_hours_est: number }[];
   };
   data_provenance: { sources: string[]; notes: string };

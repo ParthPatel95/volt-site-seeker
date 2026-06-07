@@ -17,6 +17,13 @@ const PEER_HUBS = [
   { code: 'ORD', name: 'Chicago', lat: 41.8781, lng: -87.6298 },
 ];
 
+// One-way fiber latency model: speed of light in fiber ≈ 200,000 km/s → 5 µs/km.
+// Real-world routing rarely follows great-circle paths; apply a 1.4× routing factor.
+const FIBER_LATENCY_MS_PER_KM = 0.005 * 1.4; // ≈7 µs/km one-way
+function modelLatencyMs(km: number) {
+  return Math.round(km * FIBER_LATENCY_MS_PER_KM * 10) / 10;
+}
+
 function hav(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -101,14 +108,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Pull all curated layers in parallel (small tables, fine to load fully)
-    const [pops, fiber, trans, gas, water, parks] = await Promise.all([
+    // Pull all reference layers in parallel
+    const [
+      pops, fiber, trans, gas, water, parks,
+      climate, hazards, waterLic, incentives,
+      clouds, ixps, logistics, gen, pop,
+    ] = await Promise.all([
       admin.from('alberta_carrier_pops').select('*'),
       admin.from('alberta_fiber_routes').select('*'),
       admin.from('alberta_transmission_lines').select('*'),
       admin.from('alberta_gas_pipelines').select('*'),
       admin.from('alberta_water_sources').select('*'),
       admin.from('alberta_industrial_parks').select('*'),
+      admin.from('alberta_climate_normals').select('*'),
+      admin.from('alberta_hazard_grid').select('*'),
+      admin.from('alberta_water_licences').select('*'),
+      admin.from('alberta_municipal_incentives').select('*'),
+      admin.from('cloud_regions').select('*'),
+      admin.from('internet_exchanges').select('*'),
+      admin.from('alberta_logistics_assets').select('*'),
+      admin.from('alberta_generation_assets').select('*'),
+      admin.from('alberta_population_centres').select('*'),
     ]);
 
     const nearestPops = nearestPoints(pops.data ?? [], lat, lng, 5);
@@ -117,6 +137,14 @@ Deno.serve(async (req) => {
     const nearestGas = nearestLines(gas.data ?? [], lat, lng, 3);
     const nearestWater = nearestPoints(water.data ?? [], lat, lng, 3);
     const nearestParks = nearestPoints(parks.data ?? [], lat, lng, 3);
+    const nearestClimate = nearestPoints(climate.data ?? [], lat, lng, 1)[0];
+    const nearestHazard = nearestPoints(hazards.data ?? [], lat, lng, 1)[0];
+    const nearestWaterLic = nearestPoints(waterLic.data ?? [], lat, lng, 3);
+    const nearestIncentive = nearestPoints(incentives.data ?? [], lat, lng, 1)[0];
+    const nearestIxps = nearestPoints(ixps.data ?? [], lat, lng, 4);
+    const nearestLogistics = nearestPoints(logistics.data ?? [], lat, lng, 8);
+    const nearbyGen = nearestPoints(gen.data ?? [], lat, lng, 8).filter((g: any) => g.distance_km <= 150);
+    const nearestPopulation = nearestPoints(pop.data ?? [], lat, lng, 3);
 
     // -------- Fiber Connectivity Score (0-100) --------
     // Sub-scores:
@@ -203,20 +231,133 @@ Deno.serve(async (req) => {
       .map((s: any) => ({ ...s, lat: s.latitude, lng: s.longitude }));
     const nearestSubs = nearestPoints(subsAlberta, lat, lng, 3);
 
-    // Drive times to YYC/YEG (Haversine + avg highway speed 95km/h, MVP)
+    // -------- Drive times --------
     const driveTimes = PEER_HUBS.slice(0, 2).map(h => {
       const km = hav(lat, lng, h.lat, h.lng);
       return { hub: h.name, code: h.code, distance_km: Math.round(km), drive_hours_est: Math.round(km / 95 * 10) / 10 };
     });
 
+    // -------- Cloud region modeled latency --------
+    const cloudReach = (clouds.data ?? []).map((c: any) => {
+      const km = hav(lat, lng, c.lat, c.lng);
+      return {
+        provider: c.provider, region_code: c.region_code, region_name: c.region_name,
+        distance_km: Math.round(km),
+        modeled_latency_ms_one_way: modelLatencyMs(km),
+        source_url: c.source_url,
+      };
+    }).sort((a, b) => a.modeled_latency_ms_one_way - b.modeled_latency_ms_one_way);
+
+    // -------- Generation mix within 150 km --------
+    const genMix = nearbyGen.reduce((acc: Record<string, { mw: number; count: number }>, g: any) => {
+      acc[g.fuel_type] = acc[g.fuel_type] ?? { mw: 0, count: 0 };
+      acc[g.fuel_type].mw += Number(g.capacity_mw);
+      acc[g.fuel_type].count += 1;
+      return acc;
+    }, {});
+    const renewableMw = (genMix.wind?.mw ?? 0) + (genMix.solar?.mw ?? 0) + (genMix.hydro?.mw ?? 0);
+    const totalGenMw = Object.values(genMix).reduce((s, v) => s + v.mw, 0);
+    const renewableShare = totalGenMw > 0 ? renewableMw / totalGenMw : 0;
+    const ppaCandidates = nearbyGen.filter((g: any) => g.ppa_available).slice(0, 6);
+
+    // -------- Composite Hyperscaler Suitability Score (0-100) --------
+    // Fiber 20, Power 25, Climate 15, Water 10, Risk 10, Sustainability 10, Logistics 10
+    const fiberSub = Math.round((total / 100) * 20);
+
+    const nearestTransKv = nearestTrans[0]?.voltage_kv ?? 0;
+    const nearestSubDist = nearestSubs[0]?.distance_km ?? 999;
+    const powerScore = Math.round(
+      lerp(nearestSubDist, 2, 50) * 10 +
+      lerp(75 / Math.max(nearestTransKv, 25), 0.15, 3) * 15,
+    );
+
+    const freeCool = nearestClimate?.free_cooling_hours_below_18c ?? 7000;
+    const climateScore = Math.round(clamp01((freeCool - 6500) / 1500) * 15);
+
+    const waterDist = nearestWater[0]?.distance_km ?? 999;
+    const waterClosed = nearestWater[0]?.allocation_status === 'closed';
+    const waterScore = Math.round(lerp(waterDist, 2, 60) * 10 * (waterClosed ? 0.5 : 1));
+
+    const hazardPenalty = ((): number => {
+      const order: Record<string, number> = { 'Very Low': 0, 'Low': 1, 'Low-Moderate': 2, 'Moderate': 3, 'High': 4, 'Severe': 5 };
+      const ratings = [nearestHazard?.seismic_rating, nearestHazard?.wildfire_rating, nearestHazard?.flood_rating, nearestHazard?.tornado_rating];
+      const max = Math.max(...ratings.map((r: any) => order[r] ?? 1));
+      return max; // 0..5
+    })();
+    const riskScore = Math.round(clamp01(1 - hazardPenalty / 5) * 10);
+
+    const sustainabilityScore = Math.round(
+      clamp01(renewableShare) * 6 +
+      Math.min(ppaCandidates.length, 4) / 4 * 4,
+    );
+
+    const nearestAirportDist = nearestPoints(
+      (logistics.data ?? []).filter((l: any) => l.asset_type === 'international_airport'), lat, lng, 1,
+    )[0]?.distance_km ?? 999;
+    const nearestRailDist = nearestPoints(
+      (logistics.data ?? []).filter((l: any) => l.asset_type === 'class_i_rail'), lat, lng, 1,
+    )[0]?.distance_km ?? 999;
+    const labour = nearestPopulation[0]?.labour_force_2021 ?? 0;
+    const logisticsScore = Math.round(
+      lerp(nearestAirportDist, 5, 200) * 4 +
+      lerp(nearestRailDist, 1, 80) * 3 +
+      clamp01(labour / 500000) * 3,
+    );
+
+    const hsTotal = fiberSub + powerScore + climateScore + waterScore + riskScore + sustainabilityScore + logisticsScore;
+    const hsGrade = hsTotal >= 85 ? 'A' : hsTotal >= 70 ? 'B' : hsTotal >= 55 ? 'C' : hsTotal >= 40 ? 'D' : 'F';
+
+    const hyperscaler_score = {
+      total: hsTotal,
+      grade: hsGrade,
+      breakdown: {
+        fiber:           { score: fiberSub,          max: 20, detail: `Fiber sub-score ${total.toFixed(0)}/100 → ${fiberSub}/20` },
+        power:           { score: powerScore,        max: 25, detail: `Nearest sub ${nearestSubDist.toFixed(1)} km · highest line ${nearestTransKv} kV` },
+        climate:         { score: climateScore,      max: 15, detail: `${freeCool.toLocaleString()} free-cooling hours/yr (${nearestClimate?.station_name ?? 'n/a'})` },
+        water:           { score: waterScore,        max: 10, detail: `${nearestWater[0]?.name ?? 'none'} ${waterDist.toFixed(1)} km · basin ${nearestWater[0]?.allocation_status ?? 'unknown'}` },
+        risk:            { score: riskScore,         max: 10, detail: `${nearestHazard?.region_name ?? 'n/a'} — seismic ${nearestHazard?.seismic_rating ?? '?'}, wildfire ${nearestHazard?.wildfire_rating ?? '?'}` },
+        sustainability:  { score: sustainabilityScore, max: 10, detail: `${Math.round(renewableShare * 100)}% renewable MW within 150 km · ${ppaCandidates.length} PPA-eligible` },
+        logistics:       { score: logisticsScore,    max: 10, detail: `Airport ${Math.round(nearestAirportDist)} km · rail ${Math.round(nearestRailDist)} km · ${labour.toLocaleString()} workers nearby` },
+      },
+    };
+
+    const methodology = {
+      hyperscaler_score: 'Weighted 100-pt composite: Fiber(20) Power(25) Climate(15) Water(10) Risk(10) Sustainability(10) Logistics(10).',
+      fiber_score: 'Proximity(35) + Carrier diversity(25) + Route diversity(20) + Latency(20).',
+      modeled_latency: `One-way fiber latency modeled at 5 µs/km × 1.4 routing factor (≈7 µs/km). Speed of light in single-mode fiber n=1.467 ≈ 200,000 km/s.`,
+      distance: 'All distances are great-circle (Haversine) in kilometres — replace with road network for drive-time accuracy.',
+      datasets_loaded: {
+        carrier_pops: pops.data?.length ?? 0,
+        fiber_routes: fiber.data?.length ?? 0,
+        transmission_lines: trans.data?.length ?? 0,
+        substations: subsAlberta.length,
+        gas_pipelines: gas.data?.length ?? 0,
+        water_sources: water.data?.length ?? 0,
+        water_licences: waterLic.data?.length ?? 0,
+        industrial_parks: parks.data?.length ?? 0,
+        climate_stations: climate.data?.length ?? 0,
+        hazard_regions: hazards.data?.length ?? 0,
+        municipal_incentives: incentives.data?.length ?? 0,
+        cloud_regions: clouds.data?.length ?? 0,
+        internet_exchanges: ixps.data?.length ?? 0,
+        logistics_assets: logistics.data?.length ?? 0,
+        generation_assets: gen.data?.length ?? 0,
+        population_centres: pop.data?.length ?? 0,
+      },
+    };
+
     const report = {
       generated_at: new Date().toISOString(),
       location: { lat, lng, label: label ?? null },
+      hyperscaler_score,
+      methodology,
       fiber: {
         score: fiber_score,
         top_routes,
         nearest_pops: nearestPops,
         nearest_long_haul_routes: nearestFiber,
+        nearest_ixps: nearestIxps,
+        cloud_reach: cloudReach,
         peering_hubs: PEER_HUBS,
       },
       transmission: {
@@ -226,20 +367,37 @@ Deno.serve(async (req) => {
       gas_and_water: {
         nearest_gas_pipelines: nearestGas,
         nearest_water_sources: nearestWater,
+        nearest_water_licences: nearestWaterLic,
       },
+      climate: nearestClimate ?? null,
+      risk: nearestHazard ?? null,
+      sustainability: {
+        generation_mix: genMix,
+        renewable_share_pct: Math.round(renewableShare * 1000) / 10,
+        nearby_generation: nearbyGen,
+        ppa_candidates: ppaCandidates,
+      },
+      jurisdiction: nearestIncentive ?? null,
       logistics: {
         nearest_industrial_parks: nearestParks,
+        nearest_logistics_assets: nearestLogistics,
+        nearest_population_centres: nearestPopulation,
         drive_times: driveTimes,
       },
       data_provenance: {
         sources: [
-          'AESO Open Data – transmission topology',
-          'CRTC fiber infrastructure dataset',
-          'CER (Canada Energy Regulator) pipeline GIS',
-          'Carrier public coverage pages (Bell/Telus/Zayo/AXIA/Cologix/eStruxture)',
-          'Alberta municipal industrial park sites',
+          'AESO Transmission Map & Asset List — https://www.aeso.ca',
+          'Canada Energy Regulator (CER) pipeline data portal — https://www.cer-rec.gc.ca',
+          'Alberta Environment & Protected Areas Water Use Reporting — https://www.alberta.ca/water-use-reporting',
+          'Environment & Climate Change Canada Climate Normals 1991–2020 — https://climate.weather.gc.ca',
+          'NRCan Earthquakes Canada seismic hazard — https://earthquakescanada.nrcan.gc.ca',
+          'Alberta Wildfire — https://wildfire.alberta.ca',
+          'PeeringDB — https://www.peeringdb.com',
+          'Carrier facility/coverage pages (Bell, Telus, Zayo, Cologix, eStruxture, AXIA)',
+          'Statistics Canada Census 2021 — https://www12.statcan.gc.ca',
+          'Hyperscaler region listings (AWS / Azure / GCP / Oracle)',
         ],
-        notes: 'Curated dataset, refreshed quarterly. Distances are straight-line (great circle) in kilometres. Latencies are typical one-way estimates published by carriers.',
+        notes: 'Reference layers are curated from primary public sources and refreshed quarterly. Per-row source URL and "as-of" date is returned with every record. Latencies marked "modeled" use the speed-of-light-in-fiber formula; latencies marked "verified" come from carrier-published values.',
       },
     };
 
