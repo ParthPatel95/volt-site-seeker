@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Zap, Calculator, Brain, Server,
-  BarChart3, Settings, ChevronLeft, ChevronRight, ArrowLeft, MapPin, Timer, Pickaxe,
+  BarChart3, Settings, ChevronLeft, ChevronRight, ArrowLeft, MapPin, Timer, Pickaxe, Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoltBuildNavItem } from '@/components/voltbuild/layout/VoltBuildNavItem';
@@ -15,6 +15,7 @@ export type AESOHubView =
   | 'market'
   | 'power-model'
   | 'energization'
+  | 'site-intel'
   | 'predictions'
   | 'datacenter'
   | 'mining-economics'
@@ -37,6 +38,7 @@ const navGroups: NavGroup[] = [
       { id: 'market', label: 'Market Overview', icon: Zap },
       { id: 'power-model', label: 'Power Model', icon: Calculator },
       { id: 'energization', label: 'Energization', icon: Timer },
+      { id: 'site-intel', label: 'Site Intelligence', icon: Network },
     ],
   },
   {
