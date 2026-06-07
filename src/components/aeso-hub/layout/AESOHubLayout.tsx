@@ -8,6 +8,7 @@ const VIEW_LABELS: Record<AESOHubView, string> = {
   market: 'Market Overview',
   'power-model': 'Power Model',
   energization: 'Energization Timeline',
+  'site-intel': 'Site Intelligence',
   predictions: 'AI Predictions',
   datacenter: 'Datacenter Control',
   'mining-economics': 'Mining Economics',
