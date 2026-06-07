@@ -76,6 +76,15 @@ export function SiteReport({ report }: Props) {
       </div>
 
       <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
+        <FiberScoreCard score={report.fiber.score} />
+        <p className="text-xs font-semibold mt-4 mb-2">Top routes (ranked)</p>
+        <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency', 'Score']}
+          rows={report.fiber.top_routes.map(r => [
+            <Badge key="r" variant="outline">{r.rank}</Badge>, <strong key="c">{r.carrier}</strong>, r.pop, r.pop_city,
+            `${r.site_to_pop_km} km`, r.hub, r.latency_ms != null ? `${r.latency_ms} ms` : '—',
+            <Badge key="s" variant="secondary">{r.composite}</Badge>,
+          ])} />
+        <p className="text-xs font-semibold mt-4 mb-2">Nearest POPs</p>
         <Table headers={['Carrier', 'Facility', 'City', 'Distance', 'Services', 'YYC ms', 'YEG ms', 'SEA ms', 'ORD ms', 'Source']}
           rows={report.fiber.nearest_pops.map(p => [
             <strong key="c">{p.carrier}</strong>, p.facility_name, p.city, fmtKm(p.distance_km),
