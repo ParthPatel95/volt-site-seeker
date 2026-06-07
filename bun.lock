@@ -41,6 +41,7 @@
         "@tanstack/react-query": "^5.56.2",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^14.3.1",
+        "@types/leaflet": "^1.9.21",
         "@types/papaparse": "^5.5.2",
         "@types/react-grid-layout": "^1.3.6",
         "@uppy/core": "^5.1.1",
@@ -57,6 +58,7 @@
         "jsdom": "^20.0.3",
         "jspdf": "^2.5.2",
         "jspdf-autotable": "^5.0.8",
+        "leaflet": "^1.9.4",
         "lucide-react": "^0.462.0",
         "mapbox-gl": "^3.12.0",
         "next-themes": "^0.3.0",
@@ -70,6 +72,7 @@
         "react-grid-layout": "^1.5.2",
         "react-hook-form": "^7.53.0",
         "react-is": "^18.3.1",
+        "react-leaflet": "^5.0.0",
         "react-pdf": "^10.2.0",
         "react-qr-code": "^2.0.18",
         "react-resizable-panels": "^2.1.3",
@@ -450,6 +453,8 @@
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.0", "", {}, "sha512-A9+lCBZoaMJlVKcRBz2YByCG+Cp2t6nAnMnNba+XiWxnj6r4JUFqfsgwocMBZU9LPtdxC6wB56ySYpc7LQIoJg=="],
 
+    "@react-leaflet/core": ["@react-leaflet/core@3.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@react-leaflet/core/-/core-3.0.0.tgz", { "peerDependencies": { "leaflet": "^1.9.0", "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-3EWmekh4Nz+pGcr+xjf0KNyYfC3U2JjnkWsh0zcqaexYqmmB5ZhH37kz41JXGmKzpaMZCnPofBBm64i+YrEvGQ=="],
+
     "@react-spring/animated": ["@react-spring/animated@9.7.5", "", { "dependencies": { "@react-spring/shared": "~9.7.5", "@react-spring/types": "~9.7.5" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0" } }, "sha512-Tqrwz7pIlsSDITzxoLS3n/v/YCUHQdOIKtOJf4yL6kYVSDTSmVK1LI1Q3M/uu2Sx4X3pIWF3xLUhlsA6SPNTNg=="],
 
     "@react-spring/core": ["@react-spring/core@9.7.5", "", { "dependencies": { "@react-spring/animated": "~9.7.5", "@react-spring/shared": "~9.7.5", "@react-spring/types": "~9.7.5" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0" } }, "sha512-rmEqcxRcu7dWh7MnCcMXLvrf6/SDlSokLaLTxiPlAYi11nN3B5oiCUAblO72o+9z/87j2uzxa2Inm8UbLjXA+w=="],
@@ -617,6 +622,8 @@
     "@types/geojson-vt": ["@types/geojson-vt@3.2.5", "", { "dependencies": { "@types/geojson": "*" } }, "sha512-qDO7wqtprzlpe8FfQ//ClPV9xiuoh2nkIgiouIptON9w5jvD/fA4szvP9GBlDVdJ5dldAl0kX/sy3URbWwLx0g=="],
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
+
+    "@types/leaflet": ["@types/leaflet@1.9.21", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@types/leaflet/-/leaflet-1.9.21.tgz", { "dependencies": { "@types/geojson": "*" } }, "sha512-TbAd9DaPGSnzp6QvtYngntMZgcRk+igFELwR2N99XZn7RXUdKgsXMR+28bUO0rPsWp8MIu/f47luLIQuSLYv/w=="],
 
     "@types/mapbox__point-geometry": ["@types/mapbox__point-geometry@0.1.4", "", {}, "sha512-mUWlSxAmYLfwnRBmgYV86tgYmMIICX4kza8YnE/eIlywGe2XoOxlpVnXWwir92xRLjwyarqwpu2EJKD2pk0IUA=="],
 
@@ -1204,6 +1211,8 @@
 
     "keyv": ["keyv@4.5.4", "", { "dependencies": { "json-buffer": "3.0.1" } }, "sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw=="],
 
+    "leaflet": ["leaflet@1.9.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/leaflet/-/leaflet-1.9.4.tgz", {}, "sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA=="],
+
     "levn": ["levn@0.4.1", "", { "dependencies": { "prelude-ls": "^1.2.1", "type-check": "~0.4.0" } }, "sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ=="],
 
     "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
@@ -1459,6 +1468,8 @@
     "react-hook-form": ["react-hook-form@7.53.1", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-6aiQeBda4zjcuaugWvim9WsGqisoUk+etmFEsSUMm451/Ic8L/UAb7sRtMj3V+Hdzm6mMjU1VhiSzYUZeBm0Vg=="],
 
     "react-is": ["react-is@18.3.1", "", {}, "sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg=="],
+
+    "react-leaflet": ["react-leaflet@5.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/react-leaflet/-/react-leaflet-5.0.0.tgz", { "dependencies": { "@react-leaflet/core": "^3.0.0" }, "peerDependencies": { "leaflet": "^1.9.0", "react": "^19.0.0", "react-dom": "^19.0.0" } }, "sha512-CWbTpr5vcHw5bt9i4zSlPEVQdTVcML390TjeDG0cK59z1ylexpqC6M1PJFjV8jD7CF+ACBFsLIDs6DRMoLEofw=="],
 
     "react-pdf": ["react-pdf@10.2.0", "", { "dependencies": { "clsx": "^2.0.0", "dequal": "^2.0.3", "make-cancellable-promise": "^2.0.0", "make-event-props": "^2.0.0", "merge-refs": "^2.0.0", "pdfjs-dist": "5.4.296", "tiny-invariant": "^1.0.0", "warning": "^4.0.0" }, "peerDependencies": { "@types/react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-zk0DIL31oCh8cuQycM0SJKfwh4Onz0/Nwi6wTOjgtEjWGUY6eM+/vuzvOP3j70qtEULn7m1JtaeGzud1w5fY2Q=="],
 
