@@ -1,97 +1,116 @@
-## Alberta Site Intelligence — new AESO Market Hub view
+## Goal
 
-Add a comprehensive **"Site Intelligence"** view to the AESO Market Hub that lets clients evaluate any Alberta location across the four infrastructure layers needed for an AI/HPC/mining build: **fiber, transmission, gas & water, and site logistics**. Sourced from a curated dataset + live enrichment.
+Two things the user asked for:
 
-### What the user gets
+1. **Data accuracy + visible sourcing** — every datapoint in the report should carry a citation (URL + publisher + as-of date) and a confidence tier (Verified / Modeled / Estimated). Today the curated tables have a `source_url` column but it's only surfaced for POPs; transmission, gas, water, parks have no visible attribution.
+2. **Hyperscaler / AI-HPC grade depth** — add the sections an AWS / Microsoft / Meta / CoreWeave / xAI siting team actually asks for.
 
-Two modes inside one view:
+## Part 1 — Verify & cite every row
 
-1. **Map Explorer** (Mapbox/Leaflet of Alberta)
-   - Toggleable layers: Fiber backbone routes, Carrier POPs, AESO transmission lines (138/240/500 kV), Substations, NGTL gas mainlines + tap stations, Water bodies/rivers, Rail, Highways, Industrial parks, Airports.
-   - Click any feature → side panel with full attributes + source citation.
-   - Layer legend, basemap toggle (satellite/terrain), distance measurement tool.
+### Curated-data cleanup
+- Re-seed `alberta_transmission_lines`, `alberta_gas_pipelines`, `alberta_water_sources`, `alberta_industrial_parks`, `alberta_carrier_pops`, `alberta_fiber_routes` against **primary public sources**:
+  - **Transmission** — AESO ISO Tariff Appendix + AESO interactive transmission map (https://www.aeso.ca/grid/projects/) → owner (AltaLink / ATCO / ENMAX / EPCOR / city utilities), kV class, in-service year.
+  - **Substations** — AESO substation registry + utility owner's GIS layer; record MVA rating where published.
+  - **Gas pipelines** — CER pipeline data portal (https://www.cer-rec.gc.ca/en/data-analysis/) + Alberta Energy Regulator Pipeline Map → NPS, MOP, commodity, operator.
+  - **Water** — Alberta Environment & Protected Areas surface-water licences (Water Act diversion records) + Alberta River Basin reports.
+  - **Industrial parks** — Each municipality's economic development page (Alberta's Industrial Heartland, Edmonton Global, City of Medicine Hat, etc.) — record latest published "available power" only when the municipality states it.
+  - **Carrier POPs / fiber** — PeeringDB (https://www.peeringdb.com), each carrier's coverage map (Bell, Telus, Zayo, Cologix, eStruxture, Hurricane Electric), CIRA IXP map.
+- Add columns to every curated table: `source_url TEXT`, `source_publisher TEXT`, `source_as_of DATE`, `confidence TEXT CHECK (confidence IN ('verified','modeled','estimated'))`.
+- Backfill latencies: replace hand-typed numbers with the standard fiber-latency model (`~5 µs/km` one-way over the great-circle distance) and label them `modeled`. Only mark as `verified` where a carrier publishes a SLA latency figure.
 
-2. **Address / Coordinate Lookup → Site Report**
-   - Input: address (Google Places autocomplete via existing Google Maps connector) or lat/lng.
-   - Output: full **Alberta Site Intelligence Report** with:
-     - **Fiber & Network**: nearest carrier POP (Bell, Telus, Shaw/Rogers, Zayo, Beanfield, AXIA), distance, lit/dark availability, estimated latency to YYC, YEG, Seattle, Chicago.
-     - **Transmission**: nearest 138/240/500 kV line + substation, owner (AltaLink/ATCO/EPCOR/Fortis), distance, voltage, AESO connection queue status (live from existing `aeso_outages` / outage API where available).
-     - **Gas & Water**: nearest NGTL pipeline, tap station distance, nearest major water source, municipal water utility.
-     - **Site Logistics**: zoning hint, nearest rail spur, highway, airport, drive time to Calgary/Edmonton, industrial park membership.
-     - **Climate**: avg annual temperature, free-cooling hours, wildfire/flood risk flags (Google Weather + Air Quality APIs).
-     - **PDF export** of the full report.
+### Edge function changes
+- Return `sources: [{url, publisher, as_of, confidence}]` on every nested record (POP, line, pipeline, water, park, substation).
+- Add a top-level `methodology` block per scoring sub-metric: formula, inputs, units, and source.
 
-### Data strategy (curated + live enrichment)
+### UI changes (`SiteReport.tsx`)
+- New "Source" column in every table (publisher chip + external-link icon → opens `source_url`).
+- Confidence chip (green / amber / grey) next to each row.
+- Replace the single "Data provenance" card at the bottom with a per-section "Methodology & sources" expandable card showing the formula and the citation list for that section.
+- Add an "As of" badge in the report header showing the oldest source date in the report.
 
-**Curated (seeded into Supabase)** — verified open datasets:
+## Part 2 — Hyperscaler / AI-HPC depth
 
-| Layer | Source |
-|---|---|
-| AESO transmission lines & substations | AESO Open Data — transmission topology shapefile (re-use existing `substations` table; add `transmission_lines` table) |
-| Fiber backbone (long-haul) | CRTC fiber infrastructure dataset + AXIA SuperNet public route map + ISED broadband datasets |
-| NGTL pipelines + tap stations | CER (Canada Energy Regulator) Open Data pipeline GIS layer |
-| Hydrography (rivers/lakes) | Natural Resources Canada CanVec |
-| Rail, highways, industrial parks, airports | OpenStreetMap (extract Alberta clip) |
-| Municipal water utilities | Alberta Environment open data |
+Add the following sections to the report. All are computed in the edge function from public datasets (curated table + on-the-fly enrichment).
 
-Seed via a one-time edge function (`alberta-infra-seed`) that downloads each source, clips to Alberta, simplifies geometries, and bulk-inserts into Supabase.
+### A. Power & grid capacity (expand existing Transmission section)
+- **Nearest substation MVA rating, transformer count, voltage classes** (AESO + AltaLink/ATCO published ratings).
+- **AESO interconnection queue position & status** for projects within 25 km (AESO LTAP queue, public).
+- **Generation mix within 100 km** — wind, solar, gas, cogen capacity (AESO Asset List, already in `aeso_assets`).
+- **Grid carbon intensity (gCO₂/kWh)** — pull current value from existing AESO data + 12-month rolling avg.
+- **Curtailment exposure** — count of negative-price hours in last 12 months at the nearest pricing node (already have `aeso_training_data`).
+- **Estimated time-to-energize** band (12 / 24 / 36+ months) based on voltage class + queue depth.
 
-**Live enrichment** (per-lookup, called from the Site Report edge function):
-- **Google Maps connector** (already linked) — geocoding, Places, Routes for drive times, Weather + Air Quality.
-- **Firecrawl** — carrier coverage page scrape + Lovable AI (Gemini Flash) extraction for "is this address inside carrier X's footprint?" when not in curated POPs.
-- **AESO APIM** — pull live outage/queue info for the nearest substation (re-use existing AESO ingestion patterns).
+### B. Climate & cooling (new section)
+Pull from **Environment & Climate Change Canada Climate Normals 1991-2020** for the nearest station (open dataset, no key needed):
+- Mean annual dry-bulb, ASHRAE 0.4% / 1% / 2% design dry-bulb and mean-coincident wet-bulb.
+- **Annual free-cooling hours** (hours where dry-bulb < 18 °C — proxy for direct-air or dry-cooler economization).
+- **WUE-driver index**: estimated hours requiring evaporative make-up.
+- ASHRAE climate zone.
+- Source: ECCC station ID + URL + observation period.
 
-### Backend (new)
+### C. Natural-hazard risk (new section)
+- **Seismic** — NRCan 2020 National Building Code seismic hazard values (Sa(0.2) / PGA) for the lat/lng (NRCan open API).
+- **Wildfire** — distance to nearest historical fire perimeter from Alberta Wildfire Open Data (last 10 yrs).
+- **Flood** — Alberta Flood Hazard Mapping flag (where mapped) and distance to 100-yr floodplain edge.
+- **Tornado climatology** — Environment Canada tornado density grid.
+- Render as a 4-cell risk matrix (Low / Moderate / High / Severe) with source link per row.
 
-1. **Supabase tables** (new, all with proper GRANTs + RLS read-for-authenticated):
-   - `alberta_transmission_lines` (geometry, voltage_kv, owner, name, in_service_date)
-   - `alberta_fiber_routes` (geometry, carrier, route_type, lit_dark, source)
-   - `alberta_carrier_pops` (point, carrier, address, services, latency_to_yyc_ms, latency_to_sea_ms, latency_to_ord_ms)
-   - `alberta_gas_pipelines` (geometry, operator, diameter_mm, pressure_kpa)
-   - `alberta_gas_taps` (point, operator, capacity)
-   - `alberta_water_sources` (geometry, name, type)
-   - `alberta_rail` / `alberta_industrial_parks` / `alberta_airports` (geometry/point + attrs)
-   - `alberta_site_reports` (cached generated reports keyed by lat/lng hash + user_id; 7-day TTL)
-   - Reuse existing `substations` table.
-   - PostGIS not enabled — store geometries as **GeoJSON `jsonb`** + precomputed `lat`/`lng` for points; use Haversine in SQL function `nearest_features(lat, lng, layer, limit)`.
+### D. Water rights & cooling water (expand Water section)
+- Closest **licensed surface-water diversion point** with licensed m³/year (Alberta EPA Water Use Reporting open dataset).
+- Sub-basin allocation status (closed / partially closed / open) — Alberta River Basin reports.
+- Distance to nearest **treated municipal water main** (if within 25 km of an industrial park already in our table).
 
-2. **Edge functions**:
-   - `alberta-infra-seed` — one-time ingestion of curated datasets (admin-only, idempotent).
-   - `alberta-site-report` — given `{lat, lng}`: runs nearest-feature queries, calls Google Maps (drive times, weather, air quality), invokes Firecrawl+Gemini for missing carrier coverage, caches result in `alberta_site_reports`, returns full JSON report.
+### E. Cloud & network reach (expand Fiber section)
+- Add hyperscaler cloud regions to `PEER_HUBS`: `AWS us-west-2 (Hillsboro OR)`, `AWS ca-central-1 (Montreal)`, `Azure West US 2`, `Azure Canada Central`, `GCP us-west1`, `GCP northamerica-northeast1`.
+- Compute modeled one-way latency (great-circle × 5 µs/km × 1.4 routing factor) to each, label `modeled`.
+- **Nearest IXP / peering fabric** (YYC-IX, YEG-IX, SIX, Equinix Toronto) with port density from PeeringDB.
+- **Dark-fiber availability flag** per long-haul route (carrier publishes dark fiber on this route Y/N).
+- **Subsea cable landing reach** — onward latency from SEA to Tokyo/Sydney/Singapore (Submarine Cable Map data).
 
-### Frontend (new files under `src/components/aeso-hub/site-intel/`)
+### F. Land, jurisdiction & incentives (new section)
+- Municipality + county for the lat/lng (reverse-geocode via Google Geocoding API — key already in secrets).
+- **Property tax rate (mill rate)** for the host municipality where published.
+- **Provincial / municipal incentives** snapshot — Alberta IRA-equivalent investment tax credits, sub-50 ¢/kWh power deals via the Alberta Industrial Heartland, etc. (curated, with source links to gov't pages).
+- **Zoning class** for the parcel (from the existing `alberta_industrial_parks` if the site falls inside one; otherwise "outside designated industrial park").
 
-- `SiteIntelTab.tsx` — top-level view with toggle between Map / Lookup modes.
-- `AlbertaMap.tsx` — Leaflet map (already lightweight; add `leaflet` + `react-leaflet` if not present) with layer toggles fed from Supabase via React Query.
-- `LayerToggleSidebar.tsx`, `FeaturePopup.tsx`, `LayerLegend.tsx`.
-- `SiteLookupForm.tsx` — Google Places autocomplete (existing browser key) + manual lat/lng.
-- `SiteReport.tsx` — sectioned report renderer (Fiber / Transmission / Gas+Water / Logistics / Climate) with source citations + PDF export via existing `jspdf` setup.
-- `useAlbertaSiteReport.ts` — React Query hook calling the edge function.
+### G. Workforce & logistics (expand Site Logistics)
+- Population + labour-force size within 100 km (Stats Canada census 2021 open data).
+- Skilled-trades availability index (electricians + millwrights per 1k workforce, Stats Canada NOC data).
+- Distance to **Class-I rail spur** (CN / CPKC, already publicly mapped).
+- Distance to **heavy-haul highway** (Alberta Transportation High-Load Corridor map) — critical for moving transformers and chillers.
+- Distance to **international airport** (YYC / YEG).
 
-### Hub wiring
+### H. Sustainability & PPA (new section)
+- Nearest operating + announced wind / solar farms within 100 km (already in `aeso_assets`) with MW and PPA-available flag.
+- Estimated renewable PPA price band ($/MWh) using last 12 mo of AESO market data already in DB.
+- Grid carbon intensity trajectory chart (already have data).
 
-- Add `'site-intel'` to `AESOHubView` union in `AESOHubSidebar.tsx`.
-- Add label `'Site Intelligence'` + `MapPin`/`Network` icon to sidebar + `VIEW_LABELS`.
-- Render `<SiteIntelTab />` in `AESOMarketHub.tsx` switch.
+## Composite "Hyperscaler Suitability Score"
 
-### Out of scope (call out to user before building)
+Replace the standalone Fiber Score with a 0-100 **Hyperscaler Suitability Score** that rolls up:
+- Fiber & network (20)
+- Power capacity & speed-to-energize (25)
+- Climate / free-cooling (15)
+- Water availability (10)
+- Risk (10, inverted)
+- Sustainability & PPA access (10)
+- Logistics & workforce (10)
 
-- No write access to AESO connection queue (read-only display of public queue PDF data; flag as "as of latest verified publish date").
-- Real-time fiber capacity (carriers don't publish) — we show route presence + carrier names, not Mbps available.
-- Crown land availability and detailed zoning require provincial GIS layers that aren't fully open; we'll show the nearest municipality + link to its zoning portal, not parcel-level zoning.
+Keep the existing Fiber sub-score visible inside the breakdown.
 
-### Memory updates
+## Files to touch
 
-After build, save:
-- `mem://features/aeso-market-hub/site-intelligence` — data sources, schema, edge function flow.
-- `mem://constraints/alberta-infra-data-freshness` — quarterly refresh cadence + verified-as-of dates.
+- `supabase/migrations/<new>.sql` — add `source_url / source_publisher / source_as_of / confidence` columns to the six curated tables; new `alberta_climate_normals`, `alberta_hazard_grid`, `alberta_water_licences`, `alberta_municipal_incentives` tables (with GRANTs + RLS).
+- Data-seed migration — re-seed every row with verified primary sources.
+- `supabase/functions/alberta-site-report/index.ts` — add climate / hazard / cloud-latency / water-rights / workforce / sustainability sections, methodology blocks, per-row sources, and the new composite score.
+- `src/hooks/useAlbertaSiteReport.ts` — extend `SiteReport` type.
+- `src/components/aeso-hub/site-intel/SiteReport.tsx` — render new sections, source chips, confidence chips, methodology expanders, replace fiber score with hyperscaler suitability score.
+- `src/constants/app-version.ts` — bump.
 
-### Order of execution
+## Out of scope (call out if user wants them)
 
-1. Supabase migrations (tables + grants + RLS + nearest-feature SQL function).
-2. `alberta-infra-seed` edge function (admin-triggered, populates curated layers).
-3. `alberta-site-report` edge function.
-4. Frontend: `SiteIntelTab` + map + lookup + report, wired into hub sidebar.
-5. Bump `APP_VERSION`. Smoke test in preview.
+- Live ingestion from the AESO interconnection queue API and ECCC climate API as scheduled jobs (could be added later; this plan reads them on-demand inside the edge function with response caching in `alberta_site_reports`).
+- Parcel-level zoning + ALR overlay (needs municipal GIS scraping per municipality).
+- Carbon-free-energy 24/7 matching score (needs hourly PPA modelling).
 
-Ready to switch to build mode when you approve.
+Ready to switch to build mode and implement?

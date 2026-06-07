@@ -2429,6 +2429,7 @@ export type Database = {
           address: string | null
           carrier: string
           city: string
+          confidence: string | null
           created_at: string
           facility_name: string
           id: string
@@ -2439,12 +2440,15 @@ export type Database = {
           latency_to_yyc_ms: number | null
           lng: number
           services: string[] | null
+          source_as_of: string | null
+          source_publisher: string | null
           source_url: string | null
         }
         Insert: {
           address?: string | null
           carrier: string
           city: string
+          confidence?: string | null
           created_at?: string
           facility_name: string
           id?: string
@@ -2455,12 +2459,15 @@ export type Database = {
           latency_to_yyc_ms?: number | null
           lng: number
           services?: string[] | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
         }
         Update: {
           address?: string | null
           carrier?: string
           city?: string
+          confidence?: string | null
           created_at?: string
           facility_name?: string
           id?: string
@@ -2471,46 +2478,126 @@ export type Database = {
           latency_to_yyc_ms?: number | null
           lng?: number
           services?: string[] | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
+        }
+        Relationships: []
+      }
+      alberta_climate_normals: {
+        Row: {
+          ashrae_04_design_db_c: number | null
+          ashrae_04_mcwb_c: number | null
+          ashrae_1_design_db_c: number | null
+          ashrae_climate_zone: string | null
+          confidence: string | null
+          created_at: string
+          evap_hours_above_24c: number | null
+          free_cooling_hours_below_10c: number | null
+          free_cooling_hours_below_18c: number | null
+          id: string
+          lat: number
+          lng: number
+          mean_annual_dry_bulb_c: number | null
+          mean_annual_wet_bulb_c: number | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+          station_id: string
+          station_name: string
+        }
+        Insert: {
+          ashrae_04_design_db_c?: number | null
+          ashrae_04_mcwb_c?: number | null
+          ashrae_1_design_db_c?: number | null
+          ashrae_climate_zone?: string | null
+          confidence?: string | null
+          created_at?: string
+          evap_hours_above_24c?: number | null
+          free_cooling_hours_below_10c?: number | null
+          free_cooling_hours_below_18c?: number | null
+          id?: string
+          lat: number
+          lng: number
+          mean_annual_dry_bulb_c?: number | null
+          mean_annual_wet_bulb_c?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          station_id: string
+          station_name: string
+        }
+        Update: {
+          ashrae_04_design_db_c?: number | null
+          ashrae_04_mcwb_c?: number | null
+          ashrae_1_design_db_c?: number | null
+          ashrae_climate_zone?: string | null
+          confidence?: string | null
+          created_at?: string
+          evap_hours_above_24c?: number | null
+          free_cooling_hours_below_10c?: number | null
+          free_cooling_hours_below_18c?: number | null
+          id?: string
+          lat?: number
+          lng?: number
+          mean_annual_dry_bulb_c?: number | null
+          mean_annual_wet_bulb_c?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          station_id?: string
+          station_name?: string
         }
         Relationships: []
       }
       alberta_fiber_routes: {
         Row: {
           carrier: string
+          confidence: string | null
           created_at: string
+          dark_fiber_available: boolean | null
           end_lat: number
           end_lng: number
           id: string
           lit_dark: string | null
           route_name: string
           route_type: string
+          source_as_of: string | null
+          source_publisher: string | null
           source_url: string | null
           start_lat: number
           start_lng: number
         }
         Insert: {
           carrier: string
+          confidence?: string | null
           created_at?: string
+          dark_fiber_available?: boolean | null
           end_lat: number
           end_lng: number
           id?: string
           lit_dark?: string | null
           route_name: string
           route_type?: string
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           start_lat: number
           start_lng: number
         }
         Update: {
           carrier?: string
+          confidence?: string | null
           created_at?: string
+          dark_fiber_available?: boolean | null
           end_lat?: number
           end_lng?: number
           id?: string
           lit_dark?: string | null
           route_name?: string
           route_type?: string
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           start_lat?: number
           start_lng?: number
@@ -2519,6 +2606,8 @@ export type Database = {
       }
       alberta_gas_pipelines: {
         Row: {
+          commodity: string | null
+          confidence: string | null
           created_at: string
           diameter_mm: number | null
           end_lat: number
@@ -2527,11 +2616,15 @@ export type Database = {
           name: string
           operator: string
           pressure_kpa: number | null
+          source_as_of: string | null
+          source_publisher: string | null
           source_url: string | null
           start_lat: number
           start_lng: number
         }
         Insert: {
+          commodity?: string | null
+          confidence?: string | null
           created_at?: string
           diameter_mm?: number | null
           end_lat: number
@@ -2540,11 +2633,15 @@ export type Database = {
           name: string
           operator: string
           pressure_kpa?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           start_lat: number
           start_lng: number
         }
         Update: {
+          commodity?: string | null
+          confidence?: string | null
           created_at?: string
           diameter_mm?: number | null
           end_lat?: number
@@ -2553,15 +2650,129 @@ export type Database = {
           name?: string
           operator?: string
           pressure_kpa?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           start_lat?: number
           start_lng?: number
         }
         Relationships: []
       }
+      alberta_generation_assets: {
+        Row: {
+          asset_name: string
+          capacity_mw: number
+          commercial_operation_year: number | null
+          confidence: string | null
+          created_at: string
+          fuel_type: string
+          id: string
+          lat: number
+          lng: number
+          operator: string | null
+          ppa_available: boolean | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+          status: string | null
+        }
+        Insert: {
+          asset_name: string
+          capacity_mw: number
+          commercial_operation_year?: number | null
+          confidence?: string | null
+          created_at?: string
+          fuel_type: string
+          id?: string
+          lat: number
+          lng: number
+          operator?: string | null
+          ppa_available?: boolean | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          status?: string | null
+        }
+        Update: {
+          asset_name?: string
+          capacity_mw?: number
+          commercial_operation_year?: number | null
+          confidence?: string | null
+          created_at?: string
+          fuel_type?: string
+          id?: string
+          lat?: number
+          lng?: number
+          operator?: string | null
+          ppa_available?: boolean | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      alberta_hazard_grid: {
+        Row: {
+          confidence: string | null
+          created_at: string
+          flood_rating: string | null
+          id: string
+          lat: number
+          lng: number
+          radius_km: number | null
+          region_name: string
+          seismic_pga_g: number | null
+          seismic_rating: string | null
+          seismic_sa02_g: number | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+          tornado_rating: string | null
+          wildfire_rating: string | null
+        }
+        Insert: {
+          confidence?: string | null
+          created_at?: string
+          flood_rating?: string | null
+          id?: string
+          lat: number
+          lng: number
+          radius_km?: number | null
+          region_name: string
+          seismic_pga_g?: number | null
+          seismic_rating?: string | null
+          seismic_sa02_g?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          tornado_rating?: string | null
+          wildfire_rating?: string | null
+        }
+        Update: {
+          confidence?: string | null
+          created_at?: string
+          flood_rating?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          radius_km?: number | null
+          region_name?: string
+          seismic_pga_g?: number | null
+          seismic_rating?: string | null
+          seismic_sa02_g?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          tornado_rating?: string | null
+          wildfire_rating?: string | null
+        }
+        Relationships: []
+      }
       alberta_industrial_parks: {
         Row: {
           available_power_mw: number | null
+          confidence: string | null
           created_at: string
           id: string
           lat: number
@@ -2569,11 +2780,14 @@ export type Database = {
           municipality: string
           name: string
           notes: string | null
+          source_as_of: string | null
+          source_publisher: string | null
           source_url: string | null
           zoning: string | null
         }
         Insert: {
           available_power_mw?: number | null
+          confidence?: string | null
           created_at?: string
           id?: string
           lat: number
@@ -2581,11 +2795,14 @@ export type Database = {
           municipality: string
           name: string
           notes?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           zoning?: string | null
         }
         Update: {
           available_power_mw?: number | null
+          confidence?: string | null
           created_at?: string
           id?: string
           lat?: number
@@ -2593,8 +2810,148 @@ export type Database = {
           municipality?: string
           name?: string
           notes?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           zoning?: string | null
+        }
+        Relationships: []
+      }
+      alberta_logistics_assets: {
+        Row: {
+          asset_type: string
+          confidence: string | null
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          notes: string | null
+          operator: string | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+        }
+        Insert: {
+          asset_type: string
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          notes?: string | null
+          operator?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          asset_type?: string
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          notes?: string | null
+          operator?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
+      alberta_municipal_incentives: {
+        Row: {
+          confidence: string | null
+          created_at: string
+          id: string
+          incentive_summary: string | null
+          lat: number
+          lng: number
+          machinery_equipment_mill_rate: number | null
+          municipality: string
+          non_residential_mill_rate: number | null
+          service_radius_km: number | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+        }
+        Insert: {
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          incentive_summary?: string | null
+          lat: number
+          lng: number
+          machinery_equipment_mill_rate?: number | null
+          municipality: string
+          non_residential_mill_rate?: number | null
+          service_radius_km?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          incentive_summary?: string | null
+          lat?: number
+          lng?: number
+          machinery_equipment_mill_rate?: number | null
+          municipality?: string
+          non_residential_mill_rate?: number | null
+          service_radius_km?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
+      alberta_population_centres: {
+        Row: {
+          confidence: string | null
+          created_at: string
+          id: string
+          labour_force_2021: number | null
+          lat: number
+          lng: number
+          name: string
+          population_2021: number
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+          trades_workers_estimate: number | null
+        }
+        Insert: {
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          labour_force_2021?: number | null
+          lat: number
+          lng: number
+          name: string
+          population_2021: number
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          trades_workers_estimate?: number | null
+        }
+        Update: {
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          labour_force_2021?: number | null
+          lat?: number
+          lng?: number
+          name?: string
+          population_2021?: number
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          trades_workers_estimate?: number | null
         }
         Relationships: []
       }
@@ -2633,6 +2990,7 @@ export type Database = {
       }
       alberta_transmission_lines: {
         Row: {
+          confidence: string | null
           created_at: string
           end_lat: number
           end_lng: number
@@ -2640,12 +2998,15 @@ export type Database = {
           in_service_date: string | null
           name: string
           owner: string
+          source_as_of: string | null
+          source_publisher: string | null
           source_url: string | null
           start_lat: number
           start_lng: number
           voltage_kv: number
         }
         Insert: {
+          confidence?: string | null
           created_at?: string
           end_lat: number
           end_lng: number
@@ -2653,12 +3014,15 @@ export type Database = {
           in_service_date?: string | null
           name: string
           owner: string
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           start_lat: number
           start_lng: number
           voltage_kv: number
         }
         Update: {
+          confidence?: string | null
           created_at?: string
           end_lat?: number
           end_lng?: number
@@ -2666,6 +3030,8 @@ export type Database = {
           in_service_date?: string | null
           name?: string
           owner?: string
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
           start_lat?: number
           start_lng?: number
@@ -2673,35 +3039,101 @@ export type Database = {
         }
         Relationships: []
       }
+      alberta_water_licences: {
+        Row: {
+          allocation_status: string | null
+          confidence: string | null
+          created_at: string
+          id: string
+          lat: number
+          licensed_m3_per_year: number | null
+          licensee: string
+          lng: number
+          purpose: string | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+          source_water_body: string
+          sub_basin: string | null
+        }
+        Insert: {
+          allocation_status?: string | null
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          lat: number
+          licensed_m3_per_year?: number | null
+          licensee: string
+          lng: number
+          purpose?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          source_water_body: string
+          sub_basin?: string | null
+        }
+        Update: {
+          allocation_status?: string | null
+          confidence?: string | null
+          created_at?: string
+          id?: string
+          lat?: number
+          licensed_m3_per_year?: number | null
+          licensee?: string
+          lng?: number
+          purpose?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          source_water_body?: string
+          sub_basin?: string | null
+        }
+        Relationships: []
+      }
       alberta_water_sources: {
         Row: {
+          allocation_status: string | null
+          confidence: string | null
           created_at: string
           id: string
           lat: number
           lng: number
           name: string
           notes: string | null
+          source_as_of: string | null
+          source_publisher: string | null
           source_url: string | null
+          sub_basin: string | null
           type: string
         }
         Insert: {
+          allocation_status?: string | null
+          confidence?: string | null
           created_at?: string
           id?: string
           lat: number
           lng: number
           name: string
           notes?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
+          sub_basin?: string | null
           type: string
         }
         Update: {
+          allocation_status?: string | null
+          confidence?: string | null
           created_at?: string
           id?: string
           lat?: number
           lng?: number
           name?: string
           notes?: string | null
+          source_as_of?: string | null
+          source_publisher?: string | null
           source_url?: string | null
+          sub_basin?: string | null
           type?: string
         }
         Relationships: []
@@ -3389,6 +3821,42 @@ export type Database = {
           transmission_lines?: Json | null
           updated_at?: string
           utility_companies?: Json | null
+        }
+        Relationships: []
+      }
+      cloud_regions: {
+        Row: {
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          provider: string
+          region_code: string
+          region_name: string
+          source_as_of: string | null
+          source_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          provider: string
+          region_code: string
+          region_name: string
+          source_as_of?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          provider?: string
+          region_code?: string
+          region_name?: string
+          source_as_of?: string | null
+          source_url?: string | null
         }
         Relationships: []
       }
@@ -5284,6 +5752,48 @@ export type Database = {
           opportunity_name?: string
           opportunity_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      internet_exchanges: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          participant_count: number | null
+          peak_traffic_gbps: number | null
+          source_as_of: string | null
+          source_publisher: string | null
+          source_url: string | null
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          participant_count?: number | null
+          peak_traffic_gbps?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          participant_count?: number | null
+          peak_traffic_gbps?: number | null
+          source_as_of?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
         }
         Relationships: []
       }
