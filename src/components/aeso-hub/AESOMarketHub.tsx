@@ -17,6 +17,7 @@ import { EnergizationTab } from './tabs/EnergizationTab';
 import { AnalyticsTab } from './tabs/AnalyticsTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { MiningEconomicsTab } from './tabs/MiningEconomicsTab';
+import { SiteIntelTab } from './tabs/SiteIntelTab';
 
 export function AESOMarketHub() {
   const [activeTab, setActiveTab] = React.useState<AESOHubView>('market');
@@ -112,6 +113,7 @@ export function AESOMarketHub() {
         )}
         {activeTab === 'power-model' && <PowerModelTab />}
         {activeTab === 'energization' && <EnergizationTab />}
+        {activeTab === 'site-intel' && <SiteIntelTab />}
         {activeTab === 'predictions' && <PredictionsTab />}
         {activeTab === 'datacenter' && <DatacenterTab currentPrice={currentPrice} />}
         {activeTab === 'mining-economics' && <MiningEconomicsTab />}
