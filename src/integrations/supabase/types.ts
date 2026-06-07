@@ -2424,6 +2424,288 @@ export type Database = {
         }
         Relationships: []
       }
+      alberta_carrier_pops: {
+        Row: {
+          address: string | null
+          carrier: string
+          city: string
+          created_at: string
+          facility_name: string
+          id: string
+          lat: number
+          latency_to_ord_ms: number | null
+          latency_to_sea_ms: number | null
+          latency_to_yeg_ms: number | null
+          latency_to_yyc_ms: number | null
+          lng: number
+          services: string[] | null
+          source_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          carrier: string
+          city: string
+          created_at?: string
+          facility_name: string
+          id?: string
+          lat: number
+          latency_to_ord_ms?: number | null
+          latency_to_sea_ms?: number | null
+          latency_to_yeg_ms?: number | null
+          latency_to_yyc_ms?: number | null
+          lng: number
+          services?: string[] | null
+          source_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          carrier?: string
+          city?: string
+          created_at?: string
+          facility_name?: string
+          id?: string
+          lat?: number
+          latency_to_ord_ms?: number | null
+          latency_to_sea_ms?: number | null
+          latency_to_yeg_ms?: number | null
+          latency_to_yyc_ms?: number | null
+          lng?: number
+          services?: string[] | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
+      alberta_fiber_routes: {
+        Row: {
+          carrier: string
+          created_at: string
+          end_lat: number
+          end_lng: number
+          id: string
+          lit_dark: string | null
+          route_name: string
+          route_type: string
+          source_url: string | null
+          start_lat: number
+          start_lng: number
+        }
+        Insert: {
+          carrier: string
+          created_at?: string
+          end_lat: number
+          end_lng: number
+          id?: string
+          lit_dark?: string | null
+          route_name: string
+          route_type?: string
+          source_url?: string | null
+          start_lat: number
+          start_lng: number
+        }
+        Update: {
+          carrier?: string
+          created_at?: string
+          end_lat?: number
+          end_lng?: number
+          id?: string
+          lit_dark?: string | null
+          route_name?: string
+          route_type?: string
+          source_url?: string | null
+          start_lat?: number
+          start_lng?: number
+        }
+        Relationships: []
+      }
+      alberta_gas_pipelines: {
+        Row: {
+          created_at: string
+          diameter_mm: number | null
+          end_lat: number
+          end_lng: number
+          id: string
+          name: string
+          operator: string
+          pressure_kpa: number | null
+          source_url: string | null
+          start_lat: number
+          start_lng: number
+        }
+        Insert: {
+          created_at?: string
+          diameter_mm?: number | null
+          end_lat: number
+          end_lng: number
+          id?: string
+          name: string
+          operator: string
+          pressure_kpa?: number | null
+          source_url?: string | null
+          start_lat: number
+          start_lng: number
+        }
+        Update: {
+          created_at?: string
+          diameter_mm?: number | null
+          end_lat?: number
+          end_lng?: number
+          id?: string
+          name?: string
+          operator?: string
+          pressure_kpa?: number | null
+          source_url?: string | null
+          start_lat?: number
+          start_lng?: number
+        }
+        Relationships: []
+      }
+      alberta_industrial_parks: {
+        Row: {
+          available_power_mw: number | null
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          municipality: string
+          name: string
+          notes: string | null
+          source_url: string | null
+          zoning: string | null
+        }
+        Insert: {
+          available_power_mw?: number | null
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          municipality: string
+          name: string
+          notes?: string | null
+          source_url?: string | null
+          zoning?: string | null
+        }
+        Update: {
+          available_power_mw?: number | null
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          municipality?: string
+          name?: string
+          notes?: string | null
+          source_url?: string | null
+          zoning?: string | null
+        }
+        Relationships: []
+      }
+      alberta_site_reports: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          label: string | null
+          lat: number
+          lng: number
+          report: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          label?: string | null
+          lat: number
+          lng: number
+          report: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          label?: string | null
+          lat?: number
+          lng?: number
+          report?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      alberta_transmission_lines: {
+        Row: {
+          created_at: string
+          end_lat: number
+          end_lng: number
+          id: string
+          in_service_date: string | null
+          name: string
+          owner: string
+          source_url: string | null
+          start_lat: number
+          start_lng: number
+          voltage_kv: number
+        }
+        Insert: {
+          created_at?: string
+          end_lat: number
+          end_lng: number
+          id?: string
+          in_service_date?: string | null
+          name: string
+          owner: string
+          source_url?: string | null
+          start_lat: number
+          start_lng: number
+          voltage_kv: number
+        }
+        Update: {
+          created_at?: string
+          end_lat?: number
+          end_lng?: number
+          id?: string
+          in_service_date?: string | null
+          name?: string
+          owner?: string
+          source_url?: string | null
+          start_lat?: number
+          start_lng?: number
+          voltage_kv?: number
+        }
+        Relationships: []
+      }
+      alberta_water_sources: {
+        Row: {
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          notes: string | null
+          source_url: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          notes?: string | null
+          source_url?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          notes?: string | null
+          source_url?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           alert_type: Database["public"]["Enums"]["alert_type"]
@@ -12030,6 +12312,10 @@ export type Database = {
       }
     }
     Functions: {
+      alberta_haversine_km: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
+      }
       bulk_delete_verified_sites: {
         Args: { site_ids: string[] }
         Returns: number
