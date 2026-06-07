@@ -21,6 +21,43 @@ interface Props {
 }
 
 export function SiteReport({ report }: Props) {
+  const topRoutes = report.fiber.top_routes;
+  const allCarriers = useMemo(() => [...new Set(topRoutes.map(r => r.carrier))], [topRoutes]);
+
+  const [selectedCarriers, setSelectedCarriers] = useState<string[]>(allCarriers);
+  const [maxLatency, setMaxLatency] = useState<number>(60);
+  const [minRouteDiversity, setMinRouteDiversity] = useState<number>(1);
+
+  useEffect(() => {
+    setSelectedCarriers(allCarriers);
+    setMaxLatency(60);
+    setMinRouteDiversity(1);
+  }, [allCarriers]);
+
+  const hubCarrierDiversity = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const r of topRoutes) {
+      if (!map.has(r.hub)) map.set(r.hub, new Set());
+      map.get(r.hub)!.add(r.carrier);
+    }
+    const diversityMap = new Map<string, number>();
+    for (const [hub, set] of map) {
+      diversityMap.set(hub, set.size);
+    }
+    return diversityMap;
+  }, [topRoutes]);
+
+  const maxHubDiversity = useMemo(() => Math.max(1, ...hubCarrierDiversity.values()), [hubCarrierDiversity]);
+
+  const filteredRoutes = useMemo(() => {
+    return topRoutes.filter(r => {
+      if (!selectedCarriers.includes(r.carrier)) return false;
+      if (r.latency_ms != null && r.latency_ms > maxLatency) return false;
+      if ((hubCarrierDiversity.get(r.hub) ?? 0) < minRouteDiversity) return false;
+      return true;
+    });
+  }, [topRoutes, selectedCarriers, maxLatency, minRouteDiversity, hubCarrierDiversity]);
+
   const handlePdf = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
