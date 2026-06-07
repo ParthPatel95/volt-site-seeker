@@ -1,79 +1,97 @@
-## Goal
+## Alberta Site Intelligence — new AESO Market Hub view
 
-Add a "No Curtailment / 24×7 AI Hosting" operating mode to the Power Model so users can analyze costs assuming 99.99% uptime — no 12CP avoidance and no energy-price curtailment. Then tighten the results UI so each number appears once with a clear label and an accurate definition.
+Add a comprehensive **"Site Intelligence"** view to the AESO Market Hub that lets clients evaluate any Alberta location across the four infrastructure layers needed for an AI/HPC/mining build: **fiber, transmission, gas & water, and site logistics**. Sourced from a curated dataset + live enrichment.
 
-## 1. New operating mode: "24×7 AI Hosting (no curtailment)"
+### What the user gets
 
-### Configuration UI (`PowerModelAnalyzer.tsx`)
+Two modes inside one view:
 
-Add a top-level **Operating Mode** selector in the Facility Parameters card with three choices:
+1. **Map Explorer** (Mapbox/Leaflet of Alberta)
+   - Toggleable layers: Fiber backbone routes, Carrier POPs, AESO transmission lines (138/240/500 kV), Substations, NGTL gas mainlines + tap stations, Water bodies/rivers, Rail, Highways, Industrial parks, Airports.
+   - Click any feature → side panel with full attributes + source citation.
+   - Layer legend, basemap toggle (satellite/terrain), distance measurement tool.
 
-- **24×7 AI Hosting** — 99.99% uptime, no curtailment (NEW, default for AI workloads)
-- **12CP Priority** — current behavior, always avoid monthly system peak
-- **Cost Optimized** — current behavior, dollar-value scored curtailment
+2. **Address / Coordinate Lookup → Site Report**
+   - Input: address (Google Places autocomplete via existing Google Maps connector) or lat/lng.
+   - Output: full **Alberta Site Intelligence Report** with:
+     - **Fiber & Network**: nearest carrier POP (Bell, Telus, Shaw/Rogers, Zayo, Beanfield, AXIA), distance, lit/dark availability, estimated latency to YYC, YEG, Seattle, Chicago.
+     - **Transmission**: nearest 138/240/500 kV line + substation, owner (AltaLink/ATCO/EPCOR/Fortis), distance, voltage, AESO connection queue status (live from existing `aeso_outages` / outage API where available).
+     - **Gas & Water**: nearest NGTL pipeline, tap station distance, nearest major water source, municipal water utility.
+     - **Site Logistics**: zoning hint, nearest rail spur, highway, airport, drive time to Calgary/Edmonton, industrial park membership.
+     - **Climate**: avg annual temperature, free-cooling hours, wildfire/flood risk flags (Google Weather + Air Quality APIs).
+     - **PDF export** of the full report.
 
-When **24×7 AI Hosting** is selected:
-- Hide / disable: `targetUptimePercent`, `12CP Avoidance Window`, `12CP Forecast Success %`, `Curtailment Strategy` (they don't apply).
-- Force `targetUptimePercent = 99.99`, `peakAvoidanceSuccessRate = 0` so the model pays the full Bulk Coincident Demand charge every month.
-- Show an info note: "AI/HPC clients require continuous power. This mode assumes zero curtailment and pays the full 12CP transmission demand charge."
+### Data strategy (curated + live enrichment)
 
-### Calculator (`usePowerModelCalculator.ts`)
+**Curated (seeded into Supabase)** — verified open datasets:
 
-Extend `CurtailmentStrategy` union to `'12cp-priority' | 'cost-optimized' | 'none'`.
+| Layer | Source |
+|---|---|
+| AESO transmission lines & substations | AESO Open Data — transmission topology shapefile (re-use existing `substations` table; add `transmission_lines` table) |
+| Fiber backbone (long-haul) | CRTC fiber infrastructure dataset + AXIA SuperNet public route map + ISED broadband datasets |
+| NGTL pipelines + tap stations | CER (Canada Energy Regulator) Open Data pipeline GIS layer |
+| Hydrography (rivers/lakes) | Natural Resources Canada CanVec |
+| Rail, highways, industrial parks, airports | OpenStreetMap (extract Alberta clip) |
+| Municipal water utilities | Alberta Environment open data |
 
-When `curtailmentStrategy === 'none'`:
-- Skip both curtailment passes — `finalRunning = records`, `curtailedHours = 0`.
-- Force `bulkCoincidentDemand = bulkCoincidentRate * cap` (no success-rate discount).
-- Skip `curtailmentSavings`, `overContractCredits`, `shutdownLog` (all zero / empty).
-- Fixed-price mode still uses the fixed energy price for `poolEnergyTotal`, but with no curtailment over-contract credits are not earned (we ignore them in this mode to match real PPA take-or-pay behavior).
+Seed via a one-time edge function (`alberta-infra-seed`) that downloads each source, clips to Alberta, simplifies geometries, and bulk-inserts into Supabase.
 
-### Strategy Comparison
+**Live enrichment** (per-lookup, called from the Site Report edge function):
+- **Google Maps connector** (already linked) — geocoding, Places, Routes for drive times, Weather + Air Quality.
+- **Firecrawl** — carrier coverage page scrape + Lovable AI (Gemini Flash) extraction for "is this address inside carrier X's footprint?" when not in curated POPs.
+- **AESO APIM** — pull live outage/queue info for the nearest substation (re-use existing AESO ingestion patterns).
 
-`PowerModelStrategyComparison` and `PowerModelChargeBreakdown` need a "no curtailment" baseline column when this mode is active so users can see the cost of running 24×7 vs the optimized scenarios.
+### Backend (new)
 
-## 2. Clean up the numbers shown
+1. **Supabase tables** (new, all with proper GRANTs + RLS read-for-authenticated):
+   - `alberta_transmission_lines` (geometry, voltage_kv, owner, name, in_service_date)
+   - `alberta_fiber_routes` (geometry, carrier, route_type, lit_dark, source)
+   - `alberta_carrier_pops` (point, carrier, address, services, latency_to_yyc_ms, latency_to_sea_ms, latency_to_ord_ms)
+   - `alberta_gas_pipelines` (geometry, operator, diameter_mm, pressure_kpa)
+   - `alberta_gas_taps` (point, operator, capacity)
+   - `alberta_water_sources` (geometry, name, type)
+   - `alberta_rail` / `alberta_industrial_parks` / `alberta_airports` (geometry/point + attrs)
+   - `alberta_site_reports` (cached generated reports keyed by lat/lng hash + user_id; 7-day TTL)
+   - Reuse existing `substations` table.
+   - PostGIS not enabled — store geometries as **GeoJSON `jsonb`** + precomputed `lat`/`lng` for points; use Haversine in SQL function `nearest_features(lat, lng, layer, limit)`.
 
-Currently the Results dashboard repeats several values across the hero cards, the stat ribbon, and the breakdown table. Audit and consolidate:
+2. **Edge functions**:
+   - `alberta-infra-seed` — one-time ingestion of curated datasets (admin-only, idempotent).
+   - `alberta-site-report` — given `{lat, lng}`: runs nearest-feature queries, calls Google Maps (drive times, weather, air quality), invokes Firecrawl+Gemini for missing carrier coverage, caches result in `alberta_site_reports`, returns full JSON report.
 
-### Duplicates to remove
+### Frontend (new files under `src/components/aeso-hub/site-intel/`)
 
-| Currently shown in | Number | Action |
-|---|---|---|
-| Hero card "All-in Rate" + Stat ribbon "Breakeven" + Breakeven card | Breakeven CA$/MWh appears 3× | Keep once in hero only (or stat ribbon when hosting rate is set); remove from ribbon when hero already shows it |
-| Hero "Total Annual Cost" sub + Stat ribbon "Consumption" | MWh consumed shown twice | Keep only in Consumption stat |
-| All-in Rate hero + breakdown table footer | Total ¢/kWh shown twice | Keep both but label one "Hero KPI" vs detailed "All-in Total"; ensure they match to 2 dp (fix any rounding drift) |
-| Stat ribbon "Curtailed" hours + breakdown "Downtime Budget Allocation" | Same number shown twice | Remove from stat ribbon when budget block is rendered below |
-| Curtailment Savings + Over-Contract Credits | Both shown only when `fixedPriceCAD > 0` — keep but add explanatory tooltip distinguishing the two |
+- `SiteIntelTab.tsx` — top-level view with toggle between Map / Lookup modes.
+- `AlbertaMap.tsx` — Leaflet map (already lightweight; add `leaflet` + `react-leaflet` if not present) with layer toggles fed from Supabase via React Query.
+- `LayerToggleSidebar.tsx`, `FeaturePopup.tsx`, `LayerLegend.tsx`.
+- `SiteLookupForm.tsx` — Google Places autocomplete (existing browser key) + manual lat/lng.
+- `SiteReport.tsx` — sectioned report renderer (Fiber / Transmission / Gas+Water / Logistics / Climate) with source citations + PDF export via existing `jspdf` setup.
+- `useAlbertaSiteReport.ts` — React Query hook calling the edge function.
 
-### Labels & explanations to add (info tooltips)
+### Hub wiring
 
-Every KPI gets a `<HelpCircle>` tooltip with the exact formula:
+- Add `'site-intel'` to `AESOHubView` union in `AESOHubSidebar.tsx`.
+- Add label `'Site Intelligence'` + `MapPin`/`Network` icon to sidebar + `VIEW_LABELS`.
+- Render `<SiteIntelTab />` in `AESOMarketHub.tsx` switch.
 
-- **Total Annual Cost** — "Sum of all 12 monthly invoices: DTS transmission + Energy (pool or fixed) + FortisAlberta distribution + GST. Includes the full 12CP charge weighted by forecast-success %."
-- **All-in Rate** — "Total Annual Cost ÷ Total kWh consumed (after curtailment). In 24×7 mode this is over full nameplate kWh."
-- **Net Margin** — "Annual hosting revenue (Hosting Rate × kWh delivered) − Total Annual Cost."
-- **Breakeven Pool Price** — "Pool price above which marginal cost of running exceeds hosting revenue. Curtail when pool > this."
-- **Uptime** — "Running hours ÷ Total hours. In 24×7 mode = 100%."
-- **Curtailed Hours** — "Hours shut down for 12CP avoidance + price optimization. Zero in 24×7 mode."
-- **Over-Contract Credits** — "Fixed-price PPA only. When pool > contract price, you sell back surplus and earn (pool − contract) × capacity per running hour."
-- **Curtail Savings** — "Energy cost avoided by shutting down during high-price hours, valued at the energy rate you would have paid."
+### Out of scope (call out to user before building)
 
-### Accuracy fixes
+- No write access to AESO connection queue (read-only display of public queue PDF data; flag as "as of latest verified publish date").
+- Real-time fiber capacity (carriers don't publish) — we show route presence + carrier names, not Mbps available.
+- Crown land availability and detailed zoning require provincial GIS layers that aren't fully open; we'll show the nearest municipality + link to its zoning portal, not parcel-level zoning.
 
-- The All-in Rate cards round `avgPerKwhCAD * 100` to 2 dp but the breakdown table sums component cents that round independently — replace the breakdown total with `annual.avgPerKwhCAD * 100` (single source of truth) so they always match.
-- `totalCentsPerKwh - energyCentsPerKwh` for "Adders" can go negative when `totalPoolEnergy` includes the fixed-price contract energy on a curtailed dataset. Clamp at 0 and recompute energy share from `poolEnergy` only over running hours.
-- `effectivePerKwhCAD` is currently computed only when `totalKWh > 0` but the hero card guards on `annual.totalOverContractCredits > 0` — also guard against `effectivePerKwhCAD <= 0` to avoid showing −cent values for short test windows.
+### Memory updates
 
-## Files touched
+After build, save:
+- `mem://features/aeso-market-hub/site-intelligence` — data sources, schema, edge function flow.
+- `mem://constraints/alberta-infra-data-freshness` — quarterly refresh cadence + verified-as-of dates.
 
-- `src/hooks/usePowerModelCalculator.ts` — extend strategy union, add `'none'` branch, force-full 12CP charge.
-- `src/components/aeso/PowerModelAnalyzer.tsx` — Operating Mode selector, hide irrelevant inputs in 24×7 mode, info banner.
-- `src/components/aeso/PowerModelSummaryCards.tsx` — remove duplicates, add tooltips, fix rounding source.
-- `src/components/aeso/PowerModelChargeBreakdown.tsx` — single-source `All-in Total`, conditionally show "no curtailment" baseline.
-- `src/components/aeso/PowerModelStrategyComparison.tsx` — add `24×7 No Curtailment` baseline column.
-- `src/constants/app-version.ts` — bump to invalidate cache.
+### Order of execution
 
-## Open questions
+1. Supabase migrations (tables + grants + RLS + nearest-feature SQL function).
+2. `alberta-infra-seed` edge function (admin-triggered, populates curated layers).
+3. `alberta-site-report` edge function.
+4. Frontend: `SiteIntelTab` + map + lookup + report, wired into hub sidebar.
+5. Bump `APP_VERSION`. Smoke test in preview.
 
-1. In 24×7 mode, should I keep "Over-Contract Credits" available for **fixed-price PPA** customers? Real take-or-pay PPAs still let you settle the spread without curtailing. **Default in plan: yes, keep credits in 24×7 fixed mode** (they're a market-settled payment, not a curtailment).
-2. Should I make 24×7 the **default mode** for new sessions, or leave 12CP Priority as the default and let users opt in?
+Ready to switch to build mode when you approve.
