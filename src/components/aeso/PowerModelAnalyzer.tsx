@@ -531,6 +531,8 @@ export function PowerModelAnalyzer() {
 
           <PowerModelSummaryCards annual={annual} breakeven={breakeven} hostingRateCAD={hostingRateCAD} totalShutdownHours={shutdownLog.length} totalShutdownSavings={shutdownLog.reduce((s, r) => s + r.costAvoided, 0)} curtailmentSavings={annual?.curtailmentSavings} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} curtailmentStrategy={params.curtailmentStrategy} />
 
+          {coverage && <PowerModelDataCoverage report={coverage} />}
+
           {/* AI Analysis - Promoted out of tabs */}
           <PowerModelAIAnalysis params={params} tariffOverrides={tariffOverrides} annual={annual} monthly={monthly} breakeven={breakeven} autoTrigger={autoTriggerAI} />
 
