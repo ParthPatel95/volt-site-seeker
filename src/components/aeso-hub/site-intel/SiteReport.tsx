@@ -563,6 +563,8 @@ export function SiteReport({ report }: Props) {
         </Section>
       )}
 
+      <AerialScanSection report={report} />
+
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
