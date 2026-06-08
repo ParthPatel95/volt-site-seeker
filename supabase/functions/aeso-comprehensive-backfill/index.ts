@@ -3,11 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
 interface BackfillRequest {
-  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate' | 'smp';
+  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate' | 'smp' | 'gaps';
   startYear?: number;
   endYear?: number;
   batchMonths?: number;
   offsetMonths?: number;
+  startMonth?: number;
+  endMonth?: number;
 }
 
 interface BackfillProgress {
@@ -40,6 +42,8 @@ serve(async (req) => {
       year,
       batchSize = 500
     } = body;
+    const startMonthOpt: number | undefined = (body as any).startMonth;
+    const endMonthOpt: number | undefined = (body as any).endMonth;
 
     console.log(`Comprehensive backfill: phase=${phase}, startYear=${startYear}, endYear=${endYear}, offset=${offsetMonths}`);
 
@@ -55,6 +59,9 @@ serve(async (req) => {
     switch (phase) {
       case 'prices':
         result = await backfillPrices(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
+        break;
+      case 'gaps':
+        result = await backfillGaps(supabase, aesoKey, startYear, endYear, startMonthOpt, endMonthOpt);
         break;
       case 'weather':
         result = await backfillWeather(supabase, startYear, endYear, batchMonths, offsetMonths);
