@@ -533,6 +533,14 @@ export function PowerModelAnalyzer() {
           {/* Charge Breakdown Table */}
           <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} capacityMW={params.contractedCapacityMW} />
 
+          {/* AESO 2026-015T Bill Estimator Reconciliation */}
+          {monthly.length > 0 && (
+            <PowerModelEstimatorReconciliation
+              reconciliation={reconcileAnnual(monthly, annual, params)}
+              hasOverrides={Object.keys(tariffOverrides).length > 0}
+            />
+          )}
+
           {/* Consolidated Analytics Tabs (5 instead of 9) */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>
             <TabsList className="overflow-x-auto flex h-auto gap-1 w-full justify-start">
