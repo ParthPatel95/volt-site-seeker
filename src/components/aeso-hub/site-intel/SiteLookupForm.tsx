@@ -11,10 +11,11 @@ interface Props {
   initialLat?: number | null;
   initialLng?: number | null;
   onResolve: (loc: { lat: number; lng: number; label?: string }) => void;
+  onClear?: () => void;
   loading?: boolean;
 }
 
-export function SiteLookupForm({ initialLat, initialLng, onResolve, loading }: Props) {
+export function SiteLookupForm({ initialLat, initialLng, onResolve, onClear, loading }: Props) {
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState(initialLat?.toString() ?? '');
   const [lng, setLng] = useState(initialLng?.toString() ?? '');
@@ -67,6 +68,7 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, loading }: P
   const clearAll = () => {
     setAddress(''); setLat(''); setLng('');
     lastPinRef.current = { lat: null, lng: null };
+    onClear?.();
   };
 
   return (
