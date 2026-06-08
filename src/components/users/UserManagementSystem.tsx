@@ -213,7 +213,21 @@ export function UserManagementSystem() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        let message = error.message;
+        const context = (error as any).context;
+
+        if (context instanceof Response) {
+          try {
+            const body = await context.clone().json();
+            message = body?.error || body?.message || message;
+          } catch {
+            message = await context.clone().text() || message;
+          }
+        }
+
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
 
       const authData = data;
