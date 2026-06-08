@@ -199,10 +199,40 @@ export function SiteReport({ report }: Props) {
             {report.location.label ?? `${report.location.lat.toFixed(4)}, ${report.location.lng.toFixed(4)}`}
           </p>
         </div>
-        <Button onClick={handlePdf} size="sm" variant="outline">
-          <Download className="w-4 h-4 mr-2" /> Export PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <CoverageBadge inputs={[
+            { rows: report.fiber.nearest_pops },
+            { rows: report.fiber.nearest_long_haul_routes },
+            { rows: report.fiber.nearest_ixps },
+            { rows: report.fiber.cloud_reach ?? [], forcedConfidence: 'modeled' },
+            { rows: report.transmission.nearest_lines },
+            { rows: report.transmission.nearest_substations ?? [] },
+            { rows: report.climate ? [report.climate] : [] },
+            { rows: report.risk ? [report.risk] : [] },
+            { rows: report.gas_and_water.nearest_gas_pipelines },
+            { rows: report.gas_and_water.nearest_water_sources },
+            { rows: report.gas_and_water.nearest_water_licences ?? [] },
+            { rows: report.logistics.nearest_industrial_parks },
+            { rows: report.logistics.nearest_logistics_assets ?? [] },
+            { rows: report.logistics.nearest_population_centres ?? [] },
+            { rows: report.workforce?.nearest_centres ?? [] },
+            { rows: report.workforce?.post_secondary_within_200km ?? [] },
+            { rows: report.construction?.epc_firms ?? [] },
+            { rows: report.construction?.union_vs_open_wages ?? [] },
+            { rows: report.regulatory?.nearest_zone ? [report.regulatory.nearest_zone] : [] },
+            { rows: report.connectivity_depth?.carrier_pop_details ?? [] },
+            { rows: report.connectivity_depth?.dark_fiber_segments_nearby ?? [] },
+          ]} />
+          <Button onClick={handlePdf} size="sm" variant="outline">
+            <Download className="w-4 h-4 mr-2" /> Export PDF
+          </Button>
+        </div>
       </div>
+      <p className="text-[10px] text-muted-foreground -mt-2">
+        Coverage legend: <span className="text-emerald-700">✓ verified</span> ·{' '}
+        <span className="text-amber-700">≈ modeled</span> ·{' '}
+        <span>~ estimated</span>. Verified = sourced from a cited authoritative dataset; modeled = computed from physics/heuristics; estimated = best-effort placeholder pending source.
+      </p>
 
       <Section
         icon={<Cable className="w-4 h-4" />}
