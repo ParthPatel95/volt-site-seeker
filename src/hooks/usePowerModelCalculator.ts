@@ -131,6 +131,12 @@ export interface AnnualSummary {
   // Scenario comparison fields
   totalBulkCoincidentDemandFull: number; // Full 12CP charge WITHOUT avoidance
   totalPriceCurtailmentSavings: number;  // Energy cost avoided by price-based shutdowns
+  /**
+   * 12CP charge NOT included in totalPreGST due to peakAvoidanceSuccessRate.
+   * = successRate × totalBulkCoincidentDemandFull. Add this back to model a
+   * scenario with no 12CP avoidance program.
+   */
+  missingTwelveCP: number;
   // Over-contract credits (fixed price mode only)
   totalOverContractCredits: number;
   effectivePerKwhCAD: number;
@@ -160,6 +166,23 @@ function calculatePODTieredCharge(
     remaining -= appliedMW;
   }
   return total;
+}
+
+/**
+ * All variable per-MWh charges that scale with energy consumption,
+ * EXCLUDING the pool energy price itself and Operating Reserve (which is
+ * applied as a percentage of pool energy). Returns $/MWh.
+ */
+function marginalNonPoolPerMWh(overrides?: TariffOverrides): number {
+  const retailer = r(overrides?.retailerFeeMeteredEnergy, AESO_RATE_DTS_2026.retailerFee.meteredEnergy);
+  const bulkE = r(overrides?.bulkMeteredEnergy, AESO_RATE_DTS_2026.bulkSystem.meteredEnergy);
+  const regE = r(overrides?.regionalMeteredEnergy, AESO_RATE_DTS_2026.regionalSystem.meteredEnergy);
+  const tcrE = r(overrides?.tcrMeteredEnergy, AESO_RATE_DTS_2026.tcr.meteredEnergy);
+  const vcE = r(overrides?.voltageControlMeteredEnergy, AESO_RATE_DTS_2026.voltageControl.meteredEnergy);
+  const riderE = r(overrides?.riderFMeteredEnergy, AESO_RATE_DTS_2026.riderF.meteredEnergy);
+  const fortisVol = r(overrides?.fortisVolumetricCentsKwh, FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH);
+  // fortisVol is ¢/kWh → convert to $/MWh (¢/kWh × 10 = $/MWh)
+  return retailer + bulkE + regE + tcrE + vcE + riderE + (fortisVol * 10);
 }
 
 function calculateBreakeven(params: FacilityParams, overrides?: TariffOverrides): number {
