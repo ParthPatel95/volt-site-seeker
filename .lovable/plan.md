@@ -1,74 +1,56 @@
-## Goal
+## What I found
 
-You asked: are the new features working, and is any data fake or made up?
-The short answer from my review: the **satellite image + AI asset scan** features are wired correctly, but several of the **new dataset sections** (workforce, construction wages, EPC firms, mill rates, dark fiber, carrier-hotel cross-connect fees) are **curated estimates dressed up as "verified" data**. They have plausible numbers and source URLs, but the values were not actually pulled live from those URLs (and at least two of those URLs return 404/403 today). Per your "no fake or made-up data" rule, we need to relabel them and tighten the coverage badge so they are clearly marked as estimates, not verified facts.
+- The satellite image error is likely configuration/code-path related: `site-satellite-image` and `site-asset-vision` call `GOOGLE_MAPS_API_KEY`, but that secret is not present in the project secrets I can see. The current function returns a 500, which the UI displays as “Edge Function returned a non-2xx status code”.
+- Nearby substations are currently loaded only from the legacy `substations` table. That table does not contain the visible substation beside `51.024423, -113.144688`, so the report misses it even though it is clearly visible in imagery.
+- The Site Intelligence UI is one long report made of stacked sections, so it is hard to compare findings quickly.
 
-This plan fixes the honesty problem and verifies the AI scan path end-to-end.
+## Plan
 
-## What I verified is real and live
+### 1. Fix satellite imagery and AI scan reliability
+- Update `site-satellite-image` and `site-asset-vision` so failures return clear, actionable messages instead of the generic non-2xx error.
+- Use the connected Google Maps runtime correctly:
+  - If the project has a Google Maps connector secret available, call Static Maps through the connector/gateway pattern.
+  - If not, surface a precise “Google Maps credential not available to edge functions” message so the setup issue is obvious.
+- Keep the displayed satellite image as real Google imagery only; no placeholder or fake imagery.
 
-- `alberta-site-report` edge function loads 13 reference tables in parallel and computes distances correctly.
-- ECCC climate normals, NRCan seismic ratings, PeeringDB IXPs, AESO transmission lines, StatsCan population centres, generation assets — these rows in the DB do match their cited sources and are safe to keep as "verified".
-- Modeled fiber latency to cloud regions uses real physics (5 µs/km × 1.4 routing). Already labelled "modeled" — correct.
-- `site-satellite-image` correctly calls Google Static Maps (hybrid, scale=2) and returns base64.
-- `site-asset-vision` correctly forwards the satellite image to `google/gemini-2.5-flash` via the Lovable AI gateway with a strict JSON schema prompt and returns detections + cross-checks them in the UI.
+### 2. Add Open Infrastructure / OSM-backed substation discovery
+- Add a new live lookup path for nearby electrical infrastructure using OpenStreetMap/OpenInfraMap-style data via the Overpass API:
+  - `power=substation`
+  - `power=transformer`
+  - `power=switchgear`
+  - nearby `power=line` / `power=minor_line`
+- Return real OSM tags where available: name, operator, voltage, substation type, power feature type, distance, coordinates, and source URL.
+- Mark these records as `verified` only as “OpenStreetMap/OpenInfraMap tagged feature”, not as engineering-verified capacity.
+- Merge this live substation layer into `alberta-site-report` so the Power & Transmission section catches assets like the visible substation beside the provided site.
+- Add the Open Infrastructure record count into “Datasets queried” so it is obvious whether that live layer loaded.
 
-## What is NOT honest right now
+### 3. Improve substation detail and honesty
+- In Power & Transmission, split substations into:
+  - **Dataset substations** from internal/AESO-style records
+  - **Open Infrastructure detections** from OSM/OpenInfraMap tags
+  - **Aerial AI detections** from satellite scan
+- Add a warning when satellite imagery detects a substation but neither the internal dataset nor Open Infrastructure lookup contains one nearby.
+- Do not invent capacity, owner, or voltage if OSM does not provide it; show “Not tagged” instead.
 
-Rows in these tables are hand-curated estimates but the UI's `CoverageBadge` treats them as "verified" because `classifyRow` defaults to verified whenever `source_url` is non-empty:
+### 4. Redesign Site Intelligence from long scroll into an analysis dashboard
+- Replace the single long vertical report with a more usable dashboard layout:
+  - Sticky top summary with location, overall score, coverage/confidence, export, and key risks.
+  - A compact “decision summary” row: Power, Fiber, Cooling/Climate, Water, Risk, Logistics.
+  - Tabbed sections instead of endless scrolling:
+    - Overview
+    - Power
+    - Fiber
+    - Cooling & Water
+    - Logistics & Workforce
+    - Risk & Regulatory
+    - Imagery & AI Scan
+    - Methodology
+  - Keep dense tables, but show the most important 3–5 records first with expandable/detail areas where needed.
+- Make the imagery/substation area more prominent in the Power and Imagery tabs so visual findings and structured data can be compared quickly.
 
-| Table | Issue |
-|---|---|
-| `alberta_workforce_stats` | Electrician/HVAC/IT counts and median wages are estimates, not pulled from StatsCan tables |
-| `alberta_construction_capacity` | EPC firm "mega-project capable" flag and recent-project lists are editorial |
-| `alberta_construction_wages` | Union vs open-shop rates are typical-range estimates, not the live Alberta Wage & Salary Survey |
-| `alberta_regulatory_zones` | Mill rates, M&E exemption flags, AUC permit weeks — point-in-time estimates; several source URLs 404 |
-| `alberta_carrier_pop_details` | Cross-connect fee estimates and "open access" flags are editorial |
-| `alberta_last_mile_providers` | Speeds and tech are typical, not from CRTC/ISED feeds |
-| `alberta_dark_fiber_inventory` | IFA counts are estimates; some rows already correctly use `source_url='estimate'` |
-
-## Changes
-
-### 1. Honest classification in `SiteReport.tsx`
-Change `classifyRow` so a row is only "verified" when the row explicitly sets `confidence='verified'`. Default becomes "estimated". This flips the badges to amber/red on the curated sections automatically.
-
-Also force-classify the following sections so the badge is correct regardless of row contents:
-- Workforce, Construction, Regulatory, Connectivity Depth → `forcedConfidence: 'estimated'`
-- Cloud reach → already `'modeled'` (keep)
-- Climate, Risk, Transmission, IXPs, Population centres, Carrier POPs (the original 45-row table) → `'verified'`
-
-### 2. Add a "Data accuracy" banner at the top of the report
-Above the existing coverage legend, render a short panel that lists:
-- **Verified** (live or quarterly-refreshed authoritative source): AESO transmission, ECCC climate normals, NRCan seismic, PeeringDB, StatsCan 2021 population, AER generation list, carrier POP locations.
-- **Modeled**: fiber latency to cloud regions (physics), drive times (km / 95 km/h), hyperscaler score weighting.
-- **Estimated (use with caution)**: workforce trade counts, construction wages, EPC capability, municipal mill rates, last-mile speeds, dark-fiber IFA counts, carrier-hotel cross-connect fees.
-
-This is one short Card with three columns and the same icons used elsewhere — no business-logic change.
-
-### 3. Fix broken / wrong source URLs
-Replace the two confirmed bad URLs (Strathcona 404, open.alberta 403) and any others surfaced by a quick HEAD check against every distinct `source_url` in the new tables. A one-shot migration UPDATEs the rows with the canonical landing pages, and adds `confidence` columns (text) to all seven tables so future rows can mark themselves accurately.
-
-### 4. Verify the AI scan path end-to-end
-- Confirm `GOOGLE_MAPS_API_KEY` and `LOVABLE_API_KEY` are present (they are — both functions already gate on them).
-- Add an explicit empty-result hint in `AerialScanSection` when `scan.detections.length === 0` so the user knows the model ran but saw nothing, instead of a silent panel.
-- When an AI-detected `substation` is NOT covered by the dataset, surface a "Possibly missing from dataset — please review" callout (already in code via `isCovered`, but currently buried — promote it to a top-of-section warning if any high-confidence detection is uncovered).
-
-### 5. Surface dataset health in the report
-The edge function already returns `methodology.datasets_loaded` counts. Add a tiny "Datasets loaded" line under the Methodology card so you can see at a glance that e.g. 406 substations, 45 carrier POPs, 12 transmission lines were actually queried.
-
-### 6. Version
-Bump `APP_VERSION` to `'2026.06.08.006'`.
-
-## Out of scope
-
-- Building live ingestion pipelines for StatsCan / Alberta Wage Survey / CRTC / municipal tax rolls. That is the only way to make these rows truly "verified live" and is a multi-day project per dataset — happy to scope it next if you want.
-- Persisting AI scan results.
-- Polygon overlays on the satellite image.
-
-## Files touched
-
-- `src/components/aeso-hub/site-intel/SiteReport.tsx` (classifyRow, banner, forced confidences, empty-state hint, missing-asset callout, datasets-loaded line)
-- `src/constants/app-version.ts`
-- New migration adding a `confidence` text column to the seven curated tables, defaulting to `'estimated'`, plus a handful of UPDATEs to fix the bad source URLs and mark the rows that are genuinely verified.
-
-After approval I will implement and then sanity-check by invoking `alberta-site-report`, `site-satellite-image`, and `site-asset-vision` against a known Alberta coordinate.
+### 5. Verification
+- Test the edge functions directly with the example coordinates `51.024423, -113.144688`.
+- Confirm the satellite image loads or shows a precise credential error.
+- Confirm Open Infrastructure lookup returns the nearby substation if it is tagged in OSM/OpenInfraMap.
+- Confirm no fake substation details are displayed when fields are missing.
+- Bump `APP_VERSION` after implementation.
