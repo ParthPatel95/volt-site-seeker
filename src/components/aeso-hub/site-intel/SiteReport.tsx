@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import {
   Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink, Filter,
   Thermometer, ShieldAlert, Leaf, Building2, Cloud, Network,
-  Users, HardHat, Scale, Wifi,
+  Users, HardHat, Scale, Wifi, Satellite, ScanSearch, AlertTriangle, Loader2,
 } from 'lucide-react';
 import type { SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
+import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -562,6 +563,8 @@ export function SiteReport({ report }: Props) {
         </Section>
       )}
 
+      <AerialScanSection report={report} />
+
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
@@ -585,6 +588,140 @@ export function SiteReport({ report }: Props) {
         )}
       </Card>
     </div>
+  );
+}
+
+function AerialScanSection({ report }: { report: SiteReportT }) {
+  const { lat, lng } = report.location;
+  const [zoom, setZoom] = useState<number>(18);
+  const [imgB64, setImgB64] = useState<string | null>(null);
+  const [imgLoading, setImgLoading] = useState(false);
+  const [imgError, setImgError] = useState<string | null>(null);
+  const [mapsUrl, setMapsUrl] = useState<string | null>(null);
+
+  const [scan, setScan] = useState<any | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setImgLoading(true);
+    setImgError(null);
+    setImgB64(null);
+    supabase.functions.invoke('site-satellite-image', { body: { lat, lng, zoom } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) { setImgError(error.message); return; }
+        if (data?.error) { setImgError(data.error); return; }
+        setImgB64(data?.image_base64 ?? null);
+        setMapsUrl(data?.maps_url ?? null);
+      })
+      .finally(() => { if (!cancelled) setImgLoading(false); });
+    return () => { cancelled = true; };
+  }, [lat, lng, zoom]);
+
+  const runScan = async () => {
+    setScanLoading(true);
+    setScanError(null);
+    setScan(null);
+    const { data, error } = await supabase.functions.invoke('site-asset-vision', { body: { lat, lng, zoom } });
+    setScanLoading(false);
+    if (error) { setScanError(error.message); return; }
+    if (data?.error) { setScanError(data.error); return; }
+    setScan(data);
+  };
+
+  // Dataset cross-check: find nearby items per detection type
+  const datasetByType = useMemo(() => {
+    const subs = (report.transmission?.nearest_substations ?? []) as any[];
+    const lines = (report.transmission?.nearest_lines ?? []) as any[];
+    const gas = (report.gas_and_water?.nearest_gas_pipelines ?? []) as any[];
+    const water = (report.gas_and_water?.nearest_water_sources ?? []) as any[];
+    const logi = (report.logistics?.nearest_logistics_assets ?? []) as any[];
+    return { substation: subs, transmission_line: lines, gas_pipeline: gas, gas_regulator: gas, water_body: water, water_treatment: water, rail: logi };
+  }, [report]);
+
+  function isCovered(type: string, distM?: number | null) {
+    const arr = (datasetByType as any)[type] as any[] | undefined;
+    if (!arr || arr.length === 0) return false;
+    const thresholdKm = distM != null ? Math.max(1, distM / 1000 * 1.5) : 1;
+    return arr.some(r => (r.distance_km ?? 99) <= thresholdKm);
+  }
+
+  const confTone: Record<string, string> = {
+    high: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30',
+    medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+    low: 'bg-muted text-muted-foreground border-border',
+  };
+
+  return (
+    <Section
+      icon={<Satellite className="w-4 h-4" />}
+      title="Aerial Imagery & AI Asset Scan"
+      subtitle="Satellite view of the site plus an AI pass that flags visible infrastructure and cross-checks it against our dataset."
+    >
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <Label className="text-xs">Zoom</Label>
+        <ToggleGroup type="single" value={String(zoom)} onValueChange={(v) => v && setZoom(Number(v))}>
+          <ToggleGroupItem value="14" className="text-xs px-2 h-7">Area</ToggleGroupItem>
+          <ToggleGroupItem value="16" className="text-xs px-2 h-7">Neighborhood</ToggleGroupItem>
+          <ToggleGroupItem value="18" className="text-xs px-2 h-7">Site</ToggleGroupItem>
+          <ToggleGroupItem value="19" className="text-xs px-2 h-7">Close-up</ToggleGroupItem>
+        </ToggleGroup>
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary hover:underline inline-flex items-center gap-1 ml-auto">
+            Open in Google Maps <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+
+      <div className="rounded border border-border overflow-hidden bg-muted/30 aspect-square max-w-md">
+        {imgLoading && <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading imagery…</div>}
+        {imgError && <div className="w-full h-full flex items-center justify-center text-xs text-rose-600 p-4 text-center">{imgError}</div>}
+        {imgB64 && <img src={`data:image/png;base64,${imgB64}`} alt={`Satellite view at ${lat.toFixed(5)}, ${lng.toFixed(5)}`} className="w-full h-full object-cover" />}
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-1">Imagery © Google · {lat.toFixed(5)}, {lng.toFixed(5)} · zoom {zoom}</p>
+
+      <div className="mt-4 flex items-center gap-2">
+        <Button size="sm" variant="outline" onClick={runScan} disabled={scanLoading}>
+          {scanLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ScanSearch className="w-4 h-4 mr-2" />}
+          {scanLoading ? 'Analyzing image…' : scan ? 'Re-run AI scan' : 'Run AI asset scan'}
+        </Button>
+        {scan?.image_quality && (
+          <Badge variant="outline" className="text-[10px]">Image quality: {scan.image_quality}</Badge>
+        )}
+      </div>
+      {scanError && <p className="text-xs text-rose-600 mt-2">{scanError}</p>}
+
+      {scan?.summary && <p className="text-xs text-muted-foreground mt-3 italic">{scan.summary}</p>}
+
+      {Array.isArray(scan?.detections) && scan.detections.length > 0 && (
+        <div className="mt-3">
+          <Table
+            headers={['Type', 'Label', 'Confidence', 'Bearing', 'Dist (m)', 'Cross-check', 'Notes']}
+            rows={scan.detections.map((d: any) => {
+              const cross = ['substation','transmission_line','gas_pipeline','gas_regulator','water_body','water_treatment','rail'].includes(d.type)
+                ? (isCovered(d.type, d.approx_distance_m)
+                    ? <Badge key="c" variant="outline" className={`text-[9px] ${confTone.high}`}>in dataset</Badge>
+                    : <Badge key="c" variant="outline" className="text-[9px] bg-rose-500/15 text-rose-700 border-rose-500/30 inline-flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> possibly missing</Badge>)
+                : <span key="c" className="text-[10px] text-muted-foreground">—</span>;
+              return [
+                <span key="t" className="text-[11px] font-mono">{d.type}</span>,
+                <span key="l" className="font-medium">{d.label}</span>,
+                <Badge key="cf" variant="outline" className={`text-[9px] ${confTone[d.confidence] ?? confTone.low}`}>{d.confidence}</Badge>,
+                d.approx_bearing_deg != null ? `${Math.round(d.approx_bearing_deg)}°` : '—',
+                d.approx_distance_m != null ? Math.round(d.approx_distance_m) : '—',
+                cross,
+                <span key="n" className="text-[10px] text-muted-foreground">{d.notes ?? ''}</span>,
+              ];
+            })}
+          />
+          <p className="text-[10px] text-muted-foreground mt-2">
+            AI detections are best-effort and may include false positives. Items flagged "possibly missing" deserve a manual review — they may be assets absent from our reference tables (e.g. a new substation).
+          </p>
+        </div>
+      )}
+    </Section>
   );
 }
 
