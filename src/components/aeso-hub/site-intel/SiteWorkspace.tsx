@@ -36,7 +36,7 @@ const NAV: { key: PanelKey; label: string; icon: any }[] = [
 
 export function SiteWorkspace({ report }: { report: SiteReportT }) {
   const [panel, setPanel] = useState<PanelKey>('overview');
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const { lat, lng } = report.location;
 
   // Always-on OSM power scan (used by Overview KPIs + Power panel).
@@ -88,9 +88,9 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
   };
 
   return (
-    <div className="flex w-full min-h-[600px] border border-border rounded-lg overflow-hidden bg-background">
+    <div className="@container flex w-full min-h-[600px] border border-border rounded-lg overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className={`flex-shrink-0 border-r border-border bg-secondary/30 transition-all ${collapsed ? 'w-12' : 'w-52'}`}>
+      <aside className={`flex-shrink-0 border-r border-border bg-secondary/30 transition-all ${collapsed ? 'w-12' : 'w-44'}`}>
         <div className="flex items-center justify-between p-2 border-b border-border">
           {!collapsed && <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Workspace</span>}
           <button
@@ -248,7 +248,7 @@ function KpiStrip({ report, osm }: { report: SiteReportT; osm: any | null }) {
   const tx = osm?.summary?.nearest_transmission_substation;
 
   return (
-    <div className="px-4 py-3 border-b border-border bg-secondary/20 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+    <div className="px-4 py-3 border-b border-border bg-secondary/20 grid grid-cols-2 @md:grid-cols-3 @3xl:grid-cols-6 gap-2">
       <Kpi label="Max kV nearby (OSM)" value={maxKv ? `${maxKv} kV` : '—'} sub={tx?.name ?? undefined} tone={maxKv >= 240 ? 'good' : maxKv >= 138 ? 'good' : maxKv ? 'warn' : 'default'} />
       <Kpi label="Nearest substation" value={fmtKm(nearestSubKm)} sub={osm?.substations?.[0]?.operator ?? undefined} tone={nearestSubKm < 2 ? 'good' : nearestSubKm < 5 ? 'warn' : 'default'} />
       <Kpi label="Tx substations ≤25 km" value={osm?.counts?.transmission_substations ?? '—'} sub="OSM tagged" />
