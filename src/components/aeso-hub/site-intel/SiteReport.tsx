@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink, Filter,
   Thermometer, ShieldAlert, Leaf, Building2, Cloud, Network,
