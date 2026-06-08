@@ -668,6 +668,15 @@ function AerialScanSection({ report }: { report: SiteReportT }) {
     return arr.some(r => (r.distance_km ?? 99) <= thresholdKm);
   }
 
+  const missingHighConfidence = useMemo(() => {
+    const dets = Array.isArray(scan?.detections) ? scan.detections : [];
+    return dets.filter((d: any) =>
+      ['substation','transmission_line','gas_pipeline','gas_regulator','water_body','rail'].includes(d.type)
+      && d.confidence === 'high'
+      && !isCovered(d.type, d.approx_distance_m),
+    );
+  }, [scan]);
+
   const confTone: Record<string, string> = {
     high: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30',
     medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
@@ -714,6 +723,24 @@ function AerialScanSection({ report }: { report: SiteReportT }) {
       {scanError && <p className="text-xs text-rose-600 mt-2">{scanError}</p>}
 
       {scan?.summary && <p className="text-xs text-muted-foreground mt-3 italic">{scan.summary}</p>}
+
+      {missingHighConfidence.length > 0 && (
+        <div className="mt-3 rounded border border-rose-500/30 bg-rose-500/10 p-3">
+          <p className="text-xs font-semibold text-rose-700 flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5" /> {missingHighConfidence.length} high-confidence detection{missingHighConfidence.length === 1 ? '' : 's'} not in our dataset
+          </p>
+          <ul className="mt-1 text-[11px] text-rose-700 list-disc pl-5">
+            {missingHighConfidence.map((d: any, i: number) => (
+              <li key={i}><strong>{d.type.replace(/_/g, ' ')}</strong> — {d.label}{d.approx_distance_m != null ? ` (~${Math.round(d.approx_distance_m)} m)` : ''}</li>
+            ))}
+          </ul>
+          <p className="text-[10px] text-rose-700/80 mt-1">These may be real assets we have not yet ingested. Worth a manual review before relying on the dataset for this site.</p>
+        </div>
+      )}
+
+      {scan && Array.isArray(scan.detections) && scan.detections.length === 0 && !scanError && (
+        <p className="text-xs text-muted-foreground mt-3">AI scan ran but did not identify discrete infrastructure assets at this zoom level. Try a wider zoom (Area) or a closer one (Close-up).</p>
+      )}
 
       {Array.isArray(scan?.detections) && scan.detections.length > 0 && (
         <div className="mt-3">
