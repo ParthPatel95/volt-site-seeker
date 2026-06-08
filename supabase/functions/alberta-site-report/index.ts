@@ -113,6 +113,8 @@ Deno.serve(async (req) => {
       pops, fiber, trans, gas, water, parks,
       climate, hazards, waterLic, incentives,
       clouds, ixps, logistics, gen, pop,
+      workforce, postSec, epcs, wages, regZones,
+      popDetails, lastMile, darkFiber,
     ] = await Promise.all([
       admin.from('alberta_carrier_pops').select('*'),
       admin.from('alberta_fiber_routes').select('*'),
@@ -129,6 +131,14 @@ Deno.serve(async (req) => {
       admin.from('alberta_logistics_assets').select('*'),
       admin.from('alberta_generation_assets').select('*'),
       admin.from('alberta_population_centres').select('*'),
+      admin.from('alberta_workforce_stats').select('*'),
+      admin.from('alberta_post_secondary').select('*'),
+      admin.from('alberta_construction_capacity').select('*'),
+      admin.from('alberta_construction_wages').select('*'),
+      admin.from('alberta_regulatory_zones').select('*'),
+      admin.from('alberta_carrier_pop_details').select('*'),
+      admin.from('alberta_last_mile_providers').select('*'),
+      admin.from('alberta_dark_fiber_inventory').select('*'),
     ]);
 
     const nearestPops = nearestPoints(pops.data ?? [], lat, lng, 5);
@@ -384,6 +394,33 @@ Deno.serve(async (req) => {
         nearest_population_centres: nearestPopulation,
         drive_times: driveTimes,
       },
+      workforce: (() => {
+        const nearestWf = nearestPoints(workforce.data ?? [], lat, lng, 3);
+        const nearestSchools = nearestPoints(postSec.data ?? [], lat, lng, 8)
+          .filter((s: any) => s.distance_km <= 200);
+        return {
+          nearest_centres: nearestWf,
+          post_secondary_within_200km: nearestSchools,
+        };
+      })(),
+      construction: {
+        epc_firms: epcs.data ?? [],
+        union_vs_open_wages: wages.data ?? [],
+      },
+      regulatory: (() => {
+        const nearestZone = nearestPoints(regZones.data ?? [], lat, lng, 1)[0] ?? null;
+        return { nearest_zone: nearestZone };
+      })(),
+      connectivity_depth: (() => {
+        const popDet = nearestPoints(popDetails.data ?? [], lat, lng, 6);
+        const lm = nearestPoints(lastMile.data ?? [], lat, lng, 1)[0] ?? null;
+        const df = nearestLines(darkFiber.data ?? [], lat, lng, 5);
+        return {
+          carrier_pop_details: popDet,
+          last_mile_in_municipality: lm,
+          dark_fiber_segments_nearby: df,
+        };
+      })(),
       data_provenance: {
         sources: [
           'AESO Transmission Map & Asset List — https://www.aeso.ca',
@@ -396,6 +433,11 @@ Deno.serve(async (req) => {
           'Carrier facility/coverage pages (Bell, Telus, Zayo, Cologix, eStruxture, AXIA)',
           'Statistics Canada Census 2021 — https://www12.statcan.gc.ca',
           'Hyperscaler region listings (AWS / Azure / GCP / Oracle)',
+          'Alberta Wage & Salary Survey — https://open.alberta.ca/publications/alberta-wage-and-salary-survey',
+          'Alberta Labour Force Statistics — https://open.alberta.ca/dataset/labour-force-statistics',
+          'CRTC Communications Monitoring & ISED National Broadband Data — https://crtc.gc.ca / https://www.ic.gc.ca',
+          'Municipal property tax rates (per-municipality publications)',
+          'Post-secondary institution program calendars (SAIT, NAIT, U of C, U of A, polytechnics)',
         ],
         notes: 'Reference layers are curated from primary public sources and refreshed quarterly. Per-row source URL and "as-of" date is returned with every record. Latencies marked "modeled" use the speed-of-light-in-fiber formula; latencies marked "verified" come from carrier-published values.',
       },

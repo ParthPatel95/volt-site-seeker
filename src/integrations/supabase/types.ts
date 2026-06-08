@@ -2424,6 +2424,54 @@ export type Database = {
         }
         Relationships: []
       }
+      alberta_carrier_pop_details: {
+        Row: {
+          building_owner: string | null
+          carriers_on_net: string[] | null
+          city: string | null
+          created_at: string
+          cross_connect_fee_estimate_cad: number | null
+          facility_name: string
+          facility_type: string | null
+          id: string
+          last_verified: string | null
+          lat: number
+          lng: number
+          open_access: boolean | null
+          source_url: string | null
+        }
+        Insert: {
+          building_owner?: string | null
+          carriers_on_net?: string[] | null
+          city?: string | null
+          created_at?: string
+          cross_connect_fee_estimate_cad?: number | null
+          facility_name: string
+          facility_type?: string | null
+          id?: string
+          last_verified?: string | null
+          lat: number
+          lng: number
+          open_access?: boolean | null
+          source_url?: string | null
+        }
+        Update: {
+          building_owner?: string | null
+          carriers_on_net?: string[] | null
+          city?: string | null
+          created_at?: string
+          cross_connect_fee_estimate_cad?: number | null
+          facility_name?: string
+          facility_type?: string | null
+          id?: string
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          open_access?: boolean | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
       alberta_carrier_pops: {
         Row: {
           address: string | null
@@ -2433,6 +2481,7 @@ export type Database = {
           created_at: string
           facility_name: string
           id: string
+          last_verified: string | null
           lat: number
           latency_to_ord_ms: number | null
           latency_to_sea_ms: number | null
@@ -2452,6 +2501,7 @@ export type Database = {
           created_at?: string
           facility_name: string
           id?: string
+          last_verified?: string | null
           lat: number
           latency_to_ord_ms?: number | null
           latency_to_sea_ms?: number | null
@@ -2471,6 +2521,7 @@ export type Database = {
           created_at?: string
           facility_name?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           latency_to_ord_ms?: number | null
           latency_to_sea_ms?: number | null
@@ -2550,6 +2601,123 @@ export type Database = {
         }
         Relationships: []
       }
+      alberta_construction_capacity: {
+        Row: {
+          created_at: string
+          firm_name: string
+          hq_city: string | null
+          id: string
+          last_verified: string | null
+          mega_project_capable: boolean | null
+          recent_projects: Json | null
+          source_url: string | null
+          union_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          firm_name: string
+          hq_city?: string | null
+          id?: string
+          last_verified?: string | null
+          mega_project_capable?: boolean | null
+          recent_projects?: Json | null
+          source_url?: string | null
+          union_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          firm_name?: string
+          hq_city?: string | null
+          id?: string
+          last_verified?: string | null
+          mega_project_capable?: boolean | null
+          recent_projects?: Json | null
+          source_url?: string | null
+          union_status?: string | null
+        }
+        Relationships: []
+      }
+      alberta_construction_wages: {
+        Row: {
+          benefits_loading_pct: number | null
+          created_at: string
+          id: string
+          last_verified: string | null
+          open_shop_rate_cad_hr: number | null
+          source_url: string | null
+          trade: string
+          union_rate_cad_hr: number | null
+        }
+        Insert: {
+          benefits_loading_pct?: number | null
+          created_at?: string
+          id?: string
+          last_verified?: string | null
+          open_shop_rate_cad_hr?: number | null
+          source_url?: string | null
+          trade: string
+          union_rate_cad_hr?: number | null
+        }
+        Update: {
+          benefits_loading_pct?: number | null
+          created_at?: string
+          id?: string
+          last_verified?: string | null
+          open_shop_rate_cad_hr?: number | null
+          source_url?: string | null
+          trade?: string
+          union_rate_cad_hr?: number | null
+        }
+        Relationships: []
+      }
+      alberta_dark_fiber_inventory: {
+        Row: {
+          conduit_owner: string | null
+          created_at: string
+          end_lat: number
+          end_lng: number
+          id: string
+          ifa_count_estimate: number | null
+          last_verified: string | null
+          lit_or_dark: string | null
+          owner: string | null
+          segment_name: string
+          source_url: string | null
+          start_lat: number
+          start_lng: number
+        }
+        Insert: {
+          conduit_owner?: string | null
+          created_at?: string
+          end_lat: number
+          end_lng: number
+          id?: string
+          ifa_count_estimate?: number | null
+          last_verified?: string | null
+          lit_or_dark?: string | null
+          owner?: string | null
+          segment_name: string
+          source_url?: string | null
+          start_lat: number
+          start_lng: number
+        }
+        Update: {
+          conduit_owner?: string | null
+          created_at?: string
+          end_lat?: number
+          end_lng?: number
+          id?: string
+          ifa_count_estimate?: number | null
+          last_verified?: string | null
+          lit_or_dark?: string | null
+          owner?: string | null
+          segment_name?: string
+          source_url?: string | null
+          start_lat?: number
+          start_lng?: number
+        }
+        Relationships: []
+      }
       alberta_fiber_routes: {
         Row: {
           carrier: string
@@ -2559,6 +2727,7 @@ export type Database = {
           end_lat: number
           end_lng: number
           id: string
+          last_verified: string | null
           lit_dark: string | null
           route_name: string
           route_type: string
@@ -2576,6 +2745,7 @@ export type Database = {
           end_lat: number
           end_lng: number
           id?: string
+          last_verified?: string | null
           lit_dark?: string | null
           route_name: string
           route_type?: string
@@ -2593,6 +2763,7 @@ export type Database = {
           end_lat?: number
           end_lng?: number
           id?: string
+          last_verified?: string | null
           lit_dark?: string | null
           route_name?: string
           route_type?: string
@@ -2613,6 +2784,7 @@ export type Database = {
           end_lat: number
           end_lng: number
           id: string
+          last_verified: string | null
           name: string
           operator: string
           pressure_kpa: number | null
@@ -2630,6 +2802,7 @@ export type Database = {
           end_lat: number
           end_lng: number
           id?: string
+          last_verified?: string | null
           name: string
           operator: string
           pressure_kpa?: number | null
@@ -2647,6 +2820,7 @@ export type Database = {
           end_lat?: number
           end_lng?: number
           id?: string
+          last_verified?: string | null
           name?: string
           operator?: string
           pressure_kpa?: number | null
@@ -2667,6 +2841,7 @@ export type Database = {
           created_at: string
           fuel_type: string
           id: string
+          last_verified: string | null
           lat: number
           lng: number
           operator: string | null
@@ -2684,6 +2859,7 @@ export type Database = {
           created_at?: string
           fuel_type: string
           id?: string
+          last_verified?: string | null
           lat: number
           lng: number
           operator?: string | null
@@ -2701,6 +2877,7 @@ export type Database = {
           created_at?: string
           fuel_type?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           lng?: number
           operator?: string | null
@@ -2775,6 +2952,7 @@ export type Database = {
           confidence: string | null
           created_at: string
           id: string
+          last_verified: string | null
           lat: number
           lng: number
           municipality: string
@@ -2790,6 +2968,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat: number
           lng: number
           municipality: string
@@ -2805,6 +2984,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           lng?: number
           municipality?: string
@@ -2817,12 +2997,46 @@ export type Database = {
         }
         Relationships: []
       }
+      alberta_last_mile_providers: {
+        Row: {
+          created_at: string
+          id: string
+          last_verified: string | null
+          lat: number
+          lng: number
+          population_centre: string
+          providers: Json
+          source_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_verified?: string | null
+          lat: number
+          lng: number
+          population_centre: string
+          providers: Json
+          source_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          population_centre?: string
+          providers?: Json
+          source_url?: string | null
+        }
+        Relationships: []
+      }
       alberta_logistics_assets: {
         Row: {
           asset_type: string
           confidence: string | null
           created_at: string
           id: string
+          last_verified: string | null
           lat: number
           lng: number
           name: string
@@ -2837,6 +3051,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat: number
           lng: number
           name: string
@@ -2851,6 +3066,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           lng?: number
           name?: string
@@ -2868,6 +3084,7 @@ export type Database = {
           created_at: string
           id: string
           incentive_summary: string | null
+          last_verified: string | null
           lat: number
           lng: number
           machinery_equipment_mill_rate: number | null
@@ -2883,6 +3100,7 @@ export type Database = {
           created_at?: string
           id?: string
           incentive_summary?: string | null
+          last_verified?: string | null
           lat: number
           lng: number
           machinery_equipment_mill_rate?: number | null
@@ -2898,6 +3116,7 @@ export type Database = {
           created_at?: string
           id?: string
           incentive_summary?: string | null
+          last_verified?: string | null
           lat?: number
           lng?: number
           machinery_equipment_mill_rate?: number | null
@@ -2916,6 +3135,7 @@ export type Database = {
           created_at: string
           id: string
           labour_force_2021: number | null
+          last_verified: string | null
           lat: number
           lng: number
           name: string
@@ -2930,6 +3150,7 @@ export type Database = {
           created_at?: string
           id?: string
           labour_force_2021?: number | null
+          last_verified?: string | null
           lat: number
           lng: number
           name: string
@@ -2944,6 +3165,7 @@ export type Database = {
           created_at?: string
           id?: string
           labour_force_2021?: number | null
+          last_verified?: string | null
           lat?: number
           lng?: number
           name?: string
@@ -2952,6 +3174,96 @@ export type Database = {
           source_publisher?: string | null
           source_url?: string | null
           trades_workers_estimate?: number | null
+        }
+        Relationships: []
+      }
+      alberta_post_secondary: {
+        Row: {
+          annual_grads_relevant: number | null
+          city: string | null
+          created_at: string
+          id: string
+          institution_name: string
+          last_verified: string | null
+          lat: number
+          lng: number
+          program_focus: string[] | null
+          source_url: string | null
+        }
+        Insert: {
+          annual_grads_relevant?: number | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          institution_name: string
+          last_verified?: string | null
+          lat: number
+          lng: number
+          program_focus?: string[] | null
+          source_url?: string | null
+        }
+        Update: {
+          annual_grads_relevant?: number | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          institution_name?: string
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          program_focus?: string[] | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
+      alberta_regulatory_zones: {
+        Row: {
+          aer_region: string | null
+          auc_typical_permit_weeks: number | null
+          created_at: string
+          id: string
+          indigenous_consultation_required: boolean | null
+          last_verified: string | null
+          lat: number
+          lng: number
+          machinery_equipment_exempt: boolean | null
+          mill_rate_non_residential: number | null
+          municipality: string
+          school_tax_rate: number | null
+          source_url: string | null
+          treaty_area: string | null
+        }
+        Insert: {
+          aer_region?: string | null
+          auc_typical_permit_weeks?: number | null
+          created_at?: string
+          id?: string
+          indigenous_consultation_required?: boolean | null
+          last_verified?: string | null
+          lat: number
+          lng: number
+          machinery_equipment_exempt?: boolean | null
+          mill_rate_non_residential?: number | null
+          municipality: string
+          school_tax_rate?: number | null
+          source_url?: string | null
+          treaty_area?: string | null
+        }
+        Update: {
+          aer_region?: string | null
+          auc_typical_permit_weeks?: number | null
+          created_at?: string
+          id?: string
+          indigenous_consultation_required?: boolean | null
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          machinery_equipment_exempt?: boolean | null
+          mill_rate_non_residential?: number | null
+          municipality?: string
+          school_tax_rate?: number | null
+          source_url?: string | null
+          treaty_area?: string | null
         }
         Relationships: []
       }
@@ -2996,6 +3308,7 @@ export type Database = {
           end_lng: number
           id: string
           in_service_date: string | null
+          last_verified: string | null
           name: string
           owner: string
           source_as_of: string | null
@@ -3012,6 +3325,7 @@ export type Database = {
           end_lng: number
           id?: string
           in_service_date?: string | null
+          last_verified?: string | null
           name: string
           owner: string
           source_as_of?: string | null
@@ -3028,6 +3342,7 @@ export type Database = {
           end_lng?: number
           id?: string
           in_service_date?: string | null
+          last_verified?: string | null
           name?: string
           owner?: string
           source_as_of?: string | null
@@ -3045,6 +3360,7 @@ export type Database = {
           confidence: string | null
           created_at: string
           id: string
+          last_verified: string | null
           lat: number
           licensed_m3_per_year: number | null
           licensee: string
@@ -3061,6 +3377,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat: number
           licensed_m3_per_year?: number | null
           licensee: string
@@ -3077,6 +3394,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           licensed_m3_per_year?: number | null
           licensee?: string
@@ -3096,6 +3414,7 @@ export type Database = {
           confidence: string | null
           created_at: string
           id: string
+          last_verified: string | null
           lat: number
           lng: number
           name: string
@@ -3111,6 +3430,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat: number
           lng: number
           name: string
@@ -3126,6 +3446,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           lng?: number
           name?: string
@@ -3135,6 +3456,60 @@ export type Database = {
           source_url?: string | null
           sub_basin?: string | null
           type?: string
+        }
+        Relationships: []
+      }
+      alberta_workforce_stats: {
+        Row: {
+          centre_name: string
+          created_at: string
+          electricians_count: number | null
+          hvac_techs_count: number | null
+          id: string
+          it_workers_count: number | null
+          labour_force: number | null
+          last_verified: string | null
+          lat: number
+          lng: number
+          median_wage_electrician: number | null
+          median_wage_it: number | null
+          pct_post_secondary: number | null
+          source_url: string | null
+          unemployment_rate: number | null
+        }
+        Insert: {
+          centre_name: string
+          created_at?: string
+          electricians_count?: number | null
+          hvac_techs_count?: number | null
+          id?: string
+          it_workers_count?: number | null
+          labour_force?: number | null
+          last_verified?: string | null
+          lat: number
+          lng: number
+          median_wage_electrician?: number | null
+          median_wage_it?: number | null
+          pct_post_secondary?: number | null
+          source_url?: string | null
+          unemployment_rate?: number | null
+        }
+        Update: {
+          centre_name?: string
+          created_at?: string
+          electricians_count?: number | null
+          hvac_techs_count?: number | null
+          id?: string
+          it_workers_count?: number | null
+          labour_force?: number | null
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          median_wage_electrician?: number | null
+          median_wage_it?: number | null
+          pct_post_secondary?: number | null
+          source_url?: string | null
+          unemployment_rate?: number | null
         }
         Relationships: []
       }
@@ -3828,6 +4203,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_verified: string | null
           lat: number
           lng: number
           provider: string
@@ -3839,6 +4215,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat: number
           lng: number
           provider: string
@@ -3850,6 +4227,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           lng?: number
           provider?: string
@@ -5760,6 +6138,7 @@ export type Database = {
           city: string
           created_at: string
           id: string
+          last_verified: string | null
           lat: number
           lng: number
           name: string
@@ -5773,6 +6152,7 @@ export type Database = {
           city: string
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat: number
           lng: number
           name: string
@@ -5786,6 +6166,7 @@ export type Database = {
           city?: string
           created_at?: string
           id?: string
+          last_verified?: string | null
           lat?: number
           lng?: number
           name?: string

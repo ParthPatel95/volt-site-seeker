@@ -128,6 +128,22 @@ export interface SiteReport {
     nearest_population_centres: Array<{ id: string; name: string; population_2021: number; labour_force_2021: number | null; trades_workers_estimate: number | null; source_url: string | null; distance_km?: number }>;
     drive_times: { hub: string; code: string; distance_km: number; drive_hours_est: number }[];
   };
+  workforce?: {
+    nearest_centres: Array<{ id: string; centre_name: string; labour_force: number | null; unemployment_rate: number | null; pct_post_secondary: number | null; electricians_count: number | null; hvac_techs_count: number | null; it_workers_count: number | null; median_wage_electrician: number | null; median_wage_it: number | null; source_url: string | null; last_verified: string | null; distance_km?: number }>;
+    post_secondary_within_200km: Array<{ id: string; institution_name: string; city: string | null; program_focus: string[] | null; annual_grads_relevant: number | null; source_url: string | null; distance_km?: number }>;
+  };
+  construction?: {
+    epc_firms: Array<{ id: string; firm_name: string; hq_city: string | null; mega_project_capable: boolean; union_status: string | null; recent_projects: any; source_url: string | null }>;
+    union_vs_open_wages: Array<{ id: string; trade: string; union_rate_cad_hr: number | null; open_shop_rate_cad_hr: number | null; benefits_loading_pct: number | null; source_url: string | null }>;
+  };
+  regulatory?: {
+    nearest_zone: null | { id: string; municipality: string; mill_rate_non_residential: number | null; machinery_equipment_exempt: boolean | null; school_tax_rate: number | null; aer_region: string | null; auc_typical_permit_weeks: number | null; indigenous_consultation_required: boolean | null; treaty_area: string | null; source_url: string | null; distance_km?: number };
+  };
+  connectivity_depth?: {
+    carrier_pop_details: Array<{ id: string; facility_name: string; city: string | null; facility_type: string | null; open_access: boolean | null; cross_connect_fee_estimate_cad: number | null; building_owner: string | null; carriers_on_net: string[] | null; source_url: string | null; distance_km?: number }>;
+    last_mile_in_municipality: null | { id: string; population_centre: string; providers: Array<{ name: string; max_speed_gbps: number; technology: string }>; source_url: string | null; distance_km?: number };
+    dark_fiber_segments_nearby: Array<{ id: string; segment_name: string; owner: string | null; lit_or_dark: string | null; conduit_owner: string | null; ifa_count_estimate: number | null; source_url: string | null; distance_km?: number }>;
+  };
   data_provenance: { sources: string[]; notes: string };
 }
 
