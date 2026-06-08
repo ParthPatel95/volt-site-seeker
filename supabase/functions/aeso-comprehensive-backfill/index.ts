@@ -154,10 +154,10 @@ async function backfillGaps(
           stillMissing: 0,
         });
       } else {
-        const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
+        const url = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
         const resp = await fetch(url, {
           headers: {
-            'X-API-Key': aesoKey,
+            'API-KEY': aesoKey,
             'Ocp-Apim-Subscription-Key': aesoKey,
           },
         });
@@ -406,10 +406,10 @@ async function backfillPrices(supabase: any, aesoKey: string | undefined, startY
       }
 
       // Fetch from AESO API
-      const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
+      const url = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
       const response = await fetch(url, {
         headers: {
-          'X-API-Key': aesoKey,
+          'API-KEY': aesoKey,
           'Ocp-Apim-Subscription-Key': aesoKey
         }
       });
@@ -892,7 +892,7 @@ async function backfillSMP(supabase: any, aesoKey: string | undefined, startYear
     try {
       const url = `https://api.aeso.ca/report/v1/smp?startDate=${startDate}&endDate=${endDate}`;
       const response = await fetch(url, {
-        headers: { 'X-API-Key': aesoKey, 'Ocp-Apim-Subscription-Key': aesoKey },
+        headers: { 'API-KEY': aesoKey, 'Ocp-Apim-Subscription-Key': aesoKey },
         signal: AbortSignal.timeout(20000),
       });
 
