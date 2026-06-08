@@ -6,7 +6,12 @@ const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
 async function fetchStaticMapBase64(lat: number, lng: number, zoom: number) {
   const url = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=${zoom}&size=640x640&scale=2&maptype=satellite&key=${GOOGLE_KEY}`;
   const r = await fetch(url);
-  if (!r.ok) throw new Error(`Google Static Maps ${r.status}`);
+  if (!r.ok) {
+    const body = await r.text();
+    let hint = '';
+    if (r.status === 403) hint = ' — Google rejected the key (likely Static Maps API or billing not enabled).';
+    throw new Error(`Google Static Maps ${r.status}${hint} :: ${body.slice(0, 240)}`);
+  }
   const buf = new Uint8Array(await r.arrayBuffer());
   let bin = '';
   for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
@@ -75,6 +80,6 @@ Deno.serve(async (req) => {
       ...parsed,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
