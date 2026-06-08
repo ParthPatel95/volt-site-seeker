@@ -1,84 +1,71 @@
-## Audit findings — Power Model math
+## Problem
 
-I traced the numbers in the screenshot back through `usePowerModelCalculator.ts` and `PowerModelCostProgression.tsx` and found three real math defects (plus one UX issue) that together explain why "With Price Curtailment" looks identical to the base row and why optimization savings are misstated.
+1. **Squeezed layout** — At ~1075 px the Site Lookup is a 380 px form + workspace, and the workspace itself has a fixed 208 px inner sidebar plus a 6‑column KPI strip. Result: KPI cards and panel content collide (visible in screenshot).
+2. **Shallow fiber data** — The edge function already computes `top_routes`, `cloud_reach`, `nearest_long_haul_routes`, `carrier_pop_details`, `last_mile_in_municipality`, `dark_fiber_segments_nearby`, and `peering_hubs`, but the Connectivity panel only renders 2 small tables (POPs + IXPs). Tons of data is silently dropped.
 
-### Bug 1 — Scenario base/with-X formulas double-count 12CP
+## Plan
 
-In `PowerModelCostProgression.tsx`:
+### 1. Layout (presentation only)
 
-```ts
-const baseCostPreGST = annual.totalPreGST + full12CPCharge + priceCurtailSavings;
-const with12CPCostPreGST = baseCostPreGST - full12CPCharge;
-```
+**`src/components/aeso-hub/tabs/SiteIntelTab.tsx`**
+- After a report is generated, collapse the lookup form into a slim header chip ("📍 lat,lng · Change") and give the workspace the full content width. Form re‑expands on "Change".
+- Change the grid from fixed `lg:grid-cols-[380px_1fr]` to a stack on `< xl`, two‑column only at `xl+`.
 
-`annual.totalPreGST` already contains `(1 - successRate) × full12CPCharge` (15% of the full charge by default, because the calculator applies `peakAvoidanceSuccessRate`). Adding `full12CPCharge` on top makes `baseCost` overstate the unoptimized scenario by 15% of the 12CP charge. Then subtracting the full charge again in `with12CPCostPreGST` zeroes out the entire 12CP line even though a real 12CP-avoidance program still pays ~15% (the missed-peak portion). Both the "Base" and "With 12CP Avoidance" rates are wrong.
+**`src/components/aeso-hub/site-intel/SiteWorkspace.tsx`**
+- Inner workspace sidebar starts **collapsed by default** (icon‑only `w-12`), expands on hover/click. Removes the 208 px static rail.
+- KPI strip: switch from `lg:grid-cols-6` to a container‑driven 2 / 3 / 6 layout with `@container` queries so it reflows by the workspace's own width, not the viewport.
+- Add `min-w-0` and `overflow-x-auto` guards on table wrappers so deeper fiber tables don't push the layout.
 
-**Fix:** introduce explicit annual fields and compute scenarios from them:
+### 2. Fiber depth — render everything we already have
 
-```
-missingTwelveCP = successRate × full12CPCharge          // added back to model "no avoidance"
-withBothPreGST  = annual.totalPreGST                    // optimized (12CP + price)
-with12CPOnly    = withBothPreGST + priceCurtailSavings  // 12CP avoidance only
-withPriceOnly   = withBothPreGST + missingTwelveCP      // price curtailment only
-basePreGST      = withBothPreGST + missingTwelveCP + priceCurtailSavings
-```
+Rewrite `ConnectivityPanel` in `SiteWorkspace.tsx` to surface every fiber field returned by the edge function:
 
-Apply GST to each, then format.
+- **Fiber score card** — score, grade, 4 sub‑score bars (proximity / carrier diversity / route diversity / latency) from `report.fiber.score.breakdown`.
+- **Top routes** — full ranked table (`report.fiber.top_routes`): rank, carrier, POP, site→POP km, peering hub, modeled latency, composite score.
+- **Carrier POPs** — extend existing table with all latency columns + source URL.
+- **Carrier POP details** — `report.connectivity_depth.carrier_pop_details`: facility address, building owner, lit services, cross‑connect fee, MMR availability, 24×7 access.
+- **Long‑haul routes** — `report.fiber.nearest_long_haul_routes`: route name, carrier, A‑Z endpoints, fiber pair count, lit/dark, distance to route.
+- **Dark fiber inventory** — `report.connectivity_depth.dark_fiber_segments_nearby`: segment, strands available, IRU term, vendor.
+- **Last‑mile providers** — `report.connectivity_depth.last_mile_in_municipality` (multi‑provider list with tech / max speed / pricing tier).
+- **IXPs** — keep existing, add ASN count and switch fabric.
+- **Cloud reach** — `report.fiber.cloud_reach`: provider, region, distance, modeled one‑way ms, source URL.
+- **Peering hubs** — `report.fiber.peering_hubs` distance + modeled latency from the site to YYC / YEG / SEA / ORD.
 
-### Bug 2 — Price-curtailment savings only count pool energy
+All sections become collapsible accordion items so the panel doesn't get visually overwhelming, with the score + top routes open by default.
 
-`calcCurtailSavings` returns `poolPrice × cap` (or `fixedPriceCAD × cap`). The real cost avoided by skipping an hour is the full marginal MWh cost the breakeven formula already encodes:
+### 3. Fiber depth — pull live external data
 
-```
-marginal_per_MWh = poolPrice × (1 + orRate)
-                 + bulkE + regE + tcr + vcr + riderF + retailer
-                 + fortisVolumetric
-```
+New edge function **`supabase/functions/fiber-depth-lookup/index.ts`** that the Connectivity panel calls on mount (same pattern as `osm-power-infrastructure`):
 
-So every curtailed hour also avoids Operating Reserve (8.13% of pool), Bulk/Regional metered energy, TCR, Voltage Control, Rider F, retailer fee, and (where applicable) Fortis volumetric. Today's model under-reports curtailment savings by ~12–18% depending on pool price, and the "Without Curtailment" rebuild in the scenario card is therefore too low.
+- **PeeringDB** (`https://www.peeringdb.com/api/`): nearby `fac` (facilities) within ~75 km, their participants (`netfac`/`net`), ASN counts, IPv4/IPv6 prefixes, peering policies. Also list nearby `ix` with full participant lists.
+- **OpenStreetMap Overpass**: query `man_made=communications_tower`, `telecom=*`, `man_made=tower` with `tower:type=communication`, plus `building=data_center` within 25 km. Returns name, operator, height, distance.
+- **CRTC Broadband Map (ISED National Broadband Internet Service Availability)**: hex‑level availability for the site's cell — list every ISP serving the hex with max down/up speed and tech (fibre / FWA / cable / DSL / GEO / LEO).
+- **Hurricane Electric BGP toolkit** (`bgp.he.net`) scrape for upstream ASN context of the closest carrier POPs.
 
-**Fix:**
-- Add a helper `marginalChargesPerMWh(overrides)` that returns the same components used in `calculateBreakeven`.
-- Rewrite `calcCurtailSavings(rec)` to:
-  - Fixed price PPA: `(fixedPriceCAD × (1 + orRateOnActualPool ? 0 : 0) + marginalNonPool) × cap` — OR is a pass-through on the *actual* pool price even with a PPA, so charge it with `rec.poolPrice × orRate × cap` plus `(fixedPriceCAD + marginalNonPool) × cap`.
-  - Floating: `(rec.poolPrice × (1 + orRate) + marginalNonPool) × cap`.
-- This keeps consistency with `calculateBreakeven` and with the per-MWh marginals already booked elsewhere in the monthly loop.
+Edge function returns a normalized JSON object cached in a new `alberta_fiber_depth_cache` table (key = rounded lat/lng + day), so repeat lookups are free.
 
-### Bug 3 — "Full 12CP" annual line ignores capacity overrides
+New panel section "Live fiber scan" renders the result with the same Section/MiniTable atoms; clearly badges each table with its source (PeeringDB / OSM / ISED / HE).
 
-`totalBulkCoincidentDemandFull = monthly.length × bulkCoincidentRate × cap` uses the *constant* rate even when the user supplied a `tariffOverrides.bulkCoincidentDemand` for the scenario. The 12CP-only column then disagrees with the reconciliation card.
+### 4. PDF export
+Extend `handlePdf` to include the new tables (top routes, cloud reach, last‑mile, dark fiber, PeeringDB facilities) so the exported report matches the screen.
 
-**Fix:** use the resolved `bulkCoincidentRate` (already computed) consistently.
+### 5. Version
+Bump `APP_VERSION` to `'2026.06.08.012'`.
 
-### UX issue — "0 hours qualified" reads as a math error
+## Files
 
-When no pool-price hours exceed breakeven (common with low-price datasets), `priceCurtailSavings = 0`, so the "With Price Curtailment" row equals "Base" and the combined row equals "12CP Only". That's mathematically correct but looks broken. Add a small inline note ("0 hours above $X/MWh breakeven this period") and surface a dash in the savings column with a tooltip explaining why.
+**Edit**
+- `src/components/aeso-hub/tabs/SiteIntelTab.tsx` — collapse form after report; widen workspace.
+- `src/components/aeso-hub/site-intel/SiteWorkspace.tsx` — sidebar default‑collapsed, KPI container query, rewritten ConnectivityPanel with all fiber tables + live‑scan integration, extended PDF export.
+- `src/constants/app-version.ts` — bump version.
 
-## Changes
-
-1. **`src/hooks/usePowerModelCalculator.ts`**
-   - New `marginalNonPoolPerMWh()` helper, reused by `calculateBreakeven` and curtailment savings.
-   - Rewrite `calcCurtailSavings` to include OR + all variable charges.
-   - Add `annual.missingTwelveCP` and ensure `totalBulkCoincidentDemandFull` uses the resolved override rate.
-   - Keep `peakAvoidanceSuccessRate` semantics unchanged.
-
-2. **`src/components/aeso/PowerModelCostProgression.tsx`**
-   - Replace scenario derivation with the explicit formulas above.
-   - Add the "0 hours qualified" tooltip/inline note when `priceCurtailSavings === 0` and `kwh > 0`.
-
-3. **`src/components/aeso/PowerModelStrategyComparison.tsx`** (Optimization Funnel)
-   - Apply the same corrected scenario formulas so the funnel and the table agree.
-
-4. **Tests — `src/lib/aeso/__tests__/`**
-   - New `powerModelScenarios.test.ts` covering: (a) base = optimized + missing12CP + price savings; (b) 24×7 strategy parity (`'none'` ⇒ base == optimized); (c) curtailment savings ≈ breakeven × curtailed MWh within tolerance; (d) override rate flows into `totalBulkCoincidentDemandFull`.
-   - Extend the existing `billEstimatorReconciliation` test with a successRate=0.85 case to lock the fix.
-
-5. **`src/constants/app-version.ts`** — bump to `'2026.06.08.011'`.
-
-No tariff-rate changes, no DB/edge-function changes, no UI restructuring beyond the small note.
+**Create**
+- `supabase/functions/fiber-depth-lookup/index.ts` — PeeringDB + OSM telecom + ISED + HE.net aggregator.
+- `supabase/migrations/<ts>_alberta_fiber_depth_cache.sql` — cache table with GRANTs + RLS (service_role only writes; authenticated reads).
 
 ## Verification
 
-- Hand-check against AESO 2026-015T for a 45 MW / 32,850 MWh / 85% peak-success scenario; reconciliation card should stay green.
-- For a low-price dataset (no hours above breakeven), scenario table now shows base = optimized in the "Price" row with a clear "0 qualifying hours" note, and the 12CP rows still differ by ~`successRate × $5.9M`.
-- All new tests pass.
+- Build passes.
+- Manual: load Site Lookup at 1024 / 1280 / 1440 widths and confirm no horizontal overflow, KPI strip reflows cleanly, workspace gets full width post‑report.
+- Connectivity panel renders all 9+ fiber sections with non‑empty data for a Calgary test point.
+- `fiber-depth-lookup` edge function returns 200 with PeeringDB + ISED + OSM payload for `51.0447, -114.0719`.
