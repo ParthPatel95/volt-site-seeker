@@ -524,8 +524,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                   { label: '(5) TCR', value: avg(m => m.tcr), estimate: true },
                   { label: '(6) Voltage Control', value: avg(m => m.voltageControl) },
                   { label: '(7) System Support', value: avg(m => m.systemSupport) },
-                  { label: 'FortisAlberta Demand Charge', value: avg(m => m.fortisDemandCharge), note: 'Rate 65' },
-                  { label: 'FortisAlberta Distribution', value: avg(m => m.fortisDistribution), note: 'Rate 65' },
+                  { label: 'FortisAlberta Service Charge', value: avg(m => m.fortisDistribution), note: 'Rate 65 ($50.619440/day flat)' },
                 ];
                 return rows.map(r => (
                   <div key={r.label} className="flex justify-between py-1.5 border-b border-border/50">
