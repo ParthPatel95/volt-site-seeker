@@ -27,10 +27,18 @@ async function queryOverpass(query: string): Promise<any> {
     try {
       const r = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'WattByte-SiteIntel/1.0 (https://wattbyte.com; contact: support@wattbyte.com)',
+          'Accept': 'application/json',
+        },
         body: 'data=' + encodeURIComponent(query),
       });
-      if (!r.ok) { lastErr = new Error(`${url} -> ${r.status}`); continue; }
+      if (!r.ok) {
+        const body = await r.text();
+        lastErr = new Error(`${url} -> ${r.status} ${body.slice(0, 120)}`);
+        continue;
+      }
       return await r.json();
     } catch (e) { lastErr = e; }
   }
