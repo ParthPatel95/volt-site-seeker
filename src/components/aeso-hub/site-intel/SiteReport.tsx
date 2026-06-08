@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink, Filter,
   Thermometer, ShieldAlert, Leaf, Building2, Cloud, Network,
@@ -217,7 +218,7 @@ export function SiteReport({ report }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur py-2 border-b border-border">
         <div>
           <h3 className="text-lg font-semibold">Hyperscaler Site Intelligence Report</h3>
           <p className="text-xs text-muted-foreground">
@@ -253,8 +254,45 @@ export function SiteReport({ report }: Props) {
           </Button>
         </div>
       </div>
-      <DataAccuracyBanner />
 
+      {/* Decision summary row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+        {Object.entries(report.hyperscaler_score?.breakdown ?? {}).map(([k, v]: [string, any]) => (
+          <Card key={k} className="p-2.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k}</div>
+            <div className="text-base font-semibold">{v.score}<span className="text-xs text-muted-foreground">/{v.max}</span></div>
+            <div className="text-[10px] text-muted-foreground line-clamp-2" title={v.detail}>{v.detail}</div>
+          </Card>
+        ))}
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto">
+          <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+          <TabsTrigger value="power" className="text-xs">Power</TabsTrigger>
+          <TabsTrigger value="fiber" className="text-xs">Fiber</TabsTrigger>
+          <TabsTrigger value="cooling" className="text-xs">Cooling &amp; Water</TabsTrigger>
+          <TabsTrigger value="logistics" className="text-xs">Logistics</TabsTrigger>
+          <TabsTrigger value="risk" className="text-xs">Risk &amp; Reg.</TabsTrigger>
+          <TabsTrigger value="imagery" className="text-xs">Imagery / AI</TabsTrigger>
+          <TabsTrigger value="methodology" className="text-xs">Methodology</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4 mt-4">
+          <DataAccuracyBanner />
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Overall hyperscaler score</div>
+                <div className="text-3xl font-bold">{report.hyperscaler_score?.total ?? '—'}<span className="text-base text-muted-foreground">/100</span></div>
+              </div>
+              <Badge variant="outline" className="text-base px-3">Grade {report.hyperscaler_score?.grade ?? '—'}</Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Weighted across fiber, power, climate, water, risk, sustainability and logistics. See Methodology for the formula and exact dataset counts queried.</p>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="fiber" className="space-y-4 mt-4">
       <Section
         icon={<Cable className="w-4 h-4" />}
         title="Fiber & Network"
@@ -320,7 +358,10 @@ export function SiteReport({ report }: Props) {
             <SourceLink key="s" url={x.source_url} publisher="PeeringDB" confidence="verified" />,
           ])} />
       </Section>
+        </TabsContent>
 
+        <TabsContent value="power" className="space-y-4 mt-4">
+      <OsmPowerSection lat={report.location.lat} lng={report.location.lng} datasetSubs={report.transmission.nearest_substations ?? []} />
       <Section
         icon={<Zap className="w-4 h-4" />}
         title="Power & Transmission"
@@ -341,7 +382,9 @@ export function SiteReport({ report }: Props) {
         )}
         <div className="text-[10px] text-muted-foreground mt-2">Source: AESO Transmission Map — https://www.aeso.ca/grid/projects/</div>
       </Section>
+        </TabsContent>
 
+        <TabsContent value="cooling" className="space-y-4 mt-4">
       {report.climate && (
         <Section
           icon={<Thermometer className="w-4 h-4" />}
@@ -362,24 +405,6 @@ export function SiteReport({ report }: Props) {
           <div className="mt-2"><SourceLink url={report.climate.source_url} publisher={report.climate.source_publisher} confidence="verified" asOf={report.climate.source_as_of} /></div>
         </Section>
       )}
-
-      {report.risk && (
-        <Section
-          icon={<ShieldAlert className="w-4 h-4" />}
-          title="Natural-Hazard Risk"
-          subtitle={report.risk.region_name}
-          right={<CoverageBadge inputs={[{ rows: [report.risk], forcedConfidence: 'verified' }]} />}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <KV label="Seismic PGA" value={`${report.risk.seismic_pga_g ?? '—'} g`} sub={report.risk.seismic_rating ?? ''} />
-            <KV label="Wildfire" value={report.risk.wildfire_rating ?? '—'} />
-            <KV label="Flood" value={report.risk.flood_rating ?? '—'} />
-            <KV label="Tornado" value={report.risk.tornado_rating ?? '—'} />
-          </div>
-          <div className="mt-2"><SourceLink url={report.risk.source_url} publisher={report.risk.source_publisher} confidence="verified" /></div>
-        </Section>
-      )}
-
       <Section
         icon={<Flame className="w-4 h-4" />}
         title="Natural Gas & Water"
@@ -412,7 +437,54 @@ export function SiteReport({ report }: Props) {
           </>
         )}
       </Section>
+        </TabsContent>
 
+        <TabsContent value="risk" className="space-y-4 mt-4">
+      {report.risk && (
+        <Section
+          icon={<ShieldAlert className="w-4 h-4" />}
+          title="Natural-Hazard Risk"
+          subtitle={report.risk.region_name}
+          right={<CoverageBadge inputs={[{ rows: [report.risk], forcedConfidence: 'verified' }]} />}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <KV label="Seismic PGA" value={`${report.risk.seismic_pga_g ?? '—'} g`} sub={report.risk.seismic_rating ?? ''} />
+            <KV label="Wildfire" value={report.risk.wildfire_rating ?? '—'} />
+            <KV label="Flood" value={report.risk.flood_rating ?? '—'} />
+            <KV label="Tornado" value={report.risk.tornado_rating ?? '—'} />
+          </div>
+          <div className="mt-2"><SourceLink url={report.risk.source_url} publisher={report.risk.source_publisher} confidence="verified" /></div>
+        </Section>
+      )}
+      {report.regulatory?.nearest_zone && (
+        <Section
+          icon={<Scale className="w-4 h-4" />}
+          title="Tax, Land & Regulatory"
+          subtitle={report.regulatory.nearest_zone.municipality}
+          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone], forcedConfidence: 'estimated' }]} />}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
+            <KV label="M&E exempt"
+              value={report.regulatory.nearest_zone.machinery_equipment_exempt
+                ? <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Yes</Badge>
+                : <Badge variant="outline">No</Badge>} />
+            <KV label="School tax rate" value={report.regulatory.nearest_zone.school_tax_rate ?? '—'} />
+            <KV label="AER region" value={report.regulatory.nearest_zone.aer_region ?? '—'} />
+            <KV label="AUC permit (typical)" value={report.regulatory.nearest_zone.auc_typical_permit_weeks != null ? `${report.regulatory.nearest_zone.auc_typical_permit_weeks} wks` : '—'} />
+            <KV label="Treaty area" value={report.regulatory.nearest_zone.treaty_area ?? '—'} />
+            <KV label="Indigenous consultation"
+              value={report.regulatory.nearest_zone.indigenous_consultation_required
+                ? <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">Required</Badge>
+                : <Badge variant="outline">Not flagged</Badge>} />
+            <KV label="Distance to centre" value={fmtKm(report.regulatory.nearest_zone.distance_km)} />
+          </div>
+          <div className="mt-2"><SourceLink url={report.regulatory.nearest_zone.source_url} publisher="Municipality / AUC / ACO" confidence="verified" /></div>
+        </Section>
+      )}
+        </TabsContent>
+
+        <TabsContent value="logistics" className="space-y-4 mt-4">
       <Section
         icon={<Truck className="w-4 h-4" />}
         title="Site Logistics & Workforce"
@@ -446,7 +518,6 @@ export function SiteReport({ report }: Props) {
           rows={report.logistics.drive_times.map(d => [`${d.hub} (${d.code})`, `${d.distance_km} km`, `${d.drive_hours_est} h`])} />
         <p className="text-[10px] text-muted-foreground mt-2">Drive times estimated at 95 km/h avg highway speed; replace with Routes API for full traffic-aware estimates.</p>
       </Section>
-
       {report.workforce && (
         <Section
           icon={<Users className="w-4 h-4" />}
@@ -481,7 +552,6 @@ export function SiteReport({ report }: Props) {
             ])} />
         </Section>
       )}
-
       {report.construction && (
         <Section
           icon={<HardHat className="w-4 h-4" />}
@@ -511,34 +581,6 @@ export function SiteReport({ report }: Props) {
             ])} />
         </Section>
       )}
-
-      {report.regulatory?.nearest_zone && (
-        <Section
-          icon={<Scale className="w-4 h-4" />}
-          title="Tax, Land & Regulatory"
-          subtitle={report.regulatory.nearest_zone.municipality}
-          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone], forcedConfidence: 'estimated' }]} />}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
-            <KV label="M&E exempt"
-              value={report.regulatory.nearest_zone.machinery_equipment_exempt
-                ? <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Yes</Badge>
-                : <Badge variant="outline">No</Badge>} />
-            <KV label="School tax rate" value={report.regulatory.nearest_zone.school_tax_rate ?? '—'} />
-            <KV label="AER region" value={report.regulatory.nearest_zone.aer_region ?? '—'} />
-            <KV label="AUC permit (typical)" value={report.regulatory.nearest_zone.auc_typical_permit_weeks != null ? `${report.regulatory.nearest_zone.auc_typical_permit_weeks} wks` : '—'} />
-            <KV label="Treaty area" value={report.regulatory.nearest_zone.treaty_area ?? '—'} />
-            <KV label="Indigenous consultation"
-              value={report.regulatory.nearest_zone.indigenous_consultation_required
-                ? <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">Required</Badge>
-                : <Badge variant="outline">Not flagged</Badge>} />
-            <KV label="Distance to centre" value={fmtKm(report.regulatory.nearest_zone.distance_km)} />
-          </div>
-          <div className="mt-2"><SourceLink url={report.regulatory.nearest_zone.source_url} publisher="Municipality / AUC / ACO" confidence="verified" /></div>
-        </Section>
-      )}
-
       {report.connectivity_depth && (
         <Section
           icon={<Wifi className="w-4 h-4" />}
@@ -582,9 +624,13 @@ export function SiteReport({ report }: Props) {
             ])} />
         </Section>
       )}
+        </TabsContent>
 
-      <AerialScanSection report={report} />
+        <TabsContent value="imagery" className="space-y-4 mt-4">
+          <AerialScanSection report={report} />
+        </TabsContent>
 
+        <TabsContent value="methodology" className="space-y-4 mt-4">
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
@@ -619,6 +665,8 @@ export function SiteReport({ report }: Props) {
           </>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -816,5 +864,101 @@ function Table({ headers, rows }: { headers: string[]; rows: (React.ReactNode)[]
         </tbody>
       </table>
     </div>
+  );
+}
+
+function OsmPowerSection({ lat, lng, datasetSubs }: { lat: number; lng: number; datasetSubs: any[] }) {
+  const [data, setData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [radius, setRadius] = useState(3000);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true); setError(null); setData(null);
+    supabase.functions.invoke('osm-power-infrastructure', { body: { lat, lng, radius_m: radius } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) { setError(error.message); return; }
+        if (data?.error) { setError(data.error); return; }
+        setData(data);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [lat, lng, radius]);
+
+  const subs: any[] = data?.substations ?? [];
+  const lines: any[] = data?.power_lines ?? [];
+
+  // Cross-check: OSM subs within 1.5 km that the internal dataset is missing.
+  const missingInDataset = useMemo(() => {
+    return subs.filter(s => {
+      if (s.distance_km > 1.5) return false;
+      return !(datasetSubs ?? []).some(d => (d.distance_km ?? 99) <= Math.max(0.5, s.distance_km * 1.5));
+    });
+  }, [subs, datasetSubs]);
+
+  return (
+    <Section
+      icon={<Zap className="w-4 h-4" />}
+      title="Live Open Infrastructure scan (OpenStreetMap / OpenInfraMap)"
+      subtitle="Real-time Overpass query for tagged substations, transformers and power lines around the site."
+      right={
+        <ToggleGroup type="single" value={String(radius)} onValueChange={(v) => v && setRadius(Number(v))}>
+          <ToggleGroupItem value="1000" className="text-[10px] px-2 h-6">1 km</ToggleGroupItem>
+          <ToggleGroupItem value="3000" className="text-[10px] px-2 h-6">3 km</ToggleGroupItem>
+          <ToggleGroupItem value="10000" className="text-[10px] px-2 h-6">10 km</ToggleGroupItem>
+        </ToggleGroup>
+      }
+    >
+      {loading && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Querying OpenStreetMap Overpass…</p>}
+      {error && <p className="text-xs text-rose-600">OSM lookup failed: {error}</p>}
+      {!loading && !error && (
+        <>
+          <div className="flex flex-wrap gap-2 mb-2 text-[10px] text-muted-foreground">
+            <Badge variant="outline" className="text-[10px]">Substations/transformers: <strong className="ml-1">{data?.counts?.substations ?? 0}</strong></Badge>
+            <Badge variant="outline" className="text-[10px]">Power lines: <strong className="ml-1">{data?.counts?.power_lines ?? 0}</strong></Badge>
+            <span>· {data?.attribution}</span>
+          </div>
+          {missingInDataset.length > 0 && (
+            <div className="mb-2 rounded border border-amber-500/30 bg-amber-500/10 p-2">
+              <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> {missingInDataset.length} OSM-tagged substation{missingInDataset.length === 1 ? '' : 's'} within 1.5 km not present in our internal dataset
+              </p>
+              <p className="text-[10px] text-amber-700/80">These are real OSM features that our curated substation table is missing — manual review recommended before relying on the internal layer.</p>
+            </div>
+          )}
+          {subs.length === 0
+            ? <p className="text-xs text-muted-foreground">No tagged substations or transformers within {Math.round(radius/1000)} km on OpenStreetMap.</p>
+            : <Table headers={['Type', 'Name', 'Operator', 'Voltage', 'Sub type', 'Distance', 'OSM']}
+                rows={subs.slice(0, 8).map(s => [
+                  <Badge key="t" variant="outline" className="text-[10px]">{s.power}</Badge>,
+                  <span key="n" className="font-medium">{s.name ?? <span className="text-muted-foreground italic">Not tagged</span>}</span>,
+                  s.operator ?? <span className="text-muted-foreground italic">Not tagged</span>,
+                  s.voltage ? `${s.voltage} V` : <span className="text-muted-foreground italic">Not tagged</span>,
+                  s.substation ?? <span className="text-muted-foreground italic">—</span>,
+                  fmtKm(s.distance_km),
+                  <a key="l" href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1"><ExternalLink className="w-3 h-3" /></a>,
+                ])} />}
+          {lines.length > 0 && (
+            <>
+              <p className="text-xs font-semibold mt-3 mb-1">OSM power lines nearby</p>
+              <Table headers={['Name/ref', 'Operator', 'Voltage', 'Circuits', 'Distance', 'OSM']}
+                rows={lines.slice(0, 5).map(l => [
+                  l.name ?? <span className="text-muted-foreground italic">Unnamed</span>,
+                  l.operator ?? <span className="text-muted-foreground italic">Not tagged</span>,
+                  l.voltage ? `${l.voltage} V` : <span className="text-muted-foreground italic">Not tagged</span>,
+                  l.circuits ?? '—',
+                  fmtKm(l.distance_km),
+                  <a key="l" href={l.source_url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1"><ExternalLink className="w-3 h-3" /></a>,
+                ])} />
+            </>
+          )}
+          <p className="text-[10px] text-muted-foreground mt-2">
+            Source: OpenStreetMap via Overpass API (<a href="https://openinframap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openinframap.org</a>). Fields marked "Not tagged" mean OSM contributors have not recorded that attribute — we do not estimate it.
+          </p>
+        </>
+      )}
+    </Section>
   );
 }
