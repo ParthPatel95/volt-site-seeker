@@ -482,10 +482,13 @@ export function SiteReport({ report }: Props) {
   );
 }
 
-function Section({ icon, title, subtitle, children }: { icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode }) {
+function Section({ icon, title, subtitle, right, children }: { icon: React.ReactNode; title: string; subtitle?: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-2 mb-1">{icon}<h4 className="font-semibold text-sm">{title}</h4></div>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2">{icon}<h4 className="font-semibold text-sm">{title}</h4></div>
+        {right}
+      </div>
       {subtitle && <p className="text-xs text-muted-foreground mb-3">{subtitle}</p>}
       {children}
     </Card>
