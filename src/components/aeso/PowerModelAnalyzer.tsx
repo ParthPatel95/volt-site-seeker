@@ -19,6 +19,8 @@ import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, typ
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
+import { PowerModelEstimatorReconciliation } from './PowerModelEstimatorReconciliation';
+import { reconcileAnnual } from '@/lib/aeso/billEstimatorReconciliation';
 import { PowerModelCostProgression } from './PowerModelCostProgression';
 import { PowerModelStrategyComparison } from './PowerModelStrategyComparison';
 import { PowerModelCharts } from './PowerModelCharts';
@@ -530,6 +532,14 @@ export function PowerModelAnalyzer() {
           
           {/* Charge Breakdown Table */}
           <PowerModelChargeBreakdown monthly={monthly} annual={annual} targetUptime={params.targetUptimePercent} fixedPriceCAD={params.fixedPriceCAD} cadUsdRate={params.cadUsdRate} capacityMW={params.contractedCapacityMW} />
+
+          {/* AESO 2026-015T Bill Estimator Reconciliation */}
+          {monthly.length > 0 && (
+            <PowerModelEstimatorReconciliation
+              reconciliation={reconcileAnnual(monthly, annual, params)}
+              hasOverrides={Object.keys(tariffOverrides).length > 0}
+            />
+          )}
 
           {/* Consolidated Analytics Tabs (5 instead of 9) */}
           <Tabs value={analyticsTab} onValueChange={setAnalyticsTab}>

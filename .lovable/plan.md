@@ -1,82 +1,63 @@
-## Problem
+## Goal
 
-The Power Model is double-charging transmission. For a Rate 65 (transmission-connected) site it adds two FortisAlberta line items that don't exist on Rate 65:
+Independently reconcile the model's DTS subtotal against the AESO **2026-015T Appendix 1 Bill Estimator** formulas, and surface a pass/fail tolerance check inside the Power Model UI so any drift between our calculator and the official estimator is visible immediately.
 
-| Line in current model | Rate per official tariff | Effect on a 45 MW site |
-|---|---|---|
-| FortisAlberta Demand $7.52/kW-month | **Not on Rate 65** (Rate 63 only) | +$4.06M/yr ≈ **+1.77¢/kWh** |
-| Fortis Distribution 0.2704¢/kWh | **Not on Rate 65** | +$1.07M/yr ≈ **+0.27¢/kWh** |
+## What "reconcile" means here
 
-That's where the inflated "All-in 9.85¢" comes from. Worst-case DTS alone should be ≈3.5–3.9¢/kWh, matching your independent estimate.
+The AESO Bill Estimator is a fixed monthly formula given (a) contracted/billing capacity (MW), (b) monthly energy (MWh), (c) substation fraction, (d) the highest coincident demand for the month (used for 12CP charge), and (e) average pool price for OR. For every month the model produces, we will recompute the DTS subtotal a second time using a clean, isolated Bill-Estimator implementation, then compare it line-by-line against the calculator's `MonthlyResult.totalDTSCharges` and individual DTS components.
 
-## Verified source (official)
+If everything is wired correctly, the two numbers must match within rounding (≤ 0.5 % or ≤ $1, whichever is greater, per line; ≤ 0.1 % on the DTS subtotal). Anything outside tolerance is a real bug.
 
-FortisAlberta, *Rates, Options and Riders Schedules*, effective April 1, 2026 (AUC Decision 30274-D01-2025), **Rate 65: Transmission Connected Service**, p. governing Rate 65:
+## Deliverables
 
-> Transmission Charges: "The Transmission Charge is the current Independent System Operator (ISO) tariff charges as billed by the Alberta Electric System Operator (AESO) flowed through directly to the Customer."
-> Distribution Charges: "Service Charge — **$50.619440/day**"
+### 1. `src/lib/aeso/billEstimator2026.ts` (new — pure functions)
+- `estimateDTSMonth(input): DTSEstimateMonth` — single-month estimator that mirrors the official 2026-015T spreadsheet row-by-row:
+  - Bulk Coincident Demand = `coincidentDemandRate × billingMW × (1 - successRate)` (configurable; default 0.85 matches calculator)
+  - Bulk Metered Energy = `bulkERate × MWh`
+  - Regional Billing Capacity = `regCapRate × billingMW`
+  - Regional Metered Energy = `regERate × MWh`
+  - POD Substation = `podSubRate × subFraction`
+  - POD Tiered = identical tier walk to `calculatePODTieredCharge` (re-implemented inline so we're not just calling the same code)
+  - Operating Reserve = `orRatePct/100 × poolEnergyAtActualPrice` (pass-through on actual pool price)
+  - TCR / Voltage Control / System Support = standard rate × MWh or × MW
+  - Returns each component plus `dtsSubtotal`.
+- `estimateDTSAnnual(months)` — sums the monthly estimates.
+- All inputs are the verified 2026 rates from `AESO_RATE_DTS_2026`; no overrides applied here so the reconciler always compares against the canonical AESO tariff.
 
-That's the entire FortisAlberta bill for Rate 65: an ISO pass-through (already covered by AESO Rate DTS in the model) plus a flat ~$50.62/day service charge (≈$18,476/yr — trivial, ~0.005¢/kWh at 45 MW).
+### 2. `src/lib/aeso/billEstimatorReconciliation.ts` (new)
+- `reconcileMonth(monthlyResult, hourlyForMonth, params)`:
+  - Builds the Bill-Estimator inputs from the same monthly running hours/MWh/pool-price the calculator used.
+  - Calls `estimateDTSMonth`.
+  - Returns an array of line-level deltas: `{ label, calc, estimator, deltaAbs, deltaPct, withinTolerance }`.
+- `reconcileAnnual(monthly, hourly, params)` aggregates monthly deltas + computes subtotal-level tolerance flag.
+- Tolerance constants: `LINE_ABS_TOL = 1.0`, `LINE_PCT_TOL = 0.005`, `SUBTOTAL_PCT_TOL = 0.001`.
 
-Source URL: https://www.fortisalberta.com/docs/default-source/default-document-library/rates-options-and-riders-schedules-effective-april-1-2026.pdf
+### 3. `src/components/aeso/PowerModelEstimatorReconciliation.tsx` (new card)
+- Compact card with title "AESO 2026-015T Bill Estimator — Reconciliation".
+- Header badge: green "✓ Matches AESO Estimator (Δ 0.0%)" / amber "⚠ Drift detected (Δ X.X%)" / red "✗ Out of tolerance".
+- Two-column table per component (Calculator vs Estimator) with Δ$ and Δ% and a per-row check icon.
+- Collapsible "View monthly breakdown" expanding to a 12-row matrix.
+- Footer cites the source: AESO 2026-015T Appendix 1 Bill Estimator with `SourceLink`.
+- Pure presentational — receives `reconciliation` from a `useMemo` in `PowerModelAnalyzer`.
 
-## Fix
+### 4. Wire into `PowerModelAnalyzer.tsx`
+- Compute `const reconciliation = useMemo(() => reconcileAnnual(monthly, hourlyData, params), [monthly, hourlyData, params])`.
+- Render `<PowerModelEstimatorReconciliation ... />` immediately under `<PowerModelChargeBreakdown />` so analysts see the validation right next to the charges.
 
-### 1. `src/constants/tariff-rates.ts`
-Replace the `FORTISALBERTA_RATE_65_2026` constant with the actual Rate 65 structure:
-```ts
-export const FORTISALBERTA_RATE_65_2026 = {
-  // Rate 65 = ISO tariff pass-through (already modeled via AESO Rate DTS) +
-  // a flat distribution service charge. No $/kW-month demand charge,
-  // no ¢/kWh volumetric. Verified against AUC Decision 30274-D01-2025,
-  // FortisAlberta Rates Schedule effective April 1, 2026.
-  DISTRIBUTION_SERVICE_CHARGE_PER_DAY: 50.619440, // $/day
-  // Legacy fields retained as 0 for backward compatibility with override UI:
-  DEMAND_CHARGE_KW_MONTH: 0,
-  VOLUMETRIC_DELIVERY_CENTS_KWH: 0,
-  TRANSMISSION_ACCESS_CENTS_KWH: 0, // pass-through via DTS
-  RIDERS_CENTS_KWH: 0,
-  effectiveDate: '2026-04-01',
-  sourceUrl: 'https://www.fortisalberta.com/docs/default-source/default-document-library/rates-options-and-riders-schedules-effective-april-1-2026.pdf',
-  sourceDecision: 'AUC Decision 30274-D01-2025',
-  lastVerified: '2026-06-08',
-} as const;
-```
+### 5. Tests `src/lib/aeso/__tests__/billEstimator2026.test.ts`
+- One known-good scenario from the official spreadsheet: 45 MW billing, 32,850 MWh, full substation, 85 % peak-avoidance — assert each line equals the value `AESO_RATE_DTS_2026` would produce, and assert `reconcileMonth` returns all `withinTolerance: true` for an unmodified calculator run.
+- Negative test: synthetic perturbation (e.g. inject a +5 % bump on `regionalBillingCapacity`) to confirm the reconciler flags it as out-of-tolerance.
 
-### 2. `src/hooks/usePowerModelCalculator.ts`
-Replace the Fortis charge math (lines ~401-403):
-```ts
-// OLD
-const fortisDemandCharge = cap * 1000 * fortisDemand;
-const fortisDistribution = kwh * fortisVol / 100;
-
-// NEW — Rate 65 distribution = flat $/day service charge only
-const daysInMonth = new Date(yearOfBucket, calendarMonth + 1, 0).getDate();
-const fortisDemandCharge = 0; // Rate 65 has no demand charge
-const fortisDistribution = daysInMonth * FORTISALBERTA_RATE_65_2026.DISTRIBUTION_SERVICE_CHARGE_PER_DAY;
-```
-Keep the existing `totalFortisCharges = fortisDemandCharge + fortisDistribution` so the rest of the aggregation/UI continues to work; the "FortisAlberta Demand" bar will simply render as 0 and the "Fortis Distribution" bar will show the tiny daily service charge.
-
-### 3. UI labels (`PowerModelChargeBreakdown.tsx`, `PowerModelEditableRates.tsx`, `PowerModelRateExplainer.tsx`, `PowerModelDataSources.tsx`, `powerModelExport.ts`)
-- Rename the "FortisAlberta Demand" row to "FortisAlberta Service Charge (Rate 65)" and bind it to `fortisDistribution`.
-- Remove the "Fortis Distribution" line item (now folded into the service charge).
-- In the editable-rates panel, hide the `DEMAND_CHARGE_KW_MONTH` and `VOLUMETRIC_DELIVERY_CENTS_KWH` inputs (or replace with a single read-only "Service Charge $50.619440/day" entry) and add a footnote: *"Rate 65 distribution is a flat daily service charge — no demand or volumetric component. AESO ISO tariff is billed via Rate DTS line items above."*
-- Update the data-sources / rate-explainer copy to cite the April 1, 2026 schedule and AUC Decision 30274-D01-2025.
-
-### 4. Verify in-app
-After change, the same 45 MW Rate 65 scenario should land at roughly:
-- DTS (incl. 12CP at 85% avoidance): ~3.5–3.9¢/kWh
-- Operating Reserve + Pool Energy + Rider F + Retailer: variable with pool price
-- Fortis service charge: ≈0.005¢/kWh (flat)
-- All-in: ~7.5–8.0¢/kWh worst case, dropping into the 6s with curtailment — matching your independent estimate.
-
-### 5. Bump `APP_VERSION`
-`src/constants/app-version.ts` → `'2026.06.08.009'`.
-
-### 6. Memory update
-Update `mem://features/aeso-101/rate-65-transmission-connected-advantage` to reflect that Rate 65 distribution = $50.619440/day flat, no $/kW-month, no volumetric (per AUC 30274-D01-2025).
+### 6. Maintenance
+- Bump `APP_VERSION` → `'2026.06.08.010'`.
+- No DB / edge-function / migration changes.
+- Bill-Estimator file path cited in code comments and UI: https://www.aeso.ca/assets/Information-Documents/2026-015T-Appendix-1-Bill-Estimator.xlsx
 
 ## Out of scope
-- AESO Rate DTS values (already verified against 2026-015T Bill Estimator and unchanged).
-- 12CP avoidance success-rate logic (unchanged).
-- Curtailment/optimizer logic (unchanged).
+- Energy / Pool / OR / Fortis / Rider F / Retailer / GST lines (the Bill Estimator only covers DTS — Fortis service charge is already covered by the prior fix and stays separate).
+- Editing override behavior — when the user overrides a tariff, the reconciler still uses canonical AESO rates, so a deliberate override will (correctly) show drift. The UI will explain that with a small note: *"Reconciliation uses official AESO 2026-015T rates. Differences here reflect any tariff overrides you applied."*
+
+## Verification
+- Run the new vitest suite — both happy-path and perturbation tests pass.
+- Open Power Model for a 45 MW Rate 65 scenario with no overrides → reconciliation card shows all green, Δ ≤ 0.1 % on subtotal.
+- Set Regional Billing Capacity override to 3,200 (vs 2,987) → reconciliation flips amber and highlights that exact row.
