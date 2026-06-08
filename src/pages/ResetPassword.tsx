@@ -21,36 +21,67 @@ export const ResetPassword: React.FC = () => {
   const [error, setError] = useState('');
   const [validating, setValidating] = useState(true);
 
-  // Validate the reset token on component mount
+  // Supabase delivers recovery tokens in the URL hash (#access_token=...&refresh_token=...).
+  // Older flows used query params, and the modern flow fires a PASSWORD_RECOVERY auth event.
+  // Handle all three so the reset page works reliably.
   useEffect(() => {
-    const validateToken = async () => {
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      
-      if (!accessToken || !refreshToken) {
-        setError('Invalid or missing reset link. Please request a new password reset.');
-        setValidating(false);
+    let cancelled = false;
+
+    const readTokens = () => {
+      // Hash params (modern Supabase recovery link)
+      const hash = window.location.hash.startsWith('#')
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get('access_token') ?? searchParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token') ?? searchParams.get('refresh_token');
+      const type = hashParams.get('type') ?? searchParams.get('type');
+      return { accessToken, refreshToken, type };
+    };
+
+    const validate = async () => {
+      const { accessToken, refreshToken } = readTokens();
+
+      // Already have an active session (e.g. PASSWORD_RECOVERY fired earlier)?
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        if (!cancelled) setValidating(false);
         return;
       }
 
-      try {
-        // Set the session using the tokens from the URL
+      if (accessToken && refreshToken) {
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
-          refresh_token: refreshToken
+          refresh_token: refreshToken,
         });
-
-        if (error) {
-          setError('Invalid or expired reset link. Please request a new password reset.');
+        if (!cancelled) {
+          if (error) setError('Invalid or expired reset link. Please request a new password reset.');
+          setValidating(false);
         }
-      } catch (err) {
-        setError('Failed to validate reset link. Please try again.');
-      } finally {
-        setValidating(false);
+        return;
       }
+
+      // No tokens yet — wait briefly for Supabase to fire PASSWORD_RECOVERY,
+      // otherwise show the invalid-link message.
+      setTimeout(async () => {
+        if (cancelled) return;
+        const { data: { session: s2 } } = await supabase.auth.getSession();
+        if (!s2) setError('Invalid or missing reset link. Please request a new password reset.');
+        setValidating(false);
+      }, 1200);
     };
 
-    validateToken();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (!cancelled) {
+          setError('');
+          setValidating(false);
+        }
+      }
+    });
+
+    validate();
+    return () => { cancelled = true; sub.subscription.unsubscribe(); };
   }, [searchParams]);
 
   const validatePassword = (pwd: string) => {
@@ -89,9 +120,10 @@ export const ResetPassword: React.FC = () => {
       } else {
         toast({
           title: "Password Updated",
-          description: "Your password has been successfully updated. You are now logged in.",
+          description: "Your password has been successfully updated. Please sign in.",
         });
-        navigate('/voltmarket/dashboard');
+        await supabase.auth.signOut();
+        navigate('/voltmarket/auth');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
