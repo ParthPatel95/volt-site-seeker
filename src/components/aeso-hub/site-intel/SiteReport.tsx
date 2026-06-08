@@ -218,7 +218,7 @@ export function SiteReport({ report }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur py-2 border-b border-border">
         <div>
           <h3 className="text-lg font-semibold">Hyperscaler Site Intelligence Report</h3>
           <p className="text-xs text-muted-foreground">
@@ -254,8 +254,45 @@ export function SiteReport({ report }: Props) {
           </Button>
         </div>
       </div>
-      <DataAccuracyBanner />
 
+      {/* Decision summary row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+        {Object.entries(report.hyperscaler_score?.breakdown ?? {}).map(([k, v]: [string, any]) => (
+          <Card key={k} className="p-2.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k}</div>
+            <div className="text-base font-semibold">{v.score}<span className="text-xs text-muted-foreground">/{v.max}</span></div>
+            <div className="text-[10px] text-muted-foreground line-clamp-2" title={v.detail}>{v.detail}</div>
+          </Card>
+        ))}
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto">
+          <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+          <TabsTrigger value="power" className="text-xs">Power</TabsTrigger>
+          <TabsTrigger value="fiber" className="text-xs">Fiber</TabsTrigger>
+          <TabsTrigger value="cooling" className="text-xs">Cooling &amp; Water</TabsTrigger>
+          <TabsTrigger value="logistics" className="text-xs">Logistics</TabsTrigger>
+          <TabsTrigger value="risk" className="text-xs">Risk &amp; Reg.</TabsTrigger>
+          <TabsTrigger value="imagery" className="text-xs">Imagery / AI</TabsTrigger>
+          <TabsTrigger value="methodology" className="text-xs">Methodology</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4 mt-4">
+          <DataAccuracyBanner />
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Overall hyperscaler score</div>
+                <div className="text-3xl font-bold">{report.hyperscaler_score?.total ?? '—'}<span className="text-base text-muted-foreground">/100</span></div>
+              </div>
+              <Badge variant="outline" className="text-base px-3">Grade {report.hyperscaler_score?.grade ?? '—'}</Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Weighted across fiber, power, climate, water, risk, sustainability and logistics. See Methodology for the formula and exact dataset counts queried.</p>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="fiber" className="space-y-4 mt-4">
       <Section
         icon={<Cable className="w-4 h-4" />}
         title="Fiber & Network"
@@ -321,7 +358,10 @@ export function SiteReport({ report }: Props) {
             <SourceLink key="s" url={x.source_url} publisher="PeeringDB" confidence="verified" />,
           ])} />
       </Section>
+        </TabsContent>
 
+        <TabsContent value="power" className="space-y-4 mt-4">
+      <OsmPowerSection lat={report.location.lat} lng={report.location.lng} datasetSubs={report.transmission.nearest_substations ?? []} />
       <Section
         icon={<Zap className="w-4 h-4" />}
         title="Power & Transmission"
@@ -342,7 +382,9 @@ export function SiteReport({ report }: Props) {
         )}
         <div className="text-[10px] text-muted-foreground mt-2">Source: AESO Transmission Map — https://www.aeso.ca/grid/projects/</div>
       </Section>
+        </TabsContent>
 
+        <TabsContent value="cooling" className="space-y-4 mt-4">
       {report.climate && (
         <Section
           icon={<Thermometer className="w-4 h-4" />}
@@ -363,24 +405,6 @@ export function SiteReport({ report }: Props) {
           <div className="mt-2"><SourceLink url={report.climate.source_url} publisher={report.climate.source_publisher} confidence="verified" asOf={report.climate.source_as_of} /></div>
         </Section>
       )}
-
-      {report.risk && (
-        <Section
-          icon={<ShieldAlert className="w-4 h-4" />}
-          title="Natural-Hazard Risk"
-          subtitle={report.risk.region_name}
-          right={<CoverageBadge inputs={[{ rows: [report.risk], forcedConfidence: 'verified' }]} />}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <KV label="Seismic PGA" value={`${report.risk.seismic_pga_g ?? '—'} g`} sub={report.risk.seismic_rating ?? ''} />
-            <KV label="Wildfire" value={report.risk.wildfire_rating ?? '—'} />
-            <KV label="Flood" value={report.risk.flood_rating ?? '—'} />
-            <KV label="Tornado" value={report.risk.tornado_rating ?? '—'} />
-          </div>
-          <div className="mt-2"><SourceLink url={report.risk.source_url} publisher={report.risk.source_publisher} confidence="verified" /></div>
-        </Section>
-      )}
-
       <Section
         icon={<Flame className="w-4 h-4" />}
         title="Natural Gas & Water"
@@ -413,7 +437,54 @@ export function SiteReport({ report }: Props) {
           </>
         )}
       </Section>
+        </TabsContent>
 
+        <TabsContent value="risk" className="space-y-4 mt-4">
+      {report.risk && (
+        <Section
+          icon={<ShieldAlert className="w-4 h-4" />}
+          title="Natural-Hazard Risk"
+          subtitle={report.risk.region_name}
+          right={<CoverageBadge inputs={[{ rows: [report.risk], forcedConfidence: 'verified' }]} />}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <KV label="Seismic PGA" value={`${report.risk.seismic_pga_g ?? '—'} g`} sub={report.risk.seismic_rating ?? ''} />
+            <KV label="Wildfire" value={report.risk.wildfire_rating ?? '—'} />
+            <KV label="Flood" value={report.risk.flood_rating ?? '—'} />
+            <KV label="Tornado" value={report.risk.tornado_rating ?? '—'} />
+          </div>
+          <div className="mt-2"><SourceLink url={report.risk.source_url} publisher={report.risk.source_publisher} confidence="verified" /></div>
+        </Section>
+      )}
+      {report.regulatory?.nearest_zone && (
+        <Section
+          icon={<Scale className="w-4 h-4" />}
+          title="Tax, Land & Regulatory"
+          subtitle={report.regulatory.nearest_zone.municipality}
+          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone], forcedConfidence: 'estimated' }]} />}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
+            <KV label="M&E exempt"
+              value={report.regulatory.nearest_zone.machinery_equipment_exempt
+                ? <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Yes</Badge>
+                : <Badge variant="outline">No</Badge>} />
+            <KV label="School tax rate" value={report.regulatory.nearest_zone.school_tax_rate ?? '—'} />
+            <KV label="AER region" value={report.regulatory.nearest_zone.aer_region ?? '—'} />
+            <KV label="AUC permit (typical)" value={report.regulatory.nearest_zone.auc_typical_permit_weeks != null ? `${report.regulatory.nearest_zone.auc_typical_permit_weeks} wks` : '—'} />
+            <KV label="Treaty area" value={report.regulatory.nearest_zone.treaty_area ?? '—'} />
+            <KV label="Indigenous consultation"
+              value={report.regulatory.nearest_zone.indigenous_consultation_required
+                ? <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">Required</Badge>
+                : <Badge variant="outline">Not flagged</Badge>} />
+            <KV label="Distance to centre" value={fmtKm(report.regulatory.nearest_zone.distance_km)} />
+          </div>
+          <div className="mt-2"><SourceLink url={report.regulatory.nearest_zone.source_url} publisher="Municipality / AUC / ACO" confidence="verified" /></div>
+        </Section>
+      )}
+        </TabsContent>
+
+        <TabsContent value="logistics" className="space-y-4 mt-4">
       <Section
         icon={<Truck className="w-4 h-4" />}
         title="Site Logistics & Workforce"
@@ -447,7 +518,6 @@ export function SiteReport({ report }: Props) {
           rows={report.logistics.drive_times.map(d => [`${d.hub} (${d.code})`, `${d.distance_km} km`, `${d.drive_hours_est} h`])} />
         <p className="text-[10px] text-muted-foreground mt-2">Drive times estimated at 95 km/h avg highway speed; replace with Routes API for full traffic-aware estimates.</p>
       </Section>
-
       {report.workforce && (
         <Section
           icon={<Users className="w-4 h-4" />}
@@ -482,7 +552,6 @@ export function SiteReport({ report }: Props) {
             ])} />
         </Section>
       )}
-
       {report.construction && (
         <Section
           icon={<HardHat className="w-4 h-4" />}
@@ -512,34 +581,6 @@ export function SiteReport({ report }: Props) {
             ])} />
         </Section>
       )}
-
-      {report.regulatory?.nearest_zone && (
-        <Section
-          icon={<Scale className="w-4 h-4" />}
-          title="Tax, Land & Regulatory"
-          subtitle={report.regulatory.nearest_zone.municipality}
-          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone], forcedConfidence: 'estimated' }]} />}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
-            <KV label="M&E exempt"
-              value={report.regulatory.nearest_zone.machinery_equipment_exempt
-                ? <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Yes</Badge>
-                : <Badge variant="outline">No</Badge>} />
-            <KV label="School tax rate" value={report.regulatory.nearest_zone.school_tax_rate ?? '—'} />
-            <KV label="AER region" value={report.regulatory.nearest_zone.aer_region ?? '—'} />
-            <KV label="AUC permit (typical)" value={report.regulatory.nearest_zone.auc_typical_permit_weeks != null ? `${report.regulatory.nearest_zone.auc_typical_permit_weeks} wks` : '—'} />
-            <KV label="Treaty area" value={report.regulatory.nearest_zone.treaty_area ?? '—'} />
-            <KV label="Indigenous consultation"
-              value={report.regulatory.nearest_zone.indigenous_consultation_required
-                ? <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">Required</Badge>
-                : <Badge variant="outline">Not flagged</Badge>} />
-            <KV label="Distance to centre" value={fmtKm(report.regulatory.nearest_zone.distance_km)} />
-          </div>
-          <div className="mt-2"><SourceLink url={report.regulatory.nearest_zone.source_url} publisher="Municipality / AUC / ACO" confidence="verified" /></div>
-        </Section>
-      )}
-
       {report.connectivity_depth && (
         <Section
           icon={<Wifi className="w-4 h-4" />}
@@ -583,9 +624,13 @@ export function SiteReport({ report }: Props) {
             ])} />
         </Section>
       )}
+        </TabsContent>
 
-      <AerialScanSection report={report} />
+        <TabsContent value="imagery" className="space-y-4 mt-4">
+          <AerialScanSection report={report} />
+        </TabsContent>
 
+        <TabsContent value="methodology" className="space-y-4 mt-4">
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
@@ -620,6 +665,8 @@ export function SiteReport({ report }: Props) {
           </>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
