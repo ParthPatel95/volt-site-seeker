@@ -60,9 +60,11 @@ function classifyRow(row: any, forced?: RowConfidence): RowConfidence {
   if (!row) return 'estimated';
   const conf = (row.confidence ?? '').toString().toLowerCase();
   if (conf === 'verified' || conf === 'modeled' || conf === 'estimated') return conf as RowConfidence;
-  const url = row.source_url;
-  if (!url || url === 'estimate') return 'estimated';
-  return 'verified';
+  // Honest default: a row is only "verified" when it explicitly says so via
+  // the `confidence` column. A bare `source_url` is not enough — many of our
+  // curated rows carry plausible links to landing pages, not the exact
+  // dataset that produced the number.
+  return 'estimated';
 }
 
 interface CoverageInput { rows: any[]; forcedConfidence?: RowConfidence }
