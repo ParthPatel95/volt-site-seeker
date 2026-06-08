@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Network, Map as MapIcon, FileSearch, Info } from 'lucide-react';
+import { Network, Map as MapIcon, FileSearch, Info, MapPin, RefreshCcw } from 'lucide-react';
 import { AlbertaMap } from '../site-intel/AlbertaMap';
 import { SiteLookupForm } from '../site-intel/SiteLookupForm';
 import { SiteWorkspace } from '../site-intel/SiteWorkspace';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 export function SiteIntelTab() {
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [report, setReport] = useState<SiteReportT | null>(null);
+  const [formCollapsed, setFormCollapsed] = useState(false);
   const generate = useGenerateSiteReport();
 
   const handleResolve = async (loc: { lat: number; lng: number; label?: string }) => {
@@ -18,6 +20,7 @@ export function SiteIntelTab() {
     try {
       const r = await generate.mutateAsync(loc);
       setReport(r);
+      setFormCollapsed(true);
       toast.success('Site report generated');
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to generate report');
@@ -56,24 +59,39 @@ export function SiteIntelTab() {
         </TabsContent>
 
         <TabsContent value="lookup" className="space-y-4 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-            <SiteLookupForm
-              initialLat={pin?.lat ?? null}
-              initialLng={pin?.lng ?? null}
-              onResolve={handleResolve}
-              onClear={() => { setPin(null); setReport(null); }}
-              loading={generate.isPending}
-            />
-            <div className="min-h-[400px]">
-              {report ? (
-                <SiteWorkspace report={report} />
-              ) : (
-                <Card className="h-full flex items-center justify-center p-8 text-center text-sm text-muted-foreground">
-                  Enter an address or coordinates (or pick a point on the map) to generate a comprehensive site intelligence report.
-                </Card>
-              )}
+          {report && formCollapsed ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-secondary/30">
+                <MapPin className="w-4 h-4 text-primary" />
+                <span className="text-xs font-mono">{pin?.lat.toFixed(5)}, {pin?.lng.toFixed(5)}</span>
+                {report.location.label && <span className="text-xs text-muted-foreground truncate">· {report.location.label}</span>}
+                <Button size="sm" variant="ghost" className="ml-auto h-7 text-xs"
+                  onClick={() => setFormCollapsed(false)}>
+                  <RefreshCcw className="w-3 h-3 mr-1" /> Change location
+                </Button>
+              </div>
+              <SiteWorkspace report={report} />
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-4">
+              <SiteLookupForm
+                initialLat={pin?.lat ?? null}
+                initialLng={pin?.lng ?? null}
+                onResolve={handleResolve}
+                onClear={() => { setPin(null); setReport(null); setFormCollapsed(false); }}
+                loading={generate.isPending}
+              />
+              <div className="min-h-[400px] min-w-0">
+                {report ? (
+                  <SiteWorkspace report={report} />
+                ) : (
+                  <Card className="h-full flex items-center justify-center p-8 text-center text-sm text-muted-foreground">
+                    Enter an address or coordinates (or pick a point on the map) to generate a comprehensive site intelligence report.
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

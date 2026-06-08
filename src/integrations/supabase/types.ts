@@ -2730,6 +2730,33 @@ export type Database = {
         }
         Relationships: []
       }
+      alberta_fiber_depth_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          payload: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          payload: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          payload?: Json
+        }
+        Relationships: []
+      }
       alberta_fiber_routes: {
         Row: {
           carrier: string

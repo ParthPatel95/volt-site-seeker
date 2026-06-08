@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import {
   LayoutDashboard, Zap, Cable, Thermometer, Truck, Satellite, BookOpen,
   Download, ExternalLink, Loader2, AlertTriangle, ScanSearch, ChevronLeft, ChevronRight,
-  Gauge, Compass, Target, Factory, Activity, MapPin,
+  Gauge, Compass, Target, Factory, Activity, MapPin, Radio, Server, Cloud, Globe2, Wifi,
 } from 'lucide-react';
 import type { SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,7 +36,7 @@ const NAV: { key: PanelKey; label: string; icon: any }[] = [
 
 export function SiteWorkspace({ report }: { report: SiteReportT }) {
   const [panel, setPanel] = useState<PanelKey>('overview');
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const { lat, lng } = report.location;
 
   // Always-on OSM power scan (used by Overview KPIs + Power panel).
@@ -88,9 +88,9 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
   };
 
   return (
-    <div className="flex w-full min-h-[600px] border border-border rounded-lg overflow-hidden bg-background">
+    <div className="@container flex w-full min-h-[600px] border border-border rounded-lg overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className={`flex-shrink-0 border-r border-border bg-secondary/30 transition-all ${collapsed ? 'w-12' : 'w-52'}`}>
+      <aside className={`flex-shrink-0 border-r border-border bg-secondary/30 transition-all ${collapsed ? 'w-12' : 'w-44'}`}>
         <div className="flex items-center justify-between p-2 border-b border-border">
           {!collapsed && <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Workspace</span>}
           <button
@@ -147,7 +147,7 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
         <KpiStrip report={report} osm={osm} />
 
         {/* Panel content */}
-        <main className="flex-1 overflow-auto p-4 space-y-4">
+        <main className="flex-1 min-w-0 overflow-auto p-4 space-y-4">
           {panel === 'overview' && <OverviewPanel report={report} osm={osm} onJump={setPanel} />}
           {panel === 'power' && (
             <PowerPanel
@@ -248,7 +248,7 @@ function KpiStrip({ report, osm }: { report: SiteReportT; osm: any | null }) {
   const tx = osm?.summary?.nearest_transmission_substation;
 
   return (
-    <div className="px-4 py-3 border-b border-border bg-secondary/20 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+    <div className="px-4 py-3 border-b border-border bg-secondary/20 grid grid-cols-2 @md:grid-cols-3 @3xl:grid-cols-6 gap-2">
       <Kpi label="Max kV nearby (OSM)" value={maxKv ? `${maxKv} kV` : '—'} sub={tx?.name ?? undefined} tone={maxKv >= 240 ? 'good' : maxKv >= 138 ? 'good' : maxKv ? 'warn' : 'default'} />
       <Kpi label="Nearest substation" value={fmtKm(nearestSubKm)} sub={osm?.substations?.[0]?.operator ?? undefined} tone={nearestSubKm < 2 ? 'good' : nearestSubKm < 5 ? 'warn' : 'default'} />
       <Kpi label="Tx substations ≤25 km" value={osm?.counts?.transmission_substations ?? '—'} sub="OSM tagged" />
@@ -531,25 +531,282 @@ function BearingDial({ dial }: { dial: { sector: number; angle_from: number; ang
 // ────────────────────────────────────────────────────────────────────────────
 
 function ConnectivityPanel({ report }: { report: SiteReportT }) {
+  const { lat, lng } = report.location;
+  const fiber: any = report.fiber ?? {};
+  const depth: any = (report as any).connectivity_depth ?? {};
+  const score = fiber.score ?? null;
+  const peeringHubs: any[] = fiber.peering_hubs ?? [];
+
+  // Live external scan
+  const [live, setLive] = useState<any | null>(null);
+  const [liveLoading, setLiveLoading] = useState(true);
+  const [liveError, setLiveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLiveLoading(true); setLiveError(null); setLive(null);
+    supabase.functions.invoke('fiber-depth-lookup', { body: { lat, lng } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) { setLiveError(error.message); return; }
+        if (data?.error) { setLiveError(data.error); return; }
+        setLive(data);
+      })
+      .finally(() => { if (!cancelled) setLiveLoading(false); });
+    return () => { cancelled = true; };
+  }, [lat, lng]);
+
   return (
     <>
-      <Section icon={<Cable className="w-4 h-4" />} title="Carrier POPs" subtitle="Nearest fiber points of presence">
+      {/* Fiber score */}
+      {score && (
+        <Section icon={<Gauge className="w-4 h-4" />} title="Fiber connectivity score" subtitle="100-point composite scored from real curated data">
+          <div className="grid grid-cols-2 @3xl:grid-cols-5 gap-2">
+            <Kpi label="Total" value={`${score.total}/100`} sub={`Grade ${score.grade}`} tone={score.total >= 70 ? 'good' : score.total >= 50 ? 'warn' : 'bad'} />
+            {Object.entries(score.breakdown ?? {}).map(([k, v]: any) => (
+              <Kpi key={k} label={k.replace(/_/g, ' ')} value={`${v.score}/${v.max}`} sub={v.detail} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Top routes */}
+      {fiber.top_routes?.length > 0 && (
+        <Section icon={<Activity className="w-4 h-4" />} title="Top carrier routes" subtitle="Ranked POP × peering-hub combinations by latency + distance">
+          <MiniTable
+            headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Peering hub', 'Latency', 'Score']}
+            rows={fiber.top_routes.map((r: any) => [
+              <strong key="r">{r.rank}</strong>,
+              r.carrier, r.pop, r.pop_city,
+              `${r.site_to_pop_km} km`, r.hub,
+              r.latency_ms != null ? `${r.latency_ms} ms` : '—',
+              <Badge key="s" variant="outline" className="text-[9px]">{r.composite}</Badge>,
+            ])}
+          />
+        </Section>
+      )}
+
+      {/* Carrier POPs (verbose) */}
+      <Section icon={<Cable className="w-4 h-4" />} title="Carrier POPs" subtitle="Nearest fiber points of presence with modeled latency to peering hubs">
         <MiniTable
-          headers={['Carrier', 'Facility', 'City', 'Distance', 'YYC ms', 'SEA ms', 'ORD ms']}
-          rows={report.fiber.nearest_pops.map(p => [
-            <strong key="c">{p.carrier}</strong>, p.facility_name, p.city, fmtKm(p.distance_km),
-            p.latency_to_yyc_ms ?? '—', p.latency_to_sea_ms ?? '—', p.latency_to_ord_ms ?? '—',
+          headers={['Carrier', 'Facility', 'City', 'Distance', 'YYC', 'YEG', 'SEA', 'ORD', 'Source']}
+          rows={(fiber.nearest_pops ?? []).map((p: any) => [
+            <strong key="c">{p.carrier}</strong>,
+            p.facility_name, p.city, fmtKm(p.distance_km),
+            p.latency_to_yyc_ms != null ? `${p.latency_to_yyc_ms} ms` : '—',
+            p.latency_to_yeg_ms != null ? `${p.latency_to_yeg_ms} ms` : '—',
+            p.latency_to_sea_ms != null ? `${p.latency_to_sea_ms} ms` : '—',
+            p.latency_to_ord_ms != null ? `${p.latency_to_ord_ms} ms` : '—',
+            p.source_url ? <a key="u" href={p.source_url} target="_blank" rel="noopener noreferrer" className="text-primary"><ExternalLink className="w-3 h-3 inline" /></a> : '—',
           ])}
         />
       </Section>
-      <Section icon={<Cable className="w-4 h-4" />} title="Internet exchanges & long-haul">
-        <MiniTable
-          headers={['IXP', 'City', 'Participants', 'Peak Gbps', 'Distance']}
-          rows={(report.fiber.nearest_ixps ?? []).map((x: any) => [x.name, x.city, x.participant_count ?? '—', x.peak_traffic_gbps ?? '—', fmtKm(x.distance_km)])}
-        />
+
+      {/* Carrier POP details */}
+      {depth.carrier_pop_details?.length > 0 && (
+        <Section icon={<Server className="w-4 h-4" />} title="POP facility details" subtitle="Building owner, services and access for nearest carrier facilities">
+          <MiniTable
+            headers={['Facility', 'Address', 'Building owner', 'Lit services', 'X-connect fee', 'MMR', '24×7', 'Distance']}
+            rows={depth.carrier_pop_details.map((d: any) => [
+              <strong key="f">{d.facility_name ?? d.name ?? '—'}</strong>,
+              d.address ?? '—',
+              d.building_owner ?? '—',
+              d.lit_services ?? d.services ?? '—',
+              d.cross_connect_fee_usd != null ? `$${d.cross_connect_fee_usd}` : '—',
+              d.mmr_available === true ? 'Yes' : d.mmr_available === false ? 'No' : '—',
+              d.access_24x7 === true ? 'Yes' : d.access_24x7 === false ? 'No' : '—',
+              fmtKm(d.distance_km),
+            ])}
+          />
+        </Section>
+      )}
+
+      {/* Long-haul routes */}
+      {fiber.nearest_long_haul_routes?.length > 0 && (
+        <Section icon={<Globe2 className="w-4 h-4" />} title="Long-haul fiber routes" subtitle="Inter-city backbone segments passing nearby">
+          <MiniTable
+            headers={['Route', 'Carrier', 'A endpoint', 'Z endpoint', 'Fiber pairs', 'Status', 'Distance']}
+            rows={fiber.nearest_long_haul_routes.map((r: any) => [
+              <strong key="n">{r.route_name ?? r.name ?? '—'}</strong>,
+              r.carrier ?? '—',
+              r.endpoint_a ?? r.start_city ?? '—',
+              r.endpoint_z ?? r.end_city ?? '—',
+              r.fiber_pair_count ?? r.pairs ?? '—',
+              r.lit_or_dark ?? r.status ?? '—',
+              fmtKm(r.distance_km),
+            ])}
+          />
+        </Section>
+      )}
+
+      {/* Dark fiber inventory */}
+      {depth.dark_fiber_segments_nearby?.length > 0 && (
+        <Section icon={<Cable className="w-4 h-4" />} title="Dark fiber inventory" subtitle="Unlit strands available for IRU lease">
+          <MiniTable
+            headers={['Segment', 'Vendor', 'Strands available', 'IRU term', 'Distance']}
+            rows={depth.dark_fiber_segments_nearby.map((d: any) => [
+              d.segment_name ?? d.name ?? '—',
+              d.vendor ?? d.operator ?? '—',
+              d.strands_available ?? d.available_strands ?? '—',
+              d.iru_term_years ? `${d.iru_term_years} yr` : '—',
+              fmtKm(d.distance_km),
+            ])}
+          />
+        </Section>
+      )}
+
+      {/* Last-mile providers */}
+      {depth.last_mile_in_municipality && (
+        <Section icon={<Wifi className="w-4 h-4" />} title="Last-mile providers" subtitle={depth.last_mile_in_municipality.municipality ?? 'In the host municipality'}>
+          <MiniTable
+            headers={['Provider', 'Technology', 'Max down', 'Max up', 'Tier']}
+            rows={(depth.last_mile_in_municipality.providers ?? [depth.last_mile_in_municipality]).map((p: any) => [
+              <strong key="p">{p.provider ?? p.name ?? '—'}</strong>,
+              p.technology ?? p.tech ?? '—',
+              p.max_download_mbps != null ? `${p.max_download_mbps} Mbps` : '—',
+              p.max_upload_mbps != null ? `${p.max_upload_mbps} Mbps` : '—',
+              p.tier ?? p.pricing_tier ?? '—',
+            ])}
+          />
+        </Section>
+      )}
+
+      {/* IXPs */}
+      {fiber.nearest_ixps?.length > 0 && (
+        <Section icon={<Cable className="w-4 h-4" />} title="Internet exchanges (curated)">
+          <MiniTable
+            headers={['IXP', 'City', 'Participants', 'Peak Gbps', 'Distance']}
+            rows={fiber.nearest_ixps.map((x: any) => [x.name, x.city, x.participant_count ?? '—', x.peak_traffic_gbps ?? '—', fmtKm(x.distance_km)])}
+          />
+        </Section>
+      )}
+
+      {/* Cloud reach */}
+      {fiber.cloud_reach?.length > 0 && (
+        <Section icon={<Cloud className="w-4 h-4" />} title="Cloud region reach" subtitle="Modeled one-way fiber latency to public-cloud regions">
+          <MiniTable
+            headers={['Provider', 'Region', 'Code', 'Distance', 'Modeled latency', 'Source']}
+            rows={fiber.cloud_reach.slice(0, 12).map((c: any) => [
+              <strong key="p">{c.provider}</strong>,
+              c.region_name, c.region_code,
+              `${c.distance_km} km`,
+              `${c.modeled_latency_ms_one_way} ms`,
+              c.source_url ? <a key="u" href={c.source_url} target="_blank" rel="noopener noreferrer" className="text-primary"><ExternalLink className="w-3 h-3 inline" /></a> : '—',
+            ])}
+          />
+        </Section>
+      )}
+
+      {/* Peering hubs */}
+      {peeringHubs.length > 0 && (
+        <Section icon={<Compass className="w-4 h-4" />} title="Distance to peering hubs">
+          <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-2">
+            {peeringHubs.map((h: any) => {
+              const km = Math.round(haversineFromReport(lat, lng, h.lat, h.lng));
+              const ms = Math.round(km * 0.007 * 10) / 10;
+              return <Kpi key={h.code} label={`${h.code} · ${h.name}`} value={`${km} km`} sub={`~${ms} ms one-way`} />;
+            })}
+          </div>
+        </Section>
+      )}
+
+      {/* Live external fiber scan */}
+      <Section icon={<Radio className="w-4 h-4" />} title="Live fiber & telecom scan"
+        subtitle={liveLoading ? 'Querying PeeringDB · OpenStreetMap · ISED…' : live ? `PeeringDB · OSM · ISED · ${live.queried_at?.slice(0, 16).replace('T', ' ')} UTC` : '—'}>
+        {liveLoading && <div className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Fetching live data…</div>}
+        {liveError && <div className="text-xs text-rose-600">Live scan failed: {liveError}</div>}
+        {live && (
+          <div className="space-y-4">
+            {/* PeeringDB facilities */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <h5 className="text-xs font-semibold">PeeringDB facilities <Badge variant="outline" className="text-[9px] ml-1">{live.peeringdb?.facility_count ?? 0}</Badge></h5>
+                <span className="text-[10px] text-muted-foreground">{live.peeringdb?.attribution}</span>
+              </div>
+              <MiniTable
+                headers={['Facility', 'Org', 'City', 'Networks', 'IXes', 'Distance', 'Source']}
+                rows={(live.peeringdb?.facilities ?? []).slice(0, 15).map((f: any) => [
+                  <strong key="n">{f.name}</strong>,
+                  f.org ?? '—', f.city ?? '—',
+                  f.net_count ?? '—', f.ix_count ?? '—',
+                  fmtKm(f.distance_km),
+                  <a key="u" href={f.source_url} target="_blank" rel="noopener noreferrer" className="text-primary"><ExternalLink className="w-3 h-3 inline" /></a>,
+                ])}
+              />
+            </div>
+
+            {/* PeeringDB IXPs */}
+            {live.peeringdb?.ixps?.length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold mb-1">PeeringDB internet exchanges (Canada)</h5>
+                <MiniTable
+                  headers={['IXP', 'City', 'Networks', 'IPv6', 'Media', 'Source']}
+                  rows={live.peeringdb.ixps.slice(0, 12).map((x: any) => [
+                    <strong key="n">{x.name}</strong>,
+                    x.city ?? '—', x.net_count ?? '—',
+                    x.proto_ipv6 ? 'Yes' : 'No',
+                    x.media ?? '—',
+                    <a key="u" href={x.source_url} target="_blank" rel="noopener noreferrer" className="text-primary"><ExternalLink className="w-3 h-3 inline" /></a>,
+                  ])}
+                />
+              </div>
+            )}
+
+            {/* OSM telecom */}
+            {live.osm_telecom?.items?.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <h5 className="text-xs font-semibold">OSM telecom & data-center assets <Badge variant="outline" className="text-[9px] ml-1">{live.osm_telecom.counts.total}</Badge></h5>
+                  <span className="text-[10px] text-muted-foreground">
+                    {live.osm_telecom.counts.comms_towers} towers · {live.osm_telecom.counts.data_centers} DCs · {live.osm_telecom.counts.telecom_offices} offices
+                  </span>
+                </div>
+                <MiniTable
+                  headers={['Name', 'Kind', 'Operator', 'Height', 'Distance', 'Bearing', 'OSM']}
+                  rows={live.osm_telecom.items.slice(0, 20).map((t: any) => [
+                    t.name ?? <em className="text-muted-foreground">Unnamed</em>,
+                    <Badge key="k" variant="outline" className="text-[9px]">{t.kind}</Badge>,
+                    t.operator ?? '—',
+                    t.height_m != null ? `${t.height_m} m` : '—',
+                    fmtKm(t.distance_km),
+                    bearingLabel(t.bearing_deg),
+                    <a key="u" href={t.source_url} target="_blank" rel="noopener noreferrer" className="text-primary"><ExternalLink className="w-3 h-3 inline" /></a>,
+                  ])}
+                />
+              </div>
+            )}
+
+            {/* ISED broadband */}
+            {live.ised_broadband && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <h5 className="text-xs font-semibold">ISED National Broadband (hex {live.ised_broadband.hex_id ?? '—'})</h5>
+                  <a href={live.ised_broadband.source_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary inline-flex items-center gap-1 hover:underline">Dataset <ExternalLink className="w-3 h-3" /></a>
+                </div>
+                <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-2">
+                  <Kpi label="Max download" value={live.ised_broadband.max_download_mbps ? `${live.ised_broadband.max_download_mbps} Mbps` : '—'} />
+                  <Kpi label="Max upload" value={live.ised_broadband.max_upload_mbps ? `${live.ised_broadband.max_upload_mbps} Mbps` : '—'} />
+                  <Kpi label="Technologies" value={live.ised_broadband.technologies ?? '—'} />
+                  <Kpi label="Providers" value={live.ised_broadband.providers ?? '—'} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Section>
     </>
   );
+}
+
+// inline haversine helper (avoids importing utils for one call site)
+function haversineFromReport(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const toRad = (d: number) => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
 }
 
 // ────────────────────────────────────────────────────────────────────────────
