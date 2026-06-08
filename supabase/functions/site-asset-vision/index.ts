@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
     const { lat, lng, zoom = 18 } = await req.json();
     if (typeof lat !== 'number' || typeof lng !== 'number') {
-      return new Response(JSON.stringify({ error: 'lat/lng required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'lat/lng required' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const z = Math.max(13, Math.min(20, Math.round(zoom)));
     const b64 = await fetchStaticMapBase64(lat, lng, z);
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     });
     if (!aiResp.ok) {
       const txt = await aiResp.text();
-      return new Response(JSON.stringify({ error: `AI gateway ${aiResp.status}: ${txt}` }), { status: aiResp.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: `AI gateway ${aiResp.status}: ${txt.slice(0, 240)}` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const aiJson = await aiResp.json();
     const content = aiJson?.choices?.[0]?.message?.content ?? '{}';
