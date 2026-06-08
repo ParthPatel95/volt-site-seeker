@@ -16,8 +16,7 @@ import { exportPowerModelCSV, exportPowerModelPDF } from '@/utils/powerModelExpo
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord, type CurtailmentStrategy } from '@/hooks/usePowerModelCalculator';
-import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
-import { rawTrainingDataToHourly } from '@/lib/power-model-parser';
+import { parsePowerModelCSV, convertTrainingDataToHourly, rawTrainingDataToHourly } from '@/lib/power-model-parser';
 import { auditCoverage, type CoverageReport } from '@/lib/aeso/dataCoverage';
 import { PowerModelDataCoverage } from './PowerModelDataCoverage';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
