@@ -204,47 +204,43 @@ export function SiteReport({ report }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <CoverageBadge inputs={[
-            { rows: report.fiber.nearest_pops },
-            { rows: report.fiber.nearest_long_haul_routes },
-            { rows: report.fiber.nearest_ixps },
+            { rows: report.fiber.nearest_pops, forcedConfidence: 'verified' },
+            { rows: report.fiber.nearest_long_haul_routes, forcedConfidence: 'verified' },
+            { rows: report.fiber.nearest_ixps, forcedConfidence: 'verified' },
             { rows: report.fiber.cloud_reach ?? [], forcedConfidence: 'modeled' },
-            { rows: report.transmission.nearest_lines },
-            { rows: report.transmission.nearest_substations ?? [] },
-            { rows: report.climate ? [report.climate] : [] },
-            { rows: report.risk ? [report.risk] : [] },
-            { rows: report.gas_and_water.nearest_gas_pipelines },
-            { rows: report.gas_and_water.nearest_water_sources },
-            { rows: report.gas_and_water.nearest_water_licences ?? [] },
-            { rows: report.logistics.nearest_industrial_parks },
-            { rows: report.logistics.nearest_logistics_assets ?? [] },
-            { rows: report.logistics.nearest_population_centres ?? [] },
-            { rows: report.workforce?.nearest_centres ?? [] },
-            { rows: report.workforce?.post_secondary_within_200km ?? [] },
-            { rows: report.construction?.epc_firms ?? [] },
-            { rows: report.construction?.union_vs_open_wages ?? [] },
-            { rows: report.regulatory?.nearest_zone ? [report.regulatory.nearest_zone] : [] },
-            { rows: report.connectivity_depth?.carrier_pop_details ?? [] },
-            { rows: report.connectivity_depth?.dark_fiber_segments_nearby ?? [] },
+            { rows: report.transmission.nearest_lines, forcedConfidence: 'verified' },
+            { rows: report.transmission.nearest_substations ?? [], forcedConfidence: 'verified' },
+            { rows: report.climate ? [report.climate] : [], forcedConfidence: 'verified' },
+            { rows: report.risk ? [report.risk] : [], forcedConfidence: 'verified' },
+            { rows: report.gas_and_water.nearest_gas_pipelines, forcedConfidence: 'verified' },
+            { rows: report.gas_and_water.nearest_water_sources, forcedConfidence: 'verified' },
+            { rows: report.gas_and_water.nearest_water_licences ?? [], forcedConfidence: 'verified' },
+            { rows: report.logistics.nearest_industrial_parks, forcedConfidence: 'estimated' },
+            { rows: report.logistics.nearest_logistics_assets ?? [], forcedConfidence: 'verified' },
+            { rows: report.logistics.nearest_population_centres ?? [], forcedConfidence: 'verified' },
+            { rows: report.workforce?.nearest_centres ?? [], forcedConfidence: 'estimated' },
+            { rows: report.workforce?.post_secondary_within_200km ?? [], forcedConfidence: 'estimated' },
+            { rows: report.construction?.epc_firms ?? [], forcedConfidence: 'estimated' },
+            { rows: report.construction?.union_vs_open_wages ?? [], forcedConfidence: 'estimated' },
+            { rows: report.regulatory?.nearest_zone ? [report.regulatory.nearest_zone] : [], forcedConfidence: 'estimated' },
+            { rows: report.connectivity_depth?.carrier_pop_details ?? [], forcedConfidence: 'estimated' },
+            { rows: report.connectivity_depth?.dark_fiber_segments_nearby ?? [], forcedConfidence: 'estimated' },
           ]} />
           <Button onClick={handlePdf} size="sm" variant="outline">
             <Download className="w-4 h-4 mr-2" /> Export PDF
           </Button>
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground -mt-2">
-        Coverage legend: <span className="text-emerald-700">✓ verified</span> ·{' '}
-        <span className="text-amber-700">≈ modeled</span> ·{' '}
-        <span>~ estimated</span>. Verified = sourced from a cited authoritative dataset; modeled = computed from physics/heuristics; estimated = best-effort placeholder pending source.
-      </p>
+      <DataAccuracyBanner />
 
       <Section
         icon={<Cable className="w-4 h-4" />}
         title="Fiber & Network"
         subtitle="Closest carrier POPs and long-haul corridors"
         right={<CoverageBadge inputs={[
-          { rows: report.fiber.nearest_pops },
-          { rows: report.fiber.nearest_long_haul_routes },
-          { rows: report.fiber.nearest_ixps },
+          { rows: report.fiber.nearest_pops, forcedConfidence: 'verified' },
+          { rows: report.fiber.nearest_long_haul_routes, forcedConfidence: 'verified' },
+          { rows: report.fiber.nearest_ixps, forcedConfidence: 'verified' },
           { rows: report.fiber.cloud_reach ?? [], forcedConfidence: 'modeled' },
         ]} />}
       >
@@ -308,8 +304,8 @@ export function SiteReport({ report }: Props) {
         title="Power & Transmission"
         subtitle="AESO transmission lines, substations, and grid posture"
         right={<CoverageBadge inputs={[
-          { rows: report.transmission.nearest_lines },
-          { rows: report.transmission.nearest_substations ?? [] },
+          { rows: report.transmission.nearest_lines, forcedConfidence: 'verified' },
+          { rows: report.transmission.nearest_substations ?? [], forcedConfidence: 'verified' },
         ]} />}
       >
         <Table headers={['Line', 'kV', 'Owner', 'Distance']}
@@ -329,7 +325,7 @@ export function SiteReport({ report }: Props) {
           icon={<Thermometer className="w-4 h-4" />}
           title="Climate & Cooling"
           subtitle={`ECCC normals 1991–2020 · ${report.climate.station_name}`}
-          right={<CoverageBadge inputs={[{ rows: [report.climate] }]} />}
+          right={<CoverageBadge inputs={[{ rows: [report.climate], forcedConfidence: 'verified' }]} />}
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <KV label="Mean annual T" value={`${report.climate.mean_annual_dry_bulb_c ?? '—'} °C`} />
@@ -350,7 +346,7 @@ export function SiteReport({ report }: Props) {
           icon={<ShieldAlert className="w-4 h-4" />}
           title="Natural-Hazard Risk"
           subtitle={report.risk.region_name}
-          right={<CoverageBadge inputs={[{ rows: [report.risk] }]} />}
+          right={<CoverageBadge inputs={[{ rows: [report.risk], forcedConfidence: 'verified' }]} />}
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <KV label="Seismic PGA" value={`${report.risk.seismic_pga_g ?? '—'} g`} sub={report.risk.seismic_rating ?? ''} />
@@ -367,9 +363,9 @@ export function SiteReport({ report }: Props) {
         title="Natural Gas & Water"
         subtitle="Process fuel and cooling sources"
         right={<CoverageBadge inputs={[
-          { rows: report.gas_and_water.nearest_gas_pipelines },
-          { rows: report.gas_and_water.nearest_water_sources },
-          { rows: report.gas_and_water.nearest_water_licences ?? [] },
+          { rows: report.gas_and_water.nearest_gas_pipelines, forcedConfidence: 'verified' },
+          { rows: report.gas_and_water.nearest_water_sources, forcedConfidence: 'verified' },
+          { rows: report.gas_and_water.nearest_water_licences ?? [], forcedConfidence: 'verified' },
         ]} />}
       >
         <Table headers={['Gas pipeline', 'Operator', 'Diameter', 'Pressure', 'Distance', 'Source']}
@@ -400,9 +396,9 @@ export function SiteReport({ report }: Props) {
         title="Site Logistics & Workforce"
         subtitle="Industrial parks, transport, and labour"
         right={<CoverageBadge inputs={[
-          { rows: report.logistics.nearest_industrial_parks },
-          { rows: report.logistics.nearest_logistics_assets ?? [] },
-          { rows: report.logistics.nearest_population_centres ?? [] },
+          { rows: report.logistics.nearest_industrial_parks, forcedConfidence: 'estimated' },
+          { rows: report.logistics.nearest_logistics_assets ?? [], forcedConfidence: 'verified' },
+          { rows: report.logistics.nearest_population_centres ?? [], forcedConfidence: 'verified' },
         ]} />}
       >
         <Table headers={['Industrial park', 'Municipality', 'Available power', 'Zoning', 'Distance', 'Source']}
@@ -435,8 +431,8 @@ export function SiteReport({ report }: Props) {
           title="Workforce & Talent"
           subtitle="Labour pool, trades supply, and post-secondary pipeline"
           right={<CoverageBadge inputs={[
-            { rows: report.workforce.nearest_centres ?? [] },
-            { rows: report.workforce.post_secondary_within_200km ?? [] },
+            { rows: report.workforce.nearest_centres ?? [], forcedConfidence: 'estimated' },
+            { rows: report.workforce.post_secondary_within_200km ?? [], forcedConfidence: 'estimated' },
           ]} />}
         >
           <Table headers={['Centre', 'Labour force', 'Unemploy.', '% Post-sec', 'Electricians', 'HVAC techs', 'IT workers', 'Med. electrician $/hr', 'Distance', 'Source']}
@@ -470,8 +466,8 @@ export function SiteReport({ report }: Props) {
           title="Construction & EPC Capacity"
           subtitle="Alberta GC/EPC firms and prevailing trade wages"
           right={<CoverageBadge inputs={[
-            { rows: report.construction.epc_firms ?? [] },
-            { rows: report.construction.union_vs_open_wages ?? [] },
+            { rows: report.construction.epc_firms ?? [], forcedConfidence: 'estimated' },
+            { rows: report.construction.union_vs_open_wages ?? [], forcedConfidence: 'estimated' },
           ]} />}
         >
           <Table headers={['Firm', 'HQ / Office', 'Mega-project capable', 'Labour model', 'Recent projects', 'Source']}
@@ -499,7 +495,7 @@ export function SiteReport({ report }: Props) {
           icon={<Scale className="w-4 h-4" />}
           title="Tax, Land & Regulatory"
           subtitle={report.regulatory.nearest_zone.municipality}
-          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone] }]} />}
+          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone], forcedConfidence: 'estimated' }]} />}
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
@@ -527,9 +523,9 @@ export function SiteReport({ report }: Props) {
           title="Connectivity Depth"
           subtitle="Carrier-hotel access, last-mile providers, dark fiber inventory"
           right={<CoverageBadge inputs={[
-            { rows: report.connectivity_depth.carrier_pop_details ?? [] },
-            { rows: report.connectivity_depth.last_mile_in_municipality ? [report.connectivity_depth.last_mile_in_municipality] : [] },
-            { rows: report.connectivity_depth.dark_fiber_segments_nearby ?? [] },
+            { rows: report.connectivity_depth.carrier_pop_details ?? [], forcedConfidence: 'estimated' },
+            { rows: report.connectivity_depth.last_mile_in_municipality ? [report.connectivity_depth.last_mile_in_municipality] : [], forcedConfidence: 'estimated' },
+            { rows: report.connectivity_depth.dark_fiber_segments_nearby ?? [], forcedConfidence: 'estimated' },
           ]} />}
         >
           <p className="text-xs font-semibold mb-2">Carrier hotels & MMR facilities</p>
