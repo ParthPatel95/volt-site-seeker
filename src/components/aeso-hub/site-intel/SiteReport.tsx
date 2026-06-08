@@ -107,6 +107,28 @@ function CoverageBadge({ inputs }: { inputs: CoverageInput[] }) {
   );
 }
 
+function DataAccuracyBanner() {
+  return (
+    <Card className="p-3 bg-secondary/30 border-border">
+      <p className="text-[11px] font-semibold mb-2">How to read this report</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
+        <div>
+          <span className="inline-block text-[9px] px-1.5 py-0.5 rounded border bg-emerald-500/15 text-emerald-700 border-emerald-500/30 mb-1">✓ Verified</span>
+          <p className="text-muted-foreground">AESO transmission, substations & generation · ECCC climate normals · NRCan seismic · PeeringDB IXPs · StatsCan 2021 population · CER pipelines · carrier POP locations.</p>
+        </div>
+        <div>
+          <span className="inline-block text-[9px] px-1.5 py-0.5 rounded border bg-amber-500/15 text-amber-700 border-amber-500/30 mb-1">≈ Modeled</span>
+          <p className="text-muted-foreground">Fiber latency to cloud regions (speed-of-light physics), drive times (km ÷ 95 km/h), composite suitability score weighting.</p>
+        </div>
+        <div>
+          <span className="inline-block text-[9px] px-1.5 py-0.5 rounded border bg-rose-500/15 text-rose-700 border-rose-500/30 mb-1">~ Estimated — use with caution</span>
+          <p className="text-muted-foreground">Trade worker counts & wages, EPC firm capability, municipal mill rates, last-mile speeds, dark-fiber IFA counts, carrier-hotel cross-connect fees. Treat as planning starting points, not bid-grade numbers.</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 interface Props {
   report: SiteReportT;
 }
