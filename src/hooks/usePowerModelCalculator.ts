@@ -250,6 +250,11 @@ export function usePowerModelCalculator(
     // Bulk coincident demand rate for cost-optimized scoring
     const bulkCoincidentRate = r(tariffOverrides?.bulkCoincidentDemand, AESO_RATE_DTS_2026.bulkSystem.coincidentDemand);
 
+    // Per-MWh non-pool marginal $/MWh (matches breakeven formula). Curtailing
+    // an hour avoids all of these, plus pool energy itself, plus OR (which is
+    // a % of actual pool energy and is a pass-through even with a fixed PPA).
+    const marginalNonPool = marginalNonPoolPerMWh(tariffOverrides);
+
     for (const [monthIdx, records] of monthGroups) {
       const yearOfBucket = Math.floor(monthIdx / 12);
       const calendarMonth = monthIdx % 12;
@@ -271,9 +276,13 @@ export function usePowerModelCalculator(
 
       const isFixedPrice = params.fixedPriceCAD > 0;
 
-      // Helper: calculate curtailment savings per curtailed hour
+      // Helper: TRUE marginal cost avoided per curtailed hour (full $).
+      // Includes pool/fixed energy, Operating Reserve (always on real pool
+      // price), and every other variable per-MWh charge from breakeven.
       const calcCurtailSavings = (rec: HourlyRecord) => {
-        return isFixedPrice ? params.fixedPriceCAD * cap : rec.poolPrice * cap;
+        const energy = isFixedPrice ? params.fixedPriceCAD : rec.poolPrice;
+        const orPassThrough = rec.poolPrice * orRate; // OR is on actual pool
+        return (energy + orPassThrough + marginalNonPool) * cap;
       };
       // Helper: calculate over-contract credit per curtailed hour (fixed price only)
       const calcOverContractCredit = (rec: HourlyRecord) => {
@@ -501,8 +510,16 @@ export function usePowerModelCalculator(
       totalTCR: monthly.reduce((s, m) => s + m.tcr, 0),
       totalVoltageControl: monthly.reduce((s, m) => s + m.voltageControl, 0),
       totalSystemSupport: monthly.reduce((s, m) => s + m.systemSupport, 0),
-      // Full 12CP charge: what you'd pay WITHOUT avoidance ($11,131/MW/month × capacity × 12 months)
+      // Full 12CP charge: what you'd pay WITHOUT avoidance.
+      // Uses the resolved rate (honors tariffOverrides.bulkCoincidentDemand).
       totalBulkCoincidentDemandFull: monthly.length * bulkCoincidentRate * cap,
+      // 12CP portion NOT in totalPreGST because of peak-avoidance success.
+      // successRate × full 12CP. In 'none' (24x7), successRate = 0 → missing = 0.
+      missingTwelveCP:
+        (params.curtailmentStrategy === 'none'
+          ? 0
+          : Math.min(1, Math.max(0, params.peakAvoidanceSuccessRate ?? 0.85))
+        ) * monthly.length * bulkCoincidentRate * cap,
       // Price curtailment savings: energy cost avoided by shutting down during high-price hours
       totalPriceCurtailmentSavings: allShutdownRecords
         .filter(sr => sr.reason === 'Price' || sr.reason === '12CP+Price')
