@@ -113,6 +113,8 @@ Deno.serve(async (req) => {
       pops, fiber, trans, gas, water, parks,
       climate, hazards, waterLic, incentives,
       clouds, ixps, logistics, gen, pop,
+      workforce, postSec, epcs, wages, regZones,
+      popDetails, lastMile, darkFiber,
     ] = await Promise.all([
       admin.from('alberta_carrier_pops').select('*'),
       admin.from('alberta_fiber_routes').select('*'),
@@ -129,6 +131,14 @@ Deno.serve(async (req) => {
       admin.from('alberta_logistics_assets').select('*'),
       admin.from('alberta_generation_assets').select('*'),
       admin.from('alberta_population_centres').select('*'),
+      admin.from('alberta_workforce_stats').select('*'),
+      admin.from('alberta_post_secondary').select('*'),
+      admin.from('alberta_construction_capacity').select('*'),
+      admin.from('alberta_construction_wages').select('*'),
+      admin.from('alberta_regulatory_zones').select('*'),
+      admin.from('alberta_carrier_pop_details').select('*'),
+      admin.from('alberta_last_mile_providers').select('*'),
+      admin.from('alberta_dark_fiber_inventory').select('*'),
     ]);
 
     const nearestPops = nearestPoints(pops.data ?? [], lat, lng, 5);
