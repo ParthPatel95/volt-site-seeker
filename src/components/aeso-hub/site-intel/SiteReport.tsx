@@ -591,6 +591,18 @@ export function SiteReport({ report }: Props) {
           {report.methodology?.modeled_latency && <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>}
           {report.methodology?.distance && <p><strong>Distance:</strong> {report.methodology.distance}</p>}
         </div>
+        {report.methodology?.datasets_loaded && (
+          <>
+            <p className="text-xs font-semibold mb-1">Datasets queried for this report</p>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {Object.entries(report.methodology.datasets_loaded).map(([k, v]) => (
+                <Badge key={k} variant="outline" className="text-[10px]">
+                  {k.replace(/_/g, ' ')}: <strong className="ml-1">{String(v)}</strong>
+                </Badge>
+              ))}
+            </div>
+          </>
+        )}
         {report.data_provenance?.sources?.length ? (
           <>
             <Separator className="my-2" />
