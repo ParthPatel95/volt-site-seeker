@@ -17,6 +17,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, type HourlyRecord, type CurtailmentStrategy } from '@/hooks/usePowerModelCalculator';
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
+import { rawTrainingDataToHourly } from '@/lib/power-model-parser';
+import { auditCoverage, type CoverageReport } from '@/lib/aeso/dataCoverage';
+import { PowerModelDataCoverage } from './PowerModelDataCoverage';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
 import { PowerModelEstimatorReconciliation } from './PowerModelEstimatorReconciliation';
@@ -40,6 +43,7 @@ export function PowerModelAnalyzer() {
   const { toast } = useToast();
   const [dataSource, setDataSource] = useState<'upload' | 'database'>('database');
   const [hourlyData, setHourlyData] = useState<HourlyRecord[]>([]);
+  const [rawHourly, setRawHourly] = useState<HourlyRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
   // Dynamic date range loader. Persists last selection to localStorage.
@@ -127,6 +131,8 @@ export function PowerModelAnalyzer() {
         return;
       }
       setHourlyData(records);
+      // CSV parser already dedupes; the audit treats raw == deduped here.
+      setRawHourly(records);
       toast({ title: `Loaded ${records.length} hourly records`, description: `From uploaded CSV` });
     };
     reader.readAsText(file);
@@ -166,7 +172,9 @@ export function PowerModelAnalyzer() {
 
       setLoadProgress(95);
       const records = convertTrainingDataToHourly(allData);
+      const raw = rawTrainingDataToHourly(allData);
       setHourlyData(records);
+      setRawHourly(raw);
       setLoadProgress(100);
       setAutoTriggerAI(true); // Auto-trigger AI analysis
       toast({ title: `Loaded ${records.length.toLocaleString()} records`, description: `${activeRange.label} · ${activeRange.start} → ${activeRange.end}` });
@@ -189,6 +197,11 @@ export function PowerModelAnalyzer() {
     const avgPool = hourlyData.reduce((s, r) => s + r.poolPrice, 0) / hourlyData.length;
     return { count: hourlyData.length, avgPool: avgPool.toFixed(0) };
   }, [hourlyData]);
+
+  const coverage: CoverageReport | null = useMemo(() => {
+    if (hourlyData.length === 0) return null;
+    return auditCoverage(rawHourly.length > 0 ? rawHourly : hourlyData, hourlyData);
+  }, [hourlyData, rawHourly]);
 
   return (
     <div className="space-y-6">
