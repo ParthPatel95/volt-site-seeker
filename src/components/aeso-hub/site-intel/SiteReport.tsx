@@ -194,7 +194,7 @@ export function SiteReport({ report }: Props) {
 
         <p className="text-xs font-semibold mt-4 mb-2 flex items-center gap-2"><Cloud className="w-3 h-3" /> Hyperscaler cloud reach (modeled one-way latency)</p>
         <Table headers={['Provider', 'Region', 'Distance', 'Modeled latency', 'Source']}
-          rows={report.fiber.cloud_reach.map(c => [
+          rows={(report.fiber.cloud_reach ?? []).map(c => [
             <strong key="p">{c.provider}</strong>,
             <span key="r"><code className="text-[10px]">{c.region_code}</code> <span className="text-muted-foreground"> {c.region_name}</span></span>,
             `${c.distance_km} km`,
@@ -204,7 +204,7 @@ export function SiteReport({ report }: Props) {
 
         <p className="text-xs font-semibold mt-4 mb-2 flex items-center gap-2"><Network className="w-3 h-3" /> Internet exchanges</p>
         <Table headers={['IXP', 'City', 'Participants', 'Peak (Gbps)', 'Distance', 'Source']}
-          rows={report.fiber.nearest_ixps.map(x => [
+          rows={(report.fiber.nearest_ixps ?? []).map(x => [
             <strong key="n">{x.name}</strong>, x.city, x.participant_count ?? '—', x.peak_traffic_gbps ?? '—',
             fmtKm(x.distance_km),
             <SourceLink key="s" url={x.source_url} publisher="PeeringDB" confidence="verified" />,
@@ -214,11 +214,11 @@ export function SiteReport({ report }: Props) {
       <Section icon={<Zap className="w-4 h-4" />} title="Power & Transmission" subtitle="AESO transmission lines, substations, and grid posture">
         <Table headers={['Line', 'kV', 'Owner', 'Distance']}
           rows={report.transmission.nearest_lines.map((t: any) => [t.name, <Badge key="v" variant="outline">{t.voltage_kv} kV</Badge>, t.owner, fmtKm(t.distance_km)])} />
-        {report.transmission.nearest_substations.length > 0 && (
+        {(report.transmission.nearest_substations ?? []).length > 0 && (
           <>
             <p className="text-xs font-semibold mt-4 mb-2">Nearby substations</p>
             <Table headers={['Substation', 'City', 'Voltage', 'Owner', 'Distance']}
-              rows={report.transmission.nearest_substations.map((s: any) => [s.name, s.city, s.voltage_level ?? '—', s.utility_owner ?? '—', fmtKm(s.distance_km)])} />
+              rows={(report.transmission.nearest_substations ?? []).map((s: any) => [s.name, s.city, s.voltage_level ?? '—', s.utility_owner ?? '—', fmtKm(s.distance_km)])} />
           </>
         )}
         <div className="text-[10px] text-muted-foreground mt-2">Source: AESO Transmission Map — https://www.aeso.ca/grid/projects/</div>
@@ -262,11 +262,11 @@ export function SiteReport({ report }: Props) {
             <Badge key="a" variant={(w as any).allocation_status === 'closed' ? 'destructive' : 'secondary'}>{(w as any).allocation_status ?? 'unknown'}</Badge>,
             fmtKm(w.distance_km),
             <SourceLink key="s" url={w.source_url} publisher={(w as any).source_publisher ?? 'Alberta EPA'} confidence={(w as any).confidence} asOf={(w as any).source_as_of} />])} />
-        {report.gas_and_water.nearest_water_licences?.length > 0 && (
+        {(report.gas_and_water.nearest_water_licences?.length ?? 0) > 0 && (
           <>
             <p className="text-xs font-semibold mt-4 mb-2">Licensed industrial water diversions (Water Act)</p>
             <Table headers={['Licensee', 'Source', 'Licensed m³/yr', 'Purpose', 'Basin', 'Distance', 'Source']}
-              rows={report.gas_and_water.nearest_water_licences.map((l: any) => [
+              rows={(report.gas_and_water.nearest_water_licences ?? []).map((l: any) => [
                 <strong key="n">{l.licensee}</strong>, l.source_water_body,
                 l.licensed_m3_per_year != null ? Number(l.licensed_m3_per_year).toLocaleString() : '—',
                 l.purpose ?? '—', l.sub_basin ?? '—', fmtKm(l.distance_km),
@@ -282,15 +282,15 @@ export function SiteReport({ report }: Props) {
             <SourceLink key="s" url={p.source_url} publisher={(p as any).source_publisher ?? 'Municipality'} confidence={(p as any).confidence} asOf={(p as any).source_as_of} />])} />
         <p className="text-xs font-semibold mt-4 mb-2">Transport assets (airport · rail · heavy-haul · intermodal)</p>
         <Table headers={['Type', 'Asset', 'Operator', 'Distance', 'Source']}
-          rows={report.logistics.nearest_logistics_assets.map((l: any) => [
+          rows={(report.logistics.nearest_logistics_assets ?? []).map((l: any) => [
             <Badge key="t" variant="outline" className="text-[10px]">{l.asset_type.replace(/_/g,' ')}</Badge>,
             l.name, l.operator ?? '—', fmtKm(l.distance_km),
             <SourceLink key="s" url={l.source_url} publisher={(l as any).source_publisher ?? 'Operator'} confidence="verified" />,
           ])} />
         <p className="text-xs font-semibold mt-4 mb-2">Workforce — population centres (StatsCan 2021)</p>
         <Table headers={['Centre', 'Population', 'Labour force', 'Trades (est.)', 'Distance', 'Source']}
-          rows={report.logistics.nearest_population_centres.map((p: any) => [
-            <strong key="n">{p.name}</strong>, p.population_2021.toLocaleString(),
+          rows={(report.logistics.nearest_population_centres ?? []).map((p: any) => [
+            <strong key="n">{p.name}</strong>, p.population_2021?.toLocaleString() ?? '—',
             p.labour_force_2021?.toLocaleString() ?? '—', p.trades_workers_estimate?.toLocaleString() ?? '—',
             fmtKm(p.distance_km),
             <SourceLink key="s" url={p.source_url} publisher="StatsCan" confidence="verified" asOf="2021-05-11" />,
