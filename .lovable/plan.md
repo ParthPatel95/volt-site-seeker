@@ -1,56 +1,78 @@
-## What I found
+## Goal
 
-- The satellite image error is likely configuration/code-path related: `site-satellite-image` and `site-asset-vision` call `GOOGLE_MAPS_API_KEY`, but that secret is not present in the project secrets I can see. The current function returns a 500, which the UI displays as “Edge Function returned a non-2xx status code”.
-- Nearby substations are currently loaded only from the legacy `substations` table. That table does not contain the visible substation beside `51.024423, -113.144688`, so the report misses it even though it is clearly visible in imagery.
-- The Site Intelligence UI is one long report made of stacked sections, so it is hard to compare findings quickly.
+Site Intelligence "Power" model becomes a pure Open Infrastructure (OSM / OpenInfraMap) view — internal Supabase transmission/substation tables are not queried or shown. Rebuild the Site Intelligence UI from the ground up into a professional analyst workspace and add new analytical tools that OSM data unlocks.
 
-## Plan
+## 1. Power = Open Infrastructure only
 
-### 1. Fix satellite imagery and AI scan reliability
-- Update `site-satellite-image` and `site-asset-vision` so failures return clear, actionable messages instead of the generic non-2xx error.
-- Use the connected Google Maps runtime correctly:
-  - If the project has a Google Maps connector secret available, call Static Maps through the connector/gateway pattern.
-  - If not, surface a precise “Google Maps credential not available to edge functions” message so the setup issue is obvious.
-- Keep the displayed satellite image as real Google imagery only; no placeholder or fake imagery.
+Backend (`supabase/functions/osm-power-infrastructure`)
+- Expand the Overpass query to pull everything OSM tags around the point:
+  - `power=substation | transformer | switchgear | plant | generator | compensator | converter`
+  - `power=line | minor_line | cable` (with `geometry` so we can measure perpendicular distance, not just centroid)
+  - `power=tower | pole | portal` (nearest structure)
+  - `man_made=tower` filtered to `tower:type=communication` for adjacent telecom (optional toggle)
+- For each element, return every meaningful OSM tag verbatim: `name`, `operator`, `owner`, `voltage` (parsed into kV list), `frequency`, `substation` (transmission/distribution/industrial/traction), `location` (overhead/underground), `cables`, `circuits`, `wires`, `start_date`, `ref`, `rating`, `gas_insulated`, `wikidata`, `wikipedia`.
+- Compute: distance_km (centroid), nearest-point distance for lines, bearing from site, and a per-feature `source_url` to openstreetmap.org and `openinframap_url` to openinframap.org.
+- Add an aggregated `summary`: highest nearby voltage, count by voltage class (≥240 kV, 138–230 kV, 69–138 kV, <69 kV), nearest transmission substation, nearest distribution substation, nearest line of each class, total tagged generation capacity (sum of `generator:output:electricity` where present, with units preserved), and a `data_completeness` score (how many of the top-N features had voltage/operator/name).
+- Increase default radius to 8 km, cap 25 km; raise element cap to 500. Keep the multi-endpoint Overpass fallback.
+- No invented fields — anything missing returns `null` and renders as "Not tagged in OSM".
 
-### 2. Add Open Infrastructure / OSM-backed substation discovery
-- Add a new live lookup path for nearby electrical infrastructure using OpenStreetMap/OpenInfraMap-style data via the Overpass API:
-  - `power=substation`
-  - `power=transformer`
-  - `power=switchgear`
-  - nearby `power=line` / `power=minor_line`
-- Return real OSM tags where available: name, operator, voltage, substation type, power feature type, distance, coordinates, and source URL.
-- Mark these records as `verified` only as “OpenStreetMap/OpenInfraMap tagged feature”, not as engineering-verified capacity.
-- Merge this live substation layer into `alberta-site-report` so the Power & Transmission section catches assets like the visible substation beside the provided site.
-- Add the Open Infrastructure record count into “Datasets queried” so it is obvious whether that live layer loaded.
+Frontend
+- Delete the internal-dataset Power section entirely from `SiteReport.tsx` (remove `report.transmission.nearest_lines` / `nearest_substations` rendering). The Power tab renders **only** OSM data.
+- Remove the "missing from internal dataset" cross-check (no internal dataset is shown anymore).
+- `alberta-site-report` continues to provide the non-power context (climate, seismic, IXPs, population, pipelines, water, logistics). Its `transmission` block is simply ignored by the UI; we won't change the edge function in this pass.
 
-### 3. Improve substation detail and honesty
-- In Power & Transmission, split substations into:
-  - **Dataset substations** from internal/AESO-style records
-  - **Open Infrastructure detections** from OSM/OpenInfraMap tags
-  - **Aerial AI detections** from satellite scan
-- Add a warning when satellite imagery detects a substation but neither the internal dataset nor Open Infrastructure lookup contains one nearby.
-- Do not invent capacity, owner, or voltage if OSM does not provide it; show “Not tagged” instead.
+## 2. New analytical tools (all OSM-driven)
 
-### 4. Redesign Site Intelligence from long scroll into an analysis dashboard
-- Replace the single long vertical report with a more usable dashboard layout:
-  - Sticky top summary with location, overall score, coverage/confidence, export, and key risks.
-  - A compact “decision summary” row: Power, Fiber, Cooling/Climate, Water, Risk, Logistics.
-  - Tabbed sections instead of endless scrolling:
-    - Overview
-    - Power
-    - Fiber
-    - Cooling & Water
-    - Logistics & Workforce
-    - Risk & Regulatory
-    - Imagery & AI Scan
-    - Methodology
-  - Keep dense tables, but show the most important 3–5 records first with expandable/detail areas where needed.
-- Make the imagery/substation area more prominent in the Power and Imagery tabs so visual findings and structured data can be compared quickly.
+Added to the Power tab:
+- **Voltage profile chart** — bar chart of feature counts by voltage class with the closest example per class.
+- **Distance decay panel** — for each of substations, generation, and lines: nearest, median, and 90th-percentile distance with sparkline.
+- **Radial heat dial** — 12-sector compass showing which bearings concentrate transmission assets (helps siting an interconnect route).
+- **Interconnect candidate ranker** — scores nearby substations on (a) distance, (b) max voltage, (c) transmission vs distribution, (d) operator known, and lists top 3 with map pins and a "tap point" rationale.
+- **Generation neighbors** — table of `power=plant`/`generator` with source (wind/solar/gas/hydro), output, operator, distance.
+- **Line crossings within 1 km** — counts and lists overhead vs underground segments and gas-insulated substations (useful for resilience scoring).
+- **OSM data quality strip** — per-result completeness percentage + a "View on OpenInfraMap" deep-link button.
 
-### 5. Verification
-- Test the edge functions directly with the example coordinates `51.024423, -113.144688`.
-- Confirm the satellite image loads or shows a precise credential error.
-- Confirm Open Infrastructure lookup returns the nearby substation if it is tagged in OSM/OpenInfraMap.
-- Confirm no fake substation details are displayed when fields are missing.
-- Bump `APP_VERSION` after implementation.
+## 3. Full UI rebuild
+
+Replace the current `SiteReport.tsx` (a tabbed monolith) with a modular analyst workspace:
+
+```text
+src/components/aeso-hub/site-intel/
+  SiteWorkspace.tsx            ← new top-level shell
+  workspace/
+    SiteHeader.tsx             ← address, coords, score chips, export menu
+    SiteSidebar.tsx            ← persistent nav (Overview, Power, Connectivity,
+                                 Climate & Risk, Logistics, Imagery, Methodology)
+    SiteKpiStrip.tsx           ← 6 KPI cards (max kV nearby, nearest sub km,
+                                 fiber km, water km, seismic, hyperscaler score)
+    panels/
+      OverviewPanel.tsx        ← decision summary + mini-map + top risks
+      PowerPanel.tsx           ← OSM-only, hosts all new analytical tools
+      ConnectivityPanel.tsx    ← IXPs, carrier POPs, fiber
+      ClimateRiskPanel.tsx     ← climate normals, seismic, wildfire
+      LogisticsPanel.tsx       ← rail, highway, workforce, industrial parks
+      ImageryPanel.tsx         ← satellite + AI asset detection
+      MethodologyPanel.tsx     ← data sources & timestamps
+    charts/VoltageBarChart.tsx, DistanceDecay.tsx, BearingDial.tsx
+    InterconnectRanker.tsx
+```
+
+Design language
+- Persistent left sidebar (collapsible on <1024 px), sticky top header with location + export, main content paginates per panel instead of one long scroll.
+- Each panel ≤ one viewport tall on first paint; expandable "show all" inside.
+- Cards use the existing institutional palette (deep navy / Bitcoin orange accents) per project memory — no new tokens.
+- Recharts for bar/line, a small SVG for the bearing dial, leaflet (already loaded for `AlbertaMap`) for the Power mini-map with substation/line overlays.
+
+`SiteReport.tsx` is replaced by `SiteWorkspace.tsx` in its single import site (`AESOMarketHub` site-intel route). Old file deleted.
+
+## 4. Verification
+
+- Call `osm-power-infrastructure` at `51.024423, -113.144688` and confirm: Namaka Substation present with operator/voltage; voltage profile and bearing dial populate; interconnect ranker returns ≥1 candidate; no internal-dataset rows render anywhere in the Power tab.
+- Confirm UI: sidebar nav works, KPI strip renders, each panel scroll-free at 1280×800, PDF export still works (rebuilt against the new structure).
+
+## Technical notes
+
+- Edge function: still public (no JWT), still uses Overpass; concurrent requests rate-limited via 1.5 s cache window keyed by lat/lng/radius (in-memory in the function instance) to be polite.
+- `radius_m` becomes a query param controllable from the Power panel (3, 8, 15, 25 km).
+- All distance math stays in km, two-decimal precision.
+- No DB migrations. No new secrets. APP_VERSION bumped at the end.
