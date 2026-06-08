@@ -35,9 +35,9 @@ const benefits = [
   },
   {
     icon: Calculator,
-    title: 'Demand-Based Billing',
-    description: `Predictable $${FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH}/kW/month demand charge instead of volatile volumetric rates`,
-    savings: 'Budget certainty',
+    title: 'Flat Distribution Charge',
+    description: `Distribution is a flat $${FORTISALBERTA_RATE_65_2026.DISTRIBUTION_SERVICE_CHARGE_PER_DAY.toFixed(2)}/day service charge — no $/kW-month demand or ¢/kWh volumetric component`,
+    savings: 'Predictable, ~$18.5k/yr',
     color: 'hsl(var(--watt-navy))'
   },
   {
