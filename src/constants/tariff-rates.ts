@@ -24,15 +24,27 @@ export const AESO_TARIFF_2026 = {
 
 export const FORTISALBERTA_RATE_65_2026 = {
   // Rate 65 - Transmission Connected Service
-  DEMAND_CHARGE_KW_MONTH: 7.52, // $/kW/month - Updated July 2025 schedule
-  VOLUMETRIC_DELIVERY_CENTS_KWH: 0.2704, // ¢/kWh - Distribution delivery charge
-  TRANSMISSION_ACCESS_CENTS_KWH: 0.16, // ¢/kWh - Transmission access
-  RIDERS_CENTS_KWH: 0.32, // ¢/kWh - Average riders
-  
+  // Per AUC Decision 30274-D01-2025, FortisAlberta Rates Schedule effective
+  // April 1, 2026: Rate 65 has TWO components only — (1) AESO ISO tariff
+  // charges flowed through directly (already modeled via AESO Rate DTS line
+  // items in this calculator), and (2) a flat distribution service charge of
+  // $50.619440/day. There is NO $/kW/month demand charge and NO ¢/kWh
+  // volumetric distribution charge on Rate 65 — those apply to Rate 63
+  // (distribution-connected large general service), not Rate 65.
+  DISTRIBUTION_SERVICE_CHARGE_PER_DAY: 50.619440, // $/day (flat)
+
+  // Legacy fields kept at 0 for backward compatibility with the editable-rate
+  // override UI and the scenario builder. Do NOT use these as real charges.
+  DEMAND_CHARGE_KW_MONTH: 0,
+  VOLUMETRIC_DELIVERY_CENTS_KWH: 0,
+  TRANSMISSION_ACCESS_CENTS_KWH: 0, // pass-through via AESO Rate DTS
+  RIDERS_CENTS_KWH: 0,
+
   // Source metadata
-  effectiveDate: '2025-07-01',
-  sourceUrl: 'https://www.fortisalberta.com/docs/default-source/default-document-library/jul-1-2025-fortisalberta-rates-options-and-riders-schedules.pdf',
-  lastVerified: '2026-02-01',
+  effectiveDate: '2026-04-01',
+  sourceUrl: 'https://www.fortisalberta.com/docs/default-source/default-document-library/rates-options-and-riders-schedules-effective-april-1-2026.pdf',
+  sourceDecision: 'AUC Decision 30274-D01-2025',
+  lastVerified: '2026-06-08',
 } as const;
 
 // EPCOR industrial rates for comparison

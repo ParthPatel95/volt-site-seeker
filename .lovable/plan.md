@@ -1,78 +1,82 @@
-## Goal
+## Problem
 
-Site Intelligence "Power" model becomes a pure Open Infrastructure (OSM / OpenInfraMap) view — internal Supabase transmission/substation tables are not queried or shown. Rebuild the Site Intelligence UI from the ground up into a professional analyst workspace and add new analytical tools that OSM data unlocks.
+The Power Model is double-charging transmission. For a Rate 65 (transmission-connected) site it adds two FortisAlberta line items that don't exist on Rate 65:
 
-## 1. Power = Open Infrastructure only
+| Line in current model | Rate per official tariff | Effect on a 45 MW site |
+|---|---|---|
+| FortisAlberta Demand $7.52/kW-month | **Not on Rate 65** (Rate 63 only) | +$4.06M/yr ≈ **+1.77¢/kWh** |
+| Fortis Distribution 0.2704¢/kWh | **Not on Rate 65** | +$1.07M/yr ≈ **+0.27¢/kWh** |
 
-Backend (`supabase/functions/osm-power-infrastructure`)
-- Expand the Overpass query to pull everything OSM tags around the point:
-  - `power=substation | transformer | switchgear | plant | generator | compensator | converter`
-  - `power=line | minor_line | cable` (with `geometry` so we can measure perpendicular distance, not just centroid)
-  - `power=tower | pole | portal` (nearest structure)
-  - `man_made=tower` filtered to `tower:type=communication` for adjacent telecom (optional toggle)
-- For each element, return every meaningful OSM tag verbatim: `name`, `operator`, `owner`, `voltage` (parsed into kV list), `frequency`, `substation` (transmission/distribution/industrial/traction), `location` (overhead/underground), `cables`, `circuits`, `wires`, `start_date`, `ref`, `rating`, `gas_insulated`, `wikidata`, `wikipedia`.
-- Compute: distance_km (centroid), nearest-point distance for lines, bearing from site, and a per-feature `source_url` to openstreetmap.org and `openinframap_url` to openinframap.org.
-- Add an aggregated `summary`: highest nearby voltage, count by voltage class (≥240 kV, 138–230 kV, 69–138 kV, <69 kV), nearest transmission substation, nearest distribution substation, nearest line of each class, total tagged generation capacity (sum of `generator:output:electricity` where present, with units preserved), and a `data_completeness` score (how many of the top-N features had voltage/operator/name).
-- Increase default radius to 8 km, cap 25 km; raise element cap to 500. Keep the multi-endpoint Overpass fallback.
-- No invented fields — anything missing returns `null` and renders as "Not tagged in OSM".
+That's where the inflated "All-in 9.85¢" comes from. Worst-case DTS alone should be ≈3.5–3.9¢/kWh, matching your independent estimate.
 
-Frontend
-- Delete the internal-dataset Power section entirely from `SiteReport.tsx` (remove `report.transmission.nearest_lines` / `nearest_substations` rendering). The Power tab renders **only** OSM data.
-- Remove the "missing from internal dataset" cross-check (no internal dataset is shown anymore).
-- `alberta-site-report` continues to provide the non-power context (climate, seismic, IXPs, population, pipelines, water, logistics). Its `transmission` block is simply ignored by the UI; we won't change the edge function in this pass.
+## Verified source (official)
 
-## 2. New analytical tools (all OSM-driven)
+FortisAlberta, *Rates, Options and Riders Schedules*, effective April 1, 2026 (AUC Decision 30274-D01-2025), **Rate 65: Transmission Connected Service**, p. governing Rate 65:
 
-Added to the Power tab:
-- **Voltage profile chart** — bar chart of feature counts by voltage class with the closest example per class.
-- **Distance decay panel** — for each of substations, generation, and lines: nearest, median, and 90th-percentile distance with sparkline.
-- **Radial heat dial** — 12-sector compass showing which bearings concentrate transmission assets (helps siting an interconnect route).
-- **Interconnect candidate ranker** — scores nearby substations on (a) distance, (b) max voltage, (c) transmission vs distribution, (d) operator known, and lists top 3 with map pins and a "tap point" rationale.
-- **Generation neighbors** — table of `power=plant`/`generator` with source (wind/solar/gas/hydro), output, operator, distance.
-- **Line crossings within 1 km** — counts and lists overhead vs underground segments and gas-insulated substations (useful for resilience scoring).
-- **OSM data quality strip** — per-result completeness percentage + a "View on OpenInfraMap" deep-link button.
+> Transmission Charges: "The Transmission Charge is the current Independent System Operator (ISO) tariff charges as billed by the Alberta Electric System Operator (AESO) flowed through directly to the Customer."
+> Distribution Charges: "Service Charge — **$50.619440/day**"
 
-## 3. Full UI rebuild
+That's the entire FortisAlberta bill for Rate 65: an ISO pass-through (already covered by AESO Rate DTS in the model) plus a flat ~$50.62/day service charge (≈$18,476/yr — trivial, ~0.005¢/kWh at 45 MW).
 
-Replace the current `SiteReport.tsx` (a tabbed monolith) with a modular analyst workspace:
+Source URL: https://www.fortisalberta.com/docs/default-source/default-document-library/rates-options-and-riders-schedules-effective-april-1-2026.pdf
 
-```text
-src/components/aeso-hub/site-intel/
-  SiteWorkspace.tsx            ← new top-level shell
-  workspace/
-    SiteHeader.tsx             ← address, coords, score chips, export menu
-    SiteSidebar.tsx            ← persistent nav (Overview, Power, Connectivity,
-                                 Climate & Risk, Logistics, Imagery, Methodology)
-    SiteKpiStrip.tsx           ← 6 KPI cards (max kV nearby, nearest sub km,
-                                 fiber km, water km, seismic, hyperscaler score)
-    panels/
-      OverviewPanel.tsx        ← decision summary + mini-map + top risks
-      PowerPanel.tsx           ← OSM-only, hosts all new analytical tools
-      ConnectivityPanel.tsx    ← IXPs, carrier POPs, fiber
-      ClimateRiskPanel.tsx     ← climate normals, seismic, wildfire
-      LogisticsPanel.tsx       ← rail, highway, workforce, industrial parks
-      ImageryPanel.tsx         ← satellite + AI asset detection
-      MethodologyPanel.tsx     ← data sources & timestamps
-    charts/VoltageBarChart.tsx, DistanceDecay.tsx, BearingDial.tsx
-    InterconnectRanker.tsx
+## Fix
+
+### 1. `src/constants/tariff-rates.ts`
+Replace the `FORTISALBERTA_RATE_65_2026` constant with the actual Rate 65 structure:
+```ts
+export const FORTISALBERTA_RATE_65_2026 = {
+  // Rate 65 = ISO tariff pass-through (already modeled via AESO Rate DTS) +
+  // a flat distribution service charge. No $/kW-month demand charge,
+  // no ¢/kWh volumetric. Verified against AUC Decision 30274-D01-2025,
+  // FortisAlberta Rates Schedule effective April 1, 2026.
+  DISTRIBUTION_SERVICE_CHARGE_PER_DAY: 50.619440, // $/day
+  // Legacy fields retained as 0 for backward compatibility with override UI:
+  DEMAND_CHARGE_KW_MONTH: 0,
+  VOLUMETRIC_DELIVERY_CENTS_KWH: 0,
+  TRANSMISSION_ACCESS_CENTS_KWH: 0, // pass-through via DTS
+  RIDERS_CENTS_KWH: 0,
+  effectiveDate: '2026-04-01',
+  sourceUrl: 'https://www.fortisalberta.com/docs/default-source/default-document-library/rates-options-and-riders-schedules-effective-april-1-2026.pdf',
+  sourceDecision: 'AUC Decision 30274-D01-2025',
+  lastVerified: '2026-06-08',
+} as const;
 ```
 
-Design language
-- Persistent left sidebar (collapsible on <1024 px), sticky top header with location + export, main content paginates per panel instead of one long scroll.
-- Each panel ≤ one viewport tall on first paint; expandable "show all" inside.
-- Cards use the existing institutional palette (deep navy / Bitcoin orange accents) per project memory — no new tokens.
-- Recharts for bar/line, a small SVG for the bearing dial, leaflet (already loaded for `AlbertaMap`) for the Power mini-map with substation/line overlays.
+### 2. `src/hooks/usePowerModelCalculator.ts`
+Replace the Fortis charge math (lines ~401-403):
+```ts
+// OLD
+const fortisDemandCharge = cap * 1000 * fortisDemand;
+const fortisDistribution = kwh * fortisVol / 100;
 
-`SiteReport.tsx` is replaced by `SiteWorkspace.tsx` in its single import site (`AESOMarketHub` site-intel route). Old file deleted.
+// NEW — Rate 65 distribution = flat $/day service charge only
+const daysInMonth = new Date(yearOfBucket, calendarMonth + 1, 0).getDate();
+const fortisDemandCharge = 0; // Rate 65 has no demand charge
+const fortisDistribution = daysInMonth * FORTISALBERTA_RATE_65_2026.DISTRIBUTION_SERVICE_CHARGE_PER_DAY;
+```
+Keep the existing `totalFortisCharges = fortisDemandCharge + fortisDistribution` so the rest of the aggregation/UI continues to work; the "FortisAlberta Demand" bar will simply render as 0 and the "Fortis Distribution" bar will show the tiny daily service charge.
 
-## 4. Verification
+### 3. UI labels (`PowerModelChargeBreakdown.tsx`, `PowerModelEditableRates.tsx`, `PowerModelRateExplainer.tsx`, `PowerModelDataSources.tsx`, `powerModelExport.ts`)
+- Rename the "FortisAlberta Demand" row to "FortisAlberta Service Charge (Rate 65)" and bind it to `fortisDistribution`.
+- Remove the "Fortis Distribution" line item (now folded into the service charge).
+- In the editable-rates panel, hide the `DEMAND_CHARGE_KW_MONTH` and `VOLUMETRIC_DELIVERY_CENTS_KWH` inputs (or replace with a single read-only "Service Charge $50.619440/day" entry) and add a footnote: *"Rate 65 distribution is a flat daily service charge — no demand or volumetric component. AESO ISO tariff is billed via Rate DTS line items above."*
+- Update the data-sources / rate-explainer copy to cite the April 1, 2026 schedule and AUC Decision 30274-D01-2025.
 
-- Call `osm-power-infrastructure` at `51.024423, -113.144688` and confirm: Namaka Substation present with operator/voltage; voltage profile and bearing dial populate; interconnect ranker returns ≥1 candidate; no internal-dataset rows render anywhere in the Power tab.
-- Confirm UI: sidebar nav works, KPI strip renders, each panel scroll-free at 1280×800, PDF export still works (rebuilt against the new structure).
+### 4. Verify in-app
+After change, the same 45 MW Rate 65 scenario should land at roughly:
+- DTS (incl. 12CP at 85% avoidance): ~3.5–3.9¢/kWh
+- Operating Reserve + Pool Energy + Rider F + Retailer: variable with pool price
+- Fortis service charge: ≈0.005¢/kWh (flat)
+- All-in: ~7.5–8.0¢/kWh worst case, dropping into the 6s with curtailment — matching your independent estimate.
 
-## Technical notes
+### 5. Bump `APP_VERSION`
+`src/constants/app-version.ts` → `'2026.06.08.009'`.
 
-- Edge function: still public (no JWT), still uses Overpass; concurrent requests rate-limited via 1.5 s cache window keyed by lat/lng/radius (in-memory in the function instance) to be polite.
-- `radius_m` becomes a query param controllable from the Power panel (3, 8, 15, 25 km).
-- All distance math stays in km, two-decimal precision.
-- No DB migrations. No new secrets. APP_VERSION bumped at the end.
+### 6. Memory update
+Update `mem://features/aeso-101/rate-65-transmission-connected-advantage` to reflect that Rate 65 distribution = $50.619440/day flat, no $/kW-month, no volumetric (per AUC 30274-D01-2025).
+
+## Out of scope
+- AESO Rate DTS values (already verified against 2026-015T Bill Estimator and unchanged).
+- 12CP avoidance success-rate logic (unchanged).
+- Curtailment/optimizer logic (unchanged).

@@ -46,10 +46,9 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
         const rows = [
           { label: `Energy Price${isFixed ? ' (Fixed Contract)' : ' (Avg Pool)'}`, cents: c(annual.totalPoolEnergy), badge: isFixed ? 'Fixed' : 'Floating' },
           { label: 'Operating Reserve (12.5%)', cents: c(annual.totalOperatingReserve) },
-          { label: 'FortisAlberta Demand', cents: c(annual.totalFortisDemand) },
           { label: 'Regional Billing Capacity', cents: c(annual.totalRegionalBillingCapacity) },
           { label: 'POD Charges (Sub + Tiered)', cents: c(annual.totalPodCharges) },
-          { label: 'Fortis Distribution', cents: c(annual.totalFortisDistribution) },
+          { label: 'FortisAlberta Service Charge (Rate 65)', cents: c(annual.totalFortisDistribution) },
           { label: 'Bulk Metered Energy', cents: c(annual.totalBulkMeteredEnergy) },
           { label: 'Regional Metered Energy', cents: c(annual.totalRegionalMeteredEnergy) },
           { label: 'Rider F', cents: c(annual.totalRiderF) },
@@ -525,8 +524,7 @@ export function PowerModelChargeBreakdown({ monthly, annual, targetUptime = 95, 
                   { label: '(5) TCR', value: avg(m => m.tcr), estimate: true },
                   { label: '(6) Voltage Control', value: avg(m => m.voltageControl) },
                   { label: '(7) System Support', value: avg(m => m.systemSupport) },
-                  { label: 'FortisAlberta Demand Charge', value: avg(m => m.fortisDemandCharge), note: 'Rate 65' },
-                  { label: 'FortisAlberta Distribution', value: avg(m => m.fortisDistribution), note: 'Rate 65' },
+                  { label: 'FortisAlberta Service Charge', value: avg(m => m.fortisDistribution), note: 'Rate 65 ($50.619440/day flat)' },
                 ];
                 return rows.map(r => (
                   <div key={r.label} className="flex justify-between py-1.5 border-b border-border/50">

@@ -77,13 +77,16 @@ export function PowerModelRateExplainer() {
                 </div>
 
                 <div className="bg-muted/30 rounded-lg p-4 space-y-1">
-                  <h4 className="text-sm font-semibold mb-2">FortisAlberta Distribution Charges</h4>
-                  <RateRow label="Demand Charge" value={`$${FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH.toFixed(2)}`} unit="/kW/month" />
-                  <RateRow label="Volumetric Delivery" value={`${FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH}¢`} unit="/kWh" />
-                  <RateRow label="Transmission Access" value={`${FORTISALBERTA_RATE_65_2026.TRANSMISSION_ACCESS_CENTS_KWH}¢`} unit="/kWh" />
-                  <RateRow label="Riders (avg)" value={`${FORTISALBERTA_RATE_65_2026.RIDERS_CENTS_KWH}¢`} unit="/kWh" verified={false} />
+                  <h4 className="text-sm font-semibold mb-2">FortisAlberta Distribution Charges (Rate 65)</h4>
+                  <RateRow label="Service Charge" value={`$${FORTISALBERTA_RATE_65_2026.DISTRIBUTION_SERVICE_CHARGE_PER_DAY.toFixed(6)}`} unit="/day (flat)" />
+                  <p className="text-xs text-muted-foreground pt-2 leading-relaxed">
+                    Rate 65 distribution is a <strong>flat daily service charge only</strong> — no
+                    $/kW-month demand component and no ¢/kWh volumetric component. AESO ISO tariff
+                    charges are flowed through directly to the customer and billed via the AESO
+                    Rate DTS line items below.
+                  </p>
                   <div className="pt-2 text-xs text-muted-foreground">
-                    Effective: July 1, 2025 · <SourceLink href="https://www.fortisalberta.com/docs/default-source/default-document-library/jul-1-2025-fortisalberta-rates-options-and-riders-schedules.pdf" label="FortisAlberta Rate Schedule" />
+                    Effective: April 1, 2026 · AUC Decision 30274-D01-2025 · <SourceLink href="https://www.fortisalberta.com/docs/default-source/default-document-library/rates-options-and-riders-schedules-effective-april-1-2026.pdf" label="FortisAlberta Rate Schedule" />
                   </div>
                 </div>
 
