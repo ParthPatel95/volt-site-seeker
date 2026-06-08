@@ -151,10 +151,7 @@ export function SiteReport({ report }: Props) {
         </Button>
       </div>
 
-      <HyperscalerScoreCard score={report.hyperscaler_score} />
-
       <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
-        <FiberScoreCard score={report.fiber.score} />
         <div className="flex flex-wrap items-end gap-4 mb-3">
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1"><Filter className="w-3 h-3" /> Carriers</Label>
@@ -174,11 +171,10 @@ export function SiteReport({ report }: Props) {
           </div>
         </div>
         <p className="text-xs font-semibold mt-4 mb-2">Top routes (ranked)</p>
-        <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency', 'Score']}
+        <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency']}
           rows={filteredRoutes.map(r => [
             <Badge key="r" variant="outline">{r.rank}</Badge>, <strong key="c">{r.carrier}</strong>, r.pop, r.pop_city,
             `${r.site_to_pop_km} km`, r.hub, r.latency_ms != null ? `${r.latency_ms} ms` : '—',
-            <Badge key="s" variant="secondary">{r.composite}</Badge>,
           ])} />
         <p className="text-xs font-semibold mt-4 mb-2">Nearest POPs</p>
         <Table headers={['Carrier', 'Facility', 'City', 'Distance', 'Services', 'YYC ms', 'YEG ms', 'SEA ms', 'ORD ms', 'Source']}
@@ -304,8 +300,6 @@ export function SiteReport({ report }: Props) {
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
-          {report.methodology?.hyperscaler_score && <p><strong>Hyperscaler score:</strong> {report.methodology.hyperscaler_score}</p>}
-          {report.methodology?.fiber_score && <p><strong>Fiber score:</strong> {report.methodology.fiber_score}</p>}
           {report.methodology?.modeled_latency && <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>}
           {report.methodology?.distance && <p><strong>Distance:</strong> {report.methodology.distance}</p>}
         </div>
