@@ -192,15 +192,11 @@ async function backfillPrices(supabase: any, aesoKey: string | undefined, startY
     console.log(`Fetching prices for ${startDate} to ${endDate}`);
 
     try {
-      // Check if we already have data for this period
-      const { count: existingCount } = await supabase
-        .from('aeso_training_data')
-        .select('*', { count: 'exact', head: true })
-        .gte('timestamp', startDate)
-        .lte('timestamp', `${endDate}T23:59:59`);
-
-      if (existingCount && existingCount > 600) {
-        console.log(`Skipping ${startDate} - already have ${existingCount} records`);
+      // Skip only when we already have a complete month (24 * days_in_month canonical hours)
+      const expectedHours = new Date(year, month, 0).getDate() * 24;
+      const existingHourBuckets = await loadExistingHourBuckets(supabase, startDate, endDate);
+      if (existingHourBuckets.size >= expectedHours) {
+        console.log(`Skipping ${startDate} - already complete (${existingHourBuckets.size}/${expectedHours} hours)`);
         continue;
       }
 
@@ -226,31 +222,10 @@ async function backfillPrices(supabase: any, aesoKey: string | undefined, startY
         continue;
       }
 
-      // Insert records
-      for (const price of prices) {
-        const timestamp = price.begin_datetime_utc;
-        const poolPrice = parseFloat(price.pool_price);
-
-        if (!timestamp || isNaN(poolPrice)) continue;
-
-        const { error } = await supabase
-          .from('aeso_training_data')
-          .upsert({
-            timestamp,
-            pool_price: poolPrice,
-            hour_of_day: new Date(timestamp).getHours(),
-            day_of_week: new Date(timestamp).getDay(),
-            month: new Date(timestamp).getMonth() + 1,
-            is_weekend: [0, 6].includes(new Date(timestamp).getDay())
-          }, { 
-            onConflict: 'timestamp',
-            ignoreDuplicates: false 
-          });
-
-        if (!error) recordsInserted++;
-      }
-
-      console.log(`Inserted ${prices.length} price records for ${startDate}`);
+      // Only upsert hours that are missing from the canonical hour grid
+      const inserted = await upsertMissingPriceRows(supabase, prices, existingHourBuckets);
+      recordsInserted += inserted;
+      console.log(`Month ${startDate}: fetched ${prices.length}, inserted ${inserted} missing hours (had ${existingHourBuckets.size}/${expectedHours})`);
       
       // Rate limiting delay
       await new Promise(r => setTimeout(r, 200));
