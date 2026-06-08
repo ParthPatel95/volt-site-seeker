@@ -204,7 +204,17 @@ export function SiteReport({ report }: Props) {
         </Button>
       </div>
 
-      <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
+      <Section
+        icon={<Cable className="w-4 h-4" />}
+        title="Fiber & Network"
+        subtitle="Closest carrier POPs and long-haul corridors"
+        right={<CoverageBadge inputs={[
+          { rows: report.fiber.nearest_pops },
+          { rows: report.fiber.nearest_long_haul_routes },
+          { rows: report.fiber.nearest_ixps },
+          { rows: report.fiber.cloud_reach ?? [], forcedConfidence: 'modeled' },
+        ]} />}
+      >
         <div className="flex flex-wrap items-end gap-4 mb-3">
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1"><Filter className="w-3 h-3" /> Carriers</Label>
@@ -260,7 +270,15 @@ export function SiteReport({ report }: Props) {
           ])} />
       </Section>
 
-      <Section icon={<Zap className="w-4 h-4" />} title="Power & Transmission" subtitle="AESO transmission lines, substations, and grid posture">
+      <Section
+        icon={<Zap className="w-4 h-4" />}
+        title="Power & Transmission"
+        subtitle="AESO transmission lines, substations, and grid posture"
+        right={<CoverageBadge inputs={[
+          { rows: report.transmission.nearest_lines },
+          { rows: report.transmission.nearest_substations ?? [] },
+        ]} />}
+      >
         <Table headers={['Line', 'kV', 'Owner', 'Distance']}
           rows={report.transmission.nearest_lines.map((t: any) => [t.name, <Badge key="v" variant="outline">{t.voltage_kv} kV</Badge>, t.owner, fmtKm(t.distance_km)])} />
         {(report.transmission.nearest_substations ?? []).length > 0 && (
@@ -274,7 +292,12 @@ export function SiteReport({ report }: Props) {
       </Section>
 
       {report.climate && (
-        <Section icon={<Thermometer className="w-4 h-4" />} title="Climate & Cooling" subtitle={`ECCC normals 1991–2020 · ${report.climate.station_name}`}>
+        <Section
+          icon={<Thermometer className="w-4 h-4" />}
+          title="Climate & Cooling"
+          subtitle={`ECCC normals 1991–2020 · ${report.climate.station_name}`}
+          right={<CoverageBadge inputs={[{ rows: [report.climate] }]} />}
+        >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <KV label="Mean annual T" value={`${report.climate.mean_annual_dry_bulb_c ?? '—'} °C`} />
             <KV label="ASHRAE 0.4% design DB" value={`${report.climate.ashrae_04_design_db_c ?? '—'} °C`} />
@@ -290,7 +313,12 @@ export function SiteReport({ report }: Props) {
       )}
 
       {report.risk && (
-        <Section icon={<ShieldAlert className="w-4 h-4" />} title="Natural-Hazard Risk" subtitle={report.risk.region_name}>
+        <Section
+          icon={<ShieldAlert className="w-4 h-4" />}
+          title="Natural-Hazard Risk"
+          subtitle={report.risk.region_name}
+          right={<CoverageBadge inputs={[{ rows: [report.risk] }]} />}
+        >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <KV label="Seismic PGA" value={`${report.risk.seismic_pga_g ?? '—'} g`} sub={report.risk.seismic_rating ?? ''} />
             <KV label="Wildfire" value={report.risk.wildfire_rating ?? '—'} />
@@ -301,7 +329,16 @@ export function SiteReport({ report }: Props) {
         </Section>
       )}
 
-      <Section icon={<Flame className="w-4 h-4" />} title="Natural Gas & Water" subtitle="Process fuel and cooling sources">
+      <Section
+        icon={<Flame className="w-4 h-4" />}
+        title="Natural Gas & Water"
+        subtitle="Process fuel and cooling sources"
+        right={<CoverageBadge inputs={[
+          { rows: report.gas_and_water.nearest_gas_pipelines },
+          { rows: report.gas_and_water.nearest_water_sources },
+          { rows: report.gas_and_water.nearest_water_licences ?? [] },
+        ]} />}
+      >
         <Table headers={['Gas pipeline', 'Operator', 'Diameter', 'Pressure', 'Distance', 'Source']}
           rows={report.gas_and_water.nearest_gas_pipelines.map((g: any) => [g.name, g.operator, `${g.diameter_mm} mm`, `${g.pressure_kpa} kPa`, fmtKm(g.distance_km),
             <SourceLink key="s" url={g.source_url} publisher={g.source_publisher ?? 'CER'} confidence={g.confidence} asOf={g.source_as_of} />])} />
@@ -325,7 +362,16 @@ export function SiteReport({ report }: Props) {
         )}
       </Section>
 
-      <Section icon={<Truck className="w-4 h-4" />} title="Site Logistics & Workforce" subtitle="Industrial parks, transport, and labour">
+      <Section
+        icon={<Truck className="w-4 h-4" />}
+        title="Site Logistics & Workforce"
+        subtitle="Industrial parks, transport, and labour"
+        right={<CoverageBadge inputs={[
+          { rows: report.logistics.nearest_industrial_parks },
+          { rows: report.logistics.nearest_logistics_assets ?? [] },
+          { rows: report.logistics.nearest_population_centres ?? [] },
+        ]} />}
+      >
         <Table headers={['Industrial park', 'Municipality', 'Available power', 'Zoning', 'Distance', 'Source']}
           rows={report.logistics.nearest_industrial_parks.map((p: any) => [p.name, p.municipality, p.available_power_mw ? `${p.available_power_mw} MW` : '—', p.zoning ?? '—', fmtKm(p.distance_km),
             <SourceLink key="s" url={p.source_url} publisher={(p as any).source_publisher ?? 'Municipality'} confidence={(p as any).confidence} asOf={(p as any).source_as_of} />])} />
@@ -351,7 +397,15 @@ export function SiteReport({ report }: Props) {
       </Section>
 
       {report.workforce && (
-        <Section icon={<Users className="w-4 h-4" />} title="Workforce & Talent" subtitle="Labour pool, trades supply, and post-secondary pipeline">
+        <Section
+          icon={<Users className="w-4 h-4" />}
+          title="Workforce & Talent"
+          subtitle="Labour pool, trades supply, and post-secondary pipeline"
+          right={<CoverageBadge inputs={[
+            { rows: report.workforce.nearest_centres ?? [] },
+            { rows: report.workforce.post_secondary_within_200km ?? [] },
+          ]} />}
+        >
           <Table headers={['Centre', 'Labour force', 'Unemploy.', '% Post-sec', 'Electricians', 'HVAC techs', 'IT workers', 'Med. electrician $/hr', 'Distance', 'Source']}
             rows={(report.workforce.nearest_centres ?? []).map((w: any) => [
               <strong key="n">{w.centre_name}</strong>,
@@ -378,7 +432,15 @@ export function SiteReport({ report }: Props) {
       )}
 
       {report.construction && (
-        <Section icon={<HardHat className="w-4 h-4" />} title="Construction & EPC Capacity" subtitle="Alberta GC/EPC firms and prevailing trade wages">
+        <Section
+          icon={<HardHat className="w-4 h-4" />}
+          title="Construction & EPC Capacity"
+          subtitle="Alberta GC/EPC firms and prevailing trade wages"
+          right={<CoverageBadge inputs={[
+            { rows: report.construction.epc_firms ?? [] },
+            { rows: report.construction.union_vs_open_wages ?? [] },
+          ]} />}
+        >
           <Table headers={['Firm', 'HQ / Office', 'Mega-project capable', 'Labour model', 'Recent projects', 'Source']}
             rows={(report.construction.epc_firms ?? []).map((f: any) => [
               <strong key="n">{f.firm_name}</strong>, f.hq_city ?? '—',
@@ -400,7 +462,12 @@ export function SiteReport({ report }: Props) {
       )}
 
       {report.regulatory?.nearest_zone && (
-        <Section icon={<Scale className="w-4 h-4" />} title="Tax, Land & Regulatory" subtitle={report.regulatory.nearest_zone.municipality}>
+        <Section
+          icon={<Scale className="w-4 h-4" />}
+          title="Tax, Land & Regulatory"
+          subtitle={report.regulatory.nearest_zone.municipality}
+          right={<CoverageBadge inputs={[{ rows: [report.regulatory.nearest_zone] }]} />}
+        >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
             <KV label="M&E exempt"
@@ -422,7 +489,16 @@ export function SiteReport({ report }: Props) {
       )}
 
       {report.connectivity_depth && (
-        <Section icon={<Wifi className="w-4 h-4" />} title="Connectivity Depth" subtitle="Carrier-hotel access, last-mile providers, dark fiber inventory">
+        <Section
+          icon={<Wifi className="w-4 h-4" />}
+          title="Connectivity Depth"
+          subtitle="Carrier-hotel access, last-mile providers, dark fiber inventory"
+          right={<CoverageBadge inputs={[
+            { rows: report.connectivity_depth.carrier_pop_details ?? [] },
+            { rows: report.connectivity_depth.last_mile_in_municipality ? [report.connectivity_depth.last_mile_in_municipality] : [] },
+            { rows: report.connectivity_depth.dark_fiber_segments_nearby ?? [] },
+          ]} />}
+        >
           <p className="text-xs font-semibold mb-2">Carrier hotels & MMR facilities</p>
           <Table headers={['Facility', 'City', 'Type', 'Open access', 'X-connect $', 'Carriers on-net', 'Distance', 'Source']}
             rows={(report.connectivity_depth.carrier_pop_details ?? []).map((p: any) => [
