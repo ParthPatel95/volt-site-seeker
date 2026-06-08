@@ -105,8 +105,7 @@ export function exportPowerModelCSV(
     ['TCR', annual.totalTCR],
     ['Voltage Control', annual.totalVoltageControl],
     ['System Support', annual.totalSystemSupport],
-    ['FortisAlberta Demand', annual.totalFortisDemand],
-    ['FortisAlberta Distribution', annual.totalFortisDistribution],
+    ['FortisAlberta Service Charge (Rate 65)', annual.totalFortisDistribution],
     ['Retailer Fee', annual.totalRetailerFee],
     ['Rider F', annual.totalRiderF],
   ] as const;
@@ -248,8 +247,7 @@ export async function exportPowerModelPDF(
     ['TCR', annual.totalTCR],
     ['Voltage Control', annual.totalVoltageControl],
     ['System Support', annual.totalSystemSupport],
-    ['FortisAlberta Demand', annual.totalFortisDemand],
-    ['FortisAlberta Distribution', annual.totalFortisDistribution],
+    ['FortisAlberta Service Charge (Rate 65)', annual.totalFortisDistribution],
     ['Retailer Fee', annual.totalRetailerFee],
     ['Rider F', annual.totalRiderF],
   ];
