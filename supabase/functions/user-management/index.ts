@@ -206,24 +206,17 @@ Deno.serve(async (req) => {
         }
 
       case 'reset-password':
-        // Send password reset email
-        const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'recovery',
-          email: userId // Note: in this case we need to pass the user's email
-        });
-
-        if (resetError) {
-          throw resetError;
-        }
-
-        // In production, you would send this link via email
-        // For now, we'll just trigger the built-in Supabase password reset
+        // Send password reset email for the selected user.
+        // The client passes a user id, so look up the email before calling Supabase Auth.
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (userError || !userData.user) {
           throw new Error('User not found');
         }
 
-        const { error: resetEmailError } = await supabaseAdmin.auth.resetPasswordForEmail(userData.user.email);
+        const origin = req.headers.get('origin') || 'https://wattbyte.com';
+        const { error: resetEmailError } = await supabaseAdmin.auth.resetPasswordForEmail(userData.user.email!, {
+          redirectTo: `${origin}/voltmarket/reset-password`,
+        });
         if (resetEmailError) {
           throw resetEmailError;
         }
