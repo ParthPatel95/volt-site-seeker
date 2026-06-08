@@ -106,9 +106,23 @@ export function PowerModelEditableRates({ overrides, onChange }: Props) {
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0">
-              <RateField label="Demand Charge" unit="$/kW/mo" value={overrides.fortisDemandChargeKwMonth} defaultValue={FORTISALBERTA_RATE_65_2026.DEMAND_CHARGE_KW_MONTH} badge="Verified" onChange={v => update('fortisDemandChargeKwMonth', v)} />
-              <RateField label="Volumetric Delivery" unit="¢/kWh" value={overrides.fortisVolumetricCentsKwh} defaultValue={FORTISALBERTA_RATE_65_2026.VOLUMETRIC_DELIVERY_CENTS_KWH} badge="Verified" onChange={v => update('fortisVolumetricCentsKwh', v)} />
+            <CardContent className="space-y-3 pt-0">
+              <div className="rounded-md border border-border bg-muted/30 p-3 text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Distribution Service Charge</span>
+                  <span className="font-mono tabular-nums">
+                    ${FORTISALBERTA_RATE_65_2026.DISTRIBUTION_SERVICE_CHARGE_PER_DAY.toFixed(6)}/day
+                  </span>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">
+                  Rate 65 distribution is a <strong>flat daily service charge</strong> only — no $/kW-month
+                  demand component and no ¢/kWh volumetric component. AESO ISO tariff charges are
+                  flowed through directly and billed via the AESO Rate DTS line items above.
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Source: AUC Decision 30274-D01-2025 · FortisAlberta Rates Schedule effective April 1, 2026.
+                </p>
+              </div>
             </CardContent>
           </CollapsibleContent>
         </Card>

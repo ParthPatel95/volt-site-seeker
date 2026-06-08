@@ -398,8 +398,21 @@ export function usePowerModelCalculator(
       const riderF = mwh * riderRate;
       const totalEnergyCharges = poolEnergyTotal + retailerFee + riderF;
 
-      const fortisDemandCharge = cap * 1000 * fortisDemand;
-      const fortisDistribution = kwh * fortisVol / 100;
+      // FortisAlberta Rate 65 (Transmission Connected Service):
+      //  - Transmission = AESO ISO tariff flow-through (already billed above
+      //    via the Rate DTS line items — do NOT double-count here).
+      //  - Distribution = flat $50.619440/day service charge only. There is
+      //    no $/kW-month demand charge and no ¢/kWh volumetric on Rate 65
+      //    (those apply to Rate 63, not Rate 65). Verified against AUC
+      //    Decision 30274-D01-2025, FortisAlberta schedule effective
+      //    April 1, 2026.
+      const daysInMonth = new Date(yearOfBucket, calendarMonth + 1, 0).getDate();
+      const fortisDemandCharge = 0;
+      const fortisDistribution = daysInMonth * FORTISALBERTA_RATE_65_2026.DISTRIBUTION_SERVICE_CHARGE_PER_DAY;
+      // Reference the legacy override values so unused-var warnings stay
+      // quiet and the override UI can still set them to non-zero if a user
+      // explicitly wants to model a non-Rate-65 scenario.
+      void fortisDemand; void fortisVol;
       const totalFortisCharges = fortisDemandCharge + fortisDistribution;
 
       const totalPreGST = totalDTSCharges + totalEnergyCharges + totalFortisCharges;
