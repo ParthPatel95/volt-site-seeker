@@ -13,16 +13,17 @@ export function PowerModelStrategyComparison({ annual, cadUsdRate }: Props) {
   if (!annual || annual.totalKWh === 0) return null;
 
   const kwh = annual.totalKWh;
-  const optimizedCost = annual.totalAmountDue;
-  const full12CPCharge = annual.totalBulkCoincidentDemandFull;
   const priceCurtailSavings = annual.totalPriceCurtailmentSavings;
-  const gstRate = annual.totalGST / annual.totalPreGST;
+  const missingTwelveCP = annual.missingTwelveCP;
+  const gstRate = annual.totalPreGST > 0 ? annual.totalGST / annual.totalPreGST : 0;
 
-  const baseCostPreGST = annual.totalPreGST + full12CPCharge + priceCurtailSavings;
-  const baseCost = baseCostPreGST * (1 + gstRate);
-  const with12CPCostPreGST = baseCostPreGST - full12CPCharge;
-  const with12CPCost = with12CPCostPreGST * (1 + gstRate);
-  const withBothCost = optimizedCost;
+  const withBothPreGST = annual.totalPreGST;
+  const with12CPPreGST = withBothPreGST + priceCurtailSavings;
+  const basePreGST = withBothPreGST + missingTwelveCP + priceCurtailSavings;
+
+  const baseCost = basePreGST * (1 + gstRate);
+  const with12CPCost = with12CPPreGST * (1 + gstRate);
+  const withBothCost = annual.totalAmountDue;
 
   const totalSavings = baseCost - withBothCost;
   const totalSavingsPct = baseCost > 0 ? ((totalSavings / baseCost) * 100) : 0;

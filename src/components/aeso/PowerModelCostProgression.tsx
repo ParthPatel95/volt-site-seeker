@@ -17,28 +17,30 @@ export function PowerModelCostProgression({ annual, cadUsdRate, fixedPriceCAD = 
   const kwh = annual.totalKWh;
   const isFixed = fixedPriceCAD > 0;
 
-  // Scenario costs (annual CAD)
-  const optimizedCost = annual.totalAmountDue; // Current: with 12CP avoidance + price curtailment
-  const full12CPCharge = annual.totalBulkCoincidentDemandFull;
+  // Scenario costs (annual CAD).
+  //
+  // The calculator's totalPreGST already reflects:
+  //   - (1 - successRate) × full 12CP charge (i.e., missed peaks only)
+  //   - All price-curtailment savings applied
+  //
+  // To rebuild the other scenarios consistently, we add back the missing
+  // portions explicitly. See AnnualSummary.missingTwelveCP &
+  // totalPriceCurtailmentSavings for definitions.
   const priceCurtailSavings = annual.totalPriceCurtailmentSavings;
+  const missingTwelveCP = annual.missingTwelveCP;
+  const gstRate = annual.totalPreGST > 0 ? annual.totalGST / annual.totalPreGST : 0;
 
-  // Recalculate GST impact for added 12CP charge
-  const gstRate = annual.totalGST / annual.totalPreGST; // derive actual GST rate
+  const withBothPreGST = annual.totalPreGST;                                  // fully optimized
+  const with12CPPreGST = withBothPreGST + priceCurtailSavings;                // 12CP avoidance only
+  const withPricePreGST = withBothPreGST + missingTwelveCP;                   // price curtailment only
+  const basePreGST = withBothPreGST + missingTwelveCP + priceCurtailSavings;  // no optimization
 
-  // Base = optimized + full 12CP charge + price curtailment savings (what you'd pay with NO optimization)
-  const baseCostPreGST = annual.totalPreGST + full12CPCharge + priceCurtailSavings;
-  const baseCost = baseCostPreGST * (1 + gstRate);
+  const baseCost = basePreGST * (1 + gstRate);
+  const with12CPCost = with12CPPreGST * (1 + gstRate);
+  const withPriceCost = withPricePreGST * (1 + gstRate);
+  const fullyOptimizedCost = annual.totalAmountDue;
 
-  // With 12CP only = base - 12CP charge (but still paying high-price hours)
-  const with12CPCostPreGST = baseCostPreGST - full12CPCharge;
-  const with12CPCost = with12CPCostPreGST * (1 + gstRate);
-
-  // With price curtailment only = base - price savings (but still paying full 12CP)
-  const withPriceCostPreGST = baseCostPreGST - priceCurtailSavings;
-  const withPriceCost = withPriceCostPreGST * (1 + gstRate);
-
-  // Fully optimized = current totalAmountDue
-  const fullyOptimizedCost = optimizedCost;
+  const zeroQualifyingHours = priceCurtailSavings === 0;
 
   const scenarios = [
     {
@@ -59,7 +61,9 @@ export function PowerModelCostProgression({ annual, cadUsdRate, fixedPriceCAD = 
     },
     {
       label: 'With Price Curtailment',
-      subtitle: isFixed ? 'Curtail during high pool price hours' : 'Curtail hours above breakeven',
+      subtitle: zeroQualifyingHours
+        ? 'No hours qualified above breakeven in this period'
+        : (isFixed ? 'Curtail during high pool price hours' : 'Curtail hours above breakeven'),
       cost: withPriceCost,
       savings: baseCost - withPriceCost,
       icon: <TrendingDown className="h-3.5 w-3.5 text-amber-500" />,
