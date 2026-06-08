@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { TrendingDown, Shield, Zap, ArrowDown } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
+import { buildScenarioBundle } from '@/lib/aeso/powerModelScenarios';
 
 interface Props {
   annual: AnnualSummary | null;
@@ -13,34 +14,15 @@ interface Props {
 
 export function PowerModelCostProgression({ annual, cadUsdRate, fixedPriceCAD = 0 }: Props) {
   if (!annual || annual.totalKWh === 0) return null;
-
-  const kwh = annual.totalKWh;
   const isFixed = fixedPriceCAD > 0;
+  const bundle = buildScenarioBundle(annual, cadUsdRate);
+  if (!bundle) return null;
 
-  // Scenario costs (annual CAD).
-  //
-  // The calculator's totalPreGST already reflects:
-  //   - (1 - successRate) × full 12CP charge (i.e., missed peaks only)
-  //   - All price-curtailment savings applied
-  //
-  // To rebuild the other scenarios consistently, we add back the missing
-  // portions explicitly. See AnnualSummary.missingTwelveCP &
-  // totalPriceCurtailmentSavings for definitions.
-  const priceCurtailSavings = annual.totalPriceCurtailmentSavings;
-  const missingTwelveCP = annual.missingTwelveCP;
-  const gstRate = annual.totalPreGST > 0 ? annual.totalGST / annual.totalPreGST : 0;
-
-  const withBothPreGST = annual.totalPreGST;                                  // fully optimized
-  const with12CPPreGST = withBothPreGST + priceCurtailSavings;                // 12CP avoidance only
-  const withPricePreGST = withBothPreGST + missingTwelveCP;                   // price curtailment only
-  const basePreGST = withBothPreGST + missingTwelveCP + priceCurtailSavings;  // no optimization
-
-  const baseCost = basePreGST * (1 + gstRate);
-  const with12CPCost = with12CPPreGST * (1 + gstRate);
-  const withPriceCost = withPricePreGST * (1 + gstRate);
-  const fullyOptimizedCost = annual.totalAmountDue;
-
-  const zeroQualifyingHours = priceCurtailSavings === 0;
+  const baseCost = bundle.base.total;
+  const with12CPCost = bundle.twelveCP.total;
+  const withPriceCost = bundle.priceCurtail.total;
+  const fullyOptimizedCost = bundle.both.total;
+  const zeroQualifyingHours = bundle.zeroQualifyingHours;
 
   const scenarios = [
     {
@@ -79,7 +61,7 @@ export function PowerModelCostProgression({ annual, cadUsdRate, fixedPriceCAD = 
     },
   ];
 
-  const fmtCents = (dollars: number) => ((dollars / kwh) * 100).toFixed(2);
+  const fmtCents = (dollars: number) => ((dollars / bundle.deliveredKWh) * 100).toFixed(2);
   const fmtAnnual = (dollars: number) => {
     if (dollars >= 1_000_000) return `$${(dollars / 1_000_000).toFixed(2)}M`;
     if (dollars >= 1_000) return `$${(dollars / 1_000).toFixed(0)}k`;

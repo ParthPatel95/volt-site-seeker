@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Shield, Zap, DollarSign, TrendingDown } from 'lucide-react';
 import type { AnnualSummary } from '@/hooks/usePowerModelCalculator';
+import { buildScenarioBundle } from '@/lib/aeso/powerModelScenarios';
 
 interface Props {
   annual: AnnualSummary | null;
@@ -11,19 +12,12 @@ interface Props {
 
 export function PowerModelStrategyComparison({ annual, cadUsdRate }: Props) {
   if (!annual || annual.totalKWh === 0) return null;
+  const bundle = buildScenarioBundle(annual, cadUsdRate);
+  if (!bundle) return null;
 
-  const kwh = annual.totalKWh;
-  const priceCurtailSavings = annual.totalPriceCurtailmentSavings;
-  const missingTwelveCP = annual.missingTwelveCP;
-  const gstRate = annual.totalPreGST > 0 ? annual.totalGST / annual.totalPreGST : 0;
-
-  const withBothPreGST = annual.totalPreGST;
-  const with12CPPreGST = withBothPreGST + priceCurtailSavings;
-  const basePreGST = withBothPreGST + missingTwelveCP + priceCurtailSavings;
-
-  const baseCost = basePreGST * (1 + gstRate);
-  const with12CPCost = with12CPPreGST * (1 + gstRate);
-  const withBothCost = annual.totalAmountDue;
+  const baseCost = bundle.base.total;
+  const with12CPCost = bundle.twelveCP.total;
+  const withBothCost = bundle.both.total;
 
   const totalSavings = baseCost - withBothCost;
   const totalSavingsPct = baseCost > 0 ? ((totalSavings / baseCost) * 100) : 0;
@@ -36,7 +30,7 @@ export function PowerModelStrategyComparison({ annual, cadUsdRate }: Props) {
       label: 'No Curtailment',
       sub: 'Full exposure',
       cost: baseCost,
-      rate: (baseCost / kwh * 100).toFixed(2),
+      rate: bundle.base.centsPerKwhCAD.toFixed(2),
       icon: <DollarSign className="w-4 h-4" />,
       color: 'from-red-500/10 to-red-500/5',
       borderColor: 'border-red-500/30',
@@ -46,7 +40,7 @@ export function PowerModelStrategyComparison({ annual, cadUsdRate }: Props) {
       label: '+ 12CP Avoidance',
       sub: 'Peak demand avoided',
       cost: with12CPCost,
-      rate: (with12CPCost / kwh * 100).toFixed(2),
+      rate: bundle.twelveCP.centsPerKwhCAD.toFixed(2),
       savings: baseCost - with12CPCost,
       icon: <Shield className="w-4 h-4" />,
       color: 'from-blue-500/10 to-blue-500/5',
@@ -57,7 +51,7 @@ export function PowerModelStrategyComparison({ annual, cadUsdRate }: Props) {
       label: '+ Price Curtailment',
       sub: 'Fully optimized',
       cost: withBothCost,
-      rate: (withBothCost / kwh * 100).toFixed(2),
+      rate: bundle.both.centsPerKwhCAD.toFixed(2),
       savings: baseCost - withBothCost,
       icon: <Zap className="w-4 h-4" />,
       color: 'from-emerald-500/10 to-emerald-500/5',
