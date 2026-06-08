@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Network, Map as MapIcon, FileSearch, Info } from 'lucide-react';
 import { AlbertaMap } from '../site-intel/AlbertaMap';
 import { SiteLookupForm } from '../site-intel/SiteLookupForm';
-import { SiteReport } from '../site-intel/SiteReport';
+import { SiteWorkspace } from '../site-intel/SiteWorkspace';
 import { useGenerateSiteReport, type SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
 import { toast } from 'sonner';
 
@@ -66,7 +66,7 @@ export function SiteIntelTab() {
             />
             <div className="min-h-[400px]">
               {report ? (
-                <SiteReport report={report} />
+                <SiteWorkspace report={report} />
               ) : (
                 <Card className="h-full flex items-center justify-center p-8 text-center text-sm text-muted-foreground">
                   Enter an address or coordinates (or pick a point on the map) to generate a comprehensive site intelligence report.
