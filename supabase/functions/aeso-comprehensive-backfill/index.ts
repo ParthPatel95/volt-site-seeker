@@ -3,13 +3,220 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
 interface BackfillRequest {
-  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate' | 'smp';
+  phase: 'prices' | 'weather' | 'demand' | 'all' | 'status' | 'interpolate' | 'smp' | 'gaps';
   startYear?: number;
   endYear?: number;
   batchMonths?: number;
   offsetMonths?: number;
+  startMonth?: number;
+  endMonth?: number;
 }
 
+// ---------------------------------------------------------------------------
+// Gap-fill helpers (price-only, idempotent, per-hour resolution)
+// ---------------------------------------------------------------------------
+
+function hourBucketIso(ts: string | Date): string {
+  const d = ts instanceof Date ? ts : new Date(ts);
+  d.setUTCMinutes(0, 0, 0);
+  return d.toISOString();
+}
+
+async function loadExistingHourBuckets(
+  supabase: any,
+  startDate: string,
+  endDate: string,
+): Promise<Set<string>> {
+  const buckets = new Set<string>();
+  const pageSize = 1000;
+  let from = 0;
+  // page through all rows in the window so we don't miss any due to the 1000-row cap
+  while (true) {
+    const { data, error } = await supabase
+      .from('aeso_training_data')
+      .select('timestamp')
+      .gte('timestamp', `${startDate}T00:00:00Z`)
+      .lte('timestamp', `${endDate}T23:59:59Z`)
+      .order('timestamp', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) {
+      console.error('loadExistingHourBuckets error:', error.message);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    for (const row of data) buckets.add(hourBucketIso(row.timestamp));
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return buckets;
+}
+
+async function upsertMissingPriceRows(
+  supabase: any,
+  prices: any[],
+  existingBuckets: Set<string>,
+): Promise<number> {
+  const rows: any[] = [];
+  const seen = new Set<string>();
+  for (const price of prices) {
+    const rawTs = price.begin_datetime_utc;
+    const poolPrice = parseFloat(price.pool_price);
+    if (!rawTs || isNaN(poolPrice)) continue;
+    // Normalise AESO's "YYYY-MM-DD HH:mm" UTC string to ISO
+    const isoTs = hourBucketIso(rawTs.replace(' ', 'T') + (rawTs.endsWith('Z') ? '' : 'Z'));
+    if (existingBuckets.has(isoTs) || seen.has(isoTs)) continue;
+    seen.add(isoTs);
+    const d = new Date(isoTs);
+    rows.push({
+      timestamp: isoTs,
+      pool_price: poolPrice,
+      hour_of_day: d.getUTCHours(),
+      day_of_week: d.getUTCDay(),
+      month: d.getUTCMonth() + 1,
+      is_weekend: [0, 6].includes(d.getUTCDay()),
+    });
+  }
+  if (rows.length === 0) return 0;
+  let inserted = 0;
+  for (let i = 0; i < rows.length; i += 200) {
+    const chunk = rows.slice(i, i + 200);
+    const { error } = await supabase
+      .from('aeso_training_data')
+      .upsert(chunk, { onConflict: 'timestamp', ignoreDuplicates: true });
+    if (error) {
+      console.error('upsertMissingPriceRows chunk error:', error.message);
+      continue;
+    }
+    inserted += chunk.length;
+  }
+  return inserted;
+}
+
+/**
+ * Walk every month in [startYear/startMonth .. endYear/endMonth] inclusive,
+ * pull the AESO Pool Price report once per month, and upsert only the hours
+ * that are missing from the canonical (UTC, top-of-hour) grid.
+ *
+ * Idempotent: safe to call repeatedly. Defaults to the last 12 months.
+ */
+async function backfillGaps(
+  supabase: any,
+  aesoKey: string | undefined,
+  startYear: number,
+  endYear: number,
+  startMonth?: number,
+  endMonth?: number,
+) {
+  if (!aesoKey) {
+    return { success: false, error: 'AESO API key not configured', isComplete: true };
+  }
+
+  // Default window: last 12 calendar months ending this month
+  const now = new Date();
+  let sy = startYear;
+  let sm = startMonth ?? 1;
+  let ey = endYear;
+  let em = endMonth ?? (now.getUTCMonth() + 1);
+  if (!startMonth && !endMonth && (endYear - startYear) > 1) {
+    // long ranges fall back to "as configured"
+  }
+
+  type MonthReport = {
+    month: string;
+    expectedHours: number;
+    existingHours: number;
+    fetched: number;
+    inserted: number;
+    stillMissing: number;
+    error?: string;
+  };
+  const report: MonthReport[] = [];
+  let totalInserted = 0;
+  const errors: string[] = [];
+
+  let y = sy, m = sm;
+  while (y < ey || (y === ey && m <= em)) {
+    const startDate = `${y}-${String(m).padStart(2, '0')}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const expectedHours = lastDay * 24;
+    const monthLabel = `${y}-${String(m).padStart(2, '0')}`;
+
+    try {
+      const existing = await loadExistingHourBuckets(supabase, startDate, endDate);
+      if (existing.size >= expectedHours) {
+        report.push({
+          month: monthLabel,
+          expectedHours,
+          existingHours: existing.size,
+          fetched: 0,
+          inserted: 0,
+          stillMissing: 0,
+        });
+      } else {
+        const url = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
+        const resp = await fetch(url, {
+          headers: {
+            'API-KEY': aesoKey,
+            'Ocp-Apim-Subscription-Key': aesoKey,
+          },
+        });
+        if (!resp.ok) {
+          const err = `AESO API ${resp.status} for ${monthLabel}`;
+          errors.push(err);
+          report.push({
+            month: monthLabel,
+            expectedHours,
+            existingHours: existing.size,
+            fetched: 0,
+            inserted: 0,
+            stillMissing: expectedHours - existing.size,
+            error: err,
+          });
+        } else {
+          const data = await resp.json();
+          const prices = data?.return?.['Pool Price Report'] || [];
+          const inserted = await upsertMissingPriceRows(supabase, prices, existing);
+          totalInserted += inserted;
+          report.push({
+            month: monthLabel,
+            expectedHours,
+            existingHours: existing.size,
+            fetched: prices.length,
+            inserted,
+            stillMissing: Math.max(0, expectedHours - existing.size - inserted),
+          });
+        }
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    } catch (e: any) {
+      const msg = `Error ${monthLabel}: ${e.message}`;
+      errors.push(msg);
+      report.push({
+        month: monthLabel,
+        expectedHours,
+        existingHours: 0,
+        fetched: 0,
+        inserted: 0,
+        stillMissing: expectedHours,
+        error: msg,
+      });
+    }
+
+    m += 1;
+    if (m > 12) { m = 1; y += 1; }
+  }
+
+  return {
+    success: errors.length === 0,
+    phase: 'gaps',
+    window: { startYear: sy, startMonth: sm, endYear: ey, endMonth: em },
+    totalInserted,
+    months: report,
+    isComplete: true,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
 interface BackfillProgress {
   phase: string;
   totalMonths: number;
@@ -40,6 +247,8 @@ serve(async (req) => {
       year,
       batchSize = 500
     } = body;
+    const startMonthOpt: number | undefined = (body as any).startMonth;
+    const endMonthOpt: number | undefined = (body as any).endMonth;
 
     console.log(`Comprehensive backfill: phase=${phase}, startYear=${startYear}, endYear=${endYear}, offset=${offsetMonths}`);
 
@@ -55,6 +264,9 @@ serve(async (req) => {
     switch (phase) {
       case 'prices':
         result = await backfillPrices(supabase, aesoKey, startYear, endYear, batchMonths, offsetMonths);
+        break;
+      case 'gaps':
+        result = await backfillGaps(supabase, aesoKey, startYear, endYear, startMonthOpt, endMonthOpt);
         break;
       case 'weather':
         result = await backfillWeather(supabase, startYear, endYear, batchMonths, offsetMonths);
@@ -185,23 +397,19 @@ async function backfillPrices(supabase: any, aesoKey: string | undefined, startY
     console.log(`Fetching prices for ${startDate} to ${endDate}`);
 
     try {
-      // Check if we already have data for this period
-      const { count: existingCount } = await supabase
-        .from('aeso_training_data')
-        .select('*', { count: 'exact', head: true })
-        .gte('timestamp', startDate)
-        .lte('timestamp', `${endDate}T23:59:59`);
-
-      if (existingCount && existingCount > 600) {
-        console.log(`Skipping ${startDate} - already have ${existingCount} records`);
+      // Skip only when we already have a complete month (24 * days_in_month canonical hours)
+      const expectedHours = new Date(year, month, 0).getDate() * 24;
+      const existingHourBuckets = await loadExistingHourBuckets(supabase, startDate, endDate);
+      if (existingHourBuckets.size >= expectedHours) {
+        console.log(`Skipping ${startDate} - already complete (${existingHourBuckets.size}/${expectedHours} hours)`);
         continue;
       }
 
       // Fetch from AESO API
-      const url = `https://api.aeso.ca/report/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
+      const url = `https://apimgw.aeso.ca/public/poolprice-api/v1.1/price/poolPrice?startDate=${startDate}&endDate=${endDate}`;
       const response = await fetch(url, {
         headers: {
-          'X-API-Key': aesoKey,
+          'API-KEY': aesoKey,
           'Ocp-Apim-Subscription-Key': aesoKey
         }
       });
@@ -219,31 +427,10 @@ async function backfillPrices(supabase: any, aesoKey: string | undefined, startY
         continue;
       }
 
-      // Insert records
-      for (const price of prices) {
-        const timestamp = price.begin_datetime_utc;
-        const poolPrice = parseFloat(price.pool_price);
-
-        if (!timestamp || isNaN(poolPrice)) continue;
-
-        const { error } = await supabase
-          .from('aeso_training_data')
-          .upsert({
-            timestamp,
-            pool_price: poolPrice,
-            hour_of_day: new Date(timestamp).getHours(),
-            day_of_week: new Date(timestamp).getDay(),
-            month: new Date(timestamp).getMonth() + 1,
-            is_weekend: [0, 6].includes(new Date(timestamp).getDay())
-          }, { 
-            onConflict: 'timestamp',
-            ignoreDuplicates: false 
-          });
-
-        if (!error) recordsInserted++;
-      }
-
-      console.log(`Inserted ${prices.length} price records for ${startDate}`);
+      // Only upsert hours that are missing from the canonical hour grid
+      const inserted = await upsertMissingPriceRows(supabase, prices, existingHourBuckets);
+      recordsInserted += inserted;
+      console.log(`Month ${startDate}: fetched ${prices.length}, inserted ${inserted} missing hours (had ${existingHourBuckets.size}/${expectedHours})`);
       
       // Rate limiting delay
       await new Promise(r => setTimeout(r, 200));
@@ -705,7 +892,7 @@ async function backfillSMP(supabase: any, aesoKey: string | undefined, startYear
     try {
       const url = `https://api.aeso.ca/report/v1/smp?startDate=${startDate}&endDate=${endDate}`;
       const response = await fetch(url, {
-        headers: { 'X-API-Key': aesoKey, 'Ocp-Apim-Subscription-Key': aesoKey },
+        headers: { 'API-KEY': aesoKey, 'Ocp-Apim-Subscription-Key': aesoKey },
         signal: AbortSignal.timeout(20000),
       });
 

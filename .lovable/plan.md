@@ -1,64 +1,70 @@
 ## Goal
-Make the Power Model fail-safe: every all-in price shown on the page must come from one canonical calculation path, and monthly summaries must visibly validate hourly coverage before any annual/scenario numbers are trusted.
 
-## Findings from audit
-- **Mixed all-in denominators:** some UI sections calculate rate using delivered kWh, while scenario/full-capacity views use full-capacity kWh or rebuilt totals. This makes different all-in prices appear across the page.
-- **Scenario Builder drift:** `PowerModelScenarioBuilder` rebuilds totals independently from component toggles and full 12CP assumptions, instead of using the same canonical scenario totals as `PowerModelCostProgression`.
-- **Monthly coverage is incomplete:** database coverage check shows 2026 data currently has missing hours in several months:
-  - January: 744 / 744 covered
-  - February: 668 / 672 covered, 4 missing
-  - March: 607 / 744 covered, 137 missing
-  - April: 312 / 720 covered, 408 missing
-  - May: 492 / 744 covered, 252 missing
-  - June: 150 / 720 covered, 570 missing
-- **Timestamp conversion risk:** `convertTrainingDataToHourly` uses local `getHours()` while date uses UTC ISO date. This can mislabel hour-ending and collapse/shift records depending on browser timezone.
-- **Database duplicate rows:** the training data has duplicate raw rows per hour; the UI dedupes after download, but the progress/coverage messaging is based on raw rows rather than canonical hourly buckets.
+Backfill every missing hour for Dec 2025 → Jun 2026 (the months flagged in the Coverage Audit) using AESO's historical Pool Price report, and harden the live hourly collector so newly arriving hours are stored without future gaps.
+
+## Why hours are missing today
+
+- `aeso-data-collector` (cron `0 * * * *`) writes **one snapshot per run** with the *current* pool price. Any missed cron tick (deploys, transient API failures, function cold start past the top of the hour) leaves a permanent hole — it never re-fetches the missed hour.
+- `aeso-comprehensive-backfill` (`phase: 'prices'`) already knows how to pull the historical `poolPrice` report month-by-month and upsert by `timestamp`, but it has a guard that **skips any month with > 600 existing rows**, which is exactly why partially-filled months (Feb 668, Mar 607, May 491, Apr 313, Dec 1) are not being completed.
+- DB confirms the gaps: Dec 2025 = 727 distinct hours (raw rows 1 because the audit reads only what the Power Model loaded; full table has more, but Dec is still incomplete), Feb 668/672, Mar 607/744, Apr 312/720, May 492/744, Jun 150/720.
 
 ## Plan
 
-### 1. Create a canonical Power Model math layer
-- Add shared helpers for:
-  - canonical invoice all-in rate = `totalAmountDue / deliveredKWh`
-  - effective rate after credits = `(totalAmountDue - credits) / deliveredKWh`
-  - full-output reference rate = scenario cost / no-curtailment kWh, clearly labeled as **reference**, never as the invoice all-in rate
-  - scenario costs: base/no optimization, 12CP only, price curtailment only, combined optimization
-- Replace duplicated formulas in:
-  - `PowerModelCostProgression`
-  - `PowerModelStrategyComparison`
-  - `PowerModelScenarioBuilder`
-  - export/PDF rate summaries where needed
+### 1. Fix the historical price backfill so it actually fills partial months
 
-### 2. Make all page labels unambiguous
-- Use **Invoice all-in rate** only for delivered-kWh invoice math.
-- Rename any full-capacity denominator display to **Full-output reference rate**.
-- Ensure the headline KPI, scenario comparison, monthly summary annual footer, charts, AI analysis context, CSV, and PDF all agree for the same scenario.
+Edit `supabase/functions/aeso-comprehensive-backfill/index.ts` (`backfillPrices`):
 
-### 3. Add strict hourly data coverage validation
-- Add a coverage audit step after loading/uploading data that validates each month by canonical hourly buckets.
-- Expected hours use the real calendar month length.
-- Flag:
-  - missing hours
-  - duplicate raw rows per hour
-  - partial months
-  - invalid pool price / AIL rows
-- Show a **Data Validation** card above results with pass/warn/fail status and a month-by-month coverage table.
+- Remove the `existingCount > 600` short-circuit. Instead, compute `expectedHours = daysInMonth * 24` and only skip when `existingCount >= expectedHours`.
+- After fetching the AESO `poolPrice` report for the month, build a `Set` of timestamps that already exist (`select timestamp where timestamp between ...`) and only upsert the **missing** hours, in chunks of 200 with `onConflict: 'timestamp'`.
+- Use `begin_datetime_utc` from AESO verbatim (already UTC, already on hour boundaries) so we match the canonical hour-ending grid the Coverage Audit checks.
+- Return `{ month, expected, fetched, inserted, stillMissing }` per month so progress is observable.
 
-### 4. Fail closed for incomplete data
-- If any completed month has missing hours, mark annual/scenario totals as **not validation-safe**.
-- Continue showing monthly rows for inspection, but visually flag incomplete months and prevent them from being mistaken for full-month/annual conclusions.
-- Do not impute or fabricate missing hours; the user’s real-data rule requires displaying only validated source data.
+### 2. Add a dedicated "fill gaps" entrypoint
 
-### 5. Fix timestamp/hour-ending normalization
-- Change database conversion to use UTC hour logic consistently.
-- Normalize records by `YYYY-MM-DD + HE 1–24` from the UTC timestamp bucket.
-- Deduplicate by canonical hour bucket before calculator use.
+Add `phase: 'gaps'` to the same edge function:
 
-### 6. Add tests to lock this down
-- Tests that all UI scenario helpers return the same all-in values for the same scenario.
-- Tests that monthly coverage detects missing and duplicate hours.
-- Tests for UTC HE conversion, especially midnight hour-ending behavior.
-- Tests that scenario builder no longer drifts from cost progression.
+- Query `aeso_training_data` for the audit window (default last 12 months), build the expected hour grid in SQL, diff against `distinct date_trunc('hour', timestamp)`, and return the exact missing hours.
+- For each missing hour, hit the AESO Pool Price endpoint scoped to that day, upsert only the gap hours. Same logic also fills `system_marginal_price` from `/price/systemMarginalPrice` when available.
+- Idempotent and safe to re-run.
 
-### 7. Version bump and validation
+### 3. Run the backfill for Dec 2025 → Jun 2026
+
+Invoke the function once for the audit window:
+
+```
+phase: 'gaps', startYear: 2025, endYear: 2026, startMonth: 12, endMonth: 6
+```
+
+Expected fills (from current DB):
+- Dec 2025: ~17 missing hours
+- Feb 2026: 4
+- Mar 2026: 137
+- Apr 2026: 408
+- May 2026: 252
+- Jun 2026 (elapsed): ~42 (through the hour the job runs)
+
+Run it twice (once for prices, once after weather lookup) so the Power Model coverage card flips to "validation-safe" for every elapsed month.
+
+### 4. Harden the live hourly collector so new gaps stop appearing
+
+Edit `supabase/functions/aeso-data-collector/index.ts`:
+
+- Before writing the current snapshot, look back **6 hours** in `aeso_training_data`. For any hour-ending bucket missing in that window, call the AESO Pool Price report for that single day and upsert the missing hour(s). This makes the cron self-healing across cold starts and brief outages.
+- Round the current-snapshot `timestamp` down to the hour (`setMinutes(0,0,0)`) so we always store one canonical row per HE bucket and the upsert on `timestamp` actually de-dupes intra-hour reruns.
+- Add a `last_collected_at` log row in `aeso_scheduled_tasks` so we can see when a run truly failed.
+
+### 5. Add a second safety-net cron
+
+Add a daily `0 6 * * *` cron that calls `aeso-comprehensive-backfill` with `phase: 'gaps'` for the trailing 7 days. Catches anything the per-hour self-heal missed.
+
+### 6. Verify
+
+- Re-query the same monthly coverage SQL we used here and confirm every elapsed month shows `distinct_hours = expected`.
+- Re-load the Power Model page; the Coverage Audit banner should turn green and "annual totals NOT invoice-safe" should disappear for elapsed months.
+- Add a Vitest case in `src/lib/aeso/__tests__/powerModelCanonical.test.ts` asserting `auditCoverage` reports `isValidationSafe: true` against a fixture with no gaps in elapsed months.
 - Bump `APP_VERSION`.
-- Run the targeted Power Model test suite and verify no inconsistent all-in values remain in the audited code paths.
+
+## Out of scope
+
+- Re-deriving non-price fields (weather, AIL, generation mix) — those have their own backfill phases already (`weather`, `demand`, `aeso-weather-backfill`, etc.). I'll only run those if you also want the weather/demand columns filled for the same hours; say the word and I'll chain them.
+- Changing the canonical math layer or any UI — Power Model code stays untouched; the Coverage Audit card will just flip to green once the rows exist.

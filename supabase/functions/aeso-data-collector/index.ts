@@ -31,7 +31,10 @@ serve(async (req) => {
     }
 
     const aesoData = energyData.data.aeso;
+    // Canonical top-of-hour bucket (UTC) so we get exactly one row per hour-ending
+    // and the unique index on `timestamp` actually dedupes intra-hour re-runs.
     const currentTime = new Date();
+    currentTime.setUTCMinutes(0, 0, 0);
     
     // Check if pricing data exists (API succeeded)
     if (!aesoData.pricing) {
@@ -333,10 +336,11 @@ serve(async (req) => {
       season: season
     };
 
-    // Insert training data
+    // Upsert so multiple cron ticks within the same hour collapse to one row
+    // instead of creating duplicates we then have to dedupe in the audit layer.
     const { error: insertError } = await supabase
       .from('aeso_training_data')
-      .insert(trainingData);
+      .upsert(trainingData, { onConflict: 'timestamp', ignoreDuplicates: false });
 
     if (insertError) {
       console.error('Error inserting training data:', insertError);
