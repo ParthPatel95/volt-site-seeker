@@ -147,7 +147,7 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
         <KpiStrip report={report} osm={osm} />
 
         {/* Panel content */}
-        <main className="flex-1 overflow-auto p-4 space-y-4">
+        <main className="flex-1 min-w-0 overflow-auto p-4 space-y-4">
           {panel === 'overview' && <OverviewPanel report={report} osm={osm} onJump={setPanel} />}
           {panel === 'power' && (
             <PowerPanel
