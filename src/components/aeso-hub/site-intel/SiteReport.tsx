@@ -298,6 +298,112 @@ export function SiteReport({ report }: Props) {
         <p className="text-[10px] text-muted-foreground mt-2">Drive times estimated at 95 km/h avg highway speed; replace with Routes API for full traffic-aware estimates.</p>
       </Section>
 
+      {report.workforce && (
+        <Section icon={<Users className="w-4 h-4" />} title="Workforce & Talent" subtitle="Labour pool, trades supply, and post-secondary pipeline">
+          <Table headers={['Centre', 'Labour force', 'Unemploy.', '% Post-sec', 'Electricians', 'HVAC techs', 'IT workers', 'Med. electrician $/hr', 'Distance', 'Source']}
+            rows={(report.workforce.nearest_centres ?? []).map((w: any) => [
+              <strong key="n">{w.centre_name}</strong>,
+              w.labour_force?.toLocaleString() ?? '—',
+              w.unemployment_rate != null ? `${w.unemployment_rate}%` : '—',
+              w.pct_post_secondary != null ? `${w.pct_post_secondary}%` : '—',
+              w.electricians_count?.toLocaleString() ?? '—',
+              w.hvac_techs_count?.toLocaleString() ?? '—',
+              w.it_workers_count?.toLocaleString() ?? '—',
+              w.median_wage_electrician != null ? `$${w.median_wage_electrician}` : '—',
+              fmtKm(w.distance_km),
+              <SourceLink key="s" url={w.source_url} publisher="StatsCan / Alberta LFS" confidence="verified" asOf={w.last_verified} />,
+            ])} />
+          <p className="text-xs font-semibold mt-4 mb-2">Post-secondary programs within 200 km</p>
+          <Table headers={['Institution', 'City', 'Programs', 'Annual relevant grads', 'Distance', 'Source']}
+            rows={(report.workforce.post_secondary_within_200km ?? []).map((s: any) => [
+              <strong key="n">{s.institution_name}</strong>, s.city ?? '—',
+              <div key="p" className="flex flex-wrap gap-1">{(s.program_focus ?? []).map((p: string) => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}</div>,
+              s.annual_grads_relevant?.toLocaleString() ?? '—',
+              fmtKm(s.distance_km),
+              <SourceLink key="src" url={s.source_url} publisher="Institution" confidence="verified" />,
+            ])} />
+        </Section>
+      )}
+
+      {report.construction && (
+        <Section icon={<HardHat className="w-4 h-4" />} title="Construction & EPC Capacity" subtitle="Alberta GC/EPC firms and prevailing trade wages">
+          <Table headers={['Firm', 'HQ / Office', 'Mega-project capable', 'Labour model', 'Recent projects', 'Source']}
+            rows={(report.construction.epc_firms ?? []).map((f: any) => [
+              <strong key="n">{f.firm_name}</strong>, f.hq_city ?? '—',
+              f.mega_project_capable ? <Badge key="y" className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Yes</Badge> : 'No',
+              f.union_status ?? '—',
+              <span key="rp" className="text-[10px] text-muted-foreground">{Array.isArray(f.recent_projects) ? f.recent_projects.map((p: any) => p.name).join(', ') : '—'}</span>,
+              <SourceLink key="s" url={f.source_url} publisher={f.firm_name} confidence="verified" />,
+            ])} />
+          <p className="text-xs font-semibold mt-4 mb-2">Union vs. open-shop wage table (Alberta Wage &amp; Salary Survey)</p>
+          <Table headers={['Trade', 'Union $/hr', 'Open-shop $/hr', 'Benefits loading', 'Source']}
+            rows={(report.construction.union_vs_open_wages ?? []).map((w: any) => [
+              <strong key="t">{w.trade}</strong>,
+              w.union_rate_cad_hr != null ? `$${w.union_rate_cad_hr}` : '—',
+              w.open_shop_rate_cad_hr != null ? `$${w.open_shop_rate_cad_hr}` : '—',
+              w.benefits_loading_pct != null ? `${w.benefits_loading_pct}%` : '—',
+              <SourceLink key="s" url={w.source_url} publisher="GoA" confidence="verified" />,
+            ])} />
+        </Section>
+      )}
+
+      {report.regulatory?.nearest_zone && (
+        <Section icon={<Scale className="w-4 h-4" />} title="Tax, Land & Regulatory" subtitle={report.regulatory.nearest_zone.municipality}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <KV label="Non-res mill rate" value={report.regulatory.nearest_zone.mill_rate_non_residential != null ? `${report.regulatory.nearest_zone.mill_rate_non_residential}` : '—'} />
+            <KV label="M&E exempt"
+              value={report.regulatory.nearest_zone.machinery_equipment_exempt
+                ? <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Yes</Badge>
+                : <Badge variant="outline">No</Badge>} />
+            <KV label="School tax rate" value={report.regulatory.nearest_zone.school_tax_rate ?? '—'} />
+            <KV label="AER region" value={report.regulatory.nearest_zone.aer_region ?? '—'} />
+            <KV label="AUC permit (typical)" value={report.regulatory.nearest_zone.auc_typical_permit_weeks != null ? `${report.regulatory.nearest_zone.auc_typical_permit_weeks} wks` : '—'} />
+            <KV label="Treaty area" value={report.regulatory.nearest_zone.treaty_area ?? '—'} />
+            <KV label="Indigenous consultation"
+              value={report.regulatory.nearest_zone.indigenous_consultation_required
+                ? <Badge className="bg-amber-500/20 text-amber-700 border-amber-500/30">Required</Badge>
+                : <Badge variant="outline">Not flagged</Badge>} />
+            <KV label="Distance to centre" value={fmtKm(report.regulatory.nearest_zone.distance_km)} />
+          </div>
+          <div className="mt-2"><SourceLink url={report.regulatory.nearest_zone.source_url} publisher="Municipality / AUC / ACO" confidence="verified" /></div>
+        </Section>
+      )}
+
+      {report.connectivity_depth && (
+        <Section icon={<Wifi className="w-4 h-4" />} title="Connectivity Depth" subtitle="Carrier-hotel access, last-mile providers, dark fiber inventory">
+          <p className="text-xs font-semibold mb-2">Carrier hotels & MMR facilities</p>
+          <Table headers={['Facility', 'City', 'Type', 'Open access', 'X-connect $', 'Carriers on-net', 'Distance', 'Source']}
+            rows={(report.connectivity_depth.carrier_pop_details ?? []).map((p: any) => [
+              <strong key="n">{p.facility_name}</strong>, p.city ?? '—', p.facility_type ?? '—',
+              p.open_access ? <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30">Open</Badge> : <Badge variant="outline">Private</Badge>,
+              p.cross_connect_fee_estimate_cad != null ? `$${p.cross_connect_fee_estimate_cad}/mo` : '—',
+              <div key="c" className="flex flex-wrap gap-1 max-w-[280px]">{(p.carriers_on_net ?? []).map((c: string) => <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>)}</div>,
+              fmtKm(p.distance_km),
+              <SourceLink key="s" url={p.source_url} publisher="Operator" confidence="verified" />,
+            ])} />
+          {report.connectivity_depth.last_mile_in_municipality && (
+            <>
+              <p className="text-xs font-semibold mt-4 mb-2">Last-mile providers in {report.connectivity_depth.last_mile_in_municipality.population_centre}</p>
+              <Table headers={['Provider', 'Max speed', 'Technology']}
+                rows={(report.connectivity_depth.last_mile_in_municipality.providers ?? []).map((pr: any) => [
+                  <strong key="n">{pr.name}</strong>, `${pr.max_speed_gbps} Gbps`, pr.technology,
+                ])} />
+              <div className="mt-1"><SourceLink url={report.connectivity_depth.last_mile_in_municipality.source_url} publisher="CRTC / ISED" confidence="verified" /></div>
+            </>
+          )}
+          <p className="text-xs font-semibold mt-4 mb-2">Dark fiber segments within reach</p>
+          <Table headers={['Segment', 'Owner', 'Lit / Dark', 'Conduit owner', 'IFA est.', 'Distance', 'Source']}
+            rows={(report.connectivity_depth.dark_fiber_segments_nearby ?? []).map((d: any) => [
+              <strong key="n">{d.segment_name}</strong>, d.owner ?? '—', d.lit_or_dark ?? '—',
+              d.conduit_owner ?? '—', d.ifa_count_estimate ?? '—',
+              fmtKm(d.distance_km),
+              d.source_url === 'estimate'
+                ? <Badge key="e" variant="outline" className="text-[9px]">estimate</Badge>
+                : <SourceLink key="s" url={d.source_url} publisher="Operator" confidence="verified" />,
+            ])} />
+        </Section>
+      )}
+
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
