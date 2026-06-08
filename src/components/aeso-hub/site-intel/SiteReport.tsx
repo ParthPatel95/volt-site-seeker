@@ -866,3 +866,99 @@ function Table({ headers, rows }: { headers: string[]; rows: (React.ReactNode)[]
     </div>
   );
 }
+
+function OsmPowerSection({ lat, lng, datasetSubs }: { lat: number; lng: number; datasetSubs: any[] }) {
+  const [data, setData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [radius, setRadius] = useState(3000);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true); setError(null); setData(null);
+    supabase.functions.invoke('osm-power-infrastructure', { body: { lat, lng, radius_m: radius } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) { setError(error.message); return; }
+        if (data?.error) { setError(data.error); return; }
+        setData(data);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [lat, lng, radius]);
+
+  const subs: any[] = data?.substations ?? [];
+  const lines: any[] = data?.power_lines ?? [];
+
+  // Cross-check: OSM subs within 1.5 km that the internal dataset is missing.
+  const missingInDataset = useMemo(() => {
+    return subs.filter(s => {
+      if (s.distance_km > 1.5) return false;
+      return !(datasetSubs ?? []).some(d => (d.distance_km ?? 99) <= Math.max(0.5, s.distance_km * 1.5));
+    });
+  }, [subs, datasetSubs]);
+
+  return (
+    <Section
+      icon={<Zap className="w-4 h-4" />}
+      title="Live Open Infrastructure scan (OpenStreetMap / OpenInfraMap)"
+      subtitle="Real-time Overpass query for tagged substations, transformers and power lines around the site."
+      right={
+        <ToggleGroup type="single" value={String(radius)} onValueChange={(v) => v && setRadius(Number(v))}>
+          <ToggleGroupItem value="1000" className="text-[10px] px-2 h-6">1 km</ToggleGroupItem>
+          <ToggleGroupItem value="3000" className="text-[10px] px-2 h-6">3 km</ToggleGroupItem>
+          <ToggleGroupItem value="10000" className="text-[10px] px-2 h-6">10 km</ToggleGroupItem>
+        </ToggleGroup>
+      }
+    >
+      {loading && <p className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Querying OpenStreetMap Overpass…</p>}
+      {error && <p className="text-xs text-rose-600">OSM lookup failed: {error}</p>}
+      {!loading && !error && (
+        <>
+          <div className="flex flex-wrap gap-2 mb-2 text-[10px] text-muted-foreground">
+            <Badge variant="outline" className="text-[10px]">Substations/transformers: <strong className="ml-1">{data?.counts?.substations ?? 0}</strong></Badge>
+            <Badge variant="outline" className="text-[10px]">Power lines: <strong className="ml-1">{data?.counts?.power_lines ?? 0}</strong></Badge>
+            <span>· {data?.attribution}</span>
+          </div>
+          {missingInDataset.length > 0 && (
+            <div className="mb-2 rounded border border-amber-500/30 bg-amber-500/10 p-2">
+              <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> {missingInDataset.length} OSM-tagged substation{missingInDataset.length === 1 ? '' : 's'} within 1.5 km not present in our internal dataset
+              </p>
+              <p className="text-[10px] text-amber-700/80">These are real OSM features that our curated substation table is missing — manual review recommended before relying on the internal layer.</p>
+            </div>
+          )}
+          {subs.length === 0
+            ? <p className="text-xs text-muted-foreground">No tagged substations or transformers within {Math.round(radius/1000)} km on OpenStreetMap.</p>
+            : <Table headers={['Type', 'Name', 'Operator', 'Voltage', 'Sub type', 'Distance', 'OSM']}
+                rows={subs.slice(0, 8).map(s => [
+                  <Badge key="t" variant="outline" className="text-[10px]">{s.power}</Badge>,
+                  <span key="n" className="font-medium">{s.name ?? <span className="text-muted-foreground italic">Not tagged</span>}</span>,
+                  s.operator ?? <span className="text-muted-foreground italic">Not tagged</span>,
+                  s.voltage ? `${s.voltage} V` : <span className="text-muted-foreground italic">Not tagged</span>,
+                  s.substation ?? <span className="text-muted-foreground italic">—</span>,
+                  fmtKm(s.distance_km),
+                  <a key="l" href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1"><ExternalLink className="w-3 h-3" /></a>,
+                ])} />}
+          {lines.length > 0 && (
+            <>
+              <p className="text-xs font-semibold mt-3 mb-1">OSM power lines nearby</p>
+              <Table headers={['Name/ref', 'Operator', 'Voltage', 'Circuits', 'Distance', 'OSM']}
+                rows={lines.slice(0, 5).map(l => [
+                  l.name ?? <span className="text-muted-foreground italic">Unnamed</span>,
+                  l.operator ?? <span className="text-muted-foreground italic">Not tagged</span>,
+                  l.voltage ? `${l.voltage} V` : <span className="text-muted-foreground italic">Not tagged</span>,
+                  l.circuits ?? '—',
+                  fmtKm(l.distance_km),
+                  <a key="l" href={l.source_url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1"><ExternalLink className="w-3 h-3" /></a>,
+                ])} />
+            </>
+          )}
+          <p className="text-[10px] text-muted-foreground mt-2">
+            Source: OpenStreetMap via Overpass API (<a href="https://openinframap.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">openinframap.org</a>). Fields marked "Not tagged" mean OSM contributors have not recorded that attribute — we do not estimate it.
+          </p>
+        </>
+      )}
+    </Section>
+  );
+}
