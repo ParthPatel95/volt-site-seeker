@@ -50,16 +50,37 @@ export function parsePowerModelCSV(csvText: string): HourlyRecord[] {
 export function convertTrainingDataToHourly(
   data: Array<{ timestamp: string; pool_price: number; ail_mw: number | null }>
 ): HourlyRecord[] {
-  const mapped = data
-    .filter(d => d.ail_mw != null)
-    .map(d => {
-      const dt = new Date(d.timestamp);
-      return {
-        date: dt.toISOString().split('T')[0],
-        he: dt.getHours() || 24, // HE 1-24 convention
-        poolPrice: d.pool_price,
-        ailMW: d.ail_mw!,
-      };
+  return dedupeHourly(rawTrainingDataToHourly(data));
+}
+
+/**
+ * Convert raw training-data rows to HourlyRecord[] WITHOUT deduping.
+ * Use this when you need to audit how many duplicate raw rows exist before
+ * the canonical (date, HE) collapse. Uses UTC consistently so the date and
+ * HE always come from the same hour bucket regardless of browser timezone.
+ */
+export function rawTrainingDataToHourly(
+  data: Array<{ timestamp: string; pool_price: number; ail_mw: number | null }>,
+): HourlyRecord[] {
+  const out: HourlyRecord[] = [];
+  for (const d of data) {
+    if (d.ail_mw == null) continue;
+    const dt = new Date(d.timestamp);
+    if (Number.isNaN(dt.getTime())) continue;
+    // Use UTC hour bucket so date and HE always come from the same hour.
+    const date = dt.toISOString().slice(0, 10);
+    // AESO convention: HE 1..24 (00:00 UTC -> HE 24 of previous day).
+    const heRaw = dt.getUTCHours();
+    const he = heRaw === 0 ? 24 : heRaw;
+    const dateForHE = heRaw === 0
+      ? new Date(dt.getTime() - 3600_000).toISOString().slice(0, 10)
+      : date;
+    out.push({
+      date: dateForHE,
+      he,
+      poolPrice: d.pool_price,
+      ailMW: d.ail_mw!,
     });
-  return dedupeHourly(mapped);
+  }
+  return out;
 }
