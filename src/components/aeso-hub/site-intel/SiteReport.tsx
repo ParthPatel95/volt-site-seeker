@@ -194,7 +194,7 @@ export function SiteReport({ report }: Props) {
 
         <p className="text-xs font-semibold mt-4 mb-2 flex items-center gap-2"><Cloud className="w-3 h-3" /> Hyperscaler cloud reach (modeled one-way latency)</p>
         <Table headers={['Provider', 'Region', 'Distance', 'Modeled latency', 'Source']}
-          rows={report.fiber.cloud_reach.map(c => [
+          rows={(report.fiber.cloud_reach ?? []).map(c => [
             <strong key="p">{c.provider}</strong>,
             <span key="r"><code className="text-[10px]">{c.region_code}</code> <span className="text-muted-foreground"> {c.region_name}</span></span>,
             `${c.distance_km} km`,
@@ -204,7 +204,7 @@ export function SiteReport({ report }: Props) {
 
         <p className="text-xs font-semibold mt-4 mb-2 flex items-center gap-2"><Network className="w-3 h-3" /> Internet exchanges</p>
         <Table headers={['IXP', 'City', 'Participants', 'Peak (Gbps)', 'Distance', 'Source']}
-          rows={report.fiber.nearest_ixps.map(x => [
+          rows={(report.fiber.nearest_ixps ?? []).map(x => [
             <strong key="n">{x.name}</strong>, x.city, x.participant_count ?? '—', x.peak_traffic_gbps ?? '—',
             fmtKm(x.distance_km),
             <SourceLink key="s" url={x.source_url} publisher="PeeringDB" confidence="verified" />,
@@ -214,11 +214,11 @@ export function SiteReport({ report }: Props) {
       <Section icon={<Zap className="w-4 h-4" />} title="Power & Transmission" subtitle="AESO transmission lines, substations, and grid posture">
         <Table headers={['Line', 'kV', 'Owner', 'Distance']}
           rows={report.transmission.nearest_lines.map((t: any) => [t.name, <Badge key="v" variant="outline">{t.voltage_kv} kV</Badge>, t.owner, fmtKm(t.distance_km)])} />
-        {report.transmission.nearest_substations.length > 0 && (
+        {(report.transmission.nearest_substations ?? []).length > 0 && (
           <>
             <p className="text-xs font-semibold mt-4 mb-2">Nearby substations</p>
             <Table headers={['Substation', 'City', 'Voltage', 'Owner', 'Distance']}
-              rows={report.transmission.nearest_substations.map((s: any) => [s.name, s.city, s.voltage_level ?? '—', s.utility_owner ?? '—', fmtKm(s.distance_km)])} />
+              rows={(report.transmission.nearest_substations ?? []).map((s: any) => [s.name, s.city, s.voltage_level ?? '—', s.utility_owner ?? '—', fmtKm(s.distance_km)])} />
           </>
         )}
         <div className="text-[10px] text-muted-foreground mt-2">Source: AESO Transmission Map — https://www.aeso.ca/grid/projects/</div>
@@ -262,11 +262,11 @@ export function SiteReport({ report }: Props) {
             <Badge key="a" variant={(w as any).allocation_status === 'closed' ? 'destructive' : 'secondary'}>{(w as any).allocation_status ?? 'unknown'}</Badge>,
             fmtKm(w.distance_km),
             <SourceLink key="s" url={w.source_url} publisher={(w as any).source_publisher ?? 'Alberta EPA'} confidence={(w as any).confidence} asOf={(w as any).source_as_of} />])} />
-        {report.gas_and_water.nearest_water_licences?.length > 0 && (
+        {(report.gas_and_water.nearest_water_licences?.length ?? 0) > 0 && (
           <>
             <p className="text-xs font-semibold mt-4 mb-2">Licensed industrial water diversions (Water Act)</p>
             <Table headers={['Licensee', 'Source', 'Licensed m³/yr', 'Purpose', 'Basin', 'Distance', 'Source']}
-              rows={report.gas_and_water.nearest_water_licences.map((l: any) => [
+              rows={(report.gas_and_water.nearest_water_licences ?? []).map((l: any) => [
                 <strong key="n">{l.licensee}</strong>, l.source_water_body,
                 l.licensed_m3_per_year != null ? Number(l.licensed_m3_per_year).toLocaleString() : '—',
                 l.purpose ?? '—', l.sub_basin ?? '—', fmtKm(l.distance_km),
@@ -282,15 +282,15 @@ export function SiteReport({ report }: Props) {
             <SourceLink key="s" url={p.source_url} publisher={(p as any).source_publisher ?? 'Municipality'} confidence={(p as any).confidence} asOf={(p as any).source_as_of} />])} />
         <p className="text-xs font-semibold mt-4 mb-2">Transport assets (airport · rail · heavy-haul · intermodal)</p>
         <Table headers={['Type', 'Asset', 'Operator', 'Distance', 'Source']}
-          rows={report.logistics.nearest_logistics_assets.map((l: any) => [
+          rows={(report.logistics.nearest_logistics_assets ?? []).map((l: any) => [
             <Badge key="t" variant="outline" className="text-[10px]">{l.asset_type.replace(/_/g,' ')}</Badge>,
             l.name, l.operator ?? '—', fmtKm(l.distance_km),
             <SourceLink key="s" url={l.source_url} publisher={(l as any).source_publisher ?? 'Operator'} confidence="verified" />,
           ])} />
         <p className="text-xs font-semibold mt-4 mb-2">Workforce — population centres (StatsCan 2021)</p>
         <Table headers={['Centre', 'Population', 'Labour force', 'Trades (est.)', 'Distance', 'Source']}
-          rows={report.logistics.nearest_population_centres.map((p: any) => [
-            <strong key="n">{p.name}</strong>, p.population_2021.toLocaleString(),
+          rows={(report.logistics.nearest_population_centres ?? []).map((p: any) => [
+            <strong key="n">{p.name}</strong>, p.population_2021?.toLocaleString() ?? '—',
             p.labour_force_2021?.toLocaleString() ?? '—', p.trades_workers_estimate?.toLocaleString() ?? '—',
             fmtKm(p.distance_km),
             <SourceLink key="s" url={p.source_url} publisher="StatsCan" confidence="verified" asOf="2021-05-11" />,
@@ -304,18 +304,26 @@ export function SiteReport({ report }: Props) {
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
-          <p><strong>Hyperscaler score:</strong> {report.methodology.hyperscaler_score}</p>
-          <p><strong>Fiber score:</strong> {report.methodology.fiber_score}</p>
-          <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>
-          <p><strong>Distance:</strong> {report.methodology.distance}</p>
+          {report.methodology?.hyperscaler_score && <p><strong>Hyperscaler score:</strong> {report.methodology.hyperscaler_score}</p>}
+          {report.methodology?.fiber_score && <p><strong>Fiber score:</strong> {report.methodology.fiber_score}</p>}
+          {report.methodology?.modeled_latency && <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>}
+          {report.methodology?.distance && <p><strong>Distance:</strong> {report.methodology.distance}</p>}
         </div>
-        <Separator className="my-2" />
-        <p className="text-xs font-semibold mb-1">Primary sources</p>
-        <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
-          {report.data_provenance.sources.map(s => <li key={s}>{s}</li>)}
-        </ul>
-        <Separator className="my-2" />
-        <p className="text-xs text-muted-foreground">{report.data_provenance.notes}</p>
+        {report.data_provenance?.sources?.length ? (
+          <>
+            <Separator className="my-2" />
+            <p className="text-xs font-semibold mb-1">Primary sources</p>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+              {report.data_provenance.sources.map(s => <li key={s}>{s}</li>)}
+            </ul>
+          </>
+        ) : null}
+        {report.data_provenance?.notes && (
+          <>
+            <Separator className="my-2" />
+            <p className="text-xs text-muted-foreground">{report.data_provenance.notes}</p>
+          </>
+        )}
       </Card>
     </div>
   );
@@ -378,6 +386,45 @@ function FiberScoreCard({ score }: { score: SiteReportT['fiber']['score'] }) {
               </div>
               <div className="h-1.5 bg-secondary rounded mt-1 overflow-hidden">
                 <div className="h-full bg-primary" style={{ width: `${(v.score / v.max) * 100}%` }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1 truncate" title={v.detail}>{v.detail}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+const HYPERSCALER_GRADE_COLOR: Record<string, string> = {
+  A: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
+  B: 'bg-lime-500/15 text-lime-700 border-lime-500/30',
+  C: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+  D: 'bg-orange-500/15 text-orange-700 border-orange-500/30',
+  F: 'bg-destructive/15 text-destructive border-destructive/30',
+};
+
+function HyperscalerScoreCard({ score }: { score?: SiteReportT['hyperscaler_score'] }) {
+  if (!score) return null;
+  const grade = score.grade ?? 'F';
+  const entries = Object.entries(score.breakdown ?? {}) as [string, { score: number; max: number; detail: string }][];
+  return (
+    <Card className="p-4 bg-gradient-to-br from-primary/5 to-muted/30 border-primary/20">
+      <div className="flex items-center gap-4">
+        <div className={`rounded-lg border px-5 py-3 text-center ${HYPERSCALER_GRADE_COLOR[grade] ?? HYPERSCALER_GRADE_COLOR.F}`}>
+          <div className="text-[10px] uppercase tracking-wide opacity-70">Hyperscaler suitability</div>
+          <div className="text-4xl font-bold leading-none mt-1">{score.total ?? 0}</div>
+          <div className="text-xs mt-1">Grade {grade}</div>
+        </div>
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
+          {entries.map(([k, v]) => (
+            <div key={k} className="text-xs">
+              <div className="flex items-center justify-between">
+                <span className="capitalize text-muted-foreground">{k.replace('_', ' ')}</span>
+                <span className="font-mono">{v.score}/{v.max}</span>
+              </div>
+              <div className="h-1.5 bg-secondary rounded mt-1 overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${v.max ? (v.score / v.max) * 100 : 0}%` }} />
               </div>
               <div className="text-[10px] text-muted-foreground mt-1 truncate" title={v.detail}>{v.detail}</div>
             </div>
