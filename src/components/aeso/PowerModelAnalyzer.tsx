@@ -19,6 +19,8 @@ import { usePowerModelCalculator, type FacilityParams, type TariffOverrides, typ
 import { parsePowerModelCSV, convertTrainingDataToHourly } from '@/lib/power-model-parser';
 import { PowerModelSummaryCards } from './PowerModelSummaryCards';
 import { PowerModelChargeBreakdown } from './PowerModelChargeBreakdown';
+import { PowerModelEstimatorReconciliation } from './PowerModelEstimatorReconciliation';
+import { reconcileAnnual } from '@/lib/aeso/billEstimatorReconciliation';
 import { PowerModelCostProgression } from './PowerModelCostProgression';
 import { PowerModelStrategyComparison } from './PowerModelStrategyComparison';
 import { PowerModelCharts } from './PowerModelCharts';
