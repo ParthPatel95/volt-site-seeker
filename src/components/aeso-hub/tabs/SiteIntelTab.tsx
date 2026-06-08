@@ -61,6 +61,7 @@ export function SiteIntelTab() {
               initialLat={pin?.lat ?? null}
               initialLng={pin?.lng ?? null}
               onResolve={handleResolve}
+              onClear={() => { setPin(null); setReport(null); }}
               loading={generate.isPending}
             />
             <div className="min-h-[400px]">

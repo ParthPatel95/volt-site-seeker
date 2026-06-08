@@ -151,10 +151,7 @@ export function SiteReport({ report }: Props) {
         </Button>
       </div>
 
-      <HyperscalerScoreCard score={report.hyperscaler_score} />
-
       <Section icon={<Cable className="w-4 h-4" />} title="Fiber & Network" subtitle="Closest carrier POPs and long-haul corridors">
-        <FiberScoreCard score={report.fiber.score} />
         <div className="flex flex-wrap items-end gap-4 mb-3">
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1"><Filter className="w-3 h-3" /> Carriers</Label>
@@ -174,11 +171,10 @@ export function SiteReport({ report }: Props) {
           </div>
         </div>
         <p className="text-xs font-semibold mt-4 mb-2">Top routes (ranked)</p>
-        <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency', 'Score']}
+        <Table headers={['#', 'Carrier', 'POP', 'City', 'Site→POP', 'Hub', 'Latency']}
           rows={filteredRoutes.map(r => [
             <Badge key="r" variant="outline">{r.rank}</Badge>, <strong key="c">{r.carrier}</strong>, r.pop, r.pop_city,
             `${r.site_to_pop_km} km`, r.hub, r.latency_ms != null ? `${r.latency_ms} ms` : '—',
-            <Badge key="s" variant="secondary">{r.composite}</Badge>,
           ])} />
         <p className="text-xs font-semibold mt-4 mb-2">Nearest POPs</p>
         <Table headers={['Carrier', 'Facility', 'City', 'Distance', 'Services', 'YYC ms', 'YEG ms', 'SEA ms', 'ORD ms', 'Source']}
@@ -304,8 +300,6 @@ export function SiteReport({ report }: Props) {
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
-          {report.methodology?.hyperscaler_score && <p><strong>Hyperscaler score:</strong> {report.methodology.hyperscaler_score}</p>}
-          {report.methodology?.fiber_score && <p><strong>Fiber score:</strong> {report.methodology.fiber_score}</p>}
           {report.methodology?.modeled_latency && <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>}
           {report.methodology?.distance && <p><strong>Distance:</strong> {report.methodology.distance}</p>}
         </div>
@@ -358,79 +352,5 @@ function Table({ headers, rows }: { headers: string[]; rows: (React.ReactNode)[]
         </tbody>
       </table>
     </div>
-  );
-}
-
-function FiberScoreCard({ score }: { score: SiteReportT['fiber']['score'] }) {
-  const gradeColor: Record<string, string> = {
-    A: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
-    B: 'bg-lime-500/15 text-lime-700 border-lime-500/30',
-    C: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
-    D: 'bg-orange-500/15 text-orange-700 border-orange-500/30',
-    F: 'bg-destructive/15 text-destructive border-destructive/30',
-  };
-  const entries = Object.entries(score.breakdown) as [string, { score: number; max: number; detail: string }][];
-  return (
-    <Card className="p-4 bg-muted/40 border-dashed">
-      <div className="flex items-center gap-4">
-        <div className={`rounded-lg border px-4 py-2 text-center ${gradeColor[score.grade]}`}>
-          <div className="text-3xl font-bold leading-none">{score.total}</div>
-          <div className="text-xs mt-0.5">Grade {score.grade}</div>
-        </div>
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
-          {entries.map(([k, v]) => (
-            <div key={k} className="text-xs">
-              <div className="flex items-center justify-between">
-                <span className="capitalize text-muted-foreground">{k.replace('_', ' ')}</span>
-                <span className="font-mono">{v.score}/{v.max}</span>
-              </div>
-              <div className="h-1.5 bg-secondary rounded mt-1 overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: `${(v.score / v.max) * 100}%` }} />
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-1 truncate" title={v.detail}>{v.detail}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-const HYPERSCALER_GRADE_COLOR: Record<string, string> = {
-  A: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
-  B: 'bg-lime-500/15 text-lime-700 border-lime-500/30',
-  C: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
-  D: 'bg-orange-500/15 text-orange-700 border-orange-500/30',
-  F: 'bg-destructive/15 text-destructive border-destructive/30',
-};
-
-function HyperscalerScoreCard({ score }: { score?: SiteReportT['hyperscaler_score'] }) {
-  if (!score) return null;
-  const grade = score.grade ?? 'F';
-  const entries = Object.entries(score.breakdown ?? {}) as [string, { score: number; max: number; detail: string }][];
-  return (
-    <Card className="p-4 bg-gradient-to-br from-primary/5 to-muted/30 border-primary/20">
-      <div className="flex items-center gap-4">
-        <div className={`rounded-lg border px-5 py-3 text-center ${HYPERSCALER_GRADE_COLOR[grade] ?? HYPERSCALER_GRADE_COLOR.F}`}>
-          <div className="text-[10px] uppercase tracking-wide opacity-70">Hyperscaler suitability</div>
-          <div className="text-4xl font-bold leading-none mt-1">{score.total ?? 0}</div>
-          <div className="text-xs mt-1">Grade {grade}</div>
-        </div>
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
-          {entries.map(([k, v]) => (
-            <div key={k} className="text-xs">
-              <div className="flex items-center justify-between">
-                <span className="capitalize text-muted-foreground">{k.replace('_', ' ')}</span>
-                <span className="font-mono">{v.score}/{v.max}</span>
-              </div>
-              <div className="h-1.5 bg-secondary rounded mt-1 overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: `${v.max ? (v.score / v.max) * 100 : 0}%` }} />
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-1 truncate" title={v.detail}>{v.detail}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
   );
 }

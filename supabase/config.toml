@@ -1,5 +1,8 @@
 project_id = "ktgosplhknmnyagxrgbe"
 
+[functions.geocode-address]
+verify_jwt = false
+
 [functions.aeso-generation-estimator]
 verify_jwt = false
 

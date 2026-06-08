@@ -1,45 +1,59 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Search, Loader2, MapPin } from 'lucide-react';
+import { Search, Loader2, MapPin, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   initialLat?: number | null;
   initialLng?: number | null;
   onResolve: (loc: { lat: number; lng: number; label?: string }) => void;
+  onClear?: () => void;
   loading?: boolean;
 }
 
-export function SiteLookupForm({ initialLat, initialLng, onResolve, loading }: Props) {
+export function SiteLookupForm({ initialLat, initialLng, onResolve, onClear, loading }: Props) {
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState(initialLat?.toString() ?? '');
   const [lng, setLng] = useState(initialLng?.toString() ?? '');
   const [geocoding, setGeocoding] = useState(false);
 
-  // Sync from external pin
-  if (initialLat !== undefined && initialLat !== null && initialLat.toString() !== lat) setLat(initialLat.toString());
-  if (initialLng !== undefined && initialLng !== null && initialLng.toString() !== lng) setLng(initialLng.toString());
+  // Sync from external pin ONLY when the external pin actually changes,
+  // so the user can still edit/clear the coord fields freely.
+  const lastPinRef = useRef<{ lat: number | null | undefined; lng: number | null | undefined }>({
+    lat: initialLat, lng: initialLng,
+  });
+  useEffect(() => {
+    if (initialLat !== lastPinRef.current.lat && initialLat !== null && initialLat !== undefined) {
+      setLat(initialLat.toString());
+    }
+    if (initialLng !== lastPinRef.current.lng && initialLng !== null && initialLng !== undefined) {
+      setLng(initialLng.toString());
+    }
+    lastPinRef.current = { lat: initialLat, lng: initialLng };
+  }, [initialLat, initialLng]);
 
   const geocode = async () => {
     if (!address.trim()) return;
     setGeocoding(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q=${encodeURIComponent(address + ', Alberta')}`;
-      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-      const json = await res.json();
-      if (!Array.isArray(json) || json.length === 0) {
-        toast.error('Address not found in Alberta');
+      const { data, error } = await supabase.functions.invoke<{ lat: number; lng: number; label: string }>(
+        'geocode-address',
+        { body: { query: address } },
+      );
+      if (error) throw error;
+      if (!data || typeof data.lat !== 'number' || typeof data.lng !== 'number') {
+        toast.error('Address not found. Try adding city/province, or drop a pin on the map.');
         return;
       }
-      const hit = json[0];
-      const la = parseFloat(hit.lat); const lo = parseFloat(hit.lon);
-      setLat(la.toString()); setLng(lo.toString());
-      onResolve({ lat: la, lng: lo, label: hit.display_name });
+      setLat(data.lat.toString());
+      setLng(data.lng.toString());
+      onResolve({ lat: data.lat, lng: data.lng, label: data.label ?? address });
     } catch (e) {
-      toast.error('Geocoding failed');
+      toast.error('Geocoding failed. Try coordinates instead.');
     } finally {
       setGeocoding(false);
     }
@@ -49,6 +63,12 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, loading }: P
     const la = parseFloat(lat); const lo = parseFloat(lng);
     if (Number.isNaN(la) || Number.isNaN(lo)) { toast.error('Invalid coordinates'); return; }
     onResolve({ lat: la, lng: lo, label: address || undefined });
+  };
+
+  const clearAll = () => {
+    setAddress(''); setLat(''); setLng('');
+    lastPinRef.current = { lat: null, lng: null };
+    onClear?.();
   };
 
   return (
@@ -62,7 +82,7 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, loading }: P
             {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Geocoded via OpenStreetMap Nominatim. You can also click the map to drop a pin.</p>
+        <p className="text-xs text-muted-foreground">Geocoded server-side via OpenStreetMap. You can also click the map to drop a pin.</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
@@ -74,10 +94,15 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, loading }: P
           <Input id="lng" value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-113.4938" />
         </div>
       </div>
-      <Button onClick={submitCoords} disabled={loading || !lat || !lng} className="w-full">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MapPin className="w-4 h-4 mr-2" />}
-        Generate Site Report
-      </Button>
+      <div className="flex gap-2">
+        <Button onClick={submitCoords} disabled={loading || !lat || !lng} className="flex-1">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MapPin className="w-4 h-4 mr-2" />}
+          Generate Site Report
+        </Button>
+        <Button onClick={clearAll} variant="outline" disabled={loading} title="Clear address and coordinates">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
     </Card>
   );
 }
