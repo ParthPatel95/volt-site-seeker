@@ -304,18 +304,26 @@ export function SiteReport({ report }: Props) {
       <Card className="p-4 bg-muted/30">
         <p className="text-xs font-semibold mb-2">Methodology & Data Provenance</p>
         <div className="text-[11px] space-y-1 mb-3">
-          <p><strong>Hyperscaler score:</strong> {report.methodology.hyperscaler_score}</p>
-          <p><strong>Fiber score:</strong> {report.methodology.fiber_score}</p>
-          <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>
-          <p><strong>Distance:</strong> {report.methodology.distance}</p>
+          {report.methodology?.hyperscaler_score && <p><strong>Hyperscaler score:</strong> {report.methodology.hyperscaler_score}</p>}
+          {report.methodology?.fiber_score && <p><strong>Fiber score:</strong> {report.methodology.fiber_score}</p>}
+          {report.methodology?.modeled_latency && <p><strong>Modeled latency:</strong> {report.methodology.modeled_latency}</p>}
+          {report.methodology?.distance && <p><strong>Distance:</strong> {report.methodology.distance}</p>}
         </div>
-        <Separator className="my-2" />
-        <p className="text-xs font-semibold mb-1">Primary sources</p>
-        <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
-          {report.data_provenance.sources.map(s => <li key={s}>{s}</li>)}
-        </ul>
-        <Separator className="my-2" />
-        <p className="text-xs text-muted-foreground">{report.data_provenance.notes}</p>
+        {report.data_provenance?.sources?.length ? (
+          <>
+            <Separator className="my-2" />
+            <p className="text-xs font-semibold mb-1">Primary sources</p>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+              {report.data_provenance.sources.map(s => <li key={s}>{s}</li>)}
+            </ul>
+          </>
+        ) : null}
+        {report.data_provenance?.notes && (
+          <>
+            <Separator className="my-2" />
+            <p className="text-xs text-muted-foreground">{report.data_provenance.notes}</p>
+          </>
+        )}
       </Card>
     </div>
   );
