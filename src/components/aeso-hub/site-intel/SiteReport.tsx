@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import {
   Cable, Zap, Flame, Droplets, Truck, Download, ExternalLink, Filter,
   Thermometer, ShieldAlert, Leaf, Building2, Cloud, Network,
-  Users, HardHat, Scale, Wifi,
+  Users, HardHat, Scale, Wifi, Satellite, ScanSearch, AlertTriangle, Loader2,
 } from 'lucide-react';
 import type { SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
+import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
