@@ -2429,6 +2429,7 @@ export type Database = {
           building_owner: string | null
           carriers_on_net: string[] | null
           city: string | null
+          confidence: string
           created_at: string
           cross_connect_fee_estimate_cad: number | null
           facility_name: string
@@ -2444,6 +2445,7 @@ export type Database = {
           building_owner?: string | null
           carriers_on_net?: string[] | null
           city?: string | null
+          confidence?: string
           created_at?: string
           cross_connect_fee_estimate_cad?: number | null
           facility_name: string
@@ -2459,6 +2461,7 @@ export type Database = {
           building_owner?: string | null
           carriers_on_net?: string[] | null
           city?: string | null
+          confidence?: string
           created_at?: string
           cross_connect_fee_estimate_cad?: number | null
           facility_name?: string
@@ -2603,6 +2606,7 @@ export type Database = {
       }
       alberta_construction_capacity: {
         Row: {
+          confidence: string
           created_at: string
           firm_name: string
           hq_city: string | null
@@ -2614,6 +2618,7 @@ export type Database = {
           union_status: string | null
         }
         Insert: {
+          confidence?: string
           created_at?: string
           firm_name: string
           hq_city?: string | null
@@ -2625,6 +2630,7 @@ export type Database = {
           union_status?: string | null
         }
         Update: {
+          confidence?: string
           created_at?: string
           firm_name?: string
           hq_city?: string | null
@@ -2640,6 +2646,7 @@ export type Database = {
       alberta_construction_wages: {
         Row: {
           benefits_loading_pct: number | null
+          confidence: string
           created_at: string
           id: string
           last_verified: string | null
@@ -2650,6 +2657,7 @@ export type Database = {
         }
         Insert: {
           benefits_loading_pct?: number | null
+          confidence?: string
           created_at?: string
           id?: string
           last_verified?: string | null
@@ -2660,6 +2668,7 @@ export type Database = {
         }
         Update: {
           benefits_loading_pct?: number | null
+          confidence?: string
           created_at?: string
           id?: string
           last_verified?: string | null
@@ -2673,6 +2682,7 @@ export type Database = {
       alberta_dark_fiber_inventory: {
         Row: {
           conduit_owner: string | null
+          confidence: string
           created_at: string
           end_lat: number
           end_lng: number
@@ -2688,6 +2698,7 @@ export type Database = {
         }
         Insert: {
           conduit_owner?: string | null
+          confidence?: string
           created_at?: string
           end_lat: number
           end_lng: number
@@ -2703,6 +2714,7 @@ export type Database = {
         }
         Update: {
           conduit_owner?: string | null
+          confidence?: string
           created_at?: string
           end_lat?: number
           end_lng?: number
@@ -2999,6 +3011,7 @@ export type Database = {
       }
       alberta_last_mile_providers: {
         Row: {
+          confidence: string
           created_at: string
           id: string
           last_verified: string | null
@@ -3009,6 +3022,7 @@ export type Database = {
           source_url: string | null
         }
         Insert: {
+          confidence?: string
           created_at?: string
           id?: string
           last_verified?: string | null
@@ -3019,6 +3033,7 @@ export type Database = {
           source_url?: string | null
         }
         Update: {
+          confidence?: string
           created_at?: string
           id?: string
           last_verified?: string | null
@@ -3181,6 +3196,7 @@ export type Database = {
         Row: {
           annual_grads_relevant: number | null
           city: string | null
+          confidence: string
           created_at: string
           id: string
           institution_name: string
@@ -3193,6 +3209,7 @@ export type Database = {
         Insert: {
           annual_grads_relevant?: number | null
           city?: string | null
+          confidence?: string
           created_at?: string
           id?: string
           institution_name: string
@@ -3205,6 +3222,7 @@ export type Database = {
         Update: {
           annual_grads_relevant?: number | null
           city?: string | null
+          confidence?: string
           created_at?: string
           id?: string
           institution_name?: string
@@ -3220,6 +3238,7 @@ export type Database = {
         Row: {
           aer_region: string | null
           auc_typical_permit_weeks: number | null
+          confidence: string
           created_at: string
           id: string
           indigenous_consultation_required: boolean | null
@@ -3236,6 +3255,7 @@ export type Database = {
         Insert: {
           aer_region?: string | null
           auc_typical_permit_weeks?: number | null
+          confidence?: string
           created_at?: string
           id?: string
           indigenous_consultation_required?: boolean | null
@@ -3252,6 +3272,7 @@ export type Database = {
         Update: {
           aer_region?: string | null
           auc_typical_permit_weeks?: number | null
+          confidence?: string
           created_at?: string
           id?: string
           indigenous_consultation_required?: boolean | null
@@ -3462,6 +3483,7 @@ export type Database = {
       alberta_workforce_stats: {
         Row: {
           centre_name: string
+          confidence: string
           created_at: string
           electricians_count: number | null
           hvac_techs_count: number | null
@@ -3479,6 +3501,7 @@ export type Database = {
         }
         Insert: {
           centre_name: string
+          confidence?: string
           created_at?: string
           electricians_count?: number | null
           hvac_techs_count?: number | null
@@ -3496,6 +3519,7 @@ export type Database = {
         }
         Update: {
           centre_name?: string
+          confidence?: string
           created_at?: string
           electricians_count?: number | null
           hvac_techs_count?: number | null

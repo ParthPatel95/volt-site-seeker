@@ -1,61 +1,74 @@
 ## Goal
-Show a high-resolution satellite image of the looked-up coordinate inside the Site Report, then run an AI pass over the image to detect on-site / nearby assets (substations, transmission lines, gas regulators, water reservoirs, rail spurs, buildings, fiber huts, etc.) — useful as a sanity check against the dataset-driven results.
 
-## What I'll build
+You asked: are the new features working, and is any data fake or made up?
+The short answer from my review: the **satellite image + AI asset scan** features are wired correctly, but several of the **new dataset sections** (workforce, construction wages, EPC firms, mill rates, dark fiber, carrier-hotel cross-connect fees) are **curated estimates dressed up as "verified" data**. They have plausible numbers and source URLs, but the values were not actually pulled live from those URLs (and at least two of those URLs return 404/403 today). Per your "no fake or made-up data" rule, we need to relabel them and tighten the coverage badge so they are clearly marked as estimates, not verified facts.
 
-### 1. Satellite image card (frontend, in `SiteReport.tsx`)
-- New "Aerial Imagery" card above the Connectivity Depth section.
-- Three zoom presets: Site (≈18 zoom, ~250 m across), Neighborhood (≈16, ~1 km), Area (≈14, ~4 km).
-- Uses Google Maps Static API via existing connector (`GOOGLE_MAPS_API_KEY`).
-- 640×640 hybrid (satellite + labels) image, served through a thin Supabase edge function so the key stays server-side.
-- Caption shows lat/lng, zoom, capture provider, and a "View in Google Maps" link.
+This plan fixes the honesty problem and verifies the AI scan path end-to-end.
 
-### 2. New edge function `site-satellite-image`
-- Input: `{ lat, lng, zoom }`.
-- Calls `https://maps.googleapis.com/maps/api/staticmap?...&maptype=hybrid` via the Google Maps connector gateway.
-- Returns the PNG bytes (with CORS) so the browser can render `<img src=…>` from an object URL.
-- Cheap, no DB writes.
+## What I verified is real and live
 
-### 3. New edge function `site-asset-vision`
-- Input: `{ lat, lng, zoom }` (zoom defaults to 18).
-- Fetches the static satellite image as above (server side, no extra round-trip).
-- Sends the image to Lovable AI Gateway (`google/gemini-2.5-flash`, vision-capable) with a structured-output prompt asking it to identify visible assets in the frame and return JSON:
-  ```
-  { detections: [
-      { type: 'substation'|'transmission_line'|'gas_regulator'|'water_body'
-             |'rail'|'road'|'building'|'solar_array'|'wind_turbine'
-             |'fiber_hut'|'cleared_pad'|'other',
-        label: string,
-        confidence: 'high'|'medium'|'low',
-        approx_bearing_deg?: number,
-        approx_distance_m?: number,
-        notes?: string } ],
-    summary: string,
-    image_quality: 'good'|'cloudy'|'low_detail' }
-  ```
-- Returns the detections plus the lat/lng/zoom used.
+- `alberta-site-report` edge function loads 13 reference tables in parallel and computes distances correctly.
+- ECCC climate normals, NRCan seismic ratings, PeeringDB IXPs, AESO transmission lines, StatsCan population centres, generation assets — these rows in the DB do match their cited sources and are safe to keep as "verified".
+- Modeled fiber latency to cloud regions uses real physics (5 µs/km × 1.4 routing). Already labelled "modeled" — correct.
+- `site-satellite-image` correctly calls Google Static Maps (hybrid, scale=2) and returns base64.
+- `site-asset-vision` correctly forwards the satellite image to `google/gemini-2.5-flash` via the Lovable AI gateway with a strict JSON schema prompt and returns detections + cross-checks them in the UI.
 
-### 4. Wire into Site Report
-- New hook `useSiteSatellite(lat, lng)` and `useSiteAssetVision(lat, lng)` (React Query, cached per coord+zoom).
-- New section "Aerial Imagery & AI Asset Scan":
-  - Satellite image (zoom toggle).
-  - "Run AI scan" button (lazy — don't auto-spend tokens on every report).
-  - Detections rendered as a small table: Type · Label · Confidence · Bearing/Distance · Notes.
-  - Cross-check block: for each detection of type `substation` / `transmission_line` / `gas_regulator` / `rail`, highlight whether the dataset already lists something within 1 km of the same bearing; if not, show an "⚠ Possibly missing from dataset — review" chip so you can spot gaps like the substation you mentioned.
+## What is NOT honest right now
 
-### 5. Version bump
-- `APP_VERSION` → `'2026.06.08.005'`.
+Rows in these tables are hand-curated estimates but the UI's `CoverageBadge` treats them as "verified" because `classifyRow` defaults to verified whenever `source_url` is non-empty:
+
+| Table | Issue |
+|---|---|
+| `alberta_workforce_stats` | Electrician/HVAC/IT counts and median wages are estimates, not pulled from StatsCan tables |
+| `alberta_construction_capacity` | EPC firm "mega-project capable" flag and recent-project lists are editorial |
+| `alberta_construction_wages` | Union vs open-shop rates are typical-range estimates, not the live Alberta Wage & Salary Survey |
+| `alberta_regulatory_zones` | Mill rates, M&E exemption flags, AUC permit weeks — point-in-time estimates; several source URLs 404 |
+| `alberta_carrier_pop_details` | Cross-connect fee estimates and "open access" flags are editorial |
+| `alberta_last_mile_providers` | Speeds and tech are typical, not from CRTC/ISED feeds |
+| `alberta_dark_fiber_inventory` | IFA counts are estimates; some rows already correctly use `source_url='estimate'` |
+
+## Changes
+
+### 1. Honest classification in `SiteReport.tsx`
+Change `classifyRow` so a row is only "verified" when the row explicitly sets `confidence='verified'`. Default becomes "estimated". This flips the badges to amber/red on the curated sections automatically.
+
+Also force-classify the following sections so the badge is correct regardless of row contents:
+- Workforce, Construction, Regulatory, Connectivity Depth → `forcedConfidence: 'estimated'`
+- Cloud reach → already `'modeled'` (keep)
+- Climate, Risk, Transmission, IXPs, Population centres, Carrier POPs (the original 45-row table) → `'verified'`
+
+### 2. Add a "Data accuracy" banner at the top of the report
+Above the existing coverage legend, render a short panel that lists:
+- **Verified** (live or quarterly-refreshed authoritative source): AESO transmission, ECCC climate normals, NRCan seismic, PeeringDB, StatsCan 2021 population, AER generation list, carrier POP locations.
+- **Modeled**: fiber latency to cloud regions (physics), drive times (km / 95 km/h), hyperscaler score weighting.
+- **Estimated (use with caution)**: workforce trade counts, construction wages, EPC capability, municipal mill rates, last-mile speeds, dark-fiber IFA counts, carrier-hotel cross-connect fees.
+
+This is one short Card with three columns and the same icons used elsewhere — no business-logic change.
+
+### 3. Fix broken / wrong source URLs
+Replace the two confirmed bad URLs (Strathcona 404, open.alberta 403) and any others surfaced by a quick HEAD check against every distinct `source_url` in the new tables. A one-shot migration UPDATEs the rows with the canonical landing pages, and adds `confidence` columns (text) to all seven tables so future rows can mark themselves accurately.
+
+### 4. Verify the AI scan path end-to-end
+- Confirm `GOOGLE_MAPS_API_KEY` and `LOVABLE_API_KEY` are present (they are — both functions already gate on them).
+- Add an explicit empty-result hint in `AerialScanSection` when `scan.detections.length === 0` so the user knows the model ran but saw nothing, instead of a silent panel.
+- When an AI-detected `substation` is NOT covered by the dataset, surface a "Possibly missing from dataset — please review" callout (already in code via `isCovered`, but currently buried — promote it to a top-of-section warning if any high-confidence detection is uncovered).
+
+### 5. Surface dataset health in the report
+The edge function already returns `methodology.datasets_loaded` counts. Add a tiny "Datasets loaded" line under the Methodology card so you can see at a glance that e.g. 406 substations, 45 carrier POPs, 12 transmission lines were actually queried.
+
+### 6. Version
+Bump `APP_VERSION` to `'2026.06.08.006'`.
 
 ## Out of scope
-- Persisting detections to a table (kept in-memory / React Query cache for now).
-- Polygon/box overlays on the satellite image (Gemini bounding boxes are unreliable at this zoom; we'll show a text list instead).
-- Automatic backfill of missing assets into the Alberta reference tables.
 
-## Files
-- New: `supabase/functions/site-satellite-image/index.ts`
-- New: `supabase/functions/site-asset-vision/index.ts`
-- New: `src/hooks/useSiteSatellite.ts`, `src/hooks/useSiteAssetVision.ts`
-- Edit: `src/components/aeso-hub/site-intel/SiteReport.tsx` (new card + cross-check)
-- Edit: `src/constants/app-version.ts`
+- Building live ingestion pipelines for StatsCan / Alberta Wage Survey / CRTC / municipal tax rolls. That is the only way to make these rows truly "verified live" and is a multi-day project per dataset — happy to scope it next if you want.
+- Persisting AI scan results.
+- Polygon overlays on the satellite image.
 
-Approve and I'll build it.
+## Files touched
+
+- `src/components/aeso-hub/site-intel/SiteReport.tsx` (classifyRow, banner, forced confidences, empty-state hint, missing-asset callout, datasets-loaded line)
+- `src/constants/app-version.ts`
+- New migration adding a `confidence` text column to the seven curated tables, defaulting to `'estimated'`, plus a handful of UPDATEs to fix the bad source URLs and mark the rows that are genuinely verified.
+
+After approval I will implement and then sanity-check by invoking `alberta-site-report`, `site-satellite-image`, and `site-asset-vision` against a known Alberta coordinate.
