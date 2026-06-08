@@ -52,6 +52,58 @@ function KV({ label, value, sub }: { label: string; value: React.ReactNode; sub?
   );
 }
 
+type RowConfidence = 'verified' | 'modeled' | 'estimated';
+
+function classifyRow(row: any, forced?: RowConfidence): RowConfidence {
+  if (forced) return forced;
+  if (!row) return 'estimated';
+  const conf = (row.confidence ?? '').toString().toLowerCase();
+  if (conf === 'verified' || conf === 'modeled' || conf === 'estimated') return conf as RowConfidence;
+  const url = row.source_url;
+  if (!url || url === 'estimate') return 'estimated';
+  return 'verified';
+}
+
+interface CoverageInput { rows: any[]; forcedConfidence?: RowConfidence }
+
+function computeCoverage(inputs: CoverageInput[]) {
+  let verified = 0, modeled = 0, estimated = 0, total = 0;
+  for (const { rows, forcedConfidence } of inputs) {
+    for (const r of rows ?? []) {
+      total++;
+      const c = classifyRow(r, forcedConfidence);
+      if (c === 'verified') verified++;
+      else if (c === 'modeled') modeled++;
+      else estimated++;
+    }
+  }
+  const pct = total === 0 ? 0 : Math.round(((verified + modeled * 0.5) / total) * 100);
+  return { verified, modeled, estimated, total, pct };
+}
+
+function CoverageBadge({ inputs }: { inputs: CoverageInput[] }) {
+  const { verified, modeled, estimated, total, pct } = computeCoverage(inputs);
+  if (total === 0) {
+    return <span className="text-[10px] px-2 py-0.5 rounded border bg-muted text-muted-foreground border-border">No data</span>;
+  }
+  const tone =
+    pct >= 80 ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'
+    : pct >= 50 ? 'bg-amber-500/15 text-amber-700 border-amber-500/30'
+    : 'bg-rose-500/15 text-rose-700 border-rose-500/30';
+  return (
+    <div
+      className={`text-[10px] px-2 py-0.5 rounded border inline-flex items-center gap-1.5 ${tone}`}
+      title={`${verified} verified · ${modeled} modeled · ${estimated} estimated of ${total} fields`}
+    >
+      <span className="font-semibold">{pct}% coverage</span>
+      <span className="opacity-60">·</span>
+      <span>{verified}✓</span>
+      {modeled > 0 && <span>{modeled}≈</span>}
+      {estimated > 0 && <span>{estimated}~</span>}
+    </div>
+  );
+}
+
 interface Props {
   report: SiteReportT;
 }
