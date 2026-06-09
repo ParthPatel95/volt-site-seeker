@@ -18,7 +18,13 @@ serve(async (req) => {
     const energyData = await supabase.functions.invoke('energy-data-integration');
     const weatherData = await supabase.functions.invoke('aeso-weather-integration');
 
-    console.log('Energy data full response:', JSON.stringify(energyData, null, 2));
+    // Avoid dumping the full response — log a compact summary so the
+    // function-runtime log buffer stays readable across many invocations.
+    console.log('Energy data response:', {
+      ok: !energyData.error,
+      hasAeso: Boolean(energyData.data?.aeso),
+      aesoKeys: energyData.data?.aeso ? Object.keys(energyData.data.aeso) : [],
+    });
 
     if (energyData.error) {
       console.error('Error fetching energy data:', energyData.error);
@@ -40,7 +46,7 @@ serve(async (req) => {
     if (!aesoData.pricing) {
       console.error('ERROR: AESO API failed - no pricing object returned');
       console.error('API success indicator:', aesoData.apiSuccess);
-      console.error('Full AESO data:', JSON.stringify(aesoData, null, 2));
+      console.error('AESO data shape:', { aesoKeys: Object.keys(aesoData ?? {}) });
       throw new Error('AESO API failure: No pricing data available. Cannot collect training data when API is down.');
     }
     
@@ -48,17 +54,21 @@ serve(async (req) => {
     const systemMarginalPrice = aesoData.pricing.system_marginal_price;
     const smpSpread = aesoData.pricing.smp_spread;
     
-    console.log('Pool price:', poolPrice);
-    console.log('System Marginal Price:', systemMarginalPrice);
-    console.log('SMP-Pool Spread:', smpSpread);
-    console.log('AESO pricing data:', JSON.stringify(aesoData.pricing, null, 2));
-    console.log('AESO load data:', JSON.stringify(aesoData.loadData, null, 2));
-    console.log('Intertie flows:', JSON.stringify(aesoData.intertieFlows, null, 2));
-    console.log('Operating reserve:', JSON.stringify(aesoData.operatingReserve, null, 2));
-    console.log('Generation outages:', JSON.stringify(aesoData.generationOutages, null, 2));
-    console.log('Wind forecast:', aesoData.windForecast ? `${aesoData.windForecast.forecasts?.length || 0} hours available` : 'Not available');
-    console.log('Solar forecast:', aesoData.solarForecast ? `${aesoData.solarForecast.forecasts?.length || 0} hours available` : 'Not available');
-    console.log('Load forecast:', aesoData.loadForecast ? `${aesoData.loadForecast.forecasts?.length || 0} hours available` : 'Not available');
+    // Log a compact snapshot — full payloads bloat the function logs and
+    // contain no information we need at INFO level for normal collection runs.
+    console.log('AESO snapshot:', {
+      poolPrice,
+      systemMarginalPrice,
+      smpSpread,
+      pricingKeys: aesoData.pricing ? Object.keys(aesoData.pricing) : [],
+      loadKeys: aesoData.loadData ? Object.keys(aesoData.loadData) : [],
+      intertieRows: Array.isArray(aesoData.intertieFlows) ? aesoData.intertieFlows.length : 0,
+      operatingReserveKeys: aesoData.operatingReserve ? Object.keys(aesoData.operatingReserve) : [],
+      generationOutageRows: Array.isArray(aesoData.generationOutages) ? aesoData.generationOutages.length : 0,
+      windForecastHours: aesoData.windForecast?.forecasts?.length ?? 0,
+      solarForecastHours: aesoData.solarForecast?.forecasts?.length ?? 0,
+      loadForecastHours: aesoData.loadForecast?.forecasts?.length ?? 0,
+    });
     
     // NEW: Fetch actual forecast data from AESO API
     const forecastApiKey = Deno.env.get('AESO_SUBSCRIPTION_KEY_PRIMARY') ||
@@ -104,7 +114,7 @@ serve(async (req) => {
     // Validate pool price exists (can be zero or negative - both are valid market prices)
     if (poolPrice === undefined || poolPrice === null) {
       console.error('ERROR: Pool price is undefined/null despite pricing object existing');
-      console.error('Full AESO data:', JSON.stringify(aesoData, null, 2));
+      console.error('AESO data shape:', { aesoKeys: Object.keys(aesoData ?? {}) });
       throw new Error('AESO data integrity error: pricing object exists but current_price is undefined.');
     }
     

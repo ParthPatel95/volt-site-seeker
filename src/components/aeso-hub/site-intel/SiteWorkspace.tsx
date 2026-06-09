@@ -552,10 +552,10 @@ function BearingDial({ dial }: { dial: { sector: number; angle_from: number; ang
 
 function ConnectivityPanel({ report }: { report: SiteReportT }) {
   const { lat, lng } = report.location;
-  const fiber: any = report.fiber ?? {};
-  const depth: any = (report as any).connectivity_depth ?? {};
+  const fiber = report.fiber;
+  const depth = report.connectivity_depth;
   const score = fiber.score ?? null;
-  const peeringHubs: any[] = fiber.peering_hubs ?? [];
+  const peeringHubs = fiber.peering_hubs ?? [];
 
   // Live external scan
   const [live, setLive] = useState<any | null>(null);
@@ -623,7 +623,7 @@ function ConnectivityPanel({ report }: { report: SiteReportT }) {
       </Section>
 
       {/* Carrier POP details */}
-      {depth.carrier_pop_details?.length > 0 && (
+      {depth?.carrier_pop_details && depth.carrier_pop_details.length > 0 && (
         <Section icon={<Server className="w-4 h-4" />} title="POP facility details" subtitle="Building owner, services and access for nearest carrier facilities">
           <MiniTable
             headers={['Facility', 'Address', 'Building owner', 'Lit services', 'X-connect fee', 'MMR', '24×7', 'Distance']}
@@ -660,7 +660,7 @@ function ConnectivityPanel({ report }: { report: SiteReportT }) {
       )}
 
       {/* Dark fiber inventory */}
-      {depth.dark_fiber_segments_nearby?.length > 0 && (
+      {depth?.dark_fiber_segments_nearby && depth.dark_fiber_segments_nearby.length > 0 && (
         <Section icon={<Cable className="w-4 h-4" />} title="Dark fiber inventory" subtitle="Unlit strands available for IRU lease">
           <MiniTable
             headers={['Segment', 'Vendor', 'Strands available', 'IRU term', 'Distance']}
@@ -676,11 +676,11 @@ function ConnectivityPanel({ report }: { report: SiteReportT }) {
       )}
 
       {/* Last-mile providers */}
-      {depth.last_mile_in_municipality && (
-        <Section icon={<Wifi className="w-4 h-4" />} title="Last-mile providers" subtitle={depth.last_mile_in_municipality.municipality ?? 'In the host municipality'}>
+      {depth?.last_mile_in_municipality && (
+        <Section icon={<Wifi className="w-4 h-4" />} title="Last-mile providers" subtitle={depth.last_mile_in_municipality.population_centre ?? 'In the host municipality'}>
           <MiniTable
             headers={['Provider', 'Technology', 'Max down', 'Max up', 'Tier']}
-            rows={(depth.last_mile_in_municipality.providers ?? [depth.last_mile_in_municipality]).map((p: any) => [
+            rows={(depth.last_mile_in_municipality.providers ?? []).map((p: any) => [
               <strong key="p">{p.provider ?? p.name ?? '—'}</strong>,
               p.technology ?? p.tech ?? '—',
               p.max_download_mbps != null ? `${p.max_download_mbps} Mbps` : '—',
