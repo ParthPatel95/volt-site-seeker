@@ -157,7 +157,6 @@ export function PowerModelAnalyzer() {
           .select('timestamp, pool_price, ail_mw')
           .gte('timestamp', startDate)
           .lte('timestamp', endDate)
-          .not('ail_mw', 'is', null)
           .order('timestamp', { ascending: true })
           .range(offset, offset + batchSize - 1);
         

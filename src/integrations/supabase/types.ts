@@ -13312,6 +13312,21 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      audit_aeso_hourly_coverage: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          ail_hours: number
+          duplicate_hour_buckets: number
+          expected_hours: number
+          is_elapsed: boolean
+          missing_price_hours: number
+          month_label: string
+          month_start: string
+          price_hours: number
+          raw_observation_rows: number
+          smp_hours: number
+        }[]
+      }
       bulk_delete_verified_sites: {
         Args: { site_ids: string[] }
         Returns: number
@@ -13498,6 +13513,15 @@ export type Database = {
       is_academy_admin: { Args: { check_user_id: string }; Returns: boolean }
       is_voltbuild_approved: { Args: { user_id: string }; Returns: boolean }
       is_voltscout_approved: { Args: { user_id: string }; Returns: boolean }
+      list_missing_aeso_hours: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          missing_ail: boolean
+          missing_hour: string
+          missing_price: boolean
+          missing_smp: boolean
+        }[]
+      }
       predict_aeso_price: {
         Args: {
           p_day_of_week: number

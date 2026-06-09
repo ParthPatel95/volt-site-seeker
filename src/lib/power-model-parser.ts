@@ -64,7 +64,6 @@ export function rawTrainingDataToHourly(
 ): HourlyRecord[] {
   const out: HourlyRecord[] = [];
   for (const d of data) {
-    if (d.ail_mw == null) continue;
     const dt = new Date(d.timestamp);
     if (Number.isNaN(dt.getTime())) continue;
     // Use UTC hour bucket so date and HE always come from the same hour.
@@ -79,7 +78,10 @@ export function rawTrainingDataToHourly(
       date: dateForHE,
       he,
       poolPrice: d.pool_price,
-      ailMW: d.ail_mw!,
+      // Coverage audit must see every canonical hour. When live AIL isn't
+      // back-filled yet we keep the hour and surface AIL as 0 so the row
+      // is still counted toward expected calendar coverage.
+      ailMW: d.ail_mw ?? 0,
     });
   }
   return out;

@@ -70,8 +70,7 @@ export function auditCoverage(
     if (
       Number.isNaN(d.getTime()) ||
       !Number.isFinite(r.he) || r.he < 1 || r.he > 24 ||
-      !Number.isFinite(r.poolPrice) ||
-      !Number.isFinite(r.ailMW)
+      !Number.isFinite(r.poolPrice)
     ) {
       invalidRecords++;
       continue;
