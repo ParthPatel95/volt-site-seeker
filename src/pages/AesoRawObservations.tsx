@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,11 @@ interface RawObservation {
   created_at: string;
 }
 
+interface Cursor {
+  observed_for: string;
+  id: number;
+}
+
 const PAGE_SIZE = 100;
 
 function toLocal(dt: string) {
@@ -49,12 +54,22 @@ function toLocal(dt: string) {
   }
 }
 
+function parseDateInput(v: string): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export default function AesoRawObservations() {
   const [rows, setRows] = useState<RawObservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
   const [total, setTotal] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+
+  // Cursor stack for back-navigation
+  const [cursorHistory, setCursorHistory] = useState<Cursor[]>([]);
+  const [currentCursor, setCurrentCursor] = useState<Cursor | null>(null);
 
   // Filters
   const [hourFrom, setHourFrom] = useState("");
@@ -65,48 +80,98 @@ export default function AesoRawObservations() {
 
   const [selected, setSelected] = useState<RawObservation | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let q = supabase
-        .from("aeso_raw_price_observations")
-        .select("*", { count: "exact" })
-        .order("observed_for", { ascending: false })
-        .order("observed_at", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+  const filters = {
+    hourFrom: parseDateInput(hourFrom),
+    hourTo: parseDateInput(hourTo),
+    source: source || null,
+    revision: revision || null,
+    endpoint: endpoint || null,
+  };
 
-      if (hourFrom) q = q.gte("observed_for", new Date(hourFrom).toISOString());
-      if (hourTo) q = q.lte("observed_for", new Date(hourTo).toISOString());
-      if (source) q = q.eq("source", source);
-      if (revision) q = q.ilike("revision_id", `%${revision}%`);
-      if (endpoint) q = q.ilike("source_endpoint", `%${endpoint}%`);
+  const load = useCallback(
+    async (cursor: Cursor | null, direction: "initial" | "next" | "prev") => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch page
+        const { data: pageData, error: pageErr } = await supabase.rpc(
+          "get_aeso_raw_observations_cursor",
+          {
+            p_page_size: PAGE_SIZE,
+            p_cursor_observed_for: cursor?.observed_for ?? null,
+            p_cursor_id: cursor?.id ?? null,
+            p_hour_from: filters.hourFrom,
+            p_hour_to: filters.hourTo,
+            p_source: filters.source,
+            p_revision_id: filters.revision,
+            p_endpoint: filters.endpoint,
+          }
+        );
 
-      const { data, error, count } = await q;
-      if (error) throw error;
-      setRows((data ?? []) as RawObservation[]);
-      setTotal(count ?? null);
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to load observations");
-    } finally {
-      setLoading(false);
-    }
+        if (pageErr) throw pageErr;
+        const pageRows = (pageData ?? []) as unknown as RawObservation[];
+
+        // Fetch total count (only on initial load to avoid extra calls when paginating)
+        let countVal: number | null = total;
+        if (direction === "initial" || total === null) {
+          const { data: countData, error: countErr } = await supabase.rpc(
+            "count_aeso_raw_observations",
+            {
+              p_hour_from: filters.hourFrom,
+              p_hour_to: filters.hourTo,
+              p_source: filters.source,
+              p_revision_id: filters.revision,
+              p_endpoint: filters.endpoint,
+            }
+          );
+          if (!countErr) {
+            countVal = (countData as unknown as number) ?? null;
+          }
+        }
+
+        setRows(pageRows);
+        setTotal(countVal);
+        setHasMore(pageRows.length === PAGE_SIZE);
+      } catch (e: any) {
+        setError(e?.message ?? "Failed to load observations");
+      } finally {
+        setLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filters.hourFrom, filters.hourTo, filters.source, filters.revision, filters.endpoint]
+  );
+
+  const onSearch = () => {
+    setCursorHistory([]);
+    setCurrentCursor(null);
+    load(null, "initial");
+  };
+
+  const goNext = () => {
+    if (rows.length === 0) return;
+    const last = rows[rows.length - 1];
+    const nextCursor = { observed_for: last.observed_for, id: last.id };
+    setCursorHistory((h) => [...h, currentCursor!].filter(Boolean) as Cursor[]);
+    setCurrentCursor(nextCursor);
+    load(nextCursor, "next");
+  };
+
+  const goPrev = () => {
+    setCursorHistory((h) => {
+      const prev = h[h.length - 1] ?? null;
+      setCurrentCursor(prev);
+      load(prev, "prev");
+      return h.slice(0, -1);
+    });
   };
 
   useEffect(() => {
-    load();
+    load(null, "initial");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, []);
 
-  const onSearch = () => {
-    setPage(0);
-    load();
-  };
-
-  const totalPages = useMemo(
-    () => (total != null ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : null),
-    [total],
-  );
+  const canGoBack = cursorHistory.length > 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -180,13 +245,18 @@ export default function AesoRawObservations() {
                 setSource("");
                 setRevision("");
                 setEndpoint("");
-                setPage(0);
-                setTimeout(load, 0);
+                setCursorHistory([]);
+                setCurrentCursor(null);
+                setTimeout(() => load(null, "initial"), 0);
               }}
             >
               Reset
             </Button>
-            <Button variant="ghost" onClick={load} disabled={loading}>
+            <Button
+              variant="ghost"
+              onClick={() => load(currentCursor, "initial")}
+              disabled={loading}
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
@@ -208,24 +278,19 @@ export default function AesoRawObservations() {
             <Button
               size="sm"
               variant="outline"
-              disabled={page === 0 || loading}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={!canGoBack || loading}
+              onClick={goPrev}
             >
               Prev
             </Button>
             <span className="text-muted-foreground">
-              Page {page + 1}
-              {totalPages ? ` / ${totalPages}` : ""}
+              Page {cursorHistory.length + 1}
             </span>
             <Button
               size="sm"
               variant="outline"
-              disabled={
-                loading ||
-                (totalPages != null && page + 1 >= totalPages) ||
-                rows.length < PAGE_SIZE
-              }
-              onClick={() => setPage((p) => p + 1)}
+              disabled={loading || !hasMore}
+              onClick={goNext}
             >
               Next
             </Button>
