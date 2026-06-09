@@ -46,17 +46,25 @@ export function useSatelliteAnalysis() {
 
       if (error) throw error;
 
+      // The satellite-analysis edge function currently returns simulated data
+      // (data.source === 'simulated'). Surface that clearly so the UI does not
+      // present demo placeholders as real ML output.
+      const isPreview = data?.source === 'simulated';
       if (request.action === 'discover_substations') {
         setDiscoveries(data.discoveries || []);
         toast({
-          title: "Real Discovery Complete",
-          description: `Found ${data.discoveries?.length || 0} potential substations using Google Maps + AI`,
+          title: isPreview ? 'Discovery preview (simulated)' : 'Discovery complete',
+          description: isPreview
+            ? `Returned ${data.discoveries?.length || 0} preview substations — the ML pipeline is not yet wired.`
+            : `Found ${data.discoveries?.length || 0} potential substations.`,
         });
       } else {
         setAnalysis(data.analysis || data.validation);
         toast({
-          title: "Real Analysis Complete",
-          description: `${request.action} completed using satellite imagery`,
+          title: isPreview ? 'Analysis preview (simulated)' : 'Analysis complete',
+          description: isPreview
+            ? `${request.action} returned placeholder data — the ML pipeline is not yet wired.`
+            : `${request.action} completed.`,
         });
       }
 

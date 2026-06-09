@@ -3,6 +3,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
+
+// NOTE: This function currently returns simulated detections only — the real ML
+// pipeline (substation_detector / transmission_line_detector / change_detector)
+// is not yet wired up. Every response is tagged `source: 'simulated'` so UI
+// consumers can render a clear preview banner. Do not surface these results
+// as real detections.
+const SIMULATED_RESPONSE = {
+  source: 'simulated' as const,
+  preview: true,
+  disclaimer:
+    'Detections are placeholders. The satellite ML pipeline is not yet wired; coordinates are seeded demo points and confidence scores are illustrative.',
+};
+
 interface SatelliteAnalysisRequest {
   action: 'discover_substations' | 'analyze_infrastructure' | 'validate_location' | 'ml_detection' | 'change_detection' | 'lidar_analysis'
   region?: string
@@ -58,7 +71,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, ...result }),
+      JSON.stringify({ success: true, ...SIMULATED_RESPONSE, ...result }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

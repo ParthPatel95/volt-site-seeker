@@ -229,6 +229,15 @@ export function EnhancedSatelliteAnalysisPanel() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 px-4 py-3 text-sm flex items-start gap-2">
+        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+        <div>
+          <strong>Preview — simulated detections.</strong> The satellite ML
+          pipeline (substation_detector, transmission_line_detector,
+          change_detector) is not yet wired. The coordinates and confidence
+          scores shown below are demo placeholders, not real ML output.
+        </div>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
