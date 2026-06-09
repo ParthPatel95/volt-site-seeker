@@ -58,7 +58,7 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('consulting_inquiries').insert({
+      const inquiryPayload = {
         full_name: data.full_name,
         company: data.company,
         role: data.role || null,
@@ -70,8 +70,15 @@ export const AdvisoryInquiryForm = React.forwardRef<HTMLDivElement>((_props, ref
         timeline: data.timeline || null,
         project_description: data.project_description || null,
         source: 'advisory_page',
-      });
+      };
+      const { error } = await supabase.from('consulting_inquiries').insert(inquiryPayload);
       if (error) throw error;
+      // Fire-and-forget notification email. Don't block the user if Resend is
+      // misconfigured; the row is already persisted and an admin can monitor
+      // the inquiries table directly.
+      supabase.functions
+        .invoke('notify-consulting-inquiry', { body: inquiryPayload })
+        .catch((err) => console.warn('notify-consulting-inquiry failed:', err));
       setSuccess(true);
       toast({ title: 'Inquiry received', description: 'Our advisory team will reach out within one business day.' });
     } catch (e: any) {
