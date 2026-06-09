@@ -349,6 +349,35 @@ serve(async (req) => {
 
     console.log('Training data collected successfully');
 
+    // Append-only raw history — never overwrite. One row per ingestion event.
+    try {
+      const { error: rawError } = await supabase
+        .from('aeso_raw_price_observations')
+        .insert({
+          observed_for: currentTime.toISOString(),
+          observed_at: new Date().toISOString(),
+          pool_price: poolPrice ?? null,
+          system_marginal_price: systemMarginalPrice ?? null,
+          forecast_pool_price: aesoData.pricing?.forecast_pool_price ?? null,
+          ail_demand_mw: aesoData.loadData?.current_demand_mw ?? null,
+          source: 'aeso-data-collector',
+          source_endpoint: 'energy-data-integration/aeso',
+          revision_id: aesoData.pricing?.revision_id ?? aesoData.pricing?.revision ?? null,
+          api_response_status: 200,
+          raw_payload: aesoData,
+          metadata: {
+            cron: true,
+            smp_spread: smpSpread ?? null,
+            collector_version: 'v2',
+          },
+        });
+      if (rawError) {
+        console.error('Failed to append raw observation:', rawError);
+      }
+    } catch (e) {
+      console.error('Raw observation insert threw:', e);
+    }
+
     return new Response(JSON.stringify({
       success: true,
       timestamp: currentTime.toISOString(),

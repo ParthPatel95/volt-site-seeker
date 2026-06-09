@@ -57,6 +57,7 @@ async function upsertMissingPriceRows(
   existingBuckets: Set<string>,
 ): Promise<number> {
   const rows: any[] = [];
+  const rawRows: any[] = [];
   const seen = new Set<string>();
   for (const price of prices) {
     const rawTs = price.begin_datetime_utc;
@@ -75,6 +76,16 @@ async function upsertMissingPriceRows(
       month: d.getUTCMonth() + 1,
       is_weekend: [0, 6].includes(d.getUTCDay()),
     });
+    rawRows.push({
+      observed_for: isoTs,
+      pool_price: poolPrice,
+      source: 'aeso-comprehensive-backfill',
+      source_endpoint: 'poolPrice',
+      revision_id: price.revision_id ?? price.revision ?? null,
+      api_response_status: 200,
+      raw_payload: price,
+      metadata: { phase: 'prices-backfill' },
+    });
   }
   if (rows.length === 0) return 0;
   let inserted = 0;
@@ -88,6 +99,16 @@ async function upsertMissingPriceRows(
       continue;
     }
     inserted += chunk.length;
+  }
+  // Append-only raw history, mirrors training-data upserts. Never overwrites.
+  for (let i = 0; i < rawRows.length; i += 500) {
+    const chunk = rawRows.slice(i, i + 500);
+    const { error } = await supabase
+      .from('aeso_raw_price_observations')
+      .insert(chunk);
+    if (error) {
+      console.error('raw observations insert error:', error.message);
+    }
   }
   return inserted;
 }

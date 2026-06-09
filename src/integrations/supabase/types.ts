@@ -1631,6 +1631,60 @@ export type Database = {
         }
         Relationships: []
       }
+      aeso_raw_price_observations: {
+        Row: {
+          ail_demand_mw: number | null
+          api_response_status: number | null
+          created_at: string
+          forecast_pool_price: number | null
+          id: number
+          metadata: Json | null
+          observed_at: string
+          observed_for: string
+          pool_price: number | null
+          raw_payload: Json | null
+          request_id: string
+          revision_id: string | null
+          source: string
+          source_endpoint: string | null
+          system_marginal_price: number | null
+        }
+        Insert: {
+          ail_demand_mw?: number | null
+          api_response_status?: number | null
+          created_at?: string
+          forecast_pool_price?: number | null
+          id?: number
+          metadata?: Json | null
+          observed_at?: string
+          observed_for: string
+          pool_price?: number | null
+          raw_payload?: Json | null
+          request_id?: string
+          revision_id?: string | null
+          source: string
+          source_endpoint?: string | null
+          system_marginal_price?: number | null
+        }
+        Update: {
+          ail_demand_mw?: number | null
+          api_response_status?: number | null
+          created_at?: string
+          forecast_pool_price?: number | null
+          id?: number
+          metadata?: Json | null
+          observed_at?: string
+          observed_for?: string
+          pool_price?: number | null
+          raw_payload?: Json | null
+          request_id?: string
+          revision_id?: string | null
+          source?: string
+          source_endpoint?: string | null
+          system_marginal_price?: number | null
+        }
+        Relationships: []
+      }
       aeso_report_translations: {
         Row: {
           created_at: string | null
