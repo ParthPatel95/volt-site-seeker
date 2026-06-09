@@ -11,9 +11,8 @@ import {
   Gauge, Compass, Target, Factory, Activity, MapPin, Radio, Server, Cloud, Globe2, Wifi,
 } from 'lucide-react';
 import type { SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
+import type { OsmPowerResponse } from '@/types/site-intel';
 import { supabase } from '@/integrations/supabase/client';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RTooltip,
 } from 'recharts';
@@ -41,7 +40,7 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
 
   // Always-on OSM power scan (used by Overview KPIs + Power panel).
   const [radius, setRadius] = useState(8000);
-  const [osm, setOsm] = useState<any | null>(null);
+  const [osm, setOsm] = useState<OsmPowerResponse | null>(null);
   const [osmLoading, setOsmLoading] = useState(true);
   const [osmError, setOsmError] = useState<string | null>(null);
 
@@ -59,32 +58,50 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
     return () => { cancelled = true; };
   }, [lat, lng, radius]);
 
-  const handlePdf = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Alberta Site Intelligence Report', 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Location: ${report.location.label ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`}`, 14, 26);
-    doc.text(`Generated: ${new Date(report.generated_at).toLocaleString()}`, 14, 32);
+  const [pdfPending, setPdfPending] = useState(false);
 
-    if (osm?.substations?.length) {
+  const handlePdf = async () => {
+    setPdfPending(true);
+    try {
+      // Lazy-load jspdf + jspdf-autotable so the PDF libs are not in the main
+      // bundle. The dynamic imports also let powerModelExport.ts share the
+      // same async chunk (Rollup deduplicates) without dragging jspdf into
+      // SiteWorkspace's static graph.
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Alberta Site Intelligence Report', 14, 18);
+      doc.setFontSize(10);
+      doc.text(`Location: ${report.location.label ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`}`, 14, 26);
+      doc.text(`Generated: ${new Date(report.generated_at).toLocaleString()}`, 14, 32);
+
+      if (osm?.substations?.length) {
+        autoTable(doc, {
+          startY: 38,
+          head: [['OSM Substation', 'Operator', 'Max kV', 'Type', 'Distance (km)']],
+          body: osm.substations.slice(0, 15).map((s) => [
+            s.name ?? '—', s.operator ?? '—', s.max_kv ?? '—', s.substation_type ?? '—', s.distance_km,
+          ]),
+          headStyles: { fillColor: [10, 22, 40] }, styles: { fontSize: 8 },
+        });
+      }
       autoTable(doc, {
-        startY: 38,
-        head: [['OSM Substation', 'Operator', 'Max kV', 'Type', 'Distance (km)']],
-        body: osm.substations.slice(0, 15).map((s: any) => [
-          s.name ?? '—', s.operator ?? '—', s.max_kv ?? '—', s.substation_type ?? '—', s.distance_km,
+        head: [['Carrier POP', 'City', 'Distance', 'YYC ms']],
+        body: report.fiber.nearest_pops.map(p => [
+          `${p.carrier} – ${p.facility_name}`, p.city, `${p.distance_km?.toFixed(1)} km`, p.latency_to_yyc_ms ?? '—',
         ]),
         headStyles: { fillColor: [10, 22, 40] }, styles: { fontSize: 8 },
       });
+      doc.save(`site-intel-${Date.now()}.pdf`);
+    } catch (e) {
+      console.error('Site Intel PDF export failed:', e);
+      alert('PDF export failed to load. Please try again or check your network.');
+    } finally {
+      setPdfPending(false);
     }
-    autoTable(doc, {
-      head: [['Carrier POP', 'City', 'Distance', 'YYC ms']],
-      body: report.fiber.nearest_pops.map(p => [
-        `${p.carrier} – ${p.facility_name}`, p.city, `${p.distance_km?.toFixed(1)} km`, p.latency_to_yyc_ms ?? '—',
-      ]),
-      headStyles: { fillColor: [10, 22, 40] }, styles: { fontSize: 8 },
-    });
-    doc.save(`site-intel-${Date.now()}.pdf`);
   };
 
   return (
@@ -138,8 +155,11 @@ export function SiteWorkspace({ report }: { report: SiteReportT }) {
           <Badge variant="outline" className="text-xs">
             Score {report.hyperscaler_score?.total ?? '—'}/100 · {report.hyperscaler_score?.grade ?? '—'}
           </Badge>
-          <Button onClick={handlePdf} size="sm" variant="outline">
-            <Download className="w-3.5 h-3.5 mr-1.5" /> Export PDF
+          <Button onClick={handlePdf} size="sm" variant="outline" disabled={pdfPending}>
+            {pdfPending
+              ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              : <Download className="w-3.5 h-3.5 mr-1.5" />}
+            Export PDF
           </Button>
         </header>
 
@@ -240,7 +260,7 @@ function bearingLabel(deg?: number | null) {
 // KPI strip
 // ────────────────────────────────────────────────────────────────────────────
 
-function KpiStrip({ report, osm }: { report: SiteReportT; osm: any | null }) {
+function KpiStrip({ report, osm }: { report: SiteReportT; osm: OsmPowerResponse | null }) {
   const fiberKm = report.fiber.nearest_pops[0]?.distance_km;
   const waterKm = report.gas_and_water.nearest_water_sources[0]?.distance_km;
   const maxKv = osm?.summary?.max_voltage_kv;
@@ -263,7 +283,7 @@ function KpiStrip({ report, osm }: { report: SiteReportT; osm: any | null }) {
 // Overview
 // ────────────────────────────────────────────────────────────────────────────
 
-function OverviewPanel({ report, osm, onJump }: { report: SiteReportT; osm: any | null; onJump: (p: PanelKey) => void }) {
+function OverviewPanel({ report, osm, onJump }: { report: SiteReportT; osm: OsmPowerResponse | null; onJump: (p: PanelKey) => void }) {
   const breakdown = Object.entries(report.hyperscaler_score?.breakdown ?? {});
   const tx = osm?.summary?.nearest_transmission_substation;
   return (
@@ -312,7 +332,7 @@ function OverviewPanel({ report, osm, onJump }: { report: SiteReportT; osm: any 
 // ────────────────────────────────────────────────────────────────────────────
 
 function PowerPanel({ osm, loading, error, radius, onRadius, lat, lng }: {
-  osm: any | null; loading: boolean; error: string | null;
+  osm: OsmPowerResponse | null; loading: boolean; error: string | null;
   radius: number; onRadius: (r: number) => void; lat: number; lng: number;
 }) {
   if (loading) {
@@ -323,9 +343,9 @@ function PowerPanel({ osm, loading, error, radius, onRadius, lat, lng }: {
   }
   if (!osm) return null;
 
-  const subs: any[] = osm.substations ?? [];
-  const gen: any[] = osm.generation ?? [];
-  const lines: any[] = osm.power_lines ?? [];
+  const subs = osm.substations ?? [];
+  const gen = osm.generation ?? [];
+  const lines = osm.power_lines ?? [];
 
   return (
     <>
@@ -370,7 +390,7 @@ function PowerPanel({ osm, loading, error, radius, onRadius, lat, lng }: {
           <div className="text-[10px] text-muted-foreground mt-1">Stacked: substations + line segments. Closest example per class shown below.</div>
           <MiniTable
             headers={['Class', 'Subs', 'Lines', 'Nearest substation', 'Nearest line']}
-            rows={osm.voltage_profile.map((v: any) => [
+            rows={osm.voltage_profile.map((v) => [
               v.bucket,
               v.substations,
               v.lines,
@@ -390,7 +410,7 @@ function PowerPanel({ osm, loading, error, radius, onRadius, lat, lng }: {
           <p className="text-xs text-muted-foreground">No transmission-class substations tagged in OSM within current radius.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {osm.interconnect_candidates.map((c: any, i: number) => (
+            {osm.interconnect_candidates.map((c, i) => (
               <div key={c.osm_id} className="border border-border rounded p-3 bg-secondary/20">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div>
@@ -971,7 +991,7 @@ function ImageryPanel({ report }: { report: SiteReportT }) {
 // Methodology
 // ────────────────────────────────────────────────────────────────────────────
 
-function MethodologyPanel({ report, osm }: { report: SiteReportT; osm: any | null }) {
+function MethodologyPanel({ report, osm }: { report: SiteReportT; osm: OsmPowerResponse | null }) {
   return (
     <Card className="p-4">
       <p className="text-sm font-semibold mb-2">Methodology & data provenance</p>
