@@ -13333,6 +13333,16 @@ export type Database = {
         }[]
       }
       clean_expired_verification_tokens: { Args: never; Returns: undefined }
+      count_aeso_raw_observations: {
+        Args: {
+          p_endpoint?: string
+          p_hour_from?: string
+          p_hour_to?: string
+          p_revision_id?: string
+          p_source?: string
+        }
+        Returns: number
+      }
       generate_time_series_cv_folds: {
         Args: { num_folds?: number; validation_window_hours?: number }
         Returns: {
@@ -13341,6 +13351,35 @@ export type Database = {
           train_start: string
           validation_end: string
           validation_start: string
+        }[]
+      }
+      get_aeso_raw_observations_cursor: {
+        Args: {
+          p_cursor_id?: number
+          p_cursor_observed_for?: string
+          p_endpoint?: string
+          p_hour_from?: string
+          p_hour_to?: string
+          p_page_size?: number
+          p_revision_id?: string
+          p_source?: string
+        }
+        Returns: {
+          ail_demand_mw: number
+          api_response_status: number
+          created_at: string
+          forecast_pool_price: number
+          id: number
+          metadata: Json
+          observed_at: string
+          observed_for: string
+          pool_price: number
+          raw_payload: Json
+          request_id: string
+          revision_id: string
+          source: string
+          source_endpoint: string
+          system_marginal_price: number
         }[]
       }
       get_all_users_with_details: {
