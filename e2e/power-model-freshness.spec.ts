@@ -66,14 +66,23 @@ test.describe("Power Model freshness & PWA hygiene", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // /app/* is behind AuthWrapper — when there is no Supabase session,
-    // the SPA renders the <Auth /> sign-in form in place of the children
-    // without changing the URL. In stock CI we have no session, so verify
-    // the route resolved (analyzer text OR sign-in form visible) and skip
-    // the analyzer-specific assertion in the unauth case. The other three
-    // tests in this file cover the freshness invariants we care about
-    // regardless of auth state.
-    const authForm = page.getByRole("heading", { name: /sign in|log in/i }).first();
-    if (await authForm.isVisible().catch(() => false)) {
+    // the SPA renders <Auth /> in place of the route children without
+    // changing the URL. In stock CI we have no session, so race the two
+    // possible outcomes: analyzer text (authed) or the Auth screen's
+    // distinctive "Access VoltScout Platform" CardTitle (unauthed). If
+    // Auth wins, skip rather than fail — the other three tests in this
+    // file already cover the freshness invariants we need to protect.
+    const authMarker = page.getByText(/Access VoltScout Platform/i).first();
+    const analyzerMarker = page.getByText(
+      /power model|peak avoidance|curtailment/i,
+    ).first();
+
+    await Promise.race([
+      authMarker.waitFor({ state: "visible", timeout: 15_000 }).catch(() => null),
+      analyzerMarker.waitFor({ state: "visible", timeout: 15_000 }).catch(() => null),
+    ]);
+
+    if (await authMarker.isVisible().catch(() => false)) {
       test.skip(true, "No Supabase session in CI — analyzer is behind AuthWrapper");
       return;
     }
@@ -84,10 +93,6 @@ test.describe("Power Model freshness & PWA hygiene", () => {
       await tab.click().catch(() => {});
     }
 
-    // Look for analyzer hallmark text. Be permissive across copy variants.
-    const marker = page.getByText(
-      /power model|peak avoidance|curtailment/i,
-    ).first();
-    await expect(marker).toBeVisible({ timeout: 15_000 });
+    await expect(analyzerMarker).toBeVisible({ timeout: 15_000 });
   });
 });
