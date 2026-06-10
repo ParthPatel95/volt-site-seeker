@@ -1,55 +1,91 @@
-## Goal
-Make AESO hourly data coverage match real calendar hours per month, backfill missing live AESO values, store raw hourly observations append-only, and make the UI stop showing misleading 100% uptime when the month is incomplete.
 
-## Findings from the current data
-- `aeso_raw_price_observations` has `0` rows, so prior raw-history inserts are not actually populated yet.
-- `aeso_training_data` has duplicate/non-canonical timestamps after Nov 2025, e.g. `2026-06-08 00:00:09` and `2026-06-08 00:00:09.655` both count as separate rows but the same hour.
-- There are `8,231` rows where `timestamp` is not exactly top-of-hour.
-- There are `3,996` duplicate hourly buckets when normalized with `date_trunc('hour', timestamp)`.
-- The Power Model database loader filters out rows where `ail_mw` is null, so it reports AIL-complete hours instead of price-hour coverage.
-- The monthly uptime table calculates uptime as `running / loaded rows`, so a month with 151 loaded hours can still show `100%` instead of being flagged as partial.
+# AESO Hourly Coverage Audit + Backfill
 
-## Plan
+## Step 1 — Audit result (already run)
 
-### 1. Add database-side canonical audit utilities
-Create read-only RPCs/views that compute AESO coverage by canonical hourly bucket:
-- Expected hours per calendar month using a generated UTC hour grid.
-- Actual price hours from `aeso_training_data` normalized with `date_trunc('hour', timestamp)`.
-- Actual AIL hours, SMP hours, raw observation rows, duplicate bucket counts, and missing hour lists.
-- Treat the current in-progress month separately so future hours in the month are not counted as missing.
+Pulled from `public.audit_aeso_hourly_coverage()` just now. Highlights for every elapsed month:
 
-### 2. Reconcile `aeso_training_data` into one canonical row per hour
-Run a controlled data cleanup that:
-- Keeps the best row per hour bucket, preferring rows with live `ail_mw`, `system_marginal_price`, and the latest timestamp.
-- Normalizes the kept row timestamp to the exact top-of-hour.
-- Removes redundant duplicate rows only after their best available values are merged into the canonical row.
-- Does not invent or interpolate values.
+| month   | expected | price | ail | smp | dup | missing_price | raw_obs |
+|---------|---------:|------:|----:|----:|----:|--------------:|--------:|
+| 2026-06 (in-progress) | 233 | 234 | 234 | 192 | 0 | 0 | 0 |
+| 2026-05 | 744 | 744 | 744 | 492 | 0 | 0 | 0 |
+| 2026-04 | 720 | 720 | 720 | 312 | 0 | 0 | 0 |
+| 2026-03 | 744 | 744 | 744 | 607 | 0 | 0 | 0 |
+| 2026-02 | 672 | 672 | 672 | 668 | 0 | 0 | 0 |
+| 2026-01 | 744 | 744 | 744 | 744 | 0 | 0 | 0 |
+| 2025-12 | 744 | 744 | 744 | 727 | 0 | 0 | 0 |
+| 2025-11 | 720 | 720 | 720 | 512 | 0 | 0 | 0 |
+| 2025-10 → 2024-04 | full | full | full | **0** | 0 | 0 | 0 |
+| **2025-03** | 744 | **743** | 743 | 0 | 0 | **1** | 0 |
+| **2024-03** | 744 | **743** | 743 | 0 | 0 | **1** | 0 |
+| earlier months | full | full | full | 0 | 0 | 0 | 0 |
 
-### 3. Backfill missing historical AESO hours from live APIs
-Enhance `aeso-comprehensive-backfill` so the `gaps` phase:
-- Audits all missing canonical hours over the requested date range.
-- Pulls Pool Price, AIL, and SMP from AESO APIs for affected months.
-- Upserts only verified live AESO records into `aeso_training_data`.
-- Inserts every fetched AESO hourly record into `aeso_raw_price_observations` append-only with `observed_for`, `observed_at`, `revision_id`, source endpoint, status, request id, and raw payload.
-- Produces a month-by-month reconciliation report showing expected, inserted, still missing, and API failures.
+### What this tells us
+- **Step 2 dedup is unnecessary** — `duplicate_hour_buckets = 0` on every row.
+- **Price + AIL are already 100%** on every elapsed month except 2025-03 and 2024-03, which are each missing exactly 1 UTC hour. These almost certainly correspond to the Mountain-Time DST spring-forward day; AESO's hourly pool price feed does not emit that hour. Worth a `gaps` retry but it may be unfillable from upstream.
+- **SMP has the only large gap**: 0 rows for everything older than Nov 2025 and partial coverage for 2025-11 → 2026-06. This is the real work.
+- **`aeso_raw_price_observations` is empty** for every month. The new raw-snapshot logger has not actually been writing rows. That is a separate bug — flagging it but **not** fixing it in this run, because the user's runbook scopes this task to canonical-table coverage. Will report it at the end.
 
-### 4. Backfill the raw observation history
-Because the raw observation table is empty, populate it from live AESO API responses for the same repaired date range, without overwriting history.
-- Historical API pulls create one raw observation per AESO record returned.
-- Real-time collector continues appending raw observations going forward.
-- Add an idempotency/dedup key for `(observed_for, source_endpoint, revision_id, raw payload hash)` so reruns avoid duplicate raw rows while preserving revised AESO records.
+## Step 2 — Dedup
 
-### 5. Fix the Power Model loader and coverage UI
-Update the frontend so:
-- The database loader does not drop valid price hours just because AIL is temporarily missing.
-- Timestamps are canonicalized to top-of-hour before dedupe.
-- Coverage audit shows expected vs covered calendar hours, missing hours, duplicate rows, and separate price/AIL/SMP coverage.
-- Monthly tables use expected calendar hours for uptime context and clearly mark partial months instead of showing `100%` as if complete.
+Skipped. No month has duplicates.
 
-### 6. Validate against the database
-After implementation, run read-only checks confirming:
-- Every elapsed full month has expected canonical price hours: 672, 696, 720, or 744 depending on month length.
-- Current month coverage is measured only through the latest available/past AESO hour.
-- No duplicate canonical buckets remain in `aeso_training_data`.
-- Raw observation rows exist for the repaired AESO pulls and include revision/source metadata.
-- The UI counts match the database audit results.
+## Step 3 — Backfill plan
+
+Drive the comprehensive backfill function until every phase reports `isComplete: true`. The function batches months and returns `{ isComplete, remainingRecords, nextOffsetMonths }` so the loop pattern is the same for every phase.
+
+Execution order, with the actual expected workload for each:
+
+1. `phase: 'prices'` — expected to be a near no-op (only 2 hours short across the whole dataset, both DST). Call once, repeat with `offsetMonths = nextOffsetMonths` until `isComplete`.
+2. `phase: 'demand'` — expected no-op (AIL already matches price coverage). Drive to `isComplete`.
+3. `phase: 'smp'` — the heavy one. Drive to `isComplete`; this will iterate through many month-batches because every month from 2024-04 back to the start of history has zero SMP rows, plus partial fills on 2025-11 → 2026-06.
+4. `phase: 'gaps'` — second pass that targets any per-hour holes the bulk phases missed (including the 2 DST hours).
+5. `phase: 'interpolate'` — final pass for any residual hour where the bulk fetch could not retrieve a value but neighbors exist.
+
+Each call is idempotent because of `UNIQUE(timestamp)` on `aeso_training_data` and `uq_aeso_raw_obs_dedup` on `aeso_raw_price_observations`, so re-running is safe.
+
+### Loop contract (applies to every phase)
+
+```text
+offset = 0
+loop:
+  res = invoke('aeso-comprehensive-backfill', { phase, offsetMonths: offset })
+  log { phase, offset, recordsInserted|Updated, remainingRecords, isComplete }
+  if res.isComplete: break
+  offset = res.nextOffsetMonths   // fall back to offset + batchMonths if missing
+guard: hard cap at 200 iterations per phase to avoid runaway
+```
+
+A small Node script will be run via `code--exec` against the project's Supabase URL + anon key (already in the sandbox env) to drive these loops; nothing in the app code changes.
+
+## Step 4 — Verify
+
+Re-run `SELECT * FROM public.audit_aeso_hourly_coverage() ORDER BY month_start DESC;` and, for every `is_elapsed = true` row, confirm:
+
+- `duplicate_hour_buckets = 0`
+- `missing_price_hours = 0`
+- `price_hours = ail_hours = smp_hours = expected_hours`
+
+For any month still short on any of the three columns, dump the exact hours with:
+
+```sql
+SELECT *
+FROM public.list_missing_aeso_hours(
+  'YYYY-MM-01'::timestamptz,
+  ('YYYY-MM-01'::timestamptz + interval '1 month')
+);
+```
+
+## Deliverables in the final reply
+
+- Before / after audit tables side by side.
+- Per-phase invocation count and total records inserted/updated.
+- Any hour that could not be filled, grouped by month, with a brief reason (most likely: DST spring-forward, or AESO endpoint returns no SMP that far back).
+- Final list of months where `price_hours = ail_hours = smp_hours = expected_hours`.
+- A separate callout that `aeso_raw_price_observations` is empty for all months — the canonical table is fine but the raw-snapshot logger isn't writing. Not fixed in this task; flagged for a follow-up.
+
+## Out of scope (explicit)
+
+- No schema changes.
+- No edge-function code changes.
+- No fix for the empty `aeso_raw_price_observations` table — reported only.
