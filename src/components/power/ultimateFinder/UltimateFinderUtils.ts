@@ -96,7 +96,11 @@ export const consolidateAllSources = async (regulatory: any, satellite: any, goo
     });
   }
 
-  if (satellite?.detections) {
+  // satellite-analysis self-tags `source: 'simulated'` when the ML pipeline
+  // is not wired up yet; do not merge those placeholder detections into the
+  // results list (they would be persisted to the substations table by
+  // storeNewSubstations()).
+  if (satellite?.detections && satellite?.source !== 'simulated') {
     satellite.detections.forEach((detection: any, idx: number) => {
       allResults.push({
         id: `satellite_${idx}`,

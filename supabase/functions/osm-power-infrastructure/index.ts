@@ -113,6 +113,18 @@ function classifyVoltage(kv: number): string {
   return '<69 kV';
 }
 
+// Warm-instance Overpass cache. Same lat/lng/radius hits within
+// CACHE_TTL_MS reuse the previous response body. OSM tags change on
+// hours-to-days timescales so a 10-minute window trades a small amount
+// of staleness for ~1 fewer external API call per re-open of the panel.
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 256;
+const overpassCache = new Map<string, { at: number; body: string }>();
+
+function cacheKey(lat: number, lng: number, r: number): string {
+  return `${lat.toFixed(4)}:${lng.toFixed(4)}:${r}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -121,6 +133,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'lat/lng required' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const r = Math.max(500, Math.min(25000, Math.round(radius_m)));
+
+    const key = cacheKey(lat, lng, r);
+    const cached = overpassCache.get(key);
+    if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+      return new Response(cached.body, {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-overpass-cache': 'hit' },
+      });
+    }
 
     const q = `
       [out:json][timeout:30];
@@ -304,7 +324,7 @@ Deno.serve(async (req) => {
 
     const total_generation_mw = generation.reduce((s, g) => s + (g.output_mw ?? 0), 0);
 
-    return new Response(JSON.stringify({
+    const body = JSON.stringify({
       lat, lng, radius_m: r,
       queried_at: new Date().toISOString(),
       source: 'OpenStreetMap (Overpass API)',
@@ -343,7 +363,18 @@ Deno.serve(async (req) => {
         generation: decay(generation),
       },
       interconnect_candidates,
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    });
+
+    // Store in cache. Drop the oldest entry when over capacity (cheap LRU).
+    if (overpassCache.size >= CACHE_MAX_ENTRIES) {
+      const oldest = overpassCache.keys().next().value;
+      if (oldest) overpassCache.delete(oldest);
+    }
+    overpassCache.set(key, { at: Date.now(), body });
+
+    return new Response(body, {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-overpass-cache': 'miss' },
+    });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as any)?.message ?? e) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }

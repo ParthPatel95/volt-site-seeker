@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, Search } from "lucide-react";
+import { Loader2, RefreshCw, Search, ShieldAlert } from "lucide-react";
 
 interface RawObservation {
   id: number;
@@ -61,6 +62,9 @@ function parseDateInput(v: string): string | null {
 }
 
 export default function AesoRawObservations() {
+  const { user } = useAuth();
+  const isAdmin = user?.email === "admin@voltscout.com";
+
   const [rows, setRows] = useState<RawObservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,11 +171,33 @@ export default function AesoRawObservations() {
   };
 
   useEffect(() => {
+    if (!isAdmin) return;
     load(null, "initial");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAdmin]);
 
   const canGoBack = cursorHistory.length > 0;
+
+  if (!isAdmin) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5" />
+              Admin access required
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              AESO raw observations are an internal admin utility. Only the
+              platform administrator can browse this data.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

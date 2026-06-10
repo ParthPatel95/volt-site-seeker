@@ -156,9 +156,20 @@ export async function exportPowerModelPDF(
     return;
   }
 
-  const { jsPDF } = await import('jspdf');
-  const autoTableMod = await import('jspdf-autotable');
-  const autoTable = (autoTableMod as any).default ?? (autoTableMod as any);
+  let jsPDF: typeof import('jspdf').jsPDF;
+  let autoTable: typeof import('jspdf-autotable').default;
+  try {
+    const jspdfMod = await import('jspdf');
+    const autoTableMod = await import('jspdf-autotable');
+    jsPDF = jspdfMod.jsPDF;
+    // jspdf-autotable's published shape varies between CJS/ESM builds; tolerate
+    // either (default export vs module namespace).
+    autoTable = ((autoTableMod as { default?: typeof autoTableMod.default }).default
+      ?? autoTableMod) as typeof autoTableMod.default;
+  } catch (e) {
+    console.error('[PowerModelPDF] Failed to load PDF libraries:', e);
+    throw new Error('PDF export libraries failed to load. Please refresh and try again.');
+  }
 
   const isFixed = params.fixedPriceCAD > 0;
   const fmtCAD = (n: number) =>

@@ -197,7 +197,11 @@ export function useUnifiedScan() {
             }
           });
 
-          if (!error && data?.discoveries) {
+          // satellite-analysis currently returns simulated detections
+          // (data.source === 'simulated'); injecting those into the unified
+          // opportunities list would surface placeholder coordinates as real
+          // discoveries. Skip until the real ML pipeline is wired.
+          if (!error && data?.discoveries && data?.source !== 'simulated') {
             // Add power assets from satellite discovery
             const powerAssets = data.discoveries.slice(0, 5).map((discovery: any) => ({
               id: discovery.id || crypto.randomUUID(),

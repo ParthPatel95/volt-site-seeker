@@ -1,11 +1,11 @@
-import React, { useRef, useEffect, lazy, Suspense } from 'react';
+import React, { useRef, useEffect, lazy } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { AdvisoryHero } from '@/components/advisory/AdvisoryHero';
 import { AdvisoryInquiryForm } from '@/components/advisory/AdvisoryInquiryForm';
 import { ScrollReveal } from '@/components/landing/ScrollAnimations';
-import { SectionLoader } from '@/components/LazyErrorBoundary';
+import { LazySection } from '@/components/LazyErrorBoundary';
 
 const AdvisoryAudience = lazy(() => import('@/components/advisory/AdvisoryAudience').then(m => ({ default: m.AdvisoryAudience })));
 const AdvisoryMarketContext = lazy(() => import('@/components/advisory/AdvisoryMarketContext').then(m => ({ default: m.AdvisoryMarketContext })));
@@ -22,15 +22,6 @@ const AdvisoryCaseStudies = lazy(() =>
 );
 const AdvisoryFAQ = lazy(() =>
   import('@/components/advisory/AdvisoryFAQ').then(m => ({ default: m.AdvisoryFAQ }))
-);
-
-const MapPlaceholder: React.FC = () => (
-  <div className="w-full h-[420px] sm:h-[500px] md:h-[600px] rounded-xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))] flex items-center justify-center">
-    <div className="text-center text-white/60">
-      <div className="w-12 h-12 rounded-full border-2 border-watt-bitcoin/40 border-t-watt-bitcoin animate-spin mx-auto mb-3" />
-      <div className="text-sm">Loading pipeline map…</div>
-    </div>
-  </div>
 );
 
 const Advisory: React.FC = () => {
@@ -79,19 +70,19 @@ const Advisory: React.FC = () => {
         <AdvisoryHero onContact={() => scrollTo(formRef)} onPipeline={() => scrollTo(pipelineRef)} />
 
         <SectionDivider color="cyan" />
-        <Suspense fallback={<SectionLoader />}><AdvisoryAudience /></Suspense>
+        <LazySection componentName="audience overview"><AdvisoryAudience /></LazySection>
 
         <SectionDivider color="purple" />
-        <Suspense fallback={<SectionLoader />}><AdvisoryMarketContext /></Suspense>
+        <LazySection componentName="market context"><AdvisoryMarketContext /></LazySection>
 
         <SectionDivider color="yellow" />
-        <Suspense fallback={<SectionLoader />}><AdvisoryServices /></Suspense>
+        <LazySection componentName="services"><AdvisoryServices /></LazySection>
 
         <SectionDivider color="cyan" />
-        <Suspense fallback={<SectionLoader />}><AdvisoryProcess /></Suspense>
+        <LazySection componentName="process"><AdvisoryProcess /></LazySection>
 
         <SectionDivider color="purple" />
-        <Suspense fallback={<SectionLoader />}><AdvisoryDifferentiators /></Suspense>
+        <LazySection componentName="differentiators"><AdvisoryDifferentiators /></LazySection>
 
         <SectionDivider color="yellow" />
 
@@ -106,25 +97,21 @@ const Advisory: React.FC = () => {
               </div>
             </ScrollReveal>
             <ScrollReveal delay={0.1}>
-              <Suspense fallback={<MapPlaceholder />}>
+              <LazySection componentName="pipeline map">
                 <AdvisoryPipelineMap />
-              </Suspense>
+              </LazySection>
             </ScrollReveal>
             <div className="mt-8">
-              <Suspense fallback={<SectionLoader />}><PipelineFlowStrip /></Suspense>
+              <LazySection componentName="pipeline strip"><PipelineFlowStrip /></LazySection>
             </div>
           </div>
         </section>
 
         <SectionDivider color="cyan" />
-        <Suspense fallback={<div className="py-24" />}>
-          <AdvisoryCaseStudies />
-        </Suspense>
+        <LazySection componentName="case studies"><AdvisoryCaseStudies /></LazySection>
 
         <SectionDivider color="purple" />
-        <Suspense fallback={<div className="py-24" />}>
-          <AdvisoryFAQ />
-        </Suspense>
+        <LazySection componentName="FAQ"><AdvisoryFAQ /></LazySection>
 
         <AdvisoryInquiryForm ref={formRef} />
       </main>

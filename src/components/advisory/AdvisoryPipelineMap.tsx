@@ -4,14 +4,14 @@ import { MapPin } from 'lucide-react';
 import { PIPELINE_PROJECTS, HQ, ENERGY_TYPE_COLORS, type PipelineProject } from '@/data/advisory-pipeline';
 import { WORLD_LAND_PATH } from './world-land-path';
 import { PipelineProjectCard } from './PipelineProjectCard';
+import {
+  ARC_VIEWBOX_WIDTH as VB_W,
+  ARC_VIEWBOX_HEIGHT as VB_H,
+  projectLngLat,
+  computeArc,
+} from './arcProjection';
 
-const VB_W = 1000;
-const VB_H = 500;
-
-const project = (lng: number, lat: number) => ({
-  x: ((lng + 180) / 360) * VB_W,
-  y: ((90 - lat) / 180) * VB_H,
-});
+const project = (lng: number, lat: number) => projectLngLat(lng, lat);
 
 interface HoverState {
   id: string;
@@ -33,22 +33,10 @@ export const AdvisoryPipelineMap: React.FC = () => {
   );
 
   // Quadratic Bézier from HQ to each site, lifted perpendicular to the chord.
-  const arcs = useMemo(() => sites.map(({ p, x, y }) => {
-    const mx = (hq.x + x) / 2;
-    const my = (hq.y + y) / 2;
-    const dx = x - hq.x;
-    const dy = y - hq.y;
-    const len = Math.hypot(dx, dy) || 1;
-    // perpendicular, lift toward top of map
-    const lift = Math.min(160, len * 0.28);
-    const nx = -dy / len;
-    const ny = dx / len;
-    // Always lift "up" (negative y) for visual consistency
-    const sign = ny < 0 ? 1 : -1;
-    const cx = mx + nx * lift * sign;
-    const cy = my + ny * lift * sign;
-    return { id: p.id, d: `M${hq.x} ${hq.y} Q${cx} ${cy} ${x} ${y}` };
-  }), [hq, sites]);
+  const arcs = useMemo(
+    () => sites.map(({ p, x, y }) => ({ id: p.id, d: computeArc(hq, { x, y }).d })),
+    [hq, sites],
+  );
 
   // External select event (kept compatible with PipelineFlowStrip if it dispatches)
   useEffect(() => {

@@ -40,3 +40,33 @@ jobs:
 
       - name: Production build smoke
         run: npm run build
+
+  e2e:
+    name: Playwright e2e (advisory only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Non-blocking while we stabilise the e2e setup. Flip
+    # `continue-on-error` off once the suite is reliably green in CI.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # The Playwright config boots `npm run preview`, which serves the
+      # production build out of dist/. Build once up front so the webServer
+      # can start immediately.
+      - name: Build for preview
+        run: npm run build
+
+      - name: Run e2e suite
+        run: npm run test:e2e
