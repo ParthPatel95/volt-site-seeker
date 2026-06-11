@@ -5796,6 +5796,81 @@ export type Database = {
           },
         ]
       }
+      gem_listings: {
+        Row: {
+          acres: number | null
+          building_sqft: number | null
+          city: string | null
+          created_at: string
+          description: string | null
+          estimate_basis: string | null
+          estimated_mw: number | null
+          facility_type: string | null
+          grid_voltage_kv: number | null
+          id: string
+          image_url: string | null
+          lat: number | null
+          listing_url: string
+          lng: number | null
+          price_usd: number | null
+          scraped_at: string
+          source: string
+          state: string | null
+          status: string | null
+          status_as_of: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          acres?: number | null
+          building_sqft?: number | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          estimate_basis?: string | null
+          estimated_mw?: number | null
+          facility_type?: string | null
+          grid_voltage_kv?: number | null
+          id?: string
+          image_url?: string | null
+          lat?: number | null
+          listing_url: string
+          lng?: number | null
+          price_usd?: number | null
+          scraped_at?: string
+          source: string
+          state?: string | null
+          status?: string | null
+          status_as_of?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acres?: number | null
+          building_sqft?: number | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          estimate_basis?: string | null
+          estimated_mw?: number | null
+          facility_type?: string | null
+          grid_voltage_kv?: number | null
+          id?: string
+          image_url?: string | null
+          lat?: number | null
+          listing_url?: string
+          lng?: number | null
+          price_usd?: number | null
+          scraped_at?: string
+          source?: string
+          state?: string | null
+          status?: string | null
+          status_as_of?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       generated_reports: {
         Row: {
           completed_at: string | null
@@ -5972,6 +6047,90 @@ export type Database = {
           target_hashrate_th?: number | null
           updated_at?: string
           worker_name?: string | null
+        }
+        Relationships: []
+      }
+      industrial_facilities: {
+        Row: {
+          capacity_unit: string | null
+          capacity_value: number | null
+          confidence: string
+          coordinates_precision: string
+          created_at: string
+          estimate_basis: string | null
+          estimated_mw: number | null
+          facility_type: string
+          grid_voltage_kv: number | null
+          id: string
+          last_verified: string | null
+          lat: number
+          lng: number
+          municipality: string | null
+          naics_code: string | null
+          name: string
+          notes: string | null
+          operator: string | null
+          source_publisher: string | null
+          source_url: string | null
+          state: string
+          status: string
+          status_as_of: string | null
+          status_source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          capacity_unit?: string | null
+          capacity_value?: number | null
+          confidence?: string
+          coordinates_precision?: string
+          created_at?: string
+          estimate_basis?: string | null
+          estimated_mw?: number | null
+          facility_type: string
+          grid_voltage_kv?: number | null
+          id?: string
+          last_verified?: string | null
+          lat: number
+          lng: number
+          municipality?: string | null
+          naics_code?: string | null
+          name: string
+          notes?: string | null
+          operator?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          state?: string
+          status?: string
+          status_as_of?: string | null
+          status_source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capacity_unit?: string | null
+          capacity_value?: number | null
+          confidence?: string
+          coordinates_precision?: string
+          created_at?: string
+          estimate_basis?: string | null
+          estimated_mw?: number | null
+          facility_type?: string
+          grid_voltage_kv?: number | null
+          id?: string
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          municipality?: string | null
+          naics_code?: string | null
+          name?: string
+          notes?: string | null
+          operator?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          state?: string
+          status?: string
+          status_as_of?: string | null
+          status_source_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
