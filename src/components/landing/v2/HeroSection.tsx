@@ -6,7 +6,10 @@ import { ArrowRight, ChevronDown, Zap } from 'lucide-react';
 import { SplitWords, CountUp, Magnetic, Reveal } from './motion';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
-const HeroGlobe3D = lazy(() => import('../HeroGlobe3D'));
+// Hero now showcases an animated 3D datacenter hall (rack rows, fans,
+// blade-bay LEDs, overhead trays, data packets) — the thing we actually
+// build — instead of a globe.
+const DatacenterScene = lazy(() => import('./DatacenterScene'));
 
 function useCanRender3D(): boolean {
   const [ok, setOk] = useState(false);
@@ -15,7 +18,7 @@ function useCanRender3D(): boolean {
     try {
       const canvas = document.createElement('canvas');
       if (canvas.getContext('webgl2') ?? canvas.getContext('webgl')) setOk(true);
-    } catch { /* photo-less gradient fallback below */ }
+    } catch { /* gradient-only fallback */ }
   }, []);
   return ok;
 }
@@ -33,28 +36,24 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-[100svh] flex flex-col overflow-hidden">
-      {/* Globe layer */}
+      {/* 3D datacenter layer */}
       <div className="absolute inset-0">
         {canRender3D && (
           <Suspense fallback={null}>
-            <div className="absolute inset-0 lg:left-[28%]">
-              {/* halo behind the globe */}
-              <div
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] rounded-full blur-3xl opacity-30 pointer-events-none"
-                style={{ background: 'radial-gradient(circle, hsl(var(--watt-trust) / 0.6), transparent 70%)' }}
-              />
-              <HeroGlobe3D />
+            <div className="absolute inset-0 lg:left-[30%]">
+              <DatacenterScene />
             </div>
           </Suspense>
         )}
       </div>
 
-      {/* Legibility gradient */}
+      {/* Legibility gradient — heavier white wash on the text side so the copy
+          stays crisp against the busy datacenter scene without darkening it */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'linear-gradient(to right, hsl(var(--background) / 0.97) 0%, hsl(var(--background) / 0.88) 32%, hsl(var(--background) / 0.45) 56%, transparent 78%)',
+            'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.94) 30%, hsl(var(--background) / 0.55) 55%, hsl(var(--background) / 0.15) 78%, transparent 100%)',
         }}
       />
 
@@ -78,7 +77,7 @@ export function HeroSection() {
             <Reveal delay={0.55}>
               <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-xl mb-10">
                 We acquire stranded energy assets and develop them into AI, HPC, and
-                Bitcoin-mining infrastructure — {TOTAL_MW.toLocaleString()}&nbsp;MW in motion
+                Bitcoin-mining datacenters — {TOTAL_MW.toLocaleString()}&nbsp;MW in motion
                 across {COUNTRIES} countries.
               </p>
             </Reveal>

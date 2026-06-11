@@ -32,7 +32,11 @@ test.describe("Power Model freshness & PWA hygiene", () => {
     page.on("request", (req) => requestedUrls.push(req.url()));
 
     await page.goto("/");
-    await page.waitForLoadState("networkidle").catch(() => {});
+    // The hero now embeds a WebGL datacenter scene + Google Fonts + Supabase
+    // preconnects, so networkidle is essentially never reached on the SPA
+    // shell. domcontentloaded is the correct wait state for a test that
+    // inspects index.html and shell-level requests.
+    await page.waitForLoadState("domcontentloaded");
 
     const html = await page.content();
     for (const pattern of FORBIDDEN_HTML_PATTERNS) {
