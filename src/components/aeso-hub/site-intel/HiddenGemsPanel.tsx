@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +9,14 @@ import {
 } from '@/components/ui/select';
 import {
   Gem, Loader2, ChevronDown, ChevronUp, ExternalLink, FileSearch, AlertTriangle,
+  List, Boxes, Radar, Globe2,
 } from 'lucide-react';
-import { useHiddenGems } from '@/hooks/useHiddenGems';
+import { useHiddenGems, useGemListings } from '@/hooks/useHiddenGems';
 import type { ScoredGem } from '@/lib/hidden-gems';
+import { toast } from 'sonner';
+
+// three.js scene is heavy — load it only when the user opens the 3D view.
+const HiddenGems3D = lazy(() => import('./HiddenGems3D'));
 
 const STATUS_OPTIONS = [
   'closed', 'announced_closure', 'for_sale', 'idle', 'curtailed', 'unknown', 'operating',
@@ -39,14 +44,17 @@ interface Props {
 export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
   const [minMw, setMinMw] = useState('');
   const [status, setStatus] = useState<string>('all');
+  const [state, setState] = useState<string>('all');
+  const [view, setView] = useState<'list' | '3d'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const filters = useMemo(() => ({
     minMw: minMw ? Number(minMw) : undefined,
     statuses: status === 'all' ? undefined : [status],
-  }), [minMw, status]);
+    states: state === 'all' ? undefined : [state],
+  }), [minMw, status, state]);
 
-  const { gems, totalFacilities, isLoading, error } = useHiddenGems(filters);
+  const { gems, ctxByState, totalFacilities, isLoading, error } = useHiddenGems(filters);
 
   return (
     <div className="space-y-4">
@@ -58,16 +66,27 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
               Hidden Gems — power-intensive industrial registry
             </CardTitle>
             <span className="text-xs text-muted-foreground">
-              {totalFacilities} facilities tracked · ranked deterministically, no synthetic scores
+              {totalFacilities} facilities tracked (AB + TX) · ranked deterministically, no synthetic scores
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Idle or distressed plants whose existing grid interconnection is the asset — electrolysis
-            chemicals, mechanical pulp, panels, cement, nitrogen. Every score factor cites its evidence;
-            MW estimates use a documented per-industry intensity model, never defaults.
+            chemicals, EAF steel, mechanical pulp, cement, LNG e-drive, fabs. Every score factor cites
+            its evidence; MW estimates use a documented per-industry intensity model, never defaults.
           </p>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3 pt-0">
+          <div className="space-y-1">
+            <Label className="text-xs">Region</Label>
+            <Select value={state} onValueChange={setState}>
+              <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">AB + TX</SelectItem>
+                <SelectItem value="AB">Alberta</SelectItem>
+                <SelectItem value="TX">Texas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1">
             <Label className="text-xs">Min estimated MW</Label>
             <Input
@@ -87,6 +106,16 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
               </SelectContent>
             </Select>
           </div>
+          <div className="ml-auto flex gap-1">
+            <Button size="sm" variant={view === 'list' ? 'default' : 'outline'} className="h-8 text-xs"
+              onClick={() => setView('list')}>
+              <List className="w-3.5 h-3.5 mr-1" /> List
+            </Button>
+            <Button size="sm" variant={view === '3d' ? 'default' : 'outline'} className="h-8 text-xs"
+              onClick={() => setView('3d')}>
+              <Boxes className="w-3.5 h-3.5 mr-1" /> 3D Map
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -104,6 +133,16 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
             <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading registry and grid layers…
           </CardContent>
         </Card>
+      ) : view === '3d' ? (
+        <Suspense fallback={
+          <Card><CardContent className="py-12 flex items-center justify-center text-muted-foreground text-sm">
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading 3D scene…
+          </CardContent></Card>
+        }>
+          {ctxByState && (
+            <HiddenGems3D gems={gems} ctxByState={ctxByState} onAnalyze={onAnalyze} />
+          )}
+        </Suspense>
       ) : (
         <div className="space-y-2">
           {gems.map((g) => (
@@ -125,9 +164,102 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
           )}
         </div>
       )}
+
+      <ListingSignals />
     </div>
   );
 }
+
+// ── Scraped listing signals ──────────────────────────────────────────────────
+
+function ListingSignals() {
+  const { listings, isLoading, scan } = useGemListings();
+
+  const runScan = async (region: 'alberta' | 'texas' | 'both') => {
+    try {
+      const res = await scan.mutateAsync(region);
+      toast.success(
+        `Scan complete: ${res.listings_stored} signal listings stored from ${res.results_scanned} results`,
+        res.errors?.length ? { description: `${res.errors.length} query error(s) — see console` } : undefined,
+      );
+      if (res.errors?.length) console.warn('gem-listing-scanner errors:', res.errors);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Listing scan failed');
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Radar className="w-4 h-4 text-primary" />
+            For-sale signals — scraped listings
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="h-7 text-xs"
+              disabled={scan.isPending} onClick={() => runScan('both')}>
+              {scan.isPending
+                ? <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                : <Globe2 className="w-3 h-3 mr-1" />}
+              Scan AB + TX now
+            </Button>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Live Firecrawl search of commercial listings for gem keywords (substation, MW/MVA quoted,
+          former plant, transmission, rail). Only listings with at least one matched signal are kept,
+          each with its source URL and the query that found it. If the scraper key isn't configured the
+          scan fails loudly — placeholder listings are never shown.
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {isLoading ? (
+          <div className="py-6 flex items-center justify-center text-muted-foreground text-sm">
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading stored listings…
+          </div>
+        ) : listings.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            No scraped listings yet — run a scan to search current listings.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {listings.map((l) => (
+              <div key={l.id} className="flex items-start gap-3 text-xs border-b border-border last:border-0 pb-2 last:pb-0">
+                <Badge variant="outline" className="font-mono tabular-nums shrink-0 mt-0.5">
+                  {l.signal_score}
+                </Badge>
+                <div className="min-w-0 flex-1">
+                  <a href={l.listing_url} target="_blank" rel="noreferrer"
+                    className="font-medium text-primary hover:underline inline-flex items-center gap-1">
+                    <span className="truncate">{l.title ?? l.listing_url}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                  {l.description_excerpt && (
+                    <p className="text-muted-foreground line-clamp-2 mt-0.5">{l.description_excerpt}</p>
+                  )}
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {l.gem_signals.map((s) => (
+                      <Badge key={s} variant="secondary" className="text-[9px] px-1.5 py-0">
+                        {s.replace(/_/g, ' ')}
+                      </Badge>
+                    ))}
+                    {l.state && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{l.state}</Badge>}
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      via "{l.search_query}" · {new Date(l.scraped_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Registry row ─────────────────────────────────────────────────────────────
 
 function GemRow({
   gem: g, expanded, onToggle, onAnalyze, analyzing,
@@ -149,7 +281,7 @@ function GemRow({
           <div className="min-w-0 flex-1">
             <div className="font-medium text-sm truncate">{f.name}</div>
             <div className="text-xs text-muted-foreground truncate">
-              {f.operator ?? '—'} · {f.facility_type.replace(/_/g, ' ')} · {f.municipality ?? '—'}
+              {f.operator ?? '—'} · {f.facility_type.replace(/_/g, ' ')} · {f.municipality ?? '—'} · {f.state ?? 'AB'}
             </div>
           </div>
           <div className="text-right">

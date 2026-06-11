@@ -39,6 +39,12 @@ export const ENERGY_INTENSITY_MWH_PER_TONNE: Record<string, number> = {
   hydrogen_electrolysis: 55, // per tonne H2
   canola_crush: 0.06,      // per tonne seed (t/day inputs are annualized)
   food_processing: 0.25,   // refrigeration-heavy lines
+  eaf_steel: 0.50,         // electric-arc furnace melt + casting
+  aluminum_smelter: 14.5,  // Hall–Héroult electrolysis — highest of all
+  containerboard: 0.35,    // recycled/kraft linerboard
+  // semiconductor_fab and lng_liquefaction intentionally absent: loads are
+  // real and large but no defensible per-unit intensity exists — those rows
+  // only get an MW figure when one is published.
 };
 
 const HOURS_PER_YEAR = 8760;
@@ -116,6 +122,7 @@ export interface FacilityRow {
   id: string;
   name: string;
   operator: string | null;
+  state?: string; // 'AB' | 'TX'
   facility_type: string;
   naics_code: string | null;
   lat: number;
@@ -322,6 +329,7 @@ export interface GemFilters {
   minMw?: number;
   statuses?: string[];
   facilityTypes?: string[];
+  states?: string[];
 }
 
 export function rankHiddenGems(
@@ -335,7 +343,48 @@ export function rankHiddenGems(
       if (filters.minMw != null && (g.derivedMw == null || g.derivedMw < filters.minMw)) return false;
       if (filters.statuses?.length && !filters.statuses.includes(g.facility.status)) return false;
       if (filters.facilityTypes?.length && !filters.facilityTypes.includes(g.facility.facility_type)) return false;
+      if (filters.states?.length && !filters.states.includes(g.facility.state ?? 'AB')) return false;
       return true;
     })
     .sort((a, b) => b.total - a.total);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Listing gem-signals (shared spec for gem-listing-scanner + UI)
+// ────────────────────────────────────────────────────────────────────────────
+// Deterministic keyword scoring for scraped real-estate listings. The edge
+// function mirrors this table (Deno can't import from src/); keep the two in
+// sync — the unit tests here are the source of truth for the weights.
+export const LISTING_SIGNALS: { pattern: RegExp; signal: string; weight: number }[] = [
+  { pattern: /\bsubstation\b/i, signal: 'substation', weight: 25 },
+  { pattern: /\b\d+(\.\d+)?\s*(mw|megawatt)/i, signal: 'mw_capacity', weight: 25 },
+  { pattern: /\b\d+(\.\d+)?\s*(mva|kva)\b/i, signal: 'transformer_capacity', weight: 20 },
+  { pattern: /\btransmission\s+line/i, signal: 'transmission_line', weight: 15 },
+  // Allow one descriptive word between the status and the asset noun:
+  // "former chemical plant", "closed steel mill", "idled paper facility".
+  { pattern: /\b(former|closed|decommissioned|idled?|shuttered)\s+(\w+\s+)?(plant|mill|smelter|refinery|factory|facility)/i, signal: 'former_plant', weight: 20 },
+  { pattern: /\b(heavy|industrial)\s+power\b/i, signal: 'heavy_power', weight: 10 },
+  { pattern: /\bhigh[\s-]?voltage\b/i, signal: 'high_voltage', weight: 10 },
+  { pattern: /\brail\s*(spur|served|access)/i, signal: 'rail_access', weight: 8 },
+  { pattern: /\bnatural\s+gas\s+(line|service|pipeline)/i, signal: 'gas_service', weight: 6 },
+  { pattern: /\bdata\s*cent(er|re)\s*(ready|zoned|approved)/i, signal: 'dc_ready', weight: 12 },
+  { pattern: /\bpower\s+(purchase|contract|agreement|allocation)\b/i, signal: 'power_contract', weight: 12 },
+  { pattern: /\bcrypto|bitcoin|mining\s+facility\b/i, signal: 'crypto_history', weight: 8 },
+];
+
+export interface ListingSignalResult {
+  signals: string[];
+  score: number; // 0–100, capped
+}
+
+export function scoreListingText(text: string): ListingSignalResult {
+  const signals: string[] = [];
+  let score = 0;
+  for (const { pattern, signal, weight } of LISTING_SIGNALS) {
+    if (pattern.test(text)) {
+      signals.push(signal);
+      score += weight;
+    }
+  }
+  return { signals, score: Math.min(100, score) };
 }

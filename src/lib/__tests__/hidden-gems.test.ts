@@ -4,7 +4,9 @@ import {
   distanceToSegmentKm,
   scoreFacility,
   rankHiddenGems,
+  scoreListingText,
   STATUS_WEIGHTS,
+  ENERGY_INTENSITY_MWH_PER_TONNE,
   type FacilityRow,
   type GemContext,
 } from '../hidden-gems';
@@ -166,5 +168,65 @@ describe('rankHiddenGems', () => {
     expect(rankHiddenGems(plants, ctx, { statuses: ['closed'] })).toHaveLength(1);
     expect(rankHiddenGems(plants, ctx, { facilityTypes: ['pulp_mechanical'] })).toHaveLength(1);
     expect(rankHiddenGems(plants, ctx, { minMw: 1000 })).toHaveLength(0);
+  });
+
+  it('applies state filter, defaulting rows without state to AB', () => {
+    const mixed = [
+      facility({ id: 'ab', state: 'AB' }),
+      facility({ id: 'tx', state: 'TX' }),
+      facility({ id: 'legacy' }), // no state column → treated as AB
+    ];
+    expect(rankHiddenGems(mixed, ctx, { states: ['TX'] }).map((g) => g.facility.id)).toEqual(['tx']);
+    expect(rankHiddenGems(mixed, ctx, { states: ['AB'] })).toHaveLength(2);
+  });
+});
+
+describe('Texas facility types', () => {
+  it('models EAF steel and aluminum smelting at sane magnitudes', () => {
+    // 3 Mt/yr EAF flat-roll (Sinton-class) ≈ 190 MW
+    const eaf = estimateFacilityMw('eaf_steel', 3_000_000, 't/yr');
+    expect(eaf!).toBeGreaterThan(150);
+    expect(eaf!).toBeLessThan(230);
+    // 267 kt/yr smelter (Rockdale-class) ≈ 440+ MW — aluminum is the ceiling.
+    const smelter = estimateFacilityMw('aluminum_smelter', 267_000, 't/yr');
+    expect(smelter!).toBeGreaterThan(350);
+    expect(smelter!).toBeLessThan(550);
+  });
+
+  it('refuses to model fabs and LNG — published figures only', () => {
+    expect(ENERGY_INTENSITY_MWH_PER_TONNE['semiconductor_fab']).toBeUndefined();
+    expect(ENERGY_INTENSITY_MWH_PER_TONNE['lng_liquefaction']).toBeUndefined();
+    expect(estimateFacilityMw('semiconductor_fab', 100000, 't/yr')).toBeNull();
+  });
+});
+
+describe('scoreListingText', () => {
+  it('detects the classic hidden-gem listing', () => {
+    const r = scoreListingText(
+      'Former chemical plant for sale — 45 MW on-site substation, 138kV transmission line frontage, rail spur.',
+    );
+    expect(r.signals).toContain('substation');
+    expect(r.signals).toContain('mw_capacity');
+    expect(r.signals).toContain('transmission_line');
+    expect(r.signals).toContain('former_plant');
+    expect(r.signals).toContain('rail_access');
+    expect(r.score).toBeGreaterThanOrEqual(80);
+  });
+
+  it('scores plain listings 0 so they are filtered out, and caps at 100', () => {
+    expect(scoreListingText('Beautiful 3-bedroom home with attached garage.')).toEqual({
+      signals: [],
+      score: 0,
+    });
+    const everything = scoreListingText(
+      'former plant for sale: substation, 50 MW, 25 MVA, transmission line, industrial power, ' +
+      'high-voltage, rail spur, natural gas line, data center ready, power contract, bitcoin mining facility',
+    );
+    expect(everything.score).toBe(100);
+  });
+
+  it('is case-insensitive and unit-tolerant', () => {
+    expect(scoreListingText('SUBSTATION on site').signals).toContain('substation');
+    expect(scoreListingText('12.5 megawatts available').signals).toContain('mw_capacity');
   });
 });
