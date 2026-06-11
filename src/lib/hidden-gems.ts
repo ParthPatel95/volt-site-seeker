@@ -142,6 +142,11 @@ export interface FacilityRow {
   source_publisher: string | null;
   notes: string | null;
   last_verified: string | null;
+  // Populated by the facility-refine edge function from live APIs; never seeded.
+  location_method?: string | null;          // 'google_geocode' | 'seed'
+  osm_substation_km?: number | null;        // measured via Overpass at the site
+  osm_max_voltage_kv?: number | null;
+  osm_checked_at?: string | null;
 }
 
 export interface SubstationRow {
@@ -242,20 +247,32 @@ export function scoreFacility(facility: FacilityRow, ctx: GemContext): ScoredGem
       : `≈${derivedMw} MW ${facility.estimate_basis === 'published' ? 'published' : 'via intensity model'} (${facility.facility_type})`,
   });
 
-  // ── Grid proximity (0–20): nearest seeded substation.
+  // ── Grid proximity (0–20). A live OSM measurement at the facility (written
+  // by facility-refine) outranks the curated-table approximation: it is a
+  // per-site Overpass result, not a distance to a seeded row.
   let nearestSub: SubstationRow | null = null;
   let nearestSubKm: number | null = null;
-  for (const s of ctx.substations) {
-    if (s.latitude == null || s.longitude == null) continue;
-    const d = haversineKm(facility.lat, facility.lng, s.latitude, s.longitude);
-    if (nearestSubKm == null || d < nearestSubKm) { nearestSubKm = d; nearestSub = s; }
+  let subDetail: string;
+  if (facility.osm_substation_km != null) {
+    nearestSubKm = facility.osm_substation_km;
+    const checked = facility.osm_checked_at ? facility.osm_checked_at.slice(0, 10) : 'unknown date';
+    subDetail = `OSM-verified: nearest substation ${nearestSubKm.toFixed(1)} km`
+      + (facility.osm_max_voltage_kv != null ? `, up to ${facility.osm_max_voltage_kv} kV nearby` : '')
+      + ` (checked ${checked})`;
+  } else {
+    for (const s of ctx.substations) {
+      if (s.latitude == null || s.longitude == null) continue;
+      const d = haversineKm(facility.lat, facility.lng, s.latitude, s.longitude);
+      if (nearestSubKm == null || d < nearestSubKm) { nearestSubKm = d; nearestSub = s; }
+    }
+    subDetail = nearestSub
+      ? `${nearestSub.name} (${nearestSub.voltage_level ?? '?'}, ${nearestSub.capacity_mva ?? '?'} MVA) at ${nearestSubKm!.toFixed(1)} km — curated dataset, run a refine for live OSM check`
+      : 'No substation in curated dataset within range — run a refine for live OSM check';
   }
   const subScore = Math.round(20 * proximityScore(nearestSubKm, 2, 40));
   factors.push({
     key: 'substation_proximity', score: subScore, max: 20,
-    detail: nearestSub
-      ? `${nearestSub.name} (${nearestSub.voltage_level ?? '?'}, ${nearestSub.capacity_mva ?? '?'} MVA) at ${nearestSubKm!.toFixed(1)} km`
-      : 'No substation in curated dataset within range',
+    detail: subDetail,
   });
 
   // ── Transmission proximity (0–10): nearest curated line segment + voltage.
@@ -310,12 +327,17 @@ export function scoreFacility(facility: FacilityRow, ctx: GemContext): ScoredGem
   const total = factors.reduce((s, f) => s + f.score, 0);
   const grade: ScoredGem['grade'] = total >= 70 ? 'A' : total >= 55 ? 'B' : total >= 40 ? 'C' : 'D';
 
-  // Confidence: floor of registry confidence and data completeness.
+  // Confidence: floor of registry confidence and data completeness. A
+  // facility that has been through facility-refine (geocoded + live OSM
+  // check) earns one notch up — its location and grid context are
+  // API-verified rather than desk research.
   const registryConf = (['high', 'medium', 'low'].includes(facility.confidence)
     ? facility.confidence : 'low') as 'high' | 'medium' | 'low';
   const dataGaps = (derivedMw == null ? 1 : 0) + (nearestSubKm == null ? 1 : 0) + (facility.status === 'unknown' ? 1 : 0);
-  const confidence: ScoredGem['confidence'] =
+  const apiVerified = facility.location_method === 'google_geocode' && facility.osm_checked_at != null;
+  let confidence: ScoredGem['confidence'] =
     dataGaps >= 2 ? 'low' : dataGaps === 1 && registryConf === 'high' ? 'medium' : registryConf;
+  if (apiVerified && dataGaps === 0 && confidence === 'medium') confidence = 'high';
 
   return {
     facility, total, grade, confidence, factors,
