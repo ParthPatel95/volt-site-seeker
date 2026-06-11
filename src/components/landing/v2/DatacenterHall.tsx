@@ -1,7 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Instances, Instance } from '@react-three/drei';
 
 // 3D datacenter hall: two parallel rows of server racks under a slim
 // raised-floor + ceiling cable tray, blinking status LEDs, fans, and
@@ -182,22 +181,31 @@ function DataPackets() {
 
 // Top-of-rack fans collectively (instanced glow ring) — purely decorative.
 function AccentLight() {
-  return (
-    <Instances limit={64}>
-      <sphereGeometry args={[0.03, 6, 6]} />
-      <meshBasicMaterial color="#22d3ee" transparent opacity={0.7} />
-      {Array.from({ length: 32 }).map((_, i) => (
-        <Instance
-          key={i}
-          position={[
-            -ROW_LENGTH / 2 + (i / 32) * (ROW_LENGTH + 1) - 0.5,
-            RACK_H / 2 + 0.08,
-            (i % 2 === 0 ? -1 : 1) * (ROW_GAP / 2 + RACK_D / 2 + 0.08),
-          ]}
-        />
-      ))}
-    </Instances>
-  );
+  // Built imperatively (THREE.InstancedMesh) instead of drei's <Instances>/<Instance>
+  // because the JSX tagger forwards data-* props into three objects and crashes.
+  const mesh = useMemo(() => {
+    const geometry = new THREE.SphereGeometry(0.03, 6, 6);
+    const material = new THREE.MeshBasicMaterial({
+      color: '#22d3ee',
+      transparent: true,
+      opacity: 0.7,
+    });
+    const instanced = new THREE.InstancedMesh(geometry, material, 32);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < 32; i++) {
+      dummy.position.set(
+        -ROW_LENGTH / 2 + (i / 32) * (ROW_LENGTH + 1) - 0.5,
+        RACK_H / 2 + 0.08,
+        (i % 2 === 0 ? -1 : 1) * (ROW_GAP / 2 + RACK_D / 2 + 0.08),
+      );
+      dummy.updateMatrix();
+      instanced.setMatrixAt(i, dummy.matrix);
+    }
+    instanced.instanceMatrix.needsUpdate = true;
+    return instanced;
+  }, []);
+
+  return <primitive object={mesh} />;
 }
 
 export function DatacenterHall() {
