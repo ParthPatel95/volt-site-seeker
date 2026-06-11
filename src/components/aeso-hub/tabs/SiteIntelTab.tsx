@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Network, Map as MapIcon, FileSearch, Info, MapPin, RefreshCcw } from 'lucide-react';
+import { Network, Map as MapIcon, FileSearch, Info, MapPin, RefreshCcw, Gem } from 'lucide-react';
 import { AlbertaMap } from '../site-intel/AlbertaMap';
 import { SiteLookupForm } from '../site-intel/SiteLookupForm';
 import { SiteWorkspace } from '../site-intel/SiteWorkspace';
+import { HiddenGemsPanel } from '../site-intel/HiddenGemsPanel';
 import { useGenerateSiteReport, type SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ export function SiteIntelTab() {
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [report, setReport] = useState<SiteReportT | null>(null);
   const [formCollapsed, setFormCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('explorer');
   const generate = useGenerateSiteReport();
 
   const handleResolve = async (loc: { lat: number; lng: number; label?: string }) => {
@@ -22,9 +24,16 @@ export function SiteIntelTab() {
       setReport(r);
       setFormCollapsed(true);
       toast.success('Site report generated');
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Failed to generate report');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to generate report');
     }
+  };
+
+  // From Hidden Gems: jump to Site Lookup and generate the full report for
+  // the candidate facility's coordinates.
+  const handleAnalyzeGem = async (loc: { lat: number; lng: number; label?: string }) => {
+    setActiveTab('lookup');
+    await handleResolve(loc);
   };
 
   return (
@@ -42,10 +51,11 @@ export function SiteIntelTab() {
         </div>
       </div>
 
-      <Tabs defaultValue="explorer" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="explorer"><MapIcon className="w-4 h-4 mr-2" />Map Explorer</TabsTrigger>
           <TabsTrigger value="lookup"><FileSearch className="w-4 h-4 mr-2" />Site Lookup</TabsTrigger>
+          <TabsTrigger value="gems"><Gem className="w-4 h-4 mr-2" />Hidden Gems</TabsTrigger>
         </TabsList>
 
         <TabsContent value="explorer" className="space-y-4 mt-4">
@@ -92,6 +102,10 @@ export function SiteIntelTab() {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="gems" className="space-y-4 mt-4">
+          <HiddenGemsPanel onAnalyze={handleAnalyzeGem} analyzing={generate.isPending} />
         </TabsContent>
       </Tabs>
     </div>
