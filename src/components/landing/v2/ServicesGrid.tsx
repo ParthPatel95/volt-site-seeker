@@ -41,7 +41,9 @@ export function ServicesGrid() {
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <Reveal>
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Services</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
+            <span className="font-mono mr-2 opacity-60">02 /</span> What we offer
+          </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight max-w-3xl mb-4">
             One platform, <span className="text-gradient-watt">five ways in</span>
           </h2>
