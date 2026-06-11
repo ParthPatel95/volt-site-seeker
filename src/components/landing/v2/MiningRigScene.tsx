@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -103,19 +103,19 @@ function HashRateDisplay() {
 import { Text } from '@react-three/drei';
 
 function Html3DText({ text }: { text: string }) {
-  return (
-    <Text
-      position={[0, 0, 0.06]}
-      fontSize={0.22}
-      color="#22d3ee"
-      anchorX="center"
-      anchorY="middle"
-      outlineWidth={0}
-      letterSpacing={0.05}
-    >
-      {text}
-    </Text>
-  );
+  // Rendered via createElement (not JSX) so the Lovable JSX tagger cannot
+  // inject data-lov-* props — drei <Text> spreads its props into the troika
+  // three object and dashed props crash r3f's applyProps ("reading 'lov'").
+  return createElement(Text, {
+    position: [0, 0, 0.06] as [number, number, number],
+    fontSize: 0.22,
+    color: '#22d3ee',
+    anchorX: 'center' as const,
+    anchorY: 'middle' as const,
+    outlineWidth: 0,
+    letterSpacing: 0.05,
+    children: text,
+  });
 }
 
 function BlockStream() {
