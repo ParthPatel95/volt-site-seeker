@@ -47,12 +47,13 @@ export function HeroSection() {
         )}
       </div>
 
-      {/* Legibility gradient */}
+      {/* Legibility gradient — heavier white wash on the text side so the copy
+          stays crisp against the busy datacenter scene without darkening it */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'linear-gradient(to right, hsl(var(--background) / 0.97) 0%, hsl(var(--background) / 0.88) 32%, hsl(var(--background) / 0.45) 56%, transparent 78%)',
+            'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.94) 30%, hsl(var(--background) / 0.55) 55%, hsl(var(--background) / 0.15) 78%, transparent 100%)',
         }}
       />
 

@@ -107,20 +107,20 @@ function Rack({ position, ledOffset }: { position: [number, number, number]; led
 function FloorStrip() {
   return (
     <>
-      {/* concrete-ish floor */}
+      {/* polished concrete floor — light enough to sit on a white page */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RACK_H / 2, 0]} receiveShadow>
         <planeGeometry args={[ROW_LENGTH + 6, 10]} />
-        <meshStandardMaterial color="#070c1a" roughness={0.95} metalness={0.05} />
+        <meshStandardMaterial color="#dfe6f0" roughness={0.85} metalness={0.05} />
       </mesh>
       {/* raised-floor grid */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RACK_H / 2 + 0.002, 0]}>
         <planeGeometry args={[ROW_LENGTH + 6, 10]} />
-        <meshBasicMaterial color="#16a5c7" wireframe transparent opacity={0.07} />
+        <meshBasicMaterial color="#16a5c7" wireframe transparent opacity={0.12} />
       </mesh>
       {/* cool aisle accent */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RACK_H / 2 + 0.003, 0]}>
         <planeGeometry args={[ROW_LENGTH + 0.4, ROW_GAP - 0.4]} />
-        <meshBasicMaterial color="#22d3ee" transparent opacity={0.12} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.18} />
       </mesh>
     </>
   );

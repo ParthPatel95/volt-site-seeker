@@ -23,14 +23,15 @@ const SectionLoader = () => (
 );
 
 const Landing: React.FC = () => {
-  // The landing is designed dark-first: force the dark token set for this
-  // page regardless of the visitor's app-theme preference. Restore on leave
-  // so the rest of the app keeps honoring the user's setting.
+  // Landing is light-first — it's a first impression and "welcoming" reads as
+  // bright. Force the light token set for this route regardless of the user's
+  // saved app-theme; restore on leave so the rest of the app keeps honoring
+  // whatever they had set.
   useEffect(() => {
     const root = document.documentElement;
     const hadDark = root.classList.contains('dark');
-    root.classList.add('dark');
-    return () => { if (!hadDark) root.classList.remove('dark'); };
+    root.classList.remove('dark');
+    return () => { if (hadDark) root.classList.add('dark'); };
   }, []);
 
   return (

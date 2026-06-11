@@ -48,12 +48,14 @@ export default function DatacenterScene() {
         frameloop={active ? 'always' : 'never'}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
-        {/* lighting */}
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[6, 8, 4]} intensity={0.9} color="#dbeafe" />
-        <pointLight position={[0, 3, 0]} intensity={0.8} color="#22d3ee" distance={12} decay={1.5} />
-        <pointLight position={[-5, 1, -2]} intensity={0.5} color="#f7931a" distance={10} decay={1.5} />
-        <fog attach="fog" args={['#070c1a', 9, 18]} />
+        {/* Lighting tuned for the light-mode page: brighter ambient and a soft
+            sky-color fog so the canvas blends into the white backdrop instead
+            of cutting a dark rectangle into it. */}
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[6, 8, 4]} intensity={1.1} color="#ffffff" />
+        <pointLight position={[0, 3, 0]} intensity={0.6} color="#22d3ee" distance={12} decay={1.5} />
+        <pointLight position={[-5, 1, -2]} intensity={0.4} color="#f7931a" distance={10} decay={1.5} />
+        <fog attach="fog" args={['#f4f7fc', 9, 18]} />
 
         <DatacenterHall />
         <CameraRig active={active} />

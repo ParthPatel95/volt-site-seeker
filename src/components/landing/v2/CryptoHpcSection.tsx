@@ -73,9 +73,16 @@ export function CryptoHpcSection() {
             </Reveal>
           </div>
 
-          {/* 3D rig */}
+          {/* 3D rig — soft branded panel so the canvas reads as a window onto
+              the rack rather than a dark hole on a light page. */}
           <Reveal className="lg:col-span-7" delay={0.15}>
-            <div className="relative rounded-3xl overflow-hidden border border-border bg-[hsl(var(--watt-navy))]/40 backdrop-blur-sm h-[28rem] sm:h-[32rem]">
+            <div
+              className="relative rounded-3xl overflow-hidden border border-watt-bitcoin/20 shadow-watt-glow h-[28rem] sm:h-[32rem]"
+              style={{
+                background:
+                  'linear-gradient(135deg, hsl(var(--watt-bitcoin) / 0.06) 0%, hsl(var(--card) / 0.85) 45%, hsl(var(--watt-trust) / 0.06) 100%)',
+              }}
+            >
               <Suspense fallback={
                 <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
                   Loading scene…
@@ -84,9 +91,9 @@ export function CryptoHpcSection() {
                 <MiningRigScene />
               </Suspense>
               {/* overlay caption */}
-              <div className="absolute top-4 left-4 flex items-center gap-2">
+              <div className="absolute top-4 left-4 flex items-center gap-2 px-2.5 py-1 rounded-full bg-card/80 border border-border backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-watt-bitcoin animate-pulse" />
-                <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin/90">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin">
                   Illustrative rig telemetry
                 </span>
               </div>

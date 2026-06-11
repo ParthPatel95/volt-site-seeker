@@ -224,11 +224,13 @@ export default function MiningRigScene() {
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         onCreated={({ camera }) => { camRef.current = camera as THREE.PerspectiveCamera; }}
       >
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[4, 6, 5]} intensity={0.8} color="#e2e8f0" />
-        <pointLight position={[0, 2.2, 1]} intensity={0.7} color="#f7931a" distance={10} decay={1.5} />
-        <pointLight position={[-3, -0.5, 2]} intensity={0.5} color="#22d3ee" distance={10} decay={1.5} />
-        <fog attach="fog" args={['#070c1a', 7, 14]} />
+        {/* Lighting tuned for the light-page surround: brighter ambient, soft
+            sky-tone fog so the canvas blends into its rounded card. */}
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[4, 6, 5]} intensity={1.1} color="#ffffff" />
+        <pointLight position={[0, 2.2, 1]} intensity={0.6} color="#f7931a" distance={10} decay={1.5} />
+        <pointLight position={[-3, -0.5, 2]} intensity={0.4} color="#22d3ee" distance={10} decay={1.5} />
+        <fog attach="fog" args={['#eef2f8', 7, 14]} />
         <Rig />
         <Drift />
       </Canvas>
