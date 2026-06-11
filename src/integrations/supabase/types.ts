@@ -5796,6 +5796,66 @@ export type Database = {
           },
         ]
       }
+      gem_listings: {
+        Row: {
+          address_text: string | null
+          created_at: string
+          description_excerpt: string | null
+          gem_signals: Json
+          geocode_precision: string | null
+          id: string
+          lat: number | null
+          listing_url: string
+          lng: number | null
+          price_text: string | null
+          raw: Json | null
+          scraped_at: string
+          search_query: string | null
+          signal_score: number
+          source: string
+          state: string | null
+          title: string | null
+        }
+        Insert: {
+          address_text?: string | null
+          created_at?: string
+          description_excerpt?: string | null
+          gem_signals?: Json
+          geocode_precision?: string | null
+          id?: string
+          lat?: number | null
+          listing_url: string
+          lng?: number | null
+          price_text?: string | null
+          raw?: Json | null
+          scraped_at?: string
+          search_query?: string | null
+          signal_score?: number
+          source?: string
+          state?: string | null
+          title?: string | null
+        }
+        Update: {
+          address_text?: string | null
+          created_at?: string
+          description_excerpt?: string | null
+          gem_signals?: Json
+          geocode_precision?: string | null
+          id?: string
+          lat?: number | null
+          listing_url?: string
+          lng?: number | null
+          price_text?: string | null
+          raw?: Json | null
+          scraped_at?: string
+          search_query?: string | null
+          signal_score?: number
+          source?: string
+          state?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       generated_reports: {
         Row: {
           completed_at: string | null
@@ -5972,6 +6032,90 @@ export type Database = {
           target_hashrate_th?: number | null
           updated_at?: string
           worker_name?: string | null
+        }
+        Relationships: []
+      }
+      industrial_facilities: {
+        Row: {
+          capacity_unit: string | null
+          capacity_value: number | null
+          confidence: string
+          coordinates_precision: string
+          created_at: string
+          estimate_basis: string | null
+          estimated_mw: number | null
+          facility_type: string
+          grid_voltage_kv: number | null
+          id: string
+          last_verified: string | null
+          lat: number
+          lng: number
+          municipality: string | null
+          naics_code: string | null
+          name: string
+          notes: string | null
+          operator: string | null
+          source_publisher: string | null
+          source_url: string | null
+          state: string
+          status: string
+          status_as_of: string | null
+          status_source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          capacity_unit?: string | null
+          capacity_value?: number | null
+          confidence?: string
+          coordinates_precision?: string
+          created_at?: string
+          estimate_basis?: string | null
+          estimated_mw?: number | null
+          facility_type: string
+          grid_voltage_kv?: number | null
+          id?: string
+          last_verified?: string | null
+          lat: number
+          lng: number
+          municipality?: string | null
+          naics_code?: string | null
+          name: string
+          notes?: string | null
+          operator?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          state?: string
+          status?: string
+          status_as_of?: string | null
+          status_source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capacity_unit?: string | null
+          capacity_value?: number | null
+          confidence?: string
+          coordinates_precision?: string
+          created_at?: string
+          estimate_basis?: string | null
+          estimated_mw?: number | null
+          facility_type?: string
+          grid_voltage_kv?: number | null
+          id?: string
+          last_verified?: string | null
+          lat?: number
+          lng?: number
+          municipality?: string | null
+          naics_code?: string | null
+          name?: string
+          notes?: string | null
+          operator?: string | null
+          source_publisher?: string | null
+          source_url?: string | null
+          state?: string
+          status?: string
+          status_as_of?: string | null
+          status_source_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
