@@ -1,34 +1,39 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
-import { LandingBackground } from '@/components/landing/LandingBackground';
-import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { SmoothScroll } from '@/components/landing/ScrollAnimations';
-import { Hero3DSection } from '@/components/landing/Hero3DSection';
+import { AuroraBackground } from '@/components/landing/v2/AuroraBackground';
+import { HeroSection } from '@/components/landing/v2/HeroSection';
+import { PipelineTicker } from '@/components/landing/v2/PipelineTicker';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 
-// Lazy load heavy sections
-const ServicesSection = lazy(() => import('@/components/landing/ServicesSection').then(module => ({ default: module.ServicesSection })));
-const GlobalSitesSection = lazy(() => import('@/components/landing/GlobalSitesSection').then(module => ({ default: module.GlobalSitesSection })));
-const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
-const LandingInvestmentThesis = lazy(() => import('@/components/landing/LandingInvestmentThesis').then(module => ({ default: module.LandingInvestmentThesis })));
-const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
+// Below-the-fold sections load lazily.
+const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowSection').then(m => ({ default: m.EnergyFlowSection })));
+const ServicesGrid = lazy(() => import('@/components/landing/v2/ServicesGrid').then(m => ({ default: m.ServicesGrid })));
+const PipelineSection = lazy(() => import('@/components/landing/v2/PipelineSection').then(m => ({ default: m.PipelineSection })));
+const FlagshipSection = lazy(() => import('@/components/landing/v2/FlagshipSection').then(m => ({ default: m.FlagshipSection })));
+const PlatformSection = lazy(() => import('@/components/landing/v2/PlatformSection').then(m => ({ default: m.PlatformSection })));
 const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
-const VoltScoutIntelligenceHub = lazy(() => import('@/components/landing/VoltScoutIntelligenceHub').then(module => ({ default: module.VoltScoutIntelligenceHub })));
-const LandingAcademySection = lazy(() => import('@/components/landing/LandingAcademySection').then(module => ({ default: module.LandingAcademySection })));
+const ClosingSections = lazy(() => import('@/components/landing/v2/ClosingSections'));
 
 const SectionLoader = () => (
-  <div className="flex justify-center items-center py-12 sm:py-16 md:py-20">
-    <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+  <div className="flex justify-center items-center py-16">
+    <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
 const Landing: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      {/* Smooth scroll functionality */}
-      <SmoothScroll />
+  // The landing is designed dark-first: force the dark token set for this
+  // page regardless of the visitor's app-theme preference. Restore on leave
+  // so the rest of the app keeps honoring the user's setting.
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    root.classList.add('dark');
+    return () => { if (!hadDark) root.classList.remove('dark'); };
+  }, []);
 
+  return (
+    <div className="min-h-screen bg-background text-foreground relative">
       {/* SEO content */}
       <header>
         <h1 className="sr-only">WattByte Infrastructure - Bitcoin Mining & AI Data Center Development</h1>
@@ -38,92 +43,43 @@ const Landing: React.FC = () => {
         </p>
       </header>
 
-      {/* Background */}
-      <LandingBackground />
-
-      {/* Navigation */}
+      <AuroraBackground />
       <LandingNavigation />
 
-      <div className="pt-14 sm:pt-16 md:pt-20 relative z-10 safe-area-pt">
-        <main>
-          {/* Hero — 3D pipeline globe driven by the real site registry */}
-          <Hero3DSection />
+      <main className="relative z-10">
+        <HeroSection />
+        <PipelineTicker />
 
-          <SectionDivider color="cyan" />
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="What we do"><EnergyFlowSection /></section>
+        </Suspense>
 
-          {/* What we offer */}
-          <section aria-label="Services" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <ServicesSection />
-            </Suspense>
-          </section>
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Services"><ServicesGrid /></section>
+        </Suspense>
 
-          <SectionDivider color="purple" />
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Global pipeline"><PipelineSection /></section>
+        </Suspense>
 
-          {/* Current sites */}
-          <section aria-label="Global Sites" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <GlobalSitesSection />
-            </Suspense>
-          </section>
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Alberta flagship facility"><FlagshipSection /></section>
+        </Suspense>
 
-          <SectionDivider color="yellow" />
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="VoltScout platform"><PlatformSection /></section>
+        </Suspense>
 
-          {/* Market thesis */}
-          <section aria-label="Problem and Solution" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <ProblemSolutionSection />
-            </Suspense>
-          </section>
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Live energy markets"><LiveMarketsSection /></section>
+        </Suspense>
 
-          <SectionDivider color="cyan" />
+        <Suspense fallback={<SectionLoader />}>
+          <ClosingSections />
+        </Suspense>
+      </main>
 
-          {/* Alberta flagship deep-dive */}
-          <section aria-label="Alberta Facility" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <AlbertaFacilityHub />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="purple" />
-
-          {/* Investment Thesis Section */}
-          <section aria-label="Investment Thesis" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <LandingInvestmentThesis />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="yellow" />
-
-          {/* Live Energy Markets Section */}
-          <section aria-label="Live Energy Markets" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <LiveMarketsSection />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="cyan" />
-
-          {/* VoltScout Intelligence Hub */}
-          <section aria-label="VoltScout Platform" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <VoltScoutIntelligenceHub />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="purple" />
-
-          {/* Academy Section */}
-          <section aria-label="WattByte Academy" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <LandingAcademySection />
-            </Suspense>
-          </section>
-        </main>
-
-        <LandingFooter />
-      </div>
+      <LandingFooter />
 
       {/* SEO content */}
       <div className="sr-only">
