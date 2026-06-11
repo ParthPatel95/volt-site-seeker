@@ -166,6 +166,26 @@ export default {
 				'flow': {
 					'0%': { transform: 'translateX(-100%)' },
 					'100%': { transform: 'translateX(800%)' }
+				},
+				// Landing v2 — aurora backdrop drift, ticker marquee, circuit dash flow
+				'aurora-1': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+					'50%': { transform: 'translate(6rem, 3rem) scale(1.15)' }
+				},
+				'aurora-2': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1.1)' },
+					'50%': { transform: 'translate(-5rem, -2rem) scale(0.95)' }
+				},
+				'aurora-3': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+					'50%': { transform: 'translate(3rem, -4rem) scale(1.2)' }
+				},
+				'marquee': {
+					from: { transform: 'translateX(0)' },
+					to: { transform: 'translateX(-50%)' }
+				},
+				'dash-flow': {
+					to: { strokeDashoffset: '-36' }
 				}
 			},
 			animation: {
@@ -176,7 +196,12 @@ export default {
 				'slide-in-right': 'slide-in-right 0.2s ease-out',
 				'slide-out-right': 'slide-out-right 0.2s ease-out',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'flow': 'flow 3s linear infinite'
+				'flow': 'flow 3s linear infinite',
+				'aurora-1': 'aurora-1 24s ease-in-out infinite',
+				'aurora-2': 'aurora-2 30s ease-in-out infinite',
+				'aurora-3': 'aurora-3 27s ease-in-out infinite',
+				'marquee': 'marquee 36s linear infinite',
+				'dash-flow': 'dash-flow 1.6s linear infinite'
 			},
 			boxShadow: {
 				'subtle': '0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05)',
@@ -189,5 +214,7 @@ export default {
 			}
 		}
 	},
+	// PostCSS loads this config through CommonJS — require() is correct here.
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	plugins: [require("tailwindcss-animate"), require("@tailwindcss/container-queries")],
 } satisfies Config;
