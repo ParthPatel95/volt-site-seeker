@@ -4,13 +4,15 @@ import { LandingBackground } from '@/components/landing/LandingBackground';
 import { SectionDivider } from '@/components/landing/SectionDivider';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
-import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
+import { Hero3DSection } from '@/components/landing/Hero3DSection';
+import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 
 // Lazy load heavy sections
+const ServicesSection = lazy(() => import('@/components/landing/ServicesSection').then(module => ({ default: module.ServicesSection })));
+const GlobalSitesSection = lazy(() => import('@/components/landing/GlobalSitesSection').then(module => ({ default: module.GlobalSitesSection })));
 const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(module => ({ default: module.ProblemSolutionSection })));
 const LandingInvestmentThesis = lazy(() => import('@/components/landing/LandingInvestmentThesis').then(module => ({ default: module.LandingInvestmentThesis })));
 const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(module => ({ default: module.AlbertaFacilityHub })));
-const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(module => ({ default: module.InfrastructureHighlights })));
 const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
 const VoltScoutIntelligenceHub = lazy(() => import('@/components/landing/VoltScoutIntelligenceHub').then(module => ({ default: module.VoltScoutIntelligenceHub })));
 const LandingAcademySection = lazy(() => import('@/components/landing/LandingAcademySection').then(module => ({ default: module.LandingAcademySection })));
@@ -26,46 +28,64 @@ const Landing: React.FC = () => {
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Smooth scroll functionality */}
       <SmoothScroll />
-      
+
       {/* SEO content */}
       <header>
         <h1 className="sr-only">WattByte Infrastructure - Bitcoin Mining & AI Data Center Development</h1>
         <p className="sr-only">
           WattByte is a global infrastructure company specializing in Bitcoin mining and AI data center development.
-          With 1,429MW in our global pipeline and 135MW under development, we transform stranded energy assets into profitable infrastructure.
+          With {TOTAL_MW.toLocaleString()}MW in our global pipeline and {UNDER_DEV_MW}MW under development, we transform stranded energy assets into profitable infrastructure.
         </p>
       </header>
 
       {/* Background */}
       <LandingBackground />
-      
+
       {/* Navigation */}
       <LandingNavigation />
-      
+
       <div className="pt-14 sm:pt-16 md:pt-20 relative z-10 safe-area-pt">
         <main>
-          {/* Hero Section */}
-          <OptimizedHeroSection />
+          {/* Hero — 3D pipeline globe driven by the real site registry */}
+          <Hero3DSection />
 
           <SectionDivider color="cyan" />
 
-          {/* Problem & Solution Section */}
+          {/* What we offer */}
+          <section aria-label="Services" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <ServicesSection />
+            </Suspense>
+          </section>
+
+          <SectionDivider color="purple" />
+
+          {/* Current sites */}
+          <section aria-label="Global Sites" className="relative">
+            <Suspense fallback={<SectionLoader />}>
+              <GlobalSitesSection />
+            </Suspense>
+          </section>
+
+          <SectionDivider color="yellow" />
+
+          {/* Market thesis */}
           <section aria-label="Problem and Solution" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <ProblemSolutionSection />
             </Suspense>
           </section>
 
-          <SectionDivider color="purple" />
+          <SectionDivider color="cyan" />
 
-          {/* Alberta Facility Hub */}
+          {/* Alberta flagship deep-dive */}
           <section aria-label="Alberta Facility" className="relative">
             <Suspense fallback={<SectionLoader />}>
               <AlbertaFacilityHub />
             </Suspense>
           </section>
 
-          <SectionDivider color="yellow" />
+          <SectionDivider color="purple" />
 
           {/* Investment Thesis Section */}
           <section aria-label="Investment Thesis" className="relative">
@@ -74,16 +94,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="cyan" />
-
-          {/* Development Pipeline Section */}
-          <section aria-label="Development Pipeline" className="relative">
-            <Suspense fallback={<SectionLoader />}>
-              <InfrastructureHighlights />
-            </Suspense>
-          </section>
-
-          <SectionDivider color="purple" />
+          <SectionDivider color="yellow" />
 
           {/* Live Energy Markets Section */}
           <section aria-label="Live Energy Markets" className="relative">
@@ -92,7 +103,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="yellow" />
+          <SectionDivider color="cyan" />
 
           {/* VoltScout Intelligence Hub */}
           <section aria-label="VoltScout Platform" className="relative">
@@ -101,7 +112,7 @@ const Landing: React.FC = () => {
             </Suspense>
           </section>
 
-          <SectionDivider color="cyan" />
+          <SectionDivider color="purple" />
 
           {/* Academy Section */}
           <section aria-label="WattByte Academy" className="relative">
@@ -121,14 +132,14 @@ const Landing: React.FC = () => {
           WattByte is a leading infrastructure company focused on Bitcoin mining and AI data center development.
           We identify underutilized power assets globally and transform them into high-performance computing facilities.
         </p>
-        
+
         <h3>Our Global Pipeline</h3>
         <ul>
-          <li>1,429MW total global pipeline across 6 countries</li>
-          <li>135MW currently under development in Alberta, Canada</li>
+          <li>{TOTAL_MW.toLocaleString()}MW total global pipeline across {COUNTRIES} countries</li>
+          <li>{UNDER_DEV_MW}MW currently under development in Alberta, Canada</li>
           <li>Strategic locations in Uganda, Texas, Nepal, Bhutan, and India</li>
         </ul>
-        
+
         <h3>VoltScout Platform</h3>
         <p>
           Our proprietary VoltScout platform provides AI-powered site intelligence, infrastructure mapping,
