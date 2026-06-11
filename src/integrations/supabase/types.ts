@@ -5798,76 +5798,61 @@ export type Database = {
       }
       gem_listings: {
         Row: {
-          acres: number | null
-          building_sqft: number | null
-          city: string | null
+          address_text: string | null
           created_at: string
-          description: string | null
-          estimate_basis: string | null
-          estimated_mw: number | null
-          facility_type: string | null
-          grid_voltage_kv: number | null
+          description_excerpt: string | null
+          gem_signals: Json
+          geocode_precision: string | null
           id: string
-          image_url: string | null
           lat: number | null
           listing_url: string
           lng: number | null
-          price_usd: number | null
+          price_text: string | null
+          raw: Json | null
           scraped_at: string
+          search_query: string | null
+          signal_score: number
           source: string
           state: string | null
-          status: string | null
-          status_as_of: string | null
           title: string | null
-          updated_at: string
         }
         Insert: {
-          acres?: number | null
-          building_sqft?: number | null
-          city?: string | null
+          address_text?: string | null
           created_at?: string
-          description?: string | null
-          estimate_basis?: string | null
-          estimated_mw?: number | null
-          facility_type?: string | null
-          grid_voltage_kv?: number | null
+          description_excerpt?: string | null
+          gem_signals?: Json
+          geocode_precision?: string | null
           id?: string
-          image_url?: string | null
           lat?: number | null
           listing_url: string
           lng?: number | null
-          price_usd?: number | null
+          price_text?: string | null
+          raw?: Json | null
           scraped_at?: string
-          source: string
+          search_query?: string | null
+          signal_score?: number
+          source?: string
           state?: string | null
-          status?: string | null
-          status_as_of?: string | null
           title?: string | null
-          updated_at?: string
         }
         Update: {
-          acres?: number | null
-          building_sqft?: number | null
-          city?: string | null
+          address_text?: string | null
           created_at?: string
-          description?: string | null
-          estimate_basis?: string | null
-          estimated_mw?: number | null
-          facility_type?: string | null
-          grid_voltage_kv?: number | null
+          description_excerpt?: string | null
+          gem_signals?: Json
+          geocode_precision?: string | null
           id?: string
-          image_url?: string | null
           lat?: number | null
           listing_url?: string
           lng?: number | null
-          price_usd?: number | null
+          price_text?: string | null
+          raw?: Json | null
           scraped_at?: string
+          search_query?: string | null
+          signal_score?: number
           source?: string
           state?: string | null
-          status?: string | null
-          status_as_of?: string | null
           title?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
