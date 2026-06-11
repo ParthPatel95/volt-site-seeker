@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { DatacenterHall } from './DatacenterHall';
 
@@ -59,9 +58,6 @@ export default function DatacenterScene() {
 
         <DatacenterHall />
         <CameraRig active={active} />
-        {/* Disabled user controls — the page owns scroll/zoom — but kept for
-            the gentle damping smoothing on the auto camera. */}
-        <OrbitControls enabled={false} />
       </Canvas>
     </div>
   );
