@@ -9,9 +9,12 @@ import {
 } from '@/components/ui/select';
 import {
   Gem, Loader2, ChevronDown, ChevronUp, ExternalLink, FileSearch, AlertTriangle,
-  List, Boxes, Radar, Globe2,
+  List, Boxes, Radar, Globe2, Bookmark, BookmarkCheck, LocateFixed, BadgeCheck,
 } from 'lucide-react';
-import { useHiddenGems, useGemListings } from '@/hooks/useHiddenGems';
+import {
+  useHiddenGems, useGemListings, useGemWatchlist, useFacilityRefine,
+  type GemListing,
+} from '@/hooks/useHiddenGems';
 import type { ScoredGem } from '@/lib/hidden-gems';
 import { toast } from 'sonner';
 
@@ -41,11 +44,13 @@ interface Props {
   analyzing?: boolean;
 }
 
+type Watchlist = ReturnType<typeof useGemWatchlist>;
+
 export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
   const [minMw, setMinMw] = useState('');
   const [status, setStatus] = useState<string>('all');
   const [state, setState] = useState<string>('all');
-  const [view, setView] = useState<'list' | '3d'>('list');
+  const [view, setView] = useState<'list' | '3d' | 'saved'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const filters = useMemo(() => ({
@@ -55,6 +60,26 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
   }), [minMw, status, state]);
 
   const { gems, ctxByState, totalFacilities, isLoading, error } = useHiddenGems(filters);
+  const watchlist = useGemWatchlist();
+  const refine = useFacilityRefine();
+  const gemListings = useGemListings();
+
+  const runRefineAll = async () => {
+    try {
+      const res = await refine.mutateAsync({ all_unverified: true, limit: 25 });
+      const failed = res.results.filter((r) => r.geocode === 'failed' || r.error);
+      toast.success(`Refined ${res.refined} facilities via Google geocode + live OSM`, {
+        description: !res.google_key_present
+          ? 'GOOGLE_MAPS_API_KEY not set — only OSM grid checks ran'
+          : failed.length ? `${failed.length} need review — see console` : undefined,
+      });
+      if (failed.length) console.warn('facility-refine issues:', failed);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Refine failed');
+    }
+  };
+
+  const savedCount = watchlist.entries.length;
 
   return (
     <div className="space-y-4">
@@ -70,9 +95,9 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Idle or distressed plants whose existing grid interconnection is the asset — electrolysis
-            chemicals, EAF steel, mechanical pulp, cement, LNG e-drive, fabs. Every score factor cites
-            its evidence; MW estimates use a documented per-industry intensity model, never defaults.
+            Idle or distressed plants whose existing grid interconnection is the asset. Every score factor
+            cites its evidence; "Refine" replaces seeded coordinates with Google-geocoded locations and
+            live OSM substation measurements.
           </p>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3 pt-0">
@@ -106,6 +131,13 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
               </SelectContent>
             </Select>
           </div>
+          <Button size="sm" variant="outline" className="h-8 text-xs"
+            disabled={refine.isPending} onClick={runRefineAll}>
+            {refine.isPending
+              ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+              : <LocateFixed className="w-3.5 h-3.5 mr-1" />}
+            Refine unverified
+          </Button>
           <div className="ml-auto flex gap-1">
             <Button size="sm" variant={view === 'list' ? 'default' : 'outline'} className="h-8 text-xs"
               onClick={() => setView('list')}>
@@ -114,6 +146,10 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
             <Button size="sm" variant={view === '3d' ? 'default' : 'outline'} className="h-8 text-xs"
               onClick={() => setView('3d')}>
               <Boxes className="w-3.5 h-3.5 mr-1" /> 3D Map
+            </Button>
+            <Button size="sm" variant={view === 'saved' ? 'default' : 'outline'} className="h-8 text-xs"
+              onClick={() => setView('saved')}>
+              <Bookmark className="w-3.5 h-3.5 mr-1" /> Saved{savedCount > 0 ? ` (${savedCount})` : ''}
             </Button>
           </div>
         </CardContent>
@@ -143,6 +179,16 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
             <HiddenGems3D gems={gems} ctxByState={ctxByState} onAnalyze={onAnalyze} />
           )}
         </Suspense>
+      ) : view === 'saved' ? (
+        <SavedView
+          gems={gems}
+          listings={gemListings.listings}
+          watchlist={watchlist}
+          onAnalyze={onAnalyze}
+          analyzing={analyzing}
+          expanded={expanded}
+          setExpanded={setExpanded}
+        />
       ) : (
         <div className="space-y-2">
           {gems.map((g) => (
@@ -153,6 +199,7 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
               onToggle={() => setExpanded(expanded === g.facility.id ? null : g.facility.id)}
               onAnalyze={onAnalyze}
               analyzing={analyzing}
+              watchlist={watchlist}
             />
           ))}
           {gems.length === 0 && !error && (
@@ -165,15 +212,157 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
         </div>
       )}
 
-      <ListingSignals />
+      {view !== 'saved' && <ListingSignals listingsApi={gemListings} watchlist={watchlist} />}
     </div>
+  );
+}
+
+// ── Saved view ───────────────────────────────────────────────────────────────
+
+function SavedView({
+  gems, listings, watchlist, onAnalyze, analyzing, expanded, setExpanded,
+}: {
+  gems: ScoredGem[];
+  listings: GemListing[];
+  watchlist: Watchlist;
+  onAnalyze: Props['onAnalyze'];
+  analyzing?: boolean;
+  expanded: string | null;
+  setExpanded: (id: string | null) => void;
+}) {
+  const savedFacilities = gems.filter((g) => watchlist.isSaved('facility', g.facility.id));
+  const savedListings = listings.filter((l) => watchlist.isSaved('listing', l.id));
+
+  if (watchlist.entries.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          Nothing saved yet — use the <Bookmark className="w-3.5 h-3.5 inline mx-1" /> button on any
+          facility or scraped listing to build your watchlist.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {savedFacilities.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground px-1">
+            Saved facilities ({savedFacilities.length})
+          </h3>
+          {savedFacilities.map((g) => (
+            <GemRow
+              key={g.facility.id}
+              gem={g}
+              expanded={expanded === g.facility.id}
+              onToggle={() => setExpanded(expanded === g.facility.id ? null : g.facility.id)}
+              onAnalyze={onAnalyze}
+              analyzing={analyzing}
+              watchlist={watchlist}
+            />
+          ))}
+        </div>
+      )}
+      {savedListings.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground px-1">
+            Saved listings ({savedListings.length})
+          </h3>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="space-y-2">
+                {savedListings.map((l) => (
+                  <ListingRow key={l.id} listing={l} watchlist={watchlist} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {savedFacilities.length === 0 && savedListings.length === 0 && (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            Saved items exist but aren't in the current dataset (check filters or rescan listings).
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ── Save button ──────────────────────────────────────────────────────────────
+
+function SaveButton({
+  watchlist, type, id,
+}: {
+  watchlist: Watchlist;
+  type: 'facility' | 'listing';
+  id: string;
+}) {
+  const saved = watchlist.isSaved(type, id);
+  return (
+    <Button
+      size="sm" variant="ghost" className="h-7 w-7 p-0"
+      title={saved ? 'Remove from saved' : 'Save for later'}
+      disabled={watchlist.toggle.isPending}
+      onClick={async () => {
+        try {
+          const res = await watchlist.toggle.mutateAsync({ type, id });
+          toast.success(res.saved ? 'Saved to watchlist' : 'Removed from watchlist');
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : 'Could not update watchlist');
+        }
+      }}
+    >
+      {saved
+        ? <BookmarkCheck className="w-4 h-4 text-primary" />
+        : <Bookmark className="w-4 h-4" />}
+    </Button>
   );
 }
 
 // ── Scraped listing signals ──────────────────────────────────────────────────
 
-function ListingSignals() {
-  const { listings, isLoading, scan } = useGemListings();
+function ListingRow({ listing: l, watchlist }: { listing: GemListing; watchlist: Watchlist }) {
+  return (
+    <div className="flex items-start gap-3 text-xs border-b border-border last:border-0 pb-2 last:pb-0">
+      <Badge variant="outline" className="font-mono tabular-nums shrink-0 mt-0.5">
+        {l.signal_score}
+      </Badge>
+      <div className="min-w-0 flex-1">
+        <a href={l.listing_url} target="_blank" rel="noreferrer"
+          className="font-medium text-primary hover:underline inline-flex items-center gap-1">
+          <span className="truncate">{l.title ?? l.listing_url}</span>
+          <ExternalLink className="w-3 h-3 shrink-0" />
+        </a>
+        {l.description_excerpt && (
+          <p className="text-muted-foreground line-clamp-2 mt-0.5">{l.description_excerpt}</p>
+        )}
+        <div className="flex flex-wrap gap-1 mt-1">
+          {l.gem_signals.map((s) => (
+            <Badge key={s} variant="secondary" className="text-[9px] px-1.5 py-0">
+              {s.replace(/_/g, ' ')}
+            </Badge>
+          ))}
+          {l.state && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{l.state}</Badge>}
+          <span className="text-[10px] text-muted-foreground ml-1">
+            via "{l.search_query}" · {new Date(l.scraped_at).toLocaleDateString()}
+          </span>
+        </div>
+      </div>
+      <SaveButton watchlist={watchlist} type="listing" id={l.id} />
+    </div>
+  );
+}
+
+function ListingSignals({
+  listingsApi, watchlist,
+}: {
+  listingsApi: ReturnType<typeof useGemListings>;
+  watchlist: Watchlist;
+}) {
+  const { listings, isLoading, scan } = listingsApi;
 
   const runScan = async (region: 'alberta' | 'texas' | 'both') => {
     try {
@@ -209,8 +398,8 @@ function ListingSignals() {
         <p className="text-xs text-muted-foreground mt-1">
           Live Firecrawl search of commercial listings for gem keywords (substation, MW/MVA quoted,
           former plant, transmission, rail). Only listings with at least one matched signal are kept,
-          each with its source URL and the query that found it. If the scraper key isn't configured the
-          scan fails loudly — placeholder listings are never shown.
+          each with its source URL and the query that found it. Save any listing to your watchlist with
+          the bookmark button.
         </p>
       </CardHeader>
       <CardContent className="pt-0">
@@ -225,32 +414,7 @@ function ListingSignals() {
         ) : (
           <div className="space-y-2">
             {listings.map((l) => (
-              <div key={l.id} className="flex items-start gap-3 text-xs border-b border-border last:border-0 pb-2 last:pb-0">
-                <Badge variant="outline" className="font-mono tabular-nums shrink-0 mt-0.5">
-                  {l.signal_score}
-                </Badge>
-                <div className="min-w-0 flex-1">
-                  <a href={l.listing_url} target="_blank" rel="noreferrer"
-                    className="font-medium text-primary hover:underline inline-flex items-center gap-1">
-                    <span className="truncate">{l.title ?? l.listing_url}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
-                  {l.description_excerpt && (
-                    <p className="text-muted-foreground line-clamp-2 mt-0.5">{l.description_excerpt}</p>
-                  )}
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {l.gem_signals.map((s) => (
-                      <Badge key={s} variant="secondary" className="text-[9px] px-1.5 py-0">
-                        {s.replace(/_/g, ' ')}
-                      </Badge>
-                    ))}
-                    {l.state && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{l.state}</Badge>}
-                    <span className="text-[10px] text-muted-foreground ml-1">
-                      via "{l.search_query}" · {new Date(l.scraped_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <ListingRow key={l.id} listing={l} watchlist={watchlist} />
             ))}
           </div>
         )}
@@ -262,15 +426,43 @@ function ListingSignals() {
 // ── Registry row ─────────────────────────────────────────────────────────────
 
 function GemRow({
-  gem: g, expanded, onToggle, onAnalyze, analyzing,
+  gem: g, expanded, onToggle, onAnalyze, analyzing, watchlist,
 }: {
   gem: ScoredGem;
   expanded: boolean;
   onToggle: () => void;
   onAnalyze: Props['onAnalyze'];
   analyzing?: boolean;
+  watchlist: Watchlist;
 }) {
   const f = g.facility;
+  const refine = useFacilityRefine();
+  const apiVerified = f.location_method === 'google_geocode';
+
+  const runRefine = async () => {
+    try {
+      const res = await refine.mutateAsync({ facility_id: f.id });
+      const r = res.results[0];
+      if (r?.geocode === 'updated') {
+        toast.success(`Location refined: ${r.precision} precision, moved ${r.moved_km} km`, {
+          description: r.osm === 'updated' && r.osm_substation_km != null
+            ? `OSM: nearest substation ${r.osm_substation_km.toFixed(1)} km${r.osm_max_voltage_kv ? `, up to ${r.osm_max_voltage_kv} kV` : ''}`
+            : undefined,
+        });
+      } else if (r?.osm === 'updated') {
+        toast.success('Live OSM grid check stored', {
+          description: r.geocode === 'skipped_no_key'
+            ? 'Set GOOGLE_MAPS_API_KEY to also refine coordinates'
+            : r.error,
+        });
+      } else {
+        toast.error(r?.error ?? 'Refine produced no updates');
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Refine failed');
+    }
+  };
+
   return (
     <Card>
       <CardContent className="py-3">
@@ -279,7 +471,12 @@ function GemRow({
             {g.total} · {g.grade}
           </Badge>
           <div className="min-w-0 flex-1">
-            <div className="font-medium text-sm truncate">{f.name}</div>
+            <div className="font-medium text-sm truncate flex items-center gap-1.5">
+              {f.name}
+              {apiVerified && (
+                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="Location API-verified" />
+              )}
+            </div>
             <div className="text-xs text-muted-foreground truncate">
               {f.operator ?? '—'} · {f.facility_type.replace(/_/g, ' ')} · {f.municipality ?? '—'} · {f.state ?? 'AB'}
             </div>
@@ -295,6 +492,7 @@ function GemRow({
           <Badge variant="outline" className="text-[10px]">
             {f.status.replace(/_/g, ' ')}
           </Badge>
+          <SaveButton watchlist={watchlist} type="facility" id={f.id} />
           <Button size="sm" variant="outline" className="h-7 text-xs" disabled={analyzing}
             onClick={() => onAnalyze({ lat: f.lat, lng: f.lng, label: f.name })}>
             <FileSearch className="w-3 h-3 mr-1" /> Full report
@@ -321,7 +519,8 @@ function GemRow({
             </div>
             <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 pt-1">
               <span>
-                Coords: {f.lat.toFixed(3)}, {f.lng.toFixed(3)} ({f.coordinates_precision})
+                Coords: {f.lat.toFixed(3)}, {f.lng.toFixed(3)} ({f.coordinates_precision}
+                {apiVerified ? ' · Google-geocoded' : ' · seeded'})
               </span>
               {f.naics_code && <span>NAICS {f.naics_code}</span>}
               {f.capacity_value != null && (
@@ -336,6 +535,20 @@ function GemRow({
               {f.last_verified
                 ? <span>Verified {f.last_verified}</span>
                 : <span className="text-amber-600 dark:text-amber-400">Seeded — not yet re-verified</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="h-7 text-xs"
+                disabled={refine.isPending} onClick={runRefine}>
+                {refine.isPending
+                  ? <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  : <LocateFixed className="w-3 h-3 mr-1" />}
+                Refine location & grid (live)
+              </Button>
+              {f.osm_checked_at && (
+                <span className="text-[10px] text-muted-foreground">
+                  Last OSM check {f.osm_checked_at.slice(0, 10)}
+                </span>
+              )}
             </div>
             {f.notes && <p className="text-[11px] text-muted-foreground italic">{f.notes}</p>}
           </div>

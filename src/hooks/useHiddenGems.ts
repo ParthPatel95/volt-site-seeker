@@ -8,11 +8,14 @@ import {
   type ScoredGem,
 } from '@/lib/hidden-gems';
 
-// industrial_facilities / gem_listings are newer than the generated Database
-// types; cast the client for those tables until Lovable regenerates
-// src/integrations/supabase/types.ts.
+// industrial_facilities / gem_listings / gem_watchlist are newer than the
+// generated Database types; cast the client for those tables until Lovable
+// regenerates src/integrations/supabase/types.ts. The builder must be `any`
+// here — reusing ReturnType<typeof supabase.from> would type-check inserts
+// against whichever table TS happens to infer.
 const untyped = supabase as unknown as {
-  from: (table: string) => ReturnType<typeof supabase.from>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
 };
 
 const EMPTY_SEGMENTS: GemContext['transmissionLines'] = [];
@@ -170,5 +173,101 @@ export function useGemListings() {
     isLoading: listings.isLoading,
     error: listings.error as Error | null,
     scan,
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Location / grid refinement (facility-refine edge function)
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface RefineResult {
+  facility_id: string;
+  name: string;
+  geocode: 'updated' | 'failed' | 'skipped_no_key';
+  precision?: string;
+  moved_km?: number;
+  osm: 'updated' | 'failed';
+  osm_substation_km?: number | null;
+  osm_max_voltage_kv?: number | null;
+  error?: string;
+}
+
+export function useFacilityRefine() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (req: { facility_id: string } | { all_unverified: true; limit?: number }) => {
+      const { data, error } = await supabase.functions.invoke('facility-refine', { body: req });
+      if (error) throw error;
+      if (data?.success === false) throw new Error(data.error ?? 'Refine failed');
+      return data as { refined: number; google_key_present: boolean; results: RefineResult[] };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hidden-gems-inputs'] });
+    },
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Watchlist (per-user saved facilities + listings)
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface WatchlistEntry {
+  id: string;
+  target_type: 'facility' | 'listing';
+  target_id: string;
+  note: string | null;
+  created_at: string;
+}
+
+export function useGemWatchlist() {
+  const queryClient = useQueryClient();
+
+  const watchlist = useQuery({
+    queryKey: ['gem-watchlist'],
+    queryFn: async () => {
+      const { data, error } = await untyped
+        .from('gem_watchlist')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as WatchlistEntry[];
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const savedKeys = new Set(
+    (watchlist.data ?? []).map((w) => `${w.target_type}:${w.target_id}`),
+  );
+
+  const toggle = useMutation({
+    mutationFn: async (target: { type: 'facility' | 'listing'; id: string }) => {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData?.user) throw new Error('Sign in to save items');
+      const existing = (watchlist.data ?? []).find(
+        (w) => w.target_type === target.type && w.target_id === target.id,
+      );
+      if (existing) {
+        const { error } = await untyped.from('gem_watchlist').delete().eq('id', existing.id);
+        if (error) throw error;
+        return { saved: false };
+      }
+      const { error } = await untyped.from('gem_watchlist').insert({
+        user_id: userData.user.id,
+        target_type: target.type,
+        target_id: target.id,
+      });
+      if (error) throw error;
+      return { saved: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gem-watchlist'] });
+    },
+  });
+
+  return {
+    entries: watchlist.data ?? [],
+    isSaved: (type: 'facility' | 'listing', id: string) => savedKeys.has(`${type}:${id}`),
+    toggle,
+    isLoading: watchlist.isLoading,
   };
 }

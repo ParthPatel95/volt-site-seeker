@@ -149,6 +149,38 @@ describe('scoreFacility', () => {
     );
     expect(g.confidence).toBe('low');
   });
+
+  it('prefers a live OSM substation measurement over curated-table distance', () => {
+    const ctx: GemContext = {
+      ...emptyCtx,
+      // Curated table says 30 km away…
+      substations: [{ name: 'Far Sub', latitude: 54.07, longitude: -112.9, voltage_level: '138kV', capacity_mva: 50, utility_owner: 'X' }],
+    };
+    // …but the live OSM check at the site measured 1.2 km.
+    const verified = scoreFacility(
+      facility({ osm_substation_km: 1.2, osm_max_voltage_kv: 240, osm_checked_at: '2026-06-11T00:00:00Z' }),
+      ctx,
+    );
+    const unverified = scoreFacility(facility(), ctx);
+    const vSub = verified.factors.find((x) => x.key === 'substation_proximity')!;
+    const uSub = unverified.factors.find((x) => x.key === 'substation_proximity')!;
+    expect(vSub.score).toBeGreaterThan(uSub.score);
+    expect(vSub.detail).toMatch(/OSM-verified/);
+    expect(vSub.detail).toMatch(/240 kV/);
+    expect(uSub.detail).toMatch(/curated dataset/);
+  });
+
+  it('upgrades medium confidence to high when fully API-verified with no gaps', () => {
+    const apiVerified = facility({
+      confidence: 'medium',
+      location_method: 'google_geocode',
+      osm_substation_km: 2.0,
+      osm_checked_at: '2026-06-11T00:00:00Z',
+    });
+    expect(scoreFacility(apiVerified, emptyCtx).confidence).toBe('high');
+    // Without the refine pass the same row stays medium.
+    expect(scoreFacility(facility({ confidence: 'medium', osm_substation_km: 2.0 }), emptyCtx).confidence).toBe('medium');
+  });
 });
 
 describe('rankHiddenGems', () => {
