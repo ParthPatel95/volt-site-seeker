@@ -9,9 +9,9 @@ import { Reveal } from './motion';
 // screenshots or invented numbers.
 
 const FEATURES = [
+  { icon: Gem, title: 'Hidden Gems discovery engine', text: 'Deterministic identification of idle, distressed, and underutilized power-intensive industrial sites across AB + TX — registry, listing-signal scraping, and geocode-verified grid checks.' },
+  { icon: MapIcon, title: 'Site Intelligence', text: 'Fiber, transmission, gas, water, climate, and hazard layers for any Alberta location, scored into a 100-point suitability report.' },
   { icon: BarChart3, title: 'AESO / ERCOT market hub', text: 'Live pricing, curtailment analytics, and an invoice-grade power cost model.' },
-  { icon: MapIcon, title: 'Site Intelligence', text: 'Fiber, transmission, gas, water, climate, and hazard layers for any Alberta location.' },
-  { icon: Gem, title: 'Hidden Gems', text: 'Deterministic discovery of idle power-intensive industrial sites across AB + TX.' },
   { icon: Activity, title: 'Live telemetry', text: 'Facility dashboards, alerts, and automation rules for operating sites.' },
 ];
 
@@ -34,13 +34,17 @@ export function PlatformSection() {
           {/* Copy */}
           <div className="order-2 lg:order-1">
             <Reveal>
-              <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Platform</p>
+              <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
+                <span className="font-mono mr-2 opacity-60">06 /</span> Our proprietary edge
+              </p>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
-                VoltScout — the engine <span className="text-gradient-watt">behind the pipeline</span>
+                VoltScout — the software that <span className="text-gradient-watt">finds hidden sites</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed mb-9">
-                Every site in our portfolio was found, scored, and modelled on VoltScout.
-                The same platform is available to partners.
+                Built in-house, VoltScout fuses grid topology, industrial registries,
+                market data, and listing signals to surface power assets nobody is
+                marketing. Every site in our portfolio was found, scored, and modelled
+                on it — and the same platform is available to partners.
               </p>
             </Reveal>
 

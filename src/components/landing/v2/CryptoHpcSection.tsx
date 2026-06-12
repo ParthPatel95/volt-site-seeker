@@ -31,7 +31,8 @@ export function CryptoHpcSection() {
           <div className="lg:col-span-5">
             <Reveal>
               <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3 flex items-center gap-2">
-                <Bitcoin className="w-4 h-4" /> Crypto + HPC
+                <span className="font-mono opacity-60">03 /</span>
+                <Bitcoin className="w-4 h-4" /> What runs on the megawatts
               </p>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
                 ASIC and AI workloads on the <span className="text-gradient-watt">same megawatts.</span>
