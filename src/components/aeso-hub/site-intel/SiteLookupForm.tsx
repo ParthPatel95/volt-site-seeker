@@ -79,9 +79,9 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, onClear, loa
   return (
     <Card className="p-4 space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="addr">Address (Alberta)</Label>
+        <Label htmlFor="addr">Address (Canada or USA)</Label>
         <div className="flex gap-2">
-          <Input id="addr" placeholder="e.g. 7007 54 St SE, Calgary" value={address} onChange={(e) => setAddress(e.target.value)}
+          <Input id="addr" placeholder="e.g. 7007 54 St SE, Calgary or Midland, TX" value={address} onChange={(e) => setAddress(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && geocode()} />
           <Button onClick={geocode} disabled={geocoding || !address.trim()} variant="secondary">
             {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
