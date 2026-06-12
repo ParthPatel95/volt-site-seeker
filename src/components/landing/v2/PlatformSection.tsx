@@ -34,9 +34,7 @@ export function PlatformSection() {
           {/* Copy */}
           <div className="order-2 lg:order-1">
             <Reveal>
-              <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
-                <span className="font-mono mr-2 opacity-60">06 /</span> The platform behind it
-              </p>
+              <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Platform</p>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
                 VoltScout — the engine <span className="text-gradient-watt">behind the pipeline</span>
               </h2>

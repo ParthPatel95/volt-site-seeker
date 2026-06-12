@@ -52,9 +52,7 @@ export function FlagshipSection() {
           {/* Copy + specs */}
           <div>
             <Reveal>
-              <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3">
-                <span className="font-mono mr-2 opacity-60">04 /</span> Flagship in steel
-              </p>
+              <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3">Flagship</p>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
                 135 MW in Alberta's <span className="text-gradient-watt">industrial heartland</span>
               </h2>

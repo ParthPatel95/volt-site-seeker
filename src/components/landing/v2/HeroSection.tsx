@@ -36,18 +36,8 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-[100svh] flex flex-col overflow-hidden">
-      {/* 3D datacenter layer. Under it: a soft branded glow that's painted
-          immediately so the right half of the hero never reads as a blank
-          rectangle while the WebGL chunk + scene first frame are loading. */}
+      {/* 3D datacenter layer */}
       <div className="absolute inset-0">
-        <div
-          className="absolute inset-0 lg:left-[30%] pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(60% 70% at 60% 50%, hsl(var(--watt-trust) / 0.16), transparent 70%),' +
-              'radial-gradient(50% 60% at 40% 70%, hsl(var(--watt-bitcoin) / 0.12), transparent 70%)',
-          }}
-        />
         {canRender3D && (
           <Suspense fallback={null}>
             <div className="absolute inset-0 lg:left-[30%]">

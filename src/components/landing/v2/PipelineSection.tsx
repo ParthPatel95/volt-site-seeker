@@ -32,9 +32,7 @@ export function PipelineSection() {
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <Reveal>
-          <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3">
-            <span className="font-mono mr-2 opacity-60">05 /</span> The global pipeline
-          </p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3">Pipeline</p>
           <div className="flex flex-wrap items-end justify-between gap-6 mb-10">
             <div className="max-w-2xl">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4">

@@ -48,27 +48,16 @@ const Landing: React.FC = () => {
       <AuroraBackground />
       <LandingNavigation />
 
-      {/* Narrative-ordered sections: Hook → Our model → What we offer →
-          What runs on it → Flagship → Pipeline → Platform → Live → Close.
-          Chapter labels live inside each section ("01 / Our model" etc). */}
       <main className="relative z-10">
         <HeroSection />
         <PipelineTicker />
 
         <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Our model"><EnergyFlowSection /></section>
+          <section aria-label="What we do"><EnergyFlowSection /></section>
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
-          <section aria-label="What we offer"><ServicesGrid /></section>
-        </Suspense>
-
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="What runs on the megawatts"><CryptoHpcSection /></section>
-        </Suspense>
-
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Alberta flagship facility"><FlagshipSection /></section>
+          <section aria-label="Services"><ServicesGrid /></section>
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
@@ -76,20 +65,19 @@ const Landing: React.FC = () => {
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Alberta flagship facility"><FlagshipSection /></section>
+        </Suspense>
+
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Crypto and HPC hosting"><CryptoHpcSection /></section>
+        </Suspense>
+
+        <Suspense fallback={<SectionLoader />}>
           <section aria-label="VoltScout platform"><PlatformSection /></section>
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Live energy markets" className="relative">
-            {/* Chapter label sits on the page so we don't have to edit the
-                legacy LiveMarketsSection component. */}
-            <div className="px-6 sm:px-10 lg:px-20 pt-12 max-w-7xl mx-auto">
-              <p className="text-sm font-semibold uppercase tracking-widest text-watt-trust">
-                <span className="font-mono mr-2 opacity-60">07 /</span> Live data, no hand-waving
-              </p>
-            </div>
-            <LiveMarketsSection />
-          </section>
+          <section aria-label="Live energy markets"><LiveMarketsSection /></section>
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
