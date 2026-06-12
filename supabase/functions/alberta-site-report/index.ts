@@ -91,11 +91,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    if (!inAlbertaBounds(lat, lng)) {
-      return new Response(JSON.stringify({ error: 'Coordinates outside Alberta bounding box' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const isAlberta = inAlbertaBounds(lat, lng);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
