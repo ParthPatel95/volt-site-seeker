@@ -5,6 +5,27 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   motion, useInView, useReducedMotion, useSpring, useTransform, useMotionValue,
 } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+// ── Frosted content panel ────────────────────────────────────────────────────
+// All reading content sits on glass so the persistent 3D scene behind the
+// page stays vivid without ever fighting the text. Strong blur + a high-
+// opacity background tint is what makes long body copy readable over the
+// busy scene; the border + shadow give the panel an edge against the sky.
+
+export function GlassPanel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn(
+        'rounded-3xl border border-border/70 bg-background/85 backdrop-blur-xl',
+        'shadow-[0_8px_40px_-12px_rgb(0_0_0_/_0.15)]',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
 // ── Scroll-choreographed reveal ──────────────────────────────────────────────
 

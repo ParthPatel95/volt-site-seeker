@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, MapPin } from 'lucide-react';
-import { Reveal, CountUp } from './motion';
+import { Reveal, CountUp, GlassPanel } from './motion';
 import {
   PIPELINE_PROJECTS, TOTAL_MW, UNDER_DEV_MW, COUNTRIES, ENERGY_TYPE_COLORS,
   type PipelineProject,
@@ -30,7 +30,7 @@ export function PipelineSection() {
 
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
-      <div className="max-w-7xl mx-auto">
+      <GlassPanel className="max-w-7xl mx-auto p-8 sm:p-12 lg:p-14">
         <Reveal>
           <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3">
             <span className="font-mono mr-2 opacity-60">05 /</span> The global pipeline
@@ -138,7 +138,7 @@ export function PipelineSection() {
             })}
           </AnimatePresence>
         </motion.div>
-      </div>
+      </GlassPanel>
     </section>
   );
 }

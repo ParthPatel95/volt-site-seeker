@@ -52,10 +52,10 @@ describe('cameraPose', () => {
 });
 
 describe('sceneOpacity', () => {
-  it('is full at the hero, dimmed through the reading zone, re-emerging at the close', () => {
+  it('is full at the hero, eased slightly through the reading zone, full again at the close', () => {
     expect(sceneOpacity(0)).toBe(1);
-    expect(sceneOpacity(0.5)).toBeCloseTo(0.42, 5);
-    expect(sceneOpacity(1)).toBeCloseTo(0.75, 5);
+    expect(sceneOpacity(0.5)).toBeCloseTo(0.88, 5);
+    expect(sceneOpacity(1)).toBeCloseTo(1, 5);
   });
 
   it('never leaves [0, 1]', () => {

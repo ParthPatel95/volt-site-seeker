@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Activity, Map as MapIcon, Gem, BarChart3 } from 'lucide-react';
-import { Reveal } from './motion';
+import { Reveal, GlassPanel } from './motion';
 
 // VoltScout showcase. The "terminal" is an abstract, clearly stylized
 // console — typed-out lines reference real platform features, not faked
@@ -29,7 +29,7 @@ export function PlatformSection() {
 
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
-      <div className="max-w-7xl mx-auto">
+      <GlassPanel className="max-w-7xl mx-auto p-8 sm:p-12 lg:p-14">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Copy */}
           <div className="order-2 lg:order-1">
@@ -113,7 +113,7 @@ export function PlatformSection() {
             </div>
           </Reveal>
         </div>
-      </div>
+      </GlassPanel>
     </section>
   );
 }

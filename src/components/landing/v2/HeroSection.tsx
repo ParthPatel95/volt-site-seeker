@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronDown, Radar } from 'lucide-react';
-import { SplitWords, CountUp, Magnetic, Reveal } from './motion';
+import { SplitWords, CountUp, Magnetic, Reveal, GlassPanel } from './motion';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
 // The 3D backdrop is no longer embedded here — ScrollScene (mounted at page
@@ -36,6 +36,7 @@ export function HeroSection() {
       <div className="relative z-10 flex-1 flex items-center">
         <div className="w-full px-6 sm:px-10 lg:px-20 max-w-7xl mx-auto">
           <div className="max-w-2xl pt-28 pb-20">
+            <GlassPanel className="p-8 sm:p-10 bg-background/75">
             <Reveal delay={0}>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-watt-trust/30 bg-watt-trust/10 text-watt-trust text-xs font-medium mb-7 backdrop-blur-sm">
                 <Radar className="w-3.5 h-3.5" />
@@ -89,6 +90,7 @@ export function HeroSection() {
                 ))}
               </div>
             </Reveal>
+            </GlassPanel>
           </div>
         </div>
       </div>
