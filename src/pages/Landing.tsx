@@ -9,7 +9,11 @@ import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 // Persistent 3D backdrop — the camera travels through the datacenter hall as
 // the visitor scrolls the whole page. Lazy so three.js stays out of the
 // first paint; the component self-gates on WebGL + prefers-reduced-motion.
-const ScrollScene = lazy(() => import('@/components/landing/v2/ScrollScene'));
+// Persistent realistic energy site — transmission line + substation +
+// datacenter — behind the whole page. Camera flies through it on scroll.
+// Lazy so three.js stays out of the first paint; self-gates on WebGL +
+// prefers-reduced-motion.
+const RealisticScene = lazy(() => import('@/components/landing/v2/RealisticScene'));
 
 // Below-the-fold sections load lazily.
 const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowSection').then(m => ({ default: m.EnergyFlowSection })));
@@ -56,7 +60,7 @@ const Landing: React.FC = () => {
           through chapters 01–03, top-down overview at the pipeline, pulled
           back for the close. Dims under the reading sections. */}
       <Suspense fallback={null}>
-        <ScrollScene />
+        <RealisticScene />
       </Suspense>
 
       <LandingNavigation />

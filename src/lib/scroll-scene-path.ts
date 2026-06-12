@@ -1,12 +1,19 @@
-// Camera path for the persistent landing scroll scene. Pure math — no
-// three.js dependency — so the journey is unit-testable.
+// Camera path for the landing-page scroll scene. Pure math — no three.js
+// dependency — so the journey is unit-testable.
 //
-// The page is one continuous shot through the datacenter hall:
-//   A  hero            — holding at the cool-aisle entrance
-//   B  chapters 01–03  — traveling down the aisle between the rack rows
-//   C  chapters 04–05  — rising to a top-down overview (the "scale" beat)
-//   D  chapters 06–end — pulling back wide for the close
-// Segment endpoints are shared so the path is continuous by construction.
+// World layout (matches src/components/landing/v2/EnergySite.tsx):
+//   x:   transmission line tower row at -46 → -34 → -22 → -10
+//        substation centered at x ≈ 6 (gravel pad spans 14)
+//        datacenter at x ≈ 18 (footprint 14 × 9, height 6)
+//   y:   ground = 0; conductor sag at y ≈ 12.4; datacenter roof at y ≈ 6
+//   z:   transmission line offset along z = 0; substation extends ±3; access road runs +z
+//
+// Scroll storyboard:
+//   A  hero            — wide establishing shot looking down the line
+//   B  chapter 01–02   — dollying along the conductors toward the substation
+//   C  chapter 03–04   — beside the transformers, then turn to face the DC
+//   D  chapter 05–06   — pulling up to a high three-quarter
+//   E  chapter 07-end  — aerial overlook of the whole site
 
 export type Vec = [number, number, number];
 
@@ -16,7 +23,6 @@ export interface CameraPose {
 }
 
 interface Segment {
-  /** scroll-progress span [from, to) */
   from: number;
   to: number;
   posA: Vec;
@@ -26,25 +32,41 @@ interface Segment {
 }
 
 const SEGMENTS: Segment[] = [
+  // A — hero: wide shot along the transmission line
   {
-    from: 0, to: 0.18,
-    posA: [-5.6, 0.55, 0], posB: [-4.2, 0.6, 0],
-    lookA: [2.5, 0.35, 0], lookB: [2.5, 0.35, 0],
+    from: 0, to: 0.15,
+    posA: [-58, 6, 14], posB: [-46, 5, 10],
+    lookA: [-20, 8, 0], lookB: [-14, 7, 0],
   },
+  // B — chapters 01-02: dollying down the line
   {
-    from: 0.18, to: 0.5,
-    posA: [-4.2, 0.6, 0], posB: [3.2, 0.8, 0],
-    lookA: [2.5, 0.35, 0], lookB: [9.0, 0.5, 0],
+    from: 0.15, to: 0.4,
+    posA: [-46, 5, 10], posB: [-14, 4, 6],
+    lookA: [-14, 7, 0], lookB: [6, 5, 0],
   },
+  // C1 — chapter 03: approaching the substation
   {
-    from: 0.5, to: 0.78,
-    posA: [3.2, 0.8, 0], posB: [0, 7.5, 5.5],
-    lookA: [9.0, 0.5, 0], lookB: [0, 0, 0],
+    from: 0.4, to: 0.55,
+    posA: [-14, 4, 6], posB: [-2, 3, 6],
+    lookA: [6, 5, 0], lookB: [8, 2, 0],
   },
+  // C2 — chapter 04: alongside the transformers, then pan toward the DC
   {
-    from: 0.78, to: 1.0001, // inclusive upper bound
-    posA: [0, 7.5, 5.5], posB: [-4.5, 5.5, 7.5],
-    lookA: [0, 0, 0], lookB: [0, 0.5, 0],
+    from: 0.55, to: 0.7,
+    posA: [-2, 3, 6], posB: [10, 3, 8],
+    lookA: [8, 2, 0], lookB: [18, 3, -1],
+  },
+  // D — chapters 05-06: rising for a three-quarter view of the whole site
+  {
+    from: 0.7, to: 0.88,
+    posA: [10, 3, 8], posB: [-10, 22, 24],
+    lookA: [18, 3, -1], lookB: [6, 0, 0],
+  },
+  // E — close: pulled back high, light aerial drift
+  {
+    from: 0.88, to: 1.0001,
+    posA: [-10, 22, 24], posB: [-22, 34, 30],
+    lookA: [6, 0, 0], lookB: [4, 0, -2],
   },
 ];
 
@@ -68,13 +90,10 @@ export function cameraPose(p: number): CameraPose {
   };
 }
 
-/**
- * Scene-layer opacity for scroll progress: full at the hero, dimmed through
- * the reading sections so text stays legible, re-emerging for the close.
- */
+/** Scene-layer opacity for scroll progress (full at hero, dimmed mid-page). */
 export function sceneOpacity(p: number): number {
   const stops: [number, number][] = [
-    [0, 1], [0.12, 0.95], [0.24, 0.3], [0.8, 0.3], [0.95, 0.65], [1, 0.65],
+    [0, 1], [0.12, 0.95], [0.24, 0.42], [0.78, 0.42], [0.95, 0.75], [1, 0.75],
   ];
   const clamped = Math.min(1, Math.max(0, p));
   for (let i = 0; i < stops.length - 1; i++) {
