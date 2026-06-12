@@ -1,4 +1,4 @@
-import { createElement, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -92,30 +92,53 @@ function HashRateDisplay() {
         <planeGeometry args={[2.05, 0.42]} />
         <meshBasicMaterial color="#02101a" />
       </mesh>
-      {/* readout — built with HTML for crisp text via foreignObject equivalent */}
-      <Html3DText text={text} />
+      {/* readout — canvas-texture sprite avoids drei <Text>/troika worker
+          (which crashes in Vite dev with "init did not return a callable
+          function"). */}
+      <CanvasTextSprite text={text} />
     </group>
   );
 }
 
-// Use drei <Text> via dynamic load to avoid pulling its font when not in
-// view; inline import is fine because three.js is already a vendor chunk.
-import { Text } from '@react-three/drei';
+function CanvasTextSprite({ text }: { text: string }) {
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  const textureRef = useRef<THREE.CanvasTexture | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-function Html3DText({ text }: { text: string }) {
-  // Rendered via createElement (not JSX) so the Lovable JSX tagger cannot
-  // inject data-lov-* props — drei <Text> spreads its props into the troika
-  // three object and dashed props crash r3f's applyProps ("reading 'lov'").
-  return createElement(Text, {
-    position: [0, 0, 0.06] as [number, number, number],
-    fontSize: 0.22,
-    color: '#22d3ee',
-    anchorX: 'center' as const,
-    anchorY: 'middle' as const,
-    outlineWidth: 0,
-    letterSpacing: 0.05,
-    children: text,
-  });
+  // Lazily create the canvas + texture once.
+  if (!canvasRef.current && typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 256;
+    canvasRef.current = canvas;
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.anisotropy = 4;
+    textureRef.current = tex;
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const tex = textureRef.current;
+    if (!canvas || !tex) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#22d3ee';
+    ctx.font = '600 160px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    tex.needsUpdate = true;
+  }, [text]);
+
+  useEffect(() => () => { textureRef.current?.dispose(); }, []);
+
+  return (
+    <mesh position={[0, 0, 0.06]}>
+      <planeGeometry args={[1.9, 0.38]} />
+      <meshBasicMaterial ref={matRef} map={textureRef.current ?? undefined} transparent />
+    </mesh>
+  );
 }
 
 function BlockStream() {
