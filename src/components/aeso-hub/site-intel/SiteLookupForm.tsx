@@ -44,7 +44,11 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, onClear, loa
         'geocode-address',
         { body: { query: address } },
       );
-      if (error) throw error;
+      if (error) {
+        console.error('Geocode error:', error);
+        toast.error(`Geocoding failed: ${error.message ?? 'unknown error'}. Try adding city/province, or drop a pin on the map.`);
+        return;
+      }
       if (!data || typeof data.lat !== 'number' || typeof data.lng !== 'number') {
         toast.error('Address not found. Try adding city/province, or drop a pin on the map.');
         return;
@@ -52,8 +56,9 @@ export function SiteLookupForm({ initialLat, initialLng, onResolve, onClear, loa
       setLat(data.lat.toString());
       setLng(data.lng.toString());
       onResolve({ lat: data.lat, lng: data.lng, label: data.label ?? address });
-    } catch (e) {
-      toast.error('Geocoding failed. Try coordinates instead.');
+    } catch (e: any) {
+      console.error('Geocode exception:', e);
+      toast.error(`Geocoding failed: ${e?.message ?? 'network error'}. Try coordinates instead.`);
     } finally {
       setGeocoding(false);
     }

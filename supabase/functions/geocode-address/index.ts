@@ -16,7 +16,12 @@ async function fromNominatim(query: string): Promise<GeocodeHit | null> {
     query,
   ];
   for (const q of variants) {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q=${encodeURIComponent(q)}`;
+    // Try Canada-restricted first, then worldwide as a fallback.
+    const urls = [
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q=${encodeURIComponent(q)}`,
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
+    ];
+    for (const url of urls) {
     try {
       const res = await fetch(url, {
         headers: {
@@ -34,23 +39,28 @@ async function fromNominatim(query: string): Promise<GeocodeHit | null> {
         };
       }
     } catch (_) { /* try next variant */ }
+    }
   }
   return null;
 }
 
 async function fromPhoton(query: string): Promise<GeocodeHit | null> {
-  const url = `https://photon.komoot.io/api/?limit=1&lang=en&q=${encodeURIComponent(query + ', Alberta, Canada')}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const json = await res.json();
-    const f = json?.features?.[0];
-    if (!f) return null;
-    const [lng, lat] = f.geometry.coordinates;
-    const p = f.properties ?? {};
-    const label = [p.name, p.city, p.state, p.country].filter(Boolean).join(', ');
-    return { lat, lng, label: label || query };
-  } catch { return null; }
+  const variants = [`${query}, Alberta, Canada`, `${query}, Canada`, query];
+  for (const q of variants) {
+    const url = `https://photon.komoot.io/api/?limit=1&lang=en&q=${encodeURIComponent(q)}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const f = json?.features?.[0];
+      if (!f) continue;
+      const [lng, lat] = f.geometry.coordinates;
+      const p = f.properties ?? {};
+      const label = [p.name, p.city, p.state, p.country].filter(Boolean).join(', ');
+      return { lat, lng, label: label || q };
+    } catch { /* try next */ }
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
