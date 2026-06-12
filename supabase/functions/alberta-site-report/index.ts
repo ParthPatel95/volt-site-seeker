@@ -73,6 +73,20 @@ function inAlbertaBounds(lat: number, lng: number) {
   return lat >= 48.99 && lat <= 60.01 && lng >= -120.01 && lng <= -109.99;
 }
 
+// Rough Texas state bounding box. Used to pick the right fiber/carrier-POP
+// reference tables. Tight enough to avoid catching neighboring states for
+// most real points; the function still works without disruption if a point
+// falls outside (it just gets Alberta tables which will sort as "far").
+function inTexasBounds(lat: number, lng: number) {
+  return lat >= 25.83 && lat <= 36.51 && lng >= -106.65 && lng <= -93.51;
+}
+
+// Which region the point belongs to — drives table selection below.
+function detectRegion(lat: number, lng: number): 'alberta' | 'texas' {
+  if (inTexasBounds(lat, lng)) return 'texas';
+  return 'alberta';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -104,6 +118,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Pick fiber-related tables by region. Other layers (gas, water,
+    // transmission, climate, hazards, incentives, etc.) are still Alberta-only
+    // until their TX equivalents are seeded; for TX points they'll return
+    // distant matches that the UI shows with the right "far" distance label.
+    const region = detectRegion(lat, lng);
+    const popsTable   = region === 'texas' ? 'texas_carrier_pops'  : 'alberta_carrier_pops';
+    const fiberTable  = region === 'texas' ? 'texas_fiber_routes'  : 'alberta_fiber_routes';
+
     // Pull all reference layers in parallel
     const [
       pops, fiber, trans, gas, water, parks,
@@ -112,8 +134,8 @@ Deno.serve(async (req) => {
       workforce, postSec, epcs, wages, regZones,
       popDetails, lastMile, darkFiber,
     ] = await Promise.all([
-      admin.from('alberta_carrier_pops').select('*'),
-      admin.from('alberta_fiber_routes').select('*'),
+      admin.from(popsTable).select('*'),
+      admin.from(fiberTable).select('*'),
       admin.from('alberta_transmission_lines').select('*'),
       admin.from('alberta_gas_pipelines').select('*'),
       admin.from('alberta_water_sources').select('*'),
