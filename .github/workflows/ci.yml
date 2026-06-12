@@ -10,6 +10,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# `verify` needs write access to push lockfile fixes back to the PR branch
+# (heal-lockfile composite action). No other step in this workflow writes
+# to the repo.
+permissions:
+  contents: write
+
 jobs:
   verify:
     name: Lint, typecheck, test
@@ -17,11 +23,19 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Required so heal-lockfile can push back to the PR head branch.
+          persist-credentials: true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+
+      - name: Heal lockfile drift (Lovable guard)
+        uses: ./.github/actions/heal-lockfile
+        with:
+          push-fix: 'true'
 
       - name: Install dependencies
         run: npm ci
@@ -55,6 +69,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      # e2e heals in place but does NOT push (verify pushes), so two jobs
+      # don't race on the same lockfile commit.
+      - name: Heal lockfile drift (Lovable guard)
+        uses: ./.github/actions/heal-lockfile
 
       - name: Install dependencies
         run: npm ci

@@ -1,0 +1,73 @@
+name: Heal npm lockfile drift
+description: |
+  Detects when package-lock.json is out of sync with package.json (the
+  failure mode Lovable's commit chain reliably produces), regenerates the
+  lockfile in place so the rest of the job's `npm ci` succeeds, and on the
+  `verify` job optionally pushes the fix back to the PR branch.
+
+  Why this exists: package-lock drift broke 3 of the last 4 PR's CI in
+  identical fashion. The local fix is always `npm install
+  --package-lock-only`; this action just automates it.
+
+inputs:
+  push-fix:
+    description: Commit and push the healed lockfile back to the PR branch.
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Detect + heal lockfile drift
+      id: heal
+      shell: bash
+      run: |
+        set -e
+        if npm ci --dry-run > /tmp/npm-ci.log 2>&1; then
+          echo "healed=false" >> "$GITHUB_OUTPUT"
+          echo "Lockfile in sync with package.json." >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+
+        echo "::warning::package-lock.json drift detected — healing locally"
+        {
+          echo "### Lockfile drift detected — auto-healing"
+          echo ""
+          echo "The lockfile did not satisfy package.json; \`npm install"
+          echo "--package-lock-only\` is being run to regenerate metadata."
+          echo ""
+          echo '```'
+          grep -E "Invalid|Missing" /tmp/npm-ci.log | head -25 || true
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        npm install --package-lock-only --no-audit --no-fund
+        echo "healed=true" >> "$GITHUB_OUTPUT"
+
+    - name: Commit + push fix to PR branch
+      if: |
+        steps.heal.outputs.healed == 'true' &&
+        inputs.push-fix == 'true' &&
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      shell: bash
+      env:
+        HEAD_REF: ${{ github.head_ref }}
+      run: |
+        set -e
+        git config user.name  "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add package-lock.json
+
+        if git diff --staged --quiet; then
+          echo "::notice::Regeneration was a no-op — nothing to push."
+          exit 0
+        fi
+
+        git commit -m "ci: auto-sync package-lock.json with package.json"
+        # Best-effort push — if it races with another job that also pushed,
+        # log and continue. The local heal still applies for this run.
+        if git push origin "HEAD:${HEAD_REF}"; then
+          echo "::warning::Pushed lockfile fix to ${HEAD_REF} — a new CI run will follow."
+        else
+          echo "::warning::Could not push lockfile fix (likely a race). Local heal still applied."
+        fi
