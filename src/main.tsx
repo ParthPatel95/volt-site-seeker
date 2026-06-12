@@ -14,15 +14,24 @@ if (typeof document !== 'undefined') {
 // user never sees a stale UI shell.
 const VERSION_STORAGE_KEY = 'wattbyte:app-version';
 const RELOAD_GUARD_KEY = 'wattbyte:app-version-reloaded';
+const SW_CLEANUP_KEY = 'wattbyte:sw-cleanup-done';
 
 if (typeof window !== 'undefined') {
   try {
     const stored = localStorage.getItem(VERSION_STORAGE_KEY);
     const alreadyReloaded = sessionStorage.getItem(RELOAD_GUARD_KEY) === APP_VERSION;
+    const swCleanupDone = localStorage.getItem(SW_CLEANUP_KEY) === APP_VERSION;
+    const versionChanged = stored !== null && isVersionOutdated(stored);
+    // Trigger a one-time hard refresh if (a) the stored version is outdated,
+    // or (b) we have never run the service-worker cleanup for this bundle —
+    // covers users who loaded the app before the cache-bust mechanism shipped
+    // and may still have a stale SW from an earlier deploy.
+    const shouldHardRefresh = (versionChanged || !swCleanupDone) && !alreadyReloaded;
 
-    if (stored && isVersionOutdated(stored) && !alreadyReloaded) {
+    if (shouldHardRefresh) {
       sessionStorage.setItem(RELOAD_GUARD_KEY, APP_VERSION);
       localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      localStorage.setItem(SW_CLEANUP_KEY, APP_VERSION);
 
       void (async () => {
         try {
@@ -42,6 +51,7 @@ if (typeof window !== 'undefined') {
       })();
     } else {
       localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      localStorage.setItem(SW_CLEANUP_KEY, APP_VERSION);
       if (alreadyReloaded) sessionStorage.removeItem(RELOAD_GUARD_KEY);
     }
   } catch {
