@@ -15,7 +15,7 @@ const STEPS = [
     title: 'Source',
     color: 'hsl(var(--watt-trust))',
     blurb:
-      'We hunt stranded and underutilized power — idle industrial interconnections, curtailed generation, remote hydro — using our own VoltScout intelligence platform.',
+      'We find hidden power assets nobody is marketing — idle industrial interconnections, curtailed generation, distressed plants — surfaced by our proprietary VoltScout platform and its Hidden Gems discovery engine.',
   },
   {
     icon: Wrench,
@@ -41,13 +41,16 @@ export function EnergyFlowSection() {
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <Reveal>
-          <p className="text-sm font-semibold uppercase tracking-widest text-watt-trust mb-3">What we do</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-watt-trust mb-3">
+            <span className="font-mono mr-2 opacity-60">01 /</span> Our model
+          </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight max-w-3xl mb-4">
-            Stranded energy in. <span className="text-gradient-watt">Productive compute out.</span>
+            Hidden energy in. <span className="text-gradient-watt">Productive compute out.</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mb-14">
-            Power is the scarce input of the compute economy. Our entire business is moving
-            megawatts from where they're wasted to where they're worth the most.
+            Power is the scarce input of the compute economy — and the best megawatts are
+            rarely listed for sale. We built proprietary software and methods to find them
+            first, then we move them from where they're wasted to where they're worth the most.
           </p>
         </Reveal>
 

@@ -1,27 +1,14 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronDown, Zap } from 'lucide-react';
+import { ArrowRight, ChevronDown, Radar } from 'lucide-react';
 import { SplitWords, CountUp, Magnetic, Reveal } from './motion';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
-// Hero now showcases an animated 3D datacenter hall (rack rows, fans,
-// blade-bay LEDs, overhead trays, data packets) — the thing we actually
-// build — instead of a globe.
-const DatacenterScene = lazy(() => import('./DatacenterScene'));
-
-function useCanRender3D(): boolean {
-  const [ok, setOk] = useState(false);
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    try {
-      const canvas = document.createElement('canvas');
-      if (canvas.getContext('webgl2') ?? canvas.getContext('webgl')) setOk(true);
-    } catch { /* gradient-only fallback */ }
-  }, []);
-  return ok;
-}
+// The 3D backdrop is no longer embedded here — ScrollScene (mounted at page
+// level in Landing.tsx) renders the datacenter hall behind the entire page
+// and the camera travels through it as the visitor scrolls. The hero just
+// holds the entrance shot and keeps its copy legible with a white wash.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline', color: 'text-primary' },
@@ -31,24 +18,12 @@ const STATS = [
 ];
 
 export function HeroSection() {
-  const canRender3D = useCanRender3D();
   const reduced = useReducedMotion();
 
   return (
     <section className="relative min-h-[100svh] flex flex-col overflow-hidden">
-      {/* 3D datacenter layer */}
-      <div className="absolute inset-0">
-        {canRender3D && (
-          <Suspense fallback={null}>
-            <div className="absolute inset-0 lg:left-[30%]">
-              <DatacenterScene />
-            </div>
-          </Suspense>
-        )}
-      </div>
-
-      {/* Legibility gradient — heavier white wash on the text side so the copy
-          stays crisp against the busy datacenter scene without darkening it */}
+      {/* Legibility gradient — white wash on the text side so the copy stays
+          crisp against the page-wide datacenter scene behind. */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -63,8 +38,8 @@ export function HeroSection() {
           <div className="max-w-2xl pt-28 pb-20">
             <Reveal delay={0}>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-watt-trust/30 bg-watt-trust/10 text-watt-trust text-xs font-medium mb-7 backdrop-blur-sm">
-                <Zap className="w-3.5 h-3.5" />
-                Power-first digital infrastructure
+                <Radar className="w-3.5 h-3.5" />
+                We find power assets others can't see
               </div>
             </Reveal>
 
@@ -76,8 +51,9 @@ export function HeroSection() {
 
             <Reveal delay={0.55}>
               <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-xl mb-10">
-                We acquire stranded energy assets and develop them into AI, HPC, and
-                Bitcoin-mining datacenters — {TOTAL_MW.toLocaleString()}&nbsp;MW in motion
+                Our proprietary software and methods uncover hidden, stranded, and
+                underutilized energy assets — then we develop them into AI, HPC, and
+                Bitcoin-mining datacenters. {TOTAL_MW.toLocaleString()}&nbsp;MW in motion
                 across {COUNTRIES} countries.
               </p>
             </Reveal>
