@@ -118,13 +118,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Pick fiber-related tables by region. Other layers (gas, water,
-    // transmission, climate, hazards, incentives, etc.) are still Alberta-only
-    // until their TX equivalents are seeded; for TX points they'll return
-    // distant matches that the UI shows with the right "far" distance label.
+    // Pick every region-specific reference table by lat/lng. Multi-region
+    // tables (`cloud_regions`, `internet_exchanges`) stay shared.
     const region = detectRegion(lat, lng);
-    const popsTable   = region === 'texas' ? 'texas_carrier_pops'  : 'alberta_carrier_pops';
-    const fiberTable  = region === 'texas' ? 'texas_fiber_routes'  : 'alberta_fiber_routes';
+    const tbl = (ab: string, tx: string) => (region === 'texas' ? tx : ab);
+
+    const popsTable        = tbl('alberta_carrier_pops',         'texas_carrier_pops');
+    const fiberTable       = tbl('alberta_fiber_routes',         'texas_fiber_routes');
+    const transTable       = tbl('alberta_transmission_lines',   'texas_transmission_lines');
+    const gasTable         = tbl('alberta_gas_pipelines',        'texas_gas_pipelines');
+    const waterTable       = tbl('alberta_water_sources',        'texas_water_sources');
+    const parksTable       = tbl('alberta_industrial_parks',     'texas_industrial_parks');
+    const climateTable     = tbl('alberta_climate_normals',      'texas_climate_normals');
+    const hazardTable      = tbl('alberta_hazard_grid',          'texas_hazard_grid');
+    const waterLicTable    = tbl('alberta_water_licences',       'texas_water_licences');
+    const incentivesTable  = tbl('alberta_municipal_incentives', 'texas_municipal_incentives');
+    const logisticsTable   = tbl('alberta_logistics_assets',     'texas_logistics_assets');
+    const genTable         = tbl('alberta_generation_assets',    'texas_generation_assets');
+    const popCentresTable  = tbl('alberta_population_centres',   'texas_population_centres');
+    const workforceTable   = tbl('alberta_workforce_stats',      'texas_workforce_stats');
+    const postSecTable     = tbl('alberta_post_secondary',       'texas_post_secondary');
+    const epcsTable        = tbl('alberta_construction_capacity','texas_construction_capacity');
+    const wagesTable       = tbl('alberta_construction_wages',   'texas_construction_wages');
+    const regZonesTable    = tbl('alberta_regulatory_zones',     'texas_regulatory_zones');
+    const popDetailsTable  = tbl('alberta_carrier_pop_details',  'texas_carrier_pop_details');
+    const lastMileTable    = tbl('alberta_last_mile_providers',  'texas_last_mile_providers');
+    const darkFiberTable   = tbl('alberta_dark_fiber_inventory', 'texas_dark_fiber_inventory');
 
     // Pull all reference layers in parallel
     const [
@@ -136,27 +155,27 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       admin.from(popsTable).select('*'),
       admin.from(fiberTable).select('*'),
-      admin.from('alberta_transmission_lines').select('*'),
-      admin.from('alberta_gas_pipelines').select('*'),
-      admin.from('alberta_water_sources').select('*'),
-      admin.from('alberta_industrial_parks').select('*'),
-      admin.from('alberta_climate_normals').select('*'),
-      admin.from('alberta_hazard_grid').select('*'),
-      admin.from('alberta_water_licences').select('*'),
-      admin.from('alberta_municipal_incentives').select('*'),
+      admin.from(transTable).select('*'),
+      admin.from(gasTable).select('*'),
+      admin.from(waterTable).select('*'),
+      admin.from(parksTable).select('*'),
+      admin.from(climateTable).select('*'),
+      admin.from(hazardTable).select('*'),
+      admin.from(waterLicTable).select('*'),
+      admin.from(incentivesTable).select('*'),
       admin.from('cloud_regions').select('*'),
       admin.from('internet_exchanges').select('*'),
-      admin.from('alberta_logistics_assets').select('*'),
-      admin.from('alberta_generation_assets').select('*'),
-      admin.from('alberta_population_centres').select('*'),
-      admin.from('alberta_workforce_stats').select('*'),
-      admin.from('alberta_post_secondary').select('*'),
-      admin.from('alberta_construction_capacity').select('*'),
-      admin.from('alberta_construction_wages').select('*'),
-      admin.from('alberta_regulatory_zones').select('*'),
-      admin.from('alberta_carrier_pop_details').select('*'),
-      admin.from('alberta_last_mile_providers').select('*'),
-      admin.from('alberta_dark_fiber_inventory').select('*'),
+      admin.from(logisticsTable).select('*'),
+      admin.from(genTable).select('*'),
+      admin.from(popCentresTable).select('*'),
+      admin.from(workforceTable).select('*'),
+      admin.from(postSecTable).select('*'),
+      admin.from(epcsTable).select('*'),
+      admin.from(wagesTable).select('*'),
+      admin.from(regZonesTable).select('*'),
+      admin.from(popDetailsTable).select('*'),
+      admin.from(lastMileTable).select('*'),
+      admin.from(darkFiberTable).select('*'),
     ]);
 
     const nearestPops = nearestPoints(pops.data ?? [], lat, lng, 5);
