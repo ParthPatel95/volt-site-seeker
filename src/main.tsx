@@ -2,10 +2,51 @@ import React, { useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { APP_VERSION } from './constants/app-version';
+import { APP_VERSION, isVersionOutdated } from './constants/app-version';
 
 if (typeof document !== 'undefined') {
   document.documentElement.dataset.appVersion = APP_VERSION;
+}
+
+// Automatic cache-busting on version change.
+// If the previously-loaded APP_VERSION is older than this bundle's,
+// clear caches + unregister service workers + hard-reload once so the
+// user never sees a stale UI shell.
+const VERSION_STORAGE_KEY = 'wattbyte:app-version';
+const RELOAD_GUARD_KEY = 'wattbyte:app-version-reloaded';
+
+if (typeof window !== 'undefined') {
+  try {
+    const stored = localStorage.getItem(VERSION_STORAGE_KEY);
+    const alreadyReloaded = sessionStorage.getItem(RELOAD_GUARD_KEY) === APP_VERSION;
+
+    if (stored && isVersionOutdated(stored) && !alreadyReloaded) {
+      sessionStorage.setItem(RELOAD_GUARD_KEY, APP_VERSION);
+      localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+
+      void (async () => {
+        try {
+          if ('caches' in window) {
+            const names = await caches.keys();
+            await Promise.allSettled(names.map((n) => caches.delete(n)));
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.allSettled(regs.map((r) => r.unregister()));
+          }
+        } finally {
+          const url = new URL(window.location.href);
+          url.searchParams.set('v', APP_VERSION);
+          window.location.replace(url.toString());
+        }
+      })();
+    } else {
+      localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+      if (alreadyReloaded) sessionStorage.removeItem(RELOAD_GUARD_KEY);
+    }
+  } catch {
+    // localStorage / caches unavailable — fall through silently
+  }
 }
 
 // Declare global function types
