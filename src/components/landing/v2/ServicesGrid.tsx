@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Briefcase, Server, Radar, GraduationCap, TrendingUp, ArrowUpRight,
 } from 'lucide-react';
-import { Reveal, TiltCard, staggerContainer, staggerItem } from './motion';
+import { Reveal, TiltCard, staggerContainer, staggerItem, GlassPanel } from './motion';
 
 // Five live offerings, each card links to a real destination; copy mirrors
 // what those pages actually claim. Interactive: spring 3D tilt + cursor glare.
@@ -39,7 +39,7 @@ const SERVICES = [
 export function ServicesGrid() {
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
-      <div className="max-w-7xl mx-auto">
+      <GlassPanel className="max-w-7xl mx-auto p-8 sm:p-12 lg:p-14">
         <Reveal>
           <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
             <span className="font-mono mr-2 opacity-60">02 /</span> What we offer
@@ -86,7 +86,7 @@ export function ServicesGrid() {
             </motion.div>
           ))}
         </motion.div>
-      </div>
+      </GlassPanel>
     </section>
   );
 }

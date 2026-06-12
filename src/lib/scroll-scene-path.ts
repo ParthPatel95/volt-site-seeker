@@ -90,10 +90,13 @@ export function cameraPose(p: number): CameraPose {
   };
 }
 
-/** Scene-layer opacity for scroll progress (full at hero, dimmed mid-page). */
+/**
+ * Scene-layer opacity for scroll progress. Glass content panels carry text
+ * legibility, so the scene only eases slightly mid-page instead of dimming.
+ */
 export function sceneOpacity(p: number): number {
   const stops: [number, number][] = [
-    [0, 1], [0.12, 0.95], [0.24, 0.42], [0.78, 0.42], [0.95, 0.75], [1, 0.75],
+    [0, 1], [0.12, 1], [0.24, 0.88], [0.78, 0.88], [0.95, 1], [1, 1],
   ];
   const clamped = Math.min(1, Math.max(0, p));
   for (let i = 0; i < stops.length - 1; i++) {

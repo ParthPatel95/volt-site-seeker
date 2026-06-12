@@ -1,6 +1,18 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+
+// Marks every mesh under it as a shadow caster (one traverse on mount) —
+// keeps the per-mesh JSX clean while letting the sun ground every structure.
+function ShadowCaster({ children }: { children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null);
+  useEffect(() => {
+    ref.current?.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) o.castShadow = true;
+    });
+  }, []);
+  return <group ref={ref}>{children}</group>;
+}
 
 // Realistic outdoor energy site: a row of lattice-steel transmission
 // towers approaching a substation (three power transformers in concrete
@@ -58,8 +70,9 @@ function SkyDome() {
     uniforms: {
       topColor:    { value: new THREE.Color('#7eb0d8') },
       midColor:    { value: new THREE.Color('#cfd9d6') },
-      bottomColor: { value: new THREE.Color('#f4d9b3') },
-      sunDir:      { value: new THREE.Vector3(-0.6, 0.35, -0.2).normalize() },
+      // Matches scene fog + background so the horizon is seamless.
+      bottomColor: { value: new THREE.Color('#e9ddc8') },
+      sunDir:      { value: new THREE.Vector3(-0.6, 0.45, -0.28).normalize() },
     },
     vertexShader: /* glsl */ `
       varying vec3 vWorld;
@@ -456,6 +469,194 @@ function Datacenter() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// Treeline — instanced low-poly spruce stands framing the site
+// ────────────────────────────────────────────────────────────────────────────
+
+function Treeline() {
+  const group = useMemo(() => {
+    const g = new THREE.Group();
+    const canopyGeo = new THREE.ConeGeometry(1.1, 3.2, 7);
+    const canopyMat = new THREE.MeshStandardMaterial({ color: '#3f5a38', roughness: 0.95 });
+    const trunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 1.0, 5);
+    const trunkMat = new THREE.MeshStandardMaterial({ color: '#5a4632', roughness: 0.9 });
+
+    const count = 70;
+    const canopies = new THREE.InstancedMesh(canopyGeo, canopyMat, count);
+    const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, count);
+    canopies.castShadow = true;
+
+    const dummy = new THREE.Object3D();
+    // Deterministic pseudo-random placement (no Math.random — stable scene).
+    const rand = (i: number, salt: number) =>
+      (Math.sin(i * 127.1 + salt * 311.7) * 43758.5453) % 1;
+
+    for (let i = 0; i < count; i++) {
+      const band = i % 2; // two stands: behind the line, and far south
+      const x = -55 + Math.abs(rand(i, 1)) * 95;
+      const z = band === 0
+        ? -16 - Math.abs(rand(i, 2)) * 14   // north treeline
+        : 18 + Math.abs(rand(i, 3)) * 16;   // south treeline
+      const s = 0.8 + Math.abs(rand(i, 4)) * 0.9;
+
+      dummy.position.set(x, 1.0 * s + 0.5, z);
+      dummy.scale.setScalar(s);
+      dummy.updateMatrix();
+      canopies.setMatrixAt(i, dummy.matrix);
+
+      dummy.position.set(x, 0.5 * s, z);
+      dummy.scale.setScalar(s);
+      dummy.updateMatrix();
+      trunks.setMatrixAt(i, dummy.matrix);
+    }
+    canopies.instanceMatrix.needsUpdate = true;
+    trunks.instanceMatrix.needsUpdate = true;
+    g.add(canopies, trunks);
+    return g;
+  }, []);
+
+  return <primitive object={group} />;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Drifting clouds — soft billboard sprites from a generated radial texture
+// ────────────────────────────────────────────────────────────────────────────
+
+function Clouds() {
+  const tex = useMemo(() => {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 128;
+    const ctx = c.getContext('2d')!;
+    // Three overlapping soft blobs make a believable cumulus silhouette.
+    for (const [cx, cy, r] of [[80, 70, 50], [130, 60, 60], [185, 72, 45]] as const) {
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      grad.addColorStop(0, 'rgba(255,255,255,0.85)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
+
+  const mat = useMemo(() => new THREE.MeshBasicMaterial({
+    map: tex, transparent: true, depthWrite: false, opacity: 0.9,
+  }), [tex]);
+
+  const group = useRef<THREE.Group>(null);
+  const seeds = useMemo(
+    () => [
+      { x: -70, y: 38, z: -60, s: 26, v: 0.5 },
+      { x: -10, y: 46, z: -85, s: 34, v: 0.35 },
+      { x: 50, y: 42, z: -70, s: 28, v: 0.42 },
+      { x: 90, y: 36, z: -40, s: 22, v: 0.55 },
+      { x: -40, y: 44, z: 70, s: 30, v: 0.4 },
+    ],
+    [],
+  );
+
+  useFrame(({ clock, camera }) => {
+    if (!group.current) return;
+    const t = clock.elapsedTime;
+    group.current.children.forEach((c, i) => {
+      const seed = seeds[i];
+      // Slow eastward drift, wrapping across the world bounds.
+      c.position.x = ((seed.x + t * seed.v + 150) % 300) - 150;
+      c.lookAt(camera.position); // billboard
+    });
+  });
+
+  return (
+    <group ref={group}>
+      {seeds.map((s, i) => (
+        <mesh key={i} position={[s.x, s.y, s.z]} material={mat}>
+          <planeGeometry args={[s.s, s.s / 2]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Powered-land parcel — the pitch made physical: a graded, fenced expansion
+// pad beside the energized substation, staked and signed, ready to build.
+// ────────────────────────────────────────────────────────────────────────────
+
+function PoweredLandParcel() {
+  const dirtMat = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: '#b09a74', roughness: 0.95 }),
+    [],
+  );
+
+  const signTex = useMemo(() => {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 256;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = '#f5f1e8';
+    ctx.fillRect(0, 0, 512, 256);
+    ctx.strokeStyle = '#1f2a3a';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(8, 8, 496, 240);
+    ctx.fillStyle = '#1f2a3a';
+    ctx.textAlign = 'center';
+    ctx.font = '700 56px Inter, system-ui, sans-serif';
+    ctx.fillText('POWERED LAND', 256, 96);
+    ctx.font = '600 40px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#f7931a';
+    ctx.fillText('READY TO BUILD', 256, 165);
+    ctx.font = '500 26px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#475569';
+    ctx.fillText('wattbyte.com', 256, 218);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
+
+  // Stake positions around the 22 × 14 graded pad.
+  const stakes: [number, number][] = [];
+  for (const sx of [-10, -5, 0, 5, 10]) { stakes.push([sx, -6.5]); stakes.push([sx, 6.5]); }
+  for (const sz of [-3.25, 0, 3.25]) { stakes.push([-10, sz]); stakes.push([10, sz]); }
+
+  return (
+    <group position={[20, 0, 12]}>
+      {/* Graded pad */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow material={dirtMat}>
+        <planeGeometry args={[22, 14]} />
+      </mesh>
+      {/* Grading stripes — subtle dozer passes */}
+      {[-4.5, -1.5, 1.5, 4.5].map((z) => (
+        <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, z]} material={MAT.concreteDark}>
+          <planeGeometry args={[21, 0.12]} />
+        </mesh>
+      ))}
+      {/* Survey stakes with high-vis tips */}
+      {stakes.map(([sx, sz], i) => (
+        <group key={i} position={[sx, 0, sz]}>
+          <mesh position={[0, 0.45, 0]} material={MAT.steelDark}>
+            <cylinderGeometry args={[0.025, 0.025, 0.9, 5]} />
+          </mesh>
+          <mesh position={[0, 0.92, 0]} material={new THREE.MeshBasicMaterial({ color: '#f7931a' })}>
+            <boxGeometry args={[0.09, 0.14, 0.02]} />
+          </mesh>
+        </group>
+      ))}
+      {/* Site sign on two posts, facing the access road */}
+      <group position={[-11.6, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+        {[-1.1, 1.1].map((sx) => (
+          <mesh key={sx} position={[sx, 1.0, 0]} material={MAT.steelDark}>
+            <cylinderGeometry args={[0.06, 0.06, 2.0, 8]} />
+          </mesh>
+        ))}
+        <mesh position={[0, 1.7, 0.04]}>
+          <planeGeometry args={[2.6, 1.3]} />
+          <meshStandardMaterial map={signTex} roughness={0.7} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // Top-level scene composition
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -471,15 +672,25 @@ export function EnergySite() {
     <group>
       <SkyDome />
       <GroundPlane />
-      <PerimeterFence />
+      <Clouds />
+      <Treeline />
 
-      {/* Transmission towers + 3-phase conductors approaching the substation */}
-      {towerXs.map((x, i) => (
-        <TransmissionTower key={i} position={[x, towerY, towerZ]} height={towerHeight} />
-      ))}
+      <ShadowCaster>
+        <PerimeterFence />
+
+        {/* Transmission towers + 3-phase conductors approaching the substation */}
+        {towerXs.map((x, i) => (
+          <TransmissionTower key={i} position={[x, towerY, towerZ]} height={towerHeight} />
+        ))}
+
+        <Substation />
+        <Datacenter />
+        <PoweredLandParcel />
+      </ShadowCaster>
 
       {/* Phase conductors between consecutive towers + final span into the
-          dead-end portal at x = 2 (substation entrance). */}
+          dead-end portal at x = 2 (substation entrance). Outside the shadow
+          caster — thin tubes just add shadow-map noise. */}
       {[...towerXs, 2].map((x, i, arr) => {
         if (i === 0) return null;
         const xa = arr[i - 1], xb = x;
@@ -495,9 +706,6 @@ export function EnergySite() {
           );
         });
       })}
-
-      <Substation />
-      <Datacenter />
     </group>
   );
 }

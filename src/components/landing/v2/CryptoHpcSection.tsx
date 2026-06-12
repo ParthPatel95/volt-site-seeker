@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Cpu, Activity, Thermometer, ShieldCheck, Bitcoin } from 'lucide-react';
-import { Reveal, CountUp } from './motion';
+import { Reveal, CountUp, GlassPanel } from './motion';
 
 // Heavy 3D mining rig — lazy-loaded chunk; section gracefully renders the
 // stats and copy if WebGL is unavailable.
@@ -25,7 +25,7 @@ export function CryptoHpcSection() {
         aria-hidden="true"
       />
 
-      <div className="max-w-7xl mx-auto relative">
+      <GlassPanel className="max-w-7xl mx-auto relative p-8 sm:p-12 lg:p-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Copy */}
           <div className="lg:col-span-5">
@@ -101,7 +101,7 @@ export function CryptoHpcSection() {
             </div>
           </Reveal>
         </div>
-      </div>
+      </GlassPanel>
     </section>
   );
 }

@@ -39,11 +39,12 @@ export default function RealisticScene() {
   const [tabOn, setTabOn] = useState(true);
   const { scrollYProgress } = useScroll();
 
-  // Scene-layer opacity choreographed in CSS so text stays legible mid-page.
+  // Glass content panels now carry text legibility, so the scene stays
+  // near-full strength the whole way — only a slight mid-page easing.
   const opacity = useTransform(
     scrollYProgress,
     [0, 0.12, 0.24, 0.78, 0.95, 1],
-    [1, 0.95, 0.42, 0.42, 0.75, 0.75],
+    [1, 1, 0.88, 0.88, 1, 1],
   );
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function RealisticScene() {
       aria-hidden="true"
     >
       <Canvas
-        shadows={false}
+        shadows
         camera={{ position: [-48, 4, 18], fov: 48 }}
         dpr={[1, 1.75]}
         frameloop={tabOn ? 'always' : 'never'}
@@ -70,16 +71,30 @@ export default function RealisticScene() {
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.05;
-          scene.background = new THREE.Color('#e6eff5');
+          gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          // Matches the sky-dome horizon + fog tint so there is no band at
+          // the far plane (the earlier white stripe at the horizon).
+          scene.background = new THREE.Color('#e9ddc8');
         }}
       >
         {/* Sun + sky ambient + bounce hemisphere */}
         <ambientLight intensity={0.42} />
         <hemisphereLight args={['#bfd6ee', '#c6b291', 0.55]} />
+        {/* Sun — single shadow-casting light; soft PCF shadows ground every
+            structure and are the single biggest realism cue outdoors. */}
         <directionalLight
-          position={[-30, 22, -12]}
+          position={[-30, 26, -14]}
           intensity={1.4}
           color="#fff2dc"
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-left={-65}
+          shadow-camera-right={45}
+          shadow-camera-top={45}
+          shadow-camera-bottom={-30}
+          shadow-camera-near={1}
+          shadow-camera-far={120}
+          shadow-bias={-0.0004}
         />
         {/* Soft warm fill from the opposite side so the substation has shape */}
         <directionalLight
@@ -87,8 +102,8 @@ export default function RealisticScene() {
           intensity={0.35}
           color="#ffd0a0"
         />
-        {/* Atmospheric depth */}
-        <fog attach="fog" args={['#dee9f0', 55, 160]} />
+        {/* Atmospheric depth — same family as the sky horizon */}
+        <fog attach="fog" args={['#e9ddc8', 60, 170]} />
 
         <EnergySite />
         <ScrollCamera progress={scrollYProgress} />
