@@ -10,15 +10,13 @@ const corsHeaders = {
 interface GeocodeHit { lat: number; lng: number; label: string }
 
 async function fromNominatim(query: string): Promise<GeocodeHit | null> {
-  const variants = [
-    `${query}, Alberta, Canada`,
-    `${query}, Canada`,
-    query,
-  ];
+  // Try the raw query first (works for full US/Canada addresses), then add
+  // Canada/USA hints for short queries like a city name.
+  const variants = [query, `${query}, Canada`, `${query}, USA`];
   for (const q of variants) {
-    // Try Canada-restricted first, then worldwide as a fallback.
     const urls = [
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q=${encodeURIComponent(q)}`,
+      // Restrict to Canada + USA first for better disambiguation, then worldwide.
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca,us&q=${encodeURIComponent(q)}`,
       `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
     ];
     for (const url of urls) {
@@ -45,7 +43,7 @@ async function fromNominatim(query: string): Promise<GeocodeHit | null> {
 }
 
 async function fromPhoton(query: string): Promise<GeocodeHit | null> {
-  const variants = [`${query}, Alberta, Canada`, `${query}, Canada`, query];
+  const variants = [query, `${query}, Canada`, `${query}, USA`];
   for (const q of variants) {
     const url = `https://photon.komoot.io/api/?limit=1&lang=en&q=${encodeURIComponent(q)}`;
     try {
