@@ -1,27 +1,15 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import { Reveal, CountUp } from './motion';
+import { Reveal, CountUp, CinematicPhoto } from './motion';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
+import heroImage from '@/assets/aeso-grid-hero.jpg';
 
-// Institutional hero: editorial copy on a clean light field, with one refined
-// abstract energy-network 3D contained in a deep-navy panel. The navy panel is
-// the single premium accent — it gives the 3D a dark backdrop where additive
-// glow looks expensive, without darkening the whole (welcoming) page.
-const GridField = lazy(() => import('./GridField'));
-
-function useCanRender3D(): boolean {
-  const [ok, setOk] = useState(false);
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    try {
-      const c = document.createElement('canvas');
-      if (c.getContext('webgl2') ?? c.getContext('webgl')) setOk(true);
-    } catch { /* gradient panel fallback */ }
-  }, []);
-  return ok;
-}
+// Institutional hero: editorial copy on a clean light field, with one
+// cinematic real-photography panel — a navy-graded grid/transmission shot that
+// drifts with a slow Ken-Burns push and scroll parallax. The navy grade keeps
+// the single premium dark accent the brand leans on, now grounded in a real
+// power-infrastructure image rather than an abstract procedural scene.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline' },
@@ -31,8 +19,6 @@ const STATS = [
 ];
 
 export function HeroSection() {
-  const canRender3D = useCanRender3D();
-
   return (
     <section className="relative pt-32 pb-20 sm:pt-36 lg:pt-40 lg:pb-28">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -80,33 +66,35 @@ export function HeroSection() {
             </Reveal>
           </div>
 
-          {/* Navy 3D panel */}
+          {/* Cinematic photo panel */}
           <Reveal delay={0.1}>
-            <div className="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl overflow-hidden bg-[hsl(var(--watt-navy))] ring-1 ring-white/10 shadow-2xl">
-              {/* glow wash behind the network */}
+            <CinematicPhoto
+              src={heroImage}
+              alt="High-voltage transmission infrastructure feeding WattByte's development pipeline"
+              eager
+              grade="navy"
+              parallax={56}
+              className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl ring-1 ring-white/10 shadow-2xl"
+            >
+              {/* additive brand glow over the photo */}
               <div
-                className="absolute inset-0 opacity-70"
+                className="pointer-events-none absolute inset-0 opacity-60 mix-blend-screen"
                 style={{
                   background:
-                    'radial-gradient(60% 55% at 50% 45%, hsl(var(--watt-trust) / 0.28), transparent 70%),' +
-                    'radial-gradient(40% 40% at 65% 70%, hsl(var(--watt-bitcoin) / 0.18), transparent 70%)',
+                    'radial-gradient(55% 50% at 50% 38%, hsl(var(--watt-trust) / 0.30), transparent 70%),' +
+                    'radial-gradient(40% 40% at 70% 72%, hsl(var(--watt-bitcoin) / 0.16), transparent 70%)',
                 }}
               />
-              {canRender3D && (
-                <Suspense fallback={null}>
-                  <div className="absolute inset-0"><GridField /></div>
-                </Suspense>
-              )}
               {/* caption chip */}
               <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-white/55">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-white/65">
                   Live development pipeline
                 </span>
                 <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin">
                   {COUNTRIES} countries
                 </span>
               </div>
-            </div>
+            </CinematicPhoto>
           </Reveal>
         </div>
 

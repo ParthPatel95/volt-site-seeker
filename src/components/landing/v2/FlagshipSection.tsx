@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, PlugZap, Cpu, Gauge } from 'lucide-react';
-import { Reveal, CountUp } from './motion';
+import { Reveal, CountUp, CinematicPhoto } from './motion';
 import facilityImage from '@/assets/alberta-facility-aerial.jpg';
 
 // Alberta Heartland flagship — the one site that's real steel today. Specs
@@ -16,27 +15,19 @@ const SPECS = [
 ];
 
 export function FlagshipSection() {
-  const reduced = useReducedMotion();
-
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Image */}
           <Reveal>
-            <motion.div
-              className="relative rounded-3xl overflow-hidden border border-border group"
-              whileHover={reduced ? undefined : 'hover'}
+            <CinematicPhoto
+              src={facilityImage}
+              alt="Aerial view of the WattByte Alberta Heartland facility"
+              grade="bottom"
+              parallax={52}
+              className="rounded-3xl border border-border h-[26rem]"
             >
-              <motion.img
-                src={facilityImage}
-                alt="Aerial view of the WattByte Alberta Heartland facility"
-                className="w-full h-[26rem] object-cover"
-                loading="lazy"
-                variants={{ hover: { scale: 1.04 } }}
-                transition={{ duration: 0.8, ease: [0.21, 0.65, 0.36, 1] }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
               <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
                 <div>
                   <div className="text-xs font-mono text-watt-bitcoin mb-1">🇨🇦 53.63°N, 113.10°W</div>
@@ -46,7 +37,7 @@ export function FlagshipSection() {
                   Under development
                 </div>
               </div>
-            </motion.div>
+            </CinematicPhoto>
           </Reveal>
 
           {/* Copy + specs */}

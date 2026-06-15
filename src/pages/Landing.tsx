@@ -14,6 +14,7 @@ const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowS
 const ServicesGrid = lazy(() => import('@/components/landing/v2/ServicesGrid').then(m => ({ default: m.ServicesGrid })));
 const PipelineSection = lazy(() => import('@/components/landing/v2/PipelineSection').then(m => ({ default: m.PipelineSection })));
 const FlagshipSection = lazy(() => import('@/components/landing/v2/FlagshipSection').then(m => ({ default: m.FlagshipSection })));
+const CinematicBand = lazy(() => import('@/components/landing/v2/CinematicBand').then(m => ({ default: m.CinematicBand })));
 const PlatformSection = lazy(() => import('@/components/landing/v2/PlatformSection').then(m => ({ default: m.PlatformSection })));
 const CryptoHpcSection = lazy(() => import('@/components/landing/v2/CryptoHpcSection').then(m => ({ default: m.CryptoHpcSection })));
 const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
@@ -70,6 +71,10 @@ const Landing: React.FC = () => {
 
         <Suspense fallback={<SectionLoader />}>
           <section aria-label="Alberta flagship facility"><FlagshipSection /></section>
+        </Suspense>
+
+        <Suspense fallback={<SectionLoader />}>
+          <CinematicBand />
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>

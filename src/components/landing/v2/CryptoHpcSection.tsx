@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Cpu, Activity, Thermometer, ShieldCheck } from 'lucide-react';
-import { Reveal, CountUp } from './motion';
+import { Reveal, CountUp, CinematicPhoto } from './motion';
 import asicMiners from '@/assets/asic-miners-powered.jpg';
 import miningFloor from '@/assets/datacenter-mining-floor-interior.jpg';
 
@@ -20,14 +20,18 @@ export function CryptoHpcSection() {
           {/* Imagery — two real facility photos, layered editorially */}
           <Reveal>
             <div className="relative">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden ring-1 ring-border shadow-xl">
-                <img src={miningFloor} alt="WattByte mining floor interior" loading="lazy"
-                  className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute -bottom-8 -right-4 sm:-right-8 w-2/5 aspect-square rounded-2xl overflow-hidden ring-4 ring-background shadow-2xl hidden sm:block">
-                <img src={asicMiners} alt="Powered ASIC miners" loading="lazy"
-                  className="w-full h-full object-cover" />
-              </div>
+              <CinematicPhoto
+                src={miningFloor}
+                alt="WattByte mining floor interior"
+                parallax={44}
+                className="aspect-[4/3] rounded-2xl ring-1 ring-border shadow-xl"
+              />
+              <CinematicPhoto
+                src={asicMiners}
+                alt="Powered ASIC miners"
+                parallax={0}
+                className="absolute -bottom-8 -right-4 sm:-right-8 w-2/5 aspect-square rounded-2xl ring-4 ring-background shadow-2xl hidden sm:block"
+              />
             </div>
           </Reveal>
 
