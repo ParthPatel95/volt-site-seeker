@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, PlugZap, Cpu, Gauge } from 'lucide-react';
-import { Reveal, CountUp, GlassPanel } from './motion';
+import { Reveal, CountUp } from './motion';
 import facilityImage from '@/assets/alberta-facility-aerial.jpg';
 
 // Alberta Heartland flagship — the one site that's real steel today. Specs
@@ -20,7 +20,7 @@ export function FlagshipSection() {
 
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
-      <GlassPanel className="max-w-7xl mx-auto p-8 sm:p-12 lg:p-14">
+      <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Image */}
           <Reveal>
@@ -53,7 +53,7 @@ export function FlagshipSection() {
           <div>
             <Reveal>
               <p className="text-sm font-semibold uppercase tracking-widest text-watt-bitcoin mb-3">
-                <span className="font-mono mr-2 opacity-60">04 /</span> Flagship in steel
+                Flagship in steel
               </p>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-5">
                 135 MW in Alberta's <span className="text-gradient-watt">industrial heartland</span>
@@ -88,7 +88,7 @@ export function FlagshipSection() {
             </Reveal>
           </div>
         </div>
-      </GlassPanel>
+      </div>
     </section>
   );
 }

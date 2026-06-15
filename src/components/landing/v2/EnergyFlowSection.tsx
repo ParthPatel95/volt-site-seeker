@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Search, Wrench, Cpu } from 'lucide-react';
-import { Reveal, GlassPanel } from './motion';
+import { Reveal } from './motion';
 
 // "What we do" as an animated circuit: stranded energy flows through the
 // three things WattByte actually does (source → develop → operate) and comes
@@ -39,10 +39,10 @@ export function EnergyFlowSection() {
 
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
-      <GlassPanel className="max-w-7xl mx-auto p-8 sm:p-12 lg:p-14">
+      <div className="max-w-7xl mx-auto">
         <Reveal>
           <p className="text-sm font-semibold uppercase tracking-widest text-watt-trust mb-3">
-            <span className="font-mono mr-2 opacity-60">01 /</span> Our model
+            Our model
           </p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight max-w-3xl mb-4">
             Hidden energy in. <span className="text-gradient-watt">Productive compute out.</span>
@@ -126,7 +126,7 @@ export function EnergyFlowSection() {
             </Reveal>
           ))}
         </div>
-      </GlassPanel>
+      </div>
     </section>
   );
 }
