@@ -1,19 +1,13 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { AuroraBackground } from '@/components/landing/v2/AuroraBackground';
 import { HeroSection } from '@/components/landing/v2/HeroSection';
 import { PipelineTicker } from '@/components/landing/v2/PipelineTicker';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 
-// Persistent 3D backdrop — the camera travels through the datacenter hall as
-// the visitor scrolls the whole page. Lazy so three.js stays out of the
-// first paint; the component self-gates on WebGL + prefers-reduced-motion.
-// Persistent realistic energy site — transmission line + substation +
-// datacenter — behind the whole page. Camera flies through it on scroll.
-// Lazy so three.js stays out of the first paint; self-gates on WebGL +
-// prefers-reduced-motion.
-const RealisticScene = lazy(() => import('@/components/landing/v2/RealisticScene'));
+// Institutional layout: clean light field, real facility photography, and one
+// refined 3D accent contained in the hero. No page-wide WebGL scene — the
+// previous traveling-camera backdrop was retired in favor of restrained motion.
 
 // Below-the-fold sections load lazily.
 const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowSection').then(m => ({ default: m.EnergyFlowSection })));
@@ -54,20 +48,10 @@ const Landing: React.FC = () => {
         </p>
       </header>
 
-      <AuroraBackground />
-
-      {/* Page-wide 3D journey: entrance shot at the hero, down the cool aisle
-          through chapters 01–03, top-down overview at the pipeline, pulled
-          back for the close. Dims under the reading sections. */}
-      <Suspense fallback={null}>
-        <RealisticScene />
-      </Suspense>
-
       <LandingNavigation />
 
-      {/* Narrative-ordered: Hook → 01 Our model → 02 What we offer →
-          03 What runs on it → 04 Flagship → 05 Pipeline → 06 Platform →
-          07 Live data → Close. Chapter labels live inside each section. */}
+      {/* Story flow: hook → our model → what we offer → what runs on it →
+          flagship → pipeline → platform → live data → close. */}
       <main className="relative z-10">
         <HeroSection />
         <PipelineTicker />
@@ -98,11 +82,9 @@ const Landing: React.FC = () => {
 
         <Suspense fallback={<SectionLoader />}>
           <section aria-label="Live energy markets" className="relative">
-            {/* Chapter label sits at page level so we don't edit the legacy
-                LiveMarketsSection component. */}
-            <div className="px-6 sm:px-10 lg:px-20 pt-12 max-w-7xl mx-auto">
-              <p className="text-sm font-semibold uppercase tracking-widest text-watt-trust">
-                <span className="font-mono mr-2 opacity-60">07 /</span> Live data, no hand-waving
+            <div className="px-6 sm:px-10 lg:px-16 pt-12 max-w-7xl mx-auto">
+              <p className="text-xs font-semibold uppercase tracking-widest text-watt-trust">
+                Live data, no hand-waving
               </p>
             </div>
             <LiveMarketsSection />
