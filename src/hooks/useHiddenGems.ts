@@ -130,19 +130,28 @@ export interface GemListing {
   search_query: string | null;
   source: string;
   scraped_at: string;
+  last_seen_at: string | null;
+  // `active` = re-seen within the staleness window; `stale` = not re-seen
+  // (likely sold/removed); `sold_or_removed` = manually flagged.
+  status: 'active' | 'stale' | 'sold_or_removed';
 }
 
-export function useGemListings() {
+export function useGemListings(opts: { includeStale?: boolean } = {}) {
   const queryClient = useQueryClient();
+  const { includeStale = false } = opts;
 
   const listings = useQuery({
-    queryKey: ['gem-listings'],
+    queryKey: ['gem-listings', { includeStale }],
     queryFn: async () => {
-      const { data, error } = await untyped
+      let q = untyped
         .from('gem_listings')
         .select('*')
         .order('signal_score', { ascending: false })
         .limit(100);
+      // Hide stale rows by default — they're the "property already sold"
+      // class of noise.
+      if (!includeStale) q = q.eq('status', 'active');
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as GemListing[];
     },
