@@ -147,6 +147,14 @@ export interface FacilityRow {
   osm_substation_km?: number | null;        // measured via Overpass at the site
   osm_max_voltage_kv?: number | null;
   osm_checked_at?: string | null;
+  // Optional deal-team contact + broker fields (Hidden Gems detail dialog).
+  contact_name?: string | null;
+  contact_role?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  broker_name?: string | null;
+  broker_url?: string | null;
+  deal_notes?: string | null;
 }
 
 export interface SubstationRow {

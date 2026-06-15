@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
           // listings are noise, not leads.
           if (score === 0) continue;
 
+          const now = new Date().toISOString();
           const row = {
             listing_url: r.url,
             title: r.title ?? null,
@@ -140,7 +141,12 @@ Deno.serve(async (req) => {
             signal_score: score,
             search_query: query,
             source: 'firecrawl',
-            scraped_at: new Date().toISOString(),
+            scraped_at: now,
+            // Every successful re-observation refreshes last_seen_at so
+            // listings that survive across scans stay 'active'. Anything
+            // not re-seen for N days gets marked 'stale' below.
+            last_seen_at: now,
+            status: 'active',
             raw: r,
           };
 
@@ -159,12 +165,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Stale-marker pass: any active row not refreshed by this run (or recent
+    // prior runs) gets `status = 'stale'`. UI hides stale rows by default.
+    let stale_marked = 0;
+    try {
+      const { data: staleData, error: staleErr } = await supabase.rpc(
+        'mark_stale_gem_listings',
+        { p_days: 14 },
+      );
+      if (staleErr) errors.push(`stale-marker: ${staleErr.message}`);
+      else if (typeof staleData === 'number') stale_marked = staleData;
+    } catch (e) {
+      errors.push(`stale-marker: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
     return new Response(JSON.stringify({
       success: true,
       region,
       queries_run: queries.length,
       results_scanned: scanned,
       listings_stored: stored,
+      stale_marked,
       listings: found,
       errors: errors.length ? errors : undefined,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

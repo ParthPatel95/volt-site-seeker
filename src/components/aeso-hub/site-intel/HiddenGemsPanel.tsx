@@ -17,6 +17,7 @@ import {
 } from '@/hooks/useHiddenGems';
 import type { ScoredGem } from '@/lib/hidden-gems';
 import { toast } from 'sonner';
+import { GemDetailDialog } from './GemDetailDialog';
 
 // three.js scene is heavy — load it only when the user opens the 3D view.
 const HiddenGems3D = lazy(() => import('./HiddenGems3D'));
@@ -50,6 +51,16 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
   const [minMw, setMinMw] = useState('');
   const [status, setStatus] = useState<string>('all');
   const [state, setState] = useState<string>('all');
+  // Full report click opens this detail dialog first; the dialog has the
+  // route into Site Lookup (with an optional refine-then-open path that
+  // fixes the locality-coords problem before analysis).
+  const [detailGem, setDetailGem] = useState<ScoredGem | null>(null);
+
+  const openDetail = (gem: ScoredGem) => setDetailGem(gem);
+  const handleOpenInSiteLookup = (loc: { lat: number; lng: number; label?: string }) => {
+    setDetailGem(null);
+    onAnalyze(loc);
+  };
   const [view, setView] = useState<'list' | '3d' | 'saved'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -184,7 +195,7 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
           gems={gems}
           listings={gemListings.listings}
           watchlist={watchlist}
-          onAnalyze={onAnalyze}
+          onOpenDetail={openDetail}
           analyzing={analyzing}
           expanded={expanded}
           setExpanded={setExpanded}
@@ -197,7 +208,7 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
               gem={g}
               expanded={expanded === g.facility.id}
               onToggle={() => setExpanded(expanded === g.facility.id ? null : g.facility.id)}
-              onAnalyze={onAnalyze}
+              onOpenDetail={openDetail}
               analyzing={analyzing}
               watchlist={watchlist}
             />
@@ -213,6 +224,13 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
       )}
 
       {view !== 'saved' && <ListingSignals listingsApi={gemListings} watchlist={watchlist} />}
+
+      <GemDetailDialog
+        gem={detailGem}
+        open={detailGem !== null}
+        onOpenChange={(open) => { if (!open) setDetailGem(null); }}
+        onOpenInSiteLookup={handleOpenInSiteLookup}
+      />
     </div>
   );
 }
@@ -220,12 +238,12 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
 // ── Saved view ───────────────────────────────────────────────────────────────
 
 function SavedView({
-  gems, listings, watchlist, onAnalyze, analyzing, expanded, setExpanded,
+  gems, listings, watchlist, onOpenDetail, analyzing, expanded, setExpanded,
 }: {
   gems: ScoredGem[];
   listings: GemListing[];
   watchlist: Watchlist;
-  onAnalyze: Props['onAnalyze'];
+  onOpenDetail: (gem: ScoredGem) => void;
   analyzing?: boolean;
   expanded: string | null;
   setExpanded: (id: string | null) => void;
@@ -257,7 +275,7 @@ function SavedView({
               gem={g}
               expanded={expanded === g.facility.id}
               onToggle={() => setExpanded(expanded === g.facility.id ? null : g.facility.id)}
-              onAnalyze={onAnalyze}
+              onOpenDetail={onOpenDetail}
               analyzing={analyzing}
               watchlist={watchlist}
             />
@@ -426,12 +444,12 @@ function ListingSignals({
 // ── Registry row ─────────────────────────────────────────────────────────────
 
 function GemRow({
-  gem: g, expanded, onToggle, onAnalyze, analyzing, watchlist,
+  gem: g, expanded, onToggle, onOpenDetail, analyzing, watchlist,
 }: {
   gem: ScoredGem;
   expanded: boolean;
   onToggle: () => void;
-  onAnalyze: Props['onAnalyze'];
+  onOpenDetail: (gem: ScoredGem) => void;
   analyzing?: boolean;
   watchlist: Watchlist;
 }) {
@@ -494,7 +512,7 @@ function GemRow({
           </Badge>
           <SaveButton watchlist={watchlist} type="facility" id={f.id} />
           <Button size="sm" variant="outline" className="h-7 text-xs" disabled={analyzing}
-            onClick={() => onAnalyze({ lat: f.lat, lng: f.lng, label: f.name })}>
+            onClick={() => onOpenDetail(g)}>
             <FileSearch className="w-3 h-3 mr-1" /> Full report
           </Button>
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={onToggle}>
