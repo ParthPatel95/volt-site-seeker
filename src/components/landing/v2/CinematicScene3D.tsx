@@ -42,10 +42,10 @@ function CurvedPhotoPlane({ src, accent }: { src: string; accent: string }) {
   const { viewport } = useThree();
 
   // Size the plane to over-fill the camera frustum at z=0 so neither parallax
-  // nor the curvature ever exposes an edge. The rig's drift is bounded to keep
-  // this 1.6× over-size always sufficient.
-  const W = viewport.width * 1.6;
-  const H = viewport.height * 1.6;
+  // nor the curvature ever exposes an edge. 2.4× covers the much larger camera
+  // drift the rig now produces.
+  const W = viewport.width * 2.4;
+  const H = viewport.height * 2.4;
 
   // Object-cover the texture into the plane's aspect by adjusting UV repeat
   // / offset (keeps the photograph undistorted regardless of container shape).
@@ -79,15 +79,20 @@ function CurvedPhotoPlane({ src, accent }: { src: string; accent: string }) {
     if (!g) return;
     const pos = g.attributes.position as THREE.BufferAttribute;
     const halfW = W / 2;
-    const depth = Math.min(0.9, W * 0.07);
+    const halfH = H / 2;
+    // Pronounced spherical bowl so camera moves produce real parallax across
+    // the surface in both axes — not just a flat slide.
+    const depthX = W * 0.14;
+    const depthY = H * 0.10;
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
-      const z = -depth * Math.pow(x / halfW, 2);
+      const y = pos.getY(i);
+      const z = -depthX * Math.pow(x / halfW, 2) - depthY * Math.pow(y / halfH, 2);
       pos.setZ(i, z);
     }
     pos.needsUpdate = true;
     g.computeVertexNormals();
-  }, [W]);
+  }, [W, H]);
 
   return (
     <group>
@@ -133,16 +138,15 @@ function CameraRig({
       return;
     }
 
-    // Idle cinematic drift — slow, organic, never lined up with mouse.
-    // Combined max drift is bounded so the 1.6× over-sized plane edges never
-    // come into the frustum.
-    const idleX = Math.sin(t * 0.13) * 0.25;
-    const idleY = Math.cos(t * 0.10) * 0.15;
-    const idleZ = Math.sin(t * 0.07) * 0.25;
+    // Idle cinematic drift — clearly visible, slow, organic. Amplitudes are
+    // bounded so the 2.4× over-sized plane edges never enter the frustum.
+    const idleX = Math.sin(t * 0.32) * 0.9 + Math.sin(t * 0.11) * 0.35;
+    const idleY = Math.cos(t * 0.26) * 0.55 + Math.cos(t * 0.09) * 0.20;
+    const idleZ = Math.sin(t * 0.20) * 0.7;
 
-    const targetX = idleX + px * 0.40;
-    const targetY = idleY + py * 0.30;
-    const targetZ = 5 + idleZ - Math.abs(px) * 0.20;
+    const targetX = idleX + px * 1.1;
+    const targetY = idleY + py * 0.8;
+    const targetZ = 5 + idleZ - Math.abs(px) * 0.4;
 
     // Spring-damped follow in the loop (avoids per-frame React state).
     const k = Math.min(1, dt * 2.2);
@@ -176,23 +180,24 @@ function Scene({
         <>
           {/* Behind the plane — slow, large, dim: atmospheric haze */}
           <Sparkles
-            count={28}
-            scale={[10, 10, 2]}
-            size={2.4}
-            speed={0.18}
-            opacity={0.45}
+            count={40}
+            scale={[14, 14, 3]}
+            size={4}
+            speed={0.4}
+            opacity={0.5}
             color="#9ec7ff"
-            position={[0, 0, -1.2]}
+            position={[0, 0, -1.5]}
           />
-          {/* In front of the plane — quick, small, bright: foreground sparks */}
+          {/* In front of the plane — quick, bright: foreground sparks that
+              streak across the camera and unmistakably read as 3D depth */}
           <Sparkles
-            count={36}
-            scale={[9, 9, 1.5]}
-            size={1.6}
-            speed={0.55}
-            opacity={0.85}
+            count={60}
+            scale={[12, 12, 3]}
+            size={6}
+            speed={1.1}
+            opacity={0.95}
             color={accent}
-            position={[0, 0, 2.2]}
+            position={[0, 0, 2.6]}
           />
         </>
       )}
