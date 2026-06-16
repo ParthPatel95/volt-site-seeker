@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, PlugZap, Cpu, Gauge } from 'lucide-react';
-import { Reveal, CountUp, CinematicPhoto } from './motion';
+import { Reveal, CountUp } from './motion';
+import { CinematicScene3D } from './CinematicScene3D';
 import facilityImage from '@/assets/alberta-facility-aerial.jpg';
 
 // Alberta Heartland flagship — the one site that's real steel today. Specs
@@ -19,13 +20,13 @@ export function FlagshipSection() {
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Image */}
+          {/* Image — 3D scene */}
           <Reveal>
-            <CinematicPhoto
+            <CinematicScene3D
               src={facilityImage}
               alt="Aerial view of the WattByte Alberta Heartland facility"
               grade="bottom"
-              parallax={52}
+              accent="#f7931a"
               className="rounded-3xl border border-border h-[26rem]"
             >
               <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
@@ -37,7 +38,7 @@ export function FlagshipSection() {
                   Under development
                 </div>
               </div>
-            </CinematicPhoto>
+            </CinematicScene3D>
           </Reveal>
 
           {/* Copy + specs */}

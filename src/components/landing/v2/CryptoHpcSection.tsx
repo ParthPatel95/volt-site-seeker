@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Cpu, Activity, Thermometer, ShieldCheck } from 'lucide-react';
 import { Reveal, CountUp, CinematicPhoto } from './motion';
+import { CinematicScene3D } from './CinematicScene3D';
 import asicMiners from '@/assets/asic-miners-powered.jpg';
 import miningFloor from '@/assets/datacenter-mining-floor-interior.jpg';
 
@@ -20,12 +21,14 @@ export function CryptoHpcSection() {
           {/* Imagery — two real facility photos, layered editorially */}
           <Reveal>
             <div className="relative">
-              <CinematicPhoto
+              <CinematicScene3D
                 src={miningFloor}
                 alt="WattByte mining floor interior"
-                parallax={44}
+                accent="#f7931a"
                 className="aspect-[4/3] rounded-2xl ring-1 ring-border shadow-xl"
               />
+              {/* Small inset stays on the lightweight Ken-Burns treatment —
+                  a tiny 3D canvas isn't worth the GPU cost at that size. */}
               <CinematicPhoto
                 src={asicMiners}
                 alt="Powered ASIC miners"
