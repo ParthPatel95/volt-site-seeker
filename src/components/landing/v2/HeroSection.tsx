@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import { Reveal, CountUp, CinematicPhoto } from './motion';
+import { Reveal, CountUp } from './motion';
+import { CinematicScene3D } from './CinematicScene3D';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 import heroImage from '@/assets/aeso-grid-hero.jpg';
 
 // Institutional hero: editorial copy on a clean light field, with one
-// cinematic real-photography panel — a navy-graded grid/transmission shot that
-// drifts with a slow Ken-Burns push and scroll parallax. The navy grade keeps
-// the single premium dark accent the brand leans on, now grounded in a real
-// power-infrastructure image rather than an abstract procedural scene.
+// hyper-real 3D scene — the real grid/transmission photograph projected onto
+// a curved plane inside a perspective camera that drifts and tilts with the
+// pointer. Atmospheric sparkles in front of and behind the plane give true
+// volumetric depth.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline' },
@@ -66,25 +67,16 @@ export function HeroSection() {
             </Reveal>
           </div>
 
-          {/* Cinematic photo panel */}
+          {/* Hyper-real 3D scene */}
           <Reveal delay={0.1}>
-            <CinematicPhoto
+            <CinematicScene3D
               src={heroImage}
               alt="High-voltage transmission infrastructure feeding WattByte's development pipeline"
               eager
               grade="navy"
-              parallax={56}
+              accent="#f7931a"
               className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl ring-1 ring-white/10 shadow-2xl"
             >
-              {/* additive brand glow over the photo */}
-              <div
-                className="pointer-events-none absolute inset-0 opacity-60 mix-blend-screen"
-                style={{
-                  background:
-                    'radial-gradient(55% 50% at 50% 38%, hsl(var(--watt-trust) / 0.30), transparent 70%),' +
-                    'radial-gradient(40% 40% at 70% 72%, hsl(var(--watt-bitcoin) / 0.16), transparent 70%)',
-                }}
-              />
               {/* caption chip */}
               <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
                 <span className="text-[11px] font-mono uppercase tracking-widest text-white/65">
@@ -94,7 +86,7 @@ export function HeroSection() {
                   {COUNTRIES} countries
                 </span>
               </div>
-            </CinematicPhoto>
+            </CinematicScene3D>
           </Reveal>
         </div>
 

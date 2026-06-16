@@ -1,21 +1,23 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { Reveal, CinematicPhoto } from './motion';
+import { Reveal } from './motion';
+import { CinematicScene3D } from './CinematicScene3D';
 import { TOTAL_MW, COUNTRIES } from '@/data/advisory-pipeline';
 import bandImage from '@/assets/aeso-wind-farm.jpg';
 
 // Full-bleed cinematic moment bridging the flagship ("one site in steel") and
-// the global pipeline. A single landscape energy shot under a strong parallax
-// + navy grade, with one line of copy — a deliberate breath in the scroll.
+// the global pipeline. A hyper-real 3D scene with a single landscape energy
+// shot under a strong navy grade, with one line of copy — a deliberate breath
+// in the scroll.
 export function CinematicBand() {
   return (
     <section aria-label="From one site to a global pipeline" className="py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-        <CinematicPhoto
+        <CinematicScene3D
           src={bandImage}
           alt="Wind generation across the Alberta grid"
           grade="navy"
-          parallax={90}
+          accent="#10a5c7"
           className="h-[56vh] min-h-[22rem] rounded-3xl ring-1 ring-white/10 shadow-2xl"
         >
           <div className="absolute inset-0 flex items-end">
@@ -37,7 +39,7 @@ export function CinematicBand() {
               </Reveal>
             </div>
           </div>
-        </CinematicPhoto>
+        </CinematicScene3D>
       </div>
     </section>
   );
