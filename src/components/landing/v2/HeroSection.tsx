@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Reveal, CountUp } from './motion';
-import { CinematicScene3D } from './CinematicScene3D';
+import { PowerGridScene3D } from './PowerGridScene3D';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
-import heroImage from '@/assets/aeso-grid-hero.jpg';
 
-// Institutional hero: editorial copy on a clean light field, with one
-// hyper-real 3D scene — the real grid/transmission photograph projected onto
-// a curved plane inside a perspective camera that drifts and tilts with the
-// pointer. Atmospheric sparkles in front of and behind the plane give true
-// volumetric depth.
+// Institutional hero: editorial copy on a clean light field, with one fully
+// procedural 3D scene — transmission towers, sagging conductor lines, and
+// glowing current pulses, rendered inside a slowly orbiting camera. No source
+// photograph; everything is geometry, so the result is unambiguously a 3D
+// animation: parallax between near/far towers, the catenary curves resolving
+// from new angles each rotation, and pulses streaming down each line.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline' },
@@ -67,14 +67,10 @@ export function HeroSection() {
             </Reveal>
           </div>
 
-          {/* Hyper-real 3D scene */}
+          {/* Procedural 3D power-grid scene */}
           <Reveal delay={0.1}>
-            <CinematicScene3D
-              src={heroImage}
-              alt="High-voltage transmission infrastructure feeding WattByte's development pipeline"
+            <PowerGridScene3D
               eager
-              grade="navy"
-              accent="#f7931a"
               className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl ring-1 ring-white/10 shadow-2xl"
             >
               {/* caption chip */}
@@ -86,7 +82,7 @@ export function HeroSection() {
                   {COUNTRIES} countries
                 </span>
               </div>
-            </CinematicScene3D>
+            </PowerGridScene3D>
           </Reveal>
         </div>
 

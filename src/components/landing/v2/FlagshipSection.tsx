@@ -2,8 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, PlugZap, Cpu, Gauge } from 'lucide-react';
 import { Reveal, CountUp } from './motion';
-import { CinematicScene3D } from './CinematicScene3D';
-import facilityImage from '@/assets/alberta-facility-aerial.jpg';
+import { DatacenterYardScene3D } from './DatacenterYardScene3D';
 
 // Alberta Heartland flagship — the one site that's real steel today. Specs
 // mirror the pipeline registry (135 MW, transmission-connected, ASIC + HPC).
@@ -20,25 +19,22 @@ export function FlagshipSection() {
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Image — 3D scene */}
+          {/* Procedural 3D data-center yard */}
           <Reveal>
-            <CinematicScene3D
-              src={facilityImage}
-              alt="Aerial view of the WattByte Alberta Heartland facility"
-              grade="bottom"
-              accent="#f7931a"
+            <DatacenterYardScene3D
               className="rounded-3xl border border-border h-[26rem]"
-            >
-              <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
-                <div>
-                  <div className="text-xs font-mono text-watt-bitcoin mb-1">🇨🇦 53.63°N, 113.10°W</div>
-                  <div className="text-xl font-semibold text-foreground">Alberta Heartland 135</div>
+              overlay={
+                <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
+                  <div>
+                    <div className="text-xs font-mono text-watt-bitcoin mb-1">🇨🇦 53.63°N, 113.10°W</div>
+                    <div className="text-xl font-semibold text-white drop-shadow">Alberta Heartland 135</div>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-full bg-watt-bitcoin/15 border border-watt-bitcoin/30 text-watt-bitcoin text-xs font-medium backdrop-blur-sm">
+                    Under development
+                  </div>
                 </div>
-                <div className="px-3 py-1.5 rounded-full bg-watt-bitcoin/15 border border-watt-bitcoin/30 text-watt-bitcoin text-xs font-medium backdrop-blur-sm">
-                  Under development
-                </div>
-              </div>
-            </CinematicScene3D>
+              }
+            />
           </Reveal>
 
           {/* Copy + specs */}
