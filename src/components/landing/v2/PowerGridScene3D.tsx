@@ -1,8 +1,7 @@
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useReducedMotion } from 'framer-motion';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { cn } from '@/lib/utils';
+import { Scene3DFrame } from './Scene3DFrame';
 
 // Procedural 3D power-grid scene. Everything in here is geometry — lattice
 // transmission towers, sagging conductor lines, glowing current pulses, a
@@ -350,67 +349,14 @@ export function PowerGridScene3D({
   eager?: boolean;
   children?: ReactNode;
 }) {
-  const reduced = useReducedMotion() ?? false;
-  const frameRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const el = frameRef.current;
-    if (!el) return;
-    if (eager) {
-      setMounted(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setMounted(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: '200px' },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [eager]);
-
   return (
-    <div ref={frameRef} className={cn('relative overflow-hidden', className)}>
-      {/* Pre-mount and no-WebGL fallback: a tonal navy field rather than the
-          source photograph (none exists for this procedural scene). */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(60% 55% at 50% 45%, #142844 0%, #0a1729 60%, #060e1c 100%)',
-        }}
-      />
-
-      {mounted && (
-        <div className="absolute inset-0">
-          <Canvas
-            dpr={[1, 1.6]}
-            shadows={false}
-            camera={{ fov: 45, position: [11, 6, 9], near: 0.1, far: 80 }}
-            gl={{ antialias: true, powerPreference: 'high-performance' }}
-            style={{ display: 'block' }}
-          >
-            <Suspense fallback={null}>
-              <Scene reduced={reduced} />
-            </Suspense>
-          </Canvas>
-        </div>
-      )}
-
-      {/* Inner vignette */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ boxShadow: 'inset 0 0 140px rgba(0,0,0,0.55)' }}
-        aria-hidden="true"
-      />
-
-      {children}
-    </div>
+    <Scene3DFrame
+      className={className}
+      eager={eager}
+      camera={{ fov: 45, position: [11, 6, 9], near: 0.1, far: 80 }}
+      overlay={children}
+    >
+      {(reduced) => <Scene reduced={reduced} />}
+    </Scene3DFrame>
   );
 }

@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Cpu, Activity, Thermometer, ShieldCheck } from 'lucide-react';
-import { Reveal, CountUp, CinematicPhoto } from './motion';
-import { CinematicScene3D } from './CinematicScene3D';
-import asicMiners from '@/assets/asic-miners-powered.jpg';
-import miningFloor from '@/assets/datacenter-mining-floor-interior.jpg';
+import { Reveal, CountUp } from './motion';
+import { ServerHallScene3D } from './ServerHallScene3D';
 
 const SPECS = [
   { icon: Activity, label: 'Hosting uptime target', value: 95, suffix: '%' },
@@ -18,24 +16,9 @@ export function CryptoHpcSection() {
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-16">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Imagery — two real facility photos, layered editorially */}
+          {/* Procedural 3D server hall — camera glides down a cold aisle */}
           <Reveal>
-            <div className="relative">
-              <CinematicScene3D
-                src={miningFloor}
-                alt="WattByte mining floor interior"
-                accent="#f7931a"
-                className="aspect-[4/3] rounded-2xl ring-1 ring-border shadow-xl"
-              />
-              {/* Small inset stays on the lightweight Ken-Burns treatment —
-                  a tiny 3D canvas isn't worth the GPU cost at that size. */}
-              <CinematicPhoto
-                src={asicMiners}
-                alt="Powered ASIC miners"
-                parallax={0}
-                className="absolute -bottom-8 -right-4 sm:-right-8 w-2/5 aspect-square rounded-2xl ring-4 ring-background shadow-2xl hidden sm:block"
-              />
-            </div>
+            <ServerHallScene3D className="aspect-[4/3] rounded-2xl ring-1 ring-border shadow-xl" />
           </Reveal>
 
           {/* Copy */}
