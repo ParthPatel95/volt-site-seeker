@@ -23,14 +23,14 @@ function Hall({
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color="#3a4456" roughness={0.7} metalness={0.2} />
       </mesh>
-      {/* lit roof strip — cool data-center glow */}
+      {/* lit roof strip — restrained cool data-center glow */}
       <mesh position={[0, h + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[w * 0.86, d * 0.7]} />
         <meshStandardMaterial
-          color="#0e1a2c"
-          emissive="#2fa8e0"
-          emissiveIntensity={0.7}
-          roughness={0.5}
+          color="#101c2e"
+          emissive="#6fa8cf"
+          emissiveIntensity={0.3}
+          roughness={0.6}
         />
       </mesh>
       {/* roof-top cooling units */}
@@ -96,18 +96,19 @@ function Ground() {
 
 function CameraOrbit({ reduced }: { reduced: boolean }) {
   const { camera } = useThree();
-  const target = useMemo(() => new THREE.Vector3(0, 1, 0), []);
+  // Orbit centred between the halls and the substation so both stay in frame.
+  const target = useMemo(() => new THREE.Vector3(0, 1.2, 2), []);
   useFrame((state) => {
     if (reduced) {
-      camera.position.set(10, 9, 12);
+      camera.position.set(9, 8, 14);
       camera.lookAt(target.x, target.y, target.z);
       return;
     }
     const t = state.clock.elapsedTime * 0.1;
-    const radius = 15;
-    camera.position.x = Math.sin(t) * radius;
-    camera.position.z = Math.cos(t) * radius;
-    camera.position.y = 8.5 + Math.sin(t * 1.3) * 1.2; // aerial vantage
+    const radius = 14;
+    camera.position.x = target.x + Math.sin(t) * radius;
+    camera.position.z = target.z + Math.cos(t) * radius;
+    camera.position.y = 8 + Math.sin(t * 1.3) * 1.0; // aerial vantage
     camera.lookAt(target.x, target.y, target.z);
   });
   return null;
@@ -139,7 +140,8 @@ function Scene({ reduced }: { reduced: boolean }) {
       {halls.map((h, i) => (
         <Hall key={i} position={h.position} size={h.size} />
       ))}
-      <Substation position={[8, 0, 4]} />
+      {/* substation in front of the halls, feeding the site */}
+      <Substation position={[0, 0, 9.5]} />
       <CameraOrbit reduced={reduced} />
     </>
   );
@@ -158,7 +160,7 @@ export function DatacenterYardScene3D({
     <Scene3DFrame
       className={className}
       eager={eager}
-      camera={{ fov: 45, position: [10, 9, 12], near: 0.1, far: 120 }}
+      camera={{ fov: 45, position: [9, 8, 14], near: 0.1, far: 120 }}
       overlay={overlay}
     >
       {(reduced) => <Scene reduced={reduced} />}
