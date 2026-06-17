@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, PlugZap, Cpu, Gauge } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Reveal, CountUp } from './motion';
-import { DatacenterYardScene3D } from './DatacenterYardScene3D';
+import facilityImage from '@/assets/alberta-facility-aerial.jpg';
 
 // Alberta Heartland flagship — the one site that's real steel today. Specs
 // mirror the pipeline registry (135 MW, transmission-connected, ASIC + HPC).
@@ -15,26 +16,39 @@ const SPECS = [
 ];
 
 export function FlagshipSection() {
+  const reduced = useReducedMotion();
   return (
     <section className="py-24 sm:py-32 px-6 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Procedural 3D data-center yard */}
+          {/* Real aerial photograph of the Alberta Heartland site */}
           <Reveal>
-            <DatacenterYardScene3D
-              className="rounded-3xl border border-border h-[26rem]"
-              overlay={
-                <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
-                  <div>
-                    <div className="text-xs font-mono text-watt-bitcoin mb-1">🇨🇦 53.63°N, 113.10°W</div>
-                    <div className="text-xl font-semibold text-white drop-shadow">Alberta Heartland 135</div>
-                  </div>
-                  <div className="px-3 py-1.5 rounded-full bg-watt-bitcoin/15 border border-watt-bitcoin/30 text-watt-bitcoin text-xs font-medium backdrop-blur-sm">
-                    Under development
-                  </div>
+            <div className="relative rounded-3xl overflow-hidden border border-border h-[26rem]">
+              <motion.img
+                src={facilityImage}
+                alt="Aerial photograph of the WattByte Alberta Heartland facility — buildings, substation and transmission feed"
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover"
+                initial={false}
+                animate={reduced ? undefined : { scale: [1.0, 1.07, 1.0] }}
+                transition={reduced ? undefined : { duration: 26, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              {/* legibility scrim for the caption */}
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3"
+                style={{ background: 'linear-gradient(to top, rgba(8,16,28,0.78), transparent)' }}
+              />
+              <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
+                <div>
+                  <div className="text-xs font-mono text-watt-bitcoin mb-1">🇨🇦 53.63°N, 113.10°W</div>
+                  <div className="text-xl font-semibold text-white drop-shadow">Alberta Heartland 135</div>
                 </div>
-              }
-            />
+                <div className="px-3 py-1.5 rounded-full bg-watt-bitcoin/20 border border-watt-bitcoin/40 text-watt-bitcoin text-xs font-medium backdrop-blur-sm">
+                  Under development
+                </div>
+              </div>
+            </div>
           </Reveal>
 
           {/* Copy + specs */}

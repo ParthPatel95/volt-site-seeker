@@ -2,15 +2,14 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Reveal, CountUp } from './motion';
-import { PowerGridScene3D } from './PowerGridScene3D';
+import { DatacenterHeroScene3D } from './DatacenterHeroScene3D';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
-// Institutional hero: editorial copy on a clean light field, with one fully
-// procedural 3D scene — transmission towers, sagging conductor lines, and
-// glowing current pulses, rendered inside a slowly orbiting camera. No source
-// photograph; everything is geometry, so the result is unambiguously a 3D
-// animation: parallax between near/far towers, the catenary curves resolving
-// from new angles each rotation, and pulses streaming down each line.
+// Institutional hero: editorial copy on a clean light field, with one bright
+// procedural 3D scene — a luminous "compute core" where energy pulses stream
+// inward along conduits (stranded power) into a rotating AI core with orbiting
+// data rings (compute), ringed by server racks (datacenters). The whole
+// WattByte thesis in one continuously animating 3D image.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline' },
@@ -67,22 +66,22 @@ export function HeroSection() {
             </Reveal>
           </div>
 
-          {/* Procedural 3D power-grid scene */}
+          {/* Procedural 3D compute-core scene */}
           <Reveal delay={0.1}>
-            <PowerGridScene3D
+            <DatacenterHeroScene3D
               eager
-              className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl ring-1 ring-white/10 shadow-2xl"
-            >
-              {/* caption chip */}
-              <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-white/65">
-                  Live development pipeline
-                </span>
-                <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin">
-                  {COUNTRIES} countries
-                </span>
-              </div>
-            </PowerGridScene3D>
+              className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl ring-1 ring-black/5 shadow-2xl"
+              overlay={
+                <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-foreground/55">
+                    Energy in · compute out
+                  </span>
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin">
+                    {COUNTRIES} countries
+                  </span>
+                </div>
+              }
+            />
           </Reveal>
         </div>
 
