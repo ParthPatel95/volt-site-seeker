@@ -234,9 +234,12 @@ export function usePowerModelCalculator(
     const monthGroups = new Map<number, HourlyRecord[]>();
     const yearSet = new Set<number>();
     for (const rec of hourlyData) {
-      const d = new Date(rec.date);
-      const y = d.getFullYear();
-      const m = d.getMonth();
+      // Parse "YYYY-MM-DD" as calendar components — do NOT use new Date(),
+      // which interprets the string as UTC midnight and then shifts into the
+      // browser's local timezone, leaking January records into December.
+      const [ys, ms] = rec.date.split('-');
+      const y = Number(ys);
+      const m = Number(ms) - 1;
       yearSet.add(y);
       const key = y * 12 + m;
       if (!monthGroups.has(key)) monthGroups.set(key, []);
@@ -455,8 +458,8 @@ export function usePowerModelCalculator(
 
       // Calculate curtailment savings for this month from shutdown records
       const monthShutdowns = allShutdownRecords.filter(sr => {
-        const sd = new Date(sr.date);
-        return sd.getFullYear() === yearOfBucket && sd.getMonth() === calendarMonth;
+        const [ys, ms] = sr.date.split('-');
+        return Number(ys) === yearOfBucket && Number(ms) - 1 === calendarMonth;
       });
       const monthShutdownSavings = monthShutdowns.reduce((s, sr) => s + sr.curtailmentSavings, 0);
       const monthOverContractCredits = monthShutdowns.reduce((s, sr) => s + sr.overContractCredit, 0);
