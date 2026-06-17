@@ -9,8 +9,8 @@ import { Scene3DFrame } from './Scene3DFrame';
 // data-center interior built entirely from geometry.
 
 const AISLE_LEN = 26;
-const RACK = '#1b2533';
-const RACK_EDGE = '#2f3d52';
+const RACK = '#3a4760';
+const RACK_EDGE = '#5b6c8a';
 
 // A rack with an emissive LED strip. The strip's emissive intensity is driven
 // per-frame to give a "live equipment" shimmer without per-LED meshes.
@@ -68,15 +68,15 @@ function Rack({
 function Hall() {
   return (
     <group>
-      {/* floor */}
+      {/* floor — light raised-floor tiles */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[14, AISLE_LEN + 8]} />
-        <meshStandardMaterial color="#0a1018" roughness={0.5} metalness={0.2} />
+        <meshStandardMaterial color="#9fb0c6" roughness={0.4} metalness={0.25} />
       </mesh>
       {/* ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4, 0]}>
         <planeGeometry args={[14, AISLE_LEN + 8]} />
-        <meshStandardMaterial color="#0c1420" roughness={0.9} />
+        <meshStandardMaterial color="#dfe8f3" roughness={0.85} />
       </mesh>
       {/* recessed ceiling light bars running down the aisle */}
       {Array.from({ length: 8 }).map((_, i) => (
@@ -130,14 +130,15 @@ function Scene({ reduced }: { reduced: boolean }) {
 
   return (
     <>
-      <fog attach="fog" args={['#060d16', 6, 30]} />
-      <color attach="background" args={['#060d16']} />
+      <fog attach="fog" args={['#1b2c40', 10, 40]} />
+      <color attach="background" args={['#1d3047']} />
 
-      <ambientLight intensity={0.35} />
-      {/* cold aisle wash from the ceiling */}
-      <directionalLight position={[0, 6, 2]} intensity={0.9} color="#bfe0ff" />
-      <pointLight position={[0, 3.4, 4]} intensity={18} distance={20} color="#9ed4ff" />
-      <pointLight position={[0, 3.4, -6]} intensity={18} distance={20} color="#9ed4ff" />
+      <ambientLight intensity={0.85} />
+      {/* bright, clean cold-aisle wash from the ceiling */}
+      <directionalLight position={[0, 6, 2]} intensity={1.4} color="#eaf4ff" />
+      <hemisphereLight args={['#dcecff', '#243349', 0.9]} />
+      <pointLight position={[0, 3.4, 4]} intensity={26} distance={24} color="#cfe8ff" />
+      <pointLight position={[0, 3.4, -6]} intensity={26} distance={24} color="#cfe8ff" />
 
       <Hall />
       {racks.map((r, i) => (

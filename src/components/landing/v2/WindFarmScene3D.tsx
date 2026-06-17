@@ -74,9 +74,9 @@ function Ground() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color="#16324a" roughness={1} metalness={0} />
+        <meshStandardMaterial color="#3f6b4a" roughness={1} metalness={0} />
       </mesh>
-      <gridHelper args={[200, 80, '#2a4f6e', '#1b3a54']} position={[0, 0.01, 0]} />
+      <gridHelper args={[200, 80, '#5a8a63', '#4a7553']} position={[0, 0.01, 0]} />
     </group>
   );
 }
@@ -120,13 +120,13 @@ function Scene({ reduced }: { reduced: boolean }) {
 
   return (
     <>
-      <fog attach="fog" args={['#1a3a57', 14, 50]} />
-      <color attach="background" args={['#1d4368']} />
+      <fog attach="fog" args={['#cfe2f3', 20, 70]} />
+      <color attach="background" args={['#9cc4e8']} />
 
-      {/* dusk lighting: warm low sun + cool sky fill */}
-      <ambientLight intensity={0.6} />
-      <hemisphereLight args={['#cfe4ff', '#16324a', 0.85]} />
-      <directionalLight position={[-8, 6, 6]} intensity={1.5} color="#ffe2b8" />
+      {/* bright daytime: high sun + open-sky fill */}
+      <ambientLight intensity={1.0} />
+      <hemisphereLight args={['#eaf4ff', '#2c5878', 1.1]} />
+      <directionalLight position={[-8, 12, 6]} intensity={1.7} color="#fff6e6" />
 
       <Ground />
       {turbines.map((t, i) => (
@@ -151,7 +151,7 @@ export function WindFarmScene3D({
       className={className}
       eager={eager}
       camera={{ fov: 50, position: [-6, 3.4, 12], near: 0.1, far: 120 }}
-      fallback="linear-gradient(180deg, #1d4368 0%, #16324a 100%)"
+      fallback="linear-gradient(180deg, #9cc4e8 0%, #cfe2f3 55%, #3f6b4a 56%, #345b40 100%)"
       overlay={overlay}
     >
       {(reduced) => <Scene reduced={reduced} />}
