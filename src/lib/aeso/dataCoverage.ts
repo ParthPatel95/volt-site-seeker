@@ -128,6 +128,7 @@ export function auditCoverage(
         missingHours: expected,
         isComplete: false,
         status: 'empty',
+        exactMatch: false,
       });
     }
     const m = monthsByKey.get(key)!;
@@ -149,15 +150,26 @@ export function auditCoverage(
   const nowYear = now.getUTCFullYear();
   const nowMonth = now.getUTCMonth();
   for (const m of months) {
+    // Recompute expected hours so in-progress months use elapsed hours
+    // (matches DB `audit_aeso_hourly_coverage`).
+    m.expectedHours = expectedHoursFor(m.year, m.month, now);
     m.missingHours = Math.max(0, m.expectedHours - m.coveredHours);
     m.isComplete = (m.year * 12 + m.month) < (nowYear * 12 + nowMonth);
     if (m.coveredHours === 0) m.status = 'empty';
     else if (m.coveredHours >= m.expectedHours) m.status = 'complete';
     else m.status = 'partial';
+    // "Exact match" = exactly one row per expected hour. No missing, no
+    // duplicates within the month.
+    m.exactMatch =
+      m.expectedHours > 0 &&
+      m.coveredHours === m.expectedHours &&
+      m.rawRecords === m.expectedHours;
   }
 
   // Validation-safe only when every elapsed month is complete.
   const isValidationSafe = months.every((m) => !m.isComplete || m.status === 'complete');
+  // Strictest contract: every month (elapsed + in-progress) is an exact match.
+  const isExactCoverage = months.length > 0 && months.every((m) => m.exactMatch);
 
   const allDates = dedupedRecords.map((r) => r.date).filter(Boolean);
   allDates.sort();
@@ -172,6 +184,7 @@ export function auditCoverage(
     invalidRecords,
     months,
     isValidationSafe,
+    isExactCoverage,
     firstDate: allDates[0] ?? null,
     lastDate: allDates[allDates.length - 1] ?? null,
   };
