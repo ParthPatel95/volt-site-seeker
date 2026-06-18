@@ -13,16 +13,19 @@ export function PowerModelDataCoverage({ report }: Props) {
   const [expanded, setExpanded] = useState(false);
   const elapsed = report.months.filter((m) => m.isComplete);
   const incompleteElapsed = elapsed.filter((m) => m.status !== 'complete');
-  const partialCurrent = report.months.find((m) => !m.isComplete && m.status === 'partial');
+  const inexactMonths = report.months.filter((m) => !m.exactMatch);
 
   let tone: 'pass' | 'warn' | 'fail';
   let label: string;
-  if (incompleteElapsed.length === 0 && report.invalidRecords === 0) {
+  if (report.isExactCoverage && report.invalidRecords === 0) {
     tone = 'pass';
-    label = 'Validated · Annual totals are invoice-safe';
-  } else if (incompleteElapsed.length === 0) {
+    label = 'Validated · exact hourly coverage (1 row per hour, every month)';
+  } else if (incompleteElapsed.length === 0 && inexactMonths.length === 0) {
     tone = 'warn';
     label = `Validated with ${report.invalidRecords} invalid rows skipped`;
+  } else if (incompleteElapsed.length === 0) {
+    tone = 'warn';
+    label = `${inexactMonths.length} month(s) not exact (extra/missing rows) — review below`;
   } else {
     tone = 'fail';
     label = `${incompleteElapsed.length} elapsed month(s) missing hours — annual totals are NOT invoice-safe`;
