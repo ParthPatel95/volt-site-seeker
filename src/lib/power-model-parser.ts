@@ -66,16 +66,14 @@ export function rawTrainingDataToHourly(
   for (const d of data) {
     const dt = new Date(d.timestamp);
     if (Number.isNaN(dt.getTime())) continue;
-    // Use UTC hour bucket so date and HE always come from the same hour.
+    // Stable UTC bucketing: keep each timestamp inside its actual UTC
+    // calendar day. HE = UTC hour + 1 (so 00:00 UTC -> HE 1, 23:00 UTC ->
+    // HE 24). Mapping 00:00 UTC back to HE 24 of the previous day leaks
+    // the first hour of January into December and breaks YTD coverage.
     const date = dt.toISOString().slice(0, 10);
-    // AESO convention: HE 1..24 (00:00 UTC -> HE 24 of previous day).
-    const heRaw = dt.getUTCHours();
-    const he = heRaw === 0 ? 24 : heRaw;
-    const dateForHE = heRaw === 0
-      ? new Date(dt.getTime() - 3600_000).toISOString().slice(0, 10)
-      : date;
+    const he = dt.getUTCHours() + 1;
     out.push({
-      date: dateForHE,
+      date,
       he,
       poolPrice: d.pool_price,
       // Coverage audit must see every canonical hour. When live AIL isn't
