@@ -12,6 +12,7 @@ const VIEW_LABELS: Record<AESOHubView, string> = {
   predictions: 'AI Predictions',
   datacenter: 'Datacenter Control',
   'mining-economics': 'Mining Economics',
+  scraping: 'Scraping',
   analytics: 'Analytics',
   settings: 'Settings',
 };
