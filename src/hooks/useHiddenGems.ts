@@ -192,13 +192,16 @@ export function useGemListings(opts: { includeStale?: boolean } = {}) {
 export interface RefineResult {
   facility_id: string;
   name: string;
-  geocode: 'updated' | 'failed' | 'skipped_no_key';
-  precision?: string;
+  refined: boolean;
+  provider?: 'google_places' | 'google_geocode' | 'osm_parcel_snap';
+  precision?: 'site' | 'parcel' | 'locality' | 'unverified';
   moved_km?: number;
-  osm: 'updated' | 'failed';
+  consensus_km?: number;
+  candidates_count?: number;
   osm_substation_km?: number | null;
   osm_max_voltage_kv?: number | null;
   error?: string;
+  needs?: string[];
 }
 
 export function useFacilityRefine() {
@@ -213,6 +216,68 @@ export function useFacilityRefine() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hidden-gems-inputs'] });
     },
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Closure-signal activity monitor (Sentinel-2 NDVI)
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface ActivityMonitorResult {
+  facility_id: string;
+  name: string;
+  observations: number;
+  trend: 'rising_vegetation' | 'recovering' | 'stable' | 'no_data' | 'error';
+  trend_score?: number;
+  evidence?: string;
+  error?: string;
+  needs?: string[];
+}
+
+export function useFacilityActivityMonitor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      req:
+        | { facility_id: string; window_years?: number }
+        | { all_stale_days: number; limit?: number; window_years?: number },
+    ) => {
+      const { data, error } = await supabase.functions.invoke('facility-activity-monitor', { body: req });
+      if (error) throw error;
+      if (data?.success === false) {
+        const e = new Error(data.error ?? 'Activity check failed');
+        // Surface the needs[] array so the dialog can show a setup hint.
+        (e as Error & { needs?: string[] }).needs = data.needs;
+        throw e;
+      }
+      return data as { checked: number; results: ActivityMonitorResult[] };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hidden-gems-inputs'] });
+    },
+  });
+}
+
+// Per-facility NDVI series for the detail dialog chart.
+export function useFacilityActivityObservations(facilityId: string | null) {
+  return useQuery({
+    queryKey: ['facility-activity-observations', facilityId],
+    enabled: !!facilityId,
+    queryFn: async () => {
+      const { data, error } = await untyped
+        .from('facility_activity_observations')
+        .select('*')
+        .eq('facility_id', facilityId!)
+        .order('observed_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        observed_at: string;
+        source: string;
+        ndvi_mean_footprint: number | null;
+        ndvi_mean_baseline: number | null;
+      }>;
+    },
+    staleTime: 60 * 1000,
   });
 }
 
