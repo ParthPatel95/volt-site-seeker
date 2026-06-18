@@ -28,6 +28,12 @@ export interface MonthCoverage {
   isComplete: boolean;
   /** Coverage classification. */
   status: CoverageStatus;
+  /**
+   * Strictest possible check: covered hours AND raw rows AND expected hours
+   * are all the same number. Only `true` when there is exactly one row per
+   * hour for every expected hour in this month (no missing, no duplicates).
+   */
+  exactMatch: boolean;
 }
 
 export interface CoverageReport {
@@ -38,6 +44,12 @@ export interface CoverageReport {
   months: MonthCoverage[];
   /** True only when every elapsed month is fully covered. */
   isValidationSafe: boolean;
+  /**
+   * True only when every month in the report (elapsed AND in-progress)
+   * satisfies `exactMatch`. This is the "exact points per hour per month"
+   * contract we surface to the UI.
+   */
+  isExactCoverage: boolean;
   /** Earliest record date (ISO). */
   firstDate: string | null;
   /** Latest record date (ISO). */
@@ -51,6 +63,25 @@ const MONTH_NAMES = [
 
 function daysInMonth(year: number, monthIndex: number): number {
   return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+/**
+ * Canonical expected hours for a (year, month) bucket given a wall-clock
+ * "now". Matches the DB function `audit_aeso_hourly_coverage`:
+ *   - fully elapsed month → daysInMonth × 24
+ *   - in-progress month   → whole hours since month start (UTC), to `now`
+ *   - future month        → 0
+ */
+function expectedHoursFor(year: number, monthIndex: number, now: Date): number {
+  const monthStart = Date.UTC(year, monthIndex, 1);
+  const nextMonthStart = Date.UTC(year, monthIndex + 1, 1);
+  const nowMs = Date.UTC(
+    now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+    now.getUTCHours(), 0, 0,
+  );
+  if (nextMonthStart <= nowMs) return daysInMonth(year, monthIndex) * 24;
+  if (monthStart > nowMs) return 0;
+  return Math.max(0, Math.floor((nowMs - monthStart) / (3600 * 1000)));
 }
 
 /**
