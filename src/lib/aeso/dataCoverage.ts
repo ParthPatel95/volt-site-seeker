@@ -66,17 +66,20 @@ export function auditCoverage(
   const buckets = new Map<string, { year: number; month: number }>();
 
   for (const r of dedupedRecords) {
-    const d = new Date(r.date);
+    // Parse "YYYY-MM-DD" as explicit calendar components — never
+    // `new Date(r.date)`, which interprets ISO strings as UTC midnight
+    // and can shift to the previous day in negative-offset timezones.
+    const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(r.date ?? '');
     if (
-      Number.isNaN(d.getTime()) ||
+      !parts ||
       !Number.isFinite(r.he) || r.he < 1 || r.he > 24 ||
       !Number.isFinite(r.poolPrice)
     ) {
       invalidRecords++;
       continue;
     }
-    const year = d.getUTCFullYear();
-    const month = d.getUTCMonth();
+    const year = Number(parts[1]);
+    const month = Number(parts[2]) - 1;
     buckets.set(`${r.date}|${r.he}`, { year, month });
   }
 
@@ -101,9 +104,9 @@ export function auditCoverage(
   }
 
   for (const r of rawRecords) {
-    const d = new Date(r.date);
-    if (Number.isNaN(d.getTime())) continue;
-    const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+    const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(r.date ?? '');
+    if (!parts) continue;
+    const key = `${Number(parts[1])}-${Number(parts[2]) - 1}`;
     const m = monthsByKey.get(key);
     if (m) m.rawRecords += 1;
   }
