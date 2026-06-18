@@ -1,42 +1,49 @@
-## Audit findings
+## What the database actually contains
 
-The database table holding hourly data is `public.aeso_training_data`.
+A fresh per-month audit of `aeso_training_data` from 2024-01 through now confirms there is **exactly 1 row per hour per month**, with pool price, AIL, and SMP all populated:
 
-For `2024-01-01` through the latest available hour (`2026-06-17 19:00 UTC`), the table is already fully filled at the hourly-bucket level:
+```text
+2024  every month = days × 24 (Jan 744, Feb 696, …, Dec 744)
+2025  every month = days × 24 (incl. Dec 744)
+2026  Jan 744, Feb 672, Mar 744, Apr 720, May 744, Jun 426 (elapsed-to-now)
+```
 
-- `2024`: 8,784 / 8,784 pool-price hours present
-- `2025`: 8,760 / 8,760 pool-price hours present
-- `2026 YTD`: 4,028 / 4,028 pool-price hours present through now
-- Total: 21,572 / 21,572 expected pool-price hours present
-- Missing pool-price hours: 0
-- Duplicate hour buckets: 0
-- Null pool-price rows: 0
-- Negative pool-price rows: 0
-
-So the remaining “missing data” issue is not a missing-row problem in `aeso_training_data`; it is coming from app-side timestamp-to-date/hour conversion and verification visibility.
+Raw rows = distinct hours = price hours = AIL hours = SMP hours for every month. There are no duplicates, no nulls, no gaps. So the remaining work is not a DB backfill — it is enforcing this contract in the app and making every tool read from the same canonical set.
 
 ## Plan
 
-1. Fix the Power Model database conversion
-   - Update the database-row-to-hourly-record conversion so each `timestamp` stays in its actual UTC calendar day.
-   - Stop converting `00:00 UTC` into `HE 24` of the previous day, because that still leaks one January YTD hour into December.
-   - Use stable UTC semantics: date = `timestamp.toISOString().slice(0, 10)`, HE = `UTC hour + 1`.
+### 1. Make "exact points per hour per month" a hard contract in the app
+- Extend `src/lib/aeso/dataCoverage.ts` so each `MonthCoverage` carries `expectedHours` calculated as:
+  - elapsed months → `daysInMonth(year, month) × 24`
+  - in-progress month → hours from month start to "now" hour (UTC), matching how the DB function `audit_aeso_hourly_coverage` already computes it
+- A month is `complete` only when `coveredHours === expectedHours` AND `rawRecords === expectedHours` (no duplicates, no missing). Anything else is `partial` and the report is NOT validation-safe.
+- Surface a new `exactMatch: boolean` per month so the UI can show a green check only when the count is exact.
 
-2. Harden coverage auditing against timezone shifts
-   - Replace remaining `new Date(dateString)` parsing in `src/lib/aeso/dataCoverage.ts` with explicit `YYYY-MM-DD` component parsing.
-   - This keeps January records from being bucketed into December in any browser timezone.
+### 2. Strengthen the Power Model coverage card
+- `src/components/aeso/PowerModelDataCoverage.tsx`: render the new `Expected vs Covered vs Raw` columns side by side; flag any month where `raw ≠ expected` even if covered hours match (catches duplicate-with-missing patterns).
+- Header badge becomes "Validated · exact hourly coverage" only when every month in range passes the exact-match contract.
 
-3. Add an app-level verification for 2024 → now
-   - Add or extend the Power Model coverage audit display to clearly show expected vs covered pool-price hours for the selected database range.
-   - Make the UI report `100% coverage` only when every expected hourly bucket is present and has pool price.
+### 3. Add a DB-side authoritative check used by the UI
+- Use the existing `public.audit_aeso_hourly_coverage(p_from, p_to)` RPC as the source of truth for the Power Model coverage panel: call it alongside the in-memory audit and show a small "DB ✓ matches" badge when the DB report and the in-memory report agree on every month. If they ever disagree, surface it loudly — that's the only situation where data would be "missing".
 
-4. Add regression coverage
-   - Add tests for the `2026-01-01T00:00:00Z` conversion so it remains `2026-01-01`, not `2025-12-31`.
-   - Add a coverage-audit test for 2024/2025/2026 month bucketing using explicit UTC date parsing.
+### 4. Point every consumer at the same canonical query
+Audit and align these tools so they all read the same `aeso_training_data` rows ordered by `timestamp` for the selected range, with no client-side date math that can drop hours:
+- `src/hooks/usePowerModelCalculator.ts` (Power Model)
+- `src/hooks/useAESOData.tsx`, `useAESOMarketData.tsx`, `useAESOHistoricalPricing` paths used by the landing analytics
+- `src/components/landing/AlbertaEnergyAnalytics.tsx` (currently goes through the `aeso-historical-pricing` edge function — switch it to the same canonical table via a thin wrapper so the homepage and the Power Model can never disagree)
+- 12CP / peak-demand surfaces already use `get_yearly_top12_peaks` / `get_monthly_peak_demands` against the same table — verify, no change expected
 
-5. Force clients onto the fixed app
-   - Bump `APP_VERSION` after the fix so old cached UI/data logic cannot keep showing stale results.
+### 5. Regression tests
+- Unit tests in `src/lib/aeso/__tests__/` for `auditCoverage`:
+  - 2024-02 expects 696, 2024-12 expects 744, 2026-02 expects 672
+  - In-progress month: expected = hours-since-month-start
+  - Duplicate raw row with same (date, HE) → `exactMatch=false`
+- A small Playwright check that opens the Power Model and asserts the coverage badge reads "Validated · exact hourly coverage" for 2024 and 2025.
 
-## No database backfill needed right now
+### 6. Force clients off stale bundles
+- Bump `src/constants/app-version.ts` so the SW + version-gate reload picks up the stricter contract.
 
-Because the live database audit shows 100% hourly pool-price coverage from 2024 through now, I will not insert or overwrite historical rows unless a later verification query identifies a specific bad hour/value.
+## Out of scope
+- No DB backfill (audit shows 100% coverage).
+- No schema changes.
+- No changes to ingestion cron — it's already producing exact hourly rows.
