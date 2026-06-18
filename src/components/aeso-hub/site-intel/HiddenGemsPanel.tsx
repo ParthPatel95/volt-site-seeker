@@ -78,8 +78,8 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
   const runRefineAll = async () => {
     try {
       const res = await refine.mutateAsync({ all_unverified: true, limit: 25 });
-      const failed = res.results.filter((r) => r.geocode === 'failed' || r.error);
-      toast.success(`Refined ${res.refined} facilities via Google geocode + live OSM`, {
+      const failed = res.results.filter((r) => !r.refined || r.error);
+      toast.success(`Refined ${res.refined} facilities via Places + parcel snap + live OSM`, {
         description: !res.google_key_present
           ? 'GOOGLE_MAPS_API_KEY not set — only OSM grid checks ran'
           : failed.length ? `${failed.length} need review — see console` : undefined,
@@ -455,24 +455,24 @@ function GemRow({
 }) {
   const f = g.facility;
   const refine = useFacilityRefine();
-  const apiVerified = f.location_method === 'google_geocode';
+  // Coordinates the user can trust: 'site' (Places ROOFTOP) and 'parcel'
+  // (snapped to an OSM industrial polygon). 'locality' is the town-centre
+  // bug, 'unverified' means we couldn't refine at all.
+  const trustedCoords = f.coordinates_precision === 'site' || f.coordinates_precision === 'parcel';
 
   const runRefine = async () => {
     try {
       const res = await refine.mutateAsync({ facility_id: f.id });
       const r = res.results[0];
-      if (r?.geocode === 'updated') {
-        toast.success(`Location refined: ${r.precision} precision, moved ${r.moved_km} km`, {
-          description: r.osm === 'updated' && r.osm_substation_km != null
+      if (r?.refined) {
+        const provider = r.provider?.replace(/_/g, ' ') ?? 'provider';
+        toast.success(`Coords refined via ${provider} → ${r.precision}, moved ${r.moved_km} km`, {
+          description: typeof r.osm_substation_km === 'number'
             ? `OSM: nearest substation ${r.osm_substation_km.toFixed(1)} km${r.osm_max_voltage_kv ? `, up to ${r.osm_max_voltage_kv} kV` : ''}`
             : undefined,
         });
-      } else if (r?.osm === 'updated') {
-        toast.success('Live OSM grid check stored', {
-          description: r.geocode === 'skipped_no_key'
-            ? 'Set GOOGLE_MAPS_API_KEY to also refine coordinates'
-            : r.error,
-        });
+      } else if (r?.needs?.includes('google_key')) {
+        toast.error('Set GOOGLE_MAPS_API_KEY on the edge function to refine coordinates');
       } else {
         toast.error(r?.error ?? 'Refine produced no updates');
       }
@@ -491,8 +491,8 @@ function GemRow({
           <div className="min-w-0 flex-1">
             <div className="font-medium text-sm truncate flex items-center gap-1.5">
               {f.name}
-              {apiVerified && (
-                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="Location API-verified" />
+              {trustedCoords && (
+                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="Coordinates verified" />
               )}
             </div>
             <div className="text-xs text-muted-foreground truncate">
@@ -538,7 +538,7 @@ function GemRow({
             <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 pt-1">
               <span>
                 Coords: {f.lat.toFixed(3)}, {f.lng.toFixed(3)} ({f.coordinates_precision}
-                {apiVerified ? ' · Google-geocoded' : ' · seeded'})
+                {f.coord_provider ? ` · ${f.coord_provider.replace(/_/g, ' ')}` : ' · seeded'})
               </span>
               {f.naics_code && <span>NAICS {f.naics_code}</span>}
               {f.capacity_value != null && (

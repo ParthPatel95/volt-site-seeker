@@ -6,12 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  AlertTriangle, BadgeCheck, ExternalLink, FileSearch, Loader2, LocateFixed,
-  Mail, MapPin, Phone, Radar, ShieldAlert, User,
+  Activity, AlertTriangle, BadgeCheck, ExternalLink, FileSearch, Leaf,
+  Loader2, LocateFixed, Mail, MapPin, Phone, Radar, Satellite, ShieldAlert,
+  User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ScoredGem } from '@/lib/hidden-gems';
-import { useFacilityRefine, useGemListings, type GemListing } from '@/hooks/useHiddenGems';
+import {
+  useFacilityRefine, useFacilityActivityMonitor, useFacilityActivityObservations,
+  useGemListings, type GemListing,
+} from '@/hooks/useHiddenGems';
 
 // Hidden Gems detail dialog. Single source of truth for "everything we know"
 // about a facility — pulled from the registry row plus any scraped listings
@@ -43,13 +47,25 @@ function nearbyListings(facilityState: string | undefined, lat: number, lng: num
 
 export function GemDetailDialog({ gem, open, onOpenChange, onOpenInSiteLookup }: Props) {
   const refine = useFacilityRefine();
+  const activityMon = useFacilityActivityMonitor();
   const { listings: allListings } = useGemListings();
   const [refining, setRefining] = useState(false);
 
+  // Hook is gated on gem being non-null; declare it before the early return so
+  // hook order stays stable across renders.
+  const activityObs = useFacilityActivityObservations(gem?.facility.id ?? null);
+
   if (!gem) return null;
   const f = gem.facility;
-  const apiVerified = f.location_method === 'google_geocode';
-  const localityOnly = f.coordinates_precision !== 'site';
+  // Coordinate provenance: 'site' (rooftop) and 'parcel' (OSM industrial
+  // polygon snap) are the trusted tiers; 'locality' is the town-centre bug
+  // and 'unverified' means we couldn't refine at all.
+  const precision = f.coordinates_precision;
+  const trusted = precision === 'site' || precision === 'parcel';
+  const localityOnly = !trusted;
+  const candidates = f.coord_candidates ?? [];
+  const consensusKm = f.coord_consensus_km;
+  const providerDisagrees = typeof consensusKm === 'number' && consensusKm >= 2;
 
   const matchedListings = nearbyListings(f.state, f.lat, f.lng, allListings);
 
@@ -58,21 +74,46 @@ export function GemDetailDialog({ gem, open, onOpenChange, onOpenInSiteLookup }:
     try {
       const res = await refine.mutateAsync({ facility_id: f.id });
       const r = res.results[0];
-      if (r?.geocode === 'updated') {
-        toast.success(`Location refined: ${r.precision}, moved ${r.moved_km} km`);
+      if (r?.refined) {
+        const provider = r.provider?.replace(/_/g, ' ') ?? 'provider';
+        toast.success(`Coords refined via ${provider} → ${r.precision}, moved ${r.moved_km} km`);
       } else if (r?.error) {
         toast.warning(`Refine notice: ${r.error}`);
+      } else if (r?.needs?.includes('google_key')) {
+        toast.error('Google Maps API key missing on the edge function');
       }
-      // Use whatever the function settled on (it updates the row in place).
-      // The hook invalidates cache on success, but for this one click we
-      // pass the freshest known coords up.
-      const freshLat = (typeof r?.osm_substation_km === 'number' && (r as { lat?: number }).lat) || f.lat;
-      const freshLng = ((r as { lng?: number })?.lng) || f.lng;
-      onOpenInSiteLookup({ lat: freshLat, lng: freshLng, label: f.name });
+      // Hook invalidates the inputs query so coords are fresh on the next render;
+      // pass the row's current best-known coords up for the immediate jump.
+      onOpenInSiteLookup({ lat: f.lat, lng: f.lng, label: f.name });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Refine failed');
     } finally {
       setRefining(false);
+    }
+  };
+
+  const runActivityCheck = async () => {
+    try {
+      const res = await activityMon.mutateAsync({ facility_id: f.id });
+      const r = res.results[0];
+      if (r?.trend === 'rising_vegetation') {
+        toast.warning(`Closure signal: ${r.evidence}`);
+      } else if (r?.trend === 'recovering') {
+        toast.info(`Mild activity drop: ${r.evidence}`);
+      } else if (r?.trend === 'stable') {
+        toast.success('Site appears active — no vegetation rebound');
+      } else if (r?.trend === 'no_data') {
+        toast.message('Not enough clear scenes to call a trend');
+      } else if (r?.error) {
+        toast.error(r.error);
+      }
+    } catch (e) {
+      const needs = (e as Error & { needs?: string[] }).needs;
+      if (needs?.includes('sentinel_creds')) {
+        toast.error('Set SENTINEL_HUB_CLIENT_ID + SENTINEL_HUB_CLIENT_SECRET as Supabase secrets to enable closure-signal monitoring.');
+      } else {
+        toast.error(e instanceof Error ? e.message : 'Activity check failed');
+      }
     }
   };
 
@@ -84,8 +125,8 @@ export function GemDetailDialog({ gem, open, onOpenChange, onOpenInSiteLookup }:
             <div className="min-w-0">
               <DialogTitle className="text-2xl flex items-center gap-2 flex-wrap">
                 <span>{f.name}</span>
-                {apiVerified && (
-                  <BadgeCheck className="w-5 h-5 text-emerald-600 shrink-0" aria-label="Location API-verified" />
+                {trusted && (
+                  <BadgeCheck className="w-5 h-5 text-emerald-600 shrink-0" aria-label="Location verified" />
                 )}
               </DialogTitle>
               <DialogDescription className="mt-1">
@@ -101,34 +142,102 @@ export function GemDetailDialog({ gem, open, onOpenChange, onOpenInSiteLookup }:
           </div>
         </DialogHeader>
 
-        {/* Location provenance — directly addresses the "wrong location" complaint */}
+        {/* Location provenance — multi-provider consensus, addresses the
+            "wrong location" complaint with the new Places-first refiner. */}
         <div className={`rounded-lg border p-3 ${
           localityOnly
             ? 'border-amber-500/30 bg-amber-500/5'
-            : 'border-emerald-500/30 bg-emerald-500/5'
+            : providerDisagrees
+              ? 'border-amber-500/30 bg-amber-500/5'
+              : 'border-emerald-500/30 bg-emerald-500/5'
         }`}>
           <div className="flex items-start gap-2.5">
-            {localityOnly
-              ? <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-              : <BadgeCheck className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />}
+            {trusted && !providerDisagrees
+              ? <BadgeCheck className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+              : <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />}
             <div className="text-xs flex-1">
               <div className="font-medium">
-                {localityOnly
-                  ? 'Coordinates are TOWN-CENTRE only — not the actual facility'
-                  : 'Coordinates are API-verified at the facility'}
+                {precision === 'parcel' && 'Coordinates snapped to the OSM industrial parcel'}
+                {precision === 'site' && 'Coordinates rooftop-verified by Google Places'}
+                {precision === 'locality' && 'Coordinates are TOWN-CENTRE only — not the actual facility'}
+                {precision === 'unverified' && 'Coordinates are unverified seed data'}
+                {!precision && 'Coordinates are unverified'}
               </div>
               <div className="text-muted-foreground mt-0.5 font-mono">
-                {f.lat.toFixed(4)}, {f.lng.toFixed(4)} · precision: {f.coordinates_precision}
-                {f.location_method && ` · ${f.location_method}`}
+                {f.lat.toFixed(5)}, {f.lng.toFixed(5)} · precision: {precision ?? 'unknown'}
+                {f.coord_provider && ` · ${f.coord_provider.replace(/_/g, ' ')}`}
+                {f.osm_parcel_name && ` · parcel: ${f.osm_parcel_name}`}
               </div>
+              {candidates.length > 1 && (
+                <div className="text-muted-foreground mt-1.5">
+                  {candidates.length} providers checked
+                  {typeof consensusKm === 'number' && (
+                    <> · max disagreement <strong className={providerDisagrees ? 'text-amber-600' : ''}>{consensusKm.toFixed(2)} km</strong></>
+                  )}
+                  {providerDisagrees && ' — providers disagree, worth a human eyeball'}
+                </div>
+              )}
               {localityOnly && (
                 <p className="text-muted-foreground mt-1.5">
                   Running the Site Lookup at these coordinates will analyze the town centre, not
-                  the plant. Use <strong>Refine &amp; open</strong> below to geocode the facility
-                  first.
+                  the plant. Use <strong>Refine &amp; open</strong> below to run Google Places +
+                  OSM parcel snap first.
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Closure-signal activity trend — historical Sentinel-2 NDVI */}
+        <div className={`rounded-lg border p-3 ${
+          f.activity_trend === 'rising_vegetation'
+            ? 'border-rose-500/30 bg-rose-500/5'
+            : f.activity_trend === 'recovering'
+              ? 'border-amber-500/30 bg-amber-500/5'
+              : f.activity_trend === 'stable'
+                ? 'border-emerald-500/30 bg-emerald-500/5'
+                : 'border-border bg-muted/30'
+        }`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5 flex-1 min-w-0">
+              {f.activity_trend === 'rising_vegetation'
+                ? <Leaf className="w-4 h-4 text-rose-600 mt-0.5 shrink-0" />
+                : f.activity_trend === 'recovering'
+                  ? <Leaf className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                  : <Satellite className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
+              <div className="text-xs flex-1">
+                <div className="font-medium">
+                  {f.activity_trend === 'rising_vegetation' && 'Closure signal — vegetation reclaiming the site'}
+                  {f.activity_trend === 'recovering' && 'Mild activity drop detected'}
+                  {f.activity_trend === 'stable' && 'Site appears active — no vegetation rebound'}
+                  {f.activity_trend === 'no_data' && 'Not enough cloud-free Sentinel-2 scenes to call a trend'}
+                  {!f.activity_trend && 'Satellite activity not yet checked'}
+                </div>
+                {f.activity_evidence && (
+                  <div className="text-muted-foreground mt-0.5 font-mono">{f.activity_evidence}</div>
+                )}
+                {f.activity_window_start && f.activity_window_end && (
+                  <div className="text-muted-foreground mt-0.5">
+                    Window {f.activity_window_start} → {f.activity_window_end}
+                    {typeof f.activity_trend_score === 'number' && ` · signal ${f.activity_trend_score}/100`}
+                  </div>
+                )}
+                {activityObs.data && activityObs.data.length > 0 && (
+                  <NdviSparkline points={activityObs.data} />
+                )}
+              </div>
+            </div>
+            <Button
+              size="sm" variant="outline"
+              onClick={runActivityCheck}
+              disabled={activityMon.isPending}
+              className="shrink-0"
+            >
+              {activityMon.isPending
+                ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                : <Activity className="w-3.5 h-3.5 mr-1.5" />}
+              Check satellite
+            </Button>
           </div>
         </div>
 
@@ -322,5 +431,39 @@ function DetailField({ label, value }: { label: string; value: string | number |
       <div className="text-muted-foreground uppercase tracking-widest text-[10px]">{label}</div>
       <div className="font-medium">{value ?? '—'}</div>
     </div>
+  );
+}
+
+// Minimal SVG sparkline for the NDVI footprint vs baseline series. Doesn't
+// pretend to be a chart library — just gives a visual sense of the trend.
+function NdviSparkline({
+  points,
+}: {
+  points: Array<{
+    observed_at: string;
+    ndvi_mean_footprint: number | null;
+    ndvi_mean_baseline: number | null;
+  }>;
+}) {
+  const valid = points.filter((p) => p.ndvi_mean_footprint != null);
+  if (valid.length < 2) return null;
+  const W = 220, H = 36, PAD = 2;
+  const ys = valid.flatMap((p) => [p.ndvi_mean_footprint!, p.ndvi_mean_baseline ?? 0]);
+  const minY = Math.min(...ys, 0);
+  const maxY = Math.max(...ys, 0.6);
+  const range = Math.max(0.1, maxY - minY);
+  const path = (key: 'ndvi_mean_footprint' | 'ndvi_mean_baseline') =>
+    valid.map((p, i) => {
+      const v = p[key];
+      if (v == null) return null;
+      const x = PAD + (i / (valid.length - 1)) * (W - 2 * PAD);
+      const y = H - PAD - ((v - minY) / range) * (H - 2 * PAD);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    }).filter(Boolean).join(' ');
+  return (
+    <svg width={W} height={H} className="mt-2" aria-label="NDVI footprint vs baseline">
+      <path d={path('ndvi_mean_baseline')} fill="none" stroke="currentColor" strokeOpacity={0.35} strokeWidth={1} />
+      <path d={path('ndvi_mean_footprint')} fill="none" stroke="hsl(var(--watt-bitcoin))" strokeWidth={1.5} />
+    </svg>
   );
 }

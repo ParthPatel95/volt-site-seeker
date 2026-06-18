@@ -19,32 +19,72 @@ import { haversineKm } from '@/lib/osm-math';
 // Electricity intensity by process, MWh per tonne of product (electrical
 // only — excludes gas/steam). Sources: CIEEDAC industrial benchmarking,
 // IEA pulp & paper / cement roadmaps, Euro Chlor & chlorate-industry
-// references. These are mid-range planning figures, not plant audits;
-// estimate_basis = 'intensity_model' rows must be presented as estimates.
+// references, USGS minerals yearbooks, EUROFER steel benchmarks, IEA Iron
+// & Steel Roadmap, IFA ammonia benchmarks. These are mid-range planning
+// figures, not plant audits; estimate_basis = 'intensity_model' rows must
+// be presented as estimates.
 export const ENERGY_INTENSITY_MWH_PER_TONNE: Record<string, number> = {
-  sodium_chlorate: 9.0,    // electrolysis, ~8.5–9.5 MWh/t NaClO3
-  chlor_alkali: 2.8,       // membrane cell, MWh/t Cl2
+  // ── Pulp, paper & wood products ──────────────────────────────────────────
   pulp_mechanical: 2.2,    // BCTMP/TMP refiners
   newsprint: 2.2,          // TMP-based newsprint
   pulp_kraft: 0.62,        // net of black-liquor self-generation
+  containerboard: 0.35,    // recycled/kraft linerboard
   osb_panel: 0.18,         // per m³ (treated as tonne-equivalent for ranking)
   sawmill: 0.10,           // per m³ lumber
-  cement: 0.11,            // grinding + kiln drives
-  lime: 0.09,
-  fertilizer_nitrogen: 0.24, // compression/ASU share (process heat is gas)
+
+  // ── Inorganic / industrial chemicals ─────────────────────────────────────
+  sodium_chlorate: 9.0,    // electrolysis, ~8.5–9.5 MWh/t NaClO3
+  chlor_alkali: 2.8,       // membrane cell, MWh/t Cl2
+  hydrogen_electrolysis: 55, // per tonne H2
+  ammonia: 0.6,            // electric share of Haber–Bosch (compression + ASU)
   methanol: 0.17,
   carbon_black: 0.45,
-  metals_refinery: 2.0,    // electrowinning-dependent; wide range
+  soda_ash: 0.15,          // Solvay process electricity share
+  pvc: 0.6,                // EDC/VCM + polymerisation
+  polyethylene: 0.4,       // LDPE/HDPE blend
+  polypropylene: 0.4,
+  ethylene_cracker: 0.15,  // compressors only — process heat is gas
+  fertilizer_nitrogen: 0.24, // compression/ASU share (process heat is gas)
   air_separation: 0.45,    // per tonne O2-equivalent
-  hydrogen_electrolysis: 55, // per tonne H2
+
+  // ── Metals (smelting & refining) ─────────────────────────────────────────
+  aluminum_smelter: 14.5,  // Hall–Héroult electrolysis — highest of all
+  silicon_metal: 12.0,     // submerged-arc furnace, metallurgical-grade Si
+  polysilicon: 50.0,       // Siemens process, solar-grade
+  ferrosilicon: 9.0,       // SAF, 75% Si grade
+  ferromanganese: 3.0,     // SAF, high-carbon FeMn
+  ferrochrome: 3.5,        // SAF, charge-chrome
+  metals_refinery: 2.0,    // electrowinning-dependent; wide range
+  copper_smelter: 2.5,     // flash smelt + electrorefining
+  zinc_smelter: 3.8,       // primary electrolysis route
+  lead_smelter: 0.7,       // ISP / Kaldo-type
+  magnesium_smelter: 14.0, // Pidgeon route electricity share
+  eaf_steel: 0.50,         // electric-arc furnace melt + casting
+  foundry_ferrous: 0.8,    // induction melt + casting
+  steel_rolling: 0.30,     // re-heat + rolling stand drives
+
+  // ── Mining & mineral processing ──────────────────────────────────────────
+  cement: 0.11,            // grinding + kiln drives
+  lime: 0.09,
+  glass_float: 1.0,        // electric boost share of float-glass tank
+  glass_container: 0.7,    // IS-machine forming + electric boost
+  potash_mine: 0.18,       // per tonne KCl product (compaction + flotation)
+  silica_sand: 0.10,
+  gold_mine_mill: 0.05,    // per tonne ore (mill + leach circuit)
+  gypsum_board: 0.05,
+
+  // ── Agri-processing & food ───────────────────────────────────────────────
   canola_crush: 0.06,      // per tonne seed (t/day inputs are annualized)
   food_processing: 0.25,   // refrigeration-heavy lines
-  eaf_steel: 0.50,         // electric-arc furnace melt + casting
-  aluminum_smelter: 14.5,  // Hall–Héroult electrolysis — highest of all
-  containerboard: 0.35,    // recycled/kraft linerboard
-  // semiconductor_fab and lng_liquefaction intentionally absent: loads are
-  // real and large but no defensible per-unit intensity exists — those rows
-  // only get an MW figure when one is published.
+  cold_storage: 0.04,      // per m³ — bulk refrigerated warehouse
+
+  // ── Compute / hyper-scale loads (named for completeness) ─────────────────
+  datacenter_legacy: 0.0,  // load is published as MW; no per-tonne intensity
+
+  // Excluded: semiconductor_fab and lng_liquefaction are real heavy loads
+  // but no defensible per-unit intensity exists — those rows only get an
+  // MW figure when one is published. datacenter_legacy is listed so the
+  // taxonomy covers them but always falls through to published MW only.
 };
 
 const HOURS_PER_YEAR = 8760;
@@ -143,10 +183,24 @@ export interface FacilityRow {
   notes: string | null;
   last_verified: string | null;
   // Populated by the facility-refine edge function from live APIs; never seeded.
-  location_method?: string | null;          // 'google_geocode' | 'seed'
+  location_method?: string | null;          // 'google_places' | 'google_geocode' | 'osm_parcel_snap' | 'seed'
   osm_substation_km?: number | null;        // measured via Overpass at the site
   osm_max_voltage_kv?: number | null;
   osm_checked_at?: string | null;
+  // Extended coordinate provenance (facility-refine v2 — Places + parcel snap).
+  coord_provider?: string | null;
+  coord_consensus_km?: number | null;       // max distance between candidate providers
+  coord_candidates?: Array<{ provider: string; lat: number; lng: number; label?: string | null; kind?: string | null }> | null;
+  osm_parcel_id?: string | null;            // OSM way/relation we snapped to
+  osm_parcel_name?: string | null;
+  osm_parcel_kind?: string | null;
+  // Closure-signal activity trend, written by facility-activity-monitor.
+  activity_trend?: string | null;           // 'rising_vegetation' | 'recovering' | 'stable' | 'no_data'
+  activity_trend_score?: number | null;     // 0–100; higher = stronger closure signal
+  activity_window_start?: string | null;
+  activity_window_end?: string | null;
+  activity_checked_at?: string | null;
+  activity_evidence?: string | null;
   // Optional deal-team contact + broker fields (Hidden Gems detail dialog).
   contact_name?: string | null;
   contact_role?: string | null;
