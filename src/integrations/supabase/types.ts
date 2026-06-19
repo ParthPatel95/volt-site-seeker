@@ -8529,31 +8529,49 @@ export type Database = {
           completed_at: string | null
           errors: string[] | null
           id: string
+          items_found: number | null
+          items_new: number | null
+          params: Json | null
           properties_found: number | null
+          result_summary: Json | null
+          scraper_key: string | null
           source_id: string
           source_name: string
           started_at: string
           status: string
+          triggered_by: string | null
         }
         Insert: {
           completed_at?: string | null
           errors?: string[] | null
           id?: string
+          items_found?: number | null
+          items_new?: number | null
+          params?: Json | null
           properties_found?: number | null
+          result_summary?: Json | null
+          scraper_key?: string | null
           source_id: string
           source_name: string
           started_at?: string
           status: string
+          triggered_by?: string | null
         }
         Update: {
           completed_at?: string | null
           errors?: string[] | null
           id?: string
+          items_found?: number | null
+          items_new?: number | null
+          params?: Json | null
           properties_found?: number | null
+          result_summary?: Json | null
+          scraper_key?: string | null
           source_id?: string
           source_name?: string
           started_at?: string
           status?: string
+          triggered_by?: string | null
         }
         Relationships: [
           {
