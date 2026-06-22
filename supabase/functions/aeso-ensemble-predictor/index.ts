@@ -18,14 +18,18 @@ Deno.serve(async (req) => {
     const { hoursAhead = 24, useAdaptiveWeights = true } = await req.json().catch(() => ({}));
 
     // Step 1: Get recent data for all models
-    // Phase 1 Improvement: Use 730 days (2 years) for better long-term patterns
+    // Use most-recent training data ordered by timestamp.
+    // NOTE: We previously filtered on price_lag_1h IS NOT NULL, but that column
+    // is not consistently backfilled for the last few months, which caused the
+    // anchor timestamp (and therefore every target_timestamp) to fall months
+    // into the past. The model functions below tolerate null lag features via
+    // `|| latest.pool_price` fallbacks, so the filter is unnecessary.
     const { data: recentData, error: dataError } = await supabase
       .from('aeso_training_data')
       .select('*')
       .not('pool_price', 'is', null)
-      .not('price_lag_1h', 'is', null)
       .order('timestamp', { ascending: false })
-      .limit(17520); // Last 730 days (2 years)
+      .limit(2160); // Last 90 days — enough for seasonal/hourly windows, keeps memory bounded
 
     if (dataError || !recentData?.length) {
       throw new Error('Failed to fetch recent data for ensemble');
@@ -62,7 +66,12 @@ Deno.serve(async (req) => {
 
     // Step 3: Generate predictions from each model
     const ensemblePredictions = [];
-    const currentTime = new Date(recentData[0].timestamp);
+    // Anchor predictions to max(latest data timestamp, now) so target_timestamp
+    // is always in the future even if data ingestion is briefly behind.
+    const latestDataTime = new Date(recentData[0].timestamp);
+    const nowHour = new Date();
+    nowHour.setUTCMinutes(0, 0, 0);
+    const currentTime = latestDataTime > nowHour ? latestDataTime : nowHour;
 
     for (let h = 1; h <= hoursAhead; h++) {
       const targetTime = new Date(currentTime.getTime() + h * 60 * 60 * 1000);

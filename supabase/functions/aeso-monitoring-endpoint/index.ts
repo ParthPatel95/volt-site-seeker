@@ -21,13 +21,17 @@ Deno.serve(async (req) => {
       .limit(1)
       .single();
 
-    // Get recent predictions (last 24 hours)
+    // Get recent predictions (last 24 hours).
+    // The active prediction pipeline writes to `aeso_price_predictions`
+    // (target_timestamp + created_at). The legacy `aeso_predictions` table
+    // was nearly empty, which made monitoring report "no predictions" even
+    // when the pipeline was healthy.
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: recentPredictions } = await supabase
-      .from('aeso_predictions')
-      .select('*')
-      .gte('predicted_at', oneDayAgo)
-      .order('predicted_at', { ascending: false });
+      .from('aeso_price_predictions')
+      .select('id, target_timestamp, created_at, predicted_price, actual_price, absolute_error')
+      .gte('created_at', oneDayAgo)
+      .order('created_at', { ascending: false });
 
     // Get current market regime
     const { data: currentRegime } = await supabase
@@ -54,10 +58,10 @@ Deno.serve(async (req) => {
 
     // Calculate prediction accuracy for validated predictions
     const { data: validatedPredictions } = await supabase
-      .from('aeso_predictions')
+      .from('aeso_price_predictions')
       .select('predicted_price, actual_price, absolute_error')
       .not('actual_price', 'is', null)
-      .gte('predicted_at', oneDayAgo);
+      .gte('created_at', oneDayAgo);
 
     let avgAccuracy = null;
     if (validatedPredictions && validatedPredictions.length > 0) {
@@ -133,7 +137,7 @@ Deno.serve(async (req) => {
       },
       alerts,
       data_freshness: {
-        latest_prediction: recentPredictions?.[0]?.predicted_at || null,
+        latest_prediction: recentPredictions?.[0]?.created_at || null,
         latest_regime_update: currentRegime?.timestamp || null,
         latest_quality_check: latestQuality?.report_date || null,
         latest_performance_eval: latestPerformance?.evaluation_date || null
