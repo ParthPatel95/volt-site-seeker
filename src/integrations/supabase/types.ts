@@ -13501,6 +13501,14 @@ export type Database = {
           success: boolean
         }[]
       }
+      calculate_lag_features_fast: {
+        Args: { p_hours_back?: number }
+        Returns: {
+          batch_timestamp: string
+          records_updated: number
+          success: boolean
+        }[]
+      }
       calculate_phase2_features_batch: {
         Args: never
         Returns: {
