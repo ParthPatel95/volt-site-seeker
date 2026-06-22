@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.calculate_lag_features_fast();

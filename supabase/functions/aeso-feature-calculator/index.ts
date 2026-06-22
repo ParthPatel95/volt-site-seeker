@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
     const start = Date.now();
     const { data, error } = await supabase.rpc(
       "calculate_lag_features_fast",
+      { p_hours_back: 240 },
     );
     if (error) {
       console.error("RPC calculate_enhanced_features_batch failed:", error);
