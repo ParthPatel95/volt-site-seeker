@@ -18,6 +18,7 @@ import Index from "./pages/Index";
 import VoltScout from "./pages/VoltScout";
 import WattFund from "./pages/WattFund";
 import Hosting from "./pages/Hosting";
+import EnergyRates from "./pages/EnergyRates";
 import BitcoinEducation from "./pages/BitcoinEducation";
 import DatacenterEducation from "./pages/DatacenterEducation";
 import AESOEducation from "./pages/AESOEducation";
@@ -99,6 +100,7 @@ const App = () => (
                   </LazyErrorBoundary>
                 } />
                 <Route path="/hosting" element={<Hosting />} />
+                <Route path="/energy-rates" element={<EnergyRates />} />
                 <Route path="/advisory" element={
                   <LazyErrorBoundary componentName="Advisory">
                     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><SectionLoader message="Loading Advisory..." /></div>}>
