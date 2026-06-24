@@ -8586,11 +8586,16 @@ export type Database = {
       scraping_sources: {
         Row: {
           created_at: string
+          default_params: Json | null
+          description: string | null
+          edge_function: string | null
           id: string
           keywords: string[]
           last_run: string | null
           name: string
           properties_found: number | null
+          required_secrets: string[] | null
+          scraper_key: string | null
           status: string
           type: string
           updated_at: string
@@ -8598,11 +8603,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_params?: Json | null
+          description?: string | null
+          edge_function?: string | null
           id?: string
           keywords?: string[]
           last_run?: string | null
           name: string
           properties_found?: number | null
+          required_secrets?: string[] | null
+          scraper_key?: string | null
           status?: string
           type: string
           updated_at?: string
@@ -8610,11 +8620,16 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_params?: Json | null
+          description?: string | null
+          edge_function?: string | null
           id?: string
           keywords?: string[]
           last_run?: string | null
           name?: string
           properties_found?: number | null
+          required_secrets?: string[] | null
+          scraper_key?: string | null
           status?: string
           type?: string
           updated_at?: string
