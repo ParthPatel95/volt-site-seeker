@@ -504,18 +504,31 @@ function Fence({ corners }: { corners: [number, number][] }) {
 function CameraOrbit({ reduced }: { reduced: boolean }) {
   const { camera } = useThree();
   const target = useMemo(() => new THREE.Vector3(0, 2.5, 0), []);
+  // Pointer influence is spring-damped so moving the mouse nudges the orbit
+  // (interactive) without yanking the camera. state.pointer is r3f's
+  // normalized [-1,1] cursor over THIS canvas — it never captures page
+  // scroll, and on touch devices it simply stays neutral so the auto-orbit
+  // carries the scene.
+  const damp = useRef({ az: 0, el: 0 });
   useFrame((state) => {
     if (reduced) {
       camera.position.set(34, 22, 28);
       camera.lookAt(target.x, target.y, target.z);
       return;
     }
-    // ~45-second revolution; subtle altitude bob for cinematic feel.
+    // ~45-second base revolution; subtle altitude bob for cinematic feel.
     const t = state.clock.elapsedTime * 0.14;
+    // Pointer adds up to ±0.5 rad azimuth and a little altitude.
+    const targetAz = state.pointer.x * 0.5;
+    const targetEl = state.pointer.y * 4;
+    damp.current.az += (targetAz - damp.current.az) * 0.05;
+    damp.current.el += (targetEl - damp.current.el) * 0.05;
+
     const radius = 42;
-    camera.position.x = Math.sin(t) * radius;
-    camera.position.z = Math.cos(t) * radius;
-    camera.position.y = 21 + Math.sin(t * 1.2) * 1.5;
+    const angle = t + damp.current.az;
+    camera.position.x = Math.sin(angle) * radius;
+    camera.position.z = Math.cos(angle) * radius;
+    camera.position.y = 21 + Math.sin(t * 1.2) * 1.5 + damp.current.el;
     camera.lookAt(target.x, target.y, target.z);
   });
   return null;
