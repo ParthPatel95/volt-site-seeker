@@ -310,3 +310,24 @@ verify_jwt = false
 
 [functions.firecrawl-property-scanner]
 verify_jwt = false
+
+[functions.scraping-seed]
+verify_jwt = false
+
+[functions.scraping-orchestrator]
+verify_jwt = false
+
+[functions.gem-listing-scanner]
+verify_jwt = false
+
+[functions.industrial-news-scanner]
+verify_jwt = false
+
+[functions.osm-industrial-discovery]
+verify_jwt = false
+
+[functions.facility-activity-monitor]
+verify_jwt = false
+
+[functions.facility-refine]
+verify_jwt = false

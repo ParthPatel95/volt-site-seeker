@@ -1,5 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Hidden Gems listing scanner — searches commercial real-estate listings for
 // acquisition signals (substation on site, MW capacity quoted, former plant,
