@@ -11,7 +11,9 @@ import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 
 // Below-the-fold sections load lazily.
 const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowSection').then(m => ({ default: m.EnergyFlowSection })));
+const WhyPowerFirstSection = lazy(() => import('@/components/landing/v2/WhyPowerFirstSection').then(m => ({ default: m.WhyPowerFirstSection })));
 const ServicesGrid = lazy(() => import('@/components/landing/v2/ServicesGrid').then(m => ({ default: m.ServicesGrid })));
+const FaqSection = lazy(() => import('@/components/landing/v2/FaqSection').then(m => ({ default: m.FaqSection })));
 const PipelineSection = lazy(() => import('@/components/landing/v2/PipelineSection').then(m => ({ default: m.PipelineSection })));
 const FlagshipSection = lazy(() => import('@/components/landing/v2/FlagshipSection').then(m => ({ default: m.FlagshipSection })));
 const CinematicBand = lazy(() => import('@/components/landing/v2/CinematicBand').then(m => ({ default: m.CinematicBand })));
@@ -62,6 +64,10 @@ const Landing: React.FC = () => {
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Why WattByte"><WhyPowerFirstSection /></section>
+        </Suspense>
+
+        <Suspense fallback={<SectionLoader />}>
           <section aria-label="What we offer"><ServicesGrid /></section>
         </Suspense>
 
@@ -94,6 +100,10 @@ const Landing: React.FC = () => {
             </div>
             <LiveMarketsSection />
           </section>
+        </Suspense>
+
+        <Suspense fallback={<SectionLoader />}>
+          <section aria-label="Frequently asked questions"><FaqSection /></section>
         </Suspense>
 
         <Suspense fallback={<SectionLoader />}>
