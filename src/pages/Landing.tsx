@@ -2,17 +2,21 @@ import React, { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
 import { LandingBackground } from '@/components/landing/LandingBackground';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
-import { SectionDivider } from '@/components/landing/SectionDivider';
 import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
+import { HeroSection } from '@/components/landing/v2/HeroSection';
+import { PipelineTicker } from '@/components/landing/v2/PipelineTicker';
 
-const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(m => ({ default: m.ProblemSolutionSection })));
-const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(m => ({ default: m.InvestmentThesisSection })));
-const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(m => ({ default: m.AlbertaFacilityHub })));
-const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(m => ({ default: m.InfrastructureHighlights })));
-const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection').then(m => ({ default: m.LiveMarketsSection })));
-const VoltScoutIntelligenceHub = lazy(() => import('@/components/landing/VoltScoutIntelligenceHub').then(m => ({ default: m.VoltScoutIntelligenceHub })));
+const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowSection').then(m => ({ default: m.EnergyFlowSection })));
+const WhyPowerFirstSection = lazy(() => import('@/components/landing/v2/WhyPowerFirstSection').then(m => ({ default: m.WhyPowerFirstSection })));
+const ServicesGrid = lazy(() => import('@/components/landing/v2/ServicesGrid').then(m => ({ default: m.ServicesGrid })));
+const FlagshipSection = lazy(() => import('@/components/landing/v2/FlagshipSection').then(m => ({ default: m.FlagshipSection })));
+const CinematicBand = lazy(() => import('@/components/landing/v2/CinematicBand').then(m => ({ default: m.CinematicBand })));
+const PipelineSection = lazy(() => import('@/components/landing/v2/PipelineSection').then(m => ({ default: m.PipelineSection })));
+const PlatformSection = lazy(() => import('@/components/landing/v2/PlatformSection').then(m => ({ default: m.PlatformSection })));
+const CryptoHpcSection = lazy(() => import('@/components/landing/v2/CryptoHpcSection').then(m => ({ default: m.CryptoHpcSection })));
+const FaqSection = lazy(() => import('@/components/landing/v2/FaqSection').then(m => ({ default: m.FaqSection })));
+const ClosingSections = lazy(() => import('@/components/landing/v2/ClosingSections'));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-16">
@@ -36,56 +40,22 @@ const Landing: React.FC = () => {
 
       <LandingNavigation />
 
-      <main className="relative z-10 pt-14 sm:pt-16 md:pt-20">
-        <OptimizedHeroSection />
+      <main className="relative z-10">
+        <HeroSection />
+        <PipelineTicker />
 
-        <SectionDivider color="cyan" />
-
-        <section aria-label="Power constraints and WattByte solution" className="relative">
-          <Suspense fallback={<SectionLoader />}>
-            <ProblemSolutionSection />
-          </Suspense>
-        </section>
-
-        <SectionDivider color="blue" />
-
-        <section aria-label="Company thesis" className="relative">
-          <Suspense fallback={<SectionLoader />}>
-            <InvestmentThesisSection />
-          </Suspense>
-        </section>
-
-        <SectionDivider color="green" />
-
-        <section aria-label="Alberta Heartland 135 facility" className="relative">
-          <Suspense fallback={<SectionLoader />}>
-            <AlbertaFacilityHub />
-          </Suspense>
-        </section>
-
-        <SectionDivider color="cyan" />
-
-        <section aria-label="Development pipeline" className="relative">
-          <Suspense fallback={<SectionLoader />}>
-            <InfrastructureHighlights />
-          </Suspense>
-        </section>
-
-        <SectionDivider color="purple" />
-
-        <section aria-label="Live energy markets" className="relative">
-          <Suspense fallback={<SectionLoader />}>
-            <LiveMarketsSection />
-          </Suspense>
-        </section>
-
-        <SectionDivider color="yellow" />
-
-        <section aria-label="VoltScout Intelligence Hub" className="relative">
-          <Suspense fallback={<SectionLoader />}>
-            <VoltScoutIntelligenceHub />
-          </Suspense>
-        </section>
+        <Suspense fallback={<SectionLoader />}>
+          <EnergyFlowSection />
+          <WhyPowerFirstSection />
+          <ServicesGrid />
+          <FlagshipSection />
+          <CinematicBand />
+          <PipelineSection />
+          <PlatformSection />
+          <CryptoHpcSection />
+          <FaqSection />
+          <ClosingSections />
+        </Suspense>
       </main>
 
       <LandingFooter />
