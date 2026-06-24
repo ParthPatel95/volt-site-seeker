@@ -127,10 +127,14 @@ async function overpassQuery(bbox: [number, number, number, number]): Promise<Os
   `;
   const r = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'User-Agent': 'WattByte-AESO-Hub/1.0 (site-intelligence; contact: https://wattbyte.com)',
+    },
     body: 'data=' + encodeURIComponent(q),
   });
-  if (!r.ok) throw new Error(`overpass ${r.status}: ${await r.text()}`);
+  if (!r.ok) throw new Error(`overpass ${r.status}: ${(await r.text()).slice(0, 500)}`);
   const j = await r.json();
   return (j.elements ?? []) as OsmElement[];
 }
