@@ -2,14 +2,16 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Reveal, CountUp } from './motion';
-import { DatacenterHeroScene3D } from './DatacenterHeroScene3D';
+import { DatacenterCampusScene3D } from './DatacenterCampusScene3D';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
-// Institutional hero: editorial copy on a clean light field, with one bright
-// procedural 3D scene — a luminous "compute core" where energy pulses stream
-// inward along conduits (stranded power) into a rotating AI core with orbiting
-// data rings (compute), ringed by server racks (datacenters). The whole
-// WattByte thesis in one continuously animating 3D image.
+// Institutional hero: editorial copy on a clean light field with one
+// procedural 3D scene — a realistic hyperscale datacenter campus seen from
+// the air. Six long halls in two rows with rooftop HVAC arrays (fans
+// spinning), a substation yard with three transformers + a gantry, six
+// backup diesel generators, perimeter fence, landscaping, and a transmission
+// feed coming in with an animated current pulse. The orbiting camera shows
+// the layout from every angle.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline' },
@@ -66,17 +68,17 @@ export function HeroSection() {
             </Reveal>
           </div>
 
-          {/* Procedural 3D compute-core scene */}
+          {/* Realistic hyperscale datacenter campus, aerial */}
           <Reveal delay={0.1}>
-            <DatacenterHeroScene3D
+            <DatacenterCampusScene3D
               eager
               className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] rounded-3xl ring-1 ring-black/5 shadow-2xl"
               overlay={
                 <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-foreground/55">
-                    Energy in · compute out
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-foreground/65 bg-background/60 backdrop-blur-sm px-2 py-1 rounded">
+                    Hyperscale campus · transmission-connected
                   </span>
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-watt-bitcoin bg-background/60 backdrop-blur-sm px-2 py-1 rounded">
                     {COUNTRIES} countries
                   </span>
                 </div>
