@@ -472,3 +472,85 @@ export function scoreListingText(text: string): ListingSignalResult {
   }
   return { signals, score: Math.min(100, score) };
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Distress score
+// ────────────────────────────────────────────────────────────────────────────
+// Combines every "this facility is in trouble" signal we already track —
+// status, satellite NDVI trend, status_as_of recency — into a single 0–100
+// score so the Hidden Gems list can be sorted by partner-outreach priority.
+// Every contributing factor is named in `factors` for transparency.
+
+export interface DistressResult {
+  score: number; // 0–100, higher = more likely partner target
+  band: 'severe' | 'elevated' | 'watch' | 'quiet' | 'unknown';
+  factors: string[];
+}
+
+export function computeDistressScore(facility: FacilityRow): DistressResult {
+  let score = 0;
+  const factors: string[] = [];
+
+  // Operating-state signal — registry-known closures and idlings.
+  switch (facility.status) {
+    case 'closed':
+      score += 55; factors.push('status: closed'); break;
+    case 'announced_closure':
+      score += 50; factors.push('status: closure announced'); break;
+    case 'idle':
+      score += 45; factors.push('status: idle'); break;
+    case 'curtailed':
+      score += 30; factors.push('status: curtailed'); break;
+    case 'for_sale':
+      score += 35; factors.push('status: for sale'); break;
+    case 'operating':
+      // Operating is the null signal — no contribution.
+      break;
+    default:
+      // unknown — no contribution, but worth marking the band.
+      break;
+  }
+
+  // How recently the status was confirmed — stale rows are less actionable.
+  if (facility.status_as_of) {
+    const days = (Date.now() - new Date(facility.status_as_of).getTime()) / 86400000;
+    if (days <= 180) factors.push(`status confirmed ${Math.round(days)}d ago`);
+    else if (days <= 540) { score -= 5; factors.push(`status ${Math.round(days / 30)}mo stale`); }
+    else { score -= 10; factors.push(`status >18mo stale`); }
+  }
+
+  // Satellite closure signal — written by facility-activity-monitor. Already
+  // 0–100 from Sentinel-2 NDVI trend; we blend it in at 40% weight so it
+  // can't overwhelm a strong registry signal but matters a lot when status
+  // is unknown.
+  if (typeof facility.activity_trend_score === 'number') {
+    const contrib = Math.round(facility.activity_trend_score * 0.4);
+    if (contrib > 0) {
+      score += contrib;
+      factors.push(`satellite NDVI (+${contrib})`);
+    }
+  }
+  if (facility.activity_trend === 'rising_vegetation') {
+    factors.push('vegetation reclaiming the site');
+  } else if (facility.activity_trend === 'recovering') {
+    factors.push('mild activity drop');
+  }
+
+  // Low confidence shouldn't be presented as high distress.
+  if (facility.confidence === 'low') {
+    score = Math.min(score, 60);
+    factors.push('low-confidence record');
+  }
+
+  const clamped = Math.max(0, Math.min(100, score));
+
+  let band: DistressResult['band'];
+  if (facility.status === 'unknown' && facility.activity_trend == null) {
+    band = 'unknown';
+  } else if (clamped >= 70) band = 'severe';
+  else if (clamped >= 45) band = 'elevated';
+  else if (clamped >= 20) band = 'watch';
+  else band = 'quiet';
+
+  return { score: clamped, band, factors };
+}
