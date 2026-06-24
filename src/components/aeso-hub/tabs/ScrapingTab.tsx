@@ -8,8 +8,9 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Sparkles as SparklesIcon } from 'lucide-react';
 import {
-  useScrapingSources, useScrapingJobs, useRunScraper, useRecentScrapeItems,
+  useScrapingSources, useScrapingJobs, useRunScraper, useSeedScrapers, useRecentScrapeItems,
   type ScrapingSource, type ScrapingJob, type RecentScrapeItem,
 } from '@/hooks/useScraping';
 
@@ -53,6 +54,7 @@ export function ScrapingTab() {
   const jobsQ = useScrapingJobs(30);
   const itemsQ = useRecentScrapeItems(12);
   const run = useRunScraper();
+  const seed = useSeedScrapers();
 
   // Index running jobs by scraper_key so the source cards know to disable.
   const runningKeys = useMemo(
@@ -91,6 +93,12 @@ export function ScrapingTab() {
   };
 
   const runAll = async () => {
+    if ((sourcesQ.data?.length ?? 0) === 0) {
+      toast.warning(
+        'No scrapers registered yet — hit "Seed sources" above to register them.',
+      );
+      return;
+    }
     try {
       const res = await run.mutateAsync({ scraper_key: 'all' });
       const ok = res.jobs.filter((j) => j.status === 'completed').length;
@@ -101,9 +109,55 @@ export function ScrapingTab() {
     }
   };
 
+  const seedSources = async () => {
+    try {
+      const res = await seed.mutateAsync();
+      toast.success(`Seeded ${res.seeded} scrapers — ready to run`);
+    } catch (e) {
+      const needs = (e as Error & { needs?: string[] }).needs;
+      if (needs?.includes('migration')) {
+        toast.error(
+          'Migration not applied. Apply ' +
+          '20260618220000_aeso_hub_scraping_orchestrator.sql once, then try again.',
+          { duration: 10000 },
+        );
+      } else {
+        toast.error(e instanceof Error ? e.message : 'Seed failed');
+      }
+    }
+  };
+
+  const sourcesEmpty = !sourcesQ.isLoading && (sourcesQ.data?.length ?? 0) === 0;
+
   return (
     <div className="space-y-6">
       <Header runAll={runAll} runAllPending={run.isPending} sourcesQ={sourcesQ.data?.length ?? 0} />
+
+      {/* Setup-required panel when no sources exist (migration applied but
+          seed never ran, or first-time bootstrap on a fresh project). */}
+      {sourcesEmpty && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0">
+              <SparklesIcon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm">No scrapers registered yet</div>
+              <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+                Click <strong>Seed sources</strong> to register the five canonical
+                scrapers (properties, news, OSM discovery, satellite NDVI, coordinate
+                refiner). This is idempotent — safe to re-run any time.
+              </p>
+            </div>
+            <Button onClick={seedSources} disabled={seed.isPending}>
+              {seed.isPending
+                ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                : <SparklesIcon className="w-4 h-4 mr-2" />}
+              Seed sources
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Source cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

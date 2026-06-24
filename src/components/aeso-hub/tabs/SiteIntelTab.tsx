@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -10,12 +10,30 @@ import { HiddenGemsPanel } from '../site-intel/HiddenGemsPanel';
 import { useGenerateSiteReport, type SiteReport as SiteReportT } from '@/hooks/useAlbertaSiteReport';
 import { toast } from 'sonner';
 
-export function SiteIntelTab() {
+export function SiteIntelTab({
+  initialIndustryFilter,
+  onIndustryFilterConsumed,
+}: {
+  initialIndustryFilter?: string | null;
+  onIndustryFilterConsumed?: () => void;
+} = {}) {
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [report, setReport] = useState<SiteReportT | null>(null);
   const [formCollapsed, setFormCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('explorer');
+  const [industryFilter, setIndustryFilter] = useState<string | null>(null);
   const generate = useGenerateSiteReport();
+
+  // When the parent hands us a one-shot industry filter (from the Industries
+  // directory), jump to the Hidden Gems sub-tab with it pre-applied.
+  useEffect(() => {
+    if (initialIndustryFilter) {
+      setIndustryFilter(initialIndustryFilter);
+      setActiveTab('gems');
+      onIndustryFilterConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialIndustryFilter]);
 
   const handleResolve = async (loc: { lat: number; lng: number; label?: string }) => {
     setPin({ lat: loc.lat, lng: loc.lng });
@@ -105,7 +123,12 @@ export function SiteIntelTab() {
         </TabsContent>
 
         <TabsContent value="gems" className="space-y-4 mt-4">
-          <HiddenGemsPanel onAnalyze={handleAnalyzeGem} analyzing={generate.isPending} />
+          <HiddenGemsPanel
+            onAnalyze={handleAnalyzeGem}
+            analyzing={generate.isPending}
+            initialIndustry={industryFilter}
+            onIndustryChange={setIndustryFilter}
+          />
         </TabsContent>
       </Tabs>
     </div>

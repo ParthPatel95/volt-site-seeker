@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,8 @@ import {
   useHiddenGems, useGemListings, useGemWatchlist, useFacilityRefine,
   type GemListing,
 } from '@/hooks/useHiddenGems';
-import type { ScoredGem } from '@/lib/hidden-gems';
+import { computeDistressScore, type ScoredGem } from '@/lib/hidden-gems';
+import { INDUSTRY_DIRECTORY, INDUSTRY_BY_KEY } from '@/lib/industries';
 import { toast } from 'sonner';
 import { GemDetailDialog } from './GemDetailDialog';
 
@@ -43,14 +44,23 @@ interface Props {
   /** Open the full Site Intelligence report for a candidate. */
   onAnalyze: (loc: { lat: number; lng: number; label?: string }) => void;
   analyzing?: boolean;
+  /** Pre-filter to a single facility_type when arriving from the Industries directory. */
+  initialIndustry?: string | null;
+  /** Notify parent when the user changes the industry filter from inside the panel. */
+  onIndustryChange?: (industryKey: string | null) => void;
 }
 
 type Watchlist = ReturnType<typeof useGemWatchlist>;
+type SortKey = 'gem_score' | 'distress' | 'mw';
 
-export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
+export function HiddenGemsPanel({
+  onAnalyze, analyzing, initialIndustry, onIndustryChange,
+}: Props) {
   const [minMw, setMinMw] = useState('');
   const [status, setStatus] = useState<string>('all');
   const [state, setState] = useState<string>('all');
+  const [industry, setIndustry] = useState<string>(initialIndustry ?? 'all');
+  const [sortBy, setSortBy] = useState<SortKey>('gem_score');
   // Full report click opens this detail dialog first; the dialog has the
   // route into Site Lookup (with an optional refine-then-open path that
   // fixes the locality-coords problem before analysis).
@@ -68,9 +78,36 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
     minMw: minMw ? Number(minMw) : undefined,
     statuses: status === 'all' ? undefined : [status],
     states: state === 'all' ? undefined : [state],
-  }), [minMw, status, state]);
+    facilityTypes: industry === 'all' ? undefined : [industry],
+  }), [minMw, status, state, industry]);
 
-  const { gems, ctxByState, totalFacilities, isLoading, error } = useHiddenGems(filters);
+  const { gems: gemsRaw, ctxByState, totalFacilities, isLoading, error } = useHiddenGems(filters);
+
+  // Notify parent when industry changes, and absorb the prop on prop change
+  // (so jumping back into Industries → Site Intel with a different industry
+  // updates the filter rather than being stuck on the first value).
+  useEffect(() => {
+    onIndustryChange?.(industry === 'all' ? null : industry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [industry]);
+  useEffect(() => {
+    if (initialIndustry && initialIndustry !== industry) setIndustry(initialIndustry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialIndustry]);
+
+  // Attach distress + sort. Distress is always present on every facility row;
+  // the user picks the sort key explicitly so we never quietly re-rank.
+  const gems = useMemo(() => {
+    const withDistress = gemsRaw.map((g) => ({
+      ...g,
+      distress: computeDistressScore(g.facility),
+    }));
+    return withDistress.sort((a, b) => {
+      if (sortBy === 'distress') return b.distress.score - a.distress.score;
+      if (sortBy === 'mw') return (b.derivedMw ?? 0) - (a.derivedMw ?? 0);
+      return b.total - a.total; // gem_score
+    });
+  }, [gemsRaw, sortBy]);
   const watchlist = useGemWatchlist();
   const refine = useFacilityRefine();
   const gemListings = useGemListings();
@@ -139,6 +176,29 @@ export function HiddenGemsPanel({ onAnalyze, analyzing }: Props) {
                 {STATUS_OPTIONS.map((s) => (
                   <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Industry</Label>
+            <Select value={industry} onValueChange={setIndustry}>
+              <SelectTrigger className="h-8 w-52"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-80">
+                <SelectItem value="all">All industries</SelectItem>
+                {INDUSTRY_DIRECTORY.map((i) => (
+                  <SelectItem key={i.key} value={i.key}>{i.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Sort by</Label>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
+              <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gem_score">Gem score (default)</SelectItem>
+                <SelectItem value="distress">Distress signal</SelectItem>
+                <SelectItem value="mw">Estimated MW</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -455,6 +515,8 @@ function GemRow({
 }) {
   const f = g.facility;
   const refine = useFacilityRefine();
+  const distress = useMemo(() => computeDistressScore(f), [f]);
+  const industryLabel = INDUSTRY_BY_KEY[f.facility_type]?.label ?? f.facility_type.replace(/_/g, ' ');
   // Coordinates the user can trust: 'site' (Places ROOFTOP) and 'parcel'
   // (snapped to an OSM industrial polygon). 'locality' is the town-centre
   // bug, 'unverified' means we couldn't refine at all.
@@ -496,9 +558,25 @@ function GemRow({
               )}
             </div>
             <div className="text-xs text-muted-foreground truncate">
-              {f.operator ?? '—'} · {f.facility_type.replace(/_/g, ' ')} · {f.municipality ?? '—'} · {f.state ?? 'AB'}
+              {f.operator ?? '—'} · {industryLabel} · {f.municipality ?? '—'} · {f.state ?? 'AB'}
             </div>
           </div>
+          {/* Distress signal — partner-outreach priority */}
+          {distress.band !== 'quiet' && distress.band !== 'unknown' && (
+            <Badge
+              variant="outline"
+              className={`text-[10px] font-bold ${
+                distress.band === 'severe'
+                  ? 'border-rose-500/40 text-rose-600 bg-rose-500/5'
+                  : distress.band === 'elevated'
+                    ? 'border-amber-500/40 text-amber-700 bg-amber-500/5'
+                    : 'border-sky-500/40 text-sky-700 bg-sky-500/5'
+              }`}
+              title={distress.factors.join(' · ')}
+            >
+              {distress.band === 'severe' ? '🔴' : distress.band === 'elevated' ? '🟠' : '🟡'} Distress {distress.score}
+            </Badge>
+          )}
           <div className="text-right">
             <div className="text-sm font-semibold tabular-nums">
               {g.derivedMw != null ? `≈${g.derivedMw} MW` : 'MW n/a'}

@@ -80,6 +80,25 @@ export function useScrapingJobs(limit = 30) {
   });
 }
 
+export function useSeedScrapers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('scraping-seed', { body: {} });
+      if (error) throw error;
+      if (data?.success === false) {
+        const e = new Error(data.error ?? 'Seed failed');
+        (e as Error & { needs?: string[] }).needs = data.needs;
+        throw e;
+      }
+      return data as { seeded: number; sources: Array<{ scraper_key: string; name: string }> };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['scraping-sources'] });
+    },
+  });
+}
+
 export function useRunScraper() {
   const qc = useQueryClient();
   return useMutation({

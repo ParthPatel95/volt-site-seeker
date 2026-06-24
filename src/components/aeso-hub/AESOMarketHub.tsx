@@ -18,10 +18,19 @@ import { AnalyticsTab } from './tabs/AnalyticsTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { MiningEconomicsTab } from './tabs/MiningEconomicsTab';
 import { SiteIntelTab } from './tabs/SiteIntelTab';
+import { IndustriesTab } from './tabs/IndustriesTab';
 import { ScrapingTab } from './tabs/ScrapingTab';
 
 export function AESOMarketHub() {
   const [activeTab, setActiveTab] = React.useState<AESOHubView>('market');
+  // One-shot industry filter handed to SiteIntelTab when the user jumps in
+  // from the Industries directory. Cleared after the consumer reads it.
+  const [pendingIndustry, setPendingIndustry] = React.useState<string | null>(null);
+
+  const jumpToSiteIntelWithIndustry = (industry: string) => {
+    setPendingIndustry(industry);
+    setActiveTab('site-intel');
+  };
 
   const {
     aesoPricing: pricing, aesoLoad: loadData, aesoGeneration: generationMix,
@@ -114,7 +123,13 @@ export function AESOMarketHub() {
         )}
         {activeTab === 'power-model' && <PowerModelTab />}
         {activeTab === 'energization' && <EnergizationTab />}
-        {activeTab === 'site-intel' && <SiteIntelTab />}
+        {activeTab === 'site-intel' && (
+          <SiteIntelTab
+            initialIndustryFilter={pendingIndustry}
+            onIndustryFilterConsumed={() => setPendingIndustry(null)}
+          />
+        )}
+        {activeTab === 'industries' && <IndustriesTab onPickIndustry={jumpToSiteIntelWithIndustry} />}
         {activeTab === 'predictions' && <PredictionsTab />}
         {activeTab === 'datacenter' && <DatacenterTab currentPrice={currentPrice} />}
         {activeTab === 'mining-economics' && <MiningEconomicsTab />}
