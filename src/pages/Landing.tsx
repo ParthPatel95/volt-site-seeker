@@ -1,26 +1,18 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { LandingNavigation } from '@/components/landing/LandingNavigation';
+import { LandingBackground } from '@/components/landing/LandingBackground';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { HeroSection } from '@/components/landing/v2/HeroSection';
-import { PipelineTicker } from '@/components/landing/v2/PipelineTicker';
+import { OptimizedHeroSection } from '@/components/landing/OptimizedHeroSection';
+import { SectionDivider } from '@/components/landing/SectionDivider';
+import { SmoothScroll } from '@/components/landing/ScrollAnimations';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 
-// Institutional layout: clean light field, real facility photography, and one
-// refined 3D accent contained in the hero. No page-wide WebGL scene — the
-// previous traveling-camera backdrop was retired in favor of restrained motion.
-
-// Below-the-fold sections load lazily.
-const EnergyFlowSection = lazy(() => import('@/components/landing/v2/EnergyFlowSection').then(m => ({ default: m.EnergyFlowSection })));
-const WhyPowerFirstSection = lazy(() => import('@/components/landing/v2/WhyPowerFirstSection').then(m => ({ default: m.WhyPowerFirstSection })));
-const ServicesGrid = lazy(() => import('@/components/landing/v2/ServicesGrid').then(m => ({ default: m.ServicesGrid })));
-const FaqSection = lazy(() => import('@/components/landing/v2/FaqSection').then(m => ({ default: m.FaqSection })));
-const PipelineSection = lazy(() => import('@/components/landing/v2/PipelineSection').then(m => ({ default: m.PipelineSection })));
-const FlagshipSection = lazy(() => import('@/components/landing/v2/FlagshipSection').then(m => ({ default: m.FlagshipSection })));
-const CinematicBand = lazy(() => import('@/components/landing/v2/CinematicBand').then(m => ({ default: m.CinematicBand })));
-const PlatformSection = lazy(() => import('@/components/landing/v2/PlatformSection').then(m => ({ default: m.PlatformSection })));
-const CryptoHpcSection = lazy(() => import('@/components/landing/v2/CryptoHpcSection').then(m => ({ default: m.CryptoHpcSection })));
-const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection'));
-const ClosingSections = lazy(() => import('@/components/landing/v2/ClosingSections'));
+const ProblemSolutionSection = lazy(() => import('@/components/landing/ProblemSolutionSection').then(m => ({ default: m.ProblemSolutionSection })));
+const InvestmentThesisSection = lazy(() => import('@/components/landing/InvestmentThesisSection').then(m => ({ default: m.InvestmentThesisSection })));
+const AlbertaFacilityHub = lazy(() => import('@/components/landing/AlbertaFacilityHub').then(m => ({ default: m.AlbertaFacilityHub })));
+const InfrastructureHighlights = lazy(() => import('@/components/landing/InfrastructureHighlights').then(m => ({ default: m.InfrastructureHighlights })));
+const LiveMarketsSection = lazy(() => import('@/components/landing/LiveMarketsSection').then(m => ({ default: m.LiveMarketsSection })));
+const VoltScoutIntelligenceHub = lazy(() => import('@/components/landing/VoltScoutIntelligenceHub').then(m => ({ default: m.VoltScoutIntelligenceHub })));
 
 const SectionLoader = () => (
   <div className="flex justify-center items-center py-16">
@@ -29,22 +21,13 @@ const SectionLoader = () => (
 );
 
 const Landing: React.FC = () => {
-  // Landing is light-first — it's a first impression and "welcoming" reads as
-  // bright. Force the light token set for this route regardless of the user's
-  // saved app-theme; restore on leave so the rest of the app keeps honoring
-  // whatever they had set.
-  useEffect(() => {
-    const root = document.documentElement;
-    const hadDark = root.classList.contains('dark');
-    root.classList.remove('dark');
-    return () => { if (hadDark) root.classList.add('dark'); };
-  }, []);
-
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+      <SmoothScroll />
+      <LandingBackground />
+
       {/* SEO content */}
       <header>
-        <h1 className="sr-only">WattByte Infrastructure - Bitcoin Mining & AI Data Center Development</h1>
         <p className="sr-only">
           WattByte is a global infrastructure company specializing in Bitcoin mining and AI data center development.
           With {TOTAL_MW.toLocaleString()}MW in our global pipeline and {UNDER_DEV_MW}MW under development, we transform stranded energy assets into profitable infrastructure.
@@ -53,62 +36,56 @@ const Landing: React.FC = () => {
 
       <LandingNavigation />
 
-      {/* Story flow: hook → our model → what we offer → what runs on it →
-          flagship → pipeline → platform → live data → close. */}
-      <main className="relative z-10">
-        <HeroSection />
-        <PipelineTicker />
+      <main className="relative z-10 pt-14 sm:pt-16 md:pt-20">
+        <OptimizedHeroSection />
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Our model"><EnergyFlowSection /></section>
-        </Suspense>
+        <SectionDivider color="cyan" />
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Why WattByte"><WhyPowerFirstSection /></section>
-        </Suspense>
+        <section aria-label="Power constraints and WattByte solution" className="relative">
+          <Suspense fallback={<SectionLoader />}>
+            <ProblemSolutionSection />
+          </Suspense>
+        </section>
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="What we offer"><ServicesGrid /></section>
-        </Suspense>
+        <SectionDivider color="blue" />
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="What runs on the megawatts"><CryptoHpcSection /></section>
-        </Suspense>
+        <section aria-label="Company thesis" className="relative">
+          <Suspense fallback={<SectionLoader />}>
+            <InvestmentThesisSection />
+          </Suspense>
+        </section>
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Alberta flagship facility"><FlagshipSection /></section>
-        </Suspense>
+        <SectionDivider color="green" />
 
-        <Suspense fallback={<SectionLoader />}>
-          <CinematicBand />
-        </Suspense>
+        <section aria-label="Alberta Heartland 135 facility" className="relative">
+          <Suspense fallback={<SectionLoader />}>
+            <AlbertaFacilityHub />
+          </Suspense>
+        </section>
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Global pipeline"><PipelineSection /></section>
-        </Suspense>
+        <SectionDivider color="cyan" />
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="VoltScout platform"><PlatformSection /></section>
-        </Suspense>
+        <section aria-label="Development pipeline" className="relative">
+          <Suspense fallback={<SectionLoader />}>
+            <InfrastructureHighlights />
+          </Suspense>
+        </section>
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Live energy markets" className="relative">
-            <div className="px-6 sm:px-10 lg:px-16 pt-12 max-w-7xl mx-auto">
-              <p className="text-xs font-semibold uppercase tracking-widest text-watt-trust">
-                Live data, no hand-waving
-              </p>
-            </div>
+        <SectionDivider color="purple" />
+
+        <section aria-label="Live energy markets" className="relative">
+          <Suspense fallback={<SectionLoader />}>
             <LiveMarketsSection />
-          </section>
-        </Suspense>
+          </Suspense>
+        </section>
 
-        <Suspense fallback={<SectionLoader />}>
-          <section aria-label="Frequently asked questions"><FaqSection /></section>
-        </Suspense>
+        <SectionDivider color="yellow" />
 
-        <Suspense fallback={<SectionLoader />}>
-          <ClosingSections />
-        </Suspense>
+        <section aria-label="VoltScout Intelligence Hub" className="relative">
+          <Suspense fallback={<SectionLoader />}>
+            <VoltScoutIntelligenceHub />
+          </Suspense>
+        </section>
       </main>
 
       <LandingFooter />
