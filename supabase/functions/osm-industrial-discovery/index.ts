@@ -1,5 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // OSM heavy-industry discovery. Sweeps OpenStreetMap (via Overpass) for
 // named industrial sites in Alberta or Texas — works, refineries, smelters,

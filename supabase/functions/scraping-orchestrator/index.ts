@@ -1,5 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // AESO Hub central scraping orchestrator. The ScrapingTab UI calls this
 // with `{ scraper_key, params? }`; the orchestrator looks up the canonical
