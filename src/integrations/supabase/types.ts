@@ -5796,6 +5796,53 @@ export type Database = {
           },
         ]
       }
+      facility_activity_observations: {
+        Row: {
+          cloud_cover_pct: number | null
+          created_at: string
+          facility_id: string
+          id: string
+          ndvi_mean_baseline: number | null
+          ndvi_mean_footprint: number | null
+          notes: string | null
+          observed_at: string
+          scene_id: string | null
+          source: string
+        }
+        Insert: {
+          cloud_cover_pct?: number | null
+          created_at?: string
+          facility_id: string
+          id?: string
+          ndvi_mean_baseline?: number | null
+          ndvi_mean_footprint?: number | null
+          notes?: string | null
+          observed_at: string
+          scene_id?: string | null
+          source: string
+        }
+        Update: {
+          cloud_cover_pct?: number | null
+          created_at?: string
+          facility_id?: string
+          id?: string
+          ndvi_mean_baseline?: number | null
+          ndvi_mean_footprint?: number | null
+          notes?: string | null
+          observed_at?: string
+          scene_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_activity_observations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "industrial_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gem_listings: {
         Row: {
           address_text: string | null
@@ -6037,9 +6084,18 @@ export type Database = {
       }
       industrial_facilities: {
         Row: {
+          activity_checked_at: string | null
+          activity_evidence: string | null
+          activity_trend: string | null
+          activity_trend_score: number | null
+          activity_window_end: string | null
+          activity_window_start: string | null
           capacity_unit: string | null
           capacity_value: number | null
           confidence: string
+          coord_candidates: Json | null
+          coord_consensus_km: number | null
+          coord_provider: string | null
           coordinates_precision: string
           created_at: string
           estimate_basis: string | null
@@ -6050,11 +6106,15 @@ export type Database = {
           last_verified: string | null
           lat: number
           lng: number
+          location_method: string | null
           municipality: string | null
           naics_code: string | null
           name: string
           notes: string | null
           operator: string | null
+          osm_parcel_id: string | null
+          osm_parcel_kind: string | null
+          osm_parcel_name: string | null
           source_publisher: string | null
           source_url: string | null
           state: string
@@ -6064,9 +6124,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activity_checked_at?: string | null
+          activity_evidence?: string | null
+          activity_trend?: string | null
+          activity_trend_score?: number | null
+          activity_window_end?: string | null
+          activity_window_start?: string | null
           capacity_unit?: string | null
           capacity_value?: number | null
           confidence?: string
+          coord_candidates?: Json | null
+          coord_consensus_km?: number | null
+          coord_provider?: string | null
           coordinates_precision?: string
           created_at?: string
           estimate_basis?: string | null
@@ -6077,11 +6146,15 @@ export type Database = {
           last_verified?: string | null
           lat: number
           lng: number
+          location_method?: string | null
           municipality?: string | null
           naics_code?: string | null
           name: string
           notes?: string | null
           operator?: string | null
+          osm_parcel_id?: string | null
+          osm_parcel_kind?: string | null
+          osm_parcel_name?: string | null
           source_publisher?: string | null
           source_url?: string | null
           state?: string
@@ -6091,9 +6164,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activity_checked_at?: string | null
+          activity_evidence?: string | null
+          activity_trend?: string | null
+          activity_trend_score?: number | null
+          activity_window_end?: string | null
+          activity_window_start?: string | null
           capacity_unit?: string | null
           capacity_value?: number | null
           confidence?: string
+          coord_candidates?: Json | null
+          coord_consensus_km?: number | null
+          coord_provider?: string | null
           coordinates_precision?: string
           created_at?: string
           estimate_basis?: string | null
@@ -6104,11 +6186,15 @@ export type Database = {
           last_verified?: string | null
           lat?: number
           lng?: number
+          location_method?: string | null
           municipality?: string | null
           naics_code?: string | null
           name?: string
           notes?: string | null
           operator?: string | null
+          osm_parcel_id?: string | null
+          osm_parcel_kind?: string | null
+          osm_parcel_name?: string | null
           source_publisher?: string | null
           source_url?: string | null
           state?: string
