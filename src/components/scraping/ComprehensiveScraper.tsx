@@ -48,13 +48,23 @@ export function ComprehensiveScraper({ onPropertiesFound }: ComprehensiveScraper
         sources: selectedSources
       });
       
-      const { data, error } = await supabase.functions.invoke('comprehensive-property-scraper', {
+      // Unified Firecrawl scanner. We pass the user's selected brokerage
+      // sources into the Firecrawl search queries so the scanner targets
+      // those domains specifically (e.g. "loopnet", "crexi", "cbre").
+      const sourceHint = selectedSources.join(' OR ');
+      const search_queries = [
+        `industrial property for sale ${location} ${propertyType} ${sourceHint}`,
+        `${location} ${propertyType} site:${selectedSources[0]}.com OR site:${selectedSources[1] ?? selectedSources[0]}.com`,
+        `${location} industrial building MW power substation ${sourceHint}`,
+      ];
+
+      const { data, error } = await supabase.functions.invoke('firecrawl-property-scanner', {
         body: {
-          location: location,
+          location,
           property_type: propertyType,
-          sources: selectedSources,
-          budget_range: 'under_10m',
-          power_requirements: 'high'
+          min_power_mw: 5,
+          budget_max: 10_000_000,
+          search_queries,
         }
       });
 
@@ -74,7 +84,7 @@ export function ComprehensiveScraper({ onPropertiesFound }: ComprehensiveScraper
         
         toast({
           title: "Scraping Completed!",
-          description: `Found ${data.properties_found} properties from ${data.sources_used?.length || 0} brokerage sites`,
+          description: `Found ${data.properties_found} properties via Firecrawl across ${selectedSources.length} targeted brokerage sites`,
         });
       } else {
         toast({

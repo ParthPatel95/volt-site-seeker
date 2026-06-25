@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     console.log('Searching with', queries.length, 'queries in parallel...');
     const searchPromises = queries.map(async (query) => {
       try {
-        const searchResp = await fetch('https://api.firecrawl.dev/v1/search', {
+        const searchResp = await fetch('https://api.firecrawl.dev/v2/search', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
@@ -104,8 +104,10 @@ Deno.serve(async (req) => {
 
         const searchData = await searchResp.json();
         if (searchData.success && searchData.data) {
-          console.log(`Query "${query.substring(0, 50)}..." returned ${searchData.data.length} results`);
-          return searchData.data;
+          const raw = searchData.data;
+          const items = Array.isArray(raw) ? raw : Array.isArray(raw?.web) ? raw.web : [];
+          console.log(`Query "${query.substring(0, 50)}..." returned ${items.length} results`);
+          return items;
         } else {
           console.warn('Search query failed:', searchData.error || 'unknown error');
           return [];
@@ -133,7 +135,7 @@ Deno.serve(async (req) => {
       if (md.length < 200 && r.url) {
         console.log(`Thin content (${md.length} chars) for ${r.url}, attempting direct scrape...`);
         try {
-          const scrapeResp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          const scrapeResp = await fetch('https://api.firecrawl.dev/v2/scrape', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,

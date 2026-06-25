@@ -19,14 +19,30 @@ export function AIPropertyScraper({ onPropertiesFound }: AIPropertyScraperProps)
     setScraping(true);
     
     try {
-      console.log('Starting direct brokerage property search with params:', searchParams);
-      
-      const { data, error } = await supabase.functions.invoke('real-estate-multi-scraper', {
+      console.log('Starting Firecrawl-backed brokerage search with params:', searchParams);
+
+      // Map UI fields to the Firecrawl scanner contract. budget_range /
+      // power_requirements come from the form as labels (e.g. "under_10m",
+      // "high"); the scanner accepts numeric budget_max / min_power_mw.
+      const budgetMaxMap: Record<string, number | undefined> = {
+        under_1m: 1_000_000,
+        under_5m: 5_000_000,
+        under_10m: 10_000_000,
+        under_25m: 25_000_000,
+      };
+      const powerMwMap: Record<string, number | undefined> = {
+        low: 1,
+        medium: 5,
+        high: 20,
+        very_high: 50,
+      };
+
+      const { data, error } = await supabase.functions.invoke('firecrawl-property-scanner', {
         body: {
           location: searchParams.location,
           property_type: searchParams.propertyType,
-          budget_range: searchParams.budgetRange,
-          power_requirements: searchParams.powerRequirements
+          budget_max: budgetMaxMap[searchParams.budgetRange ?? ''],
+          min_power_mw: powerMwMap[searchParams.powerRequirements ?? ''],
         }
       });
 

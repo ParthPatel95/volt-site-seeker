@@ -1,49 +1,58 @@
-## What the database actually contains
+## Goal
 
-A fresh per-month audit of `aeso_training_data` from 2024-01 through now confirms there is **exactly 1 row per hour per month**, with pool price, AIL, and SMP all populated:
+Replace the custom property scrapers and the orchestrator's source list with Firecrawl-backed scrapers. One scraping engine (Firecrawl), one orchestrator, one tracking model. FIRECRAWL_API_KEY is already linked via the workspace connector — no new secrets needed.
 
-```text
-2024  every month = days × 24 (Jan 744, Feb 696, …, Dec 744)
-2025  every month = days × 24 (incl. Dec 744)
-2026  Jan 744, Feb 672, Mar 744, Apr 720, May 744, Jun 426 (elapsed-to-now)
+## What changes
+
+### 1. New unified Firecrawl scraper edge function
+`supabase/functions/firecrawl-scraper/index.ts` — a single edge function that accepts:
 ```
+{ scraper_key, query?, urls?, region?, limit? }
+```
+and runs Firecrawl `/v2/search` + `/v2/scrape` (markdown + links + json extraction with a small Zod-ish schema) for the requested source. Returns the canonical shape the orchestrator already understands (`{ success, results_scanned, listings_stored, ... }`).
 
-Raw rows = distinct hours = price hours = AIL hours = SMP hours for every month. There are no duplicates, no nulls, no gaps. So the remaining work is not a DB backfill — it is enforcing this contract in the app and making every tool read from the same canonical set.
+Internally it dispatches by `scraper_key` to one of these Firecrawl-only routines:
+- `gem-listings` — power-heavy industrial site listings (LoopNet, Crexi, Realtor.ca commercial, regional brokers).
+- `industrial-news` — Firecrawl Search with `tbs:'qdr:w'` for AB/TX/AZ data center, mining, substation, curtailment news.
+- `property-scan` — generic URL-based scraper used by the Property Scraper page (replaces ai/comprehensive/loopnet/multi-source/real-estate-multi).
+- `firecrawl-discovery` — Firecrawl `/v2/map` + `/v2/scrape` on industrial/MLS domains to discover new facility URLs (replaces hand-rolled OSM-style discovery for non-OSM sources; `osm-discovery` itself stays on Overpass — it's not a scraping target Firecrawl serves).
 
-## Plan
+All routines:
+- Use `Authorization: Bearer ${FIRECRAWL_API_KEY}` against `https://api.firecrawl.dev/v2/...`.
+- Return `{ success: false, error, needs: ['FIRECRAWL_API_KEY'] }` with HTTP 503 if the key is missing.
+- Surface Firecrawl 402 (insufficient credits) as `success: false` with the connector-managed upgrade hint (coupon `LOVABLE50`).
+- Idempotent upserts into the existing destination tables (`gem_listings`, `news_intelligence`, `scraped_properties`, `industrial_facilities`) keyed on the existing unique indexes (`listing_url`, `url`, etc.) — no schema changes required.
 
-### 1. Make "exact points per hour per month" a hard contract in the app
-- Extend `src/lib/aeso/dataCoverage.ts` so each `MonthCoverage` carries `expectedHours` calculated as:
-  - elapsed months → `daysInMonth(year, month) × 24`
-  - in-progress month → hours from month start to "now" hour (UTC), matching how the DB function `audit_aeso_hourly_coverage` already computes it
-- A month is `complete` only when `coveredHours === expectedHours` AND `rawRecords === expectedHours` (no duplicates, no missing). Anything else is `partial` and the report is NOT validation-safe.
-- Surface a new `exactMatch: boolean` per month so the UI can show a green check only when the count is exact.
+### 2. Orchestrator + sources registry
+- `supabase/functions/scraping-orchestrator/index.ts`: extend the `summarise()` switch with `property-scan` and `firecrawl-discovery` adapters; no other logic changes.
+- `supabase/functions/scraping-seed/index.ts`: re-seed `scraping_sources` so every active row now points `edge_function = 'firecrawl-scraper'`. Existing keys (`gem-listings`, `industrial-news`) keep working. Add the new `property-scan` and `firecrawl-discovery` keys. `osm-discovery`, `satellite-activity`, `facility-refine` stay on their own functions (they're not scrapers and don't use Firecrawl).
 
-### 2. Strengthen the Power Model coverage card
-- `src/components/aeso/PowerModelDataCoverage.tsx`: render the new `Expected vs Covered vs Raw` columns side by side; flag any month where `raw ≠ expected` even if covered hours match (catches duplicate-with-missing patterns).
-- Header badge becomes "Validated · exact hourly coverage" only when every month in range passes the exact-match contract.
+### 3. Property Scraper page
+- `src/pages/PropertyScraper.tsx` + `src/components/scraping/{AIPropertyScraper, ComprehensiveScraper, MultiSourceScraper, FirecrawlPropertyScanner}.tsx`:
+  - Stop calling `ai-property-scraper`, `comprehensive-property-scraper`, `multi-source-scraper`, `loopnet-scraper`, `real-estate-multi-scraper`, `firecrawl-property-scanner`. All four UI surfaces invoke the orchestrator with `{ scraper_key: 'property-scan', params: { query | urls, region, limit } }`.
+  - Results read from the same `scraped_properties` table they already render from.
+  - Keep the existing filter/card UI exactly as-is.
 
-### 3. Add a DB-side authoritative check used by the UI
-- Use the existing `public.audit_aeso_hourly_coverage(p_from, p_to)` RPC as the source of truth for the Power Model coverage panel: call it alongside the in-memory audit and show a small "DB ✓ matches" badge when the DB report and the in-memory report agree on every month. If they ever disagree, surface it loudly — that's the only situation where data would be "missing".
+### 4. Decommission superseded functions
+After the page is migrated, delete these edge functions via `supabase--delete_edge_functions`:
+- `ai-property-scraper`
+- `comprehensive-property-scraper`
+- `loopnet-scraper`
+- `multi-source-scraper`
+- `real-estate-multi-scraper`
+- `firecrawl-property-scanner`
+- `gem-listing-scanner` (logic folded into `firecrawl-scraper`)
+- `industrial-news-scanner` (logic folded into `firecrawl-scraper`)
 
-### 4. Point every consumer at the same canonical query
-Audit and align these tools so they all read the same `aeso_training_data` rows ordered by `timestamp` for the selected range, with no client-side date math that can drop hours:
-- `src/hooks/usePowerModelCalculator.ts` (Power Model)
-- `src/hooks/useAESOData.tsx`, `useAESOMarketData.tsx`, `useAESOHistoricalPricing` paths used by the landing analytics
-- `src/components/landing/AlbertaEnergyAnalytics.tsx` (currently goes through the `aeso-historical-pricing` edge function — switch it to the same canonical table via a thin wrapper so the homepage and the Power Model can never disagree)
-- 12CP / peak-demand surfaces already use `get_yearly_top12_peaks` / `get_monthly_peak_demands` against the same table — verify, no change expected
+Their `scraping_sources` rows get re-pointed by the seed step before deletion, so no broken `edge_function` references remain.
 
-### 5. Regression tests
-- Unit tests in `src/lib/aeso/__tests__/` for `auditCoverage`:
-  - 2024-02 expects 696, 2024-12 expects 744, 2026-02 expects 672
-  - In-progress month: expected = hours-since-month-start
-  - Duplicate raw row with same (date, HE) → `exactMatch=false`
-- A small Playwright check that opens the Power Model and asserts the coverage badge reads "Validated · exact hourly coverage" for 2024 and 2025.
-
-### 6. Force clients off stale bundles
-- Bump `src/constants/app-version.ts` so the SW + version-gate reload picks up the stricter contract.
+### 5. Verify
+- `supabase--curl_edge_functions` `/firecrawl-scraper` with each `scraper_key` and confirm 200 + non-zero counts (or a clean 503 if key absent).
+- Run `/scraping-orchestrator` with `scraper_key: 'all'` and confirm every job row closes `completed`.
+- Open `/property-scraper` and `/app/aeso-market-hub` → Scraping tab in the preview, run one scrape from each, confirm rows land in `scraped_properties` / `gem_listings` / `news_intelligence`.
 
 ## Out of scope
-- No DB backfill (audit shows 100% coverage).
-- No schema changes.
-- No changes to ingestion cron — it's already producing exact hourly rows.
+
+- No new tables, no new secrets, no UI redesign.
+- OSM/Sentinel/Google flows are not changed — Firecrawl doesn't serve those data sources.
+- `useScraping.ts` already calls the orchestrator correctly; no hook changes.
