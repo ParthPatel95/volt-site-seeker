@@ -13,7 +13,7 @@ import { FullScreenDocumentViewer } from '@/components/secure-share/viewer/FullS
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/hooks/useAuth';
+import { useOptionalAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { getCachedUrls, cacheUrls, getCachedUrl, cacheUrl } from '@/utils/signedUrlCache';
 
@@ -21,7 +21,9 @@ export default function ViewDocument() {
   const { token: routeToken } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
+  // Public viewer: never block on auth. Outside the AuthProvider this returns
+  // a logged-out default, so authLoading is always false here.
+  const { user, loading: authLoading } = useOptionalAuth();
   const [searchParams] = useSearchParams();
   const documentId = searchParams.get('doc');
   const [passwordVerified, setPasswordVerified] = useState(false);
@@ -259,24 +261,10 @@ export default function ViewDocument() {
           throw new Error('This link has reached its maximum views');
         }
 
-      // Helper function to get all folder IDs including nested subfolders
-      const getAllFolderIds = async (folderId: string): Promise<string[]> => {
-        const folderIds = [folderId];
-        const { data: subfolders } = await supabase
-          .from('secure_folders')
-          .select('id')
-          .eq('parent_folder_id', folderId)
-          .eq('is_active', true);
-        
-        if (subfolders && subfolders.length > 0) {
-          for (const subfolder of subfolders) {
-            const nestedIds = await getAllFolderIds(subfolder.id);
-            folderIds.push(...nestedIds);
-          }
-        }
-        
-        return folderIds;
-      };
+      // Note: nested-folder enumeration is handled server-side by the
+      // get-folder-contents edge function (it walks the tree in-memory from a
+      // single secure_folders fetch). The old client-side recursive walk here
+      // was an unused N+1 — removed.
 
       // Handle folder, bundle, or single document
       if (link.folder_id) {
