@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireCaller } from "../_shared/guard.ts";
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -721,6 +722,11 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Paid-API endpoint: require an authenticated user or internal service
+  // caller (blocks anonymous credit-burn). (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const { action, ...params } = await req.json();

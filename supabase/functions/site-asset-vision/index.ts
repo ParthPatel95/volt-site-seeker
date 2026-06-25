@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireCaller } from "../_shared/guard.ts";
 
 const GOOGLE_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')!;
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
@@ -37,6 +38,12 @@ Bearings: 0=N, 90=E, 180=S, 270=W relative to the red center marker (which is th
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // Paid-API (Google + Lovable vision): require auth or internal service.
+  // (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
+
   try {
     if (!GOOGLE_KEY) throw new Error('GOOGLE_MAPS_API_KEY not configured');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');

@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireCaller } from "../_shared/guard.ts";
 import { rejectIfUnsafe } from "../_shared/safeFetch.ts";
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -12,6 +13,11 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Paid-API endpoint: require an authenticated user or internal service
+  // caller (blocks anonymous credit-burn). (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

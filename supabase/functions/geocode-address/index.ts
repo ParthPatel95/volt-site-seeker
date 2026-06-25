@@ -1,6 +1,8 @@
 // Geocoding edge function: server-side proxy to Nominatim with a Photon fallback.
 // Avoids browser CORS / UA-block issues that made client-side geocoding fail.
 
+import { requireCaller } from "../_shared/guard.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -63,6 +65,12 @@ async function fromPhoton(query: string): Promise<GeocodeHit | null> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // Nominatim/Photon are free but ban heavy anonymous use (could get the
+  // project egress IP blocked). Require auth or internal service.
+  // (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const body = await req.json().catch(() => ({}));

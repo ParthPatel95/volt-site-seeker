@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUserOrService } from "../_shared/guard.ts";
 interface NotificationRequest {
   type: 'new_message' | 'listing_interest' | 'verification_approved' | 'verification_rejected';
   recipient_email: string;
@@ -22,7 +23,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Auth: notifications are for authenticated contexts / internal callers.
+    // (Audit-2026-06-25 PR3.)
+    const gate = await requireUserOrService(req, supabaseClient);
+    if (gate instanceof Response) return gate;
+
     const { type, recipient_email, recipient_name, data }: NotificationRequest = await req.json();
+    // Escape every caller-controlled value before it goes into the email
+    // HTML template — `data` and recipient_name were substituted raw, a
+    // stored-XSS / email-injection vector once sending is enabled.
+    const escapeHtml = (s: unknown) => String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
     // Get email template
     const { data: template, error: templateError } = await supabaseClient
@@ -39,15 +51,17 @@ serve(async (req) => {
     let htmlContent = template.html_content;
     let subject = template.subject;
     
-    // Replace template variables
+    // Replace template variables (escaped). Escape the placeholder key when
+    // building the RegExp so a crafted key can't inject regex metachars.
     Object.entries(data).forEach(([key, value]) => {
-      const placeholder = `{{${key}}}`;
-      htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
-      subject = subject.replace(new RegExp(placeholder, 'g'), value);
+      const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`{{${safeKey}}}`, 'g');
+      htmlContent = htmlContent.replace(re, escapeHtml(value));
+      subject = subject.replace(re, escapeHtml(value));
     });
 
-    // Replace recipient name
-    htmlContent = htmlContent.replace(/{{recipient_name}}/g, recipient_name);
+    // Replace recipient name (escaped)
+    htmlContent = htmlContent.replace(/{{recipient_name}}/g, escapeHtml(recipient_name));
 
     // In a production environment, you would integrate with an email service like Resend
     // For now, we'll log the email that would be sent and return success

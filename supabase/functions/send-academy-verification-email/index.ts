@@ -57,7 +57,13 @@ serve(async (req) => {
     const baseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const verificationUrl = `${baseUrl}/functions/v1/verify-academy-email?token=${token}`;
 
-    const recipientName = full_name || 'Learner';
+    // HTML-escape the name before it goes into the outbound email body —
+    // full_name is caller-supplied and was injected raw, allowing HTML/link
+    // injection into delivered emails. (Audit-2026-06-25 PR3.)
+    const escapeHtml = (s: string) => s
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const recipientName = escapeHtml(String(full_name || 'Learner').slice(0, 120));
 
     // Send verification email via Resend
     // NOTE: Update 'from' address to verified custom domain for production

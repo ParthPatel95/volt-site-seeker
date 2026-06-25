@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireCaller } from "../_shared/guard.ts";
 function buildPowerModelPrompt(data: any): string {
   const { params, tariffOverrides, annual, monthly, breakeven } = data;
   
@@ -99,6 +100,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Paid-API endpoint: require an authenticated user or internal service
+  // caller (blocks anonymous credit-burn). (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const body = await req.json();
