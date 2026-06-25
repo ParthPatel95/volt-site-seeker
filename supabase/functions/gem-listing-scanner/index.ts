@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
 
     let scanned = 0;
     let stored = 0;
+    let skipped_non_listing = 0;
     const errors: string[] = [];
     const found: unknown[] = [];
 
