@@ -83,16 +83,26 @@ async function getERCOTAuthToken(): Promise<string | null> {
     return null;
   }
 
-  const authUrl = 'https://ercotb2c.b2clogin.com/ercotb2c.onmicrosoft.com/B2C_1_PUBAPI-ROPC-FLOW/oauth2/v2.0/token'
-    + `?username=${encodeURIComponent(username)}`
-    + `&password=${encodeURIComponent(password)}`
-    + '&grant_type=password'
-    + '&scope=openid+fec253ea-0d06-4272-a5e6-b478baeecd70+offline_access'
-    + '&client_id=fec253ea-0d06-4272-a5e6-b478baeecd70'
-    + '&response_type=id_token';
+  // Send the credentials in the POST body, NOT the URL. URL query strings
+  // are logged by every intermediary (CDN, load balancer, ERCOT's own
+  // access logs), so credentials there are effectively leaked.
+  // (Audit-2026-06-25 P0/PR2.)
+  const authUrl = 'https://ercotb2c.b2clogin.com/ercotb2c.onmicrosoft.com/B2C_1_PUBAPI-ROPC-FLOW/oauth2/v2.0/token';
+  const formBody = new URLSearchParams({
+    username,
+    password,
+    grant_type: 'password',
+    scope: 'openid fec253ea-0d06-4272-a5e6-b478baeecd70 offline_access',
+    client_id: 'fec253ea-0d06-4272-a5e6-b478baeecd70',
+    response_type: 'id_token',
+  });
 
   try {
-    const response = await fetch(authUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const response = await fetch(authUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formBody.toString(),
+    });
     if (!response.ok) return null;
     const data = await response.json();
     if (!data.id_token) return null;

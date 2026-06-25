@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUserOrService } from "../_shared/guard.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Idempotent canonical seed for the AESO Hub Scraping orchestrator.
@@ -88,6 +89,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+
+    // Admin-only setup endpoint. (Audit-2026-06-25 PR3.)
+    const gate = await requireUserOrService(req, supabase, { adminOnly: true });
+    if (gate instanceof Response) return gate;
 
     // Probe: does the scraper_key column even exist? If not, the migration
     // hasn't been applied and seeding can't proceed — tell the caller exactly

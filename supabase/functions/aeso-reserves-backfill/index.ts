@@ -20,7 +20,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { days = 30, mode = 'check' } = await req.json().catch(() => ({}));
+    const rawBody = await req.json().catch(() => ({}));
+    // Cap days to one year so a runaway/abuse call can't ask for arbitrary
+    // amounts of historical backfill. (Audit-2026-06-25 P0/PR2.)
+    const days = Math.max(1, Math.min(365, Number(rawBody?.days ?? 30)));
+    const mode = rawBody?.mode === 'fill' ? 'fill' : 'check';
     
     console.log(`AESO Reserves Backfill - Mode: ${mode}, Days: ${days}`);
 

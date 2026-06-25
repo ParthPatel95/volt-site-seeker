@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -17,11 +18,18 @@ serve(async (req) => {
 
     const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, email, full_name, company } = await req.json();
+    // Auth required. user_id is derived from the JWT, never the body — the
+    // previous code trusted body.user_id, letting any caller create an
+    // academy profile for anyone. (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireUser(req, supabaseClient);
+    if (gate instanceof Response) return gate;
+    const user_id = gate.userId;
 
-    if (!user_id || !email) {
+    const { email, full_name, company } = await req.json();
+
+    if (!email) {
       return new Response(
-        JSON.stringify({ error: 'user_id and email are required' }),
+        JSON.stringify({ error: 'email is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }

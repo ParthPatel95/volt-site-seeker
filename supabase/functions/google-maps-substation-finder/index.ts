@@ -6,6 +6,7 @@ import { performMLImageAnalysis } from './image-analysis.ts'
 import { validateSubstations, removeDuplicatesAndSort } from './validation.ts'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireCaller } from "../_shared/guard.ts";
 const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 
@@ -13,6 +14,11 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+
+  // Paid-API (Google Maps + OpenAI vision): require auth or internal
+  // service. (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     if (!GOOGLE_MAPS_API_KEY) {

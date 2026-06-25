@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 interface VoltScoreRequest {
   property_id: string;
   property_data?: any;
@@ -86,6 +87,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Auth required. Previously this endpoint accepted a body-supplied
+    // property_id and ran upsert into volt_scores under service role — any
+    // caller could overwrite the score of any property in the system.
+    // (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireUser(req, supabase);
+    if (gate instanceof Response) return gate;
+    const callerId = gate.userId;
+
     const { property_id, property_data }: VoltScoreRequest = await req.json();
 
     console.log(`Calculating VoltScore for property: ${property_id}`);
@@ -114,19 +123,29 @@ const handler = async (req: Request): Promise<Response> => {
     // Calculate VoltScore
     const scores = calculateVoltScore(property);
 
-    // Save scores to database if property_id is provided
+    // Save scores to database if property_id is provided. Only the property
+    // owner (or admin via RLS via the user JWT path) may upsert — we
+    // double-check ownership here because we're using the service-role
+    // client which would otherwise bypass RLS.
     if (property_id) {
-      const { error: insertError } = await supabase
-        .from('volt_scores')
-        .upsert({
-          property_id: property_id,
-          ...scores,
-          calculated_at: new Date().toISOString()
-        });
+      const isOwner = property?.created_by === callerId;
+      if (!isOwner) {
+        // Skip persistence for non-owners; still return the score so the UI
+        // can show it without storing it under the wrong user.
+        console.log('Caller is not property owner; skipping volt_scores upsert');
+      } else {
+        const { error: insertError } = await supabase
+          .from('volt_scores')
+          .upsert({
+            property_id: property_id,
+            ...scores,
+            calculated_at: new Date().toISOString()
+          });
 
-      if (insertError) {
-        console.error('Error saving VoltScore:', insertError);
-        // Don't throw here, still return the calculated scores
+        if (insertError) {
+          console.error('Error saving VoltScore');
+          // Don't throw here, still return the calculated scores
+        }
       }
     }
 

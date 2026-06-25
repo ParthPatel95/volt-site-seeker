@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireCaller } from "../_shared/guard.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -7,6 +8,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Paid-API endpoint: require an authenticated user or internal service
+  // caller (blocks anonymous credit-burn). (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const { imageBase64, documentId, pageNumber, ocrMethod = 'ai_vision' } = await req.json();

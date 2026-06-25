@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUserOrService } from "../_shared/guard.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // AESO Hub central scraping orchestrator. The ScrapingTab UI calls this
@@ -211,13 +212,12 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Identify the triggering user when present (for job audit).
-    let triggeredBy: string | null = null;
-    const auth = req.headers.get('Authorization');
-    if (auth?.startsWith('Bearer ')) {
-      const { data } = await supabase.auth.getUser(auth.slice(7));
-      triggeredBy = data?.user?.id ?? null;
-    }
+    // Admin-only entry point. This fans out to every paid scraper (Firecrawl,
+    // Google, Sentinel) and `scraper_key:'all'` runs them all in one call —
+    // a one-request cost amplifier if left open. (Audit-2026-06-25 PR3.)
+    const gate = await requireUserOrService(req, supabase, { adminOnly: true });
+    if (gate instanceof Response) return gate;
+    const triggeredBy = gate.kind === 'user' ? gate.userId : null;
 
     const body: OrchestrateRequest = req.method === 'POST'
       ? await req.json().catch(() => ({ scraper_key: '' }))

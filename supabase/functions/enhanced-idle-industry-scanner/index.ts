@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY')
@@ -30,8 +31,16 @@ serve(async (req) => {
   }
 
   try {
-    const { action, config, scanId, coordinates, siteName } = await req.json();
-    console.log(`Enhanced idle industry scanner: ${action}`, config);
+    // Auth required. config.userId was previously trusted and written to
+    // created_by; replace it with the JWT-derived id so the scan row is
+    // always attributed to the actual caller. (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireUser(req, supabase);
+    if (gate instanceof Response) return gate;
+    const callerId = gate.userId;
+
+    const { action, config: rawConfig, scanId, coordinates, siteName } = await req.json();
+    const config = { ...(rawConfig ?? {}), userId: callerId };
+    console.log(`Enhanced idle industry scanner: ${action}`);
 
     switch (action) {
       case 'start_comprehensive_scan':

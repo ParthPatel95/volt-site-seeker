@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { requireCaller } from "../_shared/guard.ts";
 
 const GOOGLE_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')!;
 
@@ -24,6 +25,12 @@ async function fetchStaticMap(lat: number, lng: number, zoom: number, size = '64
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // Paid-API (Google Static Maps, expensive per request): require auth or
+  // internal service. (Audit-2026-06-25 PR3.)
+  const __gate = await requireCaller(req);
+  if (__gate instanceof Response) return __gate;
+
   try {
     if (!GOOGLE_KEY) throw new Error('GOOGLE_MAPS_API_KEY not configured');
     const { lat, lng, zoom = 18 } = await req.json();

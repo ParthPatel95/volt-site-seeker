@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdmin } from "../_shared/auth.ts";
 interface GenerationRow {
   timestamp: string;
   generation_gas?: number | null;
@@ -76,6 +77,13 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Admin-only: this endpoint upserts directly into aeso_training_data,
+    // which feeds every ML model. Was previously open to anyone — a single
+    // anonymous request could poison the training corpus that drives price
+    // predictions and shutdown decisions. (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireAdmin(req, supabase);
+    if (gate instanceof Response) return gate;
 
     const { rows, columnMapping }: UploadRequest = await req.json();
 

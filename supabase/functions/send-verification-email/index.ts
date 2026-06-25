@@ -72,7 +72,16 @@ Deno.serve(async (req) => {
       .eq('user_id', user_id)
       .single();
 
-    const recipientName = profile?.company_name || email.split('@')[0] || 'there';
+    // HTML-escape before substituting into the stored email template —
+    // company_name (and the email local-part) are user-supplied and were
+    // injected raw, allowing HTML injection into delivered emails.
+    // (Audit-2026-06-25 PR3.)
+    const escapeHtml = (s: string) => s
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const recipientName = escapeHtml(
+      String(profile?.company_name || email.split('@')[0] || 'there').slice(0, 120),
+    );
 
     // Replace template variables
     let htmlContent = template.html_content;

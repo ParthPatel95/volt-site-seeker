@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 interface RegulatoryDataRequest {
   action: 'fetch_aeso_data' | 'fetch_ercot_data' | 'fetch_eia_data'
   region?: string
@@ -23,6 +24,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // Auth required: this function writes to the substations table under
+    // service role and was previously anon-callable. Even though the
+    // substation rows are server-side static data and not spread from the
+    // request body, an anonymous endpoint that performs service-role writes
+    // is a DB-poisoning vector. (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireUser(req, supabase);
+    if (gate instanceof Response) return gate;
 
     const { action, region, filters }: RegulatoryDataRequest = await req.json()
 

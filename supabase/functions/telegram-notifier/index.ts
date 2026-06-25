@@ -2,9 +2,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
+
+// (Audit-2026-06-25 P0/PR2.) Previously this function accepted `botToken`
+// from the request body and relayed messages through ANY Telegram bot the
+// caller chose. That made it an open Telegram relay reachable through your
+// project URL — a free reputation-burning spam tool — and it had no caller
+// authentication. Now: the bot token is read server-side from
+// TELEGRAM_BOT_TOKEN (Supabase secret). Callers may NOT supply their own
+// token. Callers must be authenticated. We log only redacted ids, never the
+// API response body (which used to leak bot metadata to console).
 interface SendMessageRequest {
   action: 'send_message' | 'test_connection' | 'get_chat_info';
-  botToken: string;
   chatId: string;
   message?: string;
   parseMode?: 'HTML' | 'Markdown' | 'MarkdownV2';
@@ -114,12 +123,30 @@ serve(async (req) => {
   }
 
   try {
-    const request: SendMessageRequest = await req.json();
-    const { action, botToken, chatId, message, parseMode, disableNotification } = request;
+    // Auth: relay endpoints must not be open. We require any logged-in user
+    // here (not admin) because internal alert workflows want to call this
+    // from server-side code with a service-role token too — and getUser will
+    // succeed for those.
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const gate = await requireUser(req, supabase);
+    if (gate instanceof Response) return gate;
 
-    if (!botToken || !chatId) {
+    const request: SendMessageRequest = await req.json();
+    const { action, chatId, message, parseMode, disableNotification } = request;
+
+    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+    if (!botToken) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing botToken or chatId' }),
+        JSON.stringify({ success: false, error: 'TELEGRAM_BOT_TOKEN not configured' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!chatId) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing chatId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -168,7 +195,9 @@ serve(async (req) => {
         );
     }
 
-    console.log(`Telegram ${action} result:`, JSON.stringify(result));
+    // Log only the action + a coarse outcome — never the full Telegram API
+    // response (which can include bot metadata, chat titles, member counts).
+    console.log(`Telegram ${action} ok=${Boolean((result as { success?: boolean }).success)}`);
 
     return new Response(
       JSON.stringify(result),
@@ -176,9 +205,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Telegram notifier error:', error);
+    console.error('Telegram notifier error');
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: 'internal' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 interface PriceAlert {
   id?: string;
   user_id: string;
@@ -31,21 +32,33 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const { action, alertData, userId } = await req.json();
+    const { action, alertData } = await req.json();
+
+    // The check_triggers action is invoked by the scheduler with a
+    // service-role token and has no per-user payload — keep it open here.
+    // Everything else (create/get/update/delete) requires a user JWT, and
+    // userId is derived from the JWT, never from the body.
+    // (Audit-2026-06-25 P0/PR2.)
+    let userId: string | null = null;
+    if (action !== 'check_triggers') {
+      const gate = await requireUser(req, supabase);
+      if (gate instanceof Response) return gate;
+      userId = gate.userId;
+    }
 
     switch (action) {
       case 'create_alert':
-        return await createPriceAlert(supabase, alertData, userId);
-        
+        return await createPriceAlert(supabase, alertData, userId!);
+
       case 'get_alerts':
-        return await getUserAlerts(supabase, userId);
-        
+        return await getUserAlerts(supabase, userId!);
+
       case 'update_alert':
-        return await updatePriceAlert(supabase, alertData);
-        
+        return await updatePriceAlert(supabase, alertData, userId!);
+
       case 'delete_alert':
-        return await deletePriceAlert(supabase, alertData.id, userId);
-        
+        return await deletePriceAlert(supabase, alertData.id, userId!);
+
       case 'check_triggers':
         return await checkAlertTriggers(supabase);
         
@@ -114,9 +127,12 @@ async function getUserAlerts(supabase: any, userId: string) {
   });
 }
 
-async function updatePriceAlert(supabase: any, alertData: PriceAlert) {
+async function updatePriceAlert(supabase: any, alertData: PriceAlert, userId: string) {
   console.log('Updating alert:', alertData.id);
-  
+
+  // Ownership guard added with the auth sweep — service role would
+  // otherwise bypass RLS and let any authenticated user mutate any alert.
+  // (Audit-2026-06-25 P0/PR2.)
   const { data, error } = await supabase
     .from('price_alerts')
     .update({
@@ -126,6 +142,7 @@ async function updatePriceAlert(supabase: any, alertData: PriceAlert) {
       notification_method: alertData.notification_method
     })
     .eq('id', alertData.id)
+    .eq('user_id', userId)
     .select()
     .single();
 

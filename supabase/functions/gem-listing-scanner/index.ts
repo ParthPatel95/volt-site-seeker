@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUserOrService } from "../_shared/guard.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Hidden Gems listing scanner — searches commercial real-estate listings for
@@ -86,6 +87,12 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+
+    // Gated: invoked server-to-server by scraping-orchestrator (service
+    // role) or directly from the authenticated Hidden Gems UI. Never public.
+    // (Audit-2026-06-25 PR3.)
+    const gate = await requireUserOrService(req, supabase);
+    if (gate instanceof Response) return gate;
 
     const body: ScanRequest = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const region = body.region ?? 'both';
