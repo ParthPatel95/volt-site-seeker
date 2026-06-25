@@ -1,6 +1,49 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 import { corsHeaders } from "../_shared/cors.ts";
+
+// Verify a PBKDF2 hash of the form "pbkdf2$<iter>$<base64-salt>$<base64-hash>"
+// in constant time. Mirrors the verifier in validate-aeso-share so dashboard
+// shares get the same protection. Plaintext "password_hash !== password" was
+// the previous check (Audit-2026-06-25 P0).
+async function verifyPbkdf2(password: string, stored: string): Promise<boolean> {
+  if (!stored.startsWith('pbkdf2$')) {
+    // Legacy unsalted SHA-256 — keep constant-time-compared so a hash-format
+    // upgrade doesn't break existing shares.
+    const enc = new TextEncoder().encode(password);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    const hex = Array.from(new Uint8Array(buf))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    return constantTimeEqual(hex, stored);
+  }
+  const [, iterStr, saltB64, hashB64] = stored.split('$');
+  const iter = parseInt(iterStr, 10);
+  if (!Number.isFinite(iter) || iter < 1000 || iter > 5_000_000) return false;
+  const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+  const target = Uint8Array.from(atob(hashB64), c => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password), { name: 'PBKDF2' }, false, ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' },
+    key, target.byteLength * 8,
+  );
+  return constantTimeEqualBytes(new Uint8Array(bits), target);
+}
+
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+function constantTimeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.byteLength !== b.byteLength) return false;
+  let diff = 0;
+  for (let i = 0; i < a.byteLength; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -70,12 +113,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check password if required
-    if (shareLink.password_hash && shareLink.password_hash !== password) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid password' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Check password if required — PBKDF2 + constant-time compare (with
+    // legacy SHA-256 fallback for older share rows).
+    if (shareLink.password_hash) {
+      if (typeof password !== 'string' || password.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid password' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const ok = await verifyPbkdf2(password, shareLink.password_hash);
+      if (!ok) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid password' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Increment view count and update last accessed

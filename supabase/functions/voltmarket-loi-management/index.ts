@@ -454,7 +454,27 @@ async function sendLOIResponseNotificationEmail(supabase: any, userId: string, l
 }
 
 async function handleUpdateLOI(loiId: string, req: Request, supabase: any, userId: string) {
-  const updateData = await req.json()
+  const body = await req.json()
+
+  // Mass-assignment guard: explicitly allowlist the LOI fields a buyer may
+  // amend while their LOI is still pending. `status`, `accepted_at`, etc.
+  // are deliberately NOT here — those are seller-side transitions handled
+  // by a different endpoint. (Audit-2026-06-25 P0: `.update(updateData)`
+  // previously spread the whole body, letting a buyer self-accept by
+  // passing status:'accepted'.)
+  const ALLOWED_FIELDS = [
+    'offer_amount', 'offer_currency', 'message', 'closing_date',
+    'contingencies', 'financing_details', 'expiration_date',
+  ] as const
+  const updateData: Record<string, unknown> = {}
+  for (const k of ALLOWED_FIELDS) {
+    if (k in body) updateData[k] = body[k]
+  }
+  if (Object.keys(updateData).length === 0) {
+    return new Response(JSON.stringify({ error: 'no permitted fields in update' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   // Only buyer can update pending LOIs
   const { data: loi, error } = await supabase

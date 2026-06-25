@@ -483,7 +483,23 @@ async function handleGetPendingVerifications(supabase: any, reviewerId: string) 
 }
 
 async function handleUpdateVerification(verificationId: string, req: Request, supabase: any, userId: string) {
-  const updateData = await req.json()
+  const body = await req.json()
+
+  // Mass-assignment guard: explicitly allowlist the fields a verification
+  // owner may change. `status`, `verified_by`, `verified_at`, etc. are
+  // deliberately NOT here — only an admin workflow may flip those.
+  // (Audit-2026-06-25 P0: previously `.update(updateData)` spread the
+  // whole body, letting users self-approve by passing status:'approved'.)
+  const ALLOWED_FIELDS = ['business_name', 'business_address', 'notes', 'contact_email', 'contact_phone'] as const
+  const updateData: Record<string, unknown> = {}
+  for (const k of ALLOWED_FIELDS) {
+    if (k in body) updateData[k] = body[k]
+  }
+  if (Object.keys(updateData).length === 0) {
+    return new Response(JSON.stringify({ error: 'no permitted fields in update' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   // Only allow users to update their own pending verifications
   const { data: verification, error } = await supabase

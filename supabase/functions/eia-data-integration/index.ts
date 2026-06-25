@@ -3,7 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
-const EIA_API_KEY = 'mmJGntoMp5O20cWfVn3Yt2zFJEfzJLlFBIRf9tkj'
+// EIA API key now loaded from secrets — was previously hardcoded here in
+// source. (Audit-2026-06-25 P0.) ROTATE THE OLD KEY in your EIA account
+// before deploying — the literal that used to live here has been in git
+// history since the function was created.
+const EIA_API_KEY = Deno.env.get('EIA_API_KEY') ?? '';
 const EIA_BASE_URL = 'https://api.eia.gov/v2'
 
 interface EIARequest {

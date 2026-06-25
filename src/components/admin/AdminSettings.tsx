@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { Settings, Users, Check, X, Clock, RefreshCw, UserPlus, Shield, UserMinus, Mail, Trash2, Save } from 'lucide-react';
 import { ConsultingInquiries } from './ConsultingInquiries';
 
@@ -43,8 +44,8 @@ export function AdminSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Check if current user is admin
-  const isAdmin = user?.email === 'admin@voltscout.com';
+  // Server-backed admin check (Audit-2026-06-25 P0).
+  const { isAdmin } = useIsAdmin();
 
   useEffect(() => {
     if (isAdmin) {

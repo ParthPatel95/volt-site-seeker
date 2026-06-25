@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { rejectIfUnsafe } from '../_shared/safeFetch.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 import JSZip from 'npm:jszip@3.10.1';
 
@@ -16,8 +17,12 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    // SSRF guard: only allow our own Supabase storage URLs.
+    // (Audit-2026-06-25 P0.)
+    const unsafe = rejectIfUnsafe(documentUrl, corsHeaders);
+    if (unsafe) return unsafe;
 
-    console.log('[Office Parser] Processing document', { documentType, documentUrl: documentUrl.substring(0, 100) });
+    console.log('[Office Parser] Processing document', { documentType });
 
     // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

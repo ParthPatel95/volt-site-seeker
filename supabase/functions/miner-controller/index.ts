@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdmin } from "../_shared/auth.ts";
 interface HydroMiner {
   id: string;
   name: string;
@@ -264,8 +265,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Admin-only: this function opens raw TCP sockets to mining hardware and
+    // can power-cycle, reconfigure, or factory-reset miners. Anonymous or
+    // even regular-authenticated access is never appropriate.
+    const gate = await requireAdmin(req, supabase);
+    if (gate instanceof Response) return gate;
+
     const { action, ...params } = await req.json();
-    console.log(`[MinerController] Action: ${action}`, params);
+    console.log(`[MinerController] Action: ${action}`);
 
     switch (action) {
       case 'list': {

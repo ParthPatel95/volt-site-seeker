@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { rejectIfUnsafe } from "../_shared/safeFetch.ts";
 // Helper: Extract text from PDF using Gemini Vision
 async function extractTextFromPdfWithVision(documentUrl: string, pageNumber: number, apiKey: string): Promise<string> {
   console.log('[translate-document] Extracting text from PDF via Gemini Vision:', { documentUrl: documentUrl.substring(0, 100), pageNumber });
@@ -97,16 +98,23 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { 
-      text, 
-      documentUrl, 
-      targetLanguage, 
-      documentId, 
-      pageNumber = 1, 
+    const {
+      text,
+      documentUrl,
+      targetLanguage,
+      documentId,
+      pageNumber = 1,
       stream = true,
       extractServerSide = false,
       documentType
     } = body;
+
+    // SSRF guard: if a documentUrl was supplied it must be from our own
+    // Supabase storage. (Audit-2026-06-25 P0.)
+    if (documentUrl) {
+      const unsafe = rejectIfUnsafe(documentUrl, corsHeaders);
+      if (unsafe) return unsafe;
+    }
     
     console.log('[translate-document] Request received:', {
       hasText: !!text,

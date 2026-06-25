@@ -36,33 +36,38 @@ async function encryptApiKey(apiKey: string, userSecret: string): Promise<string
 }
 
 async function decryptApiKey(encryptedData: string, userSecret: string): Promise<string> {
-  try {
-    const combined = new Uint8Array(
-      atob(encryptedData).split('').map(char => char.charCodeAt(0))
-    );
-    
-    const iv = combined.slice(0, 12);
-    const encrypted = combined.slice(12);
-    
-    const key = await crypto.subtle.importKey(
-      'raw',
-      new TextEncoder().encode(userSecret.padEnd(32, '0')),
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
-    
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encrypted
-    );
-    
-    return new TextDecoder().decode(decrypted);
-  } catch (error) {
-    // Fallback for old base64 encrypted keys
-    return atob(encryptedData);
-  }
+  // (Audit-2026-06-25 P0:) the previous catch block returned
+  // `atob(encryptedData)` — i.e. the base64-decoded *ciphertext* — when
+  // AES-GCM decryption failed. That silently leaked ciphertext bytes to
+  // the caller and disguised every error as success. Throw instead so the
+  // handler surfaces a proper 500 and the stored row stays opaque.
+  const combined = new Uint8Array(
+    atob(encryptedData).split('').map(char => char.charCodeAt(0))
+  );
+  if (combined.length < 13) throw new Error('encrypted blob too short');
+
+  const iv = combined.slice(0, 12);
+  const encrypted = combined.slice(12);
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(userSecret.padEnd(32, '0')),
+    { name: 'AES-GCM' },
+    false,
+    ['decrypt']
+  );
+
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encrypted
+  );
+  return new TextDecoder().decode(decrypted);
+  // FOLLOW-UP: the encryption key is derived from the user's UUID, which is
+  // a predictable, server-knowable value rather than a real secret. Switch
+  // to HKDF(API_KEY_ENCRYPTION_MASTER, user_id) so knowing the user_id is
+  // not enough to decrypt. Deferred — re-encrypting existing rows needs a
+  // separate backfill migration we don't want to ship in this P0 sweep.
 }
 
 const handler = async (req: Request): Promise<Response> => {

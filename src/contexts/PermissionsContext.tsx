@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 interface PermissionsContextType {
   permissions: string[];
@@ -45,25 +46,28 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     fetchPermissions();
   }, [user?.id]);
 
+  // Server-backed admin check via `public.has_role(user_id, 'admin')` RPC.
+  // Replaces three `user?.email === 'admin@voltscout.com'` compares that
+  // trusted a client-asserted email (Audit-2026-06-25 P0). The frontend
+  // only mirrors the server decision; RLS still polices any actual data
+  // access.
+  const { isAdmin } = useIsAdmin();
+
   const hasPermission = useCallback((permission: string) => {
-    // Empty permission means always allowed
     if (!permission) return true;
-    // Admin always has all permissions
-    if (user?.email === 'admin@voltscout.com') return true;
+    if (isAdmin) return true;
     return permissions.includes(permission);
-  }, [permissions, user?.email]);
+  }, [permissions, isAdmin]);
 
   const hasAnyPermission = useCallback((requiredPermissions: string[]) => {
-    // Admin always has all permissions
-    if (user?.email === 'admin@voltscout.com') return true;
+    if (isAdmin) return true;
     return requiredPermissions.some(permission => permissions.includes(permission));
-  }, [permissions, user?.email]);
+  }, [permissions, isAdmin]);
 
   const hasAllPermissions = useCallback((requiredPermissions: string[]) => {
-    // Admin always has all permissions
-    if (user?.email === 'admin@voltscout.com') return true;
+    if (isAdmin) return true;
     return requiredPermissions.every(permission => permissions.includes(permission));
-  }, [permissions, user?.email]);
+  }, [permissions, isAdmin]);
 
   const value = useMemo(() => ({
     permissions,

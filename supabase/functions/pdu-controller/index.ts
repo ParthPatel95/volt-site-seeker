@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdmin } from "../_shared/auth.ts";
 interface PDUAction {
   action: 'register' | 'shutdown' | 'power_on' | 'status' | 'schedule_shutdown' | 'list' | 'update' | 'delete';
   pdu_id?: string;
@@ -31,6 +32,13 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Admin-only: this function powers PDUs on/off, schedules shutdowns, and
+    // can delete device records. Was previously callable by anon — see
+    // p0-security-sweep migration for context.
+    const gate = await requireAdmin(req, supabase);
+    if (gate instanceof Response) return gate;
+    const userId = gate.userId;
+
     const body: PDUAction = await req.json();
     const { action } = body;
 
@@ -46,14 +54,8 @@ serve(async (req) => {
           });
         }
 
-        // Get user from auth header
-        const authHeader = req.headers.get('Authorization');
-        let userId = null;
-        if (authHeader) {
-          const token = authHeader.replace('Bearer ', '');
-          const { data: { user } } = await supabase.auth.getUser(token);
-          userId = user?.id;
-        }
+        // userId is already populated by requireAdmin() above — no need to
+        // re-derive it from the header.
 
         const { data, error } = await supabase
           .from('pdu_devices')

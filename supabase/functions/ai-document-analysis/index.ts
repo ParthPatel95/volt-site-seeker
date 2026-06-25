@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { rejectIfUnsafe } from "../_shared/safeFetch.ts";
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -16,7 +17,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { documentUrl, documentType, listingId, reportId } = await req.json();
 
-    console.log('Starting AI analysis for document:', { documentUrl, documentType, listingId });
+    // SSRF guard: documentUrl must point at our own Supabase storage.
+    // (Audit-2026-06-25 P0.)
+    const unsafe = rejectIfUnsafe(documentUrl, corsHeaders);
+    if (unsafe) return unsafe;
+
+    console.log('Starting AI analysis for document:', { documentType, listingId });
 
     // Download document content (simplified for text documents)
     const documentResponse = await fetch(documentUrl);

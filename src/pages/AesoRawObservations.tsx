@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,7 +64,8 @@ function parseDateInput(v: string): string | null {
 
 export default function AesoRawObservations() {
   const { user } = useAuth();
-  const isAdmin = user?.email === "admin@voltscout.com";
+  // Server-backed admin check (Audit-2026-06-25 P0).
+  const { isAdmin } = useIsAdmin();
 
   const [rows, setRows] = useState<RawObservation[]>([]);
   const [loading, setLoading] = useState(false);
