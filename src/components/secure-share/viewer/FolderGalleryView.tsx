@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -489,23 +489,14 @@ export function FolderGalleryView({
                     onClick={() => onDocumentSelect(doc)}
                   >
                     <div className="relative aspect-[3/4] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden">
-                      {isImage && doc.file_url ? (
-                        <img 
-                          src={doc.file_url} 
-                          alt={doc.file_name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : isPdf && !isMobileDevice && doc.file_url ? (
-                        <iframe
-                          src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                          className="absolute inset-0 w-full h-full pointer-events-none"
-                          title={doc.file_name}
-                        />
-                      ) : (
-                        <IconComponent className="w-16 h-16 text-muted-foreground/40" />
-                      )}
-                      
+                      <LazyCardPreview
+                        doc={doc}
+                        isImage={isImage}
+                        isPdf={isPdf}
+                        isMobileDevice={isMobileDevice}
+                        IconComponent={IconComponent}
+                      />
+
                       <div className="absolute inset-0 bg-background/80 opacity-0 md:group-hover:opacity-100 flex items-center justify-center">
                         <Button variant="secondary" size="sm" className="shadow-lg">
                           <Eye className="w-4 h-4 mr-2" />
@@ -621,6 +612,67 @@ export function FolderGalleryView({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Loads a card's heavy preview (full image or PDF iframe) only once the card
+// scrolls within ~300px of the viewport. Before that — and as the permanent
+// fallback on mobile or for non-previewable types — it shows the file-type
+// icon. This is what stops a folder share from loading a dozen full PDFs the
+// instant it opens; previews stream in as the viewer scrolls.
+function LazyCardPreview({
+  doc, isImage, isPdf, isMobileDevice, IconComponent,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  doc: any;
+  isImage: boolean;
+  isPdf: boolean;
+  isMobileDevice: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  IconComponent: any;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '300px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const canPreviewImage = visible && isImage && doc.file_url;
+  const canPreviewPdf = visible && isPdf && !isMobileDevice && doc.file_url;
+
+  return (
+    <div ref={ref} className="absolute inset-0 flex items-center justify-center">
+      {canPreviewImage ? (
+        <img
+          src={doc.file_url}
+          alt={doc.file_name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : canPreviewPdf ? (
+        <iframe
+          src={`${doc.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          title={doc.file_name}
+          loading="lazy"
+        />
+      ) : (
+        <IconComponent className="w-16 h-16 text-muted-foreground/40" />
+      )}
     </div>
   );
 }

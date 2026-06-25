@@ -194,3 +194,18 @@ export function useAuth() {
   }
   return context;
 }
+
+// Non-throwing variant for components that may render OUTSIDE the AuthProvider
+// — e.g. the public secure-share viewers. Returns a logged-out, not-loading
+// default so a public viewer never blocks on (or crashes from) auth.
+const LOGGED_OUT: AuthContextType = {
+  user: null,
+  session: null,
+  loading: false,
+  isApproved: false,
+  signOut: async () => {},
+};
+
+export function useOptionalAuth(): AuthContextType {
+  return useContext(AuthContext) ?? LOGGED_OUT;
+}
