@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
 
     let scanned = 0;
     let stored = 0;
+    let skipped_non_listing = 0;
     const errors: string[] = [];
     const found: unknown[] = [];
 
@@ -134,6 +135,21 @@ Deno.serve(async (req) => {
         for (const r of results) {
           scanned++;
           if (!r.url) continue;
+          // Skip obvious non-listings — social, video, and forum hosts pollute
+          // Hidden Gems with weak keyword matches that aren't real properties.
+          try {
+            const host = new URL(r.url).hostname.toLowerCase();
+            const NON_LISTING_HOSTS = [
+              'youtube.com', 'youtu.be', 'm.youtube.com',
+              'facebook.com', 'm.facebook.com', 'instagram.com',
+              'twitter.com', 'x.com', 'tiktok.com', 'reddit.com',
+              'linkedin.com', 'pinterest.com',
+            ];
+            if (NON_LISTING_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
+              skipped_non_listing++;
+              continue;
+            }
+          } catch { /* malformed URL — let it through to the upsert which will error visibly */ }
           const text = `${r.title ?? ''} ${r.description ?? ''}`;
           const { signals, score } = scoreListingText(text);
           // Only persist listings that show at least one gem signal — plain
@@ -152,10 +168,10 @@ Deno.serve(async (req) => {
             source: 'firecrawl',
             scraped_at: now,
             // Every successful re-observation refreshes last_seen_at so
-            // listings that survive across scans stay 'active'. Anything
-            // not re-seen for N days gets marked 'stale' below.
+            // listings that survive across scans stay non-stale. Anything
+            // not re-seen past the stale threshold gets flipped below.
             last_seen_at: now,
-            status: 'active',
+            is_stale: false,
             raw: r,
           };
 
@@ -175,12 +191,12 @@ Deno.serve(async (req) => {
     }
 
     // Stale-marker pass: any active row not refreshed by this run (or recent
-    // prior runs) gets `status = 'stale'`. UI hides stale rows by default.
+    // prior runs) gets `is_stale = true`. UI hides stale rows by default.
     let stale_marked = 0;
     try {
       const { data: staleData, error: staleErr } = await supabase.rpc(
         'mark_stale_gem_listings',
-        { p_days: 14 },
+        { p_threshold_hours: 14 * 24 },
       );
       if (staleErr) errors.push(`stale-marker: ${staleErr.message}`);
       else if (typeof staleData === 'number') stale_marked = staleData;
@@ -194,6 +210,7 @@ Deno.serve(async (req) => {
       queries_run: queries.length,
       results_scanned: scanned,
       listings_stored: stored,
+      skipped_non_listing,
       stale_marked,
       listings: found,
       errors: errors.length ? errors : undefined,
