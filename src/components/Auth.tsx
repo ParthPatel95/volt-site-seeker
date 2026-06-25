@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Zap, AlertCircle, Bitcoin, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AccessRequestForm } from '@/components/AccessRequestForm';
@@ -138,51 +138,92 @@ export function Auth({ onAuthStateChange }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50/30 p-4">
-      {/* Navigation back to landing */}
-      <div className="absolute top-4 left-4 z-50">
-        <Link 
-          to="/" 
-          className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to WattByte</span>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[0.9fr_1.1fr]">
+        <aside className="relative hidden overflow-hidden border-r border-border bg-secondary/30 px-10 py-12 lg:flex lg:flex-col lg:justify-between">
+          <div>
+            <Link to="/" className="inline-flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <EnhancedLogo className="h-12 w-12 object-contain" />
+              <div>
+                <p className="text-2xl font-bold leading-tight">WattByte</p>
+                <p className="text-sm text-muted-foreground">Infrastructure Company</p>
+              </div>
+            </Link>
 
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-4">
-            <EnhancedLogo className="w-12 h-12 object-contain" />
-            <div className="flex items-center">
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center">
-                Watt<Bitcoin className="w-8 h-8 text-orange-500 inline mx-0" />yte
+            <div className="mt-24 space-y-8">
+              <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="h-px w-8 bg-primary" />
+                VoltScout access
+              </div>
+              <h1 className="max-w-xl text-5xl font-bold leading-tight tracking-normal">
+                Power-first intelligence for site development.
               </h1>
+              <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
+                Secure access to geocoding, infrastructure mapping, AESO analytics, and real-data site screening tools.
+              </p>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="border-t border-border pt-4">
+              <p className="font-semibold">Canada + USA</p>
+              <p className="mt-1 text-muted-foreground">Cross-border site lookup</p>
+            </div>
+            <div className="border-t border-border pt-4">
+              <p className="font-semibold">Live data</p>
+              <p className="mt-1 text-muted-foreground">No mock intelligence</p>
+            </div>
+          </div>
+        </aside>
+
+        <main className="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-12">
+          <Link 
+            to="/" 
+            className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:left-6 sm:top-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to WattByte</span>
           </Link>
-          <CardTitle>Access VoltScout Platform</CardTitle>
-          <CardDescription>
-            {hasGridBazaarAccount 
-              ? "Your GridBazaar account does not have VoltScout access. Please contact support for approval."
-              : showAccessForm 
-                ? "Request access to our AI-powered energy discovery platform"
-                : "Sign in to access your account"
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+
+          <Card className="w-full max-w-xl border-border bg-card/95 shadow-institutional">
+            <CardHeader className="space-y-5 text-center">
+              <Link to="/" className="mx-auto flex items-center justify-center gap-3 lg:hidden">
+                <EnhancedLogo className="h-11 w-11 object-contain" />
+                <div className="text-left">
+                  <p className="text-2xl font-bold leading-tight">WattByte</p>
+                  <p className="text-xs text-muted-foreground">Infrastructure Company</p>
+                </div>
+              </Link>
+
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary">
+                {showAccessForm ? <ShieldCheck className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
+              </div>
+
+              <div>
+                <CardTitle className="text-2xl">{showAccessForm ? 'Request VoltScout Access' : 'Access VoltScout'}</CardTitle>
+                <CardDescription className="mt-2">
+                  {hasGridBazaarAccount 
+                    ? "Your GridBazaar account does not have VoltScout access. Please contact support for approval."
+                    : showAccessForm 
+                      ? "Submit your application for the energy intelligence platform."
+                      : "Sign in to continue to the WattByte platform."
+                  }
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
           {hasGridBazaarAccount ? (
             <div className="space-y-6 text-center">
-              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <h3 className="font-semibold text-orange-800 mb-2">VoltScout Access Required</h3>
-                <p className="text-orange-700 text-sm mb-4">
+              <div className="rounded-md border border-border bg-secondary/40 p-4">
+                <h3 className="font-semibold text-foreground mb-2">VoltScout Access Required</h3>
+                <p className="text-muted-foreground text-sm mb-4">
                   You have a GridBazaar account, but VoltScout requires separate approval. 
                   Contact our team to request VoltScout platform access.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link 
                     to="/voltmarket" 
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     Go to GridBazaar
                   </Link>
@@ -260,7 +301,7 @@ export function Auth({ onAuthStateChange }: AuthProps) {
 
               <div className="text-center space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  New to WattByte? Request access to our exclusive platform
+                  New to WattByte? Request platform access.
                 </p>
                 <Button 
                   onClick={() => setShowAccessForm(true)}
@@ -279,8 +320,10 @@ export function Auth({ onAuthStateChange }: AuthProps) {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
     </div>
   );
 }

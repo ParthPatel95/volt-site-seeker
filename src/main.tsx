@@ -97,6 +97,7 @@ function AppWithLoader() {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         window.__hideAppLoader?.();
+        document.getElementById('app-error')?.remove();
       });
     });
   }, []);
