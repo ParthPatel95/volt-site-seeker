@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireCronOrService } from "../_shared/cronAuth.ts";
 
 // The original implementation pulled all of aeso_training_data (3000+ rows ×
 // 141 columns) plus every natural-gas price into memory and recomputed every
@@ -10,6 +11,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Cron-only entry point: accept the EDGE_CRON_SECRET header (set by the
+  // scheduled job in 20260625010000_cron_secret_gate.sql) or the
+  // service-role token. Rejects public anon JWTs.
+  // (Audit-2026-06-25 PR4.)
+  const __gate = requireCronOrService(req);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

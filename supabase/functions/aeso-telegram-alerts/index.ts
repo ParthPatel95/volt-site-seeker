@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireAdmin } from "../_shared/auth.ts";
+import { requireCronOrService } from "../_shared/cronAuth.ts";
 // ============================================================
 // Reliable Mountain Time conversion (MST/MDT) using UTC offsets
 // Replaces the unreliable toLocaleString anti-pattern
@@ -526,12 +527,16 @@ serve(async (req) => {
     const { forceCheck = false, testRuleId = null } = body;
 
     // Manual trigger paths (forceCheck or testRuleId) bypass the rule
-    // cooldown and can blast Telegram messages on demand. Restrict those to
-    // admins. The pure scheduled-cron path (no body) still runs unauthed
-    // because it's invoked by the Supabase scheduler with a service-role
-    // token. (Audit-2026-06-25 P0/PR2.)
+    // cooldown and can blast Telegram messages on demand → admin-only.
+    // The scheduled-cron path must carry the EDGE_CRON_SECRET header (set
+    // by the rescheduled cron job in 20260625010000_cron_secret_gate.sql)
+    // or the service-role token. The plain anon-key path that used to
+    // exist no longer works. (Audit-2026-06-25 PR2 + PR4.)
     if (forceCheck || testRuleId) {
       const gate = await requireAdmin(req, supabase);
+      if (gate instanceof Response) return gate;
+    } else {
+      const gate = requireCronOrService(req);
       if (gate instanceof Response) return gate;
     }
 
