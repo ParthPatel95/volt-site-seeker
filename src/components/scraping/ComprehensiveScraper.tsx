@@ -84,7 +84,7 @@ export function ComprehensiveScraper({ onPropertiesFound }: ComprehensiveScraper
         
         toast({
           title: "Scraping Completed!",
-          description: `Found ${data.properties_found} properties from ${data.sources_used?.length || 0} brokerage sites`,
+          description: `Found ${data.properties_found} properties via Firecrawl across ${selectedSources.length} targeted brokerage sites`,
         });
       } else {
         toast({
