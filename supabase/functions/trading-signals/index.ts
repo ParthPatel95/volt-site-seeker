@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,7 +14,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, userId, market, asset, signalType, riskTolerance = 'medium' } = await req.json();
+    // Auth required. userId derived from JWT — previously taken from the
+    // body, allowing fabrication/reading of any user's trading signals.
+    // (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireUser(req, supabase);
+    if (gate instanceof Response) return gate;
+    const userId = gate.userId;
+
+    const { action, market, asset, signalType, riskTolerance = 'medium' } = await req.json();
 
     console.log('Trading signals request:', { action, market, asset, signalType });
 

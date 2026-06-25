@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdmin } from "../_shared/auth.ts";
 // ============================================================
 // Reliable Mountain Time conversion (MST/MDT) using UTC offsets
 // Replaces the unreliable toLocaleString anti-pattern
@@ -523,6 +524,16 @@ serve(async (req) => {
     }
 
     const { forceCheck = false, testRuleId = null } = body;
+
+    // Manual trigger paths (forceCheck or testRuleId) bypass the rule
+    // cooldown and can blast Telegram messages on demand. Restrict those to
+    // admins. The pure scheduled-cron path (no body) still runs unauthed
+    // because it's invoked by the Supabase scheduler with a service-role
+    // token. (Audit-2026-06-25 P0/PR2.)
+    if (forceCheck || testRuleId) {
+      const gate = await requireAdmin(req, supabase);
+      if (gate instanceof Response) return gate;
+    }
 
     console.log('AESO Telegram Alerts check starting...');
 

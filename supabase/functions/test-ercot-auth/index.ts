@@ -78,8 +78,7 @@ async function testEndpoint(url: string, apiKey: string, testName: string) {
     url: url,
     status: 0,
     statusText: '',
-    requiresAuth: false,
-    responsePreview: ''
+    requiresAuth: false
   };
 
   try {
@@ -110,11 +109,13 @@ async function testEndpoint(url: string, apiKey: string, testName: string) {
       
       const text2 = await res2.text();
       console.log(`With subscription key: ${res2.status} ${res2.statusText}`);
-      console.log(`Response preview:`, text2.slice(0, 200));
-      
+      // (Audit-2026-06-25 P0/PR2.) Do NOT return the upstream body to the
+      // caller — ERCOT can echo Authorization/Subscription header fragments
+      // into error bodies, which would leak the token to an unauth caller.
+      // The status code and statusText alone are enough to diagnose.
+
       result.status = res2.status;
       result.statusText = res2.statusText;
-      result.responsePreview = text2.slice(0, 300);
       
       if (res2.status === 401) {
         result.message = 'Requires OAuth Bearer token (ID token) in addition to subscription key';
@@ -122,7 +123,8 @@ async function testEndpoint(url: string, apiKey: string, testName: string) {
     } else {
       result.status = res1.status;
       result.statusText = res1.statusText;
-      result.responsePreview = text1.slice(0, 300);
+      // Audit-2026-06-25 P0/PR2: do not return the upstream body to the
+      // caller — ERCOT can echo Authorization fragments in error bodies.
     }
   } catch (error: any) {
     console.error(`Test failed:`, error);

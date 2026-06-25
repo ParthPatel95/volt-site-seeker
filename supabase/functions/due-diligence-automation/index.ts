@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,7 +14,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, reportType, listingId, userId, companyName, parameters } = await req.json();
+    // userId derived from JWT, never from body. The previous code accepted
+    // body.userId and ran .insert({ user_id: userId }) under service role,
+    // letting any caller fabricate due-diligence rows for any user (and
+    // bill OpenAI to them). (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireUser(req, supabase);
+    if (gate instanceof Response) return gate;
+    const userId = gate.userId;
+
+    const { action, reportType, listingId, companyName, parameters } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {

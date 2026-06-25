@@ -16,7 +16,10 @@ serve(async (req) => {
 
     console.log('🔧 Phase 6: Starting Hyperparameter Optimization...');
 
-    const { trials = 5 } = await req.json().catch(() => ({ trials: 5 }));
+    // Cap trials to prevent DB CPU DoS via { trials: 100000 }.
+    // (Audit-2026-06-25 P0/PR2.)
+    const rawBody = await req.json().catch(() => ({ trials: 5 }));
+    const trials = Math.max(1, Math.min(100, Number(rawBody?.trials ?? 5)));
 
     // Define hyperparameter search space
     const searchSpace = {

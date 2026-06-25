@@ -2,6 +2,28 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAdmin } from "../_shared/auth.ts";
+
+// Allowlist of fields a caller may set when creating/updating a shutdown
+// rule. ANY column not in this list — e.g. an internal status flag, an
+// audit timestamp, or `created_by` — must be set by the server, never the
+// caller. (Audit-2026-06-25 P0/PR2.)
+const RULE_ALLOWED_FIELDS = [
+  'name', 'description',
+  'price_ceiling_cad', 'soft_ceiling_cad', 'price_floor_cad',
+  'priority_group', 'is_active',
+  'grace_period_seconds', 'cooldown_seconds',
+  'affected_pdu_groups',
+] as const;
+
+function pickAllowed<T extends string>(
+  body: Record<string, unknown>,
+  fields: readonly T[],
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) if (f in body) out[f] = body[f];
+  return out;
+}
 interface AutomationDecision {
   timestamp: string;
   current_price: number;
@@ -24,6 +46,14 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Admin-only: this engine creates / updates / deletes shutdown rules that
+    // automatically power-cycle the datacenter. Previously every action was
+    // anonymous — anyone could delete every rule, or inject one that
+    // triggered an immediate shutdown. (Audit-2026-06-25 P0/PR2.)
+    const gate = await requireAdmin(req, supabase);
+    if (gate instanceof Response) return gate;
+    const userId = gate.userId;
 
     const body = await req.json();
     const { action } = body;
@@ -342,19 +372,14 @@ serve(async (req) => {
           });
         }
 
-        // Get user from auth header
-        const authHeader = req.headers.get('Authorization');
-        let userId = null;
-        if (authHeader) {
-          const token = authHeader.replace('Bearer ', '');
-          const { data: { user } } = await supabase.auth.getUser(token);
-          userId = user?.id;
-        }
-
+        // userId is already populated by requireAdmin() above. Use the
+        // allowlist instead of spreading rule_data so a caller can't set
+        // internal fields like `id`, `created_at`, or `last_triggered_at`.
+        const safeRuleData = pickAllowed(rule_data, RULE_ALLOWED_FIELDS);
         const { data, error } = await supabase
           .from('datacenter_shutdown_rules')
           .insert({
-            ...rule_data,
+            ...safeRuleData,
             created_by: userId,
           })
           .select()
@@ -376,9 +401,16 @@ serve(async (req) => {
           });
         }
 
+        // Allowlist for update too — same reasoning as create_rule.
+        const safeRuleData = pickAllowed(rule_data, RULE_ALLOWED_FIELDS);
+        if (Object.keys(safeRuleData).length === 0) {
+          return new Response(JSON.stringify({ error: 'no permitted fields in update' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
         const { data, error } = await supabase
           .from('datacenter_shutdown_rules')
-          .update(rule_data)
+          .update(safeRuleData)
           .eq('id', rule_id)
           .select()
           .single();
