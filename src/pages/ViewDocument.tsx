@@ -75,8 +75,10 @@ export default function ViewDocument() {
         };
       });
 
+      // Pass the share token so get-signed-url can verify the requested paths
+      // belong to documents reachable via this link, without needing a JWT.
       const { data, error } = await supabase.functions.invoke('get-signed-url', {
-        body: { paths: pathsWithExpiry }
+        body: { paths: pathsWithExpiry, shareToken: token }
       });
 
       if (error) {
@@ -146,7 +148,7 @@ export default function ViewDocument() {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const { data, error } = await supabase.functions.invoke('get-signed-url', {
-          body: { storagePath, expiresIn, isVideo }
+          body: { storagePath, expiresIn, isVideo, shareToken: token }
         });
 
         if (error) {

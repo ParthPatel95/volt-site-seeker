@@ -1,6 +1,34 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
+
+// HTML and JS-string escapers used to render the meta-tag preamble safely.
+// Without them the token + share title/description (both reflected from the
+// request / DB) get interpolated straight into <meta content="..."> and into
+// a <script>window.location.href = '...'</script> string, where an
+// attacker-shaped value can break out of the attribute / string context and
+// inject markup or JS. (Audit-2026-06-25 P0.)
+function htmlEscape(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function jsEscape(s: string): string {
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\r?\n/g, '\\n');
+}
+// Tokens we mint are url-safe alphanumeric. An out-of-shape token can't map
+// to a real share — reject before interpolating it anywhere.
+const SAFE_TOKEN_RE = /^[A-Za-z0-9_-]{8,128}$/;
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -12,7 +40,7 @@ Deno.serve(async (req) => {
     const pathParts = url.pathname.split('/');
     const token = pathParts[pathParts.length - 1];
     
-    if (!token) {
+    if (!token || !SAFE_TOKEN_RE.test(token)) {
       return new Response('Invalid share token', { status: 400, headers: corsHeaders });
     }
 
@@ -76,42 +104,51 @@ Deno.serve(async (req) => {
       // Continue with default meta tags
     }
 
-    // Return HTML with proper meta tags for social media crawlers
+    // Escape every interpolation. Token is shape-checked above, but we still
+    // run it through both encoders defensively in case the regex ever loosens.
+    const tH = htmlEscape(token);
+    const tJ = jsEscape(token);
+    const oH = htmlEscape(url.origin);
+    const oJ = jsEscape(url.origin);
+    const titleH = htmlEscape(shareTitle);
+    const descH = htmlEscape(shareDescription);
+    const imgH = htmlEscape(shareImage);
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${shareTitle}</title>
-  <meta name="description" content="${shareDescription}">
-  
+  <title>${titleH}</title>
+  <meta name="description" content="${descH}">
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="${url.origin}/view/${token}">
-  <meta property="og:title" content="${shareTitle}">
-  <meta property="og:description" content="${shareDescription}">
-  <meta property="og:image" content="${shareImage}">
+  <meta property="og:url" content="${oH}/view/${tH}">
+  <meta property="og:title" content="${titleH}">
+  <meta property="og:description" content="${descH}">
+  <meta property="og:image" content="${imgH}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="WattByte Infrastructure Company">
-  
+
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="${url.origin}/view/${token}">
-  <meta name="twitter:title" content="${shareTitle}">
-  <meta name="twitter:description" content="${shareDescription}">
-  <meta name="twitter:image" content="${shareImage}">
-  
+  <meta name="twitter:url" content="${oH}/view/${tH}">
+  <meta name="twitter:title" content="${titleH}">
+  <meta name="twitter:description" content="${descH}">
+  <meta name="twitter:image" content="${imgH}">
+
   <!-- Redirect for non-crawler requests -->
-  <meta http-equiv="refresh" content="0; url=${url.origin}/view/${token}">
+  <meta http-equiv="refresh" content="0; url=${oH}/view/${tH}">
   <script>
     // JavaScript redirect as fallback
-    window.location.href = '${url.origin}/view/${token}';
+    window.location.href = '${oJ}/view/${tJ}';
   </script>
 </head>
 <body>
   <p>Redirecting to shared content...</p>
-  <p>If you are not redirected automatically, <a href="${url.origin}/view/${token}">click here</a>.</p>
+  <p>If you are not redirected automatically, <a href="${oH}/view/${tH}">click here</a>.</p>
 </body>
 </html>`;
 

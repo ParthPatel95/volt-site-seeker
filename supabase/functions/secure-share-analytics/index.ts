@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 interface AnalyticsRequest {
   dateFrom?: string;
   dateTo?: string;
@@ -18,9 +19,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Auth required: this endpoint returns viewer PII (name, email, IP,
+    // location, recipient_email from secure_links). Was anon-callable before
+    // — see p0-security-sweep migration for context.
+    const gate = await requireUser(req, supabaseClient);
+    if (gate instanceof Response) return gate;
+    const userId = gate.userId;
+
     const { dateFrom, dateTo }: AnalyticsRequest = await req.json();
-    
+
     console.log('Fetching analytics with date range:', { dateFrom, dateTo });
+
+    // Scope analytics to links created by the calling user. Admins see all.
+    const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+      _user_id: userId, _role: 'admin',
+    });
 
     // Build the query with date filters
     let query = supabaseClient
@@ -40,9 +53,14 @@ serve(async (req) => {
         scroll_depth,
         document_id,
         document:secure_documents(id, file_name, file_type),
-        link:secure_links(recipient_email)
+        link:secure_links!inner(recipient_email, created_by)
       `)
       .order('opened_at', { ascending: false });
+
+    if (!isAdmin) {
+      // Non-admins see only activity on links they created.
+      query = query.eq('link.created_by', userId);
+    }
 
     if (dateFrom) {
       query = query.gte('opened_at', dateFrom);

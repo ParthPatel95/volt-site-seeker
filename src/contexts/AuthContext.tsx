@@ -40,9 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const error = result?.error;
       if (error) {
-        console.warn('Approval check failed, defaulting to approved:', error.message);
-        approvalCache.current.set(userId, true);
-        setIsApproved(true);
+        // FAIL CLOSED. The previous behaviour was to set isApproved=true on
+        // any RPC error or timeout, which meant any backend outage granted
+        // full access to every visitor (Audit-2026-06-25 P0).
+        console.warn('Approval check failed, denying access:', error.message);
+        // We intentionally do NOT cache the negative result — a transient
+        // outage shouldn't lock the user out of subsequent retries.
+        setIsApproved(false);
         return;
       }
 
@@ -50,10 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       approvalCache.current.set(userId, approved);
       setIsApproved(approved);
     } catch (error) {
-      console.warn('Approval check timeout/error, defaulting to approved:',
+      console.warn('Approval check timeout/error, denying access:',
         error instanceof Error ? error.message : 'unknown');
-      approvalCache.current.set(userId, true);
-      setIsApproved(true);
+      // FAIL CLOSED (see above).
+      setIsApproved(false);
     } finally {
       if (timer !== undefined) clearTimeout(timer);
     }

@@ -1,6 +1,27 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { corsHeaders } from "../_shared/cors.ts";
+
+// get-signed-url
+// Mints signed URLs for stored objects. Used by:
+//   * the Secure Share viewer (PUBLIC, token-based) — must NOT require a JWT
+//     because the viewer is anonymous by design.
+//   * admin/internal flows that already carry a Supabase user JWT.
+//
+// Before this revision the function was an open relay: no auth, any bucket,
+// any path. Anyone could POST a path and receive a signed URL for any object
+// in storage. (Audit-2026-06-25 P0.)
+//
+// Authorization model now:
+//   1. Bucket allowlist — only the buckets that actually exist are signable.
+//   2. Either:
+//      a. Authorization: Bearer <user JWT> resolves to a valid user — admin/
+//         internal path, anything inside the allowlist is signable.
+//      b. shareToken: <token> from a public share link — the requested
+//         storage path MUST belong to a document reachable via that link's
+//         document_id / bundle_id / folder_id graph. Verified server-side
+//         against secure_documents joined through secure_links.
+//   3. If neither is supplied, 401.
+
 interface BatchPathRequest {
   storagePath: string;
   isVideo?: boolean;
@@ -15,222 +36,236 @@ interface BatchUrlResult {
   error?: string;
 }
 
-Deno.serve(async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+// Only the buckets the product actually serves. Add new ones deliberately.
+const ALLOWED_BUCKETS = new Set<string>([
+  'secure-documents',
+  'documents',
+  'inventory-images',
+  'listing-images',
+  'profile-images',
+  'voltmarket-documents',
+  'voltmarket-images',
+]);
+
+const supabaseAdmin = (): SupabaseClient => createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+);
+
+async function authenticateUser(req: Request): Promise<string | null> {
+  const auth = req.headers.get("Authorization");
+  if (!auth?.startsWith("Bearer ")) return null;
+  const token = auth.slice(7);
+  try {
+    const { data } = await supabaseAdmin().auth.getUser(token);
+    return data?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Given a share token, return the set of storage paths reachable through it.
+// Empty set = invalid/expired/scoped to nothing.
+async function pathsReachableByShareToken(token: string): Promise<Set<string>> {
+  const sb = supabaseAdmin();
+  const { data: link, error: linkErr } = await sb
+    .from("secure_links")
+    .select("id, document_id, bundle_id, folder_id, status, expires_at, max_views, current_views")
+    .eq("token", token)
+    .maybeSingle();
+  if (linkErr || !link) return new Set();
+  if (link.status && link.status !== "active") return new Set();
+  if (link.expires_at && new Date(link.expires_at).getTime() < Date.now()) return new Set();
+  if (link.max_views && link.current_views >= link.max_views) return new Set();
+
+  const reachable = new Set<string>();
+
+  // Single document
+  if (link.document_id) {
+    const { data: doc } = await sb
+      .from("secure_documents").select("storage_path").eq("id", link.document_id).maybeSingle();
+    if (doc?.storage_path) reachable.add(doc.storage_path);
   }
 
-  try {
-    const body = await req.json();
-    
-    // Check if this is a batch request
-    if (body.paths && Array.isArray(body.paths)) {
-      return handleBatchRequest(body.paths, body.bucket);
+  // Bundle → documents
+  if (link.bundle_id) {
+    const { data: rows } = await sb
+      .from("bundle_documents")
+      .select("document_id, secure_documents!inner(storage_path)")
+      .eq("bundle_id", link.bundle_id);
+    for (const r of rows ?? []) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = (r as any)?.secure_documents?.storage_path;
+      if (p) reachable.add(p);
     }
-    
-    // Handle single URL request (backward compatible)
-    return handleSingleRequest(body);
-  } catch (error: any) {
-    console.error("Error in get-signed-url function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+  }
+
+  // Folder (and descendants) → documents
+  if (link.folder_id) {
+    const allFolderIds = new Set<string>([link.folder_id]);
+    let frontier: string[] = [link.folder_id];
+    // BFS bounded so a pathological tree can't hang.
+    for (let depth = 0; depth < 8 && frontier.length; depth++) {
+      const { data: kids } = await sb
+        .from("secure_folders").select("id, parent_folder_id")
+        .in("parent_folder_id", frontier).eq("is_active", true);
+      const next: string[] = [];
+      for (const k of kids ?? []) {
+        if (!allFolderIds.has(k.id)) { allFolderIds.add(k.id); next.push(k.id); }
       }
-    );
+      frontier = next;
+    }
+    const { data: docs } = await sb
+      .from("secure_documents").select("storage_path")
+      .in("folder_id", Array.from(allFolderIds));
+    for (const d of docs ?? []) if (d.storage_path) reachable.add(d.storage_path);
+  }
+
+  return reachable;
+}
+
+const unauthorized = (msg: string): Response => new Response(JSON.stringify({ error: msg }), {
+  status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+});
+const badRequest = (msg: string): Response => new Response(JSON.stringify({ error: msg }), {
+  status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+});
+
+Deno.serve(async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const bucketName = body.bucket ?? 'secure-documents';
+
+    // 1. Bucket allowlist
+    if (!ALLOWED_BUCKETS.has(bucketName)) {
+      return badRequest(`bucket "${bucketName}" is not signable`);
+    }
+
+    // 2. Authorize via either user JWT or share token.
+    const userId = await authenticateUser(req);
+    const shareToken: string | undefined = body.shareToken;
+
+    let allowedPaths: Set<string> | null = null; // null = unrestricted (user JWT)
+    if (userId) {
+      allowedPaths = null;
+    } else if (typeof shareToken === "string" && shareToken.length > 0) {
+      allowedPaths = await pathsReachableByShareToken(shareToken);
+      if (allowedPaths.size === 0) {
+        return unauthorized("share token is invalid, expired, or scoped to no documents");
+      }
+    } else {
+      return unauthorized("provide an Authorization Bearer token or a shareToken");
+    }
+
+    // 3. Dispatch
+    if (body.paths && Array.isArray(body.paths)) {
+      return await handleBatchRequest(body.paths, bucketName, allowedPaths);
+    }
+    return await handleSingleRequest(body, bucketName, allowedPaths);
+  } catch (error: unknown) {
+    console.error("Error in get-signed-url:", error);
+    return new Response(JSON.stringify({ error: "internal error" }), {
+      status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 });
 
-/**
- * Handle batch request for multiple signed URLs in one call
- */
-async function handleBatchRequest(paths: BatchPathRequest[], bucket?: string): Promise<Response> {
-  const bucketName = bucket || 'secure-documents';
+async function handleBatchRequest(
+  paths: BatchPathRequest[],
+  bucketName: string,
+  allowedPaths: Set<string> | null,
+): Promise<Response> {
   const startTime = Date.now();
-  
-  console.log(`[get-signed-url] Batch request for ${paths.length} files`);
-  
-  // Create Supabase client with service role key
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+  const sb = supabaseAdmin();
+  const results: BatchUrlResult[] = [];
+  let successCount = 0;
 
-  // Process all paths in parallel for maximum speed
-  const results: BatchUrlResult[] = await Promise.all(
-    paths.map(async (item): Promise<BatchUrlResult> => {
-      const { storagePath, isVideo = false, expiresIn } = item;
-      
-      if (!storagePath) {
-        return {
-          storagePath: storagePath || '',
-          signedUrl: null,
-          expiresIn: 0,
-          isVideo,
-          error: 'Storage path is required'
-        };
-      }
-
-      // Video-optimized expiry time (6 hours default for videos, 1 hour for others)
-      const defaultExpiry = isVideo ? 21600 : 3600;
-      const expirySeconds = expiresIn || defaultExpiry;
-
-      try {
-        const { data, error } = await supabaseAdmin.storage
-          .from(bucketName)
-          .createSignedUrl(storagePath, expirySeconds);
-
-        if (error) {
-          console.error(`[get-signed-url] Error for ${storagePath}:`, error.message);
-          return {
-            storagePath,
-            signedUrl: null,
-            expiresIn: expirySeconds,
-            isVideo,
-            error: error.message
-          };
-        }
-
-        return {
-          storagePath,
-          signedUrl: data.signedUrl,
-          expiresIn: expirySeconds,
-          isVideo
-        };
-      } catch (err: any) {
-        console.error(`[get-signed-url] Exception for ${storagePath}:`, err.message);
-        return {
-          storagePath,
-          signedUrl: null,
-          expiresIn: 0,
-          isVideo,
-          error: err.message
-        };
-      }
-    })
-  );
-
-  const successCount = results.filter(r => r.signedUrl).length;
-  const duration = Date.now() - startTime;
-  console.log(`[get-signed-url] Batch complete: ${successCount}/${paths.length} URLs in ${duration}ms`);
-
-  return new Response(
-    JSON.stringify({ 
-      signedUrls: results,
-      totalRequested: paths.length,
-      totalSuccess: successCount,
-      processingTimeMs: duration
-    }),
-    {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-        "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
-        "Cache-Control": "public, max-age=300"
-      },
+  for (const p of paths) {
+    if (!p?.storagePath) {
+      results.push({ storagePath: "", signedUrl: null, expiresIn: 0, isVideo: false, error: "missing storagePath" });
+      continue;
     }
-  );
+    if (allowedPaths && !allowedPaths.has(p.storagePath)) {
+      results.push({ storagePath: p.storagePath, signedUrl: null, expiresIn: 0, isVideo: !!p.isVideo, error: "forbidden" });
+      continue;
+    }
+    const expirySeconds = p.expiresIn ?? (p.isVideo ? 21600 : 3600);
+    try {
+      const { data, error } = await sb.storage.from(bucketName).createSignedUrl(p.storagePath, expirySeconds);
+      if (error || !data?.signedUrl) {
+        results.push({ storagePath: p.storagePath, signedUrl: null, expiresIn: expirySeconds, isVideo: !!p.isVideo, error: "sign failed" });
+      } else {
+        results.push({ storagePath: p.storagePath, signedUrl: data.signedUrl, expiresIn: expirySeconds, isVideo: !!p.isVideo });
+        successCount++;
+      }
+    } catch {
+      results.push({ storagePath: p.storagePath, signedUrl: null, expiresIn: expirySeconds, isVideo: !!p.isVideo, error: "sign error" });
+    }
+  }
+
+  return new Response(JSON.stringify({
+    signedUrls: results,
+    totalRequested: paths.length,
+    totalSuccess: successCount,
+    processingTimeMs: Date.now() - startTime,
+  }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders,
+      "Cache-Control": "public, max-age=300",
+    },
+  });
 }
 
-/**
- * Handle single URL request (backward compatible)
- */
-async function handleSingleRequest(body: any): Promise<Response> {
-  const { bucket, path, storagePath, expiresIn, isVideo } = body;
-
-  // Support both 'path' and 'storagePath' for backwards compatibility
-  const filePath = path || storagePath;
-  const bucketName = bucket || 'secure-documents';
-
-  if (!filePath) {
-    return new Response(
-      JSON.stringify({ error: "Storage path is required" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+async function handleSingleRequest(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body: any,
+  bucketName: string,
+  allowedPaths: Set<string> | null,
+): Promise<Response> {
+  const filePath: string | undefined = body.path || body.storagePath;
+  if (!filePath) return badRequest("storagePath is required");
+  if (allowedPaths && !allowedPaths.has(filePath)) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403, headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 
-  // Create Supabase client with service role key for privileged access
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
-
-  // Video-optimized expiry time (6 hours default for videos, 1 hour for others)
+  const isVideo = !!body.isVideo;
   const defaultExpiry = isVideo ? 21600 : 3600;
-  const expirySeconds = expiresIn || defaultExpiry;
+  const expirySeconds = body.expiresIn || defaultExpiry;
+  const sb = supabaseAdmin();
 
-  console.log(`[get-signed-url] Creating signed URL: ${filePath}, isVideo: ${isVideo}, expiry: ${expirySeconds}s`);
-
-  // Retry logic for transient failures
-  const maxRetries = 3;
-  let lastError: Error | null = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const { data, error } = await supabaseAdmin.storage
-        .from(bucketName)
-        .createSignedUrl(filePath, expirySeconds);
-
+      const { data, error } = await sb.storage.from(bucketName).createSignedUrl(filePath, expirySeconds);
       if (error) {
-        // Check if it's an HTML response error (transient)
         if (error.message?.includes('Unexpected token') || error.message?.includes('<html>')) {
-          console.warn(`[get-signed-url] Attempt ${attempt}/${maxRetries} - Storage service returned HTML, retrying...`);
-          lastError = error;
-          if (attempt < maxRetries) {
-            await new Promise(r => setTimeout(r, 500 * attempt)); // Exponential backoff
-            continue;
-          }
+          if (attempt < 3) { await new Promise(r => setTimeout(r, 500 * attempt)); continue; }
         }
-        console.error("Signed URL error:", error);
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
+        return new Response(JSON.stringify({ error: "sign failed" }), {
+          status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
       }
-
-      // Success - return the signed URL
-      return new Response(
-        JSON.stringify({ 
-          signedUrl: data.signedUrl,
-          expiresIn: expirySeconds,
-          isVideo: isVideo || false
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-            "Access-Control-Expose-Headers": "Content-Length, Content-Type, Content-Disposition, Accept-Ranges, Content-Range",
-            "Cache-Control": "public, max-age=300"
-          },
-        }
-      );
-    } catch (err: any) {
-      console.error(`[get-signed-url] Attempt ${attempt}/${maxRetries} exception:`, err.message);
-      lastError = err;
-      if (attempt < maxRetries) {
-        await new Promise(r => setTimeout(r, 500 * attempt));
-      }
+      return new Response(JSON.stringify({
+        signedUrl: data.signedUrl, expiresIn: expirySeconds, isVideo,
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+          "Cache-Control": "public, max-age=300",
+        },
+      });
+    } catch {
+      if (attempt < 3) await new Promise(r => setTimeout(r, 500 * attempt));
     }
   }
 
-  // All retries failed
-  console.error("[get-signed-url] All retries exhausted:", lastError?.message);
-  return new Response(
-    JSON.stringify({ error: lastError?.message || "Failed to generate signed URL after retries" }),
-    {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    }
-  );
-
+  return new Response(JSON.stringify({ error: "sign failed after retries" }), {
+    status: 500, headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
 }

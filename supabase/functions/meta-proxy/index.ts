@@ -44,8 +44,10 @@ serve(async (req) => {
                               referer.includes('linkedin') ||
                               url.searchParams.has('utm_source');
     
-    // Always serve meta tags for social media requests by default (this is the key fix)
-    const shouldServeMeta = isCrawler || debug || hasShareIndicators || force || true; // Force serving meta tags for all requests
+    // Only serve meta tags when the request actually looks like a sharing
+    // context. The trailing `|| true` was a leftover from debugging and
+    // defeated the crawler check entirely. (Audit-2026-06-25 P0.)
+    const shouldServeMeta = isCrawler || debug || hasShareIndicators || force;
     
     console.log('Request analysis:', { 
       isCrawler, 
