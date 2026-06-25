@@ -5851,6 +5851,8 @@ export type Database = {
           gem_signals: Json
           geocode_precision: string | null
           id: string
+          is_stale: boolean
+          last_seen_at: string
           lat: number | null
           listing_url: string
           lng: number | null
@@ -5870,6 +5872,8 @@ export type Database = {
           gem_signals?: Json
           geocode_precision?: string | null
           id?: string
+          is_stale?: boolean
+          last_seen_at?: string
           lat?: number | null
           listing_url: string
           lng?: number | null
@@ -5889,6 +5893,8 @@ export type Database = {
           gem_signals?: Json
           geocode_precision?: string | null
           id?: string
+          is_stale?: boolean
+          last_seen_at?: string
           lat?: number | null
           listing_url?: string
           lng?: number | null
@@ -13792,6 +13798,10 @@ export type Database = {
           missing_price: boolean
           missing_smp: boolean
         }[]
+      }
+      mark_stale_gem_listings: {
+        Args: { p_threshold_hours?: number }
+        Returns: number
       }
       predict_aeso_price: {
         Args: {
