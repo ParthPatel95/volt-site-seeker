@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     for (const query of queries) {
       try {
-        const resp = await fetch('https://api.firecrawl.dev/v1/search', {
+        const resp = await fetch('https://api.firecrawl.dev/v2/search', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
@@ -128,12 +128,20 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ query, limit }),
         });
         if (!resp.ok) {
-          errors.push(`"${query}" -> HTTP ${resp.status}`);
+          let bodyText = '';
+          try { bodyText = await resp.text(); } catch { /* ignore */ }
+          if (resp.status === 402) {
+            errors.push(`"${query}" -> Firecrawl 402 insufficient credits${bodyText ? `: ${bodyText.slice(0, 200)}` : ''}`);
+          } else {
+            errors.push(`"${query}" -> HTTP ${resp.status}${bodyText ? `: ${bodyText.slice(0, 200)}` : ''}`);
+          }
           continue;
         }
         const data = await resp.json();
-        const results: Array<{ url?: string; title?: string; description?: string }> =
-          data?.data ?? [];
+        const raw = data?.data;
+        const results: Array<{ url?: string; title?: string; description?: string }> = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.web) ? raw.web : [];
 
         for (const r of results) {
           scanned++;
