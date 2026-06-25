@@ -184,6 +184,7 @@ Deno.serve(async (req) => {
               .update({ ...row, discovered_at: now })
               .eq('id', existing.id);
             opErr = error;
+            if (!error) stored++;
           } else {
             const { error } = await supabase.from('news_intelligence').insert(row);
             opErr = error;
