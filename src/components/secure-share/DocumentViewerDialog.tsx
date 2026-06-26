@@ -3,18 +3,13 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Download, ZoomIn, ZoomOut, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { VideoPlayer } from './viewer/VideoPlayer';
 import { PdfErrorBoundary } from './viewer/PdfErrorBoundary';
 import { OfficeDocumentViewer } from './viewer/OfficeDocumentViewer';
-
-// Configure PDF.js worker - use CDN to avoid bundling 1.9MB worker file
-// This reduces build output size and speeds up deployment
-if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-  console.log('[PDF.js Dialog] Worker initialized via CDN');
-}
+// Self-hosted pdf.js worker (CSP-safe) — see src/lib/pdfWorker.ts.
+import { PDF_CMAP_URL, PDF_CMAP_PACKED } from '@/lib/pdfWorker';
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -48,8 +43,8 @@ export function DocumentViewerDialog({ open, onOpenChange, document, accessLevel
   const documentOptions = useMemo(() => ({
     disableRange: false,
     disableStream: false,
-    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-    cMapPacked: true,
+    cMapUrl: PDF_CMAP_URL,
+    cMapPacked: PDF_CMAP_PACKED,
     withCredentials: false,  // Critical for CORS with Supabase signed URLs
     isEvalSupported: false,  // Security - disable eval in PDF.js
   }), []);

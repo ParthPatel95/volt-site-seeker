@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Download, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Maximize2, Minimize2, MoreVertical, Globe, Languages, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDocumentActivityTracking } from '@/hooks/useDocumentActivityTracking';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,13 +12,9 @@ import { TranslationPanel } from './TranslationPanel';
 import { extractPageText } from '@/utils/pdfTextExtractor';
 import { OfficeDocumentViewer } from './OfficeDocumentViewer';
 import { PdfErrorBoundary } from './PdfErrorBoundary';
-
-// Configure PDF.js worker - use CDN to avoid bundling 1.9MB worker file
-// This reduces build output size and speeds up deployment
-if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-  console.log('[PDF.js] Worker initialized via CDN');
-}
+// Self-hosted pdf.js worker — the strict CSP (worker-src 'self') blocks the
+// CDN worker that previously kept PDFs from rendering. (Audit-2026-06.)
+import { PDF_CMAP_URL, PDF_CMAP_PACKED } from '@/lib/pdfWorker';
 
 // Debounce utility
 function debounce<T extends (...args: any[]) => void>(
@@ -121,8 +117,8 @@ export function DocumentViewer({
   const documentOptions = useMemo(() => ({
     disableRange: false,
     disableStream: false,
-    cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
-    cMapPacked: true,
+    cMapUrl: PDF_CMAP_URL,
+    cMapPacked: PDF_CMAP_PACKED,
     withCredentials: false,  // Critical for CORS with Supabase signed URLs
     isEvalSupported: false,  // Security - disable eval in PDF.js
   }), []);

@@ -179,17 +179,9 @@ export function TranslationPanel({
         // Dynamically import PDF.js to extract text
         const pdfjsLib = await import('pdfjs-dist');
         
-        // Configure worker with fallback CDNs (use .mjs for pdfjs-dist 5.x)
-        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          const workerUrls = [
-            `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-            `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-            `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`,
-            `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js` // Legacy fallback
-          ];
-          pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
-          console.log(`[TranslationPanel] Configured PDF.js worker: ${workerUrls[0]}`);
-        }
+        // Self-hosted worker — CDN workers are blocked by the CSP. (Audit-2026-06.)
+        const { PDF_WORKER_SRC } = await import('@/lib/pdfWorker');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
         
         const loadingTask = pdfjsLib.getDocument({
           url: documentUrl,

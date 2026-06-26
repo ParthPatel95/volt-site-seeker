@@ -129,11 +129,10 @@ export function MobileDocumentViewer({
         }
         
         const pdfjsLib = await import('pdfjs-dist');
-        
-        // Set worker
-        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`;
-        }
+
+        // Self-hosted worker — CDN workers are blocked by the CSP. (Audit-2026-06.)
+        const { PDF_WORKER_SRC } = await import('@/lib/pdfWorker');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
         
         console.log('[MobileDocumentViewer] Loading PDF...');
         
