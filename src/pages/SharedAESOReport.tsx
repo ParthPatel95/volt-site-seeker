@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeReportHtml } from '@/utils/sanitizeReportHtml';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -302,7 +303,7 @@ export default function SharedAESOReport() {
       container.style.background = 'white';
       container.style.visibility = 'hidden';
       container.style.pointerEvents = 'none';
-      container.innerHTML = htmlContent;
+      container.innerHTML = sanitizeReportHtml(htmlContent);
       document.body.appendChild(container);
       
       // Force layout calculation and wait for render

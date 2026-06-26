@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { sanitizeReportHtml } from '@/utils/sanitizeReportHtml';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -304,7 +305,7 @@ export function AESOHistoricalPricing() {
         container.style.background = 'white';
         container.style.visibility = 'hidden';
         container.style.pointerEvents = 'none';
-        container.innerHTML = htmlContent;
+        container.innerHTML = sanitizeReportHtml(htmlContent);
         document.body.appendChild(container);
         
         // Force layout calculation and wait for render
@@ -502,7 +503,7 @@ export function AESOHistoricalPricing() {
         container.style.background = 'white';
         container.style.zIndex = '-9999';
         container.style.opacity = '0';
-        container.innerHTML = htmlContent;
+        container.innerHTML = sanitizeReportHtml(htmlContent);
         document.body.appendChild(container);
         
         // Wait for content to render
