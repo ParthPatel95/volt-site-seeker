@@ -68,7 +68,7 @@
     "html2canvas": "^1.4.1",
     "input-otp": "^1.2.4",
     "jsdom": "^20.0.3",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.462.0",
