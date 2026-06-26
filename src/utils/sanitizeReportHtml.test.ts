@@ -48,9 +48,7 @@ describe('sanitizeReportHtml', () => {
 
   it('handles empty / non-string input safely', () => {
     expect(sanitizeReportHtml('')).toBe('');
-    // @ts-expect-error intentional bad input
-    expect(sanitizeReportHtml(null)).toBe('');
-    // @ts-expect-error intentional bad input
-    expect(sanitizeReportHtml(undefined)).toBe('');
+    expect(sanitizeReportHtml(null as unknown as string)).toBe('');
+    expect(sanitizeReportHtml(undefined as unknown as string)).toBe('');
   });
 });
