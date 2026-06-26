@@ -43,11 +43,11 @@ export const LandingNavigation = () => {
       <Link to="/" className="flex items-center space-x-2 sm:space-x-3 min-w-0 cursor-pointer hover:opacity-80 transition-opacity">
         <EnhancedLogo className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain flex-shrink-0" />
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground flex items-center">
+          <div className="text-lg sm:text-xl md:text-2xl font-bold text-foreground flex items-center" aria-label="WattByte">
             <span className="truncate">Watt</span>
             <Bitcoin className="inline w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 -mx-0.5 flex-shrink-0 text-primary" />
             <span className="truncate">yte</span>
-          </h1>
+          </div>
           <p className="text-xs sm:text-sm truncate text-muted-foreground">Infrastructure Company</p>
         </div>
       </Link>

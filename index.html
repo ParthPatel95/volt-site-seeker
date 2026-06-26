@@ -18,7 +18,7 @@
     <!--
       Baseline security headers. Prefer configuring these at the hosting
       layer (Cloudflare / Netlify / Vercel) for X-Frame-Options and
-      frame-ancestors; meta-tag equivalents below cover the rest.
+      frame-ancestors; meta-tag equivalents must be configured at the host layer.
       CSP is intentionally permissive on style/connect to avoid breaking
       Tailwind, Google Fonts, Supabase, and Mapbox; tighten as features are
       audited. Requires ALLOWED_ORIGINS server-side to be meaningful.
@@ -26,7 +26,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="geolocation=(self), camera=(), microphone=(), payment=(), usb=()" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://api.mapbox.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://api.mapbox.com https://events.mapbox.com https://maps.googleapis.com https://maps.gstatic.com https://api.openai.com https://*.huggingface.co https://*.hf.co https://api.coingecko.com https://api.coinbase.com https://mempool.space blob: data:; worker-src 'self' blob:; frame-ancestors 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://api.mapbox.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://api.mapbox.com https://events.mapbox.com https://maps.googleapis.com https://maps.gstatic.com https://api.openai.com https://api.coinbase.com https://mempool.space blob: data:; worker-src 'self' blob:;" />
 
     <!-- Canonical URL -->
     <link rel="canonical" href="https://wattbyte.com" />
@@ -98,26 +98,26 @@
     }
     </script>
 
-    <!-- Structured Data for Investment Service -->
+    <!-- Structured Data for Infrastructure Service -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "FinancialService",
+      "@type": "ProfessionalService",
       "name": "WattByte Infrastructure Company",
       "description": "WattByte acquires and develops strategic power infrastructure for AI, high-performance computing, and Bitcoin mining operations.",
       "url": "https://wattbyte.com",
-      "serviceType": "Infrastructure Investment Fund",
+      "serviceType": "Power infrastructure development",
       "areaServed": "North America",
       "hasOfferCatalog": {
         "@type": "OfferCatalog",
-        "name": "Investment Opportunities",
+        "name": "Infrastructure Capabilities",
         "itemListElement": [
           {
             "@type": "Offer",
             "itemOffered": {
               "@type": "Service",
-              "name": "Fund I Investment",
-              "description": "$25M target fund focusing on renewable energy infrastructure"
+              "name": "Power-first infrastructure development",
+              "description": "Strategic energy infrastructure for AI, high-performance computing, and Bitcoin mining operations"
             }
           }
         ]
