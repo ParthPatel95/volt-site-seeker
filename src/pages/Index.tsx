@@ -1,7 +1,7 @@
-import Landing from "@/pages/Landing";
+import LandingV3 from "@/pages/LandingV3";
 
 const Index = () => {
-  return <Landing />;
+  return <LandingV3 />;
 };
 
 export default Index;
