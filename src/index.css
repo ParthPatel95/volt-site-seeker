@@ -208,7 +208,11 @@
   }
 
   html, body, #root {
-    overflow-x: hidden;
+    /* `clip` prevents horizontal scroll WITHOUT turning these into scroll
+       containers — `overflow-x: hidden` here silently breaks every
+       `position: sticky` descendant (e.g. the cinematic landing's pinned
+       chapters). clip is the same visually but sticky-safe. */
+    overflow-x: clip;
     max-width: 100vw;
   }
 
