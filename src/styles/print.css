@@ -1,11 +1,11 @@
 /* Print styles for Advanced Analytics */
 @media print {
   /* Hide non-essential elements */
-  .print\\:hidden,
+  .print\:hidden,
   header,
   nav,
   footer,
-  button:not(.print\\:block),
+  button:not(.print\:block),
   .sidebar,
   [role="navigation"] {
     display: none !important;
@@ -93,7 +93,7 @@
   }
 
   /* Two-column charts side by side if space allows */
-  .grid.lg\\:grid-cols-2 {
+  .grid.lg\:grid-cols-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
