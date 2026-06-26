@@ -8,22 +8,11 @@ async function getPdfjsLib(): Promise<typeof import('pdfjs-dist')> {
   }
   
   const pdfjsLib = await import('pdfjs-dist');
-  
-  // Configure PDF.js worker with multiple fallback CDNs for pdfjs-dist 5.x compatibility
-  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    const workerUrls = [
-      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.mjs`,
-      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`,
-      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`,
-      // Legacy fallbacks for older environments
-      `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`
-    ];
-    
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrls[0];
-    console.log(`[pdfTextExtractor] Worker initialized with: ${workerUrls[0]}`);
-  }
-  
+
+  // Self-hosted worker — CDN workers are blocked by the CSP. (Audit-2026-06.)
+  const { PDF_WORKER_SRC } = await import('@/lib/pdfWorker');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
+
   pdfjsLibInstance = pdfjsLib;
   return pdfjsLib;
 }
