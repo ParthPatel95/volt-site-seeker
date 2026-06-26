@@ -98,7 +98,7 @@ function Scene({ progress }: { progress: MotionValue<number> }) {
             <span className="inline-block h-px w-7 bg-watt-bitcoin" />
             Our model
           </div>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-500 sm:text-base">
+          <p className="mt-4 hidden max-w-xl text-sm leading-relaxed text-slate-500 sm:block sm:text-base">
             <span className="text-slate-700">Power is the scarce input of the compute economy.</span>{' '}
             Watch a stranded megawatt become productive compute.
           </p>
@@ -161,31 +161,31 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
 
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-14"
+      className="absolute inset-0 flex flex-col gap-4 sm:gap-8 lg:flex-row lg:items-center lg:gap-14"
       style={{ opacity, y }}
     >
       {/* Text column */}
       <div className="order-2 flex-1 lg:order-1">
         <div
-          className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] shadow-sm"
+          className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] shadow-sm sm:mb-5 sm:text-[11px]"
           style={{ color: beat.accent }}
         >
           <beat.icon className="h-3.5 w-3.5" />
           {beat.kicker}
         </div>
 
-        <h2 className="max-w-xl text-3xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[2.9rem]">
+        <h2 className="max-w-xl text-[1.6rem] font-bold leading-[1.12] tracking-tight text-slate-900 sm:text-4xl lg:text-[2.9rem]">
           {beat.title}
         </h2>
 
-        <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 lg:text-lg">
+        <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:mt-5 sm:line-clamp-none sm:text-base lg:text-lg">
           {beat.blurb}
         </p>
 
         {/* supporting number */}
-        <div className="mt-8 flex items-baseline gap-4">
+        <div className="mt-4 flex items-baseline gap-3 sm:mt-8 sm:gap-4">
           <span
-            className="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl lg:text-7xl"
+            className="text-4xl font-bold tabular-nums tracking-tight sm:text-6xl lg:text-7xl"
             style={{ color: beat.accent }}
           >
             {beat.metricValue}
@@ -201,7 +201,7 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
 
       {/* Media column */}
       <div className="order-1 lg:order-2 lg:w-[44%]">
-        <div className="group relative aspect-[4/3] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+        <div className="group relative h-[20vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:h-auto sm:aspect-[4/3] sm:rounded-3xl">
           <img
             src={beat.image}
             alt=""

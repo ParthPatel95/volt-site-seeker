@@ -17,7 +17,7 @@ const STATS = [
 export function HeroV3() {
   const reduced = useReducedMotion();
   return (
-    <section className="relative h-screen min-h-[680px] w-full overflow-hidden bg-[#f8fafc] text-slate-900">
+    <section className="relative flex h-screen min-h-[600px] w-full flex-col overflow-hidden bg-[#f8fafc] text-slate-900">
       {/* light, airy base with a faint brand wash */}
       <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_-10%,#ffffff_0%,#f1f5f9_55%,#e9eef5_100%)]" />
 
@@ -32,7 +32,7 @@ export function HeroV3() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#f8fafc] to-transparent" />
 
       {/* Overlaid editorial content */}
-      <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-center px-6 sm:px-10 lg:px-16">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-6 pt-24 sm:px-10 lg:px-16 lg:pt-28">
         <motion.div
           initial={reduced ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -43,7 +43,7 @@ export function HeroV3() {
           WattByte Infrastructure
         </motion.div>
 
-        <h1 className="max-w-4xl text-[2.7rem] font-bold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl lg:text-[5rem]">
+        <h1 className="max-w-4xl text-[2rem] font-bold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.04] lg:text-[5rem]">
           <SplitWords text="We turn stranded power" className="block" />
           <SplitWords text="into the compute" className="block" delay={0.25} />
           <span className="block">
@@ -58,7 +58,7 @@ export function HeroV3() {
           initial={reduced ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.85 }}
-          className="mt-7 max-w-xl text-lg leading-relaxed text-slate-600"
+          className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:mt-7 sm:text-lg"
         >
           We acquire underutilized energy assets and develop them into AI, high-performance
           computing, and Bitcoin-mining datacenters — sourced with software no one else has.
@@ -68,7 +68,7 @@ export function HeroV3() {
           initial={reduced ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.98 }}
-          className="mt-9 flex flex-wrap items-center gap-3"
+          className="mt-6 flex flex-wrap items-center gap-3 sm:mt-9"
         >
           <Magnetic>
             <Link
@@ -89,18 +89,19 @@ export function HeroV3() {
         </motion.div>
       </div>
 
-      {/* Stat band pinned to the bottom of the hero */}
+      {/* Stat band — in normal flow at the bottom of the hero so it can never
+          overlap the content on short screens. */}
       <motion.div
         initial={reduced ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1.15 }}
-        className="absolute inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/70 backdrop-blur-md"
+        className="relative z-10 border-t border-slate-200 bg-white/70 backdrop-blur-md"
       >
         <div className="mx-auto grid max-w-7xl grid-cols-2 px-6 sm:px-10 lg:grid-cols-4 lg:px-16">
           {STATS.map((s, i) => (
             <div
               key={s.label}
-              className={`py-5 lg:py-6 lg:px-8 ${i > 0 ? 'lg:border-l border-slate-200' : ''} ${i < 2 ? 'border-b lg:border-b-0 border-slate-200' : ''}`}
+              className={`py-4 sm:py-5 lg:py-6 lg:px-8 ${i > 0 ? 'lg:border-l border-slate-200' : ''} ${i < 2 ? 'border-b lg:border-b-0 border-slate-200' : ''}`}
             >
               <div className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
                 <CountUp value={s.value} />{s.suffix}
@@ -111,18 +112,6 @@ export function HeroV3() {
         </div>
       </motion.div>
 
-      {/* scroll cue */}
-      {!reduced && (
-        <motion.div
-          aria-hidden
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 1, 0], y: [0, 6, 6, 0] }}
-          transition={{ duration: 2.4, repeat: Infinity, delay: 1.5 }}
-          className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-slate-400 lg:bottom-28"
-        >
-          Scroll
-        </motion.div>
-      )}
     </section>
   );
 }
