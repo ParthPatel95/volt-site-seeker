@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { errorResponse } from '../_shared/http.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 // HTML and JS-string escapers used to render the meta-tag preamble safely.
 // Without them the token + share title/description (both reflected from the
@@ -35,6 +36,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Abuse guard: cap meta-proxy fetches per IP.
+  const limited = await enforceRateLimit(req, { name: 'secure-share-meta-proxy', max: 30, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const url = new URL(req.url);

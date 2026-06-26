@@ -2,6 +2,7 @@ import { Resend } from 'https://esm.sh/resend@3.2.0';
 
 import { corsHeaders } from '../_shared/cors.ts';
 import { errorResponse } from '../_shared/http.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 // Send an internal notification email to the advisory team when a new
 // consulting inquiry is submitted. Called fire-and-forget from the Advisory
@@ -74,6 +75,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Abuse guard: cap inquiry submissions per IP (contact form → e-mail).
+  const limited = await enforceRateLimit(req, { name: 'notify-consulting-inquiry', max: 5, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const apiKey = Deno.env.get('RESEND_API_KEY');

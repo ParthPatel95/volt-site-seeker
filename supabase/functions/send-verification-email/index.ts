@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@3.2.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { errorResponse } from '../_shared/http.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 interface VerificationEmailRequest {
   email: string;
   user_id: string;
@@ -14,6 +15,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Abuse guard: throttle verification e-mails per IP to prevent mail bombing.
+  const limited = await enforceRateLimit(req, { name: 'send-verification-email', max: 3, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const supabaseClient = createClient(
