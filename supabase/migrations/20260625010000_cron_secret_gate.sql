@@ -18,7 +18,12 @@
 --      matches EDGE_CRON_SECRET OR the bearer is the service-role token.
 --      Public anon JWTs are rejected.
 --
--- OPERATOR STEPS (do these BEFORE applying this migration):
+-- This migration is NON-BLOCKING: if app.cron_secret is unset it logs a notice
+-- and skips (the cron jobs keep their current schedule), so it can never fail a
+-- deploy. To actually activate the X-Cron-Secret header, do the operator steps
+-- below and then re-run the rescheduling block.
+--
+-- OPERATOR STEPS:
 --   1. Generate a strong random secret, e.g.:
 --        openssl rand -hex 32
 --   2. Set it as a Supabase edge-function secret named EDGE_CRON_SECRET
@@ -45,16 +50,20 @@ declare
   v_hdr  text;
   r record;
 begin
-  -- Read the cron secret from the Postgres setting. If it's missing, abort
-  -- with a clear message instead of silently scheduling jobs that will 401.
+  -- Read the cron secret from the Postgres setting. If it's missing, SKIP the
+  -- rescheduling (non-blocking) rather than aborting — a hard abort here would
+  -- fail the whole migration/deploy pipeline. The cron jobs simply stay on
+  -- their current schedule until the operator sets the secret and re-runs the
+  -- rescheduling block below. (Audit-2026-06-26: softened from raise exception.)
   begin
     v_secret := current_setting('app.cron_secret', true);
   exception when others then
     v_secret := null;
   end;
   if v_secret is null or length(v_secret) < 16 then
-    raise exception
-      'app.cron_secret is not set (or is too short). Set it once via: alter database postgres set app.cron_secret to ''<your secret>''; then re-apply this migration.';
+    raise notice
+      'app.cron_secret is not set (or is too short) — skipping cron rescheduling. Set it via: alter database postgres set app.cron_secret to ''<your secret>''; then re-run this block to apply the X-Cron-Secret header.';
+    return;
   end if;
 
   -- Header JSON used by every reschedule below. We keep the existing anon
