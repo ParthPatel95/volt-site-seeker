@@ -42,11 +42,11 @@ export function Flagship() {
           decoding="async"
         />
       }
-      overlayClassName="bg-[radial-gradient(120%_120%_at_15%_85%,rgba(6,11,22,0.55)_0%,rgba(6,11,22,0.82)_45%,rgba(6,11,22,0.97)_100%)]"
+      overlayClassName="bg-[radial-gradient(120%_120%_at_70%_25%,rgba(6,11,22,0.25)_0%,rgba(6,11,22,0.6)_55%,rgba(6,11,22,0.9)_100%)]"
     >
       {/* A second, directional scrim so the lower-left text column always pops
           against whatever lands in the frame. */}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-[#060b16] via-[#060b16]/35 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-[#060b16] via-[#060b16]/45 to-transparent" />
 
       <section
         id="flagship"

@@ -114,12 +114,15 @@ export function CinematicBand({
   const y = useTransform(scrollYProgress, [0, 1], ['-12%', '12%']);
 
   return (
-    <section ref={ref} className={cn('relative overflow-hidden', className)}>
-      <motion.div className="absolute inset-0 -z-10 scale-125" style={reduced ? undefined : { y }}>
+    // `isolate` keeps the absolutely-positioned background layers inside this
+    // section's own stacking context — without it a negative z-index would
+    // render the image BEHIND the opaque page background and hide it.
+    <section ref={ref} className={cn('relative isolate overflow-hidden', className)}>
+      <motion.div className="absolute inset-0 z-0 scale-125" style={reduced ? undefined : { y }}>
         {background}
       </motion.div>
-      <div className={cn('absolute inset-0 -z-10', overlayClassName)} />
-      {children}
+      <div className={cn('absolute inset-0 z-0', overlayClassName)} />
+      <div className="relative z-10">{children}</div>
     </section>
   );
 }

@@ -37,10 +37,10 @@ export function ClosingCta() {
   return (
     <section
       id="get-in-touch"
-      className="relative overflow-hidden bg-[#060b16] py-32 lg:py-40"
+      className="relative isolate overflow-hidden bg-[#060b16] py-32 lg:py-40"
     >
       {/* ── CSS radial bloom background — bitcoin + teal over near-black navy ── */}
-      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
         {/* warm bitcoin core, slightly above center */}
         <div
           className="absolute left-1/2 top-[38%] h-[44rem] w-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.55] blur-3xl"
@@ -75,7 +75,7 @@ export function ClosingCta() {
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#060b16] to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-3xl text-center">
           <Reveal y={20}>
             <div className="mb-6 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">

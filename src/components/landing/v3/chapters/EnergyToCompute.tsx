@@ -105,7 +105,7 @@ function Scene({ progress }: { progress: MotionValue<number> }) {
         </div>
 
         {/* Stage — the three beats stacked and cross-faded */}
-        <div className="relative mt-8 flex-1 lg:mt-10">
+        <div className="relative mt-8 flex min-h-[46vh] flex-1 items-center lg:mt-10">
           {BEATS.map((beat) => (
             <BeatLayer key={beat.index} beat={beat} progress={progress} />
           ))}
@@ -147,14 +147,17 @@ function Scene({ progress }: { progress: MotionValue<number> }) {
 function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<number> }) {
   // Each beat owns a window centred on its third. Tuned so beat 0 is fully
   // present at the top of the pin and beat 2 holds at the bottom.
+  // Windows overlap so the cross-fades hand off directly — there is never a
+  // scroll position where the stage is empty. Beat 0 is fully present at the
+  // very top of the pin; beat 2 holds to the end.
   const windows: Record<number, { o: number[]; t: number[] }> = {
-    0: { o: [0, 0.06, 0.26, 0.34], t: [0, 0, 1, 0] },
-    1: { o: [0.3, 0.4, 0.6, 0.7], t: [0, 1, 1, 0] },
-    2: { o: [0.66, 0.76, 1, 1], t: [0, 1, 1, 1] },
+    0: { o: [0, 0.28, 0.36], t: [1, 1, 0] },
+    1: { o: [0.28, 0.36, 0.62, 0.7], t: [0, 1, 1, 0] },
+    2: { o: [0.62, 0.7, 1], t: [0, 1, 1] },
   };
   const w = windows[beat.index];
   const opacity = useTransform(progress, w.o, w.t);
-  const y = useTransform(progress, w.o, [40, 0, 0, -40]);
+  const y = useTransform(progress, w.o, w.o.map((_, i, a) => (i === 0 ? 40 : i === a.length - 1 ? -40 : 0)));
 
   return (
     <motion.div
@@ -263,7 +266,7 @@ function StepLabel({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
 export function EnergyToCompute(): ReactNode {
   return (
     <section id="energy-to-compute" className="relative bg-[#060b16]">
-      <PinnedChapter heightVh={300}>
+      <PinnedChapter heightVh={260}>
         {(progress) => <Scene progress={progress} />}
       </PinnedChapter>
 
@@ -271,22 +274,19 @@ export function EnergyToCompute(): ReactNode {
           with a CTA. Lives outside the runway so it reads as the payoff. */}
       <div className="relative py-24 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
-          <div className="grid items-end gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                Hidden energy in.{' '}
-                <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
-                  Productive compute out.
-                </span>
-              </h2>
-              <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/65 lg:text-lg">
-                We built proprietary software and methods to find the best megawatts first,
-                then develop and operate them as the datacenters behind modern AI. That is the
-                whole model — source, develop, operate.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Hidden energy in.{' '}
+              <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
+                Productive compute out.
+              </span>
+            </h2>
+            <p className="mt-5 text-base leading-relaxed text-white/65 lg:text-lg">
+              We built proprietary software and methods to find the best megawatts first,
+              then develop and operate them as the datacenters behind modern AI. That is the
+              whole model — source, develop, operate.
+            </p>
+            <div className="mt-9 flex flex-wrap gap-3">
               <Link
                 to="/advisory"
                 className="inline-flex h-12 items-center rounded-full bg-white px-7 text-base font-semibold text-[#060b16] transition-colors hover:bg-watt-bitcoin"
