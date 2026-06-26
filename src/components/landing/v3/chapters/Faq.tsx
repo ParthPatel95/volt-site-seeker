@@ -10,7 +10,7 @@ import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES } from '@/data/advisory-pipeline';
 // FAQ — "The short version." Plain-language answers to the questions partners
 // actually ask, carried over verbatim from the v2 FaqSection and re-presented as
 // a quiet, editorial two-column chapter: a sticky heading/intro rail on the left,
-// a dark accordion on the right. Every figure traces to the same sourced registry
+// a light accordion on the right. Every figure traces to the same sourced registry
 // the rest of the page uses. One accent (orange) only.
 
 interface Faq {
@@ -28,10 +28,10 @@ const FAQS: Faq[] = [
       <>
         We acquire stranded and underutilized energy assets and develop them into
         AI, high-performance-computing, and Bitcoin-mining datacenters. In practice
-        that means three things: <strong className="font-semibold text-white/90">sourcing</strong> power
-        nobody is marketing, <strong className="font-semibold text-white/90">developing</strong> it
+        that means three things: <strong className="font-semibold text-slate-900">sourcing</strong> power
+        nobody is marketing, <strong className="font-semibold text-slate-900">developing</strong> it
         through interconnection and EPC, and{' '}
-        <strong className="font-semibold text-white/90">operating</strong> dual-workload capacity
+        <strong className="font-semibold text-slate-900">operating</strong> dual-workload capacity
         once it&rsquo;s energized.
       </>
     ),
@@ -54,12 +54,12 @@ const FAQS: Faq[] = [
     a: (
       <>
         Both &mdash; and we&rsquo;re explicit about which is which.{' '}
-        <span className="font-semibold tabular-nums text-white/90">{UNDER_DEV_MW} MW</span> is
+        <span className="font-semibold tabular-nums text-slate-900">{UNDER_DEV_MW} MW</span> is
         under active development in Alberta (transmission-connected, dual-workload by
         design), inside a{' '}
-        <span className="font-semibold tabular-nums text-white/90">{TOTAL_MW.toLocaleString()} MW</span>{' '}
+        <span className="font-semibold tabular-nums text-slate-900">{TOTAL_MW.toLocaleString()} MW</span>{' '}
         global pipeline across{' '}
-        <span className="font-semibold tabular-nums text-white/90">{COUNTRIES} countries</span>.
+        <span className="font-semibold tabular-nums text-slate-900">{COUNTRIES} countries</span>.
         Every figure on this site traces to the same sourced registry behind our{' '}
         <Link to="/advisory" className={inlineLink}>Advisory pipeline</Link>.
       </>
@@ -109,13 +109,13 @@ export function Faq() {
           {/* Left rail — sticks while the answers scroll past it on desktop. */}
           <div className="lg:sticky lg:top-28 lg:self-start">
             <Reveal>
-              <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+              <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
                 <span className="inline-block h-px w-7 bg-watt-bitcoin" />
                 Questions, answered
               </div>
             </Reveal>
 
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
               <SplitWords text="The short" />{' '}
               <SplitWords
                 text="version"
@@ -125,7 +125,7 @@ export function Faq() {
             </h2>
 
             <Reveal delay={0.1}>
-              <p className="mt-6 max-w-md text-base leading-relaxed text-white/65 lg:text-lg">
+              <p className="mt-6 max-w-md text-base leading-relaxed text-slate-600 lg:text-lg">
                 Plain-language answers to what partners actually ask &mdash; every figure
                 consistent with the sourced registry behind the rest of this page.
               </p>
@@ -135,7 +135,7 @@ export function Faq() {
               <Magnetic>
                 <Link
                   to="/advisory"
-                  className="mt-9 inline-flex h-12 items-center rounded-full border border-white/20 px-6 text-base font-medium text-white/90 transition-colors hover:border-watt-bitcoin/50 hover:bg-white/5"
+                  className="mt-9 inline-flex h-12 items-center rounded-full border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:border-watt-bitcoin/50 hover:bg-slate-100"
                 >
                   <MessageCircleQuestion className="mr-2 h-4 w-4 text-watt-bitcoin" />
                   Still have a question?
@@ -145,20 +145,20 @@ export function Faq() {
             </Reveal>
           </div>
 
-          {/* Right column — the dark accordion. */}
+          {/* Right column — the light accordion. */}
           <Reveal delay={0.12} y={32}>
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 backdrop-blur-sm sm:px-8">
+            <div className="rounded-3xl border border-slate-200 bg-white px-6 shadow-sm sm:px-8">
               <Accordion type="single" collapsible defaultValue="item-0" className="w-full">
                 {FAQS.map((f, i) => (
                   <AccordionItem
                     key={i}
                     value={`item-${i}`}
-                    className="border-b border-white/10 last:border-b-0"
+                    className="border-b border-slate-200 last:border-b-0"
                   >
-                    <AccordionTrigger className="py-6 text-left text-lg font-medium text-white transition-colors hover:no-underline hover:text-watt-bitcoin [&[data-state=open]]:text-watt-bitcoin [&>svg]:text-white/40">
+                    <AccordionTrigger className="py-6 text-left text-lg font-medium text-slate-900 transition-colors hover:no-underline hover:text-watt-bitcoin [&[data-state=open]]:text-watt-bitcoin [&>svg]:text-slate-400">
                       {f.q}
                     </AccordionTrigger>
-                    <AccordionContent className="pb-7 pr-6 text-base leading-relaxed text-white/65">
+                    <AccordionContent className="pb-7 pr-6 text-base leading-relaxed text-slate-600">
                       {f.a}
                     </AccordionContent>
                   </AccordionItem>

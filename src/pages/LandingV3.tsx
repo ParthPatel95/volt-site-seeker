@@ -26,7 +26,7 @@ const ChapterLoader = () => (
 const LandingV3: React.FC = () => {
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-[#060b16] text-white">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900">
         {/* SEO */}
         <header className="sr-only">
           <h1>WattByte Infrastructure — turning stranded power into AI and HPC compute</h1>

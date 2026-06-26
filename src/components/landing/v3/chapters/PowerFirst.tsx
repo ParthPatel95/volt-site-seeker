@@ -55,7 +55,7 @@ export function PowerFirst() {
           {/* ── Media column — parallaxed substation in a framed plate ─────── */}
           <div className="lg:sticky lg:top-24 lg:self-start">
             <Reveal y={28}>
-              <div className="relative overflow-hidden rounded-3xl ring-1 ring-white/10">
+              <div className="relative overflow-hidden rounded-3xl ring-1 ring-slate-200 shadow-sm">
                 {/* The aspect box lives INSIDE the parallax so it carries its own
                     height; the image absolutely fills it (so it always shows). */}
                 <Parallax speed={44} axis="y">
@@ -74,14 +74,14 @@ export function PowerFirst() {
 
                 {/* Floating metric plate, anchored to the framed image. */}
                 <div className="absolute inset-x-5 bottom-5 z-10 sm:inset-x-6 sm:bottom-6">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 backdrop-blur-md">
+                  <div className="rounded-2xl border border-slate-200 bg-white/85 px-5 py-4 shadow-sm backdrop-blur-md">
                     <div className="flex items-end gap-2">
-                      <span className="text-3xl font-bold tabular-nums text-white sm:text-4xl">
+                      <span className="text-3xl font-bold tabular-nums text-slate-900 sm:text-4xl">
                         144
                       </span>
                       <span className="pb-1 text-sm font-medium text-watt-trust">kV</span>
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-white/55">
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">
                       Transmission-connected at the flagship — energized
                       interconnection, not a queue position.
                     </p>
@@ -94,17 +94,17 @@ export function PowerFirst() {
           {/* ── Thesis column ──────────────────────────────────────────────── */}
           <div className="flex flex-col">
             <Reveal y={24}>
-              <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+              <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
                 <span className="inline-block h-px w-7 bg-watt-bitcoin" />
                 The WattByte edge
               </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
                 <SplitWords text="Power-first," />{' '}
                 <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
                   not space-first.
                 </span>
               </h2>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 lg:text-lg">
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-600 lg:text-lg">
                 Everyone is racing to the same shovel-ready sites. We start one
                 step upstream — securing the megawatts and the interconnection
                 first, then developing the compute that turns them into yield.
@@ -116,7 +116,7 @@ export function PowerFirst() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-80px' }}
-              className="mt-10 flex flex-col divide-y divide-white/10 border-y border-white/10 lg:mt-12"
+              className="mt-10 flex flex-col divide-y divide-slate-200 border-y border-slate-200 lg:mt-12"
             >
               {THESES.map((t) => (
                 <motion.div
@@ -124,12 +124,12 @@ export function PowerFirst() {
                   variants={staggerItem}
                   className="group flex gap-5 py-6 sm:gap-6 sm:py-7"
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-watt-bitcoin transition-colors duration-300 group-hover:border-watt-bitcoin/40 group-hover:bg-watt-bitcoin/10">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-watt-bitcoin/10 text-watt-bitcoin transition-colors duration-300 group-hover:border-watt-bitcoin/40 group-hover:bg-watt-bitcoin/10">
                     <t.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{t.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-white/60 sm:text-base">
+                    <h3 className="text-lg font-semibold text-slate-900">{t.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
                       {t.body}
                     </p>
                   </div>
@@ -141,13 +141,13 @@ export function PowerFirst() {
               <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-center">
                 <Link
                   to="/advisory"
-                  className="inline-flex h-12 items-center rounded-full bg-white px-7 text-base font-semibold text-[#060b16] transition-colors hover:bg-watt-bitcoin"
+                  className="inline-flex h-12 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
                 >
                   Source power with us
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
-                <p className="text-sm text-white/45">
-                  <span className="font-semibold tabular-nums text-white/70">
+                <p className="text-sm text-slate-500">
+                  <span className="font-semibold tabular-nums text-slate-700">
                     <CountUp value={UNDER_DEV_MW} />
                     {' MW'}
                   </span>{' '}

@@ -32,7 +32,7 @@ const COLS = [
 
 export function LandingFooterV3() {
   return (
-    <footer className="relative z-10 border-t border-white/10 bg-[#04070f] text-white">
+    <footer className="relative z-10 border-t border-slate-200 bg-slate-50 text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-14 sm:px-10 lg:px-16">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2 lg:col-span-3">
@@ -42,27 +42,27 @@ export function LandingFooterV3() {
                 Watt<Bitcoin className="-mx-0.5 h-5 w-5 text-watt-bitcoin" />yte
               </span>
             </div>
-            <p className="mb-5 max-w-sm text-sm leading-relaxed text-white/55">
+            <p className="mb-5 max-w-sm text-sm leading-relaxed text-slate-500">
               We turn stranded power into the compute behind modern AI — sourcing, developing
               and operating energy-first datacenter infrastructure worldwide.
             </p>
             <div className="flex items-center gap-4">
-              <a href="https://www.instagram.com/wattbyte/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-white/55 transition-colors hover:text-watt-bitcoin"><Instagram className="h-5 w-5" /></a>
-              <a href="https://www.linkedin.com/company/wattbyte" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-white/55 transition-colors hover:text-watt-bitcoin"><Linkedin className="h-5 w-5" /></a>
-              <a href="mailto:contact@wattbyte.com" aria-label="Email" className="text-white/55 transition-colors hover:text-watt-bitcoin"><Mail className="h-5 w-5" /></a>
+              <a href="https://www.instagram.com/wattbyte/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-slate-500 transition-colors hover:text-watt-bitcoin"><Instagram className="h-5 w-5" /></a>
+              <a href="https://www.linkedin.com/company/wattbyte" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-slate-500 transition-colors hover:text-watt-bitcoin"><Linkedin className="h-5 w-5" /></a>
+              <a href="mailto:contact@wattbyte.com" aria-label="Email" className="text-slate-500 transition-colors hover:text-watt-bitcoin"><Mail className="h-5 w-5" /></a>
             </div>
           </div>
 
           {COLS.map((col) => (
             <div key={col.title}>
-              <h3 className="mb-3 text-sm font-semibold text-white">{col.title}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-slate-900">{col.title}</h3>
               <ul className="space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l.label}>
                     {'href' in l && l.href ? (
-                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-sm text-white/55 transition-colors hover:text-white">{l.label}</a>
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-sm text-slate-500 transition-colors hover:text-slate-900">{l.label}</a>
                     ) : (
-                      <Link to={(l as { to: string }).to} className={`text-sm transition-colors hover:text-white ${'accent' in l && l.accent ? 'font-medium text-watt-bitcoin' : 'text-white/55'}`}>{l.label}</Link>
+                      <Link to={(l as { to: string }).to} className={`text-sm transition-colors hover:text-slate-900 ${'accent' in l && l.accent ? 'font-medium text-watt-bitcoin' : 'text-slate-500'}`}>{l.label}</Link>
                     )}
                   </li>
                 ))}
@@ -71,11 +71,11 @@ export function LandingFooterV3() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
-          <p className="text-xs text-white/40">© {new Date().getFullYear()} WattByte Infrastructure Company. All rights reserved.</p>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-8 md:flex-row">
+          <p className="text-xs text-slate-400">© {new Date().getFullYear()} WattByte Infrastructure Company. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link to="/privacy" className="text-xs text-white/40 transition-colors hover:text-white">Privacy Policy</Link>
-            <Link to="/terms" className="text-xs text-white/40 transition-colors hover:text-white">Terms of Service</Link>
+            <Link to="/privacy" className="text-xs text-slate-400 transition-colors hover:text-slate-900">Privacy Policy</Link>
+            <Link to="/terms" className="text-xs text-slate-400 transition-colors hover:text-slate-900">Terms of Service</Link>
           </div>
         </div>
       </div>

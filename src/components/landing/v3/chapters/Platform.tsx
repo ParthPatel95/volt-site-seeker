@@ -107,19 +107,19 @@ function Sparkline() {
 
 function DashboardPanel() {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-[0_30px_80px_-32px_rgba(0,0,0,0.85)]">
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_80px_-32px_rgba(15,23,42,0.18)]">
       {/* ambient teal wash */}
       <div
-        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-watt-trust/20 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-watt-trust/15 blur-3xl"
         aria-hidden="true"
       />
 
       {/* window chrome */}
-      <div className="relative flex items-center gap-1.5 border-b border-white/10 px-5 py-3.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-        <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-        <span className="h-2.5 w-2.5 rounded-full bg-white/20" />
-        <span className="ml-3 font-mono text-[11px] tracking-wide text-white/40">
+      <div className="relative flex items-center gap-1.5 border-b border-slate-200 px-5 py-3.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+        <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+        <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+        <span className="ml-3 font-mono text-[11px] tracking-wide text-slate-500">
           voltscout · site-intel — illustrative
         </span>
       </div>
@@ -128,12 +128,12 @@ function DashboardPanel() {
         {/* coordinate header + headline score */}
         <div className="flex items-end justify-between gap-4">
           <div>
-            <div className="font-mono text-[11px] text-white/40">53.63°N, −113.10°W</div>
-            <div className="mt-1 text-sm font-medium text-white/80">Suitability report</div>
+            <div className="font-mono text-[11px] text-slate-500">53.63°N, −113.10°W</div>
+            <div className="mt-1 text-sm font-medium text-slate-700">Suitability report</div>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold leading-none tracking-tight text-white tabular-nums">
-              81<span className="text-lg text-white/40">/100</span>
+            <div className="text-4xl font-bold leading-none tracking-tight text-slate-900 tabular-nums">
+              81<span className="text-lg text-slate-400">/100</span>
             </div>
             <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-watt-trust">
               Strong fit
@@ -146,10 +146,10 @@ function DashboardPanel() {
           {SCORE_ROWS.map((row, i) => (
             <div key={row.label}>
               <div className="mb-1.5 flex items-center justify-between text-xs">
-                <span className="text-white/60">{row.label}</span>
-                <span className="font-mono tabular-nums text-white/80">{row.value}</span>
+                <span className="text-slate-600">{row.label}</span>
+                <span className="font-mono tabular-nums text-slate-700">{row.value}</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.07]">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                 <motion.div
                   className="h-full rounded-full bg-watt-trust"
                   initial={{ width: 0 }}
@@ -163,9 +163,9 @@ function DashboardPanel() {
         </div>
 
         {/* sparkline footer — AESO pool price, illustrative */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/40">
+            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-slate-500">
               AESO pool price · 24h
             </span>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-watt-trust">
@@ -199,16 +199,16 @@ function FeatureRow({
       <Reveal y={28} className={reverse ? 'lg:order-2' : 'lg:order-1'}>
         <div className="flex items-center gap-4">
           <span className="font-mono text-sm tabular-nums text-watt-bitcoin">{feature.index}</span>
-          <span className="h-px flex-1 max-w-[3rem] bg-white/15" />
+          <span className="h-px flex-1 max-w-[3rem] bg-slate-200" />
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-watt-trust/10 ring-1 ring-watt-trust/25">
             <Icon className="h-4.5 w-4.5 text-watt-trust" />
           </span>
         </div>
 
-        <h3 className="mt-5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+        <h3 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
           {feature.title}
         </h3>
-        <p className="mt-4 max-w-xl text-base leading-relaxed text-white/65">
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600">
           {feature.text}
         </p>
 
@@ -223,7 +223,7 @@ function FeatureRow({
             <motion.li
               key={tag}
               variants={staggerItem}
-              className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/55"
+              className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm"
             >
               {tag}
             </motion.li>
@@ -241,7 +241,7 @@ function FeatureRow({
 
 function PhotoPlate({ src, alt, speed }: { src: string; alt: string; speed: number }) {
   return (
-    <Parallax speed={speed} className="overflow-hidden rounded-3xl border border-white/10 shadow-[0_30px_80px_-32px_rgba(0,0,0,0.85)]">
+    <Parallax speed={speed} className="overflow-hidden rounded-3xl border border-slate-200 shadow-[0_30px_80px_-32px_rgba(15,23,42,0.25)]">
       <div className="relative aspect-[4/3] w-full">
         <img src={src} alt={alt} className="absolute inset-0 h-full w-full scale-[1.08] object-cover" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/20 to-transparent" />
@@ -257,19 +257,19 @@ export function Platform(): ReactNode {
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
         {/* Header */}
         <Reveal y={24}>
-          <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+          <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
             <span className="inline-block h-px w-7 bg-watt-bitcoin" />
             VoltScout Platform
           </div>
 
-          <h2 className="max-w-4xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="max-w-4xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
             <SplitWords text="The software that" />{' '}
             <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
               <SplitWords text="finds hidden sites" delay={0.21} />
             </span>
           </h2>
 
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/65 lg:text-lg">
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-600 lg:text-lg">
             Built in-house, VoltScout fuses grid topology, industrial registries, market
             data, and listing signals to surface power assets nobody is marketing. Every
             site in our portfolio was found, scored, and modelled on it — and the same
@@ -296,14 +296,14 @@ export function Platform(): ReactNode {
 
         {/* Live telemetry strip + CTA */}
         <Reveal y={20} delay={0.05}>
-          <div className="mt-24 flex flex-col gap-8 rounded-3xl border border-white/10 bg-white/[0.03] p-8 sm:flex-row sm:items-center sm:justify-between sm:p-10 lg:mt-32">
+          <div className="mt-24 flex flex-col gap-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-10 lg:mt-32">
             <div className="flex items-start gap-4">
               <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-watt-trust/10 ring-1 ring-watt-trust/25">
                 <Activity className="h-5 w-5 text-watt-trust" />
               </span>
               <div>
-                <div className="text-lg font-semibold text-white">From discovery to live telemetry</div>
-                <p className="mt-1.5 max-w-md text-sm leading-relaxed text-white/55">
+                <div className="text-lg font-semibold text-slate-900">From discovery to live telemetry</div>
+                <p className="mt-1.5 max-w-md text-sm leading-relaxed text-slate-600">
                   Facility dashboards, alerts, and automation rules carry the same site from
                   candidate to operating asset — all in one platform.
                 </p>
@@ -312,7 +312,7 @@ export function Platform(): ReactNode {
 
             <Link
               to="/app"
-              className="inline-flex h-12 shrink-0 items-center rounded-full bg-white px-7 text-base font-semibold text-[#060b16] transition-colors hover:bg-watt-bitcoin"
+              className="inline-flex h-12 shrink-0 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
             >
               Enter the platform <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

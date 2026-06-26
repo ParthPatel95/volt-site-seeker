@@ -41,13 +41,13 @@ export function GlobalPipeline() {
         <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <Reveal y={18}>
-              <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+              <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
                 <span className="inline-block h-px w-7 bg-watt-bitcoin" />
                 The global pipeline
               </div>
             </Reveal>
 
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
               <Reveal y={22}>
                 A pipeline that{' '}
                 <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
@@ -57,7 +57,7 @@ export function GlobalPipeline() {
             </h2>
 
             <Reveal y={20} delay={0.08}>
-              <p className="mt-5 text-base leading-relaxed text-white/65 lg:text-lg">
+              <p className="mt-5 text-base leading-relaxed text-slate-600 lg:text-lg">
                 The same data behind our Advisory pipeline map — every figure is
                 sourced, site by site. Nothing here is marketing-only.
               </p>
@@ -67,7 +67,7 @@ export function GlobalPipeline() {
           <Reveal y={18} delay={0.12} className="shrink-0">
             <Link
               to="/advisory"
-              className="inline-flex h-12 items-center rounded-full border border-white/20 px-6 text-base font-medium text-white/90 transition-colors hover:bg-white/5"
+              className="inline-flex h-12 items-center rounded-full border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
             >
               Full pipeline detail
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -77,17 +77,17 @@ export function GlobalPipeline() {
 
         {/* Summary stats */}
         <Reveal y={20} delay={0.05}>
-          <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-md lg:grid-cols-4 lg:divide-x lg:divide-white/10">
+          <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-4 lg:divide-x lg:divide-slate-200">
             {STATS.map((s) => (
               <div
                 key={s.label}
-                className="border-t border-white/10 px-6 py-7 first:border-t-0 [&:nth-child(2)]:border-t-0 lg:border-t-0"
+                className="border-t border-slate-200 px-6 py-7 first:border-t-0 [&:nth-child(2)]:border-t-0 lg:border-t-0"
               >
-                <div className="text-3xl font-bold tabular-nums text-white sm:text-4xl lg:text-5xl">
+                <div className="text-3xl font-bold tabular-nums text-slate-900 sm:text-4xl lg:text-5xl">
                   <CountUp value={s.value} />
                   <span className="text-watt-bitcoin">{s.suffix}</span>
                 </div>
-                <div className="mt-2 text-[0.7rem] font-medium uppercase tracking-[0.18em] text-white/45">
+                <div className="mt-2 text-[0.7rem] font-medium uppercase tracking-[0.18em] text-slate-500">
                   {s.label}
                 </div>
               </div>
@@ -109,7 +109,7 @@ export function GlobalPipeline() {
               <motion.article
                 key={p.id}
                 variants={staggerItem}
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition-colors duration-300 hover:border-white/20"
+                className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-colors duration-300 hover:border-slate-300"
               >
                 {/* Cover image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
@@ -155,23 +155,23 @@ export function GlobalPipeline() {
                 <div className="flex flex-1 flex-col p-6">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
                         <span className="text-xl leading-none" aria-hidden="true">
                           {p.flagEmoji}
                         </span>
                         {p.location}
                       </h3>
-                      <p className="mt-1 flex items-center gap-1.5 text-sm text-white/45">
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
                         <MapPin className="h-3.5 w-3.5" />
                         {p.country}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.12em] text-white/55">
+                    <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-600">
                       {p.status}
                     </span>
                   </div>
 
-                  <p className="mt-4 text-sm leading-relaxed text-white/60">
+                  <p className="mt-4 text-sm leading-relaxed text-slate-600">
                     {p.description}
                   </p>
                 </div>

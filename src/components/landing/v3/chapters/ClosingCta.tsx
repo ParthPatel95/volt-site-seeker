@@ -22,11 +22,11 @@ function Stat({
 }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="text-2xl font-bold tracking-tight text-white tabular-nums sm:text-3xl">
+      <div className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums sm:text-3xl">
         <CountUp value={value} />
-        {suffix ? <span className="text-white/70">{suffix}</span> : null}
+        {suffix ? <span className="text-slate-600">{suffix}</span> : null}
       </div>
-      <div className="mt-1.5 text-xs font-medium uppercase tracking-[0.18em] text-white/45">
+      <div className="mt-1.5 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
         {label}
       </div>
     </div>
@@ -37,13 +37,13 @@ export function ClosingCta() {
   return (
     <section
       id="get-in-touch"
-      className="relative isolate overflow-hidden bg-[#060b16] py-32 lg:py-40"
+      className="relative isolate overflow-hidden bg-[#f8fafc] py-32 lg:py-40"
     >
       {/* ── CSS radial bloom background — bitcoin + teal over near-black navy ── */}
       <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
         {/* warm bitcoin core, slightly above center */}
         <div
-          className="absolute left-1/2 top-[38%] h-[44rem] w-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.55] blur-3xl"
+          className="absolute left-1/2 top-[38%] h-[44rem] w-[44rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.22] blur-3xl"
           style={{
             background:
               'radial-gradient(closest-side, rgba(247,147,26,0.42), rgba(247,147,26,0.10) 55%, transparent 78%)',
@@ -51,7 +51,7 @@ export function ClosingCta() {
         />
         {/* cool teal counter-glow, lower and offset for depth */}
         <div
-          className="absolute left-[58%] top-[64%] h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.40] blur-3xl"
+          className="absolute left-[58%] top-[64%] h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.20] blur-3xl"
           style={{
             background:
               'radial-gradient(closest-side, rgba(16,165,199,0.40), rgba(16,165,199,0.08) 55%, transparent 80%)',
@@ -59,10 +59,10 @@ export function ClosingCta() {
         />
         {/* faint engineering grid for texture */}
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="absolute inset-0 opacity-[0.7]"
           style={{
             backgroundImage:
-              'linear-gradient(to right, rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.6) 1px, transparent 1px)',
+              'linear-gradient(to right, rgba(15,23,42,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.05) 1px, transparent 1px)',
             backgroundSize: '72px 72px',
             maskImage:
               'radial-gradient(ellipse 70% 55% at 50% 45%, black, transparent 80%)',
@@ -71,20 +71,20 @@ export function ClosingCta() {
           }}
         />
         {/* settle the bloom back into the page base at the edges */}
-        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[#060b16] to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#060b16] to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[#f8fafc] to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f8fafc] to-transparent" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-3xl text-center">
           <Reveal y={20}>
-            <div className="mb-6 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+            <div className="mb-6 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
               <span className="inline-block h-px w-7 bg-watt-bitcoin" />
               Start the conversation
             </div>
           </Reveal>
 
-          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h2 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
             <SplitWords text={`${TOTAL_MW.toLocaleString()} MW says`} />
             <span className="mt-1 block">
               <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
@@ -94,7 +94,7 @@ export function ClosingCta() {
           </h2>
 
           <Reveal delay={0.25} y={18}>
-            <p className="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-white/65 lg:text-lg">
+            <p className="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-slate-600 lg:text-lg">
               Whether you&rsquo;re siting a datacenter, deploying miners, or backing
               the build-out of the infrastructure behind AI&nbsp;&mdash; this is where
               it starts.
@@ -106,7 +106,7 @@ export function ClosingCta() {
               <Magnetic>
                 <Link
                   to="/advisory"
-                  className="inline-flex h-12 items-center rounded-full bg-white px-7 text-base font-semibold text-[#060b16] transition-colors hover:bg-watt-bitcoin"
+                  className="inline-flex h-12 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
                 >
                   Work with us
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -115,7 +115,7 @@ export function ClosingCta() {
               <Magnetic strength={0.2}>
                 <Link
                   to="/hosting"
-                  className="inline-flex h-12 items-center rounded-full border border-white/20 px-6 text-base font-medium text-white/90 transition-colors hover:bg-white/5"
+                  className="inline-flex h-12 items-center rounded-full border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
                 >
                   Explore hosting
                 </Link>
@@ -126,11 +126,11 @@ export function ClosingCta() {
 
         {/* ── Thin sourced trust rail ── */}
         <Reveal delay={0.55} y={16}>
-          <div className="mx-auto mt-16 flex max-w-2xl items-center justify-center gap-8 border-t border-white/10 pt-10 sm:gap-16">
+          <div className="mx-auto mt-16 flex max-w-2xl items-center justify-center gap-8 border-t border-slate-200 pt-10 sm:gap-16">
             <Stat value={TOTAL_MW} suffix=" MW" label="Pipeline" />
-            <span className="h-10 w-px bg-white/10" aria-hidden="true" />
+            <span className="h-10 w-px bg-slate-200" aria-hidden="true" />
             <Stat value={UNDER_DEV_MW} suffix=" MW" label="Under development" />
-            <span className="h-10 w-px bg-white/10" aria-hidden="true" />
+            <span className="h-10 w-px bg-slate-200" aria-hidden="true" />
             <Stat value={COUNTRIES} label="Countries" />
           </div>
         </Reveal>

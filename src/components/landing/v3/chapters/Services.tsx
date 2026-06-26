@@ -8,8 +8,8 @@ import { Reveal, SplitWords, TiltCard, staggerContainer, staggerItem } from '../
 
 // Services — "What we do." The five live offerings re-presented as a cinematic
 // stagger grid of 3D tilt cards. Copy, routes and structure carry over verbatim
-// from the v2 ServicesGrid; here they sit on dark glass with restrained brand
-// tints (orange/teal only — one family, no rainbow) and a weighted hover lift.
+// from the v2 ServicesGrid; here they sit on light glass cards with restrained
+// brand tints (orange/teal only — one family, no rainbow) and a weighted hover lift.
 
 type Accent = 'bitcoin' | 'trust';
 
@@ -97,8 +97,8 @@ function ServiceCard({ service }: { service: Service }) {
         <TiltCard
           className={[
             'group relative flex h-full flex-col overflow-hidden rounded-2xl',
-            'border border-white/10 bg-white/[0.04] p-6 sm:p-8',
-            'transition-colors duration-300 hover:bg-white/[0.06]',
+            'border border-slate-200 bg-white p-6 sm:p-8 shadow-sm',
+            'transition-colors duration-300 hover:bg-slate-50',
             a.ring,
           ].join(' ')}
         >
@@ -119,14 +119,14 @@ function ServiceCard({ service }: { service: Service }) {
               <Icon className={['h-6 w-6', a.iconText].join(' ')} />
             </div>
 
-            <h3 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-white">
+            <h3 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-slate-900">
               {service.title}
               <ArrowUpRight
-                className="h-4 w-4 -translate-x-1 translate-y-1 text-white/70 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
+                className="h-4 w-4 -translate-x-1 translate-y-1 text-slate-400 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
               />
             </h3>
 
-            <p className="mt-3 text-sm leading-relaxed text-white/65">
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
               {service.description}
             </p>
           </div>
@@ -141,19 +141,19 @@ export function Services(): ReactNode {
     <section id="services" className="relative py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
         <Reveal y={24}>
-          <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+          <div className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
             <span className="inline-block h-px w-7 bg-watt-bitcoin" />
             What we offer
           </div>
 
-          <h2 className="max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
             <SplitWords text="One platform," />{' '}
             <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
               <SplitWords text="five ways in" delay={0.18} />
             </span>
           </h2>
 
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/65 lg:text-lg">
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 lg:text-lg">
             From advisory mandates to hosted megawatts — everything we offer runs on
             infrastructure we source, diligence, and operate ourselves.
           </p>
@@ -175,11 +175,11 @@ export function Services(): ReactNode {
           <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link
               to="/advisory"
-              className="inline-flex h-12 items-center rounded-full bg-white px-7 text-base font-semibold text-[#060b16] transition-colors hover:bg-watt-bitcoin"
+              className="inline-flex h-12 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
             >
               Work with us <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
-            <span className="text-sm text-white/45">
+            <span className="text-sm text-slate-500">
               One team across sourcing, development, and operations.
             </span>
           </div>

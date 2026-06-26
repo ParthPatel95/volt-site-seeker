@@ -79,27 +79,27 @@ function Scene({ progress }: { progress: MotionValue<number> }) {
   const bgY = useTransform(progress, [0, 1], ['-6%', '6%']);
 
   return (
-    <div className="relative h-full w-full bg-[#060b16]">
+    <div className="relative h-full w-full bg-[#f8fafc]">
       {/* faint, slow-drifting establishing image behind everything */}
       <motion.div
-        className="absolute inset-0 scale-110 bg-cover bg-center opacity-[0.12]"
+        className="absolute inset-0 scale-110 bg-cover bg-center opacity-[0.06]"
         style={{ backgroundImage: `url(${gridSubstation})`, y: bgY }}
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 bg-gradient-to-b from-[#060b16] via-[#060b16]/70 to-[#060b16]"
+        className="absolute inset-0 bg-gradient-to-b from-[#f8fafc] via-[#f8fafc]/70 to-[#f8fafc]"
         aria-hidden="true"
       />
 
       <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col px-6 sm:px-10 lg:px-16">
         {/* Eyebrow — constant through the chapter */}
         <div className="pt-[clamp(4rem,12vh,8rem)]">
-          <div className="inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+          <div className="inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
             <span className="inline-block h-px w-7 bg-watt-bitcoin" />
             Our model
           </div>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/45 sm:text-base">
-            <span className="text-white/80">Power is the scarce input of the compute economy.</span>{' '}
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-500 sm:text-base">
+            <span className="text-slate-700">Power is the scarce input of the compute economy.</span>{' '}
             Watch a stranded megawatt become productive compute.
           </p>
         </div>
@@ -113,11 +113,11 @@ function Scene({ progress }: { progress: MotionValue<number> }) {
 
         {/* Journey rail — STRANDED MW → PRODUCTIVE COMPUTE */}
         <div className="pb-[clamp(2.5rem,8vh,5rem)]">
-          <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/40 sm:text-xs">
+          <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500 sm:text-xs">
             <span>Stranded MW</span>
-            <span className="text-white/55">AI · HPC · BTC</span>
+            <span className="text-slate-600">AI · HPC · BTC</span>
           </div>
-          <div className="relative h-px w-full bg-white/12">
+          <div className="relative h-px w-full bg-slate-200">
             <motion.div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-watt-trust to-watt-bitcoin"
               style={{ width: railFill }}
@@ -167,18 +167,18 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
       {/* Text column */}
       <div className="order-2 flex-1 lg:order-1">
         <div
-          className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] backdrop-blur"
+          className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] shadow-sm"
           style={{ color: beat.accent }}
         >
           <beat.icon className="h-3.5 w-3.5" />
           {beat.kicker}
         </div>
 
-        <h2 className="max-w-xl text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl lg:text-[2.9rem]">
+        <h2 className="max-w-xl text-3xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[2.9rem]">
           {beat.title}
         </h2>
 
-        <p className="mt-5 max-w-lg text-base leading-relaxed text-white/65 lg:text-lg">
+        <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 lg:text-lg">
           {beat.blurb}
         </p>
 
@@ -190,8 +190,8 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
           >
             {beat.metricValue}
           </span>
-          <span className="max-w-[8rem] text-xs leading-snug text-white/50 sm:text-sm">
-            <span className="block uppercase tracking-[0.12em] text-white/40">
+          <span className="max-w-[8rem] text-xs leading-snug text-slate-500 sm:text-sm">
+            <span className="block uppercase tracking-[0.12em] text-slate-400">
               {beat.metricLabel}
             </span>
             {beat.metricUnit}
@@ -201,7 +201,7 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
 
       {/* Media column */}
       <div className="order-1 lg:order-2 lg:w-[44%]">
-        <div className="group relative aspect-[4/3] overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]">
+        <div className="group relative aspect-[4/3] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
           <img
             src={beat.image}
             alt=""
@@ -231,7 +231,7 @@ function RailNode({ beat, progress }: { beat: Beat; progress: MotionValue<number
 
   return (
     <motion.span
-      className="block h-3 w-3 rounded-full ring-4 ring-[#060b16]"
+      className="block h-3 w-3 rounded-full ring-4 ring-[#f8fafc]"
       style={{ backgroundColor: beat.accent, opacity: lit, scale }}
     />
   );
@@ -254,8 +254,8 @@ function StepLabel({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
         style={{ backgroundColor: beat.accent }}
       />
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-white">{labels[beat.index]}</div>
-        <div className="truncate text-[11px] uppercase tracking-[0.14em] text-white/40">
+        <div className="text-sm font-semibold text-slate-900">{labels[beat.index]}</div>
+        <div className="truncate text-[11px] uppercase tracking-[0.14em] text-slate-500">
           {beat.kicker.split('—')[1]?.trim()}
         </div>
       </div>
@@ -265,7 +265,7 @@ function StepLabel({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
 
 export function EnergyToCompute(): ReactNode {
   return (
-    <section id="energy-to-compute" className="relative bg-[#060b16]">
+    <section id="energy-to-compute" className="relative bg-transparent">
       <PinnedChapter heightVh={260}>
         {(progress) => <Scene progress={progress} />}
       </PinnedChapter>
@@ -275,13 +275,13 @@ export function EnergyToCompute(): ReactNode {
       <div className="relative py-24 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
           <div className="max-w-3xl">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
               Hidden energy in.{' '}
               <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
                 Productive compute out.
               </span>
             </h2>
-            <p className="mt-5 text-base leading-relaxed text-white/65 lg:text-lg">
+            <p className="mt-5 text-base leading-relaxed text-slate-600 lg:text-lg">
               We built proprietary software and methods to find the best megawatts first,
               then develop and operate them as the datacenters behind modern AI. That is the
               whole model — source, develop, operate.
@@ -289,13 +289,13 @@ export function EnergyToCompute(): ReactNode {
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
                 to="/advisory"
-                className="inline-flex h-12 items-center rounded-full bg-white px-7 text-base font-semibold text-[#060b16] transition-colors hover:bg-watt-bitcoin"
+                className="inline-flex h-12 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
               >
                 Work with us <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
               <Link
                 to="/app"
-                className="inline-flex h-12 items-center rounded-full border border-white/20 px-6 text-base font-medium text-white/90 transition-colors hover:bg-white/5"
+                className="inline-flex h-12 items-center rounded-full border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 See VoltScout
               </Link>

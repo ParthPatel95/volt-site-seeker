@@ -1,24 +1,24 @@
 // Cinematic hero centerpiece — an ABSTRACT energy→compute field, not a literal
-// datacenter model. A glowing power grid recedes to a dark horizon with pulses
-// of current racing across it toward a luminous compute core; energy embers
-// drift through the air and thin data-beams rise from the grid. The camera
-// drifts slowly and parallaxes to the cursor. Designed to sit behind bold
-// overlaid type as the first thing a visitor sees.
+// datacenter model. A blueprint-style power grid recedes to a soft horizon with
+// pulses of current racing across it toward a warm compute core; faint
+// data-beams rise from the grid. The camera drifts slowly and parallaxes to the
+// cursor. Designed to sit behind bold overlaid type on a LIGHT background.
 //
-// Pure @react-three/fiber + drei + three (no postprocessing dep). Glow is
-// achieved with additive materials plus a CSS bloom overlay in the hero
-// section. Degrades to a static gradient under reduced motion / no WebGL.
+// Light-tuned: glows can't be additive on a light field (additive → white), so
+// the grid/beams use normal blending with deeper brand colors that read as dark
+// lines on off-white, and the core is a soft warm radial. Pure r3f/three; no
+// postprocessing. Degrades to a static gradient under reduced motion / no WebGL.
 
 import { Suspense, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Sparkles, Billboard } from '@react-three/drei';
+import { Billboard } from '@react-three/drei';
 import { useReducedMotion } from 'framer-motion';
 import * as THREE from 'three';
 
-// Brand colors as THREE colors (matches --watt-bitcoin / --watt-trust / blue).
-const C_TEAL = new THREE.Color('#10a5c7');
+// Brand colors, deepened so they read on a light field.
+const C_LINE = new THREE.Color('#0e7490'); // deep teal (cyan-700)
 const C_ORANGE = new THREE.Color('#f7931a');
-const C_BLUE = new THREE.Color('#3b82f6');
+const C_BLUE = new THREE.Color('#2563eb');
 
 // ── Grid floor shader ────────────────────────────────────────────────────────
 
@@ -37,7 +37,6 @@ const gridFragment = /* glsl */ `
   uniform vec3 uLine;
   uniform vec3 uPulse;
 
-  // Anti-aliased grid lines using screen-space derivatives.
   float gridLine(vec2 uv, float density) {
     vec2 g = abs(fract(uv * density - 0.5) - 0.5) / fwidth(uv * density);
     return 1.0 - min(min(g.x, g.y), 1.0);
@@ -45,31 +44,27 @@ const gridFragment = /* glsl */ `
 
   void main() {
     vec2 uv = vUv;
-    // Fade toward the horizon (uv.y -> 1.0 is far away) and the side edges.
     float horizon = smoothstep(1.0, 0.15, uv.y);
     float edges = smoothstep(0.0, 0.18, uv.x) * smoothstep(1.0, 0.82, uv.x);
 
-    float fine = gridLine(uv, 60.0) * 0.5;
+    float fine = gridLine(uv, 60.0) * 0.4;
     float coarse = gridLine(uv, 15.0);
     float line = max(coarse, fine);
 
-    // Current pulses racing toward the viewer along the depth axis.
+    // Current pulses racing toward the viewer.
     float p = fract(uv.y * 2.5 - uTime * 0.18);
-    float pulse = smoothstep(0.5, 0.0, abs(p - 0.5)) ;
-    pulse = pow(pulse, 3.0);
-
-    // A second, faster sparse pulse for life.
+    float pulse = pow(smoothstep(0.5, 0.0, abs(p - 0.5)), 3.0);
     float p2 = fract(uv.y * 6.0 - uTime * 0.42 + 0.33);
     float pulse2 = pow(smoothstep(0.5, 0.0, abs(p2 - 0.5)), 6.0);
 
-    vec3 col = uLine;
-    col = mix(col, uPulse, clamp(pulse + pulse2, 0.0, 1.0));
+    vec3 col = mix(uLine, uPulse, clamp(pulse + pulse2, 0.0, 1.0));
 
+    // Alpha: line presence boosted along the pulses, faded to the horizon/edges.
     float alpha = line * horizon * edges;
-    alpha += (pulse * 0.5 + pulse2 * 0.8) * line * horizon * edges;
+    alpha *= 0.55 + 0.45 * clamp(pulse + pulse2, 0.0, 1.0);
     alpha = clamp(alpha, 0.0, 1.0);
 
-    gl_FragColor = vec4(col, alpha);
+    gl_FragColor = vec4(col, alpha * 0.9);
   }
 `;
 
@@ -78,7 +73,7 @@ function GridFloor() {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uLine: { value: C_TEAL.clone().multiplyScalar(0.9) },
+      uLine: { value: C_LINE.clone() },
       uPulse: { value: C_ORANGE.clone() },
     }),
     [],
@@ -96,33 +91,31 @@ function GridFloor() {
         uniforms={uniforms}
         transparent
         depthWrite={false}
-        blending={THREE.AdditiveBlending}
+        blending={THREE.NormalBlending}
       />
     </mesh>
   );
 }
 
-// ── Luminous compute core ────────────────────────────────────────────────────
+// ── Warm compute core (soft radial, normal-blended for light) ────────────────
 
 function CoreGlow() {
   const halo = useRef<THREE.Mesh>(null);
   const core = useRef<THREE.Mesh>(null);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const s = 1 + Math.sin(t * 1.3) * 0.06;
-    if (core.current) core.current.scale.setScalar(s);
-    if (halo.current) halo.current.scale.setScalar(1 + Math.sin(t * 0.9) * 0.1);
+    if (core.current) core.current.scale.setScalar(1 + Math.sin(t * 1.3) * 0.06);
+    if (halo.current) halo.current.scale.setScalar(1 + Math.sin(t * 0.9) * 0.08);
   });
   return (
     <group position={[0, 0.35, -1.5]}>
-      {/* soft additive halo, always facing camera */}
       <Billboard>
         <mesh ref={halo}>
-          <circleGeometry args={[2.6, 64]} />
+          <circleGeometry args={[2.4, 64]} />
           <shaderMaterial
             transparent
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
+            blending={THREE.NormalBlending}
             uniforms={useMemo(() => ({ uColor: { value: C_ORANGE.clone() } }), [])}
             vertexShader={/* glsl */ `
               varying vec2 vUv;
@@ -133,18 +126,16 @@ function CoreGlow() {
               void main(){
                 float d = distance(vUv, vec2(0.5));
                 float a = smoothstep(0.5, 0.0, d);
-                gl_FragColor = vec4(uColor, a * 0.55);
+                gl_FragColor = vec4(uColor, a * 0.30);
               }
             `}
           />
         </mesh>
       </Billboard>
-      {/* bright inner core */}
       <mesh ref={core}>
-        <sphereGeometry args={[0.34, 32, 32]} />
+        <circleGeometry args={[0.22, 48]} />
         <meshBasicMaterial color={C_ORANGE} toneMapped={false} />
       </mesh>
-      <pointLight color={C_ORANGE} intensity={6} distance={14} />
     </group>
   );
 }
@@ -161,7 +152,7 @@ function DataBeams() {
         z: -Math.random() * 14 - 1,
         h: 1.4 + Math.random() * 2.6,
         phase: Math.random() * Math.PI * 2,
-        color: Math.random() > 0.5 ? C_TEAL : C_BLUE,
+        color: Math.random() > 0.5 ? C_LINE : C_BLUE,
       });
     }
     return arr;
@@ -170,19 +161,19 @@ function DataBeams() {
     const t = state.clock.elapsedTime;
     group.current?.children.forEach((c, i) => {
       const m = (c as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      m.opacity = 0.25 + (Math.sin(t * 1.5 + beams[i].phase) * 0.5 + 0.5) * 0.55;
+      m.opacity = 0.1 + (Math.sin(t * 1.5 + beams[i].phase) * 0.5 + 0.5) * 0.28;
     });
   });
   return (
     <group ref={group}>
       {beams.map((b, i) => (
         <mesh key={i} position={[b.x, -1.4 + b.h / 2, b.z]}>
-          <planeGeometry args={[0.035, b.h]} />
+          <planeGeometry args={[0.03, b.h]} />
           <meshBasicMaterial
             color={b.color}
             transparent
-            opacity={0.4}
-            blending={THREE.AdditiveBlending}
+            opacity={0.25}
+            blending={THREE.NormalBlending}
             depthWrite={false}
             side={THREE.DoubleSide}
             toneMapped={false}
@@ -200,11 +191,8 @@ function Rig({ pointer }: { pointer: React.MutableRefObject<{ x: number; y: numb
   const target = useMemo(() => new THREE.Vector3(0, 0.2, -1.5), []);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const px = pointer.current.x;
-    const py = pointer.current.y;
-    // base slow orbital drift + parallax offset toward the cursor
-    const tx = Math.sin(t * 0.12) * 1.3 + px * 1.4;
-    const ty = 1.1 + Math.cos(t * 0.16) * 0.25 - py * 0.7;
+    const tx = Math.sin(t * 0.12) * 1.3 + pointer.current.x * 1.4;
+    const ty = 1.1 + Math.cos(t * 0.16) * 0.25 - pointer.current.y * 0.7;
     camera.position.x += (tx - camera.position.x) * 0.03;
     camera.position.y += (ty - camera.position.y) * 0.03;
     camera.position.z = 6.5;
@@ -213,15 +201,21 @@ function Rig({ pointer }: { pointer: React.MutableRefObject<{ x: number; y: numb
   return null;
 }
 
-// ── Public component ─────────────────────────────────────────────────────────
-
 export function HeroScene3D({ className }: { className?: string }) {
   const reduced = useReducedMotion();
   const pointer = useRef({ x: 0, y: 0 });
 
-  // Static, dependency-free fallback (reduced motion or SSR safety).
   if (reduced) {
-    return <div className={className} aria-hidden style={{ background: 'radial-gradient(120% 80% at 50% 20%, rgba(247,147,26,0.18), transparent 55%), radial-gradient(100% 70% at 70% 90%, rgba(16,165,199,0.16), transparent 60%)' }} />;
+    return (
+      <div
+        className={className}
+        aria-hidden
+        style={{
+          background:
+            'radial-gradient(120% 80% at 50% 20%, rgba(247,147,26,0.10), transparent 55%), radial-gradient(100% 70% at 70% 90%, rgba(14,116,144,0.10), transparent 60%)',
+        }}
+      />
+    );
   }
 
   return (
@@ -241,13 +235,10 @@ export function HeroScene3D({ className }: { className?: string }) {
         dpr={[1, 1.8]}
       >
         <Suspense fallback={null}>
-          <fog attach="fog" args={['#060b16', 8, 22]} />
-          <ambientLight intensity={0.3} />
+          <fog attach="fog" args={['#eaeff6', 9, 24]} />
           <GridFloor />
           <CoreGlow />
           <DataBeams />
-          <Sparkles count={120} scale={[18, 8, 12]} size={3} speed={0.3} opacity={0.5} color={C_ORANGE} />
-          <Sparkles count={160} scale={[20, 9, 14]} size={2} speed={0.2} opacity={0.4} color={C_TEAL} />
           <Rig pointer={pointer} />
         </Suspense>
       </Canvas>
