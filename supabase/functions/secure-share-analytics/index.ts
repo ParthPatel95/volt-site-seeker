@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface AnalyticsRequest {
   dateFrom?: string;
   dateTo?: string;
@@ -400,10 +401,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in secure-share-analytics:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, corsHeaders, { status: 500, context: 'secure-share-analytics' });
   }
 });

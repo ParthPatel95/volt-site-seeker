@@ -236,7 +236,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to fetch live data',
-        message: error.message,
+        message: 'Internal server error',
         isLive: false,
         // Provide reasonable fallback values (January 2026 estimates)
         price: 0,

@@ -113,11 +113,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Geocoding error:', error);
-    
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to geocode address' 
+      JSON.stringify({
+        success: false,
+        error: 'Internal server error'
       }),
       {
         status: 500,

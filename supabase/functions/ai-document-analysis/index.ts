@@ -181,7 +181,7 @@ serve(async (req) => {
     console.error('Error in AI document analysis:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal server error',
         success: false
       }),
       {

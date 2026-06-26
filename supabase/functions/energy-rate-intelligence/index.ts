@@ -209,9 +209,9 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error('Error in energy rate intelligence:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'An unexpected error occurred'
+      error: 'An unexpected error occurred'
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

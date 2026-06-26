@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface OptimizationParams {
   energyDemand: number; // MW
   operatingHours: number;
@@ -65,10 +66,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in optimization-engine function:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, corsHeaders, { status: 500, context: 'optimization-engine' });
   }
 });
 

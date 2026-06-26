@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 interface AccessRequestData {
   fullName: string;
   email: string;
@@ -18,6 +19,10 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Abuse guard: cap access-request submissions per IP.
+  const limited = await enforceRateLimit(req, { name: "submit-access-request", max: 5, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const requestData: AccessRequestData = await req.json();
@@ -64,9 +69,9 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in submit-access-request function:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Failed to submit access request"
+      JSON.stringify({
+        success: false,
+        error: "Failed to submit access request"
       }),
       {
         status: 500,

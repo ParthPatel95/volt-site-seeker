@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { errorResponse } from '../_shared/http.ts';
 
 interface ReqBody {
   lat: number;
@@ -490,8 +491,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error('[alberta-site-report] error', err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(err, corsHeaders, { status: 500, context: 'alberta-site-report' });
   }
 });

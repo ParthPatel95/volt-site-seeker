@@ -2,6 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "https://esm.sh/resend@3.2.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 interface VerificationEmailRequest {
   email: string;
   user_id: string;
@@ -13,6 +15,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Abuse guard: throttle verification e-mails per IP to prevent mail bombing.
+  const limited = await enforceRateLimit(req, { name: 'send-verification-email', max: 3, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const supabaseClient = createClient(
@@ -123,16 +129,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    const message = error instanceof Error ? error.message : 'Failed to send verification email';
-    return new Response(
-      JSON.stringify({ 
-        error: message 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Failed to send verification email', context: 'send-verification-email' });
   }
 });

@@ -124,9 +124,10 @@ Deno.serve(async (req) => {
       sources: upserted ?? [],
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
+    console.error('[scraping-seed]', e instanceof Error ? (e.stack ?? e.message) : String(e));
     return new Response(JSON.stringify({
       success: false,
-      error: e instanceof Error ? e.message : String(e),
+      error: 'Internal server error',
     }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

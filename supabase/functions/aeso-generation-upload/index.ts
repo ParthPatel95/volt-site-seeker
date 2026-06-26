@@ -186,8 +186,8 @@ serve(async (req) => {
       console.error('Upsert error:', upsertError);
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          error: upsertError.message,
+          success: false,
+          error: 'Internal server error',
           code: upsertError.code
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -212,8 +212,8 @@ serve(async (req) => {
     console.error('Upload error:', error);
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message,
+        success: false,
+        error: 'Internal server error',
         durationMs: Date.now() - startTime
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

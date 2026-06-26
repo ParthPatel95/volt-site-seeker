@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireAdmin } from "../_shared/auth.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface PDUAction {
   action: 'register' | 'shutdown' | 'power_on' | 'status' | 'schedule_shutdown' | 'list' | 'update' | 'delete';
   pdu_id?: string;
@@ -333,9 +334,6 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('PDU Controller error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, corsHeaders, { status: 500, context: 'pdu-controller' });
   }
 });

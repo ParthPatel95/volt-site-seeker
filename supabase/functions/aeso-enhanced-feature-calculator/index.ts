@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Feature calculation failed'
+        error: 'Feature calculation failed'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

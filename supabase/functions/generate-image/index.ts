@@ -3,11 +3,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+
+  // Abuse guard: cap image generations per IP (paid inference).
+  const limited = await enforceRateLimit(req, { name: 'generate-image', max: 10, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const { prompt } = await req.json()
@@ -29,9 +35,6 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error:', error)
-    return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred', details: error instanceof Error ? error.message : 'Unknown error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    return errorResponse(error, corsHeaders, { status: 500, message: 'An unexpected error occurred', context: 'generate-image' })
   }
 })

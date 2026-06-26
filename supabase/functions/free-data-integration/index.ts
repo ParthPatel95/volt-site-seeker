@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.131.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 import { fetchCountyRecords } from './scrapers/countyRecords.ts';
 import { FreeDataRequest, PropertyData } from './types.ts';
 
@@ -95,13 +96,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Free data integration error:', error);
-    return new Response(JSON.stringify({
-      error: 'Failed to fetch data',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
-    });
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Failed to fetch data', context: 'free-data-integration' });
   }
 });
 

@@ -1,5 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts';
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 
 const GOOGLE_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')!;
 
@@ -49,6 +50,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     // Return 200 so supabase.functions.invoke surfaces the message instead of the
     // generic "Edge Function returned a non-2xx status code" wrapper.
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return errorResponse(e, corsHeaders, { status: 200, context: 'site-satellite-image' });
   }
 });

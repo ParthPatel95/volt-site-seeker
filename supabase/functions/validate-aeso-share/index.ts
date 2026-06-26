@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 import { buildCorsHeaders } from "../_shared/cors.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 interface ValidateRequest {
   token: string;
@@ -62,6 +63,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Abuse guard: throttle share-token validation per IP to blunt brute-force.
+  const limited = await enforceRateLimit(req, { name: 'validate-aeso-share', max: 30, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

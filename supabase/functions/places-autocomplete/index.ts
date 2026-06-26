@@ -90,11 +90,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Places autocomplete error:', error);
-    
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to get place suggestions' 
+      JSON.stringify({
+        success: false,
+        error: 'Failed to get place suggestions'
       }),
       {
         status: 500,

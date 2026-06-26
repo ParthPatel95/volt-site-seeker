@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Data quality analysis failed'
+        error: 'Data quality analysis failed'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

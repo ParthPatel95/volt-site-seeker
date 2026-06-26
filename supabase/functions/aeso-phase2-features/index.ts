@@ -85,8 +85,8 @@ Deno.serve(async (req) => {
     console.error('❌ Phase 2 Feature Engineering Failed:', error)
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message,
+        success: false,
+        error: 'Internal server error',
         phase: 2
       }),
       { 

@@ -26,16 +26,20 @@ export default defineConfig(({ command, mode }) => ({
         // Split heavy libraries into their own chunks so the main bundle
         // stays small and these only load when a page actually imports
         // them (via dynamic import or a route that uses them).
-        manualChunks: {
-          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
-          'vendor-mapbox': ['mapbox-gl'],
-          'vendor-pdf': ['pdfjs-dist', 'react-pdf', 'jspdf', 'pdf-lib', 'html2canvas'],
-          'vendor-ocr': ['tesseract.js'],
-          'vendor-charts': ['recharts'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-          // @huggingface/transformers is only referenced by dead code
-          // (BackgroundRemovalProcessor has no call sites) — tree-shaken
-          // away in production, so not listed here.
+        // Function form (required by Vite 8 / rolldown; the object form is
+        // Rollup-only). Each heavy lib + its subtree lands in its own chunk
+        // so the main bundle stays small and these load on demand.
+        // @huggingface/transformers is only referenced by dead code
+        // (BackgroundRemovalProcessor has no call sites) — tree-shaken away
+        // in production, so it is not split here.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return;
+          if (/node_modules\/(three|@react-three)\//.test(id)) return 'vendor-three';
+          if (/node_modules\/mapbox-gl\//.test(id)) return 'vendor-mapbox';
+          if (/node_modules\/(pdfjs-dist|react-pdf|jspdf|pdf-lib|html2canvas)\//.test(id)) return 'vendor-pdf';
+          if (/node_modules\/tesseract\.js\//.test(id)) return 'vendor-ocr';
+          if (/node_modules\/recharts\//.test(id)) return 'vendor-charts';
+          if (/node_modules\/@supabase\/supabase-js\//.test(id)) return 'vendor-supabase';
         },
       },
     },

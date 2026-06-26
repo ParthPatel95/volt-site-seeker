@@ -1,6 +1,8 @@
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
 import { corsHeaders } from '../_shared/cors.ts';
+import { errorResponse } from '../_shared/http.ts';
+import { enforceRateLimit } from '../_shared/rateLimit.ts';
 
 // Send an internal notification email to the advisory team when a new
 // consulting inquiry is submitted. Called fire-and-forget from the Advisory
@@ -74,6 +76,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Abuse guard: cap inquiry submissions per IP (contact form → e-mail).
+  const limited = await enforceRateLimit(req, { name: 'notify-consulting-inquiry', max: 5, windowSeconds: 60, corsHeaders });
+  if (limited) return limited;
+
   try {
     const apiKey = Deno.env.get('RESEND_API_KEY');
     if (!apiKey) {
@@ -106,10 +112,6 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('notify-consulting-inquiry failed:', error);
-    const message = error instanceof Error ? error.message : 'Failed to send notification';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Failed to send notification', context: 'notify-consulting-inquiry' });
   }
 });

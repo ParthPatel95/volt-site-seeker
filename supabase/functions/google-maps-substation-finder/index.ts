@@ -104,9 +104,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Enhanced substation search error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error',
+      JSON.stringify({
+        success: false,
+        error: 'Internal server error',
         details: 'Check edge function logs for more information'
       }),
       { 

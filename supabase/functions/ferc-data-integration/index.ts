@@ -33,9 +33,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('FERC API Error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: (error instanceof Error ? error.message : 'Unknown error') || 'Failed to fetch FERC data' 
+      JSON.stringify({
+        success: false,
+        error: 'Failed to fetch FERC data'
       }),
       { 
         status: 500,

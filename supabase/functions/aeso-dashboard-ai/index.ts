@@ -169,7 +169,7 @@ Be helpful and suggest relevant visualizations based on user requests.`;
     console.error('Error in aeso-dashboard-ai function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal server error',
         message: "Sorry, I encountered an error. Please try again."
       }),
       {

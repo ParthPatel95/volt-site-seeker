@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCaller } from "../_shared/guard.ts";
 import { rejectIfUnsafe } from "../_shared/safeFetch.ts";
+import { errorResponse } from '../_shared/http.ts';
 // Helper: Extract text from PDF using Gemini Vision
 async function extractTextFromPdfWithVision(documentUrl: string, pageNumber: number, apiKey: string): Promise<string> {
   console.log('[translate-document] Extracting text from PDF via Gemini Vision:', { documentUrl: documentUrl.substring(0, 100), pageNumber });
@@ -436,10 +437,6 @@ Return ONLY the translated text without any explanations or metadata.`;
     );
 
   } catch (error) {
-    console.error('[translate-document] Unhandled error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, context: 'translate-document' });
   }
 });

@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders } from '../_shared/cors.ts';
+import { errorResponse } from '../_shared/http.ts';
 
 // Live fiber-depth lookup. Aggregates:
 //   - PeeringDB (facilities, IXPs, networks)
@@ -322,8 +323,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error('[fiber-depth-lookup] error', err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(err, corsHeaders, { status: 500, context: 'fiber-depth-lookup' });
   }
 });

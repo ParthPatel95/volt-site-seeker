@@ -163,9 +163,9 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error('Error calculating VoltScore:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Failed to calculate VoltScore'
+      error: 'Failed to calculate VoltScore'
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

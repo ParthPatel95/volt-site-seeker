@@ -890,7 +890,7 @@ const handler = async (req: Request): Promise<Response> => {
             console.error('Error updating company:', error);
             return new Response(JSON.stringify({
               success: false,
-              error: `Failed to update company: ${error.message}`
+              error: 'Failed to update company'
             }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -909,7 +909,7 @@ const handler = async (req: Request): Promise<Response> => {
             console.error('Error saving company:', error);
             return new Response(JSON.stringify({
               success: false,
-              error: `Failed to save company: ${error.message}`
+              error: 'Failed to save company'
             }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -1357,10 +1357,9 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error('Error in corporate intelligence:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'An unexpected error occurred',
-      details: error.stack
+      error: 'An unexpected error occurred'
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

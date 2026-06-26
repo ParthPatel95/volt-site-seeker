@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 const LANGUAGE_NAMES: Record<string, string> = {
   'hi': 'Hindi',
   'gu': 'Gujarati',
@@ -177,10 +178,6 @@ Guidelines:
     });
 
   } catch (error) {
-    console.error('Translation error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Translation failed' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Translation failed', context: 'translate-page' });
   }
 });

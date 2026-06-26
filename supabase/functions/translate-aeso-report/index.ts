@@ -173,7 +173,7 @@ Ensure the translation is professional and suitable for business/investor audien
     console.error('[Translate AESO Report] Error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: 'Internal server error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

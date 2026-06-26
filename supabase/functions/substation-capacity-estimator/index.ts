@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 const GOOGLE_MAPS_API_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
 
@@ -107,14 +108,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Capacity estimation error:', error)
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    return errorResponse(error, corsHeaders, { status: 500, context: 'substation-capacity-estimator' })
   }
 })
 

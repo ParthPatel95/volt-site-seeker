@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface PriceAlert {
   id?: string;
   user_id: string;
@@ -68,10 +69,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in price-alert-system function:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, corsHeaders, { status: 500, context: 'price-alert-system' });
   }
 });
 
