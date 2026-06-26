@@ -19,47 +19,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isApproved, setIsApproved] = useState(false);
   const approvalCache = useRef<Map<string, boolean>>(new Map());
 
-  const checkApproval = async (userId: string) => {
-    if (approvalCache.current.has(userId)) {
-      const cached = approvalCache.current.get(userId) ?? false;
-      setIsApproved(cached);
-      return;
-    }
-
-    // Race the RPC against a timer we can clear, so we don't leave a pending
-    // setTimeout that later rejects an already-settled promise.
+  // One RPC attempt, raced against a clearable timeout.
+  const runApprovalRpc = async (userId: string, timeoutMs: number): Promise<boolean> => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const timeoutPromise = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error('Approval check timeout')), 8000);
+        timer = setTimeout(() => reject(new Error('Approval check timeout')), timeoutMs);
       });
       const approvalPromise = supabase.rpc('is_voltscout_approved', { user_id: userId });
-      const result = await Promise.race([approvalPromise, timeoutPromise]) as
-        | { data: unknown; error: { message: string } | null }
-        | never;
-
-      const error = result?.error;
-      if (error) {
-        // FAIL CLOSED. The previous behaviour was to set isApproved=true on
-        // any RPC error or timeout, which meant any backend outage granted
-        // full access to every visitor (Audit-2026-06-25 P0).
-        console.warn('Approval check failed, denying access:', error.message);
-        // We intentionally do NOT cache the negative result — a transient
-        // outage shouldn't lock the user out of subsequent retries.
-        setIsApproved(false);
-        return;
-      }
-
-      const approved = Boolean(result?.data);
-      approvalCache.current.set(userId, approved);
-      setIsApproved(approved);
-    } catch (error) {
-      console.warn('Approval check timeout/error, denying access:',
-        error instanceof Error ? error.message : 'unknown');
-      // FAIL CLOSED (see above).
-      setIsApproved(false);
+      const result = (await Promise.race([approvalPromise, timeoutPromise])) as {
+        data: unknown;
+        error: { message: string } | null;
+      };
+      if (result?.error) throw new Error(result.error.message);
+      return Boolean(result?.data);
     } finally {
       if (timer !== undefined) clearTimeout(timer);
+    }
+  };
+
+  // Resolve VoltScout approval for a user.
+  //
+  // Security property (preserved from the Audit-2026-06-25 P0 fix): we NEVER
+  // grant access we have not positively confirmed. A user who has never been
+  // confirmed approved defaults to denied on any error — a backend outage can
+  // never grant access.
+  //
+  // Availability property (the regression this fixes): once a user HAS been
+  // confirmed approved this session, a transient RPC error/timeout — e.g. the
+  // re-check Supabase triggers on tab refocus (SIGNED_IN) or token refresh —
+  // must NOT flip them to denied and bounce them to the login screen. We keep
+  // the last-known-good result and only an explicit `false` from the RPC
+  // revokes access.
+  const checkApproval = async (userId: string, opts: { force?: boolean } = {}) => {
+    const prior = approvalCache.current.get(userId); // last confirmed value, if any
+    if (!opts.force && prior !== undefined) {
+      setIsApproved(prior);
+      return;
+    }
+
+    // Retry transient failures a couple of times before giving up.
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const approved = await runApprovalRpc(userId, 5000);
+        approvalCache.current.set(userId, approved);
+        setIsApproved(approved);
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    console.warn(
+      'Approval check failed:',
+      lastError instanceof Error ? lastError.message : 'unknown',
+    );
+    if (prior === true) {
+      // Keep an approved user approved through a transient outage.
+      setIsApproved(true);
+    } else {
+      // Never confirmed → fail closed, but do NOT cache the denial so a later
+      // retry can still succeed.
+      setIsApproved(false);
     }
   };
 
@@ -141,21 +163,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // On SIGNED_IN / USER_UPDATED, ensure the approval status is re-fetched
-        // (admin may have changed it between sessions).
-        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          if (session?.user) approvalCache.current.delete(session.user.id);
-        }
-
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           try {
-            await checkApproval(session.user.id);
+            // Supabase fires SIGNED_IN on tab refocus too — do NOT invalidate
+            // the cached approval there (a re-check that transiently fails
+            // would otherwise bounce an approved user to the login screen).
+            // Only USER_UPDATED forces a fresh check (an admin may have changed
+            // approval); checkApproval keeps last-known-good on transient error.
+            await checkApproval(session.user.id, { force: event === 'USER_UPDATED' });
           } catch (err) {
             console.error('Error checking approval:', err);
-            setIsApproved(false);
+            // Keep whatever we already had rather than forcing a logout.
           }
         } else {
           setIsApproved(false);
