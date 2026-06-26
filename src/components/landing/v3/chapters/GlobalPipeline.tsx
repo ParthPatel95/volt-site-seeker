@@ -1,7 +1,9 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { Reveal, CountUp, staggerContainer, staggerItem } from '../scroll';
+import type { PipelineProject } from '@/data/advisory-pipeline';
 import {
   PIPELINE_PROJECTS,
   TOTAL_MW,
@@ -103,24 +105,43 @@ export function GlobalPipeline() {
           viewport={{ once: true, margin: '-80px' }}
           className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3"
         >
-          {SITES.map((p) => {
-            const energy = ENERGY_TYPE_COLORS[p.energyType];
-            return (
-              <motion.article
-                key={p.id}
-                variants={staggerItem}
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-colors duration-300 hover:border-slate-300"
-              >
-                {/* Cover image */}
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
-                    src={PIPELINE_IMAGES[p.imageKey]}
-                    alt={`${p.location}, ${p.country} — ${p.energyType} energy site`}
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  {/* Dark gradient for legibility + cinematic weight */}
+          {SITES.map((p) => (
+            <PipelineCard key={p.id} p={p} />
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// One project card with a gap-safe scroll parallax on its photo: the image is
+// oversized inside an overflow-hidden frame and drifts vertically as the card
+// passes through the viewport (transform-only → smooth). Also keeps the
+// stagger reveal-in and hover accents.
+function PipelineCard({ p }: { p: PipelineProject }) {
+  const ref = useRef<HTMLElement>(null);
+  const reduced = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], ['8%', '-8%']);
+  const energy = ENERGY_TYPE_COLORS[p.energyType];
+
+  return (
+    <motion.article
+      ref={ref}
+      variants={staggerItem}
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-colors duration-300 hover:border-slate-300"
+    >
+      {/* Cover image */}
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <motion.img
+          src={PIPELINE_IMAGES[p.imageKey]}
+          alt={`${p.location}, ${p.country} — ${p.energyType} energy site`}
+          style={reduced ? undefined : { y }}
+          className="absolute inset-x-0 top-[-12%] h-[124%] w-full object-cover will-change-transform"
+          loading="lazy"
+          decoding="async"
+        />
+        {/* Dark gradient for legibility + cinematic weight */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/45 to-[#060b16]/10" />
 
                   {/* Energy-type chip, colored from the shared palette */}
@@ -181,11 +202,6 @@ export function GlobalPipeline() {
                   className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 transition-transform duration-500 ease-out group-hover:scale-x-100"
                   style={{ backgroundColor: energy?.hex }}
                 />
-              </motion.article>
-            );
-          })}
-        </motion.div>
-      </div>
-    </section>
+    </motion.article>
   );
 }
