@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "https://esm.sh/resend@3.2.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface VerificationEmailRequest {
   email: string;
   user_id: string;
@@ -123,16 +124,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    const message = error instanceof Error ? error.message : 'Failed to send verification email';
-    return new Response(
-      JSON.stringify({ 
-        error: message 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Failed to send verification email', context: 'send-verification-email' });
   }
 });

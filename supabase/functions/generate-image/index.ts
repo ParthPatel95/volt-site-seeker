@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -29,9 +30,6 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error:', error)
-    return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred', details: error instanceof Error ? error.message : 'Unknown error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    return errorResponse(error, corsHeaders, { status: 500, message: 'An unexpected error occurred', context: 'generate-image' })
   }
 })

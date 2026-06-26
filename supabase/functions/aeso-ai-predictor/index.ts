@@ -309,7 +309,7 @@ Based on this data, provide predictions using the forecast_prices function.`;
     console.error('❌ AI Prediction Error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'AI prediction failed'
+      error: 'AI prediction failed'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

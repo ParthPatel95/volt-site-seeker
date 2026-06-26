@@ -367,9 +367,9 @@ ${historicalData ? `Last 5 hours prices: ${historicalData.slice(-5).map((d: any)
 
   } catch (error: any) {
     console.error('ML Predictor error:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       success: false,
-      error: error.message 
+      error: 'Internal server error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

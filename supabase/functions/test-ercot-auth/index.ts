@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -58,14 +59,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error('Test error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, context: 'test-ercot-auth' });
   }
 })
 

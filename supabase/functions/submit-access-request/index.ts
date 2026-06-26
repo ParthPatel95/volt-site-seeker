@@ -64,9 +64,9 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in submit-access-request function:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Failed to submit access request"
+      JSON.stringify({
+        success: false,
+        error: "Failed to submit access request"
       }),
       {
         status: 500,

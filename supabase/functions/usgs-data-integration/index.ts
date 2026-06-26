@@ -36,11 +36,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('USGS API Error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to fetch USGS data' 
+      JSON.stringify({
+        success: false,
+        error: 'Failed to fetch USGS data'
       }),
-      { 
+      {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

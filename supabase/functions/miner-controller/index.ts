@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireAdmin } from "../_shared/auth.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface HydroMiner {
   id: string;
   name: string;
@@ -706,9 +707,6 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error('[MinerController] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    });
+    return errorResponse(error, corsHeaders, { status: 500, context: 'miner-controller' });
   }
 });

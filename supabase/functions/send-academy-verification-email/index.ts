@@ -5,6 +5,7 @@ import { Resend } from "npm:resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface VerificationRequest {
   email: string;
   user_id: string;
@@ -185,15 +186,6 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Failed to send verification email' 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Failed to send verification email', context: 'send-academy-verification-email' });
   }
 });

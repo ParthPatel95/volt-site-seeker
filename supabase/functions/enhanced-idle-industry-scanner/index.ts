@@ -71,11 +71,11 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('Enhanced scanner error:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
+      JSON.stringify({
+        success: false,
+        error: 'Internal server error'
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
@@ -111,9 +111,9 @@ async function getSiteDetails(coordinates: any, siteName: string) {
   } catch (error: any) {
     console.error('Error fetching site details:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message,
+      JSON.stringify({
+        success: false,
+        error: 'Internal server error',
         details: null
       }),
       { 

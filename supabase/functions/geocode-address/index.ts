@@ -2,6 +2,7 @@
 // Avoids browser CORS / UA-block issues that made client-side geocoding fail.
 
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,8 +93,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(e, corsHeaders, { status: 500, context: 'geocode-address' });
   }
 });

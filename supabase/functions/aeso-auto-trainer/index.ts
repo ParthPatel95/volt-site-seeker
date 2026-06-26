@@ -99,8 +99,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Auto-trainer error:', error);
     return new Response(JSON.stringify({ 
-      success: false, 
-      error: error.message,
+      success: false,
+      error: 'Internal server error',
       timestamp: new Date().toISOString()
     }), {
       status: 500,

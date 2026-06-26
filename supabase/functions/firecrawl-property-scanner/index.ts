@@ -371,7 +371,7 @@ Return ONLY valid JSON, no markdown code fences.`;
     console.error('Scanner error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Scanner failed'
+      error: 'Internal server error'
     }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

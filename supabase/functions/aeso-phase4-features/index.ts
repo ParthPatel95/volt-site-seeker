@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Phase 4 feature calculation failed'
+        error: 'Internal server error'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

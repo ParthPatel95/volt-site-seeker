@@ -184,9 +184,9 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in api-key-management function:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Internal server error"
+      JSON.stringify({
+        success: false,
+        error: "Internal server error"
       }),
       {
         status: 500,

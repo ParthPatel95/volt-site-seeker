@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 // EIA API key now loaded from secrets — was previously hardcoded here in
 // source. (Audit-2026-06-25 P0.) ROTATE THE OLD KEY in your EIA account
 // before deploying — the literal that used to live here has been in git
@@ -57,13 +58,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('EIA integration error:', error)
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    return errorResponse(error, corsHeaders, { status: 500, context: 'eia-data-integration' })
   }
 })
 

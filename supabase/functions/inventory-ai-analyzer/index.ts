@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface ExtractedText {
   modelNumber?: string;
   serialNumber?: string;
@@ -1038,9 +1039,6 @@ Be thorough but conservative with estimates. If uncertain about anything, indica
 
   } catch (error) {
     console.error("Error in inventory-ai-analyzer:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: "Analysis failed", context: 'inventory-ai-analyzer' });
   }
 });

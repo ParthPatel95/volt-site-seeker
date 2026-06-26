@@ -261,7 +261,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: 'Internal server error',
       timestamp: new Date().toISOString()
     }), {
       status: 500,

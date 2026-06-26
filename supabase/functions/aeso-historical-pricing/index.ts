@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 // In-memory cache for 10-year historical data (keyed by uptimePercentage)
 interface CachedResponse {
   data: any;
@@ -421,13 +422,7 @@ Deno.serve(async (req) => {
       }
     }
     
-    return new Response(JSON.stringify({ 
-      error: errorMessage,
-      details: details
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, corsHeaders, { status: 500, message: errorMessage, context: 'aeso-historical-pricing' });
   }
 });
 

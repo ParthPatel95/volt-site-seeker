@@ -165,9 +165,9 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error in orchestrator:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        error: error.message 
+        error: 'Internal server error'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

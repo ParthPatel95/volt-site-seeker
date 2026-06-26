@@ -1,6 +1,7 @@
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
 import { corsHeaders } from '../_shared/cors.ts';
+import { errorResponse } from '../_shared/http.ts';
 
 // Send an internal notification email to the advisory team when a new
 // consulting inquiry is submitted. Called fire-and-forget from the Advisory
@@ -106,10 +107,6 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('notify-consulting-inquiry failed:', error);
-    const message = error instanceof Error ? error.message : 'Failed to send notification';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return errorResponse(error, corsHeaders, { status: 500, message: 'Failed to send notification', context: 'notify-consulting-inquiry' });
   }
 });

@@ -223,9 +223,10 @@ Deno.serve(async (req) => {
       errors: errors.length ? errors : undefined,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
+    console.error('[gem-listing-scanner]', e);
     return new Response(JSON.stringify({
       success: false,
-      error: e instanceof Error ? e.message : String(e),
+      error: 'Internal server error',
     }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireAdmin } from "../_shared/auth.ts";
+import { errorResponse } from '../_shared/http.ts';
 
 // Allowlist of fields a caller may set when creating/updating a shutdown
 // rule. ANY column not in this list — e.g. an internal status flag, an
@@ -451,9 +452,6 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('Automation Engine error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, corsHeaders, { status: 500, context: 'datacenter-automation-engine' });
   }
 });

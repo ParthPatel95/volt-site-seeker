@@ -200,9 +200,9 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('❌ Error in ercot-advanced-analytics:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message,
+      JSON.stringify({
+        success: false,
+        error: 'Internal server error',
         transmission_constraints: [],
         seven_day_forecast: [],
         market_participants: [],

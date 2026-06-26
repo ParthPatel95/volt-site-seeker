@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     if (error) {
       console.error("RPC calculate_enhanced_features_batch failed:", error);
       return new Response(
-        JSON.stringify({ success: false, error: error.message }),
+        JSON.stringify({ success: false, error: 'Internal server error' }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Error calculating enhanced features:", error);
     return new Response(
-      JSON.stringify({ success: false, error: (error as Error).message }),
+      JSON.stringify({ success: false, error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

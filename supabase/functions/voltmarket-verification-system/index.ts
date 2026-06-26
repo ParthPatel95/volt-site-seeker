@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 interface VerificationRequest {
   verificationType: 'identity' | 'company' | 'financial' | 'accredited_investor'
   submissionData: Record<string, any>
@@ -77,11 +78,7 @@ Deno.serve(async (req) => {
     return new Response('Not found', { status: 404, headers: corsHeaders })
 
   } catch (error) {
-    console.error('Verification system error:', error)
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return errorResponse(error, corsHeaders, { status: 400, context: 'voltmarket-verification-system' })
   }
 })
 

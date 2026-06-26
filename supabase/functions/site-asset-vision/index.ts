@@ -1,5 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts';
 import { requireCaller } from "../_shared/guard.ts";
+import { errorResponse } from '../_shared/http.ts';
 
 const GOOGLE_KEY = Deno.env.get('GOOGLE_MAPS_API_KEY')!;
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
@@ -87,6 +88,6 @@ Deno.serve(async (req) => {
       ...parsed,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return errorResponse(e, corsHeaders, { status: 200, context: 'site-asset-vision' });
   }
 });

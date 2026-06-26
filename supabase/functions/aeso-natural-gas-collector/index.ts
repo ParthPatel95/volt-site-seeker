@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message,
+        error: 'Internal server error',
         note: 'Real Henry Hub natural gas price data (proxy for AECO) is required from EIA API'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

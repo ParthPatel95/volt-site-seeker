@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 
 // NOTE: This function currently returns simulated detections only — the real ML
 // pipeline (substation_detector / transmission_line_detector / change_detector)
@@ -77,13 +78,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Satellite analysis error:', error)
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    return errorResponse(error, corsHeaders, { status: 500, context: 'satellite-analysis' })
   }
 })
 

@@ -214,7 +214,7 @@ serve(async (req) => {
       fullyDilutedMarketCap: 0,
       dominance: 0,
       error: true,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      errorMessage: 'Internal server error'
     };
     
     return new Response(

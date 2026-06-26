@@ -72,7 +72,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: false,
-      error: errorMessage,
+      error: 'Internal server error',
       duration_ms: Date.now() - startTime
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

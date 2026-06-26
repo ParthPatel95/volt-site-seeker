@@ -1,6 +1,7 @@
 import { corsHeaders } from '../_shared/cors.ts';
 import { requireCaller } from "../_shared/guard.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import { errorResponse } from '../_shared/http.ts';
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
@@ -161,9 +162,6 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('[OCR] Error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(error, corsHeaders, { status: 500, context: 'ocr-extract-text' });
   }
 });

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { errorResponse } from '../_shared/http.ts';
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -169,12 +170,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in get-folder-contents function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message ?? "Unexpected error" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      },
-    );
+    return errorResponse(error, corsHeaders, { status: 500, context: 'get-folder-contents' });
   }
 });
