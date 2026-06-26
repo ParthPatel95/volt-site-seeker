@@ -4,6 +4,7 @@
  */
 
 import html2canvas from 'html2canvas';
+import { sanitizeReportHtml } from '@/utils/sanitizeReportHtml';
 
 export interface PDFExportOptions {
   filename?: string;
@@ -150,7 +151,9 @@ export async function exportContainerToPDF(
   container.style.width = options.windowWidth ? `${options.windowWidth}px` : '1100px';
   container.style.backgroundColor = options.backgroundColor || '#ffffff';
   container.style.pointerEvents = 'none';
-  container.innerHTML = htmlContent;
+  // Sanitize before injecting into the live document — this div is in the
+  // parent origin, unlike the sandboxed iframe used for display. (Audit P0.)
+  container.innerHTML = sanitizeReportHtml(htmlContent);
   document.body.appendChild(container);
 
   try {
