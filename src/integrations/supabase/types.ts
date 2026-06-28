@@ -8236,6 +8236,24 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          bucket_key: string
+          hits: number
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          hits?: number
+          window_start: string
+        }
+        Update: {
+          bucket_key?: string
+          hits?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       regulatory_updates: {
         Row: {
           affected_sectors: string[] | null
@@ -13623,6 +13641,10 @@ export type Database = {
           success: boolean
           total_records: number
         }[]
+      }
+      check_rate_limit: {
+        Args: { p_key: string; p_max: number; p_window_seconds: number }
+        Returns: boolean
       }
       clean_expired_verification_tokens: { Args: never; Returns: undefined }
       count_aeso_raw_observations: {
