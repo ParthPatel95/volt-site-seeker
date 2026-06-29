@@ -4,7 +4,7 @@ import { Search, Wrench, Cpu, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PinnedChapter } from '../scroll';
 import { JourneyScene } from '../JourneyScene';
-import { HeroScene } from '../HeroScene';
+import EnergyToComputeScene3D from '../EnergyToComputeScene3D';
 import { TOTAL_MW, UNDER_DEV_MW } from '@/data/advisory-pipeline';
 
 // EnergyToCompute — the thesis chapter. A tall pinned runway scrubs through a
@@ -293,10 +293,11 @@ export function EnergyToCompute(): ReactNode {
               </div>
             </div>
 
-            {/* Animated payoff — a live datacenter aisle (the model's output) */}
+            {/* Animated payoff — a real WebGL 3D scene: orange "hidden energy"
+                streams in and lights up a teal compute lattice (the model's output) */}
             <div className="relative">
               <div className="relative aspect-[5/4] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_80px_-32px_rgba(15,23,42,0.25)] sm:aspect-[16/10]">
-                <HeroScene className="absolute inset-0 h-full w-full" />
+                <EnergyToComputeScene3D className="absolute inset-0 h-full w-full" />
                 <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-slate-900/5" />
                 <span className="absolute left-5 top-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-600 ring-1 ring-slate-900/5 backdrop-blur-sm">
                   <span className="h-1.5 w-1.5 rounded-full bg-watt-trust" />
