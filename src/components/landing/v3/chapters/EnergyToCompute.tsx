@@ -4,6 +4,7 @@ import { Search, Wrench, Cpu, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PinnedChapter } from '../scroll';
 import { JourneyScene } from '../JourneyScene';
+import { HeroScene } from '../HeroScene';
 import { TOTAL_MW, UNDER_DEV_MW } from '@/data/advisory-pipeline';
 
 // EnergyToCompute — the thesis chapter. A tall pinned runway scrubs through a
@@ -262,31 +263,46 @@ export function EnergyToCompute(): ReactNode {
           with a CTA. Lives outside the runway so it reads as the payoff. */}
       <div className="relative py-24 lg:py-32">
         <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16">
-          <div className="max-w-3xl">
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-              Hidden energy in.{' '}
-              <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
-                Productive compute out.
-              </span>
-            </h2>
-            <p className="mt-5 text-base leading-relaxed text-slate-600 lg:text-lg">
-              We built proprietary software and methods to find the best megawatts first,
-              then develop and operate them as the datacenters behind modern AI. That is the
-              whole model — source, develop, operate.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link
-                to="/advisory"
-                className="inline-flex h-12 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
-              >
-                Work with us <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-              <Link
-                to="/app"
-                className="inline-flex h-12 items-center rounded-full border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
-              >
-                See VoltScout
-              </Link>
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
+            {/* Copy */}
+            <div className="max-w-xl">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                Hidden energy in.{' '}
+                <span className="bg-gradient-to-r from-watt-bitcoin to-watt-trust bg-clip-text text-transparent">
+                  Productive compute out.
+                </span>
+              </h2>
+              <p className="mt-5 text-base leading-relaxed text-slate-600 lg:text-lg">
+                We built proprietary software and methods to find the best megawatts first,
+                then develop and operate them as the datacenters behind modern AI. That is the
+                whole model — source, develop, operate.
+              </p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link
+                  to="/advisory"
+                  className="inline-flex h-12 items-center rounded-full bg-slate-900 px-7 text-base font-semibold text-white transition-colors hover:bg-watt-bitcoin"
+                >
+                  Work with us <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+                <Link
+                  to="/app"
+                  className="inline-flex h-12 items-center rounded-full border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  See VoltScout
+                </Link>
+              </div>
+            </div>
+
+            {/* Animated payoff — a live datacenter aisle (the model's output) */}
+            <div className="relative">
+              <div className="relative aspect-[5/4] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_80px_-32px_rgba(15,23,42,0.25)] sm:aspect-[16/10]">
+                <HeroScene className="absolute inset-0 h-full w-full" />
+                <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-slate-900/5" />
+                <span className="absolute left-5 top-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-600 ring-1 ring-slate-900/5 backdrop-blur-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-watt-trust" />
+                  Datacenters behind modern AI
+                </span>
+              </div>
             </div>
           </div>
         </div>
