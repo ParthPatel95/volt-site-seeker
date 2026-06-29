@@ -4,34 +4,114 @@ import * as THREE from 'three';
 
 /**
  * DatacenterScene — a realistic 3D server-hall flythrough (react-three-fiber v8
- * + three r160, no drei / no postprocessing). Two rows of dark rack cabinets
- * form an aisle that recedes to a vanishing point; the aisle-facing fronts are
- * covered in stacked server units with glowing status LEDs; overhead light
- * strips and cool ambient + a warm brand accent light the hall. The racks
- * scroll continuously toward the camera (a seamless dolly down the aisle).
+ * + three r160, no drei / no postprocessing). Two rows of instanced rack
+ * cabinets form an aisle that recedes to a vanishing point; the aisle-facing
+ * fronts are stacked server units with glowing status LEDs; overhead light
+ * strips and cool ambient + a warm brand accent light the hall, which scrolls
+ * continuously toward the camera (a seamless dolly down the aisle).
  *
- * Atmospheric/dark by design (that is what a real datacenter looks like); it
- * sits inside a framed panel on the light page like a window into the hall.
- * Reduced-motion safe (one representative static frame, frameloop="demand").
+ * Two looks:
+ *  - "dark"  : atmospheric server hall (sits inside a framed panel like a window).
+ *  - "light" : a clean, bright white datacenter whose background fades into the
+ *              light page — used full-bleed behind the hero copy.
+ *
+ * Reduced-motion safe (one representative static frame, frameloop="demand"),
+ * pauses off-screen via IntersectionObserver, dpr-capped.
  */
 
-// ── Tunables ────────────────────────────────────────────────────────────────
-const PER_SIDE = 16; //   rack cabinets per row
-const SPACING = 1.15; //  z-gap between racks
-const AISLE_HALF = 1.25; // half-width of the walking aisle
+const PER_SIDE = 16;
+const SPACING = 1.15;
+const AISLE_HALF = 1.25;
 const RACK_W = 0.78;
 const RACK_H = 2.05;
 const RACK_D = 1.05;
-const HALL = PER_SIDE * SPACING; // total scroll length before recycle
-const Z_NEAR = 3.5; //    nearest a rack gets before wrapping to the back
-const SPEED = 1.05; //    world units / second the hall scrolls toward camera
+const HALL = PER_SIDE * SPACING;
+const Z_NEAR = 3.5;
+const SPEED = 1.05;
 
 type Accent = 'orange' | 'teal';
+type Variant = 'dark' | 'light';
 const ACCENTS: Record<Accent, string> = { orange: '#F7931A', teal: '#10a5c7' };
 
-// A procedurally-drawn rack-front texture: stacked 1U server units, vent grilles,
-// drive bays and rows of coloured status LEDs. Used (emissive) on the inner face.
-function makeRackTexture(accentHex: string): THREE.CanvasTexture {
+interface Palette {
+  bg: [number, number, number];
+  fog: { color: string; near: number; far: number };
+  body: string;
+  bodyRough: number;
+  bodyMetal: number;
+  floor: string;
+  floorRough: number;
+  floorMetal: number;
+  strip: string;
+  ambient: { color: string; intensity: number };
+  hemi: { sky: string; ground: string; intensity: number };
+  dir: { color: string; intensity: number };
+  accentLight: number;
+  coolLight: { color: string; intensity: number };
+  tex: {
+    panel: string;
+    slabA: string;
+    slabB: string;
+    vent: string;
+    bezel: string;
+    handle: string;
+  };
+}
+
+const PALETTES: Record<Variant, Palette> = {
+  dark: {
+    bg: [0.03, 0.05, 0.09],
+    fog: { color: '#070b13', near: 6, far: 22 },
+    body: '#0b0f17',
+    bodyRough: 0.55,
+    bodyMetal: 0.5,
+    floor: '#070a11',
+    floorRough: 0.32,
+    floorMetal: 0.6,
+    strip: '#cfe6ff',
+    ambient: { color: '#5b7ea8', intensity: 0.45 },
+    hemi: { sky: '#9fc6ff', ground: '#0a0e16', intensity: 0.5 },
+    dir: { color: '#bcd6ff', intensity: 0.6 },
+    accentLight: 6,
+    coolLight: { color: '#9fc0ff', intensity: 8 },
+    tex: {
+      panel: '#0c111b',
+      slabA: '#161d2b',
+      slabB: '#111825',
+      vent: '#0a0e16',
+      bezel: 'rgba(255,255,255,0.05)',
+      handle: 'rgba(255,255,255,0.05)',
+    },
+  },
+  light: {
+    bg: [0.965, 0.976, 0.988], // ~#f6f9fc — matches the light page
+    fog: { color: '#f6f9fc', near: 7, far: 27 },
+    body: '#c2cddd',
+    bodyRough: 0.5,
+    bodyMetal: 0.25,
+    floor: '#e6ebf3',
+    floorRough: 0.5,
+    floorMetal: 0.2,
+    strip: '#eaf2ff',
+    ambient: { color: '#ffffff', intensity: 0.95 },
+    hemi: { sky: '#ffffff', ground: '#c2ccdd', intensity: 0.85 },
+    dir: { color: '#ffffff', intensity: 0.75 },
+    accentLight: 3,
+    coolLight: { color: '#e3edff', intensity: 3 },
+    tex: {
+      panel: '#cdd6e3',
+      slabA: '#e7ecf4',
+      slabB: '#dbe2ec',
+      vent: '#aab4c4',
+      bezel: 'rgba(255,255,255,0.6)',
+      handle: 'rgba(15,23,42,0.14)',
+    },
+  },
+};
+
+// Procedurally-drawn rack-front texture: stacked 1U server units, vent grilles,
+// drive bays and rows of coloured status LEDs.
+function makeRackTexture(accentHex: string, pal: Palette): THREE.CanvasTexture {
   const W = 128;
   const H = 512;
   const cv = document.createElement('canvas');
@@ -39,27 +119,22 @@ function makeRackTexture(accentHex: string): THREE.CanvasTexture {
   cv.height = H;
   const ctx = cv.getContext('2d')!;
 
-  // dark cabinet face
-  ctx.fillStyle = '#0c111b';
+  ctx.fillStyle = pal.tex.panel;
   ctx.fillRect(0, 0, W, H);
 
-  const LED = ['#37d67a', '#ffb020', '#21b3d6', accentHex]; // green / amber / cyan / brand
+  const LED = ['#37d67a', '#ffb020', '#21b3d6', accentHex];
   const units = 26;
   const uh = H / units;
   for (let i = 0; i < units; i++) {
     const y = i * uh;
-    // server chassis slab
-    ctx.fillStyle = i % 2 === 0 ? '#161d2b' : '#111825';
+    ctx.fillStyle = i % 2 === 0 ? pal.tex.slabA : pal.tex.slabB;
     ctx.fillRect(4, y + 1, W - 8, uh - 2);
-    // thin bezel highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillStyle = pal.tex.bezel;
     ctx.fillRect(4, y + 1, W - 8, 1);
 
-    // vent grille block (right side)
-    ctx.fillStyle = '#0a0e16';
+    ctx.fillStyle = pal.tex.vent;
     for (let v = 0; v < 5; v++) ctx.fillRect(58 + v * 12, y + 4, 7, uh - 8);
 
-    // a few status LEDs (left side) — bright, self-lit
     const n = 2 + ((i * 7) % 3);
     for (let k = 0; k < n; k++) {
       const c = LED[(i + k) % LED.length];
@@ -71,8 +146,7 @@ function makeRackTexture(accentHex: string): THREE.CanvasTexture {
       ctx.fill();
     }
     ctx.shadowBlur = 0;
-    // drive-bay handle line
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillStyle = pal.tex.handle;
     ctx.fillRect(40, y + uh / 2 - 1, 12, 2);
   }
 
@@ -83,13 +157,14 @@ function makeRackTexture(accentHex: string): THREE.CanvasTexture {
   return tex;
 }
 
-// One InstancedMesh of rack bodies + one of glowing front panels, scrolled.
 function Racks({
   accentHex,
+  pal,
   animate,
   runningRef,
 }: {
   accentHex: string;
+  pal: Palette;
   animate: boolean;
   runningRef: React.MutableRefObject<boolean>;
 }) {
@@ -97,11 +172,10 @@ function Racks({
   const faceRef = useRef<THREE.InstancedMesh>(null);
   const { invalidate } = useThree();
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const tex = useMemo(() => makeRackTexture(accentHex), [accentHex]);
+  const tex = useMemo(() => makeRackTexture(accentHex, pal), [accentHex, pal]);
   useEffect(() => () => tex.dispose(), [tex]);
 
   const COUNT = PER_SIDE * 2;
-  // static per-rack layout: side (-1 left / +1 right), index along the row.
   const layout = useMemo(
     () =>
       Array.from({ length: COUNT }, (_, i) => {
@@ -119,19 +193,16 @@ function Racks({
     const scroll = (t * SPEED) % SPACING;
     for (let i = 0; i < COUNT; i++) {
       const { side, baseZ } = layout[i];
-      // wrap each rack into [Z_NEAR - HALL, Z_NEAR]
       let z = baseZ + scroll + Z_NEAR;
-      z = ((z - Z_NEAR) % HALL + HALL) % HALL; // 0..HALL
-      z = Z_NEAR - z; // Z_NEAR (near) .. Z_NEAR-HALL (far)
+      z = (((z - Z_NEAR) % HALL) + HALL) % HALL;
+      z = Z_NEAR - z;
 
-      // body
       dummy.position.set(side * AISLE_HALF, 0, z);
       dummy.rotation.set(0, 0, 0);
       dummy.scale.set(RACK_W, RACK_H, RACK_D);
       dummy.updateMatrix();
       body.setMatrixAt(i, dummy.matrix);
 
-      // glowing front panel on the aisle-facing side (normal toward x=0)
       dummy.position.set(side * (AISLE_HALF - RACK_W / 2 - 0.012), 0, z);
       dummy.rotation.set(0, side === -1 ? Math.PI / 2 : -Math.PI / 2, 0);
       dummy.scale.set(RACK_D * 0.96, RACK_H * 0.97, 1);
@@ -155,35 +226,31 @@ function Racks({
 
   return (
     <group>
-      <instancedMesh ref={bodyRef} args={[undefined as never, undefined as never, COUNT]} castShadow>
+      <instancedMesh ref={bodyRef} args={[undefined as never, undefined as never, COUNT]}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="#0b0f17" roughness={0.55} metalness={0.5} />
+        <meshStandardMaterial color={pal.body} roughness={pal.bodyRough} metalness={pal.bodyMetal} />
       </instancedMesh>
       <instancedMesh ref={faceRef} args={[undefined as never, undefined as never, COUNT]}>
         <planeGeometry args={[1, 1]} />
-        {/* self-lit server fronts: the texture carries the glow */}
         <meshBasicMaterial map={tex} toneMapped={false} />
       </instancedMesh>
     </group>
   );
 }
 
-// Overhead linear light strips + floor for the hall context.
-function Hall() {
+function Hall({ pal }: { pal: Palette }) {
   const strips = [];
   for (let i = 0; i < 7; i++) strips.push(-i * 2.4 + 2);
   return (
     <group>
-      {/* floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RACK_H / 2, -6]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -RACK_H / 2, -6]}>
         <planeGeometry args={[14, 48]} />
-        <meshStandardMaterial color="#070a11" roughness={0.32} metalness={0.6} />
+        <meshStandardMaterial color={pal.floor} roughness={pal.floorRough} metalness={pal.floorMetal} />
       </mesh>
-      {/* ceiling light strips running down the aisle */}
       {strips.map((z, i) => (
         <mesh key={i} position={[0, RACK_H / 2 + 0.05, z]}>
           <boxGeometry args={[0.5, 0.04, 1.1]} />
-          <meshBasicMaterial color="#cfe6ff" toneMapped={false} />
+          <meshBasicMaterial color={pal.strip} toneMapped={false} />
         </mesh>
       ))}
     </group>
@@ -192,26 +259,27 @@ function Hall() {
 
 function Rig({
   accentHex,
+  pal,
   animate,
   runningRef,
 }: {
   accentHex: string;
+  pal: Palette;
   animate: boolean;
   runningRef: React.MutableRefObject<boolean>;
 }) {
   const accent = useMemo(() => new THREE.Color(accentHex), [accentHex]);
   return (
     <>
-      <color attach="background" args={[0.03, 0.05, 0.09]} />
-      <fog attach="fog" args={['#070b13', 6, 22]} />
-      <ambientLight intensity={0.45} color="#5b7ea8" />
-      <hemisphereLight args={['#9fc6ff', '#0a0e16', 0.5]} />
-      {/* cool key + warm brand accent */}
-      <directionalLight position={[3, 6, 4]} intensity={0.6} color="#bcd6ff" />
-      <pointLight position={[0, 1.2, 2]} intensity={6} distance={12} color={accent} />
-      <pointLight position={[0, 1.4, -6]} intensity={8} distance={16} color="#9fc0ff" />
-      <Hall />
-      <Racks accentHex={accentHex} animate={animate} runningRef={runningRef} />
+      <color attach="background" args={pal.bg} />
+      <fog attach="fog" args={[pal.fog.color, pal.fog.near, pal.fog.far]} />
+      <ambientLight intensity={pal.ambient.intensity} color={pal.ambient.color} />
+      <hemisphereLight args={[pal.hemi.sky, pal.hemi.ground, pal.hemi.intensity]} />
+      <directionalLight position={[3, 6, 4]} intensity={pal.dir.intensity} color={pal.dir.color} />
+      <pointLight position={[0, 1.2, 2]} intensity={pal.accentLight} distance={12} color={accent} />
+      <pointLight position={[0, 1.4, -6]} intensity={pal.coolLight.intensity} distance={16} color={pal.coolLight.color} />
+      <Hall pal={pal} />
+      <Racks accentHex={accentHex} pal={pal} animate={animate} runningRef={runningRef} />
     </>
   );
 }
@@ -219,9 +287,11 @@ function Rig({
 export default function DatacenterScene({
   className,
   accent = 'teal',
+  variant = 'dark',
 }: {
   className?: string;
   accent?: Accent;
+  variant?: Variant;
 }) {
   const [reduced, setReduced] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -253,6 +323,7 @@ export default function DatacenterScene({
 
   const animate = !reduced && visible;
   const accentHex = ACCENTS[accent];
+  const pal = PALETTES[variant];
 
   return (
     <div ref={wrapRef} className={className} aria-hidden>
@@ -264,7 +335,7 @@ export default function DatacenterScene({
         style={{ width: '100%', height: '100%' }}
         onCreated={({ camera }) => camera.lookAt(0, 0.1, -8)}
       >
-        <Rig accentHex={accentHex} animate={animate} runningRef={runningRef} />
+        <Rig accentHex={accentHex} pal={pal} animate={animate} runningRef={runningRef} />
       </Canvas>
     </div>
   );

@@ -3,15 +3,14 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { SplitWords, CountUp, Magnetic } from './scroll';
-import { HeroScene } from './HeroScene';
+import DatacenterScene from './DatacenterScene';
 import { TOTAL_MW, UNDER_DEV_MW, COUNTRIES, PIPELINE_PROJECTS } from '@/data/advisory-pipeline';
 
-// Living hero: a seamless, continuously-looping canvas animation (HeroScene)
-// fills the whole first viewport — a slow glide down a datacenter aisle with
-// twinkling racks, energy streaks flowing along the rails, and a neural
-// constellation pulsing overhead. The copy sits over it on a soft light wash,
-// and on scroll the copy lifts + the scene parallaxes gently. GPU-cheap (2D
-// canvas, no WebGL) and reduced-motion safe.
+// Living hero: a realistic 3D datacenter (DatacenterScene, "light" variant)
+// fills the whole first viewport — a seamless flythrough down a bright white
+// server aisle whose far end dissolves into the light page. The copy sits over
+// it on a soft light wash, and on scroll the copy lifts + the scene parallaxes
+// gently. WebGL (react-three-fiber) and reduced-motion safe.
 
 const STATS = [
   { value: TOTAL_MW, suffix: ' MW', label: 'Global pipeline' },
@@ -43,7 +42,7 @@ export function HeroV3() {
         className="pointer-events-none absolute inset-0"
         style={reduced ? undefined : { y: sceneY, scale: sceneScale }}
       >
-        <HeroScene className="h-full w-full" />
+        <DatacenterScene className="h-full w-full" variant="light" accent="orange" />
       </motion.div>
 
       {/* Readability washes: brighten the left where the copy sits and fade the
