@@ -4,7 +4,7 @@ import {
   ArrowRight, Bitcoin, Cpu, Thermometer, Activity, ShieldCheck, Layers, Check,
 } from 'lucide-react';
 import { Reveal, SplitWords, CountUp } from '../scroll';
-import { JourneyScene } from '../JourneyScene';
+import DatacenterScene from '../DatacenterScene';
 
 // CryptoHpc — "Two workloads on the same power." A balanced side-by-side of the
 // two compute tenants our hosted megawatts serve: Bitcoin mining (ASIC) and
@@ -85,11 +85,11 @@ function WorkloadCard({ workload }: { workload: Workload }) {
         a.border,
       ].join(' ')}
     >
-      {/* Animated header — a live compute floor (no static photo) */}
+      {/* Animated header — a realistic 3D datacenter aisle */}
       <div className="relative aspect-[16/10] overflow-hidden border-b border-slate-200">
-        <JourneyScene accent={a.hex} intensity={1} className="absolute inset-0 h-full w-full" />
-        {/* light wash so the label strip below stays legible */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-white via-white/85 to-transparent" />
+        <DatacenterScene accent={workload.accent === 'bitcoin' ? 'orange' : 'teal'} className="absolute inset-0 h-full w-full" />
+        {/* dark wash so the label strip reads over the atmospheric scene */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#070b13] via-[#070b13]/70 to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 p-6 sm:p-8">
           <span
@@ -104,7 +104,7 @@ function WorkloadCard({ workload }: { workload: Workload }) {
             <div className={['text-[11px] font-medium uppercase tracking-[0.18em]', a.text].join(' ')}>
               {workload.kicker}
             </div>
-            <div className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+            <div className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
               {workload.title}
             </div>
           </div>
