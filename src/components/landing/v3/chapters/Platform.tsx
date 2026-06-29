@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Gem, Map as MapIcon, BarChart3, Activity } from 'lucide-react';
 import { Reveal, SplitWords, staggerContainer, staggerItem } from '../scroll';
-import DatacenterScene from '../DatacenterScene';
+import DiscoveryScene from '../DiscoveryScene';
 import { GridFlowScene } from '../GridFlowScene';
 
 // Platform — VoltScout, the proprietary software edge. Three alternating
@@ -283,7 +283,7 @@ export function Platform(): ReactNode {
             feature={FEATURES[0]}
             media={
               <ScenePlate>
-                <DatacenterScene className="absolute inset-0 h-full w-full" accent="teal" />
+                <DiscoveryScene className="absolute inset-0 h-full w-full" />
               </ScenePlate>
             }
           />

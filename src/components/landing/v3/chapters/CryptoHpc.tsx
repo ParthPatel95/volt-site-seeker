@@ -4,7 +4,8 @@ import {
   ArrowRight, Bitcoin, Cpu, Thermometer, Activity, ShieldCheck, Layers, Check,
 } from 'lucide-react';
 import { Reveal, SplitWords, CountUp } from '../scroll';
-import DatacenterScene from '../DatacenterScene';
+import MiningScene from '../MiningScene';
+import ImmersionScene from '../ImmersionScene';
 
 // CryptoHpc — "Two workloads on the same power." A balanced side-by-side of the
 // two compute tenants our hosted megawatts serve: Bitcoin mining (ASIC) and
@@ -85,9 +86,14 @@ function WorkloadCard({ workload }: { workload: Workload }) {
         a.border,
       ].join(' ')}
     >
-      {/* Animated header — a realistic 3D datacenter aisle */}
+      {/* Animated header — workload-specific: a mining farm (spinning ASIC fans)
+          for Bitcoin, immersion-cooled tanks for AI/HPC */}
       <div className="relative aspect-[16/10] overflow-hidden border-b border-slate-200">
-        <DatacenterScene accent={workload.accent === 'bitcoin' ? 'orange' : 'teal'} className="absolute inset-0 h-full w-full" />
+        {workload.accent === 'bitcoin' ? (
+          <MiningScene className="absolute inset-0 h-full w-full" />
+        ) : (
+          <ImmersionScene className="absolute inset-0 h-full w-full" />
+        )}
         {/* dark wash so the label strip reads over the atmospheric scene */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#070b13] via-[#070b13]/70 to-transparent" />
 
