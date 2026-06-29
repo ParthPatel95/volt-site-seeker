@@ -9,7 +9,7 @@ import {
   staggerItem,
 } from '../scroll';
 import { UNDER_DEV_MW } from '@/data/advisory-pipeline';
-import { GridFlowScene } from '../GridFlowScene';
+import TransmissionScene from '../TransmissionScene';
 
 // Chapter: "Power-first." The differentiator thesis — securing power and
 // interconnection first beats everyone chasing the same fixed sites. A
@@ -58,7 +58,7 @@ export function PowerFirst() {
                 {/* Animated single-line diagram — energized interconnection,
                     in place of the static substation photo. */}
                 <div className="relative aspect-[4/5] w-full sm:aspect-[5/6] lg:aspect-[4/5]">
-                  <GridFlowScene accent="#10a5c7" className="absolute inset-0 h-full w-full" />
+                  <TransmissionScene className="absolute inset-0 h-full w-full" />
                 </div>
 
                 {/* Floating metric plate, anchored to the framed panel. */}
