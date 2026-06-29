@@ -2,9 +2,9 @@ import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Gem, Map as MapIcon, BarChart3, Activity } from 'lucide-react';
-import { Reveal, SplitWords, Parallax, staggerContainer, staggerItem } from '../scroll';
-import nocInterior from '@/assets/datacenter-noc-interior.jpg';
-import substation from '@/assets/datacenter-substation.jpg';
+import { Reveal, SplitWords, staggerContainer, staggerItem } from '../scroll';
+import { JourneyScene } from '../JourneyScene';
+import { GridFlowScene } from '../GridFlowScene';
 
 // Platform — VoltScout, the proprietary software edge. Three alternating
 // feature rows (copy ↔ media) re-present the real v2 PlatformSection capability
@@ -239,15 +239,15 @@ function FeatureRow({
   );
 }
 
-function PhotoPlate({ src, alt, speed }: { src: string; alt: string; speed: number }) {
+// A framed 4:3 plate that hosts an animated scene instead of a static photo.
+function ScenePlate({ children }: { children: ReactNode }) {
   return (
-    <Parallax speed={speed} className="overflow-hidden rounded-3xl border border-slate-200 shadow-[0_30px_80px_-32px_rgba(15,23,42,0.25)]">
-      <div className="relative aspect-[4/3] w-full">
-        <img src={src} alt={alt} className="absolute inset-0 h-full w-full scale-[1.08] object-cover" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/20 to-transparent" />
-        <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl" />
+    <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-[0_30px_80px_-32px_rgba(15,23,42,0.25)]">
+      <div className="relative aspect-[4/3] w-full bg-white">
+        {children}
+        <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-slate-900/5" />
       </div>
-    </Parallax>
+    </div>
   );
 }
 
@@ -281,7 +281,11 @@ export function Platform(): ReactNode {
         <div className="mt-20 space-y-24 lg:mt-28 lg:space-y-32">
           <FeatureRow
             feature={FEATURES[0]}
-            media={<PhotoPlate src={nocInterior} alt="VoltScout network operations centre" speed={64} />}
+            media={
+              <ScenePlate>
+                <JourneyScene accent="#10a5c7" intensity={1} className="absolute inset-0 h-full w-full" />
+              </ScenePlate>
+            }
           />
           <FeatureRow
             feature={FEATURES[1]}
@@ -290,7 +294,11 @@ export function Platform(): ReactNode {
           />
           <FeatureRow
             feature={FEATURES[2]}
-            media={<PhotoPlate src={substation} alt="Grid substation feeding a datacenter" speed={64} />}
+            media={
+              <ScenePlate>
+                <GridFlowScene accent="#10a5c7" className="absolute inset-0 h-full w-full" />
+              </ScenePlate>
+            }
           />
         </div>
 

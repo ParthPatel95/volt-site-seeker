@@ -4,13 +4,12 @@ import { Link } from 'react-router-dom';
 import {
   Reveal,
   SplitWords,
-  Parallax,
   CountUp,
   staggerContainer,
   staggerItem,
 } from '../scroll';
 import { UNDER_DEV_MW } from '@/data/advisory-pipeline';
-import substationImg from '@/assets/grid-transmission-substation.jpg';
+import { GridFlowScene } from '../GridFlowScene';
 
 // Chapter: "Power-first." The differentiator thesis — securing power and
 // interconnection first beats everyone chasing the same fixed sites. A
@@ -55,24 +54,14 @@ export function PowerFirst() {
           {/* ── Media column — parallaxed substation in a framed plate ─────── */}
           <div className="lg:sticky lg:top-24 lg:self-start">
             <Reveal y={28}>
-              <div className="relative overflow-hidden rounded-3xl ring-1 ring-slate-200 shadow-sm">
-                {/* The aspect box lives INSIDE the parallax so it carries its own
-                    height; the image absolutely fills it (so it always shows). */}
-                <Parallax speed={44} axis="y">
-                  <div className="relative aspect-[4/5] w-full sm:aspect-[5/6] lg:aspect-[4/5]">
-                    <img
-                      src={substationImg}
-                      alt="High-voltage transmission substation feeding a WattByte facility"
-                      className="absolute inset-0 h-full w-full scale-[1.08] object-cover"
-                      loading="lazy"
-                    />
-                    {/* Tone the photo into the page palette. */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/25 to-transparent" />
-                    <div className="pointer-events-none absolute inset-0 bg-watt-trust/[0.06] mix-blend-overlay" />
-                  </div>
-                </Parallax>
+              <div className="relative overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200 shadow-sm">
+                {/* Animated single-line diagram — energized interconnection,
+                    in place of the static substation photo. */}
+                <div className="relative aspect-[4/5] w-full sm:aspect-[5/6] lg:aspect-[4/5]">
+                  <GridFlowScene accent="#10a5c7" className="absolute inset-0 h-full w-full" />
+                </div>
 
-                {/* Floating metric plate, anchored to the framed image. */}
+                {/* Floating metric plate, anchored to the framed panel. */}
                 <div className="absolute inset-x-5 bottom-5 z-10 sm:inset-x-6 sm:bottom-6">
                   <div className="rounded-2xl border border-slate-200 bg-white/85 px-5 py-4 shadow-sm backdrop-blur-md">
                     <div className="flex items-end gap-2">

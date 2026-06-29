@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { PinnedChapter } from '../scroll';
 import { JourneyScene } from '../JourneyScene';
 import { TOTAL_MW, UNDER_DEV_MW } from '@/data/advisory-pipeline';
-import gridSubstation from '@/assets/grid-transmission-substation.jpg';
 
 // EnergyToCompute — the thesis chapter. A tall pinned runway scrubs through a
 // three-beat sequence as you scroll: (1) stranded power sitting idle, (2)
@@ -73,17 +72,9 @@ const BEATS: Beat[] = [
 function Scene({ progress }: { progress: MotionValue<number> }) {
   // The journey rail fills across the full scrub.
   const railFill = useTransform(progress, [0, 1], ['0%', '100%']);
-  // A faint background image drifts vertically as the chapter scrubs.
-  const bgY = useTransform(progress, [0, 1], ['-6%', '6%']);
 
   return (
     <div className="relative h-full w-full bg-[#f8fafc]">
-      {/* faint, slow-drifting establishing image behind everything */}
-      <motion.div
-        className="absolute inset-0 scale-110 bg-cover bg-center opacity-[0.06]"
-        style={{ backgroundImage: `url(${gridSubstation})`, y: bgY }}
-        aria-hidden="true"
-      />
       <div
         className="absolute inset-0 bg-gradient-to-b from-[#f8fafc] via-[#f8fafc]/70 to-[#f8fafc]"
         aria-hidden="true"

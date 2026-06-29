@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight, Bitcoin, Cpu, Thermometer, Activity, ShieldCheck, Layers, Check,
 } from 'lucide-react';
-import { Reveal, SplitWords, CountUp, Parallax } from '../scroll';
-import asicMinersImg from '@/assets/asic-miners-powered.jpg';
-import immersionImg from '@/assets/datacenter-immersion.jpg';
+import { Reveal, SplitWords, CountUp } from '../scroll';
+import { JourneyScene } from '../JourneyScene';
 
 // CryptoHpc — "Two workloads on the same power." A balanced side-by-side of the
 // two compute tenants our hosted megawatts serve: Bitcoin mining (ASIC) and
@@ -21,8 +20,6 @@ interface Workload {
   id: string;
   accent: Accent;
   icon: typeof Bitcoin;
-  image: string;
-  imageAlt: string;
   kicker: string;
   title: string;
   pitch: string;
@@ -49,8 +46,6 @@ const WORKLOADS: Workload[] = [
     id: 'mining',
     accent: 'bitcoin',
     icon: Bitcoin,
-    image: asicMinersImg,
-    imageAlt: 'Racks of powered ASIC Bitcoin miners on a hosted mining floor',
     kicker: 'Bitcoin mining',
     title: 'ASIC',
     pitch:
@@ -65,8 +60,6 @@ const WORKLOADS: Workload[] = [
     id: 'hpc',
     accent: 'trust',
     icon: Cpu,
-    image: immersionImg,
-    imageAlt: 'Immersion-cooled datacenter tanks running dense AI and HPC compute',
     kicker: 'AI & HPC',
     title: 'Accelerated compute',
     pitch:
@@ -92,23 +85,11 @@ function WorkloadCard({ workload }: { workload: Workload }) {
         a.border,
       ].join(' ')}
     >
-      {/* Image header */}
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <Parallax speed={28} className="absolute inset-0">
-          <img
-            src={workload.image}
-            alt={workload.imageAlt}
-            loading="lazy"
-            className="h-[124%] w-full -translate-y-[6%] object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-          />
-        </Parallax>
-        {/* legibility wash, fading into the card body */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/35 to-[#060b16]/10" />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 opacity-30 mix-blend-screen"
-          style={{ background: `linear-gradient(to top, ${a.hex}, transparent)` }}
-          aria-hidden="true"
-        />
+      {/* Animated header — a live compute floor (no static photo) */}
+      <div className="relative aspect-[16/10] overflow-hidden border-b border-slate-200">
+        <JourneyScene accent={a.hex} intensity={1} className="absolute inset-0 h-full w-full" />
+        {/* light wash so the label strip below stays legible */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-white via-white/85 to-transparent" />
 
         <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 p-6 sm:p-8">
           <span
@@ -123,7 +104,7 @@ function WorkloadCard({ workload }: { workload: Workload }) {
             <div className={['text-[11px] font-medium uppercase tracking-[0.18em]', a.text].join(' ')}>
               {workload.kicker}
             </div>
-            <div className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            <div className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
               {workload.title}
             </div>
           </div>
