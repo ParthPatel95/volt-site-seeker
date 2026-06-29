@@ -3,11 +3,9 @@ import { motion, useTransform, type MotionValue } from 'framer-motion';
 import { Search, Wrench, Cpu, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PinnedChapter } from '../scroll';
+import { JourneyScene } from '../JourneyScene';
 import { TOTAL_MW, UNDER_DEV_MW } from '@/data/advisory-pipeline';
-import aesoGridHero from '@/assets/aeso-grid-hero.jpg';
 import gridSubstation from '@/assets/grid-transmission-substation.jpg';
-import albertaAerial from '@/assets/alberta-facility-aerial.jpg';
-import datacenterNoc from '@/assets/datacenter-noc-interior.jpg';
 
 // EnergyToCompute — the thesis chapter. A tall pinned runway scrubs through a
 // three-beat sequence as you scroll: (1) stranded power sitting idle, (2)
@@ -23,7 +21,7 @@ interface Beat {
   title: string;
   accent: string;
   blurb: string;
-  image: string;
+  intensity: number; // how "online" the compute scene reads (0 idle → 1 full)
   metricLabel: string;
   metricValue: string;
   metricUnit: string;
@@ -38,7 +36,7 @@ const BEATS: Beat[] = [
     accent: '#10a5c7',
     blurb:
       'Idle industrial interconnections, curtailed generation, distressed plants — hidden power nobody is marketing. Our VoltScout platform and its Hidden Gems engine surface it first.',
-    image: aesoGridHero,
+    intensity: 0.32,
     metricLabel: 'Pipeline sourced',
     metricValue: TOTAL_MW.toLocaleString(),
     metricUnit: 'MW under evaluation',
@@ -51,7 +49,7 @@ const BEATS: Beat[] = [
     accent: '#F7931A',
     blurb:
       'Interconnection studies, energy procurement, permits and EPC. We move megawatts from where they are wasted to where they are worth the most — like our 135 MW Alberta flagship.',
-    image: albertaAerial,
+    intensity: 0.62,
     metricLabel: 'Flagship in development',
     metricValue: UNDER_DEV_MW.toLocaleString(),
     metricUnit: 'MW Alberta build',
@@ -64,7 +62,7 @@ const BEATS: Beat[] = [
     accent: '#F7931A',
     blurb:
       'ASIC and HPC capacity with live telemetry, curtailment-aware economics, and hosting for partners who bring their own machines. Wasted power, turned into the compute behind modern AI.',
-    image: datacenterNoc,
+    intensity: 1,
     metricLabel: 'Now productive',
     metricValue: 'AI · HPC · BTC',
     metricUnit: 'compute online',
@@ -104,8 +102,10 @@ function Scene({ progress }: { progress: MotionValue<number> }) {
           </p>
         </div>
 
-        {/* Stage — the three beats stacked and cross-faded */}
-        <div className="relative mt-8 flex min-h-[46vh] flex-1 items-center lg:mt-10">
+        {/* Stage — the three beats stacked and cross-faded. min-h-0 + overflow
+            -hidden lets it take the leftover column height and clip, so a tall
+            beat can never bleed up into the eyebrow above it. */}
+        <div className="relative mt-6 flex min-h-0 flex-1 items-center overflow-hidden lg:mt-8">
           {BEATS.map((beat) => (
             <BeatLayer key={beat.index} beat={beat} progress={progress} />
           ))}
@@ -178,14 +178,14 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
           {beat.title}
         </h2>
 
-        <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:mt-5 sm:line-clamp-none sm:text-base lg:text-lg">
+        <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base lg:text-lg">
           {beat.blurb}
         </p>
 
         {/* supporting number */}
-        <div className="mt-4 flex items-baseline gap-3 sm:mt-8 sm:gap-4">
+        <div className="mt-4 flex items-baseline gap-3 sm:mt-6 sm:gap-4">
           <span
-            className="text-4xl font-bold tabular-nums tracking-tight sm:text-6xl lg:text-7xl"
+            className="whitespace-nowrap text-3xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-6xl"
             style={{ color: beat.accent }}
           >
             {beat.metricValue}
@@ -199,22 +199,19 @@ function BeatLayer({ beat, progress }: { beat: Beat; progress: MotionValue<numbe
         </div>
       </div>
 
-      {/* Media column */}
+      {/* Media column — a live, animated compute scene (no static photo). The
+          panel height is bounded directly so the centred stage stays compact. */}
       <div className="order-1 lg:order-2 lg:w-[44%]">
-        <div className="group relative h-[20vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:h-auto sm:aspect-[4/3] sm:rounded-3xl">
-          <img
-            src={beat.image}
-            alt=""
-            className="h-full w-full scale-105 object-cover"
-            aria-hidden="true"
+        <div className="relative h-[16vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:h-[34vh] sm:rounded-3xl lg:h-[clamp(15rem,40vh,28rem)]">
+          <JourneyScene
+            accent={beat.accent}
+            intensity={beat.intensity}
+            className="absolute inset-0 h-full w-full"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/20 to-transparent" />
-          <div
-            className="absolute inset-0 mix-blend-soft-light"
-            style={{ backgroundColor: beat.accent, opacity: 0.18 }}
-          />
+          {/* inner hairline for crispness on the light theme */}
+          <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-slate-900/5 sm:rounded-3xl" />
           {/* corner index */}
-          <div className="absolute right-5 top-5 font-mono text-xs tracking-widest text-white/60">
+          <div className="absolute right-5 top-4 font-mono text-xs tracking-widest text-slate-400">
             0{beat.index + 1} / 03
           </div>
         </div>
