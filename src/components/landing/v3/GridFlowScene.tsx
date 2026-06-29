@@ -30,9 +30,15 @@ const EDGES: [number, number][] = [
   [0, 2], [1, 2], [2, 3], [3, 4], [3, 5], [3, 6],
 ];
 
-export function GridFlowScene({ accent, className }: { accent: string; className?: string }) {
+export function GridFlowScene({ accent, className, dark = false }: { accent: string; className?: string; dark?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
+  // Palette: light panel (default) or a dark "window into the substation" used
+  // in the model-journey cards alongside the dark Discovery / Datacenter scenes.
+  const LINE = dark ? '150, 180, 210' : SLATE;
+  const BG0 = dark ? '#0c1622' : '#ffffff';
+  const BG1 = dark ? '#070d16' : '#eef2f7';
+  const NODE_FILL = dark ? 'rgba(14,26,40,0.92)' : 'rgba(255,255,255,0.9)';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,15 +82,15 @@ export function GridFlowScene({ accent, className }: { accent: string; className
       if (!W) return;
 
       const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#ffffff');
-      bg.addColorStop(1, '#eef2f7');
+      bg.addColorStop(0, BG0);
+      bg.addColorStop(1, BG1);
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
       // Edges — faint conductors.
       ctx.lineWidth = 1.25;
       for (const [a, b] of EDGES) {
-        ctx.strokeStyle = `rgba(${SLATE}, 0.22)`;
+        ctx.strokeStyle = `rgba(${LINE}, 0.22)`;
         ctx.beginPath();
         ctx.moveTo(px(NODES[a].x), py(NODES[a].y));
         ctx.lineTo(px(NODES[b].x), py(NODES[b].y));
@@ -118,7 +124,7 @@ export function GridFlowScene({ accent, className }: { accent: string; className
         const x = px(n.x), y = py(n.y);
         const s = 7 * n.r;
         const pulse = 0.5 + 0.5 * Math.sin(t * 2 + i * 1.3);
-        ctx.fillStyle = `rgba(255,255,255,0.9)`;
+        ctx.fillStyle = NODE_FILL;
         ctx.strokeStyle = `rgba(${ACCENT}, ${0.45 + 0.4 * pulse})`;
         ctx.lineWidth = 1.5;
         roundRect(x - s, y - s, s * 2, s * 2, s * 0.5);
@@ -134,7 +140,7 @@ export function GridFlowScene({ accent, className }: { accent: string; className
       const wt = H * 0.84;
       const wh = H - wt - 12;
       const midY = wt + wh / 2;
-      ctx.strokeStyle = `rgba(${SLATE}, 0.18)`;
+      ctx.strokeStyle = `rgba(${LINE}, 0.18)`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(18, midY);
@@ -189,7 +195,7 @@ export function GridFlowScene({ accent, className }: { accent: string; className
       ro.disconnect();
       io.disconnect();
     };
-  }, [accent, reduced]);
+  }, [accent, reduced, dark, LINE, BG0, BG1, NODE_FILL]);
 
   return <canvas ref={canvasRef} className={className} aria-hidden />;
 }
