@@ -8,7 +8,7 @@ import {
   staggerContainer,
   staggerItem,
 } from '../scroll';
-import { FacilityScene } from '../FacilityScene';
+import facilityImg from '@/assets/alberta-facility-aerial.jpg';
 
 // Chapter: "Flagship." The one site that is real steel today — Alberta
 // Heartland 135. Presented as a full-bleed film still: a parallaxed aerial of
@@ -33,7 +33,15 @@ export function Flagship() {
   return (
     <CinematicBand
       className="min-h-[90vh]"
-      background={<FacilityScene className="h-full w-full" />}
+      background={
+        <img
+          src={facilityImg}
+          alt="Aerial photograph of the WattByte Alberta Heartland facility — buildings, substation and transmission feed at dusk"
+          className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      }
       overlayClassName="bg-[radial-gradient(120%_120%_at_70%_25%,rgba(6,11,22,0.25)_0%,rgba(6,11,22,0.6)_55%,rgba(6,11,22,0.9)_100%)]"
     >
       {/* A second, directional scrim so the lower-left text column always pops
